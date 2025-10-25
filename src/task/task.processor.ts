@@ -1,9 +1,9 @@
 /*
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-10-03 06:03:56
- * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2025-10-03 06:08:58
- * @FilePath: /lulab_backend/src/task/task.processor.ts
+ * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
+ * @LastEditTime: 2025-10-20 20:44:35
+ * @FilePath: \lulab_backend\src\task\task.processor.ts
  * @Description:
  *
  * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
@@ -66,6 +66,10 @@ export class TaskProcessor extends WorkerHost {
       case 'cleanupExpiredData':
         // TODO: 清理过期数据
         // await this.cleanupService.removeExpiredData(job.data.retentionDays);
+        break;
+
+      case 'helloWorld': // 新增任务
+        console.log('Hello World!', new Date().toISOString());
         break;
 
       default:
