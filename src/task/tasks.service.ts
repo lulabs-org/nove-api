@@ -50,11 +50,19 @@ export class TasksService {
       tz: 'Asia/Shanghai', // 可改为配置项
     };
 
-    const job = await this.queue.add('cron', dto.payload, {
-      repeat,
-      removeOnComplete: { age: 3600, count: 1000 },
-      removeOnFail: { age: 24 * 3600, count: 1000 },
-    } as JobsOptions);
+    // 🔹 修改：把原始任务名放到 job.data 里，而不是改 job.name
+    const job = await this.queue.add(
+      'cron',
+      {
+        originalName: dto.name, // 🔹 保存任务标识，用于 Processor 匹配
+        ...dto.payload, // 🔹 保留原 payload
+      },
+      {
+        repeat,
+        removeOnComplete: { age: 3600, count: 1000 },
+        removeOnFail: { age: 24 * 3600, count: 1000 },
+      } as JobsOptions,
+    );
 
     const jobIdVal = job.id ?? null; // 👈 兜底
 
