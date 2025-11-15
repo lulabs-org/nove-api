@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-10-03 06:03:56
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2025-10-27 20:25:50
+ * @LastEditTime: 2025-11-15 09:49:41
  * @FilePath: \lulab_backend\src\task\task.processor.ts
  * @Description:
  *
@@ -72,9 +72,81 @@ export class TaskProcessor extends WorkerHost {
         // await this.cleanupService.removeExpiredData(job.data.retentionDays);
         break;
 
-      case 'helloWorld': // 新增任务
-        console.log('Hello World!', new Date().toISOString());
-        break;
+      case 'personalDailyMeetingSummary': {
+        console.log(
+          '开始执行任务: personalDailyMeetingSummary',
+          new Date().toISOString(),
+        );
+
+        // 当前进度（pageToken = user.id）
+        let pageToken = (job.data as any).payload?.pageToken ?? null;
+
+        while (true) {
+          // 1. 找到下一个真实用户
+          const nextUser = await this.prisma.user.findFirst({
+            where: pageToken ? { id: { gt: pageToken } } : undefined,
+            orderBy: { id: 'asc' },
+            include: {
+              platformUsers: {
+                where: { isActive: true },
+                include: {
+                  participantSummaries: {
+                    where: { deletedAt: null },
+                    orderBy: { meetStartTime: 'desc' },
+                  },
+                },
+              },
+            },
+          });
+
+          // 没有用户了 → 任务结束
+          if (!nextUser) {
+            console.log('全部用户处理完毕！', new Date().toISOString());
+            return {
+              nextPageToken: null,
+              done: true,
+            };
+          }
+
+          console.log(
+            `处理用户: ${nextUser.id} (username=${nextUser.username})`,
+          );
+
+          // 2. 遍历该用户所有平台账户
+          for (const account of nextUser.platformUsers) {
+            console.log(
+              `  处理账号: ${account.id} (platformUserId=${account.platformUserId}, 平台=${account.platform})`,
+            );
+
+            // 3. 打印该账户的所有 ParticipantSummary
+            for (const summary of account.participantSummaries) {
+              console.log(`
+                ====== Participant Summary ======
+                recordFileId: ${summary.recordFileId}
+                meetStartTime: ${summary.meetStartTime}
+                meetParticipant: ${summary.meetParticipant}
+
+                个人总结:
+                ${summary.participantSummary}
+
+                会议总结:
+                ${summary.meetingSummary}
+                ==================================
+              `);
+            }
+
+            console.log(
+              `  该账号共有 ${account.participantSummaries.length} 条会议总结`,
+            );
+          }
+
+          // 保存当前用户 id 为下次 pageToken
+          pageToken = nextUser.id;
+
+          console.log('等待 5 秒后处理下一个用户...');
+          await new Promise((res) => setTimeout(res, 5000));
+        }
+      }
 
       default:
         this.logger.warn(`Unknown job type: ${taskName}`);
