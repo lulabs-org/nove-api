@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-10-03 06:03:56
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2025-11-15 09:49:41
+ * @LastEditTime: 2025-11-22 09:57:47
  * @FilePath: \lulab_backend\src\task\task.processor.ts
  * @Description:
  *
@@ -73,6 +73,15 @@ export class TaskProcessor extends WorkerHost {
         break;
 
       case 'personalDailyMeetingSummary': {
+        // 周期性使用方法：
+        // {
+        //   "name": "helloWorld",
+        //   "cron": "* * * * * *",
+        //   "payload": {
+        //     "originalName": "helloWorld"
+        //   }
+        // }
+
         console.log(
           '开始执行任务: personalDailyMeetingSummary',
           new Date().toISOString(),
