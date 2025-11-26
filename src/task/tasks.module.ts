@@ -16,12 +16,14 @@ import { TasksController } from './tasks.controller';
 import { TasksService } from './tasks.service';
 import { TaskProcessor } from './task.processor';
 import { PrismaService } from '../prisma/prisma.service';
+import { OpenaiModule } from '../integrations/openai/openai.module';
 
 @Module({
   imports: [
     BullModule.registerQueue({
       name: 'tasks', // 队列名
     }),
+    OpenaiModule,
   ],
   controllers: [TasksController],
   providers: [TasksService, TaskProcessor, PrismaService],

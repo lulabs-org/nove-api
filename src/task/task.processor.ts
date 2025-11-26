@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-10-03 06:03:56
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2025-11-22 09:57:47
+ * @LastEditTime: 2025-11-22 10:57:32
  * @FilePath: \lulab_backend\src\task\task.processor.ts
  * @Description:
  *
@@ -20,13 +20,17 @@ import type { Job } from 'bullmq';
 import { PrismaService } from '../prisma/prisma.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { TaskStatus } from '@prisma/client';
+import { OpenaiService } from '../integrations/openai/openai.service';
 
 @Injectable()
 @Processor('tasks')
 export class TaskProcessor extends WorkerHost {
   private readonly logger = new Logger(TaskProcessor.name);
 
-  constructor(private readonly prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly openaiService: OpenaiService,
+  ) {
     super();
   }
 
@@ -155,6 +159,19 @@ export class TaskProcessor extends WorkerHost {
           console.log('等待 5 秒后处理下一个用户...');
           await new Promise((res) => setTimeout(res, 5000));
         }
+      }
+
+      case 'openaiChat': {
+        const payload = (job.data as any).payload ?? {};
+        const question: string = payload.question ?? '你好';
+        const systemPrompt: string = payload.systemPrompt ?? '你是人工智能助手';
+        const messages = [
+          { role: 'system' as const, content: systemPrompt },
+          { role: 'user' as const, content: question },
+        ];
+        const reply = await this.openaiService.createChatCompletion(messages);
+        this.logger.log(`OpenAI聊天完成: ${reply?.slice(0, 200)}`);
+        return { reply };
       }
 
       default:
