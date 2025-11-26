@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-10-03 06:03:56
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2025-11-22 10:57:32
+ * @LastEditTime: 2025-11-26 21:05:46
  * @FilePath: \lulab_backend\src\task\task.processor.ts
  * @Description:
  *
@@ -125,6 +125,8 @@ export class TaskProcessor extends WorkerHost {
             `处理用户: ${nextUser.id} (username=${nextUser.username})`,
           );
 
+          let summaryData: any[] = []; // 存储该用户所有平台账户的会议总结
+
           // 2. 遍历该用户所有平台账户
           for (const account of nextUser.platformUsers) {
             console.log(
@@ -133,19 +135,27 @@ export class TaskProcessor extends WorkerHost {
 
             // 3. 打印该账户的所有 ParticipantSummary
             for (const summary of account.participantSummaries) {
-              console.log(`
-                ====== Participant Summary ======
-                recordFileId: ${summary.recordFileId}
-                meetStartTime: ${summary.meetStartTime}
-                meetParticipant: ${summary.meetParticipant}
+              summaryData.push({
+                platformUserId: account.platformUserId,
+                meetParticipant: summary.meetParticipant,
+                participantSummary: summary.participantSummary,
+                meetStartTime: summary.meetStartTime,
+                meetingSummary: summary.meetingSummary,
+              });
 
-                个人总结:
-                ${summary.participantSummary}
+              // console.log(`
+              //   ====== Participant Summary ======
+              //   recordFileId: ${summary.recordFileId}
+              //   meetStartTime: ${summary.meetStartTime}
+              //   meetParticipant: ${summary.meetParticipant}
 
-                会议总结:
-                ${summary.meetingSummary}
-                ==================================
-              `);
+              //   个人总结:
+              //   ${summary.participantSummary}
+
+              //   会议总结:
+              //   ${summary.meetingSummary}
+              //   ==================================
+              // `);
             }
 
             console.log(
@@ -153,8 +163,33 @@ export class TaskProcessor extends WorkerHost {
             );
           }
 
+          console.log('当前用户的 summaryData:', summaryData); // 打印该用户所有平台账户的会议总结
+
           // 保存当前用户 id 为下次 pageToken
           pageToken = nextUser.id;
+
+          if (summaryData.length > 0) {
+            const question = JSON.stringify(summaryData); // 用户问题
+            const systemPrompt = `
+            你是人工智能助手，需要总结用户当天的会议记录。
+            字段说明：
+            - meetParticipant: 用户名(这里所有的用户都是一个人)
+            - participantSummary: 单个会议总结
+            - meetStartTime: 会议开始时间
+            - meetingSummary: 所有人的会议总结
+            如果个人总结不清晰，可以参考 meetingSummary。
+            `.trim(); // 系统提示词,.trim() 去掉首尾空格
+
+            const messages = [
+              { role: 'system' as const, content: systemPrompt },
+              { role: 'user' as const, content: question },
+            ];
+            const reply =
+              await this.openaiService.createChatCompletion(messages);
+            console.log(`OpenAI聊天完成: ${reply?.slice(0, 200)}`);
+          } else {
+            console.log('当前用户没有有效会议总结，跳过 OpenAI 调用。');
+          }
 
           console.log('等待 5 秒后处理下一个用户...');
           await new Promise((res) => setTimeout(res, 5000));
