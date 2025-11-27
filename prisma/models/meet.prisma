@@ -657,3 +657,44 @@ model ParticipantSummary {
   @@map("participant_summaries")
 }
 
+
+// 周期类型枚举
+enum PeriodType {
+  DAILY // 每日
+  WEEKLY // 每周
+  MONTHLY // 每月
+  QUARTERLY // 每季度
+  YEARLY // 每年
+}
+
+// 用户周期性总结表
+model UserPeriodicSummary {
+  id String @id @default(cuid())
+
+  // 关联用户
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // 周期类型
+  periodType PeriodType
+
+  // 总结日期（表示这个总结所属的时间段）
+  summaryDate DateTime
+
+  // 总结内容
+  summary String @db.Text
+
+  // 软删除
+  deletedAt DateTime? // 软删除时间戳
+
+  // 时间戳
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([periodType])
+  @@index([summaryDate])
+  @@index([createdAt])
+  @@index([deletedAt]) // 软删除查询优化
+  @@map("user_periodic_summaries")
+}

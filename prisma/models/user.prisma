@@ -61,9 +61,18 @@ model User {
   permissions     UserPermission[] // 用户特殊权限
   dataPermissions UserDataPermission[] // 用户数据权限
 
-  // 平台与存储相关关联
-  platformUsers          PlatformUser[] // 平台用户关联
-  uploadedStorageObjects StorageObject[]
+  // 会议相关关联
+  MeetingParticipation MeetingParticipation[]
+  platformUsers        PlatformUser[] // 平台用户关联
+  createdSummaries     MeetingSummary[]       @relation("SummaryCreator") // 创建的总结
+  reviewedSummaries    MeetingSummary[]       @relation("ReviewedSummaries") // 审核的总结
+  periodicSummaries    UserPeriodicSummary[] // 用户周期性总结
+
+  // 登录日志关联
+  loginLogs LoginLog[] // 登录日志
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([countryCode, phone], name: "uq_users_country_code_phone")
   @@index([username]) // 用户名登录优化
