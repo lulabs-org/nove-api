@@ -187,6 +187,17 @@ export class TaskProcessor extends WorkerHost {
             const reply =
               await this.openaiService.createChatCompletion(messages);
             console.log(`OpenAI聊天完成: ${reply?.slice(0, 200)}`);
+
+            // 保存到 UserPeriodicSummary 表
+            await this.prisma.userPeriodicSummary.create({
+              data: {
+                userId: nextUser.id,
+                periodType: 'DAILY',
+                summaryDate: new Date(),
+                summary: reply || '',
+              },
+            });
+            console.log(`已保存用户 ${nextUser.id} 的每日总结`);
           } else {
             console.log('当前用户没有有效会议总结，跳过 OpenAI 调用。');
           }
