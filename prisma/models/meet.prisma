@@ -642,6 +642,10 @@ model ParticipantSummary {
   // 整个会议的总结
   meetingSummary String @db.Text
 
+  // 关联到用户周期性总结
+  userPeriodicSummaryId String?
+  userPeriodicSummary   UserPeriodicSummary? @relation(fields: [userPeriodicSummaryId], references: [id])
+
   // 软删除
   deletedAt DateTime? // 软删除时间戳
 
@@ -654,6 +658,7 @@ model ParticipantSummary {
   @@index([meetStartTime])
   @@index([createdAt])
   @@index([deletedAt]) // 软删除查询优化
+  @@index([userPeriodicSummaryId]) // 周期总结查询优化
   @@map("participant_summaries")
 }
 
@@ -683,6 +688,9 @@ model UserPeriodicSummary {
 
   // 总结内容
   summary String @db.Text
+
+  // 关联的会议记录
+  participantSummaries ParticipantSummary[]
 
   // 软删除
   deletedAt DateTime? // 软删除时间戳
