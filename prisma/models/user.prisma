@@ -66,7 +66,6 @@ model User {
   platformUsers        PlatformUser[] // 平台用户关联
   createdSummaries     MeetingSummary[]       @relation("SummaryCreator") // 创建的总结
   reviewedSummaries    MeetingSummary[]       @relation("ReviewedSummaries") // 审核的总结
-  periodicSummaries    UserPeriodicSummary[] // 用户周期性总结
 
   // 登录日志关联
   loginLogs LoginLog[] // 登录日志
