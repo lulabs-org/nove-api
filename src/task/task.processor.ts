@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-10-03 06:03:56
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2025-11-26 21:05:46
+ * @LastEditTime: 2025-12-08 21:20:29
  * @FilePath: \lulab_backend\src\task\task.processor.ts
  * @Description:
  *
@@ -200,7 +200,7 @@ export class TaskProcessor extends WorkerHost {
                 summaryDate: new Date(),
                 meetParticipant: nextUser.username || '用户',
                 participantSummary: reply || '',
-              } as any, // 临时绕过类型检查，需要重启 TypeScript 服务器
+              },
             });
             console.log(
               `已创建用户 ${nextUser.id} 的每日总结: ${dailySummary.id}`,
