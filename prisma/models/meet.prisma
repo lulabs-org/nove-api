@@ -620,9 +620,13 @@ model MeetingSummary {
 model ParticipantSummary {
   id String @id @default(cuid())
 
-  // 平台用户ID（关联到 PlatformUser）
-  platformUserId String
-  platformUser   PlatformUser @relation(fields: [platformUserId], references: [id], onDelete: Restrict)
+  // 平台用户ID（单次会议必填，周期性总结不填）
+  platformUserId String?
+  platformUser   PlatformUser? @relation(fields: [platformUserId], references: [id], onDelete: Restrict)
+
+  // 用户ID（周期性总结必填，单次会议不填）
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // 周期类型（SINGLE=单次会议, DAILY/WEEKLY/MONTHLY=周期性总结）
   periodType PeriodType
@@ -652,6 +656,7 @@ model ParticipantSummary {
   updatedAt DateTime @updatedAt
 
   @@index([platformUserId])
+  @@index([userId]) // 用户查询优化
   @@index([periodType]) // 周期类型查询优化
   @@index([recordFileId])
   @@index([meetStartTime])
