@@ -126,6 +126,7 @@ export class TaskProcessor extends WorkerHost {
           );
 
           let summaryData: any[] = []; // 存储该用户所有平台账户的会议总结
+          let participantSummaryIds: string[] = []; // 存储单次会议的 ID 列表
 
           // 2. 遍历该用户所有平台账户
           for (const account of nextUser.platformUsers) {
@@ -142,6 +143,9 @@ export class TaskProcessor extends WorkerHost {
                 meetStartTime: summary.meetStartTime,
                 meetingSummary: summary.meetingSummary,
               });
+
+              // 收集单次会议的 ID
+              participantSummaryIds.push(summary.id);
 
               // console.log(`
               //   ====== Participant Summary ======
@@ -184,20 +188,33 @@ export class TaskProcessor extends WorkerHost {
               { role: 'system' as const, content: systemPrompt },
               { role: 'user' as const, content: question },
             ];
-            const reply =
+            const reply = 
               await this.openaiService.createChatCompletion(messages);
             console.log(`OpenAI聊天完成: ${reply?.slice(0, 200)}`);
 
-            // 保存到 UserPeriodicSummary 表
-            await this.prisma.userPeriodicSummary.create({
+            // 第一步：创建每日总结（父总结）
+            const dailySummary = await this.prisma.participantSummary.create({
               data: {
-                userId: nextUser.id,
+                platformUserId: nextUser.platformUsers[0]?.id, // 使用第一个平台账户
                 periodType: 'DAILY',
                 summaryDate: new Date(),
-                summary: reply || '',
+                meetParticipant: nextUser.username || '用户',
+                participantSummary: reply || '',
               },
             });
-            console.log(`已保存用户 ${nextUser.id} 的每日总结`);
+            console.log(`已创建用户 ${nextUser.id} 的每日总结: ${dailySummary.id}`);
+
+            // 第二步：创建关联关系（连接父总结和单次会议）
+            await (this.prisma as any).summaryRelation.createMany({
+              data: participantSummaryIds.map(childId => ({
+                parentSummaryId: dailySummary.id,
+                childSummaryId: childId,
+                parentPeriodType: 'DAILY'
+              }))
+            });
+            console.log(
+              `已关联 ${participantSummaryIds.length} 条会议记录到每日总结`
+            );
           } else {
             console.log('当前用户没有有效会议总结，跳过 OpenAI 调用。');
           }
