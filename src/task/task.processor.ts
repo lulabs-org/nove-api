@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-10-03 06:03:56
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2025-12-15 20:31:17
+ * @LastEditTime: 2025-12-17 21:02:01
  * @FilePath: \lulab_backend\src\task\task.processor.ts
  * @Description:
  *
@@ -130,7 +130,7 @@ export class TaskProcessor extends WorkerHost {
 
         console.log(groups);
 
-        return { ok: true };
+        return { ok: true, at: new Date().toISOString() };
       }
 
       case 'openaiChat': {
