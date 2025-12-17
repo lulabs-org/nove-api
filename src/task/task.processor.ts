@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-10-03 06:03:56
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2025-12-08 21:20:29
+ * @LastEditTime: 2025-12-15 20:31:17
  * @FilePath: \lulab_backend\src\task\task.processor.ts
  * @Description:
  *
@@ -91,139 +91,46 @@ export class TaskProcessor extends WorkerHost {
           new Date().toISOString(),
         );
 
-        // 当前进度（pageToken = user.id）
-        let pageToken = (job.data as any).payload?.pageToken ?? null;
-
-        while (true) {
-          // 1. 找到下一个真实用户
-          const nextUser = await this.prisma.user.findFirst({
-            where: pageToken ? { id: { gt: pageToken } } : undefined,
-            orderBy: { id: 'asc' },
-            include: {
-              platformUsers: {
-                where: { isActive: true },
-                include: {
-                  participantSummaries: {
-                    where: { deletedAt: null },
-                    orderBy: { meetStartTime: 'desc' },
-                  },
-                },
+        // 第一步：查询所有带 platformUserId 的会议记录
+        // 每条记录都会带着它对应的 platformUser 关系字段
+        const summaries = await this.prisma.participantSummary.findMany({
+          where: { platformUserId: { not: null } },
+          select: {
+            platformUser: {
+              select: {
+                id: true,
+                userId: true,
               },
             },
-          });
+          },
+        });
 
-          // 没有用户了 → 任务结束
-          if (!nextUser) {
-            console.log('全部用户处理完毕！', new Date().toISOString());
-            return {
-              nextPageToken: null,
-              done: true,
-            };
+        // groups: 存储最终按 userId 分组后的结果
+        // seen: 防止同一个 platformUser 重复加入
+        const groups: Record<string, string[]> = {};
+        const seen = new Set<string>();
+
+        for (const item of summaries) {
+          const p = item.platformUser;
+          if (!p) continue;
+
+          // 去重
+          if (seen.has(p.id)) continue;
+          seen.add(p.id);
+
+          // userId 可能为 null，给它一个稳定的 key
+          const key = p.userId ?? '__NO_USER__';
+
+          if (!groups[key]) {
+            groups[key] = [];
           }
 
-          console.log(
-            `处理用户: ${nextUser.id} (username=${nextUser.username})`,
-          );
-
-          let summaryData: any[] = []; // 存储该用户所有平台账户的会议总结
-          let participantSummaryIds: string[] = []; // 存储单次会议的 ID 列表
-
-          // 2. 遍历该用户所有平台账户
-          for (const account of nextUser.platformUsers) {
-            console.log(
-              `  处理账号: ${account.id} (platformUserId=${account.platformUserId}, 平台=${account.platform})`,
-            );
-
-            // 3. 打印该账户的所有 ParticipantSummary
-            for (const summary of account.participantSummaries) {
-              summaryData.push({
-                platformUserId: account.platformUserId,
-                meetParticipant: summary.meetParticipant,
-                participantSummary: summary.participantSummary,
-                meetStartTime: summary.meetStartTime,
-                meetingSummary: summary.meetingSummary,
-              });
-
-              // 收集单次会议的 ID
-              participantSummaryIds.push(summary.id);
-
-              // console.log(`
-              //   ====== Participant Summary ======
-              //   recordFileId: ${summary.recordFileId}
-              //   meetStartTime: ${summary.meetStartTime}
-              //   meetParticipant: ${summary.meetParticipant}
-
-              //   个人总结:
-              //   ${summary.participantSummary}
-
-              //   会议总结:
-              //   ${summary.meetingSummary}
-              //   ==================================
-              // `);
-            }
-
-            console.log(
-              `  该账号共有 ${account.participantSummaries.length} 条会议总结`,
-            );
-          }
-
-          console.log('当前用户的 summaryData:', summaryData); // 打印该用户所有平台账户的会议总结
-
-          // 保存当前用户 id 为下次 pageToken
-          pageToken = nextUser.id;
-
-          if (summaryData.length > 0) {
-            const question = JSON.stringify(summaryData); // 用户问题
-            const systemPrompt = `
-            你是人工智能助手，需要总结用户当天的会议记录。
-            字段说明：
-            - meetParticipant: 用户名(这里所有的用户都是一个人)
-            - participantSummary: 单个会议总结
-            - meetStartTime: 会议开始时间
-            - meetingSummary: 所有人的会议总结
-            如果个人总结不清晰，可以参考 meetingSummary。
-            `.trim(); // 系统提示词,.trim() 去掉首尾空格
-
-            const messages = [
-              { role: 'system' as const, content: systemPrompt },
-              { role: 'user' as const, content: question },
-            ];
-            const reply =
-              await this.openaiService.createChatCompletion(messages);
-            console.log(`OpenAI聊天完成: ${reply?.slice(0, 200)}`);
-
-            // 第一步：创建每日总结（父总结）- 关联到 User 而不是 PlatformUser
-            const dailySummary = await this.prisma.participantSummary.create({
-              data: {
-                userId: nextUser.id, // ✅ 直接关联到 User
-                periodType: 'DAILY',
-                summaryDate: new Date(),
-                meetParticipant: nextUser.username || '用户',
-                participantSummary: reply || '',
-              },
-            });
-            console.log(
-              `已创建用户 ${nextUser.id} 的每日总结: ${dailySummary.id}`,
-            );
-
-            // 第二步：创建关联关系（连接父总结和单次会议）
-            await (this.prisma as any).summaryRelation.createMany({
-              data: participantSummaryIds.map((childId) => ({
-                parentSummaryId: dailySummary.id,
-                childSummaryId: childId,
-                parentPeriodType: 'DAILY',
-              })),
-            });
-            console.log(
-              `已关联 ${participantSummaryIds.length} 条会议记录到每日总结`,
-            );
-          } else {
-            console.log('当前用户没有有效会议总结，跳过 OpenAI 调用。');
-          }
-
-          console.log('等待 5 秒后处理下一个用户...');
-          await new Promise((res) => setTimeout(res, 5000));
+          groups[key].push(p.id);
         }
+
+        console.log(groups);
+
+        return { ok: true };
       }
 
       case 'openaiChat': {

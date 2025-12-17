@@ -26,27 +26,26 @@ model PlatformUser {
   active Boolean @default(true) // 是否活跃
 
   // 关联关系
-  createdMeetings      Meeting[]            @relation("MeetingCreator") // 创建的会议
-  hostedMeetings       Meeting[]            @relation("HostedMeetings") // 主持的会议
-  paragraphs           Paragraph[]          @relation("Speaker") // 关联的段落
-  createdSummaries     MeetingSummary[]     @relation("SummaryCreator") // 创建的总结
-  approvedSummaries    MeetingSummary[]     @relation("ApprovedSummaries") // 审核的总结
-  actions              MeetingUserAction[]  @relation("UserActions")
-  meetingRecordings    MeetingRecording[]   @relation("RecordingUser")
-  meetingParticipants  MeetingParticipant[] @relation("ParticipantUser")
-  participantSummaries ParticipantSummary[] @relation("ParticipantSummaries") // 参与者总结
+  hostedMeetings       Meeting[]              @relation("HostedMeetings") // 主持的会议
+  paragraphs           Paragraph[]            @relation("Speaker") // 关联的段落
+  actions              MeetingUserAction[]
+  meetingRecordings    MeetingRecording[]
+  meetingParticipants  MeetingParticipant[]
+  participantSummaries ParticipantSummary[] // 参与者总结
 
-  // 系统字段及时间
-  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
-  lastSeenAt DateTime? @map("last_seen_at") @db.Timestamptz(6) // 最后出现时间
-  deletedAt  DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  createdSummaries  MeetingSummary[] @relation("SummaryCreator") // 创建的总结
+  reviewedSummaries MeetingSummary[] @relation("ReviewedSummaries") // 审核的总结
 
-  @@unique([platform, ptUnionId], name: "unique_platform_union_user")
-  @@index([email, platform], map: "idx_email_platform")
-  @@index([localUserId, active], map: "idx_local_user_active")
-  @@index([phoneHash, platform], map: "idx_phone_platform")
-  @@index([platform, active], map: "idx_platform_active")
+  @@unique([platform, platformUserId]) // 确保平台用户ID唯一
+  @@index([email])
+  @@index([userId])
+  @@index([phoneHash])
+  @@index([platform])
+  @@index([userName]) // 用户名查询优化
+  @@index([isActive]) // 活跃用户查询优化
+  @@index([lastSeenAt]) // 最后出现时间查询优化
   @@map("user_platforms")
 }
 
