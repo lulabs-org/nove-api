@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-10-03 06:03:56
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2025-12-17 21:14:57
+ * @LastEditTime: 2025-12-18 21:33:07
  * @FilePath: \lulab_backend\src\task\task.processor.ts
  * @Description:
  *
@@ -92,19 +92,42 @@ export class TaskProcessor extends WorkerHost {
         );
 
         // 查所有participantSummary的记录，但只拿平台用户的 id 和 userId
-        const summaries = await this.prisma.participantSummary.findMany({
-          where: { platformUserId: { not: null } },
-          select: {
-            platformUser: {
-              select: {
-                id: true,
-                userId: true,
+        const summaries =
+          (await this.prisma.participantSummary.findMany({
+            where: {
+              platformUserId: { not: null }, // 平台用户不为空
+              periodType: 'SINGLE', // 仅单次会议
+            },
+            select: {
+              platformUser: {
+                select: {
+                  id: true,
+                  userId: true,
+                },
               },
             },
-          },
+          })) ?? []; // 如果返回 null/undefined，默认是空数组
+
+        // 如果没有值，直接返回
+        if (summaries.length === 0) {
+          console.log(
+            '没有找到符合条件的记录, participantSummary的新增记录为空',
+          );
+          return { ok: true, at: new Date().toISOString() }; // 或者 return null / throw Error，根据你的需求
+        }
+
+        // 去重
+        const seen = new Set<string>();
+        // filter 会一条条遍历 summaries，如果 id 重复就不放入 uniqueSummaries，第一次出现的保留。
+        const uniqueSummaries = summaries.filter((item) => {
+          const id = item.platformUser?.id;
+          if (!id) return false; // 如果 platformUser 或 id 为 null，直接过滤掉
+          if (seen.has(id)) return false;
+          seen.add(id);
+          return true;
         });
 
-        console.log('所有会议记录:', summaries);
+        console.log(uniqueSummaries);
 
         return { ok: true, at: new Date().toISOString() };
       }
