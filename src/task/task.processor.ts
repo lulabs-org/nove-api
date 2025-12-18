@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-10-03 06:03:56
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2025-12-17 21:02:01
+ * @LastEditTime: 2025-12-17 21:14:57
  * @FilePath: \lulab_backend\src\task\task.processor.ts
  * @Description:
  *
@@ -91,8 +91,7 @@ export class TaskProcessor extends WorkerHost {
           new Date().toISOString(),
         );
 
-        // 第一步：查询所有带 platformUserId 的会议记录
-        // 每条记录都会带着它对应的 platformUser 关系字段
+        // 查所有participantSummary的记录，但只拿平台用户的 id 和 userId
         const summaries = await this.prisma.participantSummary.findMany({
           where: { platformUserId: { not: null } },
           select: {
@@ -105,30 +104,7 @@ export class TaskProcessor extends WorkerHost {
           },
         });
 
-        // groups: 存储最终按 userId 分组后的结果
-        // seen: 防止同一个 platformUser 重复加入
-        const groups: Record<string, string[]> = {};
-        const seen = new Set<string>();
-
-        for (const item of summaries) {
-          const p = item.platformUser;
-          if (!p) continue;
-
-          // 去重
-          if (seen.has(p.id)) continue;
-          seen.add(p.id);
-
-          // userId 可能为 null，给它一个稳定的 key
-          const key = p.userId ?? '__NO_USER__';
-
-          if (!groups[key]) {
-            groups[key] = [];
-          }
-
-          groups[key].push(p.id);
-        }
-
-        console.log(groups);
+        console.log('所有会议记录:', summaries);
 
         return { ok: true, at: new Date().toISOString() };
       }
