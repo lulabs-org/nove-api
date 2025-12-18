@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-10-03 06:03:56
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2025-12-18 21:33:07
+ * @LastEditTime: 2025-12-18 22:01:54
  * @FilePath: \lulab_backend\src\task\task.processor.ts
  * @Description:
  *
@@ -127,7 +127,30 @@ export class TaskProcessor extends WorkerHost {
           return true;
         });
 
-        console.log(uniqueSummaries);
+        // console.log(uniqueSummaries);
+
+        // 按 userId 分组，把相同 userId 的 platformUser.id 收集到同一组，userId 为 null 也单独分组
+        const groupedMap = new Map<
+          string | null,
+          { userId: string | null; platformUserIds: string[] }
+        >();
+
+        for (const item of uniqueSummaries) {
+          const userId = item.platformUser?.userId ?? null; // 取 userId，null 也作为 key
+          if (!groupedMap.has(userId)) {
+            groupedMap.set(userId, { userId, platformUserIds: [] }); // 初始化分组(第一个 userId 是检索用的key)
+          }
+          groupedMap.get(userId)!.platformUserIds.push(item.platformUser!.id); // 添加 platformUser.id
+        }
+
+        // 转成数组方便使用 (Map 是数据结构，不方便直接当作普通数组使用)
+        const data = Array.from(groupedMap.values());
+
+        // 打印分组结果
+        console.log(
+          '在participantSummary表检索到以下用户:\n' +
+            JSON.stringify(data, null, 2),
+        ); // 第二个参数 null 表示不格式化，第三个参数 2 表示缩进 2 个空格
 
         return { ok: true, at: new Date().toISOString() };
       }
