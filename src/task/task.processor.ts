@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-10-03 06:03:56
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2025-12-18 22:01:54
+ * @LastEditTime: 2025-12-19 16:05:29
  * @FilePath: \lulab_backend\src\task\task.processor.ts
  * @Description:
  *
@@ -151,6 +151,41 @@ export class TaskProcessor extends WorkerHost {
           '在participantSummary表检索到以下用户:\n' +
             JSON.stringify(data, null, 2),
         ); // 第二个参数 null 表示不格式化，第三个参数 2 表示缩进 2 个空格
+
+        console.log('开始依次总结每个用户的会议记录');
+
+        for (let i = 0; i < data.length; i++) {
+          const group = data[i]; // 当前分组对象 { userId, platformUserIds }
+          const { userId, platformUserIds } = group;
+
+          // 查找当前分组下所有 platformUserId 对应的 participantSummary
+          const summaries = await this.prisma.participantSummary.findMany({
+            where: {
+              platformUserId: { in: platformUserIds }, // 当前分组的所有 platformUserId
+              periodType: 'SINGLE', // 仅单次会议
+            },
+            select: {
+              participantSummary: true, // 会议总结
+              meetParticipant: true, // 参会人信息
+              platformUser: {
+                select: {
+                  user: {
+                    select: {
+                      username: true, // 通过平台用户检索到真实user的用户名
+                    },
+                  },
+                },
+              },
+            },
+          });
+
+          console.log(JSON.stringify(summaries, null, 2));
+
+          console.log(`当前用户${userId}的会议记录已总结`);
+
+          // 等待 5 秒
+          await new Promise((resolve) => setTimeout(resolve, 5000));
+        }
 
         return { ok: true, at: new Date().toISOString() };
       }
