@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-10-03 06:03:56
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2025-12-19 22:17:44
+ * @LastEditTime: 2025-12-19 22:30:35
  * @FilePath: \lulab_backend\src\task\task.processor.ts
  * @Description:
  *
@@ -194,7 +194,7 @@ export class TaskProcessor extends WorkerHost {
             realName = summaries[0]?.partName ?? '未知用户';
             // 如果没有User用户，就总结平台用户的会议记录
             console.log(
-              `平台用户(${platformUserIds})的参会议记录:\n` +
+              `\x1b[96m平台用户(${platformUserIds})的参会议记录:\x1b[0m\n` +
                 JSON.stringify(summaries, null, 2),
             );
           } else {
@@ -202,7 +202,7 @@ export class TaskProcessor extends WorkerHost {
             realName = summaries[0]?.platformUser?.user?.username ?? '未知用户';
             // 如果有User用户，就总结User用户的会议记录
             console.log(
-              `User用户(${userId})的参会议记录:\n` +
+              `\x1b[96mUser用户(${userId})的参会议记录:\x1b[0m\n` +
                 JSON.stringify(summaries, null, 2),
             );
           }
@@ -231,13 +231,13 @@ export class TaskProcessor extends WorkerHost {
           if (userId === null) {
             // 如果没有User用户，就总结平台用户的会议记录
             console.log(
-              `当前平台用户(${platformUserIds})的会议记录已总结:\n` +
+              `\x1b[92m当前平台用户(${platformUserIds})的会议记录已总结:\x1b[0m\n` +
                 JSON.stringify(summaries, null, 2),
             );
           } else {
             // 如果有User用户，就总结User用户的会议记录
             console.log(
-              `当前User用户(${userId})的会议记录已总结:\n` +
+              `\x1b[92m当前User用户(${userId})的会议记录已总结:\x1b[0m\n` +
                 JSON.stringify(summaries, null, 2),
             );
           }
