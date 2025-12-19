@@ -642,8 +642,8 @@ model ParticipantSummary {
   startAt DateTime  // 总结时间段开始（必填）
   endAt   DateTime  // 总结时间段结束（必填）
 
-  participantName    String @db.VarChar(100) // 参会人信息
-  participantSummary String @db.Text // 总结内容
+  partName    String @db.VarChar(100) // 参会人信息 
+  partSummary String @db.Text // 总结内容
 
   // 关系
   asParent SummaryRelation[] @relation("ParentSummary") // 作为父级总结，包含哪些子级总结
