@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-10-03 06:03:56
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2025-12-19 20:09:23
+ * @LastEditTime: 2025-12-19 22:08:54
  * @FilePath: \lulab_backend\src\task\task.processor.ts
  * @Description:
  *
@@ -173,6 +173,8 @@ export class TaskProcessor extends WorkerHost {
             select: {
               partSummary: true, // 会议总结
               partName: true, // 参会人信息
+              startAt: true, // 开始时间(总结的时间区间)
+              endAt: true, // 结束时间(总结的时间区间)
               platformUser: {
                 select: {
                   user: {
@@ -185,7 +187,39 @@ export class TaskProcessor extends WorkerHost {
             },
           });
 
-          console.log(JSON.stringify(summaries, null, 2));
+          console.log(
+            `用户${userId}的参会议记录:\n` + JSON.stringify(summaries, null, 2),
+          );
+
+          let realName: string;
+
+          if (userId === null) {
+            // userId 为 null：realName = partName
+            realName = summaries[0]?.partName ?? '未知用户';
+          } else {
+            // userId 不为 null：realName = username
+            realName = summaries[0]?.platformUser?.user?.username ?? '未知用户';
+          }
+
+          const question = JSON.stringify(summaries); // 用户问题
+          const systemPrompt = `
+            你是人工智能助手，需要总结用户${realName}当天的会议记录。
+            字段说明：
+            - partName: 参会人在当堂会议的昵称
+            - partSummary: 参会人当堂会议的总结
+            - startAt: 会议总结的开始区间(相当于从这个时间开始总结)
+            - endAt: 会议总结的结束区间(相当于从这个时间结束总结)
+            - platformUser: {"user":{"username":用户的真实姓名}}
+            切记这个只是解释用户输入的字段类型,并不是你要输出的内容,
+            你只需要根据用户输入的字段,总结用户在会议中的活动,不需要特别的格式。
+            `.trim(); // 系统提示词,.trim() 去掉首尾空格
+
+          const messages = [
+            { role: 'system' as const, content: systemPrompt },
+            { role: 'user' as const, content: question },
+          ];
+          const reply = await this.openaiService.createChatCompletion(messages);
+          console.log(`OpenAI聊天完成: ${reply?.slice(0, 200)}`);
 
           console.log(`当前用户${userId}的会议记录已总结`);
 
