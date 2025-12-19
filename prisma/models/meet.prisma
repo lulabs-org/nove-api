@@ -620,33 +620,32 @@ model MeetingSummary {
 model ParticipantSummary {
   id String @id @default(cuid())
 
-  // 平台用户ID（单次会议必填，周期性总结不填）
+  // 平台用户ID
   platformUserId String?
   platformUser   PlatformUser? @relation(fields: [platformUserId], references: [id], onDelete: Restrict)
 
-  // 用户ID（周期性总结必填，单次会议不填）
+  // 用户ID
   userId String?
   user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // 周期类型（SINGLE=单次会议, DAILY/WEEKLY/MONTHLY=周期性总结）
+  // 周期类型
   periodType PeriodType
 
-  // ===== 单次会议字段（仅 periodType=SINGLE 时使用）=====
+  // 单次会议字段
   meetingParticipantId String? // 对应 MeetingParticipant 的 ID
   meetingParticipant   MeetingParticipant? @relation(fields: [meetingParticipantId], references: [id], onDelete: SetNull)
 
   meetingId String? // 对应 Meeting 的 ID
   meeting   Meeting? @relation(fields: [meetingId], references: [id], onDelete: SetNull)
 
-  // ===== 周期性总结字段（仅 periodType!=SINGLE 时使用）=====
+  // 通用字段 
   startAt DateTime  // 总结时间段开始（必填）
   endAt   DateTime  // 总结时间段结束（必填）
 
-  // ===== 通用字段 =====
-  ParticipantName    String @db.VarChar(100) // 参会人信息
+  participantName    String @db.VarChar(100) // 参会人信息
   participantSummary String @db.Text // 总结内容
 
-  // ===== 关系字段（通过 SummaryRelation 表关联）=====
+  // 关系
   asParent SummaryRelation[] @relation("ParentSummary") // 作为父级总结，包含哪些子级总结
   asChild  SummaryRelation[] @relation("ChildSummary") // 作为子级总结，属于哪些父级总结
 
@@ -660,11 +659,11 @@ model ParticipantSummary {
   @@index([platformUserId])
   @@index([userId]) // 用户查询优化
   @@index([periodType]) // 周期类型查询优化
-  @@index([recordFileId])
-  @@index([meetStartTime])
-  @@index([summaryDate]) // 总结日期查询优化
   @@index([createdAt])
   @@index([deletedAt]) // 软删除查询优化
+  @@index([startAt, endAt])  // 按时间段范围查询优化
+  @@index([startAt])
+  @@index([endAt])
   @@map("participant_summaries")
 }
 
