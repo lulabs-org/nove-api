@@ -39,10 +39,10 @@ model Meeting {
   metadata Json @default("{}") @db.JsonB // 平台特定的元数据
 
   // 关联关系
-  participants         MeetingParticipant[] // 参会记录
-  recordings           MeetingRecording[] // 关联的录制
-  summaries            MeetingSummary[] // 关联的总结记录
-  participantSummaries ParticipantSummary[] @relation("MeetingParticipantSummaries") // 参与者总结
+  participants MeetingParticipant[] // 参会记录
+  recordings   MeetingRecording[] // 关联的录制
+  summaries    MeetingSummary[] // 关联的总结记录
+  participantSummaries ParticipantSummary[] // 关联个人总结
 
   // 系统字段及时间
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -219,6 +219,9 @@ model MeetingParticipant {
   instanceId  Int? // 腾讯会议实例ID
   userRole    Int? // 平台用户角色
   sessionData Json? // 本次参会的特定数据
+
+  // 关联关系
+  participantSummaries ParticipantSummary[] // 关联个人总结
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
