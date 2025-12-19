@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-10-03 06:03:56
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2025-12-19 16:05:29
+ * @LastEditTime: 2025-12-19 20:09:23
  * @FilePath: \lulab_backend\src\task\task.processor.ts
  * @Description:
  *
@@ -137,10 +137,16 @@ export class TaskProcessor extends WorkerHost {
 
         for (const item of uniqueSummaries) {
           const userId = item.platformUser?.userId ?? null; // 取 userId，null 也作为 key
-          if (!groupedMap.has(userId)) {
-            groupedMap.set(userId, { userId, platformUserIds: [] }); // 初始化分组(第一个 userId 是检索用的key)
+          // mapKey 为 userId 或 platformUserId，用于分组
+          const mapKey =
+            userId === null
+              ? `__null__:${item.platformUser!.id}` // 每个 null 都不同
+              : userId;
+
+          if (!groupedMap.has(mapKey)) {
+            groupedMap.set(mapKey, { userId, platformUserIds: [] }); // 初始化分组(第一个 userId 是检索用的key)
           }
-          groupedMap.get(userId)!.platformUserIds.push(item.platformUser!.id); // 添加 platformUser.id
+          groupedMap.get(mapKey)!.platformUserIds.push(item.platformUser!.id); // 添加 platformUser.id
         }
 
         // 转成数组方便使用 (Map 是数据结构，不方便直接当作普通数组使用)
@@ -165,8 +171,8 @@ export class TaskProcessor extends WorkerHost {
               periodType: 'SINGLE', // 仅单次会议
             },
             select: {
-              participantSummary: true, // 会议总结
-              meetParticipant: true, // 参会人信息
+              partSummary: true, // 会议总结
+              partName: true, // 参会人信息
               platformUser: {
                 select: {
                   user: {
