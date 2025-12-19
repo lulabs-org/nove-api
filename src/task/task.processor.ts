@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-10-03 06:03:56
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2025-12-19 22:08:54
+ * @LastEditTime: 2025-12-19 22:17:44
  * @FilePath: \lulab_backend\src\task\task.processor.ts
  * @Description:
  *
@@ -187,20 +187,27 @@ export class TaskProcessor extends WorkerHost {
             },
           });
 
-          console.log(
-            `用户${userId}的参会议记录:\n` + JSON.stringify(summaries, null, 2),
-          );
-
           let realName: string;
 
           if (userId === null) {
             // userId 为 null：realName = partName
             realName = summaries[0]?.partName ?? '未知用户';
+            // 如果没有User用户，就总结平台用户的会议记录
+            console.log(
+              `平台用户(${platformUserIds})的参会议记录:\n` +
+                JSON.stringify(summaries, null, 2),
+            );
           } else {
             // userId 不为 null：realName = username
             realName = summaries[0]?.platformUser?.user?.username ?? '未知用户';
+            // 如果有User用户，就总结User用户的会议记录
+            console.log(
+              `User用户(${userId})的参会议记录:\n` +
+                JSON.stringify(summaries, null, 2),
+            );
           }
 
+          // 开始总结会议记录
           const question = JSON.stringify(summaries); // 用户问题
           const systemPrompt = `
             你是人工智能助手，需要总结用户${realName}当天的会议记录。
@@ -221,7 +228,19 @@ export class TaskProcessor extends WorkerHost {
           const reply = await this.openaiService.createChatCompletion(messages);
           console.log(`OpenAI聊天完成: ${reply?.slice(0, 200)}`);
 
-          console.log(`当前用户${userId}的会议记录已总结`);
+          if (userId === null) {
+            // 如果没有User用户，就总结平台用户的会议记录
+            console.log(
+              `当前平台用户(${platformUserIds})的会议记录已总结:\n` +
+                JSON.stringify(summaries, null, 2),
+            );
+          } else {
+            // 如果有User用户，就总结User用户的会议记录
+            console.log(
+              `当前User用户(${userId})的会议记录已总结:\n` +
+                JSON.stringify(summaries, null, 2),
+            );
+          }
 
           // 等待 5 秒
           await new Promise((resolve) => setTimeout(resolve, 5000));
