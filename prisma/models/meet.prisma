@@ -632,16 +632,18 @@ model ParticipantSummary {
   periodType PeriodType
 
   // ===== 单次会议字段（仅 periodType=SINGLE 时使用）=====
-  recordFile     String?   @db.VarChar(500) // 录制文件路径
-  recordFileId   String?   @db.VarChar(100) // 会议录制ID
-  meetStartTime  DateTime? // 会议开始时间
-  meetingSummary String?   @db.Text // 整个会议的总结
+  meetingParticipantId String? // 对应 MeetingParticipant 的 ID
+  meetingParticipant   MeetingParticipant? @relation(fields: [meetingParticipantId], references: [id], onDelete: SetNull)
+
+  meetingId String? // 对应 Meeting 的 ID
+  meeting   Meeting? @relation(fields: [meetingId], references: [id], onDelete: SetNull)
 
   // ===== 周期性总结字段（仅 periodType!=SINGLE 时使用）=====
-  summaryDate DateTime? // 总结日期（表示这个总结所属的时间段）
+  startAt DateTime  // 总结时间段开始（必填）
+  endAt   DateTime  // 总结时间段结束（必填）
 
   // ===== 通用字段 =====
-  meetParticipant    String @db.VarChar(100) // 参会人信息
+  ParticipantName    String @db.VarChar(100) // 参会人信息
   participantSummary String @db.Text // 总结内容
 
   // ===== 关系字段（通过 SummaryRelation 表关联）=====
