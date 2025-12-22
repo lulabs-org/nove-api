@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-10-03 06:03:56
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2025-12-19 22:30:35
+ * @LastEditTime: 2025-12-22 20:37:22
  * @FilePath: \lulab_backend\src\task\task.processor.ts
  * @Description:
  *
@@ -171,6 +171,7 @@ export class TaskProcessor extends WorkerHost {
               periodType: 'SINGLE', // 仅单次会议
             },
             select: {
+              id: true, // 会议总结ID，用于创建 SummaryRelation
               partSummary: true, // 会议总结
               partName: true, // 参会人信息
               startAt: true, // 开始时间(总结的时间区间)
@@ -240,6 +241,51 @@ export class TaskProcessor extends WorkerHost {
               `\x1b[92m当前User用户(${userId})的会议记录已总结:\x1b[0m\n` +
                 JSON.stringify(summaries, null, 2),
             );
+          }
+
+          const now = new Date();
+          // 当天凌晨0点
+          const startOfDay = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate(),
+            0,
+            0,
+            0,
+          );
+          // 当天23:59:59
+          const endOfDay = new Date(
+            now.getFullYear(),
+            now.getMonth(),
+            now.getDate(),
+            23,
+            59,
+            59,
+          );
+
+          // 保存ai总结内容至ParticipantSummary
+          const parentSummary = await this.prisma.participantSummary.create({
+            data: {
+              periodType: 'DAILY',
+              startAt: startOfDay,
+              endAt: endOfDay,
+              partName: realName,
+              partSummary: reply,
+
+              // 关键逻辑：有 userId 就只存 userId，没有才存 platformUserId
+              ...(userId ? { userId } : { platformUserId: platformUserIds[0] }),
+            },
+          });
+
+          // 遍历 summaries，把每条记录的 id 作为 childSummaryId 创建 SummaryRelation
+          for (const childSummary of summaries) {
+            await this.prisma.summaryRelation.create({
+              data: {
+                parentSummaryId: parentSummary.id, // parentSummary 已经定义
+                childSummaryId: childSummary.id,
+                parentPeriodType: 'DAILY',
+              },
+            });
           }
 
           // 等待 5 秒
