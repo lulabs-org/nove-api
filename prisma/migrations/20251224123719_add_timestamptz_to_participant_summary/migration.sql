@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "participant_summaries" ALTER COLUMN "endAt" SET DATA TYPE TIMESTAMPTZ(6),
+ALTER COLUMN "startAt" SET DATA TYPE TIMESTAMPTZ(6);

@@ -642,8 +642,8 @@ model ParticipantSummary {
   meeting   Meeting? @relation(fields: [meetingId], references: [id], onDelete: SetNull)
 
   // 通用字段 
-  startAt DateTime  // 总结时间段开始（必填）
-  endAt   DateTime  // 总结时间段结束（必填）
+  startAt DateTime @db.Timestamptz(6)  // 总结时间段开始（必填）
+  endAt   DateTime @db.Timestamptz(6)  // 总结时间段结束（必填）
 
   partName    String @db.VarChar(100) // 参会人信息 
   partSummary String @db.Text // 总结内容
