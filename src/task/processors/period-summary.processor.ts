@@ -3,20 +3,16 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { OpenaiService } from '../../integrations/openai/openai.service';
 
 export class PeriodSummary {
+  // 让构造器导入prisma和openaiService
   constructor(
     private readonly prisma: PrismaService,
     private readonly openaiService: OpenaiService,
   ) {}
 
-  /**
-   * 处理每日会议总结任务
-   */
-  async processDailySummary(job: Job): Promise<{ ok: boolean; at: string }> {
-    console.log(
-      '开始执行任务: personalDailyMeetingSummary',
-      new Date().toISOString(),
-    );
-
+  // 获取所有符合条件 participantSummary 表中的新增记录，按 userId 分组
+  async getGroupedPlatformUsers(): Promise<
+    { userId: string | null; platformUserIds: string[] }[]
+  > {
     // 查所有participantSummary的记录，但只拿平台用户的 id 和 userId
     const summaries =
       (await this.prisma.participantSummary.findMany({
@@ -36,8 +32,7 @@ export class PeriodSummary {
 
     // 如果没有值，直接返回
     if (summaries.length === 0) {
-      console.log('没有找到符合条件的记录, participantSummary的新增记录为空');
-      return { ok: true, at: new Date().toISOString() }; // 或者 return null / throw Error，根据你的需求
+      return []; // 只返回数组
     }
 
     // 去重
@@ -74,7 +69,26 @@ export class PeriodSummary {
     }
 
     // 转成数组方便使用 (Map 是数据结构，不方便直接当作普通数组使用)
-    const data = Array.from(groupedMap.values());
+    return Array.from(groupedMap.values());
+  }
+
+  /**
+   * 处理每日会议总结任务
+   */
+  async processDailySummary(job: Job): Promise<{ ok: boolean; at: string }> {
+    console.log(
+      '开始执行任务: personalDailyMeetingSummary',
+      new Date().toISOString(),
+    );
+
+    // 调用 getGroupedPlatformUsers 方法获取分组结果
+    const data = await this.getGroupedPlatformUsers();
+
+    // 如果没有值，直接返回
+    if (data.length === 0) {
+      console.log('没有找到符合条件的记录, participantSummary的新增记录为空');
+      return { ok: true, at: new Date().toISOString() }; // 或者 return null / throw Error，根据你的需求
+    }
 
     // 打印分组结果
     console.log(
