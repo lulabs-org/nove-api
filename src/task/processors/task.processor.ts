@@ -17,12 +17,12 @@ import {
   OnQueueEvent,
 } from '@nestjs/bullmq';
 import type { Job } from 'bullmq';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { TaskStatus } from '@prisma/client';
-import { OpenaiService } from '../integrations/openai/openai.service';
+import { OpenaiService } from '../../integrations/openai/openai.service';
 
-import { PeriodSummary } from './processors/period-summary.processor';
+import { PeriodSummary } from '../service/period-summary.service';
 
 @Injectable()
 @Processor('tasks')
