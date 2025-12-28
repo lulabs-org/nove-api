@@ -2,11 +2,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import type { Queue, JobsOptions, RepeatOptions } from 'bullmq';
-import { PrismaService } from '../prisma/prisma.service';
-import { CreateOnceDto } from './dtos/create-once.dto';
-import { CreateCronDto } from './dtos/create-cron.dto';
-import { UpdateTaskDto } from './dtos/update-task.dto';
-import { QueryDto } from './dtos/query.dto';
+import { PrismaService } from '../../prisma/prisma.service';
+import { CreateOnceDto } from '../dtos/create-once.dto';
+import { CreateCronDto } from '../dtos/create-cron.dto';
+import { UpdateTaskDto } from '../dtos/update-task.dto';
+import { QueryDto } from '../dtos/query.dto';
 import { ScheduledTask, TaskStatus, TaskType } from '@prisma/client';
 
 @Injectable()

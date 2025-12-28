@@ -13,7 +13,7 @@
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { TasksController } from './tasks.controller';
-import { TasksService } from './tasks.service';
+import { TasksService } from './service/tasks.service';
 import { TaskProcessor } from './processors/task.processor';
 import { PrismaService } from '../prisma/prisma.service';
 import { OpenaiModule } from '../integrations/openai/openai.module';
