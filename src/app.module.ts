@@ -2,8 +2,8 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-07-06 05:06:37
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-09 02:51:44
- * @FilePath: /lulab_backend/src/app.module.ts
+ * @LastEditTime: 2026-01-10 23:24:09
+ * @FilePath: /nove_api/src/app.module.ts
  * @Description: Application module that defines the application's entry point and dependency injection
  *
  * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
@@ -30,9 +30,10 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { OpenaiModule } from './integrations/openai/openai.module';
 import { BullModule } from '@nestjs/bullmq';
 import { redisConfig } from './configs';
-import { TasksModule } from './task/tasks.module';
 import { ApiKeyModule } from './api-key/api-key.module';
+import { McpServerModule } from './mcp-server/mcp-server.module';
 import { PermissionModule } from './permission/permission.module';
+import { TasksModule } from './task/tasks.module';
 
 @Module({
   imports: [
@@ -66,6 +67,7 @@ import { PermissionModule } from './permission/permission.module';
     OpenaiModule,
     ApiKeyModule,
     PermissionModule,
+    McpServerModule,
   ],
   controllers: [AppController],
   providers: [
