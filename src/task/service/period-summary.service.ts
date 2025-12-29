@@ -63,13 +63,60 @@ export class PeriodSummary {
           : userId;
 
       if (!groupedMap.has(mapKey)) {
+        // 如果 groupedMap 没有这个 mapKey 的分组，就初始化一个新的组
         groupedMap.set(mapKey, { userId, platformUserIds: [] }); // 初始化分组(第一个 userId 是检索用的key)
       }
+      // 如果有这个 mapKey 的分组，就添加这条 platformUser.id
       groupedMap.get(mapKey)!.platformUserIds.push(item.platformUser!.id); // 添加 platformUser.id
     }
 
     // 转成数组方便使用 (Map 是数据结构，不方便直接当作普通数组使用)
     return Array.from(groupedMap.values());
+  }
+
+  async getSummariesByPlatformUserIds(platformUserIds: string[]): Promise<
+    {
+      id: string;
+      partSummary: string;
+      partName: string;
+      startAt: Date;
+      endAt: Date;
+      username: string;
+    }[]
+  > {
+    // 查找当前分组下所有 platformUserId 对应的 participantSummary
+    const summaries = await this.prisma.participantSummary.findMany({
+      where: {
+        platformUserId: { in: platformUserIds }, // 当前分组的所有 platformUserId
+        periodType: 'SINGLE', // 仅单次会议
+      },
+      select: {
+        id: true, // 会议总结ID，用于创建 SummaryRelation
+        partSummary: true, // 会议总结
+        partName: true, // 参会人信息
+        startAt: true, // 开始时间(总结的时间区间)
+        endAt: true, // 结束时间(总结的时间区间)
+        platformUser: {
+          select: {
+            user: {
+              select: {
+                username: true, // 通过平台用户检索到真实user的用户名
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // 扁平化 username
+    return summaries.map((s) => ({
+      id: s.id,
+      partSummary: s.partSummary,
+      partName: s.partName,
+      startAt: s.startAt,
+      endAt: s.endAt,
+      username: s.platformUser?.user?.username ?? '未知用户', // 处理 null
+    }));
   }
 
   /**
@@ -102,28 +149,8 @@ export class PeriodSummary {
       const { userId, platformUserIds } = group;
 
       // 查找当前分组下所有 platformUserId 对应的 participantSummary
-      const summaries = await this.prisma.participantSummary.findMany({
-        where: {
-          platformUserId: { in: platformUserIds }, // 当前分组的所有 platformUserId
-          periodType: 'SINGLE', // 仅单次会议
-        },
-        select: {
-          id: true, // 会议总结ID，用于创建 SummaryRelation
-          partSummary: true, // 会议总结
-          partName: true, // 参会人信息
-          startAt: true, // 开始时间(总结的时间区间)
-          endAt: true, // 结束时间(总结的时间区间)
-          platformUser: {
-            select: {
-              user: {
-                select: {
-                  username: true, // 通过平台用户检索到真实user的用户名
-                },
-              },
-            },
-          },
-        },
-      });
+      const summaries =
+        await this.getSummariesByPlatformUserIds(platformUserIds);
 
       let realName: string;
 
@@ -137,7 +164,7 @@ export class PeriodSummary {
         );
       } else {
         // userId 不为 null：realName = username
-        realName = summaries[0]?.platformUser?.user?.username ?? '未知用户';
+        realName = summaries[0]?.username ?? '未知用户';
         // 如果有User用户，就总结User用户的会议记录
         console.log(
           `\x1b[96mUser用户(${userId})的参会议记录:\x1b[0m\n` +
