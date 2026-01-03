@@ -119,6 +119,42 @@ export class PeriodSummary {
     }));
   }
 
+  async generateSummary(
+    realName: string,
+    summaries: {
+      id: string;
+      partSummary: string;
+      partName: string;
+      startAt: Date;
+      endAt: Date;
+      username: string;
+    }[],
+    prompt: string,
+  ): Promise<string> {
+    const question = JSON.stringify(summaries);
+
+    const systemPrompt = `
+      ${prompt}
+      你是人工智能助手，需要总结用户 ${realName} 当天的会议记录。
+      字段说明：
+      - partName: 参会人在当堂会议的昵称
+      - partSummary: 参会人当堂会议的总结
+      - startAt: 会议总结的开始区间
+      - endAt: 会议总结的结束区间
+      - username: 用户的真实姓名
+
+      切记以上只是字段解释，不是输出内容。
+      你只需要根据用户输入，总结用户在会议中的活动，不需要特别格式。
+      `.trim();
+
+    const messages = [
+      { role: 'system' as const, content: systemPrompt },
+      { role: 'user' as const, content: question },
+    ];
+
+    return this.openaiService.createChatCompletion(messages);
+  }
+
   /**
    * 处理每日会议总结任务
    */
@@ -172,25 +208,12 @@ export class PeriodSummary {
         );
       }
 
-      // 开始总结会议记录
-      const question = JSON.stringify(summaries); // 用户问题
-      const systemPrompt = `
-            你是人工智能助手，需要总结用户${realName}当天的会议记录。
-            字段说明：
-            - partName: 参会人在当堂会议的昵称
-            - partSummary: 参会人当堂会议的总结
-            - startAt: 会议总结的开始区间(相当于从这个时间开始总结)
-            - endAt: 会议总结的结束区间(相当于从这个时间结束总结)
-            - platformUser: {"user":{"username":用户的真实姓名}}
-            切记这个只是解释用户输入的字段类型,并不是你要输出的内容,
-            你只需要根据用户输入的字段,总结用户在会议中的活动,不需要特别的格式。
-            `.trim(); // 系统提示词,.trim() 去掉首尾空格
-
-      const messages = [
-        { role: 'system' as const, content: systemPrompt },
-        { role: 'user' as const, content: question },
-      ];
-      const reply = await this.openaiService.createChatCompletion(messages);
+      // 总结会议记录
+      const reply = await this.generateSummary(
+        realName,
+        summaries,
+        '', // 或者你之后自定义 prompt
+      );
       console.log(`OpenAI聊天完成: ${reply?.slice(0, 200)}`);
 
       if (userId === null) {
