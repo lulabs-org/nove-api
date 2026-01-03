@@ -155,6 +155,67 @@ export class PeriodSummary {
     return this.openaiService.createChatCompletion(messages);
   }
 
+  async saveSummaryWithRelations(params: {
+    realName: string;
+    reply: string;
+    userId: string | null;
+    platformUserIds: string[];
+    summaries: { id: string }[];
+  }) {
+    const { realName, reply, userId, platformUserIds, summaries } = params;
+
+    const now = new Date();
+    // 当天凌晨0点
+    const startOfDay = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      0,
+      0,
+      0,
+    );
+    // 当天23:59:59
+    const endOfDay = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      23,
+      59,
+      59,
+    );
+
+    // 保存ai总结内容至ParticipantSummary
+    const parentSummary = await this.prisma.participantSummary.create({
+      data: {
+        periodType: 'DAILY',
+        startAt: startOfDay,
+        endAt: endOfDay,
+        partName: realName,
+        partSummary: reply,
+
+        // 关键逻辑：有 userId 就只存 userId，没有才存 platformUserId
+        ...(userId ? { userId } : { platformUserId: platformUserIds[0] }),
+      },
+    });
+
+    // 遍历 summaries，把每条记录的 id 作为 childSummaryId 创建 SummaryRelation
+    for (const childSummary of summaries) {
+      await this.prisma.summaryRelation.create({
+        data: {
+          parentSummaryId: parentSummary.id, // parentSummary 已经定义
+          childSummaryId: childSummary.id,
+          parentPeriodType: 'DAILY',
+        },
+      });
+    }
+
+    return {
+      ok: true,
+      id: parentSummary.id,
+      message: `ParticipantSummary for ${realName} saved successfully`,
+    };
+  }
+
   /**
    * 处理每日会议总结任务
    */
@@ -230,50 +291,15 @@ export class PeriodSummary {
         );
       }
 
-      const now = new Date();
-      // 当天凌晨0点
-      const startOfDay = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate(),
-        0,
-        0,
-        0,
-      );
-      // 当天23:59:59
-      const endOfDay = new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate(),
-        23,
-        59,
-        59,
-      );
-
-      // 保存ai总结内容至ParticipantSummary
-      const parentSummary = await this.prisma.participantSummary.create({
-        data: {
-          periodType: 'DAILY',
-          startAt: startOfDay,
-          endAt: endOfDay,
-          partName: realName,
-          partSummary: reply,
-
-          // 关键逻辑：有 userId 就只存 userId，没有才存 platformUserId
-          ...(userId ? { userId } : { platformUserId: platformUserIds[0] }),
-        },
+      // 保存总结内容和关系至ParticipantSummary
+      const saveResult = await this.saveSummaryWithRelations({
+        realName,
+        reply,
+        userId,
+        platformUserIds,
+        summaries,
       });
-
-      // 遍历 summaries，把每条记录的 id 作为 childSummaryId 创建 SummaryRelation
-      for (const childSummary of summaries) {
-        await this.prisma.summaryRelation.create({
-          data: {
-            parentSummaryId: parentSummary.id, // parentSummary 已经定义
-            childSummaryId: childSummary.id,
-            parentPeriodType: 'DAILY',
-          },
-        });
-      }
+      console.log(saveResult);
 
       // 等待 5 秒
       await new Promise((resolve) => setTimeout(resolve, 5000));
