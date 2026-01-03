@@ -9,7 +9,10 @@ export class PeriodSummary {
     private readonly openaiService: OpenaiService,
   ) {}
 
-  // 获取所有符合条件 participantSummary 表中的新增记录，按 userId 分组
+  /**
+   * 获取所有符合条件的 participantSummary 记录，并按 userId 分组
+   * @returns 分组数组，每个元素包含 userId 和对应 platformUserIds
+   */
   async getGroupedPlatformUsers(): Promise<
     { userId: string | null; platformUserIds: string[] }[]
   > {
@@ -74,6 +77,11 @@ export class PeriodSummary {
     return Array.from(groupedMap.values());
   }
 
+  /**
+   * 获取某组 platformUserIds 对应的 participantSummary 记录
+   * @param platformUserIds 平台用户 ID 数组
+   * @returns 每条记录包含 id、partSummary、partName、startAt、endAt、username
+   */
   async getSummariesByPlatformUserIds(platformUserIds: string[]): Promise<
     {
       id: string;
@@ -119,6 +127,13 @@ export class PeriodSummary {
     }));
   }
 
+  /**
+   * 调用 OpenAI 生成每日会议总结
+   * @param realName 用户真实姓名或昵称
+   * @param summaries 当前用户当天的所有会议记录
+   * @param prompt 系统提示词，可自定义
+   * @returns AI 生成的总结文本
+   */
   async generateSummary(
     realName: string,
     summaries: {
@@ -155,6 +170,11 @@ export class PeriodSummary {
     return this.openaiService.createChatCompletion(messages);
   }
 
+  /**
+   * 保存 AI 总结到 participantSummary，并创建 summaryRelation 关联
+   * @param params 传入 realName、reply、userId、platformUserIds、summaries
+   * @returns 保存结果对象，包含成功状态、parentSummary ID 和提示信息
+   */
   async saveSummaryWithRelations(params: {
     realName: string;
     reply: string;
@@ -217,7 +237,69 @@ export class PeriodSummary {
   }
 
   /**
-   * 处理每日会议总结任务
+   * 处理单个用户的每日会议总结流程
+   * - 获取该用户的会议记录
+   * - 判断 realName（userId / platformUser）
+   * - 调用 AI 生成总结
+   * - 保存总结并创建关联
+   * - 打印日志
+   * @param group 单个用户分组信息，包含 userId 和 platformUserIds
+   */
+  async processOneUserDailySummary(group: {
+    userId: string | null;
+    platformUserIds: string[];
+  }) {
+    const { userId, platformUserIds } = group;
+
+    // 查找当前分组下所有 platformUserId 对应的 participantSummary
+    const summaries = await this.getSummariesByPlatformUserIds(platformUserIds);
+
+    let realName: string;
+
+    if (userId === null) {
+      // userId 为 null：realName = partName
+      realName = summaries[0]?.partName ?? '未知用户';
+    } else {
+      // userId 不为 null：realName = username
+      realName = summaries[0]?.username ?? '未知用户';
+    }
+
+    console.log(
+      `\x1b[96mUser获取到用户(${userId})的参会议记录:\x1b[0m\n` +
+        JSON.stringify(summaries, null, 2),
+    );
+
+    // 总结会议记录
+    const reply = await this.generateSummary(
+      realName,
+      summaries,
+      '', // 或者你之后自定义 prompt
+    );
+    console.log(`OpenAI聊天完成: ${reply?.slice(0, 200)}`);
+
+    console.log(
+      `\x1b[92m当前用户(${userId})的会议记录已完成:\x1b[0m\n` +
+        JSON.stringify(summaries, null, 2),
+    );
+
+    // 保存总结内容和关系至ParticipantSummary
+    const saveResult = await this.saveSummaryWithRelations({
+      realName,
+      reply,
+      userId,
+      platformUserIds,
+      summaries,
+    });
+    console.log(saveResult);
+  }
+
+  /**
+   * 处理每日会议总结任务（批量处理所有用户）
+   * - 调用 getGroupedPlatformUsers 获取所有分组
+   * - 遍历每个分组，调用 processOneUserDailySummary 处理
+   * - 每处理完一个用户，等待 5 秒以防压力过大
+   * @param job BullMQ Job 对象（可用于任务追踪）
+   * @returns 处理完成状态及时间戳
    */
   async processDailySummary(job: Job): Promise<{ ok: boolean; at: string }> {
     console.log(
@@ -241,51 +323,9 @@ export class PeriodSummary {
 
     console.log('开始依次总结每个用户的会议记录');
 
-    for (let i = 0; i < data.length; i++) {
-      const group = data[i]; // 当前分组对象 { userId, platformUserIds }
-      const { userId, platformUserIds } = group;
-
-      // 查找当前分组下所有 platformUserId 对应的 participantSummary
-      const summaries =
-        await this.getSummariesByPlatformUserIds(platformUserIds);
-
-      let realName: string;
-
-      if (userId === null) {
-        // userId 为 null：realName = partName
-        realName = summaries[0]?.partName ?? '未知用户';
-      } else {
-        // userId 不为 null：realName = username
-        realName = summaries[0]?.username ?? '未知用户';
-      }
-
-      console.log(
-        `\x1b[96mUser获取到用户(${userId})的参会议记录:\x1b[0m\n` +
-          JSON.stringify(summaries, null, 2),
-      );
-
-      // 总结会议记录
-      const reply = await this.generateSummary(
-        realName,
-        summaries,
-        '', // 或者你之后自定义 prompt
-      );
-      console.log(`OpenAI聊天完成: ${reply?.slice(0, 200)}`);
-
-      console.log(
-        `\x1b[92m当前用户(${userId})的会议记录已完成:\x1b[0m\n` +
-          JSON.stringify(summaries, null, 2),
-      );
-
-      // 保存总结内容和关系至ParticipantSummary
-      const saveResult = await this.saveSummaryWithRelations({
-        realName,
-        reply,
-        userId,
-        platformUserIds,
-        summaries,
-      });
-      console.log(saveResult);
+    // 遍历每个分组，处理一个用户的会议记录
+    for (const group of data) {
+      await this.processOneUserDailySummary(group);
 
       // 等待 5 秒
       await new Promise((resolve) => setTimeout(resolve, 5000));
