@@ -254,20 +254,15 @@ export class PeriodSummary {
       if (userId === null) {
         // userId 为 null：realName = partName
         realName = summaries[0]?.partName ?? '未知用户';
-        // 如果没有User用户，就总结平台用户的会议记录
-        console.log(
-          `\x1b[96m平台用户(${platformUserIds})的参会议记录:\x1b[0m\n` +
-            JSON.stringify(summaries, null, 2),
-        );
       } else {
         // userId 不为 null：realName = username
         realName = summaries[0]?.username ?? '未知用户';
-        // 如果有User用户，就总结User用户的会议记录
-        console.log(
-          `\x1b[96mUser用户(${userId})的参会议记录:\x1b[0m\n` +
-            JSON.stringify(summaries, null, 2),
-        );
       }
+
+      console.log(
+        `\x1b[96mUser获取到用户(${userId})的参会议记录:\x1b[0m\n` +
+          JSON.stringify(summaries, null, 2),
+      );
 
       // 总结会议记录
       const reply = await this.generateSummary(
@@ -277,19 +272,10 @@ export class PeriodSummary {
       );
       console.log(`OpenAI聊天完成: ${reply?.slice(0, 200)}`);
 
-      if (userId === null) {
-        // 如果没有User用户，就总结平台用户的会议记录
-        console.log(
-          `\x1b[92m当前平台用户(${platformUserIds})的会议记录已总结:\x1b[0m\n` +
-            JSON.stringify(summaries, null, 2),
-        );
-      } else {
-        // 如果有User用户，就总结User用户的会议记录
-        console.log(
-          `\x1b[92m当前User用户(${userId})的会议记录已总结:\x1b[0m\n` +
-            JSON.stringify(summaries, null, 2),
-        );
-      }
+      console.log(
+        `\x1b[92m当前用户(${userId})的会议记录已完成:\x1b[0m\n` +
+          JSON.stringify(summaries, null, 2),
+      );
 
       // 保存总结内容和关系至ParticipantSummary
       const saveResult = await this.saveSummaryWithRelations({
