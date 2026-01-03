@@ -2,7 +2,7 @@
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2025-12-25 20:04:17
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-03 09:46:39
+ * @LastEditTime: 2026-01-03 09:51:52
  * @FilePath: \lulab_backend\src\task\service\period-summary.service.ts
  * @Description:
  *
@@ -14,7 +14,7 @@ import { OpenaiService } from '../../integrations/openai/openai.service';
 import { PeriodSummaryTool } from './period-summary-tool';
 
 export class PeriodSummary {
-  private helper: PeriodSummaryTool;
+  private summaryTool: PeriodSummaryTool;
 
   // 让构造器导入prisma和openaiService
   constructor(
@@ -22,7 +22,7 @@ export class PeriodSummary {
     private readonly openaiService: OpenaiService,
   ) {
     // 初始化 PeriodSummaryTool，传入依赖
-    this.helper = new PeriodSummaryTool(prisma, openaiService);
+    this.summaryTool = new PeriodSummaryTool(prisma, openaiService);
   }
 
   /**
@@ -40,7 +40,7 @@ export class PeriodSummary {
     );
 
     // 调用 getGroupedPlatformUsers 方法获取分组结果
-    const data = await this.getGroupedPlatformUsers();
+    const data = await this.summaryTool.getGroupedPlatformUsers();
 
     // 如果没有值，直接返回
     if (data.length === 0) {
@@ -57,7 +57,7 @@ export class PeriodSummary {
 
     // 遍历每个分组，处理一个用户的会议记录
     for (const group of data) {
-      await this.processOneUserDailySummary(group);
+      await this.summaryTool.processOneUserDailySummary(group);
 
       // 等待 5 秒
       await new Promise((resolve) => setTimeout(resolve, 5000));
