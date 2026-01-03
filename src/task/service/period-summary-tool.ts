@@ -1,3 +1,13 @@
+/*
+ * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
+ * @Date: 2026-01-03 09:40:30
+ * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
+ * @LastEditTime: 2026-01-03 09:56:32
+ * @FilePath: \lulab_backend\src\task\service\period-summary-tool.ts
+ * @Description:
+ *
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
+ */
 import { PrismaService } from '../../prisma/prisma.service';
 import { OpenaiService } from '../../integrations/openai/openai.service';
 
@@ -263,7 +273,7 @@ export class PeriodSummaryTool {
     }
 
     console.log(
-      `\x1b[96mUser获取到用户(${userId})的参会议记录:\x1b[0m\n` +
+      `\x1b[96m获取到用户(${userId})的参会议记录:\x1b[0m\n` +
         JSON.stringify(summaries, null, 2),
     );
 
