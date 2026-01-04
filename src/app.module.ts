@@ -31,6 +31,7 @@ import { OpenaiModule } from './integrations/openai/openai.module';
 import { BullModule } from '@nestjs/bullmq';
 import { redisConfig } from './configs';
 import { TasksModule } from './task/tasks.module';
+import { ApiKeyModule } from './api-key/api-key.module';
 
 @Module({
   imports: [
@@ -62,6 +63,7 @@ import { TasksModule } from './task/tasks.module';
     LarkMeetingModule,
     VerificationModule,
     OpenaiModule,
+    ApiKeyModule,
   ],
   controllers: [AppController],
   providers: [
