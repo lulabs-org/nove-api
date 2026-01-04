@@ -55,7 +55,7 @@ export class TranscriptBatchProcessor {
             {
               displayName: speakerInfo.username,
               ptUserId: speakerInfo.userid,
-              phone: speakerInfo.phone,
+              phoneHash: speakerInfo.phone,
             },
           );
         }

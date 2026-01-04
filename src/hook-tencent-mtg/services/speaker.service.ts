@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-29 01:59:25
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-04 05:34:54
+ * @LastEditTime: 2026-01-05 07:41:50
  * @FilePath: /lulab_backend/src/hook-tencent-mtg/services/speaker.service.ts
  * @Description:
  *
@@ -11,12 +11,12 @@
 
 import { Injectable } from '@nestjs/common';
 import { Platform, PlatformUser } from '@prisma/client';
+import { NewSpeakerInfo } from '@/hook-tencent-mtg/types';
 import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
 import {
   SpeakerInfo,
   MeetingParticipantDetail,
 } from '@/integrations/tencent-meeting/types';
-import { NewSpeakerInfo } from '@/hook-tencent-mtg/types';
 
 @Injectable()
 export class SpeakerService {
@@ -32,60 +32,120 @@ export class SpeakerService {
       return speakerInfo;
     }
 
-    const participant = participants.find(
+    const participant = this.findParticipantByExactMatch(
+      speakerInfo,
+      participants,
+    );
+
+    if (participant) {
+      return this.enrichWithParticipantInfo(speakerInfo, participant);
+    }
+
+    const platformUserByUserId = await this.findPlatformUserByUserId(
+      speakerInfo.userid,
+    );
+
+    if (platformUserByUserId) {
+      return this.enrichWithPlatformUserInfo(speakerInfo, platformUserByUserId);
+    }
+
+    const participantByUsername = this.findParticipantByUsername(
+      speakerInfo.username,
+      participants,
+    );
+
+    if (participantByUsername) {
+      return this.enrichWithParticipantInfo(speakerInfo, participantByUsername);
+    }
+
+    const platformUserByUsername = await this.findPlatformUserByUsername(
+      speakerInfo.username,
+    );
+
+    if (platformUserByUsername) {
+      return this.enrichWithPlatformUserInfo(
+        speakerInfo,
+        platformUserByUsername,
+      );
+    }
+
+    return speakerInfo;
+  }
+
+  private findParticipantByExactMatch(
+    speakerInfo: SpeakerInfo,
+    participants: MeetingParticipantDetail[],
+  ): MeetingParticipantDetail | undefined {
+    return participants.find(
       (p) =>
         (speakerInfo.userid && p.userid === speakerInfo.userid) ||
         (speakerInfo.openId && p.open_id === speakerInfo.openId) ||
-        (speakerInfo.ms_open_id && p.ms_open_id === speakerInfo.ms_open_id) ||
-        (speakerInfo.username && p.user_name === speakerInfo.username),
+        (speakerInfo.ms_open_id && p.ms_open_id === speakerInfo.ms_open_id),
     );
+  }
 
-    if (!participant) {
-      let platformUser: PlatformUser | null = null;
-      if (speakerInfo.userid) {
-        platformUser = await this.platformUserRepository.findByPtUserId(
-          Platform.TENCENT_MEETING,
-          speakerInfo.userid,
-        );
-      }
-
-      if (!platformUser && speakerInfo.username) {
-        platformUser = await this.platformUserRepository.findByPtName(
-          Platform.TENCENT_MEETING,
-          speakerInfo.username,
-        );
-      }
-
-      if (platformUser) {
-        return {
-          ...speakerInfo,
-          uuid: platformUser.ptUnionId ?? undefined,
-          phone: platformUser.phone ?? undefined,
-        };
-      }
-
-      return speakerInfo;
+  private findParticipantByUsername(
+    username: string | undefined,
+    participants: MeetingParticipantDetail[],
+  ): MeetingParticipantDetail | undefined {
+    if (!username) {
+      return undefined;
     }
+    return participants.find((p) => p.user_name === username);
+  }
 
+  private async findPlatformUserByUserId(
+    userid: string | undefined,
+  ): Promise<PlatformUser | null> {
+    if (!userid) {
+      return null;
+    }
+    return this.platformUserRepository.findByPtUserId(
+      Platform.TENCENT_MEETING,
+      userid,
+    );
+  }
+
+  private async findPlatformUserByUsername(
+    username: string | undefined,
+  ): Promise<PlatformUser | null> {
+    if (!username) {
+      return null;
+    }
+    return this.platformUserRepository.findByPtName(
+      Platform.TENCENT_MEETING,
+      username,
+    );
+  }
+
+  private enrichWithParticipantInfo(
+    speakerInfo: SpeakerInfo,
+    participant: MeetingParticipantDetail,
+  ): NewSpeakerInfo {
+    const {
+      userid,
+      user_name,
+      join_time,
+      left_time,
+      join_type,
+      ms_open_id,
+      open_id,
+      ...rest
+    } = participant;
     return {
       ...speakerInfo,
-      uuid: participant.uuid,
-      phone: participant.phone,
-      instanceid: participant.instanceid,
-      user_role: participant.user_role,
-      ip: participant.ip,
-      location: participant.location,
-      link_type: participant.link_type,
-      net: participant.net,
-      app_version: participant.app_version,
-      audio_state: participant.audio_state,
-      video_state: participant.video_state,
-      screen_shared_state: participant.screen_shared_state,
-      webinar_member_role: participant.webinar_member_role,
-      customer_data: participant.customer_data,
-      is_enterprise_user: participant.is_enterprise_user,
-      tm_corpid: participant.tm_corpid,
-      avatar_url: participant.avatar_url,
+      ...rest,
+    };
+  }
+
+  private enrichWithPlatformUserInfo(
+    speakerInfo: SpeakerInfo,
+    platformUser: PlatformUser,
+  ): NewSpeakerInfo {
+    return {
+      ...speakerInfo,
+      uuid: platformUser.ptUnionId ?? undefined,
+      phone: platformUser.phoneHash ?? undefined,
     };
   }
 }
