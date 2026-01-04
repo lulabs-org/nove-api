@@ -252,29 +252,44 @@ docs/
 
 ### 依赖关系图
 
-```text
-┌─────────────────────────────────────────────────────────────┐
-│                        应用层                                │
-├─────────────────────────────────────────────────────────────┤
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
-│  │   Auth      │  │   Meeting   │  │   User              │  │
-│  │   Module    │  │   Module    │  │   Module            │  │
-│  └─────────────┘  └─────────────┘  └─────────────────────┘  │
-├─────────────────────────────────────────────────────────────┤
-│                        集成层                                │
-├─────────────────────────────────────────────────────────────┤
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
-│  │  Tencent    │  │    Lark     │  │   Aliyun            │  │
-│  │  Meeting    │  │  Integration│  │   Services          │  │
-│  └─────────────┘  └─────────────┘  └─────────────────────┘  │
-├─────────────────────────────────────────────────────────────┤
-│                       基础设施层                              │
-├─────────────────────────────────────────────────────────────┤
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
-│  │   Common    │  │    Prisma   │  │    Redis             │  │
-│  │   Module    │  │   Database  │  │    Cache             │  │
-│  └─────────────┘  └─────────────┘  └─────────────────────┘  │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph 应用层[应用层]
+        Auth[Auth Module]
+        Meeting[Meeting Module]
+        User[User Module]
+    end
+
+    subgraph 集成层[集成层]
+        Tencent[Tencent Meeting]
+        Lark[Lark Integration]
+        Aliyun[Aliyun Services]
+    end
+
+    subgraph 基础设施层[基础设施层]
+        Common[Common Module]
+        Prisma[Prisma Database]
+        Redis[Redis Cache]
+    end
+
+    Auth --> Tencent
+    Auth --> Lark
+    Meeting --> Tencent
+    Meeting --> Lark
+    User --> Lark
+    User --> Aliyun
+
+    Tencent --> Common
+    Lark --> Common
+    Aliyun --> Common
+
+    Auth --> Prisma
+    Meeting --> Prisma
+    User --> Prisma
+
+    Auth --> Redis
+    Meeting --> Redis
+    User --> Redis
 ```
 
 ### 模块通信模式
@@ -282,114 +297,6 @@ docs/
 1. **同步通信**: 通过依赖注入直接调用服务方法
 2. **异步通信**: 通过事件发布/订阅模式
 3. **外部通信**: 通过HTTP API或消息队列
-
-## 开发流程
-
-### 本地开发环境搭建
-
-1. **克隆仓库**
-   ```bash
-   git clone https://github.com/your-org/lulab_backend.git
-   cd lulab_backend
-   ```
-
-2. **安装依赖**
-   ```bash
-   pnpm install
-   ```
-
-3. **配置环境变量**
-   ```bash
-   cp .env.example .env
-   # 编辑 .env 文件，配置必要的环境变量
-   ```
-
-4. **数据库设置**
-   ```bash
-   # 生成 Prisma 客户端
-   pnpm db:generate
-   
-   # 运行数据库迁移
-   pnpm db:migrate
-   
-   # 填充种子数据
-   pnpm db:seed
-   ```
-
-5. **启动开发服务器**
-   ```bash
-   pnpm start:dev
-   ```
-
-### 代码质量检查
-
-```bash
-# 代码格式化
-pnpm format
-
-# 代码检查和修复
-pnpm lint
-
-# 运行测试
-pnpm test:unit
-
-# 运行集成测试
-pnpm test:integration
-
-# 运行所有测试
-pnpm test:all
-```
-
-### Git 工作流
-
-1. **创建功能分支**
-   ```bash
-   git checkout -b feature/new-feature
-   ```
-
-2. **提交代码**
-   ```bash
-   git add .
-   git commit -m "feat: add new feature"
-   ```
-
-3. **推送分支**
-   ```bash
-   git push origin feature/new-feature
-   ```
-
-4. **创建 Pull Request**
-   - 在 GitHub/GitLab 上创建 PR
-   - 等待代码审查
-   - 合并到主分支
-
-### 发布流程
-
-1. **准备发布**
-   ```bash
-   # 更新版本号
-   pnpm version patch|minor|major
-   
-   # 生成变更日志
-   pnpm changelog
-   ```
-
-2. **构建应用**
-   ```bash
-   pnpm build
-   ```
-
-3. **运行测试**
-   ```bash
-   pnpm test:ci
-   ```
-
-4. **部署到生产环境**
-   ```bash
-   # 使用 CI/CD 流水线自动部署
-   # 或手动部署脚本
-   ./scripts/deploy.sh
-   ```
 
 ## 命名约定
 
