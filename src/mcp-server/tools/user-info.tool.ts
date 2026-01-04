@@ -1,9 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { Tool } from '@rekog/mcp-nest';
 import { z } from 'zod';
+import { PrismaService } from '@/prisma/prisma.service';
 
 @Injectable()
 export class UserInfoTool {
+  constructor(private readonly prisma: PrismaService) {}
+
   @Tool({
     name: 'get-user-info',
     description: 'Get user information by user ID',
@@ -11,40 +14,163 @@ export class UserInfoTool {
       userId: z.string().describe('The ID of the user to fetch'),
     }),
   })
-  getUserInfo({ userId }: { userId: string }) {
-    const result = {
-      userId,
+  async getUserInfo({ userId }: { userId: string }) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { profile: true },
+    });
+
+    if (!user) {
+      return {
+        userId,
+        status: 'error',
+        message: `User not found with ID: ${userId}`,
+        data: null,
+      };
+    }
+
+    return {
+      userId: user.id,
       status: 'success',
-      message: `User info for ID: ${userId}`,
+      message: 'User info retrieved successfully',
       data: {
-        id: userId,
-        name: 'Sample User',
-        email: 'user@example.com',
-        createdAt: new Date().toISOString(),
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        countryCode: user.countryCode,
+        phone: user.phone,
+        emailVerified: !!user.emailVerifiedAt,
+        phoneVerified: !!user.phoneVerifiedAt,
+        active: user.active,
+        lastLoginAt: user.lastLoginAt?.toISOString(),
+        createdAt: user.createdAt.toISOString(),
+        profile: user.profile
+          ? {
+              name: user.profile.name,
+              avatar: user.profile.avatar,
+              bio: user.profile.bio,
+              firstName: user.profile.firstName,
+              lastName: user.profile.lastName,
+              dateOfBirth: user.profile.dateOfBirth?.toISOString(),
+              gender: user.profile.gender,
+              city: user.profile.city,
+              country: user.profile.country,
+            }
+          : null,
       },
     };
-    return result;
   }
 
   @Tool({
-    name: 'list-users',
-    description: 'List all users with pagination',
+    name: 'find-user-by-username',
+    description: 'Find user by username',
     parameters: z.object({
-      page: z.number().default(1).describe('Page number'),
-      limit: z.number().default(10).describe('Items per page'),
+      username: z.string().describe('The username to search for'),
     }),
   })
-  listUsers({ page, limit }: { page: number; limit: number }) {
-    const result = {
-      page,
-      limit,
-      total: 50,
-      users: Array.from({ length: Math.min(limit, 5) }, (_, i: number) => ({
-        id: `user-${(page - 1) * limit + i + 1}`,
-        name: `User ${(page - 1) * limit + i + 1}`,
-        email: `user${(page - 1) * limit + i + 1}@example.com`,
-      })),
+  async findUserByUsername({ username }: { username: string }) {
+    const user = await this.prisma.user.findUnique({
+      where: { username },
+      include: { profile: true },
+    });
+
+    if (!user) {
+      return {
+        status: 'error',
+        message: `User not found with username: ${username}`,
+        data: null,
+      };
+    }
+
+    return {
+      userId: user.id,
+      status: 'success',
+      message: 'User found successfully',
+      data: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        countryCode: user.countryCode,
+        phone: user.phone,
+        emailVerified: !!user.emailVerifiedAt,
+        phoneVerified: !!user.phoneVerifiedAt,
+        active: user.active,
+        lastLoginAt: user.lastLoginAt?.toISOString(),
+        createdAt: user.createdAt.toISOString(),
+        profile: user.profile
+          ? {
+              name: user.profile.name,
+              avatar: user.profile.avatar,
+              bio: user.profile.bio,
+              firstName: user.profile.firstName,
+              lastName: user.profile.lastName,
+              dateOfBirth: user.profile.dateOfBirth?.toISOString(),
+              gender: user.profile.gender,
+              city: user.profile.city,
+              country: user.profile.country,
+            }
+          : null,
+      },
     };
-    return result;
+  }
+
+  @Tool({
+    name: 'find-user-by-phone',
+    description: 'Find user by phone number',
+    parameters: z.object({
+      countryCode: z.string().describe('Country code (e.g., +86)'),
+      phone: z.string().describe('Phone number'),
+    }),
+  })
+  async findUserByPhone({
+    countryCode,
+    phone,
+  }: {
+    countryCode: string;
+    phone: string;
+  }) {
+    const user = await this.prisma.user.findUnique({
+      where: { unique_phone_combination: { countryCode, phone } },
+      include: { profile: true },
+    });
+
+    if (!user) {
+      return {
+        status: 'error',
+        message: `User not found with phone: ${countryCode}${phone}`,
+        data: null,
+      };
+    }
+
+    return {
+      userId: user.id,
+      status: 'success',
+      message: 'User found successfully',
+      data: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        countryCode: user.countryCode,
+        phone: user.phone,
+        emailVerified: !!user.emailVerifiedAt,
+        phoneVerified: !!user.phoneVerifiedAt,
+        active: user.active,
+        lastLoginAt: user.lastLoginAt?.toISOString(),
+        createdAt: user.createdAt.toISOString(),
+        profile: user.profile
+          ? {
+              name: user.profile.name,
+              avatar: user.profile.avatar,
+              bio: user.profile.bio,
+              firstName: user.profile.firstName,
+              lastName: user.profile.lastName,
+              dateOfBirth: user.profile.dateOfBirth?.toISOString(),
+              gender: user.profile.gender,
+              city: user.profile.city,
+              country: user.profile.country,
+            }
+          : null,
+      },
+    };
   }
 }
