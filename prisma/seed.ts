@@ -27,6 +27,14 @@ import {
   createMeetings,
   createAllRelations,
 } from './seeds/index';
+import type { CreatedUsers } from './seeds/users';
+import type { CreatedPermissions } from './seeds/permissions';
+import type { CreatedProducts } from './seeds/products';
+import type { CreatedChannels } from './seeds/channels';
+import type { CreatedProjects } from './seeds/projects';
+import type { CreatedCurriculums } from './seeds/curriculums';
+import type { CreatedMeetings } from './seeds/meetings';
+import * as readline from 'readline';
 
 const prisma = new PrismaClient();
 
@@ -49,14 +57,14 @@ function toCamelCase(str: string): string {
 
 function hasPrismaModel(prisma: PrismaClient, modelName: string): boolean {
   try {
-    return (prisma as any)[toCamelCase(modelName)] !== undefined;
+    const prismaUnknown = prisma as unknown as Record<string, unknown>;
+    return prismaUnknown[toCamelCase(modelName)] !== undefined;
   } catch {
     return false;
   }
 }
 
 async function readUserInput(prompt: string): Promise<string> {
-  const readline = require('readline');
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -64,7 +72,7 @@ async function readUserInput(prompt: string): Promise<string> {
 
   return new Promise((resolve) => {
     rl.question(prompt, (answer: string) => {
-      rl.close();
+      void rl.close();
       resolve(answer.trim());
     });
   });
@@ -149,8 +157,15 @@ async function cleanupTableData(table: string): Promise<void> {
   const modelName = toPascalCase(table);
 
   if (hasPrismaModel(prisma, modelName)) {
-    await (prisma as any)[toCamelCase(modelName)].deleteMany({});
-    console.log(`✅ 已清理表数据: ${table}`);
+    const prismaUnknown = prisma as unknown as Record<
+      string,
+      { deleteMany: (args: unknown) => Promise<unknown> }
+    >;
+    const model = prismaUnknown[toCamelCase(modelName)];
+    if (model && typeof model.deleteMany === 'function') {
+      await model.deleteMany({});
+      console.log(`✅ 已清理表数据: ${table}`);
+    }
   } else {
     await prisma.$executeRawUnsafe(`TRUNCATE TABLE "${table}" CASCADE;`);
     console.log(`✅ 已清理表数据（SQL）: ${table}`);
@@ -344,9 +359,9 @@ async function createBasicData() {
 }
 
 async function createBusinessData(
-  userData: any,
-  productData: any,
-  channelData: any,
+  userData: CreatedUsers,
+  productData: CreatedProducts,
+  channelData: CreatedChannels,
 ) {
   console.log('\n🛒 步骤 8: 创建订单数据');
   const orders = await createOrders(prisma, {
@@ -365,16 +380,16 @@ async function createBusinessData(
 }
 
 function printSeedStatistics(
-  userData: any,
-  permissionData: any,
-  organizationData: any,
-  channelData: any,
-  projectData: any,
-  curriculumData: any,
-  productData: any,
-  orders: any[],
-  refunds: any[],
-  meetingData?: any,
+  userData: CreatedUsers,
+  permissionData: CreatedPermissions,
+  organizationData: unknown,
+  channelData: CreatedChannels,
+  projectData: CreatedProjects,
+  curriculumData: CreatedCurriculums,
+  productData: CreatedProducts,
+  orders: unknown[],
+  refunds: unknown[],
+  meetingData?: CreatedMeetings,
 ): void {
   console.log('\n✅ 数据库种子数据初始化完成！');
   console.log('\n📊 统计信息:');
@@ -383,7 +398,7 @@ function printSeedStatistics(
   console.log(`🔑 权限: ${permissionData.permissions.length} 个`);
   console.log(`🏢 组织: 1 个`);
   console.log(
-    `🏬 部门: ${Object.keys(organizationData.departments).length} 个`,
+    `🏬 部门: ${Object.keys(organizationData as Record<string, unknown>).length} 个`,
   );
   console.log(`📺 渠道: ${channelData.channels.length} 个`);
   console.log(`📚 项目: ${projectData.projects.length} 个`);

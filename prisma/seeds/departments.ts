@@ -9,7 +9,7 @@
  * Copyright (c) 2025 by ${git_name_email}, All Rights Reserved.
  */
 
-import { PrismaClient, Department, Prisma } from '@prisma/client';
+import { PrismaClient, Department } from '@prisma/client';
 import { CreatedUsers } from './users';
 
 // ==================== 类型定义 ====================
