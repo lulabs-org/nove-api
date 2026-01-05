@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-06-19 21:41:26
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2025-12-15 20:19:57
+ * @LastEditTime: 2026-01-06 01:59:55
  * @FilePath: /lulab_backend/prisma/seeds/users.ts
  * @Description: 用户数据种子模块
  *
@@ -27,7 +27,7 @@ const USER_CONFIGS = {
     email: 'admin@lulab.com',
     phone: '13800138000',
     profile: {
-      name: '系统管理员',
+      displayName: '系统管理员',
       firstName: '系统',
       lastName: '管理员',
       gender: $Enums.Gender.PREFER_NOT_TO_SAY,
@@ -38,7 +38,7 @@ const USER_CONFIGS = {
     email: 'finance@lulab.com',
     phone: '13800138001',
     profile: {
-      name: '财务专员',
+      displayName: '财务专员',
       firstName: '财务',
       lastName: '专员',
       gender: $Enums.Gender.FEMALE,
@@ -51,7 +51,7 @@ const USER_CONFIGS = {
     email: 'service@lulab.com',
     phone: '13800138002',
     profile: {
-      name: '客服专员',
+      displayName: '客服专员',
       firstName: '客服',
       lastName: '专员',
       gender: $Enums.Gender.FEMALE,
@@ -65,7 +65,7 @@ const USER_CONFIGS = {
 // 普通用户配置
 const NORMAL_USER_PROFILES = [
   {
-    name: '张三',
+    displayName: '张三',
     firstName: '三',
     lastName: '张',
     gender: $Enums.Gender.MALE,
@@ -73,7 +73,7 @@ const NORMAL_USER_PROFILES = [
     bio: '软件工程师，热爱编程',
   },
   {
-    name: '李四',
+    displayName: '李四',
     firstName: '四',
     lastName: '李',
     gender: $Enums.Gender.FEMALE,
@@ -81,7 +81,7 @@ const NORMAL_USER_PROFILES = [
     bio: '产品经理，关注用户体验',
   },
   {
-    name: '王五',
+    displayName: '王五',
     firstName: '五',
     lastName: '王',
     gender: $Enums.Gender.MALE,
@@ -89,7 +89,7 @@ const NORMAL_USER_PROFILES = [
     bio: '数据分析师，擅长数据挖掘',
   },
   {
-    name: '赵六',
+    displayName: '赵六',
     firstName: '六',
     lastName: '赵',
     gender: $Enums.Gender.FEMALE,
@@ -97,7 +97,7 @@ const NORMAL_USER_PROFILES = [
     bio: 'UI设计师，追求美感',
   },
   {
-    name: '钱七',
+    displayName: '钱七',
     firstName: '七',
     lastName: '钱',
     gender: $Enums.Gender.OTHER,
