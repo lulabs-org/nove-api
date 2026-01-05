@@ -95,19 +95,17 @@ describe('ApiKeyController', () => {
         expiresAt: '2026-12-31T23:59:59Z',
       };
 
-      jest
+      const getPrimaryOrganizationIdSpy = jest
         .spyOn(userOrgService, 'getPrimaryOrganizationId')
         .mockResolvedValue(mockOrganizationId);
-      jest
+      const createKeySpy = jest
         .spyOn(apiKeyService, 'createKey')
         .mockResolvedValue(mockCreateApiKeyResponse);
 
       const result = await controller.createKey(mockUser, createDto);
 
-      expect(userOrgService.getPrimaryOrganizationId).toHaveBeenCalledWith(
-        mockUser.id,
-      );
-      expect(apiKeyService.createKey).toHaveBeenCalledWith(
+      expect(getPrimaryOrganizationIdSpy).toHaveBeenCalledWith(mockUser.id);
+      expect(createKeySpy).toHaveBeenCalledWith(
         mockOrganizationId,
         mockUser.id,
         createDto,
@@ -123,13 +121,13 @@ describe('ApiKeyController', () => {
       jest
         .spyOn(userOrgService, 'getPrimaryOrganizationId')
         .mockResolvedValue(mockOrganizationId);
-      jest
+      const createKeySpy = jest
         .spyOn(apiKeyService, 'createKey')
         .mockResolvedValue(mockCreateApiKeyResponse);
 
       const result = await controller.createKey(mockUser, createDto);
 
-      expect(apiKeyService.createKey).toHaveBeenCalledWith(
+      expect(createKeySpy).toHaveBeenCalledWith(
         mockOrganizationId,
         mockUser.id,
         createDto,
@@ -162,22 +160,17 @@ describe('ApiKeyController', () => {
     it('should list API keys with default pagination', async () => {
       const pagination = {};
 
-      jest
+      const getPrimaryOrganizationIdSpy = jest
         .spyOn(userOrgService, 'getPrimaryOrganizationId')
         .mockResolvedValue(mockOrganizationId);
-      jest
+      const listKeysSpy = jest
         .spyOn(apiKeyService, 'listKeys')
         .mockResolvedValue(mockApiKeyListResponse);
 
       const result = await controller.listKeys(mockUser, pagination);
 
-      expect(userOrgService.getPrimaryOrganizationId).toHaveBeenCalledWith(
-        mockUser.id,
-      );
-      expect(apiKeyService.listKeys).toHaveBeenCalledWith(
-        mockOrganizationId,
-        pagination,
-      );
+      expect(getPrimaryOrganizationIdSpy).toHaveBeenCalledWith(mockUser.id);
+      expect(listKeysSpy).toHaveBeenCalledWith(mockOrganizationId, pagination);
       expect(result).toEqual(mockApiKeyListResponse);
     });
 
@@ -196,16 +189,13 @@ describe('ApiKeyController', () => {
       jest
         .spyOn(userOrgService, 'getPrimaryOrganizationId')
         .mockResolvedValue(mockOrganizationId);
-      jest
+      const listKeysSpy = jest
         .spyOn(apiKeyService, 'listKeys')
         .mockResolvedValue(customListResponse);
 
       const result = await controller.listKeys(mockUser, pagination);
 
-      expect(apiKeyService.listKeys).toHaveBeenCalledWith(
-        mockOrganizationId,
-        pagination,
-      );
+      expect(listKeysSpy).toHaveBeenCalledWith(mockOrganizationId, pagination);
       expect(result).toEqual(customListResponse);
     });
 
@@ -242,17 +232,17 @@ describe('ApiKeyController', () => {
         name: 'Updated API Key Name',
       };
 
-      jest
+      const getPrimaryOrganizationIdSpy = jest
         .spyOn(userOrgService, 'getPrimaryOrganizationId')
         .mockResolvedValue(mockOrganizationId);
-      jest.spyOn(apiKeyService, 'updateKey').mockResolvedValue(updatedKey);
+      const updateKeySpy = jest
+        .spyOn(apiKeyService, 'updateKey')
+        .mockResolvedValue(updatedKey);
 
       const result = await controller.updateKey(mockUser, 'key-123', updateDto);
 
-      expect(userOrgService.getPrimaryOrganizationId).toHaveBeenCalledWith(
-        mockUser.id,
-      );
-      expect(apiKeyService.updateKey).toHaveBeenCalledWith(
+      expect(getPrimaryOrganizationIdSpy).toHaveBeenCalledWith(mockUser.id);
+      expect(updateKeySpy).toHaveBeenCalledWith(
         mockOrganizationId,
         'key-123',
         updateDto,
@@ -273,11 +263,13 @@ describe('ApiKeyController', () => {
       jest
         .spyOn(userOrgService, 'getPrimaryOrganizationId')
         .mockResolvedValue(mockOrganizationId);
-      jest.spyOn(apiKeyService, 'updateKey').mockResolvedValue(updatedKey);
+      const updateKeySpy = jest
+        .spyOn(apiKeyService, 'updateKey')
+        .mockResolvedValue(updatedKey);
 
       const result = await controller.updateKey(mockUser, 'key-123', updateDto);
 
-      expect(apiKeyService.updateKey).toHaveBeenCalledWith(
+      expect(updateKeySpy).toHaveBeenCalledWith(
         mockOrganizationId,
         'key-123',
         updateDto,
@@ -298,11 +290,13 @@ describe('ApiKeyController', () => {
       jest
         .spyOn(userOrgService, 'getPrimaryOrganizationId')
         .mockResolvedValue(mockOrganizationId);
-      jest.spyOn(apiKeyService, 'updateKey').mockResolvedValue(updatedKey);
+      const updateKeySpy = jest
+        .spyOn(apiKeyService, 'updateKey')
+        .mockResolvedValue(updatedKey);
 
       const result = await controller.updateKey(mockUser, 'key-123', updateDto);
 
-      expect(apiKeyService.updateKey).toHaveBeenCalledWith(
+      expect(updateKeySpy).toHaveBeenCalledWith(
         mockOrganizationId,
         'key-123',
         updateDto,
@@ -349,20 +343,17 @@ describe('ApiKeyController', () => {
 
   describe('revokeKey', () => {
     it('should revoke API key successfully', async () => {
-      jest
+      const getPrimaryOrganizationIdSpy = jest
         .spyOn(userOrgService, 'getPrimaryOrganizationId')
         .mockResolvedValue(mockOrganizationId);
-      jest.spyOn(apiKeyService, 'revokeKey').mockResolvedValue(undefined);
+      const revokeKeySpy = jest
+        .spyOn(apiKeyService, 'revokeKey')
+        .mockResolvedValue(undefined);
 
       await controller.revokeKey(mockUser, 'key-123');
 
-      expect(userOrgService.getPrimaryOrganizationId).toHaveBeenCalledWith(
-        mockUser.id,
-      );
-      expect(apiKeyService.revokeKey).toHaveBeenCalledWith(
-        mockOrganizationId,
-        'key-123',
-      );
+      expect(getPrimaryOrganizationIdSpy).toHaveBeenCalledWith(mockUser.id);
+      expect(revokeKeySpy).toHaveBeenCalledWith(mockOrganizationId, 'key-123');
     });
 
     it('should throw NotFoundException when key does not exist', async () => {
@@ -381,22 +372,17 @@ describe('ApiKeyController', () => {
 
   describe('rotateKey', () => {
     it('should rotate API key successfully', async () => {
-      jest
+      const getPrimaryOrganizationIdSpy = jest
         .spyOn(userOrgService, 'getPrimaryOrganizationId')
         .mockResolvedValue(mockOrganizationId);
-      jest
+      const rotateKeySpy = jest
         .spyOn(apiKeyService, 'rotateKey')
         .mockResolvedValue(mockRotateApiKeyResponse);
 
       const result = await controller.rotateKey(mockUser, 'key-123');
 
-      expect(userOrgService.getPrimaryOrganizationId).toHaveBeenCalledWith(
-        mockUser.id,
-      );
-      expect(apiKeyService.rotateKey).toHaveBeenCalledWith(
-        mockOrganizationId,
-        'key-123',
-      );
+      expect(getPrimaryOrganizationIdSpy).toHaveBeenCalledWith(mockUser.id);
+      expect(rotateKeySpy).toHaveBeenCalledWith(mockOrganizationId, 'key-123');
       expect(result).toEqual(mockRotateApiKeyResponse);
       expect(result.key).toBeDefined();
       expect(result.oldKeyId).toBe('key-123');

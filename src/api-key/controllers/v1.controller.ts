@@ -4,9 +4,9 @@
  * @LastEditors: 杨仕明 shiming.y@qq.com
  * @LastEditTime: 2026-01-05 11:25:56
  * @FilePath: /lulab_backend/src/api-key/controllers/v1.controller.ts
- * @Description: 
- * 
- * Copyright (c) 2026 by LuLab-Team, All Rights Reserved. 
+ * @Description:
+ *
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
 import {
