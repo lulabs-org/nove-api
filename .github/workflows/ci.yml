@@ -64,6 +64,9 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      - name: Lint_prisma
+        run: pnpm lint:prisma
+
       - name: Format check
         run: pnpm format --check
 

@@ -17,6 +17,8 @@ model Organization {
   // 关联关系
   departments Department[]
   users       UserOrganization[]
+  apiKeys     ApiKey[] // API Keys
+  apiKeyUsageLogs ApiKeyUsageLog[] // API Key 使用日志
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

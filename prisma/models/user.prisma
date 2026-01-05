@@ -41,6 +41,8 @@ model User {
 
   // 登录日志关联
   loginLogs LoginLog[] // 登录日志
+    // API Key 关联
+  createdApiKeys ApiKey[] // 创建的 API Keys
 
   // 订单相关关联
   orders                Order[]       @relation("UserOrders") // 用户的订单
