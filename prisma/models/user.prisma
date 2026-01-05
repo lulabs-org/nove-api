@@ -1,6 +1,6 @@
 model User {
   id       String  @id @default(cuid())
-  username String? @unique @db.VarChar(50) // 用户名
+  username String? @unique @db.VarChar(50) // 登录用户名，如 john_doe
 
   // password 密码相关字段
   passwordHash   String?   @map("password_hash") @db.VarChar(255)
@@ -8,16 +8,27 @@ model User {
   passwordParams Json?     @map("password_params") // { "cost": 12 } / argon2 参数等
   passwordSetAt  DateTime? @map("password_set_at") @db.Timestamptz(6) // 可选：审计/排查很好用
 
+  // email 邮箱相关字段
   email           String?   @unique @db.VarChar(255)
   emailVerifiedAt DateTime? @map("email_verified_at") @db.Timestamptz(6) // 邮箱验证时间
 
-  countryCode     String? // 国家代码 如 +86
-  phone           String? // 电话号码
+  // phone 电话相关字段
+  /// 国家代码 如 +86
+  countryCode     String?   @map("country_code") @db.VarChar(10)
+  /// 电话号码，不含国家代码，纯数字格式，如 13800138000
+  phone           String?   @map("phone") @db.VarChar(20)
   phoneVerifiedAt DateTime? @map("phone_verified_at") @db.Timestamptz(6) // 电话验证时间
 
-  active Boolean @default(true)
+  // 用户状态
+  active Boolean @default(true) // 用户状态：true=活跃，false=禁用
 
-  // 认证相关
+  // 系统时间戳字段
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  lastLoginAt DateTime? @map("last_login_at") @db.Timestamptz(6) // 最后登录时间
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6) // 软删除时间戳
+
+  // 认证相关关联
   accounts      Account[]
   sessions      Session[]
   Authenticator Authenticator[]
@@ -27,6 +38,9 @@ model User {
   profile     UserProfile?
   settings    UserSettings?
   preferences UserPreference?
+
+  // 登录日志关联
+  loginLogs LoginLog[] // 登录日志
 
   // 订单相关关联
   orders                Order[]       @relation("UserOrders") // 用户的订单
@@ -45,20 +59,11 @@ model User {
   permissions     UserPermission[] // 用户特殊权限
   dataPermissions UserDataPermission[] // 用户数据权限
 
-  // 会议相关关联
+  // 平台与存储相关关联
   platformUsers          PlatformUser[] // 平台用户关联
   uploadedStorageObjects StorageObject[]
 
-  // 登录日志关联
-  loginLogs LoginLog[] // 登录日志
-
-  // 系统字段及时间
-  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
-  lastLoginAt DateTime? @map("last_login_at") @db.Timestamptz(6) // 最后登录时间
-  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6) // 软删除时间戳
-
-  @@unique([countryCode, phone], name: "unique_phone_combination")
+  @@unique([countryCode, phone], name: "uq_users_country_code_phone")
   @@index([username]) // 用户名登录优化
   @@index([email]) // 登录查询优化
   @@index([phone]) // 手机号登录优化
@@ -66,5 +71,10 @@ model User {
   @@index([deletedAt]) // 软删除查询索引
   @@index([lastLoginAt]) // 最后登录时间查询
   @@index([active, deletedAt]) // 活跃用户查询优化
+  @@index([createdAt]) // 按创建时间查询优化
+  @@index([updatedAt]) // 按更新时间查询优化
+  @@index([email, active]) // 邮箱登录时过滤活跃用户
+  @@index([username, active]) // 用户名登录时过滤活跃用户
+  @@index([active, deletedAt, lastLoginAt]) // 活跃用户按最后登录时间查询
   @@map("users")
 }

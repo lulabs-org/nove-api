@@ -41,7 +41,7 @@ export class ProfileService {
     userAgent?: string,
   ): Promise<UserProfileResponseDto> {
     this.logger.log(`用户 ${userId} 正在更新资料，IP: ${ip}, UA: ${userAgent}`);
-    const { username, email, phone, countryCode, name, avatar, bio } =
+    const { username, email, phone, countryCode, displayName, avatar, bio } =
       updateProfileDto;
 
     const existingUser = await this.userRepo.getUserByIdWithProfile(userId);
@@ -85,7 +85,7 @@ export class ProfileService {
         phone,
         countryCode,
         profile: {
-          name: name || username || email?.split('@')[0] || phone,
+          displayName: displayName || username || email?.split('@')[0] || phone,
           avatar,
           bio,
         },

@@ -33,7 +33,12 @@ export class UserRepository {
     phone: string,
   ): Promise<User | null> {
     return this.prisma.user.findUnique({
-      where: { unique_phone_combination: { countryCode, phone } },
+      where: {
+        uq_users_country_code_phone: {
+          countryCode,
+          phone,
+        },
+      },
     });
   }
 
@@ -84,7 +89,7 @@ export class UserRepository {
         phoneVerifiedAt: data.phoneVerifiedAt ?? null,
         profile: {
           create: {
-            name: data.profileName,
+            displayName: data.profileName,
           },
         },
       },
@@ -113,7 +118,7 @@ export class UserRepository {
       email?: string;
       phone?: string;
       countryCode?: string;
-      profile?: { name?: string; avatar?: string; bio?: string };
+      profile?: { displayName?: string; avatar?: string; bio?: string };
     },
   ): Promise<User & { profile: UserProfile | null }> {
     const { profile, ...userData } = data;
@@ -131,12 +136,12 @@ export class UserRepository {
               profile: {
                 upsert: {
                   create: {
-                    name: profile.name,
+                    displayName: profile.displayName,
                     avatar: profile.avatar,
                     bio: profile.bio,
                   },
                   update: {
-                    name: profile.name,
+                    displayName: profile.displayName,
                     avatar: profile.avatar,
                     bio: profile.bio,
                   },

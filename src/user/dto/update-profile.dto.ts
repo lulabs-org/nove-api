@@ -35,10 +35,10 @@ export class UpdateProfileDto {
   @IsString()
   avatar?: string;
 
-  @ApiProperty({ required: false, description: '姓名或昵称' })
+  @ApiProperty({ required: false, description: '显示名称' })
   @IsOptional()
   @IsString()
-  name?: string;
+  displayName?: string;
 
   @ApiProperty({ required: false, description: '个人简介' })
   @IsOptional()

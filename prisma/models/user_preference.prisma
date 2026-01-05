@@ -1,8 +1,19 @@
 model UserPreference {
   id String @id @default(cuid())
 
-  data Json
+  /// 用户偏好数据，以JSON格式存储
+  data Json @default("{}") @db.JsonB
 
-  userId String @unique
+  /// 关联的用户ID
+  userId String @unique @map("user_id")
+  /// 关联的用户
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// 创建时间
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  /// 更新时间
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([userId], map: "idx_user_preference_user_id")
+  @@map("user_preferences")
 }

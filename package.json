@@ -11,7 +11,6 @@
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\" \"prisma/**/*.ts\" ",
-    "format-and-lint": "chmod +x scripts/shell/format-and-lint.sh && ./scripts/shell/format-and-lint.sh",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
@@ -43,7 +42,6 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:cleandata": "tsx prisma/seed.ts clean",
     "db:drop": "tsx prisma/seed.ts drop",
-    "db:drop:force": "tsx prisma/seed.ts drop --force",
     "db:seed:reset": "tsx prisma/seed.ts reset",
     "db:backup": "chmod +x scripts/backup.sh && ./scripts/backup.sh"
   },
