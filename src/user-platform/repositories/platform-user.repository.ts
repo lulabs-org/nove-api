@@ -119,27 +119,6 @@ export class PlatformUserRepository {
     });
   }
 
-  async updateLastSeenAt(id: string): Promise<PlatformUser> {
-    return this.prisma.platformUser.update({
-      where: { id },
-      data: { lastSeenAt: new Date() },
-    });
-  }
-
-  async deactivatePlatformUser(id: string): Promise<PlatformUser> {
-    return this.prisma.platformUser.update({
-      where: { id },
-      data: { active: false },
-    });
-  }
-
-  async activatePlatformUser(id: string): Promise<PlatformUser> {
-    return this.prisma.platformUser.update({
-      where: { id },
-      data: { active: true },
-    });
-  }
-
   async findByPtUserId(
     platform: Platform,
     ptUserId: string,
@@ -163,6 +142,76 @@ export class PlatformUserRepository {
         displayName,
         active: true,
       },
+    });
+  }
+
+  async findByPlatformAndPhoneHashWithoutLocalUser(
+    platform: Platform,
+    countryCode: string,
+    phoneHash: string,
+  ): Promise<PlatformUser | null> {
+    return this.prisma.platformUser.findFirst({
+      where: {
+        platform,
+        countryCode,
+        phoneHash,
+        localUserId: null,
+        active: true,
+      },
+    });
+  }
+
+  async findByPlatformAndPhoneHash(
+    platform: Platform,
+    countryCode: string,
+    phoneHash: string,
+  ): Promise<PlatformUser | null> {
+    return this.prisma.platformUser.findFirst({
+      where: {
+        platform,
+        countryCode,
+        phoneHash,
+        active: true,
+      },
+    });
+  }
+
+  async updateLastSeenAt(id: string): Promise<PlatformUser> {
+    return this.prisma.platformUser.update({
+      where: { id },
+      data: { lastSeenAt: new Date() },
+    });
+  }
+
+  async deactivatePlatformUser(id: string): Promise<PlatformUser> {
+    return this.prisma.platformUser.update({
+      where: { id },
+      data: { active: false },
+    });
+  }
+
+  async activatePlatformUser(id: string): Promise<PlatformUser> {
+    return this.prisma.platformUser.update({
+      where: { id },
+      data: { active: true },
+    });
+  }
+
+  async deleteByCountryCodeAndPhone(
+    countryCode: string,
+    phone: string,
+  ): Promise<{ count: number }> {
+    return this.prisma.platformUser.deleteMany({
+      where: {
+        countryCode,
+        phone,
+      },
+    });
+  }
+
+  async deleteById(id: string): Promise<PlatformUser> {
+    return this.prisma.platformUser.delete({
+      where: { id },
     });
   }
 }

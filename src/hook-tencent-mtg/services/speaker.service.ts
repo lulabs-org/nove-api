@@ -2,17 +2,19 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-29 01:59:25
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-05 07:41:50
+ * @LastEditTime: 2026-01-06 01:13:21
  * @FilePath: /lulab_backend/src/hook-tencent-mtg/services/speaker.service.ts
  * @Description:
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
-import { Injectable } from '@nestjs/common';
-import { Platform, PlatformUser } from '@prisma/client';
+import { Injectable, Logger } from '@nestjs/common';
 import { NewSpeakerInfo } from '@/hook-tencent-mtg/types';
+import { Platform, PlatformUser, User } from '@prisma/client';
+import { UserRepository } from '@/user/repositories/user.repository';
 import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
+
 import {
   SpeakerInfo,
   MeetingParticipantDetail,
@@ -20,8 +22,11 @@ import {
 
 @Injectable()
 export class SpeakerService {
+  private readonly logger = new Logger(SpeakerService.name);
+
   constructor(
-    private readonly platformUserRepository: PlatformUserRepository,
+    private readonly ptUserRepository: PlatformUserRepository,
+    private readonly userRepository: UserRepository,
   ) {}
 
   async enrichSpeakerInfo(
@@ -32,47 +37,39 @@ export class SpeakerService {
       return speakerInfo;
     }
 
-    const participant = this.findParticipantByExactMatch(
-      speakerInfo,
-      participants,
-    );
+    const participant = this.matchExact(speakerInfo, participants);
 
     if (participant) {
-      return this.enrichWithParticipantInfo(speakerInfo, participant);
+      return this.enrichParticipant(speakerInfo, participant);
     }
 
-    const platformUserByUserId = await this.findPlatformUserByUserId(
-      speakerInfo.userid,
-    );
+    const platformUserByUserId = await this.findUserById(speakerInfo.userid);
 
     if (platformUserByUserId) {
-      return this.enrichWithPlatformUserInfo(speakerInfo, platformUserByUserId);
+      return this.enrichUser(speakerInfo, platformUserByUserId);
     }
 
-    const participantByUsername = this.findParticipantByUsername(
+    const participantByUsername = this.matchName(
       speakerInfo.username,
       participants,
     );
 
     if (participantByUsername) {
-      return this.enrichWithParticipantInfo(speakerInfo, participantByUsername);
+      return this.enrichParticipant(speakerInfo, participantByUsername);
     }
 
-    const platformUserByUsername = await this.findPlatformUserByUsername(
+    const platformUserByUsername = await this.findUserByName(
       speakerInfo.username,
     );
 
     if (platformUserByUsername) {
-      return this.enrichWithPlatformUserInfo(
-        speakerInfo,
-        platformUserByUsername,
-      );
+      return this.enrichUser(speakerInfo, platformUserByUsername);
     }
 
     return speakerInfo;
   }
 
-  private findParticipantByExactMatch(
+  private matchExact(
     speakerInfo: SpeakerInfo,
     participants: MeetingParticipantDetail[],
   ): MeetingParticipantDetail | undefined {
@@ -84,7 +81,7 @@ export class SpeakerService {
     );
   }
 
-  private findParticipantByUsername(
+  private matchName(
     username: string | undefined,
     participants: MeetingParticipantDetail[],
   ): MeetingParticipantDetail | undefined {
@@ -94,31 +91,31 @@ export class SpeakerService {
     return participants.find((p) => p.user_name === username);
   }
 
-  private async findPlatformUserByUserId(
+  private async findUserById(
     userid: string | undefined,
   ): Promise<PlatformUser | null> {
     if (!userid) {
       return null;
     }
-    return this.platformUserRepository.findByPtUserId(
+    return this.ptUserRepository.findByPtUserId(
       Platform.TENCENT_MEETING,
       userid,
     );
   }
 
-  private async findPlatformUserByUsername(
+  private async findUserByName(
     username: string | undefined,
   ): Promise<PlatformUser | null> {
     if (!username) {
       return null;
     }
-    return this.platformUserRepository.findByPtName(
+    return this.ptUserRepository.findByPtName(
       Platform.TENCENT_MEETING,
       username,
     );
   }
 
-  private enrichWithParticipantInfo(
+  private enrichParticipant(
     speakerInfo: SpeakerInfo,
     participant: MeetingParticipantDetail,
   ): NewSpeakerInfo {
@@ -142,7 +139,7 @@ export class SpeakerService {
     };
   }
 
-  private enrichWithPlatformUserInfo(
+  private enrichUser(
     speakerInfo: SpeakerInfo,
     platformUser: PlatformUser,
   ): NewSpeakerInfo {
@@ -151,5 +148,131 @@ export class SpeakerService {
       uuid: platformUser.ptUnionId ?? undefined,
       phone: platformUser.phoneHash ?? undefined,
     };
+  }
+
+  async syncPlatformUsers(
+    uniqueParticipants: MeetingParticipantDetail[],
+  ): Promise<void> {
+    const excludedPhoneHash =
+      'df363d826259f591c0f02ce0be670eee8785eaa0477cf152944af46e008a3086';
+    const countryCode = '+86';
+
+    try {
+      for (const participant of uniqueParticipants) {
+        if (participant.phone && participant.phone !== excludedPhoneHash) {
+          const ptByPhone =
+            await this.ptUserRepository.findByPlatformAndPhoneHashWithoutLocalUser(
+              Platform.TENCENT_MEETING,
+              countryCode,
+              participant.phone,
+            );
+
+          let userByPhone: User | null = null;
+
+          if (ptByPhone?.phone) {
+            userByPhone = await this.userRepository.findUserByPhoneCombination(
+              countryCode,
+              ptByPhone.phone,
+            );
+          }
+
+          const ptByUnionId =
+            await this.ptUserRepository.findByPlatformAndUnionId(
+              Platform.TENCENT_MEETING,
+              participant.uuid,
+            );
+
+          if (ptByPhone && !ptByUnionId && userByPhone) {
+            await this.ptUserRepository.update(ptByPhone.id, {
+              ptUserId: participant.userid,
+              displayName: participant.user_name,
+              phoneHash: participant.phone,
+              phone: ptByPhone.phone,
+              localUserId: userByPhone.id,
+            });
+          }
+
+          if (ptByPhone && ptByUnionId && userByPhone) {
+            const updatedPtByUnionId = await this.ptUserRepository.update(
+              ptByUnionId.id,
+              {
+                ptUserId: participant.userid,
+                displayName: participant.user_name,
+                phoneHash: participant.phone,
+                countryCode,
+                phone: ptByPhone.phone,
+                localUserId: userByPhone.id,
+              },
+            );
+
+            if (updatedPtByUnionId) {
+              await this.ptUserRepository.deleteById(ptByPhone.id);
+            }
+          }
+
+          if (!ptByPhone && !ptByUnionId) {
+            await this.ptUserRepository.upsert(
+              {
+                platform: Platform.TENCENT_MEETING,
+                ptUnionId: participant.uuid,
+              },
+              {
+                ptUserId: participant.userid,
+                displayName: participant.user_name,
+                phoneHash: participant.phone,
+              },
+            );
+          }
+
+          if (!ptByPhone && ptByUnionId && !userByPhone) {
+            const ptByPhoneHasUser =
+              await this.ptUserRepository.findByPlatformAndPhoneHash(
+                Platform.TENCENT_MEETING,
+                countryCode,
+                participant.phone,
+              );
+
+            if (ptByPhoneHasUser?.ptUnionId === participant.uuid) {
+              continue;
+            }
+
+            if (ptByPhoneHasUser?.phone) {
+              const userByPhoneHasUser =
+                await this.userRepository.findUserByPhoneCombination(
+                  countryCode,
+                  ptByPhoneHasUser.phone,
+                );
+
+              if (userByPhoneHasUser) {
+                await this.ptUserRepository.update(ptByUnionId.id, {
+                  ptUserId: participant.userid,
+                  displayName: participant.user_name,
+                  phoneHash: participant.phone,
+                  countryCode,
+                  phone: ptByPhoneHasUser.phone,
+                  localUserId: userByPhoneHasUser.id,
+                });
+              }
+            }
+          }
+        }
+
+        if (!participant.phone || participant.phone == excludedPhoneHash) {
+          await this.ptUserRepository.upsert(
+            {
+              platform: Platform.TENCENT_MEETING,
+              ptUnionId: participant.uuid,
+            },
+            {
+              ptUserId: participant.userid,
+              displayName: participant.user_name,
+              phoneHash: participant.phone,
+            },
+          );
+        }
+      }
+    } catch (error) {
+      this.logger.error('Error processing unique participants:', error);
+    }
   }
 }

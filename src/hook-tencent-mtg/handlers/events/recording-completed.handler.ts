@@ -95,6 +95,8 @@ export class RecordingCompletedHandler extends BaseEventHandler {
         sub_meeting_id,
       );
 
+    await this.speakerService.syncPlatformUsers(uniqueParticipants);
+
     // 处理录制文件记录
     for (const file of recording_files) {
       const fileId = file.record_file_id;
