@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-09-13 02:54:40
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-04 08:15:03
+ * @LastEditTime: 2026-01-05 06:46:10
  * @FilePath: /lulab_backend/src/hook-tencent-mtg/handlers/events/recording-completed.handler.ts
  * @Description: 录制完成事件处理器
  *
@@ -63,7 +63,7 @@ export class RecordingCompletedHandler extends BaseEventHandler {
     private readonly meetingSummaryRepository: MeetingSummaryRepository,
     private readonly transcriptRepository: TranscriptRepository,
     private readonly batchProcessor: TranscriptBatchProcessor,
-    private readonly platformUserRepository: PlatformUserRepository,
+    private readonly ptUserRepository: PlatformUserRepository,
   ) {
     super();
   }
@@ -259,7 +259,7 @@ export class RecordingCompletedHandler extends BaseEventHandler {
 
             // 同步保存参会者总结到数据库
             if (meeting && recording) {
-              const platformUser = await this.platformUserRepository.upsert(
+              const platformUser = await this.ptUserRepository.upsert(
                 {
                   platform: MeetingPlatform.TENCENT_MEETING,
                   ptUnionId: u.uuid,

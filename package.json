@@ -11,7 +11,7 @@
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\" \"prisma/**/*.ts\" ",
-    "format-and-lint": "chmod +x scripts/format-and-lint.sh && ./scripts/format-and-lint.sh",
+    "format-and-lint": "chmod +x scripts/shell/format-and-lint.sh && ./scripts/shell/format-and-lint.sh",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
