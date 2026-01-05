@@ -249,7 +249,7 @@ async function createMeeting(
   const startTime = new Date(now.getTime() - 2 * 60 * 60 * 1000);
   const endTime = new Date(now.getTime() - 1 * 60 * 60 * 1000);
 
-  const { meetingId, hostUserName, ...restConfig } = meetingConfig;
+  const { meetingId, ...restConfig } = meetingConfig;
 
   return prisma.meeting.upsert({
     where: {
