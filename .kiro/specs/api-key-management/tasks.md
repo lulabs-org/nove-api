@@ -1,0 +1,309 @@
+# Implementation Plan
+
+- [x] 1. Set up Prisma schema and database migrations
+  - [x] 1.1 Create ApiKeyStatus enum and ApiKey model in Prisma schema
+    - Add enum with ACTIVE, REVOKED, EXPIRED values
+    - Define ApiKey model with all required fields (id, organizationId, name, prefix, keyHash, last4, status, scopes, expiresAt, revokedAt, lastUsedAt, createdBy, rotatedFromId, timestamps)
+    - Add relations to Organization and User models
+    - Add self-referential relation for key rotation tracking
+    - _Requirements: 1.1, 1.2, 1.4, 1.5, 5.4, 10.4, 10.5_
+  - [x] 1.2 Create ApiKeyUsageLog model in Prisma schema
+    - Define model with fields (id, apiKeyId, organizationId, method, path, statusCode, latencyMs, ip, userAgent, error, createdAt)
+    - Add relations to ApiKey and Organization
+    - _Requirements: 8.1, 8.2, 8.5_
+  - [x] 1.3 Add database indexes for performance
+    - Add unique index on prefix
+    - Add composite indexes: (organizationId, status), (organizationId, createdAt), (status, expiresAt)
+    - Add indexes on ApiKeyUsageLog: (apiKeyId, createdAt), (organizationId, createdAt), (createdAt)
+    - _Requirements: 1.5, 2.1_
+  - [x] 1.4 Generate and run Prisma migration
+    - Run `pnpm db:generate` to generate Prisma client
+    - Create migration with `prisma migrate dev`
+    - _Requirements: All database requirements_
+
+- [x] 2. Implement core key generation and cryptography utilities
+  - [x] 2.1 Create crypto utility functions
+    - Implement `generateRandomBase64Url(length)` for secure random string generation
+    - Implement `computeKeyHash(rawKey, secret)` using HMAC-SHA256
+    - Implement `verifyKeyHash(rawKey, storedHash, secret)` with constant-time comparison
+    - Implement `parseApiKey(rawKey)` to extract prefix and secret from key format
+    - _Requirements: 1.2, 6.3, 10.1, 10.2, 10.3_
+  - [x] 2.2 Create key generation service method
+    - Implement `generateApiKey(env)` that produces rawKey, prefix, secret, keyHash, last4
+    - Ensure format: `sk_<env>_<prefix>.<secret>`
+    - Validate prefix length (8-12 chars) and secret length (32-48 chars)
+    - _Requirements: 1.1, 10.1, 10.2, 10.3, 10.5_
+  - [ ]* 2.3 Write property test for key generation format
+    - **Property 1: Key generation produces valid format**
+    - **Validates: Requirements 1.1, 10.1, 10.2, 10.3**
+  - [ ]* 2.4 Write property test for hash-only storage
+    - **Property 2: Hash-only storage**
+    - **Validates: Requirements 1.2, 10.4**
+
+- [x] 3. Create DTOs and types
+  - [x] 3.1 Define request DTOs
+    - Create `CreateApiKeyDto` with name (required), scopes (optional array), expiresAt (optional date)
+    - Create `UpdateApiKeyDto` with optional name, scopes, expiresAt
+    - Add class-validator decorators for validation
+    - _Requirements: 1.1, 3.1, 3.2, 3.3_
+  - [x] 3.2 Define response DTOs
+    - Create `ApiKeyDto` with id, name, prefix, last4, status, scopes, expiresAt, createdAt, lastUsedAt
+    - Create `CreateApiKeyResponse` extending ApiKeyDto with key field
+    - Create `RotateApiKeyResponse` extending ApiKeyDto with key and oldKeyId fields
+    - Create `ApiKeyListResponse` with items array and pagination metadata
+    - _Requirements: 1.3, 2.2, 5.3_
+  - [x] 3.3 Define authentication context interface
+    - Create `ApiKeyAuthContext` interface with organizationId, apiKeyId, scopes
+    - _Requirements: 6.6_
+
+- [x] 4. Implement ApiKey repository layer
+  - [x] 4.1 Create ApiKeyRepository with Prisma
+    - Implement `create(data)` with organizationId isolation
+    - Implement `findByPrefix(prefix)` for authentication lookups
+    - Implement `findById(id, organizationId)` with tenant filtering
+    - Implement `findMany(organizationId, pagination)` for listing
+    - Implement `update(id, organizationId, data)` with tenant verification
+    - Implement `softDelete(id, organizationId)` for revocation
+    - _Requirements: 1.4, 2.1, 3.4, 4.3, 11.1, 11.2_
+  - [ ]* 4.2 Write property test for multi-tenant isolation
+    - **Property 4: Multi-tenant key association**
+    - **Validates: Requirements 1.4, 2.1, 11.1**
+
+- [x] 5. Implement ApiKeyService business logic
+  - [x] 5.1 Implement createKey method
+    - Generate API key using crypto utilities
+    - Store hash, prefix, last4, and metadata in database
+    - Associate with organizationId and createdBy userId
+    - Return response with plaintext key (only once)
+    - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5_
+  - [x] 5.2 Implement listKeys method
+    - Query keys filtered by organizationId
+    - Support pagination
+    - Return only safe fields (no keyHash or plaintext)
+    - _Requirements: 2.1, 2.2, 2.3, 2.4_
+  - [x] 5.3 Implement updateKey method
+    - Verify key belongs to organization
+    - Update name, scopes, or expiresAt
+    - Validate future dates for expiration
+    - Preserve key credentials (prefix, hash)
+    - _Requirements: 3.1, 3.2, 3.3, 3.4_
+  - [x] 5.4 Implement revokeKey method
+    - Verify key belongs to organization
+    - Set status to REVOKED and record revokedAt timestamp
+    - Maintain record for audit trail
+    - _Requirements: 4.1, 4.3, 4.4_
+  - [x] 5.5 Implement rotateKey method
+    - Verify key belongs to organization
+    - Generate new key with same name and scopes
+    - Revoke old key automatically
+    - Set rotatedFromId to link keys
+    - Return new plaintext key (only once)
+    - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
+  - [x] 5.6 Implement verifyKey method
+    - Parse key format to extract prefix
+    - Query database by prefix
+    - Compute and compare hash using constant-time comparison
+    - Verify status is ACTIVE
+    - Verify key has not expired
+    - Update lastUsedAt asynchronously
+    - Return authentication context
+    - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6_
+  - [ ]* 5.7 Write property test for plaintext single exposure
+    - **Property 3: Plaintext key single exposure**
+    - **Validates: Requirements 1.3, 5.3**
+  - [ ]* 5.8 Write property test for update preserves credentials
+    - **Property 8: Update preserves credentials**
+    - **Validates: Requirements 3.1**
+  - [ ]* 5.9 Write property test for revocation state transition
+    - **Property 12: Revocation state transition**
+    - **Validates: Requirements 4.1**
+  - [ ]* 5.10 Write property test for rotation generates new credentials
+    - **Property 15: Rotation generates new credentials**
+    - **Validates: Requirements 5.1**
+  - [ ]* 5.11 Write property test for rotation revokes old key
+    - **Property 16: Rotation revokes old key**
+    - **Validates: Requirements 5.2**
+  - [ ]* 5.12 Write property test for revoked key authentication failure
+    - **Property 13: Revoked key authentication failure**
+    - **Validates: Requirements 4.2**
+  - [ ]* 5.13 Write property test for expired key rejection
+    - **Property 23: Expired key rejection**
+    - **Validates: Requirements 6.5**
+
+- [x] 6. Implement authentication guards
+  - [x] 6.1 Create ApiKeyGuard
+    - Implement `canActivate()` method
+    - Extract key from `Authorization: Bearer` header
+    - Extract key from `x-api-key` header as fallback
+    - Call ApiKeyService.verifyKey()
+    - Attach authentication context to request.apiAuth
+    - Handle errors and return 401 for invalid keys
+    - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6_
+  - [x] 6.2 Create ApiScopesGuard
+    - Implement `canActivate()` method using Reflector
+    - Read required scopes from @ApiScopes decorator metadata
+    - Verify API key scopes contain all required scopes
+    - Return 403 if scopes insufficient
+    - _Requirements: 7.1, 7.2, 7.3, 7.4_
+  - [x] 6.3 Create @ApiScopes decorator
+    - Use SetMetadata to store required scopes
+    - _Requirements: 7.1_
+  - [ ]* 6.4 Write property test for authorization header extraction
+    - **Property 19: Authorization header extraction**
+    - **Validates: Requirements 6.1**
+  - [ ]* 6.5 Write property test for scope authorization
+    - **Property 25: Scope authorization**
+    - **Validates: Requirements 7.1, 7.3**
+  - [ ]* 6.6 Write property test for multiple scope requirement
+    - **Property 26: Multiple scope requirement**
+    - **Validates: Requirements 7.4**
+
+- [x] 7. Implement usage logging
+  - [x] 7.1 Create UsageLogRepository
+    - Implement `create(data)` to insert usage log records
+    - Support batch inserts for high volume (future optimization)
+    - _Requirements: 8.1, 8.2_
+  - [x] 7.2 Create UsageLogService
+    - Implement `logRequest(apiKeyId, organizationId, request, response, latency, error?)`
+    - Extract method, path, statusCode, ip, userAgent from request/response
+    - Never log plaintext keys
+    - Write logs synchronously (async queue support as future extension)
+    - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5_
+  - [x] 7.3 Create logging interceptor
+    - Implement NestJS interceptor to capture request/response
+    - Measure latency
+    - Call UsageLogService after response
+    - Handle both success and error cases
+    - _Requirements: 8.1, 8.4_
+  - [ ]* 7.4 Write property test for usage log completeness
+    - **Property 27: Usage log completeness**
+    - **Validates: Requirements 8.1, 8.5**
+  - [ ]* 7.5 Write property test for usage log security
+    - **Property 29: Usage log security**
+    - **Validates: Requirements 8.3**
+
+- [x] 8. Create admin API controller
+  - [x] 8.1 Create ApiKeyController for admin endpoints
+    - Add authentication guard (existing JWT/session guard)
+    - Add permission guard checking `api_keys:manage`
+    - Extract organizationId and userId from authenticated user
+    - _Requirements: 9.1, 9.2_
+  - [x] 8.2 Implement POST /admin/api-keys endpoint
+    - Accept CreateApiKeyDto
+    - Call ApiKeyService.createKey()
+    - Return CreateApiKeyResponse with plaintext key
+    - Add Swagger/OpenAPI documentation
+    - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5_
+  - [x] 8.3 Implement GET /admin/api-keys endpoint
+    - Accept pagination query parameters
+    - Call ApiKeyService.listKeys()
+    - Return ApiKeyListResponse
+    - Add Swagger/OpenAPI documentation
+    - _Requirements: 2.1, 2.2, 2.3, 2.4_
+  - [x] 8.4 Implement PATCH /admin/api-keys/:id endpoint
+    - Accept UpdateApiKeyDto
+    - Call ApiKeyService.updateKey()
+    - Return updated ApiKeyDto
+    - Add Swagger/OpenAPI documentation
+    - _Requirements: 3.1, 3.2, 3.3, 3.4_
+  - [x] 8.5 Implement POST /admin/api-keys/:id/revoke endpoint
+    - Call ApiKeyService.revokeKey()
+    - Return success response
+    - Add Swagger/OpenAPI documentation
+    - _Requirements: 4.1, 4.3, 4.4_
+  - [x] 8.6 Implement POST /admin/api-keys/:id/rotate endpoint
+    - Call ApiKeyService.rotateKey()
+    - Return RotateApiKeyResponse with new plaintext key
+    - Add Swagger/OpenAPI documentation
+    - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
+  - [ ]* 8.7 Write property test for cross-tenant operation denial
+    - **Property 11: Cross-tenant operation denial**
+    - **Validates: Requirements 3.4, 4.3, 11.2**
+
+- [x] 9. Create external API demo endpoint
+  - [x] 9.1 Create V1Controller for external API
+    - Apply ApiKeyGuard to all routes
+    - Apply ApiScopesGuard where needed
+    - _Requirements: 6.1, 6.2, 6.6_
+  - [x] 9.2 Implement GET /v1/me endpoint
+    - Extract authentication context from request.apiAuth
+    - Return organizationId, apiKeyId, scopes
+    - Do not include sensitive key material
+    - Add Swagger/OpenAPI documentation
+    - _Requirements: 12.1, 12.2_
+  - [x] 9.3 Apply usage logging interceptor to external API routes
+    - Register interceptor for all /v1/* routes
+    - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5_
+
+- [x] 10. Create ApiKeyModule and wire dependencies
+  - [x] 10.1 Create ApiKeyModule
+    - Import PrismaModule, ConfigModule
+    - Register all services, repositories, guards
+    - Export ApiKeyService, guards, and decorators
+    - _Requirements: All_
+  - [x] 10.2 Register module in AppModule
+    - Import ApiKeyModule
+    - _Requirements: All_
+  - [x] 10.3 Add environment configuration
+    - Add `API_KEY_SECRET` to .env.example
+    - Document in configuration files
+    - Validate required environment variables on startup
+    - _Requirements: 1.2, 6.3_
+
+- [x] 11. Add error handling and validation
+  - [x] 11.1 Create custom exceptions
+    - Create `ApiKeyNotFoundException`
+    - Create `ApiKeyInvalidException`
+    - Create `ApiKeyExpiredException`
+    - Create `ApiKeyRevokedException`
+    - Create `InsufficientScopesException`
+    - _Requirements: 6.4, 6.5, 7.3_
+  - [x] 11.2 Implement global exception filter
+    - Map exceptions to appropriate HTTP status codes
+    - Never expose sensitive information in error messages
+    - Use generic "Invalid API key" for all auth failures
+    - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
+  - [x] 11.3 Add input validation
+    - Validate DTO fields with class-validator
+    - Validate date formats and future dates
+    - Validate scope format
+    - _Requirements: 3.3_
+
+- [x] 12. Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 13. Create Swagger/OpenAPI documentation
+  - [x] 13.1 Add API documentation decorators
+    - Document all admin endpoints with @ApiOperation, @ApiResponse
+    - Document all external endpoints
+    - Document authentication requirements
+    - Document scope requirements
+    - _Requirements: All_
+  - [x] 13.2 Add example requests and responses
+    - Provide curl examples for all endpoints
+    - Show example API key format
+    - Document error responses
+    - _Requirements: All_
+
+- [ ]* 14. Write integration tests
+  - [ ]* 14.1 Test admin API flow
+    - Create key → List keys → Update key → Rotate key → Revoke key
+    - Verify multi-tenant isolation
+    - _Requirements: 1.1-5.5_
+  - [ ]* 14.2 Test external API authentication flow
+    - Create key → Authenticate with key → Access protected endpoint
+    - Test both header formats
+    - Test scope enforcement
+    - _Requirements: 6.1-7.4_
+  - [ ]* 14.3 Test usage logging
+    - Make requests → Verify logs created
+    - Verify log content and associations
+    - _Requirements: 8.1-8.5_
+  - [ ]* 14.4 Test error scenarios
+    - Invalid keys, expired keys, revoked keys
+    - Insufficient scopes
+    - Cross-tenant access attempts
+    - _Requirements: All error cases_
+
+- [x] 15. Final checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
