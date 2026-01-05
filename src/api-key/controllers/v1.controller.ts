@@ -1,3 +1,14 @@
+/*
+ * @Author: 杨仕明 shiming.y@qq.com
+ * @Date: 2026-01-05 10:55:08
+ * @LastEditors: 杨仕明 shiming.y@qq.com
+ * @LastEditTime: 2026-01-05 11:25:56
+ * @FilePath: /lulab_backend/src/api-key/controllers/v1.controller.ts
+ * @Description: 
+ * 
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved. 
+ */
+
 import {
   Controller,
   Get,
@@ -14,6 +25,7 @@ import {
 import { Request } from 'express';
 import { ApiKeyGuard } from '../guards/api-key.guard';
 import { ApiScopesGuard } from '../guards/api-scopes.guard';
+import { Public } from '@/auth/decorators/public.decorator';
 import { UsageLoggingInterceptor } from '../interceptors/usage-logging.interceptor';
 
 /**
@@ -30,6 +42,7 @@ export class V1Controller {
    * 获取当前 API Key 信息（演示端点）
    */
   @Get('me')
+  @Public()
   @ApiOperation({
     summary: '获取当前 API Key 信息',
     description: '返回当前 API Key 的组织 ID、Key ID 和权限范围',
