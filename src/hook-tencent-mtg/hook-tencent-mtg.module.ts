@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-01-03 10:00:00
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-04 01:54:06
+ * @LastEditTime: 2026-01-05 23:34:47
  * @FilePath: /lulab_backend/src/hook-tencent-mtg/hook-tencent-mtg.module.ts
  * @Description: 腾讯会议模块，处理腾讯会议相关的Webhook事件
  *
@@ -16,6 +16,7 @@ import { tencentMeetingConfig } from '@/configs/tencent-mtg.config';
 import { PrismaModule } from '../prisma/prisma.module';
 import { LarkModule } from '@/integrations/lark/lark.module';
 import { OpenaiModule } from '@/integrations/openai/openai.module';
+import { UserModule } from '@/user/user.module';
 
 import { TencentWebhookController } from './controllers/tencent-webhook.controller';
 import { TencentEventHandlerService } from './services/event-handler.service';
@@ -61,6 +62,7 @@ import {
     TencentModule,
     OpenaiModule,
     PrismaModule,
+    UserModule,
   ],
   controllers: [TencentWebhookController],
   providers: [
