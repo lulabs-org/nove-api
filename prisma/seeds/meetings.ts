@@ -6,6 +6,8 @@ import {
   GenerationMethod,
   Platform,
   StorageProvider,
+  RecordingFileType,
+  RecordingStatus,
   Prisma,
 } from '@prisma/client';
 import { createSimulatedTranscript } from './transcripts';
@@ -137,7 +139,7 @@ const MEETING_FILE_CONFIGS = {
     sizeBytes: BigInt(524288000), // 500MB
 
     // MeetingRecordingFile fields
-    fileType: 'VIDEO' as any, // 使用枚举值而不是数字
+    fileType: RecordingFileType.VIDEO,
     durationMs: BigInt(3600000), // 1小时
     resolution: '1920x1080',
   },
@@ -176,24 +178,24 @@ const MEETING_SUMMARY_CONFIGS = {
 
 export interface CreatedMeetings {
   meetings: {
-    teamMeeting: any;
-    clientMeeting: any;
-    trainingMeeting: any;
-    emergencyMeeting: any;
+    teamMeeting: Prisma.MeetingGetPayload<Record<string, never>>;
+    clientMeeting: Prisma.MeetingGetPayload<Record<string, never>>;
+    trainingMeeting: Prisma.MeetingGetPayload<Record<string, never>>;
+    emergencyMeeting: Prisma.MeetingGetPayload<Record<string, never>>;
   };
   platformUsers: {
-    host1: any;
-    host2: any;
-    host3: any;
-    host4: any;
-    participant1: any;
-    participant2: any;
+    host1: Prisma.PlatformUserGetPayload<Record<string, never>>;
+    host2: Prisma.PlatformUserGetPayload<Record<string, never>>;
+    host3: Prisma.PlatformUserGetPayload<Record<string, never>>;
+    host4: Prisma.PlatformUserGetPayload<Record<string, never>>;
+    participant1: Prisma.PlatformUserGetPayload<Record<string, never>>;
+    participant2: Prisma.PlatformUserGetPayload<Record<string, never>>;
   };
   meetingFiles: {
-    recording: any;
+    recording: Prisma.MeetingRecordingGetPayload<Record<string, never>>;
   };
   meetingSummaries: {
-    teamSummary: any;
+    teamSummary: Prisma.MeetingSummaryGetPayload<Record<string, never>>;
   };
 }
 
@@ -244,19 +246,17 @@ async function createMeeting(
   hostPlatformUserId?: string,
 ) {
   const now = new Date();
-  const startTime = new Date(now.getTime() - 2 * 60 * 60 * 1000); // 2小时前
-  const endTime = new Date(now.getTime() - 1 * 60 * 60 * 1000); // 1小时前
+  const startTime = new Date(now.getTime() - 2 * 60 * 60 * 1000);
+  const endTime = new Date(now.getTime() - 1 * 60 * 60 * 1000);
 
-  const { hostUserName, meetingId, ...restConfig } = meetingConfig;
+  const { meetingId, hostUserName, ...restConfig } = meetingConfig;
 
-  // 根据 model: @@unique([platform, meetingId, subMeetingId])
-  // Use upsert with the unique constraint directly
   return prisma.meeting.upsert({
     where: {
       platform_meetingId_subMeetingId: {
         platform: meetingConfig.platform,
-        meetingId: meetingId!,
-        subMeetingId: '__ROOT__', // Match the create clause value
+        meetingId: meetingId,
+        subMeetingId: '__ROOT__',
       },
     },
     update: {
@@ -266,18 +266,18 @@ async function createMeeting(
     },
     create: {
       ...restConfig,
-      meetingId: meetingId!,
+      meetingId: meetingId,
       hostId: hostPlatformUserId,
       scheduledStartAt: startTime,
       scheduledEndAt: endTime,
       startAt: startTime,
       endAt: endTime,
-      durationSeconds: 3600, // 1小时
+      durationSeconds: 3600,
       hasRecording: true,
       recordingStatus: ProcessingStatus.COMPLETED,
       processingStatus: ProcessingStatus.COMPLETED,
       timezone: 'Asia/Shanghai',
-      subMeetingId: '__ROOT__', // Explicitly set subMeetingId
+      subMeetingId: '__ROOT__',
     },
   });
 }
@@ -324,8 +324,8 @@ async function createMeetingRecording(
         meetingId,
         startAt: new Date(),
         endAt: new Date(),
-        status: 'COMPLETED' as any, // 使用类型断言来绕过类型检查
-        recorderUserId: recorderUserId, // Link to PlatformUser who recorded
+        status: RecordingStatus.COMPLETED,
+        recorderUserId: recorderUserId,
       },
     });
   }
@@ -359,7 +359,7 @@ async function createMeetingRecording(
 async function createMeetingSummary(
   prisma: PrismaClient,
   meetingId: string,
-  summaryData: any,
+  summaryData: typeof MEETING_SUMMARY_CONFIGS.teamSummary,
   transcriptId?: string,
   creatorPlatformUserId?: string,
 ) {
@@ -413,10 +413,16 @@ export async function createMeetings(
     }),
   );
 
-  const platformUsers: any = platformUsersRaw.reduce((acc, { key, user }) => {
-    acc[key] = user;
-    return acc;
-  }, {} as any);
+  const platformUsers: Record<
+    string,
+    Prisma.PlatformUserGetPayload<Record<string, never>>
+  > = platformUsersRaw.reduce(
+    (acc, { key, user }) => {
+      acc[key] = user;
+      return acc;
+    },
+    {} as Record<string, Prisma.PlatformUserGetPayload<Record<string, never>>>,
+  );
 
   // 2. 创建会议记录
   const meetingsRaw = await Promise.all(
@@ -435,7 +441,9 @@ export async function createMeetings(
       // So there is a disconnect in the original seed data between `MeetingConfig.hostUserName` and `PlatformUserConfig.userName`.
       // To simplify safely, I will keep a manual mapping for host assignment but use the map for storage.
 
-      let hostUser;
+      let hostUser:
+        | Prisma.PlatformUserGetPayload<Record<string, never>>
+        | undefined;
       if (key === 'teamMeeting') hostUser = platformUsers.host1;
       else if (key === 'clientMeeting') hostUser = platformUsers.host2;
       else if (key === 'trainingMeeting') hostUser = platformUsers.host3;
@@ -446,10 +454,16 @@ export async function createMeetings(
     }),
   );
 
-  const meetings: any = meetingsRaw.reduce((acc, { key, meeting }) => {
-    acc[key] = meeting;
-    return acc;
-  }, {} as any);
+  const meetings: Record<
+    string,
+    Prisma.MeetingGetPayload<Record<string, never>>
+  > = meetingsRaw.reduce(
+    (acc, { key, meeting }) => {
+      acc[key] = meeting;
+      return acc;
+    },
+    {} as Record<string, Prisma.MeetingGetPayload<Record<string, never>>>,
+  );
 
   // 3. 创建会议参与记录
   await Promise.all([
@@ -510,12 +524,11 @@ export async function createMeetings(
   const [teamSummary] = meetingSummaries;
 
   return {
-    meetings: meetings,
-    platformUsers: platformUsers,
-    // Simplified return structure as we have complex file objects now
+    meetings: meetings as CreatedMeetings['meetings'],
+    platformUsers: platformUsers as CreatedMeetings['platformUsers'],
     meetingFiles: {
       recording: meetingRecording,
-    } as any,
+    },
     meetingSummaries: {
       teamSummary,
     },

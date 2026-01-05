@@ -233,7 +233,7 @@ export async function createSimulatedTranscript(
       });
 
       // 4. Process Words
-      const wordsData = sentence.words.map((word, idx) => ({
+      const wordsData = sentence.words.map((word) => ({
         sentenceId: sentenceRecord.id,
         wid: parseInt(word.wid, 10),
         startTimeMs: BigInt(word.start_time),
