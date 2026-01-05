@@ -122,16 +122,20 @@ export class SpeakerService {
     speakerInfo: SpeakerInfo,
     participant: MeetingParticipantDetail,
   ): NewSpeakerInfo {
-    const {
-      userid,
-      user_name,
-      join_time,
-      left_time,
-      join_type,
-      ms_open_id,
-      open_id,
-      ...rest
-    } = participant;
+    const excludedKeys = [
+      'userid',
+      'user_name',
+      'join_time',
+      'left_time',
+      'join_type',
+      'ms_open_id',
+      'open_id',
+    ];
+    const rest = Object.fromEntries(
+      Object.entries(participant).filter(
+        ([key]) => !excludedKeys.includes(key),
+      ),
+    );
     return {
       ...speakerInfo,
       ...rest,
