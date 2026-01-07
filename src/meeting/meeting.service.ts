@@ -2,7 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { ProcessingStatus, Prisma } from '@prisma/client';
 import { MeetingRepository } from './repositories/meeting.repository';
 import { GetMeetingRecordsParams } from './types';
-import { MeetingRecordResponseDto } from './dto/meeting-record.dto';
+import {
+  MeetingRecordResponseDto,
+  MeetingStatsResponseDto,
+} from './dto/meeting-record.dto';
 import { CreateMeetingRecordDto } from './dto/create-meeting-record.dto';
 import { UpdateMeetingRecordDto } from './dto/update-meeting-record.dto';
 import {
@@ -155,14 +158,15 @@ export class MeetingService {
     startDate?: Date;
     endDate?: Date;
     platform?: string;
-  }) {
+  }): MeetingStatsResponseDto {
     void params;
     // 实现统计逻辑
     return {
-      totalMeetings: 0,
-      totalDuration: 0,
-      platformStats: {},
-      monthlyStats: [],
+      total: 0,
+      platformStats: [],
+      statusStats: [],
+      typeStats: [],
+      recentMeetings: [],
     };
   }
 

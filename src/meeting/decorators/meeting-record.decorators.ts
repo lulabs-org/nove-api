@@ -7,7 +7,10 @@ import {
   ApiBody,
 } from '@nestjs/swagger';
 import { MeetingPlatform, MeetingType, ProcessingStatus } from '@prisma/client';
-import { MeetingRecordListResponseDto } from '../dto/meeting-record.dto';
+import {
+  MeetingRecordListResponseDto,
+  MeetingStatsResponseDto,
+} from '../dto/meeting-record.dto';
 
 /**
  * 获取会议记录列表装饰器
@@ -196,28 +199,7 @@ export const ApiGetMeetingStatsDocs = () =>
     ApiResponse({
       status: 200,
       description: '获取成功',
-      schema: {
-        type: 'object',
-        properties: {
-          total: { type: 'number', description: '总会议数' },
-          platformStats: {
-            type: 'object',
-            description: '各平台会议数统计',
-          },
-          statusStats: {
-            type: 'object',
-            description: '各状态会议数统计',
-          },
-          typeStats: {
-            type: 'object',
-            description: '各类型会议数统计',
-          },
-          recentMeetings: {
-            type: 'array',
-            description: '最近的会议记录',
-          },
-        },
-      },
+      type: MeetingStatsResponseDto,
     }),
     ApiResponse({ status: 500, description: '服务器内部错误' }),
   );

@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-09-23 06:15:34
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2025-12-20 09:48:51
+ * @LastEditTime: 2026-01-07 15:22:56
  * @FilePath: /lulab_backend/src/hook-tencent-mtg/decorators/tencent-webhook.decorators.ts
  * @Description: 腾讯会议Webhook装饰器
  *
@@ -17,6 +17,7 @@ import {
   ApiResponse,
   ApiBody,
 } from '@nestjs/swagger';
+import { TencentWebhookEventBodyDto } from '../dto/tencent-webhook-body.dto';
 
 /**
  * 腾讯会议Webhook URL验证装饰器
@@ -99,19 +100,8 @@ export function ApiTencentEventReceiverDocs() {
     }),
     ApiBody({
       description: '腾讯会议Webhook事件请求体',
-      type: 'object',
+      type: TencentWebhookEventBodyDto,
       required: true,
-      schema: {
-        properties: {
-          data: {
-            type: 'string',
-            description: 'Base64编码的加密事件数据',
-            example:
-              'PEircBnzWLN8UEmnWYclRuejXA55PpzDhz4UDpL2L7kSR/g3eWQ+4k8s+BYwviUtOgiYJ+qWBkMUatK7n0hD37DbxnroY3Svohpzhe8UVjPyjPj/ywbMfkvv9VbBZb7b3Zc2E72N3wPixoY312/SVC2rYNzsvUOKQwKCyIIFVkpepufOwVNKGikwv6apt7KqmNg9uR/PAyB39WBtAs6DlmvHBTDZY8Dnh+Wckm/KGKcUyuQ0OMNXbLLaEqZhlnLf8ciVdhDySOvbS50yTNElJFtIdmpmCwbx02n+MUUk3PfQEW8bTx0w1+/3YXhLo5Xs8DfOcIKRLoGa3o9uJeo54n20zxGmAroMiR3bebsKfa4xJruTH23tkpxg6wHqZIrJAEWrdeHsmKjWt5LhdIdbto5fh6AVD4lkzoXm9wtxM7WOlr6yKux0ErAgP63I2Ig+n2ReimGtGMhrgBAtwNndzgXcoMqjiAY6jaJ7UWK/QbDnVee4RpfxvmkMppGJmn/5bF0Glt+K/d8zbbtbI1YWvZY3ImBny1WmXaGORu+++i4y51MZUgrURguQJo0WiGn+DLP5/IPIVe5bIJMLODHPNADGy5rZIkjAOYGJq2yav7ln5WfLd4VPlP/xLbDJrKdScbxSMrpkROZ1UwudnfYUtg==',
-          },
-        },
-        required: ['data'],
-      },
     }),
     ApiResponse({
       status: 200,
