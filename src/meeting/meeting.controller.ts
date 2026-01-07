@@ -29,6 +29,7 @@ import {
   QueryMeetingRecordsDto,
   MeetingRecordResponseDto,
   MeetingRecordListResponseDto,
+  MeetingStatsResponseDto,
 } from './dto/meeting-record.dto';
 import { CreateMeetingRecordDto } from './dto/create-meeting-record.dto';
 import { UpdateMeetingRecordDto } from './dto/update-meeting-record.dto';
@@ -182,7 +183,7 @@ export class MeetingController {
   getMeetingStats(
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
-  ): any {
+  ): MeetingStatsResponseDto {
     this.logger.log('获取会议统计信息', { startDate, endDate });
 
     try {

@@ -1,13 +1,42 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+export class UserProfileDto {
+  @ApiPropertyOptional({ description: '姓名' })
+  name?: string;
+
+  @ApiPropertyOptional({ description: '头像URL' })
+  avatar?: string;
+
+  @ApiPropertyOptional({ description: '个人简介' })
+  bio?: string;
+
+  @ApiPropertyOptional({ description: '名' })
+  firstName?: string;
+
+  @ApiPropertyOptional({ description: '姓' })
+  lastName?: string;
+
+  @ApiPropertyOptional({ description: '出生日期', format: 'date-time' })
+  dateOfBirth?: Date;
+
+  @ApiPropertyOptional({ description: '性别' })
+  gender?: string;
+
+  @ApiPropertyOptional({ description: '城市' })
+  city?: string;
+
+  @ApiPropertyOptional({ description: '国家' })
+  country?: string;
+}
 
 export class UserProfileResponseDto {
-  @ApiProperty()
+  @ApiProperty({ description: '用户ID' })
   id: string;
 
   @ApiProperty({ required: false, nullable: true })
   username?: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: '邮箱' })
   email: string;
 
   @ApiProperty({ required: false, nullable: true })
@@ -16,10 +45,10 @@ export class UserProfileResponseDto {
   @ApiProperty({ required: false, nullable: true })
   phone?: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: '邮箱是否已验证' })
   emailVerified: boolean;
 
-  @ApiProperty()
+  @ApiProperty({ description: '手机号是否已验证' })
   phoneVerified: boolean;
 
   @ApiProperty({
@@ -33,16 +62,6 @@ export class UserProfileResponseDto {
   @ApiProperty({ type: String, format: 'date-time' })
   createdAt: Date;
 
-  @ApiProperty({ required: false, nullable: true })
-  profile?: {
-    name?: string;
-    avatar?: string;
-    bio?: string;
-    firstName?: string;
-    lastName?: string;
-    dateOfBirth?: Date;
-    gender?: string;
-    city?: string;
-    country?: string;
-  };
+  @ApiProperty({ required: false, nullable: true, type: UserProfileDto })
+  profile?: UserProfileDto;
 }

@@ -10,6 +10,7 @@ import {
 import { RegisterDto } from '../dto/register.dto';
 import { LoginDto } from '../dto/login.dto';
 import { AuthResponseDto } from '../dto/auth-response.dto';
+import { LogoutResponseDto } from '../dto/logout-response.dto';
 
 // 注册接口文档装饰器
 export function ApiRegisterDocs() {
@@ -26,17 +27,20 @@ export function ApiRegisterDocs() {
       status: 201,
       description: '注册成功，返回访问令牌和用户信息',
       type: AuthResponseDto,
-      schema: {
-        example: {
-          accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-          refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-          user: {
-            id: '123e4567-e89b-12d3-a456-426614174000',
-            username: 'testuser',
-            email: 'user@example.com',
-            phone: '13800138000',
-            countryCode: '+86',
-            createdAt: '2024-01-01T00:00:00.000Z',
+      examples: {
+        success: {
+          summary: '注册成功示例',
+          value: {
+            accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+            refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+            user: {
+              id: '123e4567-e89b-12d3-a456-426614174000',
+              username: 'testuser',
+              email: 'user@example.com',
+              phone: '13800138000',
+              countryCode: '+86',
+              createdAt: '2024-01-01T00:00:00.000Z',
+            },
           },
         },
       },
@@ -130,17 +134,20 @@ export function ApiLoginDocs() {
       status: 200,
       description: '登录成功，返回访问令牌和用户信息',
       type: AuthResponseDto,
-      schema: {
-        example: {
-          accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-          refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-          user: {
-            id: '123e4567-e89b-12d3-a456-426614174000',
-            username: 'testuser',
-            email: 'user@example.com',
-            phone: '13800138000',
-            countryCode: '+86',
-            createdAt: '2024-01-01T00:00:00.000Z',
+      examples: {
+        success: {
+          summary: '登录成功示例',
+          value: {
+            accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+            refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+            user: {
+              id: '123e4567-e89b-12d3-a456-426614174000',
+              username: 'testuser',
+              email: 'user@example.com',
+              phone: '13800138000',
+              countryCode: '+86',
+              createdAt: '2024-01-01T00:00:00.000Z',
+            },
           },
         },
       },
@@ -460,56 +467,29 @@ export function ApiLogoutDocs() {
     ApiResponse({
       status: 200,
       description: '退出登录成功',
-      schema: {
-        type: 'object',
-        properties: {
-          success: { type: 'boolean', description: '退出是否成功' },
-          message: { type: 'string', description: '退出结果消息' },
-          details: {
-            type: 'object',
-            properties: {
-              accessTokenRevoked: {
-                type: 'boolean',
-                description: '访问令牌是否被撤销',
-              },
-              refreshTokenRevoked: {
-                type: 'boolean',
-                description: '刷新令牌是否被撤销',
-              },
-              allDevicesLoggedOut: {
-                type: 'boolean',
-                description: '是否撤销了所有设备的令牌',
-              },
-              revokedTokensCount: {
-                type: 'number',
-                description: '撤销的令牌数量',
-              },
+      type: LogoutResponseDto,
+      examples: {
+        simple_logout: {
+          summary: '简单登出',
+          value: {
+            success: true,
+            message: '退出登录成功',
+            details: {
+              accessTokenRevoked: true,
+              refreshTokenRevoked: false,
             },
           },
         },
-        examples: {
-          simple_logout: {
-            summary: '简单登出',
-            value: {
-              success: true,
-              message: '退出登录成功',
-              details: {
-                accessTokenRevoked: true,
-                refreshTokenRevoked: false,
-              },
-            },
-          },
-          comprehensive_logout: {
-            summary: '全面登出',
-            value: {
-              success: true,
-              message: '退出登录成功，已撤销所有设备的 3 个令牌',
-              details: {
-                accessTokenRevoked: true,
-                refreshTokenRevoked: true,
-                allDevicesLoggedOut: true,
-                revokedTokensCount: 3,
-              },
+        comprehensive_logout: {
+          summary: '全面登出',
+          value: {
+            success: true,
+            message: '退出登录成功，已撤销所有设备的 3 个令牌',
+            details: {
+              accessTokenRevoked: true,
+              refreshTokenRevoked: true,
+              allDevicesLoggedOut: true,
+              revokedTokensCount: 3,
             },
           },
         },

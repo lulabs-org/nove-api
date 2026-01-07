@@ -196,3 +196,68 @@ export class MeetingRecordListResponseDto {
   @ApiProperty({ description: '总页数' })
   totalPages: number;
 }
+
+/**
+ * 平台统计信息DTO
+ */
+export class PlatformStatsDto {
+  @ApiProperty({ description: '平台名称', enum: MeetingPlatform })
+  platform: MeetingPlatform;
+
+  @ApiProperty({ description: '会议数量' })
+  count: number;
+}
+
+/**
+ * 状态统计信息DTO
+ */
+export class StatusStatsDto {
+  @ApiProperty({ description: '处理状态', enum: ProcessingStatus })
+  status: ProcessingStatus;
+
+  @ApiProperty({ description: '会议数量' })
+  count: number;
+}
+
+/**
+ * 类型统计信息DTO
+ */
+export class TypeStatsDto {
+  @ApiProperty({ description: '会议类型', enum: MeetingType })
+  type: MeetingType;
+
+  @ApiProperty({ description: '会议数量' })
+  count: number;
+}
+
+/**
+ * 会议统计信息响应DTO
+ */
+export class MeetingStatsResponseDto {
+  @ApiProperty({ description: '总会议数' })
+  total: number;
+
+  @ApiProperty({
+    description: '各平台会议数统计',
+    type: [PlatformStatsDto],
+  })
+  platformStats: PlatformStatsDto[];
+
+  @ApiProperty({
+    description: '各状态会议数统计',
+    type: [StatusStatsDto],
+  })
+  statusStats: StatusStatsDto[];
+
+  @ApiProperty({
+    description: '各类型会议数统计',
+    type: [TypeStatsDto],
+  })
+  typeStats: TypeStatsDto[];
+
+  @ApiProperty({
+    description: '最近的会议记录',
+    type: [MeetingRecordResponseDto],
+  })
+  recentMeetings: MeetingRecordResponseDto[];
+}
