@@ -8,7 +8,7 @@ import { CodeType } from '@/verification/enums';
 import { UserRepository } from '@/user/repositories/user.repository';
 import { TokenService } from './token.service';
 import { AuthPolicyService } from './auth-policy.service';
-import { formatAuthUserResponse } from '@/common/utils';
+import { formatAuthUserResponse } from '@/auth/utils/auth-user-mapper';
 import { hashPassword, validatePassword } from '@/common/utils/password.util';
 
 @Injectable()

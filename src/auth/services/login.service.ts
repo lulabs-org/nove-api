@@ -13,7 +13,7 @@ import * as bcrypt from 'bcryptjs';
 import { TokenService } from './token.service';
 import { AuthPolicyService } from './auth-policy.service';
 import { UserRepository } from '@/user/repositories/user.repository';
-import { formatAuthUserResponse } from '@/common/utils';
+import { formatAuthUserResponse } from '@/auth/utils/auth-user-mapper';
 
 @Injectable()
 export class LoginService {
