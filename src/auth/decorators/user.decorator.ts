@@ -13,9 +13,16 @@ import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 export interface CurrentUser {
   id: string;
   username?: string;
-  email?: string;
+  email: string;
   phone?: string;
+  countryCode?: string;
   profile?: Record<string, unknown>;
+  roles?: string[];
+  active: boolean;
+  emailVerified: boolean;
+  phoneVerified: boolean;
+  createdAt: Date;
+  lastLoginAt?: Date | null;
 }
 
 interface RequestWithUser {

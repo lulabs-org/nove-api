@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-08 17:26:07
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-08 17:26:08
+ * @LastEditTime: 2026-01-09 01:47:33
  * @FilePath: /lulab_backend/src/auth/decorators/api-docs/get-me.docs.decorator.ts
  * @Description:
  *
@@ -15,7 +15,7 @@ import {
   ApiHeader,
   ApiProduces,
 } from '@nestjs/swagger';
-import { AuthUserResponseDto } from '../../dto/auth-user-response.dto';
+import { AuthUserWithPermissionsDto } from '../../dto/auth-user-with-permissions.dto';
 
 export function ApiGetMeDocs() {
   return applyDecorators(
@@ -28,7 +28,7 @@ export function ApiGetMeDocs() {
     ApiResponse({
       status: 200,
       description: '成功获取用户信息',
-      type: AuthUserResponseDto,
+      type: AuthUserWithPermissionsDto,
       examples: {
         success: {
           summary: '成功示例',
@@ -36,6 +36,7 @@ export function ApiGetMeDocs() {
             id: '123e4567-e89b-12d3-a456-426614174000',
             name: '张三',
             roles: ['user'],
+            permissions: ['user:read', 'meeting:create'],
           },
         },
         multipleRoles: {
@@ -44,6 +45,7 @@ export function ApiGetMeDocs() {
             id: '123e4567-e89b-12d3-a456-426614174000',
             name: '李四',
             roles: ['user', 'manager'],
+            permissions: ['user:read', 'meeting:create', 'meeting:update'],
           },
         },
       },

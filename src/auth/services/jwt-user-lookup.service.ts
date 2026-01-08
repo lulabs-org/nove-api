@@ -19,7 +19,7 @@ export class JwtUserLookupService implements JwtUserLookup {
   async getAuthenticatedUserById(
     id: string,
   ): Promise<AuthenticatedUser | null> {
-    const user = await this.userRepo.getUserByIdWithProfile(id);
+    const user = await this.userRepo.getUserByIdWithProfileAndRoles(id);
     if (!user) return null;
 
     if (!user.active) {
@@ -30,6 +30,11 @@ export class JwtUserLookupService implements JwtUserLookup {
       throw new UnauthorizedException('账户已被删除');
     }
 
+    const roles =
+      user.roles && user.roles.length > 0
+        ? user.roles.map((r) => r.role.code)
+        : ['USER'];
+
     return {
       id: user.id,
       username: user.username,
@@ -37,6 +42,12 @@ export class JwtUserLookupService implements JwtUserLookup {
       phone: user.phone,
       countryCode: user.countryCode,
       profile: user.profile as unknown as Record<string, unknown> | null,
+      roles,
+      active: user.active,
+      emailVerified: !!user.emailVerifiedAt,
+      phoneVerified: !!user.phoneVerifiedAt,
+      createdAt: user.createdAt,
+      lastLoginAt: user.lastLoginAt,
     };
   }
 }

@@ -28,7 +28,7 @@ import {
   LogoutDto,
   AuthResponseDto,
   RefreshTokenDto,
-  AuthUserResponseDto,
+  AuthUserWithPermissionsDto,
   PermissionsResponseDto,
 } from '@/auth/dto';
 import { LoginService, RegisterService, TokenService } from '@/auth/services';
@@ -308,12 +308,30 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiGetMeDocs()
   @ApiBearerAuth()
-  async getMe(@User() user: CurrentUser): Promise<AuthUserResponseDto> {
-    const roles = this.getUserRoles(user);
+  async getMe(@User() user: CurrentUser): Promise<AuthUserWithPermissionsDto> {
+    const roles = user.roles || ['USER'];
+    const permissions = this.getPermissionsByRoles(roles);
+
     return {
       id: user.id,
-      name: user.username || user.email || user.phone || 'Unknown',
+      username: user.username || undefined,
+      email: user.email,
+      phone: user.phone || undefined,
+      countryCode: user.countryCode || undefined,
+      name:
+        (user.profile?.displayName as string) ||
+        user.username ||
+        user.email ||
+        user.phone ||
+        'Unknown',
+      avatar: (user.profile?.avatar as string) || undefined,
       roles,
+      permissions,
+      active: user.active,
+      emailVerified: user.emailVerified,
+      phoneVerified: user.phoneVerified,
+      createdAt: user.createdAt.toISOString(),
+      lastLoginAt: user.lastLoginAt?.toISOString(),
     };
   }
 
@@ -324,26 +342,20 @@ export class AuthController {
   async getPermissions(
     @User() user: CurrentUser,
   ): Promise<PermissionsResponseDto> {
-    const roles = this.getUserRoles(user);
+    const roles = user.roles || ['USER'];
     const permissions = this.getPermissionsByRoles(roles);
 
     return {
       id: user.id,
-      name: user.username || user.email || user.phone || 'Unknown',
+      name:
+        (user.profile?.displayName as string) ||
+        user.username ||
+        user.email ||
+        user.phone ||
+        'Unknown',
       roles,
       permissions,
     };
-  }
-
-  private getUserRoles(user: CurrentUser): string[] {
-    const role = user.profile?.role;
-    if (Array.isArray(role)) {
-      return role;
-    }
-    if (typeof role === 'string') {
-      return [role];
-    }
-    return ['user'];
   }
 
   private getPermissionsByRoles(roles: string[]): string[] {
