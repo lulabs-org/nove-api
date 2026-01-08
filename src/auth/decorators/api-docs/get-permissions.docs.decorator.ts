@@ -30,8 +30,36 @@ export function ApiGetPermissionsDocs() {
           value: {
             id: '123e4567-e89b-12d3-a456-426614174000',
             name: '张三',
-            role: 'user',
-            permissions: ['user:read', 'user:write', 'meeting:create', 'meeting:read'],
+            roles: ['user'],
+            permissions: ['user:read', 'meeting:create', 'meeting:read'],
+          },
+        },
+        multipleRoles: {
+          summary: '多角色示例',
+          value: {
+            id: '123e4567-e89b-12d3-a456-426614174000',
+            name: '李四',
+            roles: ['user', 'manager'],
+            permissions: ['user:read', 'meeting:create', 'meeting:read', 'meeting:update', 'meeting:manage'],
+          },
+        },
+        adminRoles: {
+          summary: '管理员角色示例',
+          value: {
+            id: '123e4567-e89b-12d3-a456-426614174000',
+            name: '王五',
+            roles: ['admin'],
+            permissions: [
+              'user:read',
+              'user:write',
+              'user:delete',
+              'meeting:create',
+              'meeting:read',
+              'meeting:update',
+              'meeting:delete',
+              'meeting:manage',
+              'system:config',
+            ],
           },
         },
       },

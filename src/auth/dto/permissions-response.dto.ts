@@ -7,8 +7,8 @@ export class PermissionsResponseDto {
   @ApiProperty({ description: '用户名称' })
   name: string;
 
-  @ApiProperty({ description: '用户角色代码' })
-  role: string;
+  @ApiProperty({ description: '用户角色代码列表', type: [String] })
+  roles: string[];
 
   @ApiProperty({ description: '权限列表', type: [String] })
   permissions: string[];

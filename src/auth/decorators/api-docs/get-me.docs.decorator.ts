@@ -30,7 +30,15 @@ export function ApiGetMeDocs() {
           value: {
             id: '123e4567-e89b-12d3-a456-426614174000',
             name: '张三',
-            role: 'user',
+            roles: ['user'],
+          },
+        },
+        multipleRoles: {
+          summary: '多角色示例',
+          value: {
+            id: '123e4567-e89b-12d3-a456-426614174000',
+            name: '李四',
+            roles: ['user', 'manager'],
           },
         },
       },

@@ -309,10 +309,11 @@ export class AuthController {
   @ApiGetMeDocs()
   @ApiBearerAuth()
   async getMe(@User() user: CurrentUser): Promise<AuthUserResponseDto> {
+    const roles = this.getUserRoles(user);
     return {
       id: user.id,
       name: user.username || user.email || user.phone || 'Unknown',
-      role: user.profile?.role as string || 'user',
+      roles,
     };
   }
 
@@ -323,18 +324,29 @@ export class AuthController {
   async getPermissions(
     @User() user: CurrentUser,
   ): Promise<PermissionsResponseDto> {
-    const role = (user.profile?.role as string) || 'user';
-    const permissions = this.getPermissionsByRole(role);
+    const roles = this.getUserRoles(user);
+    const permissions = this.getPermissionsByRoles(roles);
 
     return {
       id: user.id,
       name: user.username || user.email || user.phone || 'Unknown',
-      role,
+      roles,
       permissions,
     };
   }
 
-  private getPermissionsByRole(role: string): string[] {
+  private getUserRoles(user: CurrentUser): string[] {
+    const role = user.profile?.role;
+    if (Array.isArray(role)) {
+      return role;
+    }
+    if (typeof role === 'string') {
+      return [role];
+    }
+    return ['user'];
+  }
+
+  private getPermissionsByRoles(roles: string[]): string[] {
     const rolePermissions: Record<string, string[]> = {
       admin: [
         'user:read',
@@ -357,7 +369,13 @@ export class AuthController {
       user: ['user:read', 'meeting:create', 'meeting:read'],
     };
 
-    return rolePermissions[role] || rolePermissions.user;
+    const allPermissions = new Set<string>();
+    for (const role of roles) {
+      const permissions = rolePermissions[role] || rolePermissions.user;
+      permissions.forEach((permission) => allPermissions.add(permission));
+    }
+
+    return Array.from(allPermissions);
   }
 
   private getClientIp(req: Request): string {
