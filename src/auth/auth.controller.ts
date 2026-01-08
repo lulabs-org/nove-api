@@ -9,6 +9,7 @@ import {
   ValidationPipe,
   UnauthorizedException,
   Logger,
+  Get,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
@@ -18,13 +19,17 @@ import {
   ApiResetPasswordDocs,
   ApiRefreshTokenDocs,
   ApiLogoutDocs,
-} from './decorators/api-docs.decorator';
+  ApiGetMeDocs,
+  ApiGetPermissionsDocs,
+} from './decorators';
 import {
   RegisterDto,
   LoginDto,
   LogoutDto,
   AuthResponseDto,
   RefreshTokenDto,
+  AuthUserResponseDto,
+  PermissionsResponseDto,
 } from '@/auth/dto';
 import { LoginService, RegisterService, TokenService } from '@/auth/services';
 import { PasswordService } from './services/password.service';
@@ -297,6 +302,62 @@ export class AuthController {
         },
       };
     }
+  }
+
+  @Get('me')
+  @HttpCode(HttpStatus.OK)
+  @ApiGetMeDocs()
+  @ApiBearerAuth()
+  async getMe(@User() user: CurrentUser): Promise<AuthUserResponseDto> {
+    return {
+      id: user.id,
+      name: user.username || user.email || user.phone || 'Unknown',
+      role: user.profile?.role as string || 'user',
+    };
+  }
+
+  @Get('permissions')
+  @HttpCode(HttpStatus.OK)
+  @ApiGetPermissionsDocs()
+  @ApiBearerAuth()
+  async getPermissions(
+    @User() user: CurrentUser,
+  ): Promise<PermissionsResponseDto> {
+    const role = (user.profile?.role as string) || 'user';
+    const permissions = this.getPermissionsByRole(role);
+
+    return {
+      id: user.id,
+      name: user.username || user.email || user.phone || 'Unknown',
+      role,
+      permissions,
+    };
+  }
+
+  private getPermissionsByRole(role: string): string[] {
+    const rolePermissions: Record<string, string[]> = {
+      admin: [
+        'user:read',
+        'user:write',
+        'user:delete',
+        'meeting:create',
+        'meeting:read',
+        'meeting:update',
+        'meeting:delete',
+        'meeting:manage',
+        'system:config',
+      ],
+      manager: [
+        'user:read',
+        'meeting:create',
+        'meeting:read',
+        'meeting:update',
+        'meeting:manage',
+      ],
+      user: ['user:read', 'meeting:create', 'meeting:read'],
+    };
+
+    return rolePermissions[role] || rolePermissions.user;
   }
 
   private getClientIp(req: Request): string {
