@@ -98,7 +98,12 @@ export class AuthController {
   async refreshToken(
     @Body(ValidationPipe) refreshTokenDto: RefreshTokenDto,
     @Req() req: Request,
-  ): Promise<{ accessToken: string; refreshToken: string }> {
+  ): Promise<{
+    accessToken: string;
+    expiresIn: number;
+    refreshToken: string;
+    refreshExpiresIn: number;
+  }> {
     const ip = this.getClientIp(req);
     const userAgent = req.get('User-Agent');
     return await this.tokenService.refreshToken(refreshTokenDto.refreshToken, {
