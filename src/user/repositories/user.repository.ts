@@ -20,9 +20,7 @@ export class UserRepository {
     });
   }
 
-  getUserByIdWithProfileAndRoles(
-    id: string,
-  ): Promise<
+  getUserByIdWithProfileAndRoles(id: string): Promise<
     | (User & {
         profile: UserProfile | null;
         roles: Array<{ role: { code: string } }>;

@@ -38,6 +38,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { TokenBlacklistService } from './services/token-blacklist.service';
 import { User, CurrentUser } from '@/auth/decorators/user.decorator';
 import { ClientType } from '@/auth/types/jwt.types';
+import { PermissionService } from '@/permission/services/permission.service';
 
 @ApiTags('Auth')
 @Controller({
@@ -53,6 +54,7 @@ export class AuthController {
     private readonly passwordService: PasswordService,
     private readonly tokenService: TokenService,
     private readonly tokenBlacklist: TokenBlacklistService,
+    private readonly permissionService: PermissionService,
   ) {}
 
   @Public()
@@ -310,7 +312,8 @@ export class AuthController {
   @ApiBearerAuth()
   async getMe(@User() user: CurrentUser): Promise<AuthUserWithPermissionsDto> {
     const roles = user.roles || ['USER'];
-    const permissions = this.getPermissionsByRoles(roles);
+    const permissions =
+      await this.permissionService.getPermissionsByRoleCodes(roles);
 
     return {
       id: user.id,
@@ -343,7 +346,8 @@ export class AuthController {
     @User() user: CurrentUser,
   ): Promise<PermissionsResponseDto> {
     const roles = user.roles || ['USER'];
-    const permissions = this.getPermissionsByRoles(roles);
+    const permissions =
+      await this.permissionService.getPermissionsByRoleCodes(roles);
 
     return {
       id: user.id,
@@ -356,38 +360,6 @@ export class AuthController {
       roles,
       permissions,
     };
-  }
-
-  private getPermissionsByRoles(roles: string[]): string[] {
-    const rolePermissions: Record<string, string[]> = {
-      admin: [
-        'user:read',
-        'user:write',
-        'user:delete',
-        'meeting:create',
-        'meeting:read',
-        'meeting:update',
-        'meeting:delete',
-        'meeting:manage',
-        'system:config',
-      ],
-      manager: [
-        'user:read',
-        'meeting:create',
-        'meeting:read',
-        'meeting:update',
-        'meeting:manage',
-      ],
-      user: ['user:read', 'meeting:create', 'meeting:read'],
-    };
-
-    const allPermissions = new Set<string>();
-    for (const role of roles) {
-      const permissions = rolePermissions[role] || rolePermissions.user;
-      permissions.forEach((permission) => allPermissions.add(permission));
-    }
-
-    return Array.from(allPermissions);
   }
 
   private getClientIp(req: Request): string {
