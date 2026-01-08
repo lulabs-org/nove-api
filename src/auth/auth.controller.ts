@@ -3,12 +3,14 @@ import {
   Post,
   Body,
   Req,
+  Res,
   HttpCode,
   HttpStatus,
   ValidationPipe,
   UnauthorizedException,
   Logger,
 } from '@nestjs/common';
+import { Request, Response } from 'express';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import {
   ApiRegisterDocs,
@@ -17,20 +19,20 @@ import {
   ApiRefreshTokenDocs,
   ApiLogoutDocs,
 } from './decorators/api-docs.decorator';
-import { Request } from 'express';
-import { RegisterService } from './services/register.service';
-import { LoginService } from './services/login.service';
+import {
+  RegisterDto,
+  LoginDto,
+  LogoutDto,
+  AuthResponseDto,
+  RefreshTokenDto,
+} from '@/auth/dto';
+import { LoginService, RegisterService, TokenService } from '@/auth/services';
 import { PasswordService } from './services/password.service';
-import { TokenService } from './services/token.service';
 import { Public } from '@/auth/decorators/public.decorator';
-import { RegisterDto } from './dto/register.dto';
-import { LoginDto } from './dto/login.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
-import { LogoutDto } from './dto/logout.dto';
-import { AuthResponseDto } from './dto/auth-response.dto';
-import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { TokenBlacklistService } from './services/token-blacklist.service';
 import { User, CurrentUser } from '@/auth/decorators/user.decorator';
+import { ClientType } from '@/auth/types/jwt.types';
 
 @ApiTags('Auth')
 @Controller({
@@ -55,10 +57,34 @@ export class AuthController {
   async register(
     @Body(ValidationPipe) registerDto: RegisterDto,
     @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
   ): Promise<AuthResponseDto> {
     const ip = this.getClientIp(req);
     const userAgent = req.get('User-Agent');
-    return await this.registerService.register(registerDto, ip, userAgent);
+    const result = await this.registerService.register(
+      registerDto,
+      ip,
+      userAgent,
+    );
+
+    const isWebClient = registerDto.clientType === ClientType.Web;
+    if (isWebClient) {
+      res.cookie('refreshToken', result.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: (result.refreshExpiresIn || 0) * 1000,
+        path: '/',
+      });
+      const {
+        refreshToken: _refreshToken,
+        refreshExpiresIn: _refreshExpiresIn,
+        ...webResult
+      } = result;
+      return webResult as AuthResponseDto;
+    }
+
+    return result;
   }
 
   @Public()
@@ -68,10 +94,30 @@ export class AuthController {
   async login(
     @Body(ValidationPipe) loginDto: LoginDto,
     @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
   ): Promise<AuthResponseDto> {
     const ip = this.getClientIp(req);
     const userAgent = req.get('User-Agent');
-    return await this.loginService.login(loginDto, ip, userAgent);
+    const result = await this.loginService.login(loginDto, ip, userAgent);
+
+    const isWebClient = loginDto.clientType === ClientType.Web;
+    if (isWebClient) {
+      res.cookie('refreshToken', result.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: (result.refreshExpiresIn || 0) * 1000,
+        path: '/',
+      });
+      const {
+        refreshToken: _refreshToken,
+        refreshExpiresIn: _refreshExpiresIn,
+        ...webResult
+      } = result;
+      return webResult as AuthResponseDto;
+    }
+
+    return result;
   }
 
   @Public()
@@ -98,20 +144,41 @@ export class AuthController {
   async refreshToken(
     @Body(ValidationPipe) refreshTokenDto: RefreshTokenDto,
     @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
   ): Promise<{
     accessToken: string;
     expiresIn: number;
-    refreshToken: string;
-    refreshExpiresIn: number;
+    refreshToken?: string;
+    refreshExpiresIn?: number;
   }> {
     const ip = this.getClientIp(req);
     const userAgent = req.get('User-Agent');
-    return await this.tokenService.refreshToken(refreshTokenDto.refreshToken, {
-      ip,
-      userAgent,
-      deviceInfo: refreshTokenDto.deviceInfo,
-      deviceId: refreshTokenDto.deviceId,
-    });
+    const result = await this.tokenService.refreshToken(
+      refreshTokenDto.refreshToken,
+      {
+        ip,
+        userAgent,
+        deviceInfo: refreshTokenDto.deviceInfo,
+        deviceId: refreshTokenDto.deviceId,
+      },
+    );
+
+    const isWebClient = refreshTokenDto.clientType === ClientType.Web;
+    if (isWebClient) {
+      res.cookie('refreshToken', result.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: (result.refreshExpiresIn || 0) * 1000,
+        path: '/',
+      });
+      return {
+        accessToken: result.accessToken,
+        expiresIn: result.expiresIn,
+      };
+    }
+
+    return result;
   }
 
   @Post('logout')
@@ -122,6 +189,7 @@ export class AuthController {
     @User() user: CurrentUser,
     @Req() req: Request,
     @Body(ValidationPipe) logoutDto: LogoutDto = {},
+    @Res({ passthrough: true }) res: Response,
   ): Promise<{
     success: boolean;
     message: string;
@@ -146,6 +214,12 @@ export class AuthController {
       // 获取请求上下文
       const ip = this.getClientIp(req);
       const userAgent = req.get('User-Agent');
+      const isWebClient = logoutDto.clientType === ClientType.Web;
+
+      // 如果是Web客户端，从cookie中获取refreshToken
+      if (isWebClient && !logoutDto.refreshToken) {
+        logoutDto.refreshToken = (req as any).cookies?.refreshToken;
+      }
 
       // 执行全面登出
       const logoutResult = await this.tokenService.logout(
@@ -160,6 +234,16 @@ export class AuthController {
         },
       );
 
+      // 如果是Web客户端，清除refreshToken cookie
+      if (isWebClient) {
+        res.clearCookie('refreshToken', {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          path: '/',
+        });
+      }
+
       this.logger.log(
         `User ${user.id} logout: ${JSON.stringify({
           accessRevoked: logoutResult.accessTokenRevoked,
@@ -168,6 +252,7 @@ export class AuthController {
           revokedCount: logoutResult.revokedTokensCount,
           ip,
           userAgent,
+          isWebClient,
         })}`,
       );
 

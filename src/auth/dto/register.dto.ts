@@ -1,3 +1,13 @@
+/*
+ * @Author: 杨仕明 shiming.y@qq.com
+ * @Date: 2025-12-28 11:37:14
+ * @LastEditors: 杨仕明 shiming.y@qq.com
+ * @LastEditTime: 2026-01-08 15:15:56
+ * @FilePath: /lulab_backend/src/auth/dto/register.dto.ts
+ * @Description:
+ *
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
+ */
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsEmail,
@@ -8,6 +18,7 @@ import {
   Matches,
 } from 'class-validator';
 import { AuthType } from '@/auth/enums';
+import { ClientType } from '@/auth/types/jwt.types';
 
 export class RegisterDto {
   @ApiProperty({ description: '注册类型', enum: AuthType })
@@ -66,4 +77,13 @@ export class RegisterDto {
   @IsOptional()
   @IsString()
   deviceId?: string;
+
+  @ApiProperty({
+    required: false,
+    description: '客户端类型：web-网页端，app-移动端',
+    enum: ClientType,
+  })
+  @IsOptional()
+  @IsEnum(ClientType)
+  clientType?: ClientType;
 }
