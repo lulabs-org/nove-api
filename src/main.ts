@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-06-27 05:18:41
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-08 10:39:14
+ * @LastEditTime: 2026-01-08 10:51:26
  * @FilePath: /lulab_backend/src/main.ts
  * @Description:
  *
@@ -30,12 +30,15 @@ async function bootstrap() {
 
   const allowedOrigins = new Set(parseCsv(process.env.CORS_ORIGINS));
   const originRegexes = parseRegexCsv(process.env.CORS_ORIGIN_REGEXES);
-  // 如果你用 cookie/session 必须 true；纯 token 也可以留着
+  // Required true for cookie/session; can be kept for token-only auth
   const credentials = process.env.CORS_CREDENTIALS === 'true';
 
   app.enableCors({
-    origin: (origin, cb) => {
-      if (!origin) return cb(null, true); // 非浏览器请求
+    origin: (
+      origin: string | undefined,
+      cb: (err: Error | null, allow: boolean) => void,
+    ) => {
+      if (!origin) return cb(null, true);
 
       if (allowedOrigins.has(origin)) return cb(null, true);
       if (originRegexes.some((re) => re.test(origin))) return cb(null, true);
