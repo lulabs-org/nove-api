@@ -4,9 +4,9 @@
  * @LastEditors: 杨仕明 shiming.y@qq.com
  * @LastEditTime: 2026-01-07 15:31:01
  * @FilePath: /lulab_backend/src/auth/dto/logout-response.dto.ts
- * @Description: 
- * 
- * Copyright (c) 2026 by LuLab-Team, All Rights Reserved. 
+ * @Description:
+ *
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -31,6 +31,10 @@ export class LogoutResponseDto {
   @ApiProperty({ description: '退出结果消息' })
   message: string;
 
-  @ApiProperty({ description: '详细信息', required: false, type: LogoutDetailsDto })
+  @ApiProperty({
+    description: '详细信息',
+    required: false,
+    type: LogoutDetailsDto,
+  })
   details?: LogoutDetailsDto;
 }
