@@ -45,7 +45,13 @@ export class UserRepository {
   findUserByTarget(
     target: string,
     countryCode?: string,
-  ): Promise<(User & { profile: UserProfile | null }) | null> {
+  ): Promise<
+    | (User & {
+        profile: UserProfile | null;
+        roles: Array<{ role: { code: string } }>;
+      })
+    | null
+  > {
     const conditions: Array<Record<string, unknown>> = [
       { username: target },
       { email: target },
@@ -60,8 +66,31 @@ export class UserRepository {
 
     return this.prisma.user.findFirst({
       where: { OR: conditions },
-      include: { profile: true },
-    });
+      include: {
+        profile: true,
+        roles: {
+          include: {
+            role: {
+              select: {
+                code: true,
+              },
+            },
+          },
+          orderBy: {
+            role: {
+              level: 'asc',
+            },
+          },
+          take: 1,
+        },
+      },
+    }) as Promise<
+      | (User & {
+          profile: UserProfile | null;
+          roles: Array<{ role: { code: string } }>;
+        })
+      | null
+    >;
   }
 
   findFirstByConditions(conditions: Array<Record<string, unknown>>) {
@@ -77,7 +106,12 @@ export class UserRepository {
     emailVerifiedAt?: Date | null;
     phoneVerifiedAt?: Date | null;
     profileName: string;
-  }): Promise<User & { profile: UserProfile | null }> {
+  }): Promise<
+    User & {
+      profile: UserProfile | null;
+      roles: Array<{ role: { code: string } }>;
+    }
+  > {
     return this.prisma.user.create({
       data: {
         username: data.username ?? null,
@@ -93,8 +127,30 @@ export class UserRepository {
           },
         },
       },
-      include: { profile: true },
-    });
+      include: {
+        profile: true,
+        roles: {
+          include: {
+            role: {
+              select: {
+                code: true,
+              },
+            },
+          },
+          orderBy: {
+            role: {
+              level: 'asc',
+            },
+          },
+          take: 1,
+        },
+      },
+    }) as Promise<
+      User & {
+        profile: UserProfile | null;
+        roles: Array<{ role: { code: string } }>;
+      }
+    >;
   }
 
   updateUserLastLoginAt(id: string, date: Date): Promise<User> {

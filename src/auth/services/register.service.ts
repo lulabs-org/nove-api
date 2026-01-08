@@ -8,7 +8,7 @@ import { CodeType } from '@/verification/enums';
 import { UserRepository } from '@/user/repositories/user.repository';
 import { TokenService } from './token.service';
 import { AuthPolicyService } from './auth-policy.service';
-import { formatUserResponse } from '@/common/utils';
+import { formatAuthUserResponse } from '@/common/utils';
 import { hashPassword, validatePassword } from '@/common/utils/password.util';
 
 @Injectable()
@@ -90,7 +90,7 @@ export class RegisterService {
     });
 
     return {
-      user: formatUserResponse(user),
+      user: formatAuthUserResponse(user),
       ...tokens,
     };
   }
