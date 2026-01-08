@@ -48,7 +48,6 @@ export class UserRepository {
   ): Promise<
     | (User & {
         profile: UserProfile | null;
-        roles: Array<{ role: { code: string } }>;
       })
     | null
   > {
@@ -68,26 +67,10 @@ export class UserRepository {
       where: { OR: conditions },
       include: {
         profile: true,
-        roles: {
-          include: {
-            role: {
-              select: {
-                code: true,
-              },
-            },
-          },
-          orderBy: {
-            role: {
-              level: 'asc',
-            },
-          },
-          take: 1,
-        },
       },
     }) as Promise<
       | (User & {
           profile: UserProfile | null;
-          roles: Array<{ role: { code: string } }>;
         })
       | null
     >;
@@ -109,7 +92,6 @@ export class UserRepository {
   }): Promise<
     User & {
       profile: UserProfile | null;
-      roles: Array<{ role: { code: string } }>;
     }
   > {
     return this.prisma.user.create({
@@ -129,26 +111,10 @@ export class UserRepository {
       },
       include: {
         profile: true,
-        roles: {
-          include: {
-            role: {
-              select: {
-                code: true,
-              },
-            },
-          },
-          orderBy: {
-            role: {
-              level: 'asc',
-            },
-          },
-          take: 1,
-        },
       },
     }) as Promise<
       User & {
         profile: UserProfile | null;
-        roles: Array<{ role: { code: string } }>;
       }
     >;
   }
