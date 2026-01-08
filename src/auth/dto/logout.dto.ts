@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString, IsEnum } from 'class-validator';
+import { ClientType } from '@/auth/types/jwt.types';
 
 export class LogoutDto {
   @ApiProperty({
@@ -29,4 +30,13 @@ export class LogoutDto {
   })
   @IsOptional()
   revokeAllDevices?: boolean;
+
+  @ApiProperty({
+    required: false,
+    description: '客户端类型：web-网页端，app-移动端',
+    enum: ClientType,
+  })
+  @IsOptional()
+  @IsEnum(ClientType)
+  clientType?: ClientType;
 }

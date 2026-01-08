@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, IsEnum, IsOptional, IsString } from 'class-validator';
 import { AuthType } from '@/auth/enums';
+import { ClientType } from '@/auth/types/jwt.types';
 
 export class LoginDto {
   @ApiProperty({ description: '登录类型', enum: AuthType })
@@ -49,4 +50,13 @@ export class LoginDto {
   @IsOptional()
   @IsString()
   deviceId?: string;
+
+  @ApiProperty({
+    required: false,
+    description: '客户端类型：web-网页端，app-移动端',
+    enum: ClientType,
+  })
+  @IsOptional()
+  @IsEnum(ClientType)
+  clientType?: ClientType;
 }

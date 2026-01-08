@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-07 21:59:35
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-08 14:44:45
+ * @LastEditTime: 2026-01-08 15:18:01
  * @FilePath: /lulab_backend/src/auth/dto/auth-response.dto.ts
  * @Description:
  *
@@ -18,11 +18,20 @@ export class AuthResponseDto {
   @ApiProperty({ description: '访问令牌过期时间（秒）', example: 900 })
   expiresIn: number;
 
-  @ApiProperty({ description: '刷新令牌' })
-  refreshToken: string;
+  @ApiProperty({
+    description:
+      '刷新令牌（Web客户端通过HttpOnly Cookie返回，App客户端在响应体中返回）',
+    required: false,
+  })
+  refreshToken?: string;
 
-  @ApiProperty({ description: '刷新令牌过期时间（秒）', example: 2592000 })
-  refreshExpiresIn: number;
+  @ApiProperty({
+    description:
+      '刷新令牌过期时间（秒），Web客户端通过HttpOnly Cookie返回，App客户端在响应体中返回',
+    required: false,
+    example: 2592000,
+  })
+  refreshExpiresIn?: number;
 
   @ApiProperty({ description: '用户基本信息', type: AuthUserResponseDto })
   user: AuthUserResponseDto;
