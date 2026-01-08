@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-10-01 21:54:50
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-08 14:43:29
+ * @LastEditTime: 2026-01-09 00:52:45
  * @FilePath: /lulab_backend/src/auth/services/token.service.ts
  * @Description:
  *
@@ -29,6 +29,7 @@ import {
   LogoutOptions,
   LogoutResult,
 } from '@/auth/types';
+import { parseDurationToMs, generateRandomToken } from '@/common/utils';
 
 @Injectable()
 export class TokenService {
@@ -48,36 +49,6 @@ export class TokenService {
     this.accessSecret = this.config.accessSecret;
     this.accessExpiresIn = this.config.accessExpiresIn;
     this.refreshExpiresIn = this.config.refreshExpiresIn;
-  }
-
-  /**
-   * 解析时间字符串为毫秒数
-   */
-  private parseDurationToMs(duration: string): number {
-    const m = /^(\d+)(ms|s|m|h|d|w)?$/i.exec(duration.trim());
-    if (!m) throw new Error(`Unsupported duration format: ${duration}`);
-    const val = Number(m[1]);
-    const unit = (m[2] || 's').toLowerCase();
-    const unitMap: Record<string, number> = {
-      ms: 1,
-      s: 1000,
-      m: 60_000,
-      h: 3_600_000,
-      d: 86_400_000,
-      w: 604_800_000,
-    };
-    return val * (unitMap[unit] ?? 1000);
-  }
-
-  private generateOpaqueToken(): string {
-    const bytes = Buffer.alloc(32);
-    randomUUID()
-      .replace(/-/g, '')
-      .split('')
-      .forEach((char, i) => {
-        bytes[i % 32] = char.charCodeAt(0);
-      });
-    return bytes.toString('base64url');
   }
 
   /**
@@ -101,14 +72,14 @@ export class TokenService {
       jwtid: accessJti,
     });
 
-    const refreshToken = this.generateOpaqueToken();
+    const refreshToken = generateRandomToken();
 
     const expiresIn = Math.floor(
-      this.parseDurationToMs(this.accessExpiresIn) / 1000,
+      parseDurationToMs(this.accessExpiresIn) / 1000,
     );
 
     const refreshExpiresInSeconds = Math.floor(
-      this.parseDurationToMs(this.refreshExpiresIn) / 1000,
+      parseDurationToMs(this.refreshExpiresIn) / 1000,
     );
 
     const expiresAt = new Date(Date.now() + refreshExpiresInSeconds * 1000);
@@ -167,14 +138,14 @@ export class TokenService {
         },
       );
 
-      const newRefreshToken = this.generateOpaqueToken();
+      const newRefreshToken = generateRandomToken();
 
       const expiresIn = Math.floor(
-        this.parseDurationToMs(this.accessExpiresIn) / 1000,
+        parseDurationToMs(this.accessExpiresIn) / 1000,
       );
 
       const refreshExpiresInSeconds = Math.floor(
-        this.parseDurationToMs(this.refreshExpiresIn) / 1000,
+        parseDurationToMs(this.refreshExpiresIn) / 1000,
       );
 
       const newExpiresAt = new Date(

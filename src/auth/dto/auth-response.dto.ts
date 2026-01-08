@@ -2,14 +2,14 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-07 21:59:35
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-08 15:18:01
+ * @LastEditTime: 2026-01-09 01:51:54
  * @FilePath: /lulab_backend/src/auth/dto/auth-response.dto.ts
  * @Description:
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 import { ApiProperty } from '@nestjs/swagger';
-import { AuthUserResponseDto } from './auth-user-response.dto';
+import { AuthUserMinimalDto } from './auth-user-minimal.dto';
 
 export class AuthResponseDto {
   @ApiProperty({ description: '访问令牌' })
@@ -33,6 +33,6 @@ export class AuthResponseDto {
   })
   refreshExpiresIn?: number;
 
-  @ApiProperty({ description: '用户基本信息', type: AuthUserResponseDto })
-  user: AuthUserResponseDto;
+  @ApiProperty({ description: '用户基本信息', type: AuthUserMinimalDto })
+  user: AuthUserMinimalDto;
 }

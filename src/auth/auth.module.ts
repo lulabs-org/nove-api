@@ -34,12 +34,14 @@ import { LoginLogRepository } from './repositories/login-log.repository';
 import { JwtUserLookupService } from './services/jwt-user-lookup.service';
 import { TokenBlacklistService } from './services/token-blacklist.service';
 import { jwtConfig } from '@/configs/jwt.config';
+import { PermissionModule } from '@/permission/permission.module';
 
 @Module({
   imports: [
     RedisModule,
     UserModule,
     VerificationModule,
+    PermissionModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     ConfigModule.forFeature(jwtConfig),
     JwtModule.registerAsync({

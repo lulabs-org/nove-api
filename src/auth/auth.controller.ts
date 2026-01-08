@@ -9,6 +9,7 @@ import {
   ValidationPipe,
   UnauthorizedException,
   Logger,
+  Get,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
@@ -18,13 +19,17 @@ import {
   ApiResetPasswordDocs,
   ApiRefreshTokenDocs,
   ApiLogoutDocs,
-} from './decorators/api-docs.decorator';
+  ApiGetMeDocs,
+  ApiGetPermissionsDocs,
+} from './decorators';
 import {
   RegisterDto,
   LoginDto,
   LogoutDto,
   AuthResponseDto,
   RefreshTokenDto,
+  AuthUserWithPermissionsDto,
+  PermissionsResponseDto,
 } from '@/auth/dto';
 import { LoginService, RegisterService, TokenService } from '@/auth/services';
 import { PasswordService } from './services/password.service';
@@ -33,6 +38,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { TokenBlacklistService } from './services/token-blacklist.service';
 import { User, CurrentUser } from '@/auth/decorators/user.decorator';
 import { ClientType } from '@/auth/types/jwt.types';
+import { PermissionService } from '@/permission/services/permission.service';
 
 @ApiTags('Auth')
 @Controller({
@@ -48,6 +54,7 @@ export class AuthController {
     private readonly passwordService: PasswordService,
     private readonly tokenService: TokenService,
     private readonly tokenBlacklist: TokenBlacklistService,
+    private readonly permissionService: PermissionService,
   ) {}
 
   @Public()
@@ -297,6 +304,62 @@ export class AuthController {
         },
       };
     }
+  }
+
+  @Get('me')
+  @HttpCode(HttpStatus.OK)
+  @ApiGetMeDocs()
+  @ApiBearerAuth()
+  async getMe(@User() user: CurrentUser): Promise<AuthUserWithPermissionsDto> {
+    const roles = user.roles || ['USER'];
+    const permissions =
+      await this.permissionService.getPermissionsByRoleCodes(roles);
+
+    return {
+      id: user.id,
+      username: user.username || undefined,
+      email: user.email,
+      phone: user.phone || undefined,
+      countryCode: user.countryCode || undefined,
+      name:
+        (user.profile?.displayName as string) ||
+        user.username ||
+        user.email ||
+        user.phone ||
+        'Unknown',
+      avatar: (user.profile?.avatar as string) || undefined,
+      roles,
+      permissions,
+      active: user.active,
+      emailVerified: user.emailVerified,
+      phoneVerified: user.phoneVerified,
+      createdAt: user.createdAt.toISOString(),
+      lastLoginAt: user.lastLoginAt?.toISOString(),
+    };
+  }
+
+  @Get('permissions')
+  @HttpCode(HttpStatus.OK)
+  @ApiGetPermissionsDocs()
+  @ApiBearerAuth()
+  async getPermissions(
+    @User() user: CurrentUser,
+  ): Promise<PermissionsResponseDto> {
+    const roles = user.roles || ['USER'];
+    const permissions =
+      await this.permissionService.getPermissionsByRoleCodes(roles);
+
+    return {
+      id: user.id,
+      name:
+        (user.profile?.displayName as string) ||
+        user.username ||
+        user.email ||
+        user.phone ||
+        'Unknown',
+      roles,
+      permissions,
+    };
   }
 
   private getClientIp(req: Request): string {

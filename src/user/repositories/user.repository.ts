@@ -20,6 +20,41 @@ export class UserRepository {
     });
   }
 
+  getUserByIdWithProfileAndRoles(id: string): Promise<
+    | (User & {
+        profile: UserProfile | null;
+        roles: Array<{ role: { code: string } }>;
+      })
+    | null
+  > {
+    return this.prisma.user.findUnique({
+      where: { id },
+      include: {
+        profile: true,
+        roles: {
+          include: {
+            role: {
+              select: {
+                code: true,
+              },
+            },
+          },
+          orderBy: {
+            role: {
+              level: 'asc',
+            },
+          },
+        },
+      },
+    }) as Promise<
+      | (User & {
+          profile: UserProfile | null;
+          roles: Array<{ role: { code: string } }>;
+        })
+      | null
+    >;
+  }
+
   findUserByUsername(username: string): Promise<User | null> {
     return this.prisma.user.findUnique({ where: { username } });
   }

@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-07-06 05:06:37
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-03 20:55:16
+ * @LastEditTime: 2026-01-09 02:51:44
  * @FilePath: /lulab_backend/src/app.module.ts
  * @Description: Application module that defines the application's entry point and dependency injection
  *
@@ -32,6 +32,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { redisConfig } from './configs';
 import { TasksModule } from './task/tasks.module';
 import { ApiKeyModule } from './api-key/api-key.module';
+import { PermissionModule } from './permission/permission.module';
 
 @Module({
   imports: [
@@ -64,6 +65,7 @@ import { ApiKeyModule } from './api-key/api-key.module';
     VerificationModule,
     OpenaiModule,
     ApiKeyModule,
+    PermissionModule,
   ],
   controllers: [AppController],
   providers: [
