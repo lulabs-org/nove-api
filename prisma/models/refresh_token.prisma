@@ -1,27 +1,26 @@
 // 刷新令牌存储模型
 model RefreshToken {
   id         String    @id @default(cuid())
-  userId     String // 用户ID
-  tokenHash  String    @unique // 令牌哈希值（SHA256）
-  jti        String    @unique // JWT ID，用于快速查找
-  deviceInfo String? // 设备信息
-  deviceId   String? // 设备标识符
-  userAgent  String? // 用户代理
-  ip         String? // 创建时IP地址
-  expiresAt  DateTime // 过期时间
-  revokedAt  DateTime? // 撤销时间
-  replacedBy String? // 被替换为哪个令牌的ID（用于令牌轮换）
+  userId     String
+  tokenHash  String    @unique
+  jti        String?   @unique
+  deviceInfo String?
+  deviceId   String?
+  userAgent  String?
+  ip         String?
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  replacedBy String?
 
-  // 关联到用户
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@index([userId]) // 用户令牌查询
-  @@index([deviceId, userId]) // 设备令牌查询
-  @@index([expiresAt]) // 过期令牌清理
-  @@index([revokedAt]) // 撤销令牌查询
-  @@index([userId, revokedAt]) // 用户有效令牌查询
+  @@index([userId])
+  @@index([deviceId, userId])
+  @@index([expiresAt])
+  @@index([revokedAt])
+  @@index([userId, revokedAt])
   @@map("refresh_tokens")
 }

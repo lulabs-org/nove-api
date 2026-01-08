@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-10-01 21:54:50
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2025-10-02 04:05:29
+ * @LastEditTime: 2026-01-08 14:43:29
  * @FilePath: /lulab_backend/src/auth/services/token.service.ts
  * @Description:
  *
@@ -34,7 +34,6 @@ import {
 export class TokenService {
   private readonly logger = new Logger(TokenService.name);
   private readonly accessSecret: string;
-  private readonly refreshSecret: string;
   private readonly accessExpiresIn: string;
   private readonly refreshExpiresIn: string;
 
@@ -47,7 +46,6 @@ export class TokenService {
     private readonly tokenBlacklist: TokenBlacklistService,
   ) {
     this.accessSecret = this.config.accessSecret;
-    this.refreshSecret = this.config.refreshSecret;
     this.accessExpiresIn = this.config.accessExpiresIn;
     this.refreshExpiresIn = this.config.refreshExpiresIn;
   }
@@ -71,6 +69,17 @@ export class TokenService {
     return val * (unitMap[unit] ?? 1000);
   }
 
+  private generateOpaqueToken(): string {
+    const bytes = Buffer.alloc(32);
+    randomUUID()
+      .replace(/-/g, '')
+      .split('')
+      .forEach((char, i) => {
+        bytes[i % 32] = char.charCodeAt(0);
+      });
+    return bytes.toString('base64url');
+  }
+
   /**
    * 生成令牌并存储刷新令牌到数据库
    */
@@ -79,10 +88,11 @@ export class TokenService {
     context?: TokenGenerationContext,
   ): Promise<{
     accessToken: string;
+    expiresIn: number;
     refreshToken: string;
+    refreshExpiresIn: number;
   }> {
     const payload = { sub: userId };
-    const refreshJti = randomUUID();
     const accessJti = randomUUID();
 
     const accessToken = this.jwtService.sign(payload, {
@@ -91,30 +101,23 @@ export class TokenService {
       jwtid: accessJti,
     });
 
-    const refreshToken = this.jwtService.sign(payload, {
-      secret: this.refreshSecret,
-      expiresIn: this.refreshExpiresIn,
-      jwtid: refreshJti,
-    });
+    const refreshToken = this.generateOpaqueToken();
 
-    // 计算刷新令牌过期时间
-    let expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // fallback
-    try {
-      const durationMs = this.parseDurationToMs(this.refreshExpiresIn || '7d');
-      expiresAt = new Date(Date.now() + durationMs);
-    } catch (err) {
-      this.logger.warn(
-        `Failed to parse refreshExpiresIn ("${this.refreshExpiresIn}"), using fallback expiry.`,
-        err,
-      );
-    }
+    const expiresIn = Math.floor(
+      this.parseDurationToMs(this.accessExpiresIn) / 1000,
+    );
 
-    // 存储刷新令牌到数据库
+    const refreshExpiresInSeconds = Math.floor(
+      this.parseDurationToMs(this.refreshExpiresIn) / 1000,
+    );
+
+    const expiresAt = new Date(Date.now() + refreshExpiresInSeconds * 1000);
+
     try {
       await this.refreshTokenRepo.createRefreshToken({
         userId,
         token: refreshToken,
-        jti: refreshJti,
+        jti: undefined,
         expiresAt,
         deviceInfo: context?.deviceInfo,
         deviceId: context?.deviceId,
@@ -126,48 +129,35 @@ export class TokenService {
       throw new InternalServerErrorException('生成刷新令牌失败');
     }
 
-    return { accessToken, refreshToken };
+    return {
+      accessToken,
+      expiresIn,
+      refreshToken,
+      refreshExpiresIn: refreshExpiresInSeconds,
+    };
   }
 
   async refreshToken(
     refreshToken: string,
     context?: TokenGenerationContext,
-  ): Promise<{ accessToken: string; refreshToken: string }> {
+  ): Promise<{
+    accessToken: string;
+    refreshToken: string;
+    expiresIn: number;
+    refreshExpiresIn: number;
+  }> {
     try {
-      // 首先验证JWT的签名和过期时间
-      const payload = this.jwtService.verify<{ sub: string; jti?: string }>(
-        refreshToken,
-        {
-          secret: this.refreshSecret,
-        },
-      );
-
-      if (!payload.jti) {
-        throw new UnauthorizedException('刷新令牌格式错误');
-      }
-
-      // 检查令牌是否在黑名单中
-      const revoked = await this.tokenBlacklist.isTokenBlacklisted(
-        payload.jti,
-        TokenBlacklistScope.RefreshToken,
-      );
-      if (revoked) {
-        throw new UnauthorizedException('刷新令牌已被撤销');
-      }
-
-      // 检查数据库中的令牌是否有效
-      const oldTokenRecord = await this.refreshTokenRepo.findByJti(payload.jti);
+      const oldTokenRecord =
+        await this.refreshTokenRepo.findByToken(refreshToken);
       if (!oldTokenRecord || oldTokenRecord.revokedAt) {
         throw new UnauthorizedException('刷新令牌无效或已过期');
       }
 
-      // 验证用户是否存在
-      const user = await this.userRepo.getUserById(payload.sub);
+      const user = await this.userRepo.getUserById(oldTokenRecord.userId);
       if (!user) {
         throw new UnauthorizedException('用户不存在');
       }
 
-      // 生成新的访问令牌
       const accessToken = this.jwtService.sign(
         { sub: user.id },
         {
@@ -177,37 +167,25 @@ export class TokenService {
         },
       );
 
-      // 生成新的刷新令牌（令牌轮换）
-      const newRefreshJti = randomUUID();
-      const newRefreshToken = this.jwtService.sign(
-        { sub: user.id },
-        {
-          secret: this.refreshSecret,
-          expiresIn: this.refreshExpiresIn,
-          jwtid: newRefreshJti,
-        },
+      const newRefreshToken = this.generateOpaqueToken();
+
+      const expiresIn = Math.floor(
+        this.parseDurationToMs(this.accessExpiresIn) / 1000,
       );
 
-      // 计算新的刷新令牌过期时间
-      let newExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // fallback
-      try {
-        const durationMs = this.parseDurationToMs(
-          this.refreshExpiresIn || '7d',
-        );
-        newExpiresAt = new Date(Date.now() + durationMs);
-      } catch (err) {
-        this.logger.warn(
-          `Failed to parse refreshExpiresIn ("${this.refreshExpiresIn}"), using fallback expiry.`,
-          err,
-        );
-      }
+      const refreshExpiresInSeconds = Math.floor(
+        this.parseDurationToMs(this.refreshExpiresIn) / 1000,
+      );
 
-      // 存储新的刷新令牌到数据库
+      const newExpiresAt = new Date(
+        Date.now() + refreshExpiresInSeconds * 1000,
+      );
+
       try {
         await this.refreshTokenRepo.createRefreshToken({
           userId: user.id,
           token: newRefreshToken,
-          jti: newRefreshJti,
+          jti: undefined,
           expiresAt: newExpiresAt,
           deviceInfo:
             context?.deviceInfo || oldTokenRecord.deviceInfo || undefined,
@@ -224,26 +202,18 @@ export class TokenService {
         throw new InternalServerErrorException('刷新令牌轮换失败');
       }
 
-      // 标记旧令牌被替换，实现防重放攻击
       try {
-        await this.refreshTokenRepo.revokeTokenByJti(payload.jti, {
-          replacedBy: newRefreshJti,
-        });
+        await this.refreshTokenRepo.revokeToken(refreshToken);
       } catch (error) {
-        this.logger.error('Failed to mark old token as replaced', error);
+        this.logger.error('Failed to revoke old refresh token', error);
       }
 
-      // 将旧刷新令牌加入黑名单，确保只能使用一次
-      try {
-        await this.tokenBlacklist.add(
-          refreshToken,
-          TokenBlacklistScope.RefreshToken,
-        );
-      } catch (error) {
-        this.logger.error('Failed to blacklist old refresh token', error);
-      }
-
-      return { accessToken, refreshToken: newRefreshToken };
+      return {
+        accessToken,
+        refreshToken: newRefreshToken,
+        expiresIn,
+        refreshExpiresIn: refreshExpiresInSeconds,
+      };
     } catch (error) {
       this.logger.error('Refresh token validation failed', error);
       throw new UnauthorizedException('刷新令牌无效');
@@ -265,54 +235,23 @@ export class TokenService {
     };
 
     try {
-      // 1. 撤销访问令牌（加入黑名单）
       const accessTokenResult = await this.tokenBlacklist.add(
         accessToken,
         TokenBlacklistScope.AccessToken,
       );
       result.accessTokenRevoked = accessTokenResult.added;
 
-      // 2. 处理刷新令牌
       if (options.refreshToken) {
         try {
-          // 验证刷新令牌的有效性
-          const refreshPayload = this.jwtService.verify<{
-            sub: string;
-            jti?: string;
-          }>(options.refreshToken, {
-            secret: this.refreshSecret,
-          });
-
-          if (refreshPayload.jti) {
-            // 撤销数据库中的刷新令牌
-            const revokedToken = await this.refreshTokenRepo.revokeTokenByJti(
-              refreshPayload.jti,
-            );
-            result.refreshTokenRevoked = !!revokedToken;
-
-            // 同时将刷新令牌加入黑名单
-            await this.tokenBlacklist.add(
-              options.refreshToken,
-              TokenBlacklistScope.RefreshToken,
-            );
-          }
+          const revokedToken = await this.refreshTokenRepo.revokeToken(
+            options.refreshToken,
+          );
+          result.refreshTokenRevoked = !!revokedToken;
         } catch (error) {
-          this.logger.warn('Failed to verify/revoke refresh token', error);
-          // 尽力撤销，即使验证失败也要尝试撤销
-          try {
-            await this.refreshTokenRepo.revokeToken(options.refreshToken);
-            await this.tokenBlacklist.add(
-              options.refreshToken,
-              TokenBlacklistScope.RefreshToken,
-            );
-            result.refreshTokenRevoked = true;
-          } catch {
-            // 忽略错误
-          }
+          this.logger.warn('Failed to revoke refresh token', error);
         }
       }
 
-      // 3. 根据选项撤销刷新令牌
       if (options.revokeAllDevices) {
         const revokedCount =
           await this.refreshTokenRepo.revokeAllTokensByUserId(userId);
@@ -328,7 +267,6 @@ export class TokenService {
         result.revokedTokensCount = result.refreshTokenRevoked ? 1 : 0;
       }
 
-      // 4. 生成成功消息
       if (result.allDevicesLoggedOut) {
         result.message = `退出登录成功，已撤销所有设备的 ${result.revokedTokensCount} 个令牌`;
       } else if (result.revokedTokensCount && result.revokedTokensCount > 0) {

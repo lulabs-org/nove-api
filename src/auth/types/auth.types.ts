@@ -14,7 +14,7 @@ export interface RefreshToken {
   id: string;
   userId: string;
   tokenHash: string;
-  jti: string;
+  jti?: string | null;
   deviceInfo?: string | null;
   deviceId?: string | null;
   userAgent?: string | null;
@@ -26,11 +26,10 @@ export interface RefreshToken {
   updatedAt: Date;
 }
 
-// 创建刷新令牌数据接口
 export interface CreateRefreshTokenData {
   userId: string;
   token: string;
-  jti: string;
+  jti?: string | null;
   expiresAt: Date;
   deviceInfo?: string;
   deviceId?: string;

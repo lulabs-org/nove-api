@@ -30,7 +30,7 @@ export class RefreshTokenRepository {
       data: {
         userId: data.userId,
         tokenHash,
-        jti: data.jti,
+        jti: data.jti || null,
         expiresAt: data.expiresAt,
         deviceInfo: data.deviceInfo,
         deviceId: data.deviceId,
@@ -167,6 +167,47 @@ export class RefreshTokenRepository {
       data: {
         revokedAt,
         replacedBy: options.replacedBy,
+      },
+    });
+
+    return result.count;
+  }
+
+  async deleteToken(token: string): Promise<boolean> {
+    const tokenHash = this.hashToken(token);
+
+    try {
+      await this.prisma.refreshToken.delete({
+        where: { tokenHash },
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async deleteAllTokensByUserId(
+    userId: string,
+    excludeTokenHash?: string,
+  ): Promise<number> {
+    const result = await this.prisma.refreshToken.deleteMany({
+      where: {
+        userId,
+        ...(excludeTokenHash && { tokenHash: { not: excludeTokenHash } }),
+      },
+    });
+
+    return result.count;
+  }
+
+  async deleteTokensByDeviceId(
+    userId: string,
+    deviceId: string,
+  ): Promise<number> {
+    const result = await this.prisma.refreshToken.deleteMany({
+      where: {
+        userId,
+        deviceId,
       },
     });
 
