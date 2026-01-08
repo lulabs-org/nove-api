@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-06-27 05:18:41
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-07 10:06:11
+ * @LastEditTime: 2026-01-08 10:39:14
  * @FilePath: /lulab_backend/src/main.ts
  * @Description:
  *
@@ -14,18 +14,37 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 
+function parseCsv(value?: string): string[] {
+  return (value ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function parseRegexCsv(value?: string): RegExp[] {
+  return parseCsv(value).map((pattern) => new RegExp(pattern));
+}
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  const corsOrigins = process.env.CORS_ORIGINS
-    ? process.env.CORS_ORIGINS.split(',').map((origin) => origin.trim())
-    : [];
+  const allowedOrigins = new Set(parseCsv(process.env.CORS_ORIGINS));
+  const originRegexes = parseRegexCsv(process.env.CORS_ORIGIN_REGEXES);
+  // 如果你用 cookie/session 必须 true；纯 token 也可以留着
+  const credentials = process.env.CORS_CREDENTIALS === 'true';
 
   app.enableCors({
-    origin: corsOrigins,
+    origin: (origin, cb) => {
+      if (!origin) return cb(null, true); // 非浏览器请求
+
+      if (allowedOrigins.has(origin)) return cb(null, true);
+      if (originRegexes.some((re) => re.test(origin))) return cb(null, true);
+
+      return cb(new Error(`CORS blocked: ${origin}`), false);
+    },
+    credentials,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'x-request-id'],
-    // credentials: true, // 如果你用 cookie/session 必须 true；纯 token 也可以留着
   });
 
   // 启用全局验证管道
