@@ -4,19 +4,25 @@
  * @LastEditors: 杨仕明 shiming.y@qq.com
  * @LastEditTime: 2026-01-08 17:26:53
  * @FilePath: /lulab_backend/src/auth/decorators/api-docs/get-permissions.docs.decorator.ts
- * @Description: 
- * 
- * Copyright (c) 2026 by LuLab-Team, All Rights Reserved. 
+ * @Description:
+ *
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 import { applyDecorators } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiHeader, ApiProduces } from '@nestjs/swagger';
+import {
+  ApiOperation,
+  ApiResponse,
+  ApiHeader,
+  ApiProduces,
+} from '@nestjs/swagger';
 import { PermissionsResponseDto } from '../../dto/permissions-response.dto';
 
 export function ApiGetPermissionsDocs() {
   return applyDecorators(
     ApiOperation({
       summary: '获取当前用户权限',
-      description: '获取当前登录用户的权限列表，包括用户基本信息和所有可用的权限。',
+      description:
+        '获取当前登录用户的权限列表，包括用户基本信息和所有可用的权限。',
       tags: ['Auth'],
     }),
     ApiProduces('application/json'),
@@ -40,7 +46,13 @@ export function ApiGetPermissionsDocs() {
             id: '123e4567-e89b-12d3-a456-426614174000',
             name: '李四',
             roles: ['user', 'manager'],
-            permissions: ['user:read', 'meeting:create', 'meeting:read', 'meeting:update', 'meeting:manage'],
+            permissions: [
+              'user:read',
+              'meeting:create',
+              'meeting:read',
+              'meeting:update',
+              'meeting:manage',
+            ],
           },
         },
         adminRoles: {

@@ -4,12 +4,17 @@
  * @LastEditors: 杨仕明 shiming.y@qq.com
  * @LastEditTime: 2026-01-08 17:26:08
  * @FilePath: /lulab_backend/src/auth/decorators/api-docs/get-me.docs.decorator.ts
- * @Description: 
- * 
- * Copyright (c) 2026 by LuLab-Team, All Rights Reserved. 
+ * @Description:
+ *
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 import { applyDecorators } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiHeader, ApiProduces } from '@nestjs/swagger';
+import {
+  ApiOperation,
+  ApiResponse,
+  ApiHeader,
+  ApiProduces,
+} from '@nestjs/swagger';
 import { AuthUserResponseDto } from '../../dto/auth-user-response.dto';
 
 export function ApiGetMeDocs() {

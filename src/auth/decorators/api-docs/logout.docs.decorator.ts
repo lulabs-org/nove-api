@@ -3,7 +3,6 @@ import {
   ApiOperation,
   ApiResponse,
   ApiBody,
-  ApiHeader,
   ApiConsumes,
   ApiProduces,
 } from '@nestjs/swagger';
