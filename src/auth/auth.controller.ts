@@ -76,12 +76,12 @@ export class AuthController {
         maxAge: (result.refreshExpiresIn || 0) * 1000,
         path: '/',
       });
-      const {
-        refreshToken: _refreshToken,
-        refreshExpiresIn: _refreshExpiresIn,
-        ...webResult
-      } = result;
-      return webResult as AuthResponseDto;
+
+      return {
+        accessToken: result.accessToken,
+        expiresIn: result.expiresIn,
+        user: result.user, // 如果有
+      } as AuthResponseDto;
     }
 
     return result;
@@ -109,12 +109,12 @@ export class AuthController {
         maxAge: (result.refreshExpiresIn || 0) * 1000,
         path: '/',
       });
-      const {
-        refreshToken: _refreshToken,
-        refreshExpiresIn: _refreshExpiresIn,
-        ...webResult
-      } = result;
-      return webResult as AuthResponseDto;
+
+      return {
+        accessToken: result.accessToken,
+        expiresIn: result.expiresIn,
+        user: result.user, // 如果有
+      } as AuthResponseDto;
     }
 
     return result;
@@ -218,7 +218,14 @@ export class AuthController {
 
       // 如果是Web客户端，从cookie中获取refreshToken
       if (isWebClient && !logoutDto.refreshToken) {
-        logoutDto.refreshToken = (req as any).cookies?.refreshToken;
+        const cookies = req.cookies as unknown;
+
+        if (cookies && typeof cookies === 'object') {
+          const rt = (cookies as Record<string, unknown>).refreshToken;
+          if (typeof rt === 'string') {
+            logoutDto.refreshToken = rt;
+          }
+        }
       }
 
       // 执行全面登出
