@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-06-27 05:18:41
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-08 10:51:26
+ * @LastEditTime: 2026-01-09 15:14:14
  * @FilePath: /lulab_backend/src/main.ts
  * @Description:
  *
@@ -11,6 +11,7 @@
 
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { RedocModule, RedocOptions } from 'nestjs-redoc';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 
@@ -61,19 +62,59 @@ async function bootstrap() {
 
   // Swagger配置
   const config = new DocumentBuilder()
-    .setTitle('LuLab Backend API')
-    .setDescription('LuLab Backend API文档')
+    .setTitle('Nove API')
+    .setDescription('Nove API文档')
     .setVersion('1.0')
     .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
+  // Redoc配置
+  const redocOptions: RedocOptions = {
+    title: 'Nove API',
+    logo: {
+      url: 'https://redocly.github.io/redoc/petstore-logo.png',
+      backgroundColor: '#FFFFFF',
+      altText: 'LuLab Logo',
+    },
+    sortPropsAlphabetically: true,
+    hideDownloadButton: false,
+    hideHostname: false,
+    expandResponses: '200,201',
+    requiredPropsFirst: true,
+    noAutoAuth: false,
+    theme: {
+      colors: {
+        primary: {
+          main: '#6554c0',
+        },
+      },
+      typography: {
+        fontFamily: 'muli,sans-serif',
+        fontSize: '16px',
+        lineHeight: '1.5',
+        code: {
+          fontFamily: 'monospace',
+          color: '#e53935',
+          backgroundColor: '#f5f5f5',
+        },
+      },
+      sidebar: {
+        width: '300px',
+        backgroundColor: '#252b36',
+        textColor: '#ffffff',
+      },
+    },
+  };
+  await RedocModule.setup('docs', app, document, redocOptions);
+
   const port = process.env.PORT ?? 3000;
   await app.listen(port);
   console.log(`🚀 Application is running on: http://localhost:${port}`);
   console.log(`📚 Swagger documentation: http://localhost:${port}/api`);
   console.log(`📄 Swagger API JSON: http://localhost:${port}/api-json`);
+  console.log(`📖 Redoc documentation: http://localhost:${port}/docs`);
   console.log(`🎯 GraphQL endpoint: http://localhost:${port}/graphql`);
 }
 bootstrap().catch((error) => {

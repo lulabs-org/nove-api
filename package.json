@@ -78,6 +78,7 @@
     "dotenv": "^17.2.2",
     "graphql": "^16.11.0",
     "ioredis": "^5.4.1",
+    "nestjs-redoc": "^2.2.2",
     "nodemailer": "^7.0.3",
     "openai": "^5.23.2",
     "passport": "^0.7.0",
