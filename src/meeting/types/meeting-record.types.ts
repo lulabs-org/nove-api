@@ -49,8 +49,11 @@ export interface UpdateMeetingRecordParams {
  */
 export interface GetMeetingRecordsParams {
   platform?: MeetingPlatform;
+  status?: ProcessingStatus;
+  type?: MeetingType;
   startDate?: Date;
   endDate?: Date;
   page?: number;
   limit?: number;
+  search?: string;
 }

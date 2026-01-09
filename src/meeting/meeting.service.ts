@@ -72,7 +72,10 @@ export class MeetingService {
       title: params.title,
       meetingCode: params.meetingCode || '',
       type: params.type,
-      hostId: params.hostUserId || '',
+      hostId:
+        params.hostUserId && params.hostUserId.trim() !== ''
+          ? params.hostUserId
+          : null,
       startAt: params.actualStartAt
         ? new Date(params.actualStartAt)
         : new Date(),
@@ -107,9 +110,6 @@ export class MeetingService {
       updateData.processingStatus = params.processingStatus;
     if (params.participantCount !== undefined)
       updateData.participantCount = params.participantCount;
-    if (params.transcript !== undefined)
-      updateData.transcript = params.transcript;
-    if (params.summary !== undefined) updateData.summary = params.summary;
 
     // 处理其他字段
     if (params.title !== undefined) {

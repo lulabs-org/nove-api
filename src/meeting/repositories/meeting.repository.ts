@@ -113,24 +113,50 @@ export class MeetingRepository {
     limit: number;
     totalPages: number;
   }> {
-    const { platform, startDate, endDate, page = 1, limit = 10 } = params;
+    const {
+      platform,
+      status,
+      type,
+      startDate,
+      endDate,
+      page = 1,
+      limit = 10,
+      search,
+    } = params;
     const skip = (page - 1) * limit;
 
     const where: {
       platform?: typeof platform;
-      startTime?: { gte?: Date; lte?: Date };
+      processingStatus?: typeof status;
+      type?: typeof type;
+      startAt?: { gte?: Date; lte?: Date };
+      OR?: Array<{ title?: { contains?: string; mode?: 'insensitive' } }>;
     } = {};
+
     if (platform) {
       where.platform = platform;
     }
+
+    if (status) {
+      where.processingStatus = status;
+    }
+
+    if (type) {
+      where.type = type;
+    }
+
     if (startDate || endDate) {
-      where.startTime = {};
+      where.startAt = {};
       if (startDate) {
-        where.startTime.gte = startDate;
+        where.startAt.gte = startDate;
       }
       if (endDate) {
-        where.startTime.lte = endDate;
+        where.startAt.lte = endDate;
       }
+    }
+
+    if (search) {
+      where.OR = [{ title: { contains: search, mode: 'insensitive' } }];
     }
 
     const [records, total] = await Promise.all([
