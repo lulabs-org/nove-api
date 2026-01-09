@@ -10,7 +10,6 @@ import {
   HttpCode,
   HttpStatus,
   Logger,
-  ParseUUIDPipe,
   ValidationPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
@@ -33,6 +32,7 @@ import {
 } from './dto/meeting-record.dto';
 import { CreateMeetingRecordDto } from './dto/create-meeting-record.dto';
 import { UpdateMeetingRecordDto } from './dto/update-meeting-record.dto';
+import { CuidPipe } from '@/common/pipes/cuid.pipe';
 
 /**
  * 会议记录控制器
@@ -81,13 +81,27 @@ export class MeetingController {
   }
 
   /**
+   * 健康检查端点
+   */
+  @Get('health')
+  @HttpCode(HttpStatus.OK)
+  @ApiHealthCheckDocs()
+  healthCheck() {
+    return {
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      service: 'meeting-service',
+    };
+  }
+
+  /**
    * 根据ID获取会议记录详情
    */
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ApiGetMeetingRecordByIdDocs()
   async getMeetingRecordById(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', CuidPipe) id: string,
   ): Promise<MeetingRecordResponseDto> {
     this.logger.log(`获取会议记录详情: ${id}`);
 
@@ -134,7 +148,7 @@ export class MeetingController {
   @HttpCode(HttpStatus.OK)
   @ApiUpdateMeetingRecordDocs()
   async updateMeetingRecord(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', CuidPipe) id: string,
     @Body(new ValidationPipe()) updateParams: UpdateMeetingRecordDto,
   ): Promise<MeetingRecordResponseDto> {
     this.logger.log(`更新会议记录: ${id}`, updateParams);
@@ -159,9 +173,7 @@ export class MeetingController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiDeleteMeetingRecordDocs()
-  async deleteMeetingRecord(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<void> {
+  async deleteMeetingRecord(@Param('id', CuidPipe) id: string): Promise<void> {
     this.logger.log(`删除会议记录: ${id}`);
 
     try {
@@ -207,7 +219,7 @@ export class MeetingController {
   @HttpCode(HttpStatus.OK)
   @ApiReprocessMeetingRecordDocs()
   async reprocessMeetingRecord(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', CuidPipe) id: string,
   ): Promise<MeetingRecordResponseDto> {
     this.logger.log(`重新处理会议录制文件: ${id}`);
 
@@ -223,19 +235,5 @@ export class MeetingController {
       );
       throw error;
     }
-  }
-
-  /**
-   * 健康检查端点
-   */
-  @Get('health')
-  @HttpCode(HttpStatus.OK)
-  @ApiHealthCheckDocs()
-  healthCheck() {
-    return {
-      status: 'ok',
-      timestamp: new Date().toISOString(),
-      service: 'meeting-service',
-    };
   }
 }

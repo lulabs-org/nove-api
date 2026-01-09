@@ -77,7 +77,7 @@ export class UpdateMeetingRecordDto {
     minimum: 0,
   })
   @IsOptional()
-  @Transform(({ value }) => parseInt(String(value)))
+  @Transform(({ value }) => (value ? parseInt(String(value)) : undefined))
   @IsNumber({}, { message: '持续时间必须是数字' })
   @Min(0, { message: '持续时间不能小于0' })
   duration?: number;
@@ -101,28 +101,12 @@ export class UpdateMeetingRecordDto {
   processingStatus?: ProcessingStatus;
 
   @ApiPropertyOptional({
-    description: '转录内容',
-    example: '会议转录内容...',
-  })
-  @IsOptional()
-  @IsString({ message: '转录内容必须是字符串' })
-  transcript?: string;
-
-  @ApiPropertyOptional({
-    description: '会议摘要',
-    example: '本次会议讨论了项目进展...',
-  })
-  @IsOptional()
-  @IsString({ message: '会议摘要必须是字符串' })
-  summary?: string;
-
-  @ApiPropertyOptional({
     description: '参会人数',
     example: 5,
     minimum: 0,
   })
   @IsOptional()
-  @Transform(({ value }) => parseInt(String(value)))
+  @Transform(({ value }) => (value ? parseInt(String(value)) : undefined))
   @IsNumber({}, { message: '参会人数必须是数字' })
   @Min(0, { message: '参会人数不能小于0' })
   participantCount?: number;
