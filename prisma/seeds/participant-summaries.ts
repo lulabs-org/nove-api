@@ -13,10 +13,7 @@ import { PrismaClient, PeriodType, ParticipantSummary } from '@prisma/client';
 /**
  * 创建参与者会议总结数据
  */
-export async function createParticipantSummaries(
-  prisma: PrismaClient,
-  _meetingData: any,
-) {
+export async function createParticipantSummaries(prisma: PrismaClient) {
   console.log('📝 开始创建参与者总结数据...');
 
   // 只创建 SINGLE 类型的总结，platformUserId 和 userId 为空
