@@ -66,12 +66,6 @@ model User {
   uploadedStorageObjects StorageObject[]
   participantSummaries ParticipantSummary[] @relation("UserParticipantSummaries") // 周期性总结
 
-  // 登录日志关联
-  loginLogs LoginLog[] // 登录日志
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
   @@unique([countryCode, phone], name: "uq_users_country_code_phone")
   @@index([username]) // 用户名登录优化
   @@index([email]) // 登录查询优化

@@ -17,7 +17,6 @@ model Meeting {
 
   // 主持人和参与者
   createdById      String?       @map("created_by_id") // Creator's platform user ID
-  createdBy        PlatformUser? @relation("MeetingCreator", fields: [createdById], references: [id], onDelete: SetNull)
   hostId           String?       @map("host_id") // Host's platform user ID
   host             PlatformUser? @relation("HostedMeetings", fields: [hostId], references: [id], onDelete: SetNull)
   participantCount Int? // 参与人数
@@ -42,7 +41,7 @@ model Meeting {
   participants MeetingParticipant[] // 参会记录
   recordings   MeetingRecording[] // 关联的录制
   summaries    MeetingSummary[] // 关联的总结记录
-  participantSummaries ParticipantSummary[] // 关联个人总结
+  participantSummaries ParticipantSummary[] @relation("MeetingParticipantSummaries") // 关联个人总结
 
   // 系统字段及时间
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -80,7 +79,6 @@ model MeetingRecording {
 
   // 关联字段
   recorderUserId String?       @map("recorder_user_id")
-  recorderUser   PlatformUser? @relation("RecordingUser", fields: [recorderUserId], references: [id], onDelete: SetNull)
 
   files                MeetingRecordingFile[]
   transcripts          Transcript[]
@@ -162,7 +160,6 @@ model MeetingSummary {
   createdId  String?       @map("created_id") // 创建者
   creator    PlatformUser? @relation("SummaryCreator", fields: [createdId], references: [id])
   approvedId String?       @map("approved_id") // 审核者
-  approver   PlatformUser? @relation("ApprovedSummaries", fields: [approvedId], references: [id])
   approvedAt DateTime?     @map("approved_at") @db.Timestamptz(6) // 审核时间
 
   // 版本链管理
@@ -208,7 +205,6 @@ model MeetingParticipant {
 
   // 参会人员
   platformUserId String?
-  platformUser   PlatformUser? @relation("ParticipantUser", fields: [platformUserId], references: [id], onDelete: SetNull)
 
   // 参会行为数据
   joinTime        DateTime?
@@ -241,7 +237,6 @@ model MeetingUserAction {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   platformUserId String?       @map("user_id")
-  platformUser   PlatformUser? @relation("UserActions", fields: [platformUserId], references: [id], onDelete: SetNull)
 
   @@index([platformUserId, createdAt], map: "idx_actions_user_time")
   @@index([targetType, targetId], map: "idx_actions_target")
