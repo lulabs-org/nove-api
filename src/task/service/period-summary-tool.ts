@@ -2,7 +2,7 @@
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2026-01-03 09:40:30
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-10 11:32:45
+ * @LastEditTime: 2026-01-10 11:36:02
  * @FilePath: \lulab_backend\src\task\service\period-summary-tool.ts
  * @Description:
  *
@@ -96,10 +96,10 @@ export class PeriodSummaryTool {
     {
       id: string;
       partSummary: string;
-      userName: string;
+      userName: string; // 这个是参会人在会议中的昵称(platformUser.userName)
       startAt: Date;
       endAt: Date;
-      username: string;
+      username: string; // 这个是参会人在平台上的用户名(user.username)
     }[]
   > {
     // 查找当前分组下所有 platformUserId 对应的 participantSummary
