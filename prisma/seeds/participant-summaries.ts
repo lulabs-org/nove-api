@@ -15,7 +15,7 @@ import { PrismaClient, PeriodType, ParticipantSummary } from '@prisma/client';
  */
 export async function createParticipantSummaries(
   prisma: PrismaClient,
-  meetingData: any,
+  _meetingData: any,
 ) {
   console.log('📝 开始创建参与者总结数据...');
 
