@@ -10,12 +10,14 @@ import { apiKeyConfig } from '@/configs/api-key.config';
 import { ApiKeyStatus } from '@prisma/client';
 import { CreateApiKeyDto, UpdateApiKeyDto } from '../dto';
 import { computeKeyHash } from '../utils/crypto.util';
+import { PermissionService } from '@/permission/services/permission.service';
 
 /* eslint-disable @typescript-eslint/unbound-method */
 
 describe('ApiKeyService', () => {
   let service: ApiKeyService;
   let repository: jest.Mocked<ApiKeyRepository>;
+  let permissionService: jest.Mocked<PermissionService>;
 
   const mockConfig = {
     environment: 'prod',
@@ -53,6 +55,10 @@ describe('ApiKeyService', () => {
     updateLastUsedAt: jest.fn(),
   };
 
+  const mockPermissionService = {
+    getPermissionsByUserId: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -65,11 +71,16 @@ describe('ApiKeyService', () => {
           provide: apiKeyConfig.KEY,
           useValue: mockConfig,
         },
+        {
+          provide: PermissionService,
+          useValue: mockPermissionService,
+        },
       ],
     }).compile();
 
     service = module.get<ApiKeyService>(ApiKeyService);
     repository = module.get(ApiKeyRepository);
+    permissionService = module.get(PermissionService);
   });
 
   afterEach(() => {
@@ -88,6 +99,9 @@ describe('ApiKeyService', () => {
         expiresAt: '2026-12-31T23:59:59Z',
       };
 
+      permissionService.getPermissionsByUserId.mockResolvedValue([
+        'meetings:read',
+      ]);
       repository.create.mockResolvedValue(mockApiKey);
 
       const result = await service.createKey('org-123', 'user-123', dto);
@@ -215,10 +229,18 @@ describe('ApiKeyService', () => {
         name: dto.name!,
         scopes: dto.scopes!,
       };
+      permissionService.getPermissionsByUserId.mockResolvedValue([
+        'meetings:write',
+      ]);
       repository.findById.mockResolvedValue(mockApiKey);
       repository.update.mockResolvedValue(updatedKey);
 
-      const result = await service.updateKey('org-123', 'key-123', dto);
+      const result = await service.updateKey(
+        'org-123',
+        'key-123',
+        dto,
+        'user-123',
+      );
 
       expect(repository.findById).toHaveBeenCalledWith('key-123', 'org-123');
       expect(repository.update).toHaveBeenCalledWith('key-123', 'org-123', {
@@ -234,10 +256,20 @@ describe('ApiKeyService', () => {
       repository.findById.mockResolvedValue(null);
 
       await expect(
-        service.updateKey('org-123', 'key-123', { name: 'Updated' }),
+        service.updateKey(
+          'org-123',
+          'key-123',
+          { name: 'Updated' },
+          'user-123',
+        ),
       ).rejects.toThrow(NotFoundException);
       await expect(
-        service.updateKey('org-123', 'key-123', { name: 'Updated' }),
+        service.updateKey(
+          'org-123',
+          'key-123',
+          { name: 'Updated' },
+          'user-123',
+        ),
       ).rejects.toThrow('API Key not found');
     });
 
@@ -250,7 +282,7 @@ describe('ApiKeyService', () => {
       repository.findById.mockResolvedValue(mockApiKey);
 
       await expect(
-        service.updateKey('org-123', 'key-123', dto),
+        service.updateKey('org-123', 'key-123', dto, 'user-123'),
       ).rejects.toThrow(BadRequestException);
     });
   });
@@ -260,7 +292,7 @@ describe('ApiKeyService', () => {
       repository.findById.mockResolvedValue(mockApiKey);
       repository.revoke.mockResolvedValue(mockApiKey);
 
-      await service.revokeKey('org-123', 'key-123');
+      await service.revokeKey('org-123', 'key-123', 'user-123');
 
       expect(repository.findById).toHaveBeenCalledWith('key-123', 'org-123');
       expect(repository.revoke).toHaveBeenCalledWith('key-123', 'org-123');
@@ -269,9 +301,9 @@ describe('ApiKeyService', () => {
     it('should throw NotFoundException when key does not exist', async () => {
       repository.findById.mockResolvedValue(null);
 
-      await expect(service.revokeKey('org-123', 'key-123')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.revokeKey('org-123', 'key-123', 'user-123'),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -289,7 +321,7 @@ describe('ApiKeyService', () => {
       repository.create.mockResolvedValue(newKey);
       repository.revoke.mockResolvedValue(oldKey);
 
-      const result = await service.rotateKey('org-123', 'key-123');
+      const result = await service.rotateKey('org-123', 'key-123', 'user-123');
 
       expect(repository.findById).toHaveBeenCalledWith('key-123', 'org-123');
       expect(repository.create).toHaveBeenCalledWith(
@@ -308,24 +340,24 @@ describe('ApiKeyService', () => {
     it('should throw NotFoundException when key does not exist', async () => {
       repository.findById.mockResolvedValue(null);
 
-      await expect(service.rotateKey('org-123', 'key-123')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(
+        service.rotateKey('org-123', 'key-123', 'user-123'),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('should preserve createdBy user when rotating', async () => {
-      const oldKey = { ...mockApiKey, createdBy: 'user-456' };
+      const oldKey = { ...mockApiKey, createdBy: 'user-123' };
       const newKey = { ...mockApiKey, id: 'new-key-123' };
 
       repository.findById.mockResolvedValue(oldKey);
       repository.create.mockResolvedValue(newKey);
       repository.revoke.mockResolvedValue(oldKey);
 
-      await service.rotateKey('org-123', 'key-123');
+      await service.rotateKey('org-123', 'key-123', 'user-123');
 
       expect(repository.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          createdByUser: { connect: { id: 'user-456' } },
+          createdByUser: { connect: { id: 'user-123' } },
         }),
       );
     });

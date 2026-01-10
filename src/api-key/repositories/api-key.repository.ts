@@ -59,9 +59,16 @@ export class ApiKeyRepository {
       skip?: number;
       take?: number;
       orderBy?: Prisma.ApiKeyOrderByWithRelationInput;
+      createdBy?: string;
     },
   ): Promise<{ items: ApiKey[]; total: number }> {
-    const where: Prisma.ApiKeyWhereInput = { organizationId };
+    const where: Prisma.ApiKeyWhereInput = {
+      organizationId,
+    };
+
+    if (options?.createdBy) {
+      where.createdBy = options.createdBy;
+    }
 
     const [items, total] = await Promise.all([
       this.prisma.apiKey.findMany({

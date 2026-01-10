@@ -4,6 +4,7 @@ import {
   UnauthorizedException,
   BadRequestException,
   Inject,
+  ForbiddenException,
 } from '@nestjs/common';
 import { ConfigType } from '@nestjs/config';
 import { ApiKeyStatus } from '@prisma/client';
@@ -24,6 +25,7 @@ import {
   RotateApiKeyResponse,
 } from '../dto';
 import { ApiKeyAuthContext } from '../types';
+import { PermissionService } from '@/permission/services/permission.service';
 
 /**
  * API Key Service
@@ -35,6 +37,7 @@ export class ApiKeyService {
     private readonly apiKeyRepository: ApiKeyRepository,
     @Inject(apiKeyConfig.KEY)
     private readonly config: ConfigType<typeof apiKeyConfig>,
+    private readonly permissionService: PermissionService,
   ) {}
 
   /**
@@ -49,7 +52,26 @@ export class ApiKeyService {
     userId: string,
     dto: CreateApiKeyDto,
   ): Promise<CreateApiKeyResponse> {
-    // 验证过期时间（如果提供）
+    const requestedScopes = dto.scopes || [];
+
+    if (requestedScopes.length > 0) {
+      const userPermissions =
+        await this.permissionService.getPermissionsByUserId(userId);
+
+      const hasAllScopes = requestedScopes.every((scope) =>
+        userPermissions.includes(scope),
+      );
+
+      if (!hasAllScopes) {
+        const missingScopes = requestedScopes.filter(
+          (scope) => !userPermissions.includes(scope),
+        );
+        throw new ForbiddenException(
+          `Cannot create API key with scopes you don't have. Missing permissions: ${missingScopes.join(', ')}`,
+        );
+      }
+    }
+
     if (dto.expiresAt) {
       const expiresAt = new Date(dto.expiresAt);
       if (expiresAt <= new Date()) {
@@ -57,13 +79,11 @@ export class ApiKeyService {
       }
     }
 
-    // 生成 API Key
     const { rawKey, prefix, keyHash, last4 } = generateApiKey(
       this.config.environment,
       this.config.secret,
     );
 
-    // 存储到数据库
     const apiKey = await this.apiKeyRepository.create({
       organization: {
         connect: { id: organizationId },
@@ -77,12 +97,11 @@ export class ApiKeyService {
       prefix,
       keyHash,
       last4,
-      scopes: dto.scopes || [],
+      scopes: requestedScopes,
       expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : null,
       status: ApiKeyStatus.ACTIVE,
     });
 
-    // 返回响应（包含明文 key，仅此一次）
     return {
       ...this.toDto(apiKey),
       key: rawKey,
@@ -98,6 +117,7 @@ export class ApiKeyService {
   async listKeys(
     organizationId: string,
     pagination?: PaginationDto,
+    userId?: string,
   ): Promise<ApiKeyListResponse> {
     const page = pagination?.page || 1;
     const pageSize = pagination?.pageSize || 10;
@@ -109,6 +129,7 @@ export class ApiKeyService {
         skip,
         take: pageSize,
         orderBy: { createdAt: 'desc' },
+        createdBy: userId,
       },
     );
 
@@ -132,8 +153,8 @@ export class ApiKeyService {
     organizationId: string,
     keyId: string,
     dto: UpdateApiKeyDto,
+    userId: string,
   ): Promise<ApiKeyDto> {
-    // 验证 key 存在且属于该组织
     const existingKey = await this.apiKeyRepository.findById(
       keyId,
       organizationId,
@@ -142,7 +163,28 @@ export class ApiKeyService {
       throw new NotFoundException('API Key not found');
     }
 
-    // 验证过期时间（如果提供）
+    if (existingKey.createdBy !== userId) {
+      throw new ForbiddenException('You can only update API keys you created');
+    }
+
+    if (dto.scopes && dto.scopes.length > 0) {
+      const userPermissions =
+        await this.permissionService.getPermissionsByUserId(userId);
+
+      const hasAllScopes = dto.scopes.every((scope) =>
+        userPermissions.includes(scope),
+      );
+
+      if (!hasAllScopes) {
+        const missingScopes = dto.scopes.filter(
+          (scope) => !userPermissions.includes(scope),
+        );
+        throw new ForbiddenException(
+          `Cannot update API key with scopes you don't have. Missing permissions: ${missingScopes.join(', ')}`,
+        );
+      }
+    }
+
     if (dto.expiresAt) {
       const expiresAt = new Date(dto.expiresAt);
       if (expiresAt <= new Date()) {
@@ -150,7 +192,6 @@ export class ApiKeyService {
       }
     }
 
-    // 更新 key（不改变 prefix 和 keyHash）
     const updatedKey = await this.apiKeyRepository.update(
       keyId,
       organizationId,
@@ -169,8 +210,11 @@ export class ApiKeyService {
    * @param organizationId 组织 ID
    * @param keyId API Key ID
    */
-  async revokeKey(organizationId: string, keyId: string): Promise<void> {
-    // 验证 key 存在且属于该组织
+  async revokeKey(
+    organizationId: string,
+    keyId: string,
+    userId: string,
+  ): Promise<void> {
     const existingKey = await this.apiKeyRepository.findById(
       keyId,
       organizationId,
@@ -179,7 +223,10 @@ export class ApiKeyService {
       throw new NotFoundException('API Key not found');
     }
 
-    // 撤销 key
+    if (existingKey.createdBy !== userId) {
+      throw new ForbiddenException('You can only revoke API keys you created');
+    }
+
     await this.apiKeyRepository.revoke(keyId, organizationId);
   }
 
@@ -192,20 +239,22 @@ export class ApiKeyService {
   async rotateKey(
     organizationId: string,
     keyId: string,
+    userId: string,
   ): Promise<RotateApiKeyResponse> {
-    // 验证旧 key 存在且属于该组织
     const oldKey = await this.apiKeyRepository.findById(keyId, organizationId);
     if (!oldKey) {
       throw new NotFoundException('API Key not found');
     }
 
-    // 生成新 API Key
+    if (oldKey.createdBy !== userId) {
+      throw new ForbiddenException('You can only rotate API keys you created');
+    }
+
     const { rawKey, prefix, keyHash, last4 } = generateApiKey(
       this.config.environment,
       this.config.secret,
     );
 
-    // 创建新 key（保留名称和 scopes）
     const newKey = await this.apiKeyRepository.create({
       organization: {
         connect: { id: organizationId },
@@ -227,10 +276,8 @@ export class ApiKeyService {
       },
     });
 
-    // 撤销旧 key
     await this.apiKeyRepository.revoke(keyId, organizationId);
 
-    // 返回响应（包含新明文 key，仅此一次）
     return {
       ...this.toDto(newKey),
       key: rawKey,
