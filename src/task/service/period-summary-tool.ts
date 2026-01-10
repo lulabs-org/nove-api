@@ -2,7 +2,7 @@
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2026-01-03 09:40:30
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-03 09:56:32
+ * @LastEditTime: 2026-01-10 11:32:45
  * @FilePath: \lulab_backend\src\task\service\period-summary-tool.ts
  * @Description:
  *
@@ -35,7 +35,9 @@ export class PeriodSummaryTool {
           platformUser: {
             select: {
               id: true,
-              userId: true,
+              user: {
+                select: { id: true },
+              },
             },
           },
         },
@@ -66,7 +68,7 @@ export class PeriodSummaryTool {
     >();
 
     for (const item of uniqueSummaries) {
-      const userId = item.platformUser?.userId ?? null; // 取 userId，null 也作为 key
+      const userId = item.platformUser?.user?.id ?? null; // 取 userId，null 也作为 key
       // mapKey 为 userId 或 platformUserId，用于分组
       const mapKey =
         userId === null
@@ -94,7 +96,7 @@ export class PeriodSummaryTool {
     {
       id: string;
       partSummary: string;
-      partName: string;
+      userName: string;
       startAt: Date;
       endAt: Date;
       username: string;
@@ -109,7 +111,7 @@ export class PeriodSummaryTool {
       select: {
         id: true, // 会议总结ID，用于创建 SummaryRelation
         partSummary: true, // 会议总结
-        partName: true, // 参会人信息
+        userName: true, // 参会人信息
         startAt: true, // 开始时间(总结的时间区间)
         endAt: true, // 结束时间(总结的时间区间)
         platformUser: {
@@ -128,7 +130,7 @@ export class PeriodSummaryTool {
     return summaries.map((s) => ({
       id: s.id,
       partSummary: s.partSummary,
-      partName: s.partName,
+      userName: s.userName,
       startAt: s.startAt,
       endAt: s.endAt,
       username: s.platformUser?.user?.username ?? '未知用户', // 处理 null
@@ -147,7 +149,7 @@ export class PeriodSummaryTool {
     summaries: {
       id: string;
       partSummary: string;
-      partName: string;
+      userName: string;
       startAt: Date;
       endAt: Date;
       username: string;
@@ -218,7 +220,7 @@ export class PeriodSummaryTool {
         periodType: 'DAILY',
         startAt: startOfDay,
         endAt: endOfDay,
-        partName: realName,
+        userName: realName,
         partSummary: reply,
 
         // 关键逻辑：有 userId 就只存 userId，没有才存 platformUserId
@@ -233,6 +235,7 @@ export class PeriodSummaryTool {
           parentSummaryId: parentSummary.id, // parentSummary 已经定义
           childSummaryId: childSummary.id,
           parentPeriodType: 'DAILY',
+          childPeriodType: 'SINGLE',
         },
       });
     }
@@ -265,8 +268,8 @@ export class PeriodSummaryTool {
     let realName: string;
 
     if (userId === null) {
-      // userId 为 null：realName = partName
-      realName = summaries[0]?.partName ?? '未知用户';
+      // userId 为 null：realName = userName
+      realName = summaries[0]?.userName ?? '未知用户';
     } else {
       // userId 不为 null：realName = username
       realName = summaries[0]?.username ?? '未知用户';
