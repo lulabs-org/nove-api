@@ -2,13 +2,13 @@
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2025-12-25 20:04:17
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-03 09:51:52
+ * @LastEditTime: 2026-01-10 12:30:55
  * @FilePath: \lulab_backend\src\task\service\period-summary.service.ts
  * @Description:
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
-import type { Job } from 'bullmq';
+// import type { Job } from 'bullmq';
 import { PrismaService } from '../../prisma/prisma.service';
 import { OpenaiService } from '../../integrations/openai/openai.service';
 import { PeriodSummaryTool } from './period-summary-tool';
