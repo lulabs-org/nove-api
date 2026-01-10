@@ -1,3 +1,13 @@
+/*
+ * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
+ * @Date: 2026-01-10 10:54:22
+ * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
+ * @LastEditTime: 2026-01-10 11:49:02
+ * @FilePath: \lulab_backend\prisma\seeds\participant-summaries.ts
+ * @Description:
+ *
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
+ */
 import { PrismaClient, PeriodType, ParticipantSummary } from '@prisma/client';
 
 /**
@@ -22,17 +32,16 @@ export async function createParticipantSummaries(
         platformUserId: null, // 为空
         userId: null, // 为空
         periodType: PeriodType.SINGLE,
-        meetingParticipantId: null, // 暂不关联具体参与记录
         meetingId: null, // 暂不关联具体会议
         startAt,
         endAt,
-        partName: `测试参与者${i}`,
+        userName: `测试参与者${i}`,
         partSummary: `这是第${i}条测试总结内容。会议讨论了项目进展、技术难点和下一步计划。主要观点包括：1) 需要加强团队协作；2) 优化开发流程；3) 提升代码质量。`,
       },
     });
 
     singleSummaries.push(summary);
-    console.log(`✅ 创建参与者总结 ${i}/10: ${summary.partName}`);
+    console.log(`✅ 创建参与者总结 ${i}/10: ${summary.userName}`);
   }
 
   console.log(`✅ 成功创建 ${singleSummaries.length} 条参与者总结`);
