@@ -10,7 +10,8 @@ import { MeetingPlatform, MeetingType, ProcessingStatus } from '@prisma/client';
 import {
   MeetingRecordListResponseDto,
   MeetingStatsResponseDto,
-} from '../dto/meeting-record.dto';
+  DeleteMeetingRecordResponseDto,
+} from '../dto';
 
 /**
  * 获取会议记录列表装饰器
@@ -159,7 +160,7 @@ export const ApiDeleteMeetingRecordDocs = () =>
   applyDecorators(
     ApiOperation({
       summary: '删除会议记录',
-      description: '删除指定的会议记录及其关联的文件',
+      description: '删除指定的会议记录及其关联的文件，返回被删除的记录信息',
     }),
     ApiParam({
       name: 'id',
@@ -168,8 +169,9 @@ export const ApiDeleteMeetingRecordDocs = () =>
       format: 'uuid',
     }),
     ApiResponse({
-      status: 204,
+      status: 200,
       description: '删除成功',
+      type: DeleteMeetingRecordResponseDto,
     }),
     ApiResponse({
       status: 404,

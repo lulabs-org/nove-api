@@ -5,9 +5,9 @@ import { GetMeetingRecordsParams } from './types';
 import {
   MeetingRecordResponseDto,
   MeetingStatsResponseDto,
-} from './dto/meeting-record.dto';
-import { CreateMeetingRecordDto } from './dto/create-meeting-record.dto';
-import { UpdateMeetingRecordDto } from './dto/update-meeting-record.dto';
+  CreateMeetingRecordDto,
+  UpdateMeetingRecordDto,
+} from './dto';
 import {
   MeetingRecordNotFoundException,
   MeetingRecordAlreadyExistsException,
@@ -141,14 +141,15 @@ export class MeetingService {
   }
 
   /**
-   * 删除会议记录
+   * 删除会议记录（软删除）
    */
-  async deleteMeetingRecord(id: string): Promise<void> {
+  async deleteMeetingRecord(id: string): Promise<MeetingRecordResponseDto> {
     const record = await this.meetingRepository.findById(id);
     if (!record) {
       throw new MeetingRecordNotFoundException(id);
     }
-    await this.meetingRepository.delete(id);
+    await this.meetingRepository.softDelete(id);
+    return record;
   }
 
   /**
@@ -160,7 +161,12 @@ export class MeetingService {
     platform?: string;
   }): MeetingStatsResponseDto {
     void params;
-    // 实现统计逻辑
+    // TODO: 实现统计逻辑 - 根据日期范围、平台等条件统计会议数据
+    // - 统计会议总数
+    // - 按平台分组统计
+    // - 按状态分组统计
+    // - 按类型分组统计
+    // - 获取最近会议记录
     return {
       total: 0,
       platformStats: [],

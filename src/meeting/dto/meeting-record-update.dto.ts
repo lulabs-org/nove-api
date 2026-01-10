@@ -1,52 +1,23 @@
 import {
   IsString,
-  IsNotEmpty,
-  IsEnum,
   IsOptional,
+  IsEnum,
   IsDateString,
   IsNumber,
   Min,
 } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { MeetingPlatform, MeetingType, ProcessingStatus } from '@prisma/client';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { MeetingType, ProcessingStatus } from '@prisma/client';
 import { Transform } from 'class-transformer';
 
-/**
- * 创建会议记录DTO
- */
-export class CreateMeetingRecordDto {
-  @ApiProperty({
-    description: '会议平台',
-    enum: MeetingPlatform,
-    example: MeetingPlatform.TENCENT_MEETING,
-  })
-  @IsNotEmpty({ message: '会议平台不能为空' })
-  @IsEnum(MeetingPlatform, { message: '无效的会议平台' })
-  platform: MeetingPlatform;
-
-  @ApiProperty({
-    description: '平台会议ID',
-    example: 'meeting_123456',
-  })
-  @IsNotEmpty({ message: '平台会议ID不能为空' })
-  @IsString({ message: '平台会议ID必须是字符串' })
-  platformMeetingId: string;
-
+export class UpdateMeetingRecordDto {
   @ApiPropertyOptional({
-    description: '平台录制ID',
-    example: 'recording_123456',
+    description: '会议标题',
+    example: '项目讨论会议（已更新）',
   })
   @IsOptional()
-  @IsString({ message: '平台录制ID必须是字符串' })
-  platformRecordingId?: string;
-
-  @ApiProperty({
-    description: '会议标题',
-    example: '项目讨论会议',
-  })
-  @IsNotEmpty({ message: '会议标题不能为空' })
   @IsString({ message: '会议标题必须是字符串' })
-  title: string;
+  title?: string;
 
   @ApiPropertyOptional({
     description: '会议号',
@@ -56,14 +27,14 @@ export class CreateMeetingRecordDto {
   @IsString({ message: '会议号必须是字符串' })
   meetingCode?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: '会议类型',
     enum: MeetingType,
     example: MeetingType.SCHEDULED,
   })
-  @IsNotEmpty({ message: '会议类型不能为空' })
+  @IsOptional()
   @IsEnum(MeetingType, { message: '无效的会议类型' })
-  type: MeetingType;
+  type?: MeetingType;
 
   @ApiPropertyOptional({
     description: '主持人用户ID',
@@ -73,13 +44,13 @@ export class CreateMeetingRecordDto {
   @IsString({ message: '主持人用户ID必须是字符串' })
   hostUserId?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: '主持人用户名',
-    example: '张三',
+    example: '李四',
   })
-  @IsNotEmpty({ message: '主持人用户名不能为空' })
+  @IsOptional()
   @IsString({ message: '主持人用户名必须是字符串' })
-  hostUserName: string;
+  hostUserName?: string;
 
   @ApiPropertyOptional({
     description: '实际开始时间',
@@ -103,48 +74,50 @@ export class CreateMeetingRecordDto {
     minimum: 0,
   })
   @IsOptional()
-  @Transform(({ value }) => parseInt(String(value)))
+  @Transform(({ value }) => (value ? parseInt(String(value)) : undefined))
   @IsNumber({}, { message: '持续时间必须是数字' })
   @Min(0, { message: '持续时间不能小于0' })
   duration?: number;
 
   @ApiPropertyOptional({
-    description: '是否有录制',
-    example: true,
-    default: false,
-  })
-  @IsOptional()
-  @Transform(({ value }) => {
-    if (typeof value === 'string') {
-      return value.toLowerCase() === 'true';
-    }
-    return Boolean(value);
-  })
-  hasRecording?: boolean = false;
-
-  @ApiPropertyOptional({
     description: '录制状态',
     enum: ProcessingStatus,
-    example: ProcessingStatus.PENDING,
-    default: ProcessingStatus.PENDING,
+    example: ProcessingStatus.COMPLETED,
   })
   @IsOptional()
   @IsEnum(ProcessingStatus, { message: '无效的录制状态' })
-  recordingStatus?: ProcessingStatus = ProcessingStatus.PENDING;
+  recordingStatus?: ProcessingStatus;
 
   @ApiPropertyOptional({
     description: '处理状态',
     enum: ProcessingStatus,
-    example: ProcessingStatus.PENDING,
-    default: ProcessingStatus.PENDING,
+    example: ProcessingStatus.COMPLETED,
   })
   @IsOptional()
   @IsEnum(ProcessingStatus, { message: '无效的处理状态' })
-  processingStatus?: ProcessingStatus = ProcessingStatus.PENDING;
+  processingStatus?: ProcessingStatus;
+
+  @ApiPropertyOptional({
+    description: '参会人数',
+    example: 5,
+    minimum: 0,
+  })
+  @IsOptional()
+  @Transform(({ value }) => (value ? parseInt(String(value)) : undefined))
+  @IsNumber({}, { message: '参会人数必须是数字' })
+  @Min(0, { message: '参会人数不能小于0' })
+  participantCount?: number;
+
+  @ApiPropertyOptional({
+    description: '参会者列表',
+    example: [{ name: '张三', userId: 'user_123' }],
+  })
+  @IsOptional()
+  participantList?: any;
 
   @ApiPropertyOptional({
     description: '元数据',
-    example: { source: 'api' },
+    example: { updatedBy: 'admin' },
   })
   @IsOptional()
   metadata?: any;
