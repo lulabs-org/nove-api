@@ -102,7 +102,7 @@ export class ApiKeyController {
       user.id,
     );
 
-    return this.apiKeyService.listKeys(organizationId, pagination);
+    return this.apiKeyService.listKeys(organizationId, pagination, user.id);
   }
 
   /**
@@ -144,7 +144,7 @@ export class ApiKeyController {
       user.id,
     );
 
-    return this.apiKeyService.updateKey(organizationId, id, dto);
+    return this.apiKeyService.updateKey(organizationId, id, dto, user.id);
   }
 
   /**
@@ -181,7 +181,7 @@ export class ApiKeyController {
       user.id,
     );
 
-    await this.apiKeyService.revokeKey(organizationId, id);
+    await this.apiKeyService.revokeKey(organizationId, id, user.id);
   }
 
   /**
@@ -219,6 +219,6 @@ export class ApiKeyController {
       user.id,
     );
 
-    return this.apiKeyService.rotateKey(organizationId, id);
+    return this.apiKeyService.rotateKey(organizationId, id, user.id);
   }
 }

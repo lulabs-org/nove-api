@@ -174,7 +174,11 @@ describe('ApiKeyController', () => {
       const result = await controller.listKeys(mockUser, pagination);
 
       expect(getPrimaryOrganizationIdSpy).toHaveBeenCalledWith(mockUser.id);
-      expect(listKeysSpy).toHaveBeenCalledWith(mockOrganizationId, pagination);
+      expect(listKeysSpy).toHaveBeenCalledWith(
+        mockOrganizationId,
+        pagination,
+        mockUser.id,
+      );
       expect(result).toEqual(mockApiKeyListResponse);
     });
 
@@ -199,7 +203,11 @@ describe('ApiKeyController', () => {
 
       const result = await controller.listKeys(mockUser, pagination);
 
-      expect(listKeysSpy).toHaveBeenCalledWith(mockOrganizationId, pagination);
+      expect(listKeysSpy).toHaveBeenCalledWith(
+        mockOrganizationId,
+        pagination,
+        mockUser.id,
+      );
       expect(result).toEqual(customListResponse);
     });
 
@@ -250,6 +258,7 @@ describe('ApiKeyController', () => {
         mockOrganizationId,
         'key-123',
         updateDto,
+        mockUser.id,
       );
       expect(result).toEqual(updatedKey);
     });
@@ -277,6 +286,7 @@ describe('ApiKeyController', () => {
         mockOrganizationId,
         'key-123',
         updateDto,
+        mockUser.id,
       );
       expect(result).toEqual(updatedKey);
     });
@@ -304,6 +314,7 @@ describe('ApiKeyController', () => {
         mockOrganizationId,
         'key-123',
         updateDto,
+        mockUser.id,
       );
       expect(result).toEqual(updatedKey);
     });
@@ -357,7 +368,11 @@ describe('ApiKeyController', () => {
       await controller.revokeKey(mockUser, 'key-123');
 
       expect(getPrimaryOrganizationIdSpy).toHaveBeenCalledWith(mockUser.id);
-      expect(revokeKeySpy).toHaveBeenCalledWith(mockOrganizationId, 'key-123');
+      expect(revokeKeySpy).toHaveBeenCalledWith(
+        mockOrganizationId,
+        'key-123',
+        mockUser.id,
+      );
     });
 
     it('should throw NotFoundException when key does not exist', async () => {
@@ -386,7 +401,11 @@ describe('ApiKeyController', () => {
       const result = await controller.rotateKey(mockUser, 'key-123');
 
       expect(getPrimaryOrganizationIdSpy).toHaveBeenCalledWith(mockUser.id);
-      expect(rotateKeySpy).toHaveBeenCalledWith(mockOrganizationId, 'key-123');
+      expect(rotateKeySpy).toHaveBeenCalledWith(
+        mockOrganizationId,
+        'key-123',
+        mockUser.id,
+      );
       expect(result).toEqual(mockRotateApiKeyResponse);
       expect(result.key).toBeDefined();
       expect(result.oldKeyId).toBe('key-123');
