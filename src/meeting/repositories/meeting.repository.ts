@@ -29,6 +29,7 @@ export class MeetingRepository {
           meetingId,
           subMeetingId,
         },
+        deletedAt: null,
       },
     });
   }
@@ -38,7 +39,7 @@ export class MeetingRepository {
    */
   async findById(id: string) {
     return this.prisma.meeting.findUnique({
-      where: { id },
+      where: { id, deletedAt: null },
       include: {
         recordings: true,
       },
@@ -59,7 +60,7 @@ export class MeetingRepository {
    */
   async update(id: string, data: UpdateMeetingRecordData) {
     return this.prisma.meeting.update({
-      where: { id },
+      where: { id, deletedAt: null },
       data,
     });
   }
@@ -83,6 +84,7 @@ export class MeetingRepository {
           meetingId,
           subMeetingId,
         },
+        deletedAt: null,
       },
       update: data,
       create: {
@@ -95,11 +97,35 @@ export class MeetingRepository {
   }
 
   /**
-   * Delete meeting record
+   * Delete meeting record (hard delete)
    */
   async delete(id: string) {
     return this.prisma.meeting.delete({
       where: { id },
+    });
+  }
+
+  /**
+   * Soft delete meeting record
+   */
+  async softDelete(id: string) {
+    return this.prisma.meeting.update({
+      where: { id, deletedAt: null },
+      data: {
+        deletedAt: new Date(),
+      },
+    });
+  }
+
+  /**
+   * Restore soft deleted meeting record
+   */
+  async restore(id: string) {
+    return this.prisma.meeting.update({
+      where: { id },
+      data: {
+        deletedAt: null,
+      },
     });
   }
 
@@ -131,7 +157,10 @@ export class MeetingRepository {
       type?: typeof type;
       startAt?: { gte?: Date; lte?: Date };
       OR?: Array<{ title?: { contains?: string; mode?: 'insensitive' } }>;
-    } = {};
+      deletedAt?: null;
+    } = {
+      deletedAt: null,
+    };
 
     if (platform) {
       where.platform = platform;

@@ -29,9 +29,10 @@ import {
   MeetingRecordResponseDto,
   MeetingRecordListResponseDto,
   MeetingStatsResponseDto,
-} from './dto/meeting-record.dto';
-import { CreateMeetingRecordDto } from './dto/create-meeting-record.dto';
-import { UpdateMeetingRecordDto } from './dto/update-meeting-record.dto';
+  DeleteMeetingRecordResponseDto,
+  CreateMeetingRecordDto,
+  UpdateMeetingRecordDto,
+} from './dto';
 import { CuidPipe } from '@/common/pipes/cuid.pipe';
 
 /**
@@ -171,15 +172,23 @@ export class MeetingController {
    * 删除会议记录
    */
   @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   @ApiDeleteMeetingRecordDocs()
-  async deleteMeetingRecord(@Param('id', CuidPipe) id: string): Promise<void> {
+  async deleteMeetingRecord(
+    @Param('id', CuidPipe) id: string,
+  ): Promise<DeleteMeetingRecordResponseDto> {
     this.logger.log(`删除会议记录: ${id}`);
 
     try {
-      await this.meetingService.deleteMeetingRecord(id);
+      const record = await this.meetingService.deleteMeetingRecord(id);
 
-      this.logger.log(`删除会议记录成功: ${id}`);
+      this.logger.log(`删除会议记录成功: ${record.id}`);
+
+      return {
+        success: true,
+        data: record,
+        deletedAt: new Date(),
+      };
     } catch (error: unknown) {
       this.logger.error(`删除会议记录失败: ${id}`, (error as Error).stack);
       throw error;
