@@ -30,10 +30,10 @@ export class PeriodSummary {
    * - 调用 getGroupedPlatformUsers 获取所有分组
    * - 遍历每个分组，调用 processOneUserDailySummary 处理
    * - 每处理完一个用户，等待 5 秒以防压力过大
-   * @param job BullMQ Job 对象（可用于任务追踪）
+   * @param job BullMQ Job 对象（可用于任务追踪），暂时用不到删除了
    * @returns 处理完成状态及时间戳
    */
-  async processDailySummary(job: Job): Promise<{ ok: boolean; at: string }> {
+  async processDailySummary(): Promise<{ ok: boolean; at: string }> {
     console.log(
       '开始执行任务: personalDailyMeetingSummary',
       new Date().toISOString(),

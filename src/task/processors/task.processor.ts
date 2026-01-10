@@ -2,8 +2,8 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-10-03 06:03:56
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2025-12-25 20:19:17
- * @FilePath: \lulab_backend\src\task\task.processor.ts
+ * @LastEditTime: 2026-01-10 12:22:44
+ * @FilePath: \lulab_backend\src\task\processors\task.processor.ts
  * @Description:
  *
  * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
@@ -42,7 +42,9 @@ export class TaskProcessor extends WorkerHost {
   ): Promise<unknown> {
     // 🔹 修改日志，显示 originalName
     const taskName = job.data.originalName ?? job.name; // 如果没有 originalName 就 fallback
-    this.logger.debug(`Processing job name=${taskName} id=${job.id}`);
+    this.logger.debug(
+      `Processing job name=${JSON.stringify(taskName)} id=${job.id}`,
+    );
 
     // —— 在这里编写你真实的业务逻辑 ——
     // 举例：调用第三方 API、发送邮件、生成报表等
@@ -92,24 +94,24 @@ export class TaskProcessor extends WorkerHost {
           this.prisma,
           this.openaiService,
         );
-        return await periodSummary.processDailySummary(job);
+        return await periodSummary.processDailySummary();
       }
 
-      case 'openaiChat': {
-        const payload = (job.data as any).payload ?? {};
-        const question: string = payload.question ?? '你好';
-        const systemPrompt: string = payload.systemPrompt ?? '你是人工智能助手';
-        const messages = [
-          { role: 'system' as const, content: systemPrompt },
-          { role: 'user' as const, content: question },
-        ];
-        const reply = await this.openaiService.createChatCompletion(messages);
-        this.logger.log(`OpenAI聊天完成: ${reply?.slice(0, 200)}`);
-        return { reply };
-      }
+      // case 'openaiChat': {
+      //   const payload = (job.data as any).payload ?? {};
+      //   const question: string = payload.question ?? '你好';
+      //   const systemPrompt: string = payload.systemPrompt ?? '你是人工智能助手';
+      //   const messages = [
+      //     { role: 'system' as const, content: systemPrompt },
+      //     { role: 'user' as const, content: question },
+      //   ];
+      //   const reply = await this.openaiService.createChatCompletion(messages);
+      //   this.logger.log(`OpenAI聊天完成: ${reply?.slice(0, 200)}`);
+      //   return { reply };
+      // }
 
       default:
-        this.logger.warn(`Unknown job type: ${taskName}`);
+        this.logger.warn(`Unknown job type: ${JSON.stringify(taskName)}`);
     }
 
     // 模拟：sleep 500ms
