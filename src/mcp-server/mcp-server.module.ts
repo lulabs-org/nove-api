@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-29 10:29:37
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2025-12-29 11:02:52
+ * @LastEditTime: 2026-01-11 07:30:34
  * @FilePath: /lulab_backend/src/mcp-server/mcp-server.module.ts
  * @Description:
  *
@@ -13,6 +13,7 @@ import { Module } from '@nestjs/common';
 import { McpModule, McpTransportType } from '@rekog/mcp-nest';
 import { GreetingTool } from './tools/greeting.tool';
 import { UserInfoTool } from './tools/user-info.tool';
+import { UserSearchTool } from './tools/userid-search.tool';
 import { MeetingStatsTool } from './tools/meeting-stats.tool';
 import { Public } from '@/auth/decorators/public.decorator';
 
@@ -30,6 +31,7 @@ import { Public } from '@/auth/decorators/public.decorator';
       messagesEndpoint: 'messages',
       mcpEndpoint: 'mcp',
       decorators: [Public()],
+      // guards: [AuthGuard], // 保护所有 MCP 端点
       sse: {
         pingEnabled: true,
         pingIntervalMs: 30000,
@@ -40,6 +42,6 @@ import { Public } from '@/auth/decorators/public.decorator';
       },
     }),
   ],
-  providers: [GreetingTool, UserInfoTool, MeetingStatsTool],
+  providers: [GreetingTool, UserInfoTool, UserSearchTool, MeetingStatsTool],
 })
 export class McpServerModule {}

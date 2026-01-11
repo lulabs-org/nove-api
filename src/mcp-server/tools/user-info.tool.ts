@@ -1,3 +1,13 @@
+/*
+ * @Author: 杨仕明 shiming.y@qq.com
+ * @Date: 2026-01-11 02:24:26
+ * @LastEditors: 杨仕明 shiming.y@qq.com
+ * @LastEditTime: 2026-01-11 03:11:15
+ * @FilePath: /lulab_backend/src/mcp-server/tools/user-info.tool.ts
+ * @Description:
+ *
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
+ */
 import { Injectable } from '@nestjs/common';
 import { Tool } from '@rekog/mcp-nest';
 import { z } from 'zod';
@@ -46,120 +56,7 @@ export class UserInfoTool {
         createdAt: user.createdAt.toISOString(),
         profile: user.profile
           ? {
-              name: user.profile.name,
-              avatar: user.profile.avatar,
-              bio: user.profile.bio,
-              firstName: user.profile.firstName,
-              lastName: user.profile.lastName,
-              dateOfBirth: user.profile.dateOfBirth?.toISOString(),
-              gender: user.profile.gender,
-              city: user.profile.city,
-              country: user.profile.country,
-            }
-          : null,
-      },
-    };
-  }
-
-  @Tool({
-    name: 'find-user-by-username',
-    description: 'Find user by username',
-    parameters: z.object({
-      username: z.string().describe('The username to search for'),
-    }),
-  })
-  async findUserByUsername({ username }: { username: string }) {
-    const user = await this.prisma.user.findUnique({
-      where: { username },
-      include: { profile: true },
-    });
-
-    if (!user) {
-      return {
-        status: 'error',
-        message: `User not found with username: ${username}`,
-        data: null,
-      };
-    }
-
-    return {
-      userId: user.id,
-      status: 'success',
-      message: 'User found successfully',
-      data: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        countryCode: user.countryCode,
-        phone: user.phone,
-        emailVerified: !!user.emailVerifiedAt,
-        phoneVerified: !!user.phoneVerifiedAt,
-        active: user.active,
-        lastLoginAt: user.lastLoginAt?.toISOString(),
-        createdAt: user.createdAt.toISOString(),
-        profile: user.profile
-          ? {
-              name: user.profile.name,
-              avatar: user.profile.avatar,
-              bio: user.profile.bio,
-              firstName: user.profile.firstName,
-              lastName: user.profile.lastName,
-              dateOfBirth: user.profile.dateOfBirth?.toISOString(),
-              gender: user.profile.gender,
-              city: user.profile.city,
-              country: user.profile.country,
-            }
-          : null,
-      },
-    };
-  }
-
-  @Tool({
-    name: 'find-user-by-phone',
-    description: 'Find user by phone number',
-    parameters: z.object({
-      countryCode: z.string().describe('Country code (e.g., +86)'),
-      phone: z.string().describe('Phone number'),
-    }),
-  })
-  async findUserByPhone({
-    countryCode,
-    phone,
-  }: {
-    countryCode: string;
-    phone: string;
-  }) {
-    const user = await this.prisma.user.findUnique({
-      where: { unique_phone_combination: { countryCode, phone } },
-      include: { profile: true },
-    });
-
-    if (!user) {
-      return {
-        status: 'error',
-        message: `User not found with phone: ${countryCode}${phone}`,
-        data: null,
-      };
-    }
-
-    return {
-      userId: user.id,
-      status: 'success',
-      message: 'User found successfully',
-      data: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        countryCode: user.countryCode,
-        phone: user.phone,
-        emailVerified: !!user.emailVerifiedAt,
-        phoneVerified: !!user.phoneVerifiedAt,
-        active: user.active,
-        lastLoginAt: user.lastLoginAt?.toISOString(),
-        createdAt: user.createdAt.toISOString(),
-        profile: user.profile
-          ? {
-              name: user.profile.name,
+              displayName: user.profile.displayName,
               avatar: user.profile.avatar,
               bio: user.profile.bio,
               firstName: user.profile.firstName,
