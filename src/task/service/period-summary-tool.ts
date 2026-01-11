@@ -2,7 +2,7 @@
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2026-01-03 09:40:30
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-11 16:54:07
+ * @LastEditTime: 2026-01-11 17:15:48
  * @FilePath: \nove-api\src\task\service\period-summary-tool.ts
  * @Description:
  *
@@ -193,6 +193,8 @@ export class PeriodSummaryTool {
         endAt: endOfDay,
         userName: realName,
         partSummary: reply,
+        userId: userId ?? undefined,
+        platformUserId: platformUserIds[0] ?? undefined, // 取第一个 platformUserId 作为关联
       });
 
     // 遍历 summaries，把每条记录的 id 作为 childSummaryId 创建 SummaryRelation
