@@ -165,7 +165,9 @@ export async function createParticipantSummaries(
         },
     ];
 
-    const created: any[] = [];
+    const created: Awaited<
+        ReturnType<typeof prisma.participantSummary.create>
+    >[] = [];
     for (const data of participantSummaries) {
         const summary = await prisma.participantSummary.create({
             data,
