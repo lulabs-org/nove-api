@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { PASSWORDS, type RoleMap } from './config';
 import { createUsers, type CreatedUsers } from './users';
-import { assignUserRoles } from './roles';
+import { assignUserRoles } from '../relations/user-roles';
 
 export { type RoleMap } from './config';
 
@@ -35,5 +35,5 @@ export async function createUsersWithRoles(
 }
 
 export { createUsers, type CreatedUsers } from './users';
-export { assignUserRoles, assignRolesToUsers } from './roles';
+export { assignUserRoles, assignRolesToUsers } from '../relations/user-roles';
 export * from './config';

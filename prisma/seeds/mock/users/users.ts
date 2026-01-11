@@ -1,5 +1,4 @@
 import { PrismaClient, User } from '@prisma/client';
-import bcrypt from 'bcryptjs';
 import { COUNTRY_CODE, USER_CONFIGS, NORMAL_USER_PROFILES, UserProfileConfig } from './config';
 
 export interface CreatedUsers {

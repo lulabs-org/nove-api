@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-12 00:22:09
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-12 00:32:26
+ * @LastEditTime: 2026-01-12 01:41:39
  * @FilePath: /nove_api/prisma/seeds/mock/permissions/index.ts
  * @Description: 权限模块，包含权限、角色和角色权限的创建和分配
  *
@@ -11,8 +11,8 @@
 
 import { PrismaClient, Permission } from '@prisma/client';
 import { createPermissions as createPermissionsOnly } from './permissions';
-import { createRoles, CreatedRoles } from './roles';
-import { assignRolePermissions } from './role-permissions';
+import { createRoles, CreatedRoles } from '../roles';
+import { assignRolePermissions } from '../relations/role-permissions';
 
 export interface CreatedPermissions {
   permissions: Permission[];
@@ -37,5 +37,4 @@ export async function createPermissions(
 
 // 导出各个子模块的函数和类型，以便单独使用
 export { createPermissions as createPermissionsOnly } from './permissions';
-export { createRoles, type CreatedRoles } from './roles';
-export { assignRolePermissions } from './role-permissions';
+export { createRoles, type CreatedRoles } from '../roles';

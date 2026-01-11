@@ -1,13 +1,3 @@
-/*
- * @Author: 杨仕明 shiming.y@qq.com
- * @Date: 2026-01-12 00:52:03
- * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-12 00:52:05
- * @FilePath: /nove_api/prisma/seeds/mock/users/roles.ts
- * @Description: 
- * 
- * Copyright (c) 2026 by LuLab-Team, All Rights Reserved. 
- */
 import { PrismaClient, User } from '@prisma/client';
 
 async function assignUserRole(

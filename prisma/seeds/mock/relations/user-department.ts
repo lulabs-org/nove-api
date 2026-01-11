@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { CreatedDepartments } from './config';
+import { CreatedDepartments } from '../departments/config';
 import { CreatedUsers } from '../users';
 
 export async function createUserDepartmentRelations(
