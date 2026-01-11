@@ -2,8 +2,8 @@
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2026-01-03 09:40:30
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-10 11:36:02
- * @FilePath: \lulab_backend\src\task\service\period-summary-tool.ts
+ * @LastEditTime: 2026-01-11 14:08:56
+ * @FilePath: \nove-api\src\task\service\period-summary-tool.ts
  * @Description:
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
@@ -97,8 +97,8 @@ export class PeriodSummaryTool {
       id: string;
       partSummary: string;
       userName: string; // 这个是参会人在会议中的昵称(platformUser.userName)
-      startAt: Date;
-      endAt: Date;
+      startAt: Date | null;
+      endAt: Date | null;
       username: string; // 这个是参会人在平台上的用户名(user.username)
     }[]
   > {
@@ -131,8 +131,8 @@ export class PeriodSummaryTool {
       id: s.id,
       partSummary: s.partSummary,
       userName: s.userName,
-      startAt: s.startAt,
-      endAt: s.endAt,
+      startAt: s.startAt ?? null,
+      endAt: s.endAt ?? null,
       username: s.platformUser?.user?.username ?? '未知用户', // 处理 null
     }));
   }
@@ -150,8 +150,8 @@ export class PeriodSummaryTool {
       id: string;
       partSummary: string;
       userName: string;
-      startAt: Date;
-      endAt: Date;
+      startAt: Date | null;
+      endAt: Date | null;
       username: string;
     }[],
     prompt: string,
