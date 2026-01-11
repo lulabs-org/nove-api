@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-11 05:21:40
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-12 04:06:46
+ * @LastEditTime: 2026-01-12 21:21:14
  * @FilePath: /nove_api/prisma/seeds/mock/index.ts
  * @Description:
  *
