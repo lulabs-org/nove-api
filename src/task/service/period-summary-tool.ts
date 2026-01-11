@@ -2,7 +2,7 @@
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2026-01-03 09:40:30
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-11 16:08:55
+ * @LastEditTime: 2026-01-11 16:54:07
  * @FilePath: \nove-api\src\task\service\period-summary-tool.ts
  * @Description:
  *
@@ -10,10 +10,12 @@
  */
 import { OpenaiService } from '../../integrations/openai/openai.service';
 import { PeriodSummaryRepository } from './repositories/period-summary.repository';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 @Injectable()
 export class PeriodSummaryTool {
+  private readonly logger = new Logger(PeriodSummaryTool.name);
+
   constructor(
     private readonly openaiService: OpenaiService,
     private readonly periodSummaryRepository: PeriodSummaryRepository,
@@ -238,7 +240,7 @@ export class PeriodSummaryTool {
       realName = summaries[0]?.username ?? '未知用户';
     }
 
-    console.log(
+    this.logger.debug(
       `\x1b[96m获取到用户(${userId})的参会议记录:\x1b[0m\n` +
         JSON.stringify(summaries, null, 2),
     );
@@ -249,9 +251,9 @@ export class PeriodSummaryTool {
       summaries,
       '', // 或者你之后自定义 prompt
     );
-    console.log(`OpenAI聊天完成: ${reply?.slice(0, 200)}`);
+    this.logger.debug(`OpenAI聊天完成: ${reply?.slice(0, 200)}`);
 
-    console.log(
+    this.logger.debug(
       `\x1b[92m当前用户(${userId})的会议记录已完成:\x1b[0m\n` +
         JSON.stringify(summaries, null, 2),
     );
@@ -264,6 +266,6 @@ export class PeriodSummaryTool {
       platformUserIds,
       summaries,
     });
-    console.log(saveResult);
+    this.logger.debug(saveResult);
   }
 }

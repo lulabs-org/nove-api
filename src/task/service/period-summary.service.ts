@@ -2,7 +2,7 @@
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2025-12-25 20:04:17
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-11 16:02:55
+ * @LastEditTime: 2026-01-11 16:49:08
  * @FilePath: \nove-api\src\task\service\period-summary.service.ts
  * @Description:
  *
@@ -10,10 +10,12 @@
  */
 // import type { Job } from 'bullmq';
 import { PeriodSummaryTool } from './period-summary-tool';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 
 @Injectable()
 export class PeriodSummary {
+  private readonly logger = new Logger(PeriodSummary.name);
+
   // 让构造器导入summaryTool
   constructor(private readonly summaryTool: PeriodSummaryTool) {}
 
@@ -26,7 +28,7 @@ export class PeriodSummary {
    * @returns 处理完成状态及时间戳
    */
   async processDailySummary(): Promise<{ ok: boolean; at: string }> {
-    console.log(
+    this.logger.log(
       '开始执行任务: personalDailyMeetingSummary',
       new Date().toISOString(),
     );
@@ -36,16 +38,18 @@ export class PeriodSummary {
 
     // 如果没有值，直接返回
     if (data.length === 0) {
-      console.log('没有找到符合条件的记录, participantSummary的新增记录为空');
+      this.logger.warn(
+        '没有找到符合条件的记录, participantSummary的新增记录为空',
+      );
       return { ok: true, at: new Date().toISOString() }; // 或者 return null / throw Error，根据你的需求
     }
 
     // 打印分组结果
-    console.log(
+    this.logger.debug(
       '在participantSummary表检索到以下用户:\n' + JSON.stringify(data, null, 2),
     ); // 第二个参数 null 表示不格式化，第三个参数 2 表示缩进 2 个空格
 
-    console.log('开始依次总结每个用户的会议记录');
+    this.logger.debug('开始依次总结每个用户的会议记录');
 
     // 遍历每个分组，处理一个用户的会议记录
     for (const group of data) {
