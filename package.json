@@ -43,9 +43,8 @@
     "db:seed:real": "tsx prisma/seed.ts --real",
     "db:cleandata": "tsx prisma/seed.ts clean",
     "db:drop": "tsx prisma/seed.ts drop",
-    "db:seed:reset": "tsx prisma/seed.ts reset",
-    "db:seed:reset:real": "tsx prisma/seed.ts reset --real",
-    "db:backup": "chmod +x scripts/shell/backup.sh && ./scripts/shell/backup.sh"
+    "db:drop:force": "tsx prisma/seed.ts drop --force",
+    "db:seed:reset": "tsx prisma/seed.ts reset"
   },
   "dependencies": {
     "@alicloud/credentials": "^2.4.4",
