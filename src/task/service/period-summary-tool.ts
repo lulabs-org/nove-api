@@ -2,19 +2,21 @@
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2026-01-03 09:40:30
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-11 14:08:56
+ * @LastEditTime: 2026-01-11 16:08:55
  * @FilePath: \nove-api\src\task\service\period-summary-tool.ts
  * @Description:
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
-import { PrismaService } from '../../prisma/prisma.service';
 import { OpenaiService } from '../../integrations/openai/openai.service';
+import { PeriodSummaryRepository } from './repositories/period-summary.repository';
+import { Injectable } from '@nestjs/common';
 
+@Injectable()
 export class PeriodSummaryTool {
   constructor(
-    private readonly prisma: PrismaService,
     private readonly openaiService: OpenaiService,
+    private readonly periodSummaryRepository: PeriodSummaryRepository,
   ) {}
 
   /**
@@ -26,22 +28,7 @@ export class PeriodSummaryTool {
   > {
     // 查所有participantSummary的记录，但只拿平台用户的 id 和 userId
     const summaries =
-      (await this.prisma.participantSummary.findMany({
-        where: {
-          platformUserId: { not: null }, // 平台用户不为空
-          periodType: 'SINGLE', // 仅单次会议
-        },
-        select: {
-          platformUser: {
-            select: {
-              id: true,
-              user: {
-                select: { id: true },
-              },
-            },
-          },
-        },
-      })) ?? []; // 如果返回 null/undefined，默认是空数组
+      await this.periodSummaryRepository.findAllMeetingSummaries();
 
     // 如果没有值，直接返回
     if (summaries.length === 0) {
@@ -103,28 +90,10 @@ export class PeriodSummaryTool {
     }[]
   > {
     // 查找当前分组下所有 platformUserId 对应的 participantSummary
-    const summaries = await this.prisma.participantSummary.findMany({
-      where: {
-        platformUserId: { in: platformUserIds }, // 当前分组的所有 platformUserId
-        periodType: 'SINGLE', // 仅单次会议
-      },
-      select: {
-        id: true, // 会议总结ID，用于创建 SummaryRelation
-        partSummary: true, // 会议总结
-        userName: true, // 参会人信息
-        startAt: true, // 开始时间(总结的时间区间)
-        endAt: true, // 结束时间(总结的时间区间)
-        platformUser: {
-          select: {
-            user: {
-              select: {
-                username: true, // 通过平台用户检索到真实user的用户名
-              },
-            },
-          },
-        },
-      },
-    });
+    const summaries =
+      await this.periodSummaryRepository.findSummaryByPlatformUserIds(
+        platformUserIds,
+      );
 
     // 扁平化 username
     return summaries.map((s) => ({
@@ -215,28 +184,22 @@ export class PeriodSummaryTool {
     );
 
     // 保存ai总结内容至ParticipantSummary
-    const parentSummary = await this.prisma.participantSummary.create({
-      data: {
+    const parentSummary =
+      await this.periodSummaryRepository.createPeriodSummary({
         periodType: 'DAILY',
         startAt: startOfDay,
         endAt: endOfDay,
         userName: realName,
         partSummary: reply,
-
-        // 关键逻辑：有 userId 就只存 userId，没有才存 platformUserId
-        ...(userId ? { userId } : { platformUserId: platformUserIds[0] }),
-      },
-    });
+      });
 
     // 遍历 summaries，把每条记录的 id 作为 childSummaryId 创建 SummaryRelation
     for (const childSummary of summaries) {
-      await this.prisma.summaryRelation.create({
-        data: {
-          parentSummaryId: parentSummary.id, // parentSummary 已经定义
-          childSummaryId: childSummary.id,
-          parentPeriodType: 'DAILY',
-          childPeriodType: 'SINGLE',
-        },
+      await this.periodSummaryRepository.createSummaryRelation({
+        parentSummaryId: parentSummary.id, // parentSummary 已经定义
+        childSummaryId: childSummary.id,
+        parentPeriodType: 'DAILY',
+        childPeriodType: 'SINGLE',
       });
     }
 

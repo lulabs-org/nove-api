@@ -2,8 +2,8 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-10-03 06:03:56
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-10 12:22:44
- * @FilePath: \lulab_backend\src\task\processors\task.processor.ts
+ * @LastEditTime: 2026-01-11 16:09:30
+ * @FilePath: \nove-api\src\task\processors\task.processor.ts
  * @Description:
  *
  * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
@@ -20,7 +20,6 @@ import type { Job } from 'bullmq';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { TaskStatus } from '@prisma/client';
-import { OpenaiService } from '../../integrations/openai/openai.service';
 
 import { PeriodSummary } from '../service/period-summary.service';
 
@@ -31,7 +30,7 @@ export class TaskProcessor extends WorkerHost {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly openaiService: OpenaiService,
+    private readonly periodSummary: PeriodSummary,
   ) {
     super();
   }
@@ -90,11 +89,7 @@ export class TaskProcessor extends WorkerHost {
         //   }
         // }
 
-        const periodSummary = new PeriodSummary(
-          this.prisma,
-          this.openaiService,
-        );
-        return await periodSummary.processDailySummary();
+        return await this.periodSummary.processDailySummary();
       }
 
       // case 'openaiChat': {

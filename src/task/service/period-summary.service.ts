@@ -2,28 +2,20 @@
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2025-12-25 20:04:17
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-10 12:30:55
- * @FilePath: \lulab_backend\src\task\service\period-summary.service.ts
+ * @LastEditTime: 2026-01-11 16:02:55
+ * @FilePath: \nove-api\src\task\service\period-summary.service.ts
  * @Description:
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 // import type { Job } from 'bullmq';
-import { PrismaService } from '../../prisma/prisma.service';
-import { OpenaiService } from '../../integrations/openai/openai.service';
 import { PeriodSummaryTool } from './period-summary-tool';
+import { Injectable } from '@nestjs/common';
 
+@Injectable()
 export class PeriodSummary {
-  private summaryTool: PeriodSummaryTool;
-
-  // 让构造器导入prisma和openaiService
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly openaiService: OpenaiService,
-  ) {
-    // 初始化 PeriodSummaryTool，传入依赖
-    this.summaryTool = new PeriodSummaryTool(prisma, openaiService);
-  }
+  // 让构造器导入summaryTool
+  constructor(private readonly summaryTool: PeriodSummaryTool) {}
 
   /**
    * 处理每日会议总结任务（批量处理所有用户）
