@@ -1,34 +1,10 @@
-/*
- * @Author: 杨仕明 shiming.y@qq.com
- * @Date: 2025-06-19 21:41:26
- * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2025-12-15 20:20:26
- * @FilePath: /lulab_backend/prisma/seeds/permissions.ts
- * @Description: 权限和角色权限分配种子模块
- *
- * Copyright (c) 2025 by ${git_name_email}, All Rights Reserved.
- */
-
-import { PrismaClient, $Enums, Permission, Role } from '@prisma/client';
-
-export interface CreatedPermissions {
-  permissions: Permission[];
-  roles: {
-    superAdmin: Role;
-    admin: Role;
-    manager: Role;
-    finance: Role;
-    customerService: Role;
-    user: Role;
-  };
-}
+import { PrismaClient, Permission } from '@prisma/client';
 
 export async function createPermissions(
   prisma: PrismaClient,
-): Promise<CreatedPermissions> {
-  // 定义基础权限
+): Promise<Permission[]> {
   const basePermissions = [
-    // 用户管理
+    // 用户管理权限
     {
       name: '查看用户',
       code: 'user:read',
@@ -64,8 +40,7 @@ export async function createPermissions(
       resource: 'user',
       action: 'reset-password',
     },
-
-    // 角色管理
+    // 角色管理权限
     {
       name: '查看角色',
       code: 'role:read',
@@ -101,8 +76,7 @@ export async function createPermissions(
       resource: 'role',
       action: 'assign-permission',
     },
-
-    // 权限管理
+    // 权限管理权限
     {
       name: '查看权限',
       code: 'permission:read',
@@ -131,8 +105,7 @@ export async function createPermissions(
       resource: 'permission',
       action: 'delete',
     },
-
-    // 组织管理
+    // 组织管理权限
     {
       name: '查看组织',
       code: 'organization:read',
@@ -161,8 +134,7 @@ export async function createPermissions(
       resource: 'organization',
       action: 'delete',
     },
-
-    // 部门管理
+    // 部门管理权限
     {
       name: '查看部门',
       code: 'department:read',
@@ -191,8 +163,7 @@ export async function createPermissions(
       resource: 'department',
       action: 'delete',
     },
-
-    // 产品管理
+    // 产品管理权限
     {
       name: '查看产品',
       code: 'product:read',
@@ -228,8 +199,7 @@ export async function createPermissions(
       resource: 'product',
       action: 'toggle-status',
     },
-
-    // 订单管理
+    // 订单管理权限
     {
       name: '查看订单',
       code: 'order:read',
@@ -265,8 +235,7 @@ export async function createPermissions(
       resource: 'order',
       action: 'status',
     },
-
-    // 财务管理
+    // 财务管理权限
     {
       name: '查看财务报表',
       code: 'finance:read',
@@ -288,8 +257,7 @@ export async function createPermissions(
       resource: 'finance',
       action: 'audit',
     },
-
-    // 系统管理
+    // 系统管理权限
     {
       name: '系统配置',
       code: 'system:config',
@@ -311,8 +279,7 @@ export async function createPermissions(
       resource: 'system',
       action: 'log',
     },
-
-    // 仪表板
+    // 仪表板权限
     {
       name: '查看仪表板',
       code: 'dashboard:read',
@@ -329,7 +296,6 @@ export async function createPermissions(
     },
   ];
 
-  // 创建权限
   const permissions: Permission[] = [];
   for (const permissionData of basePermissions) {
     const permission = await prisma.permission.upsert({
@@ -340,240 +306,5 @@ export async function createPermissions(
     permissions.push(permission);
   }
 
-  // 创建完整的角色体系
-
-  const roles = {
-    superAdmin: await prisma.role.upsert({
-      where: { code: 'SUPER_ADMIN' },
-      update: {},
-      create: {
-        name: '超级管理员',
-        code: 'SUPER_ADMIN',
-        description: '超级管理员，拥有所有权限',
-        level: 0,
-        type: $Enums.RoleType.SYSTEM,
-      },
-    }),
-    admin: await prisma.role.upsert({
-      where: { code: 'ADMIN' },
-      update: {},
-      create: {
-        name: '管理员',
-        code: 'ADMIN',
-        description: '系统管理员，拥有大部分管理权限',
-        level: 1,
-        type: $Enums.RoleType.SYSTEM,
-      },
-    }),
-    manager: await prisma.role.upsert({
-      where: { code: 'MANAGER' },
-      update: {},
-      create: {
-        name: '经理',
-        code: 'MANAGER',
-        description: '部门经理，拥有部门管理权限',
-        level: 2,
-        type: $Enums.RoleType.CUSTOM,
-      },
-    }),
-    finance: await prisma.role.upsert({
-      where: { code: 'FINANCE' },
-      update: {},
-      create: {
-        name: '财务',
-        code: 'FINANCE',
-        description: '财务人员，拥有财务相关权限',
-        level: 3,
-        type: $Enums.RoleType.CUSTOM,
-      },
-    }),
-    customerService: await prisma.role.upsert({
-      where: { code: 'CUSTOMER_SERVICE' },
-      update: {},
-      create: {
-        name: '客服',
-        code: 'CUSTOMER_SERVICE',
-        description: '客服人员，拥有客户服务权限',
-        level: 4,
-        type: $Enums.RoleType.CUSTOM,
-      },
-    }),
-    user: await prisma.role.upsert({
-      where: { code: 'USER' },
-      update: {},
-      create: {
-        name: '普通用户',
-        code: 'USER',
-        description: '普通用户，基础查看权限',
-        level: 5,
-        type: $Enums.RoleType.CUSTOM,
-      },
-    }),
-  };
-
-  // 为角色分配权限
-
-  // 超级管理员拥有所有权限
-  const superAdminRolePermissions = permissions.map((permission) => ({
-    roleId: roles.superAdmin.id,
-    permissionId: permission.id,
-  }));
-
-  for (const rolePermission of superAdminRolePermissions) {
-    await prisma.rolePermission.upsert({
-      where: {
-        roleId_permissionId: {
-          roleId: rolePermission.roleId,
-          permissionId: rolePermission.permissionId,
-        },
-      },
-      update: {},
-      create: rolePermission,
-    });
-  }
-
-  // 管理员权限（除了系统配置）
-  const adminPermissions = permissions.filter(
-    (p) => !['system:config'].includes(p.code),
-  );
-  const adminRolePermissions = adminPermissions.map((permission) => ({
-    roleId: roles.admin.id,
-    permissionId: permission.id,
-  }));
-
-  for (const rolePermission of adminRolePermissions) {
-    await prisma.rolePermission.upsert({
-      where: {
-        roleId_permissionId: {
-          roleId: rolePermission.roleId,
-          permissionId: rolePermission.permissionId,
-        },
-      },
-      update: {},
-      create: rolePermission,
-    });
-  }
-
-  // 经理权限
-  const managerPermissions = permissions.filter((p) =>
-    [
-      'user:read',
-      'user:create',
-      'user:update',
-      'department:read',
-      'department:create',
-      'department:update',
-      'product:read',
-      'product:create',
-      'product:update',
-      'order:read',
-      'order:create',
-      'order:update',
-      'order:status',
-      'dashboard:read',
-    ].includes(p.code),
-  );
-  const managerRolePermissions = managerPermissions.map((permission) => ({
-    roleId: roles.manager.id,
-    permissionId: permission.id,
-  }));
-
-  for (const rolePermission of managerRolePermissions) {
-    await prisma.rolePermission.upsert({
-      where: {
-        roleId_permissionId: {
-          roleId: rolePermission.roleId,
-          permissionId: rolePermission.permissionId,
-        },
-      },
-      update: {},
-      create: rolePermission,
-    });
-  }
-
-  // 财务权限
-  const financePermissions = permissions.filter((p) =>
-    [
-      'finance:read',
-      'finance:export',
-      'finance:audit',
-      'order:read',
-      'dashboard:read',
-    ].includes(p.code),
-  );
-  const financeRolePermissions = financePermissions.map((permission) => ({
-    roleId: roles.finance.id,
-    permissionId: permission.id,
-  }));
-
-  for (const rolePermission of financeRolePermissions) {
-    await prisma.rolePermission.upsert({
-      where: {
-        roleId_permissionId: {
-          roleId: rolePermission.roleId,
-          permissionId: rolePermission.permissionId,
-        },
-      },
-      update: {},
-      create: rolePermission,
-    });
-  }
-
-  // 客服权限
-  const customerServicePermissions = permissions.filter((p) =>
-    [
-      'user:read',
-      'order:read',
-      'order:update',
-      'order:status',
-      'product:read',
-      'dashboard:read',
-    ].includes(p.code),
-  );
-  const customerServiceRolePermissions = customerServicePermissions.map(
-    (permission) => ({
-      roleId: roles.customerService.id,
-      permissionId: permission.id,
-    }),
-  );
-
-  for (const rolePermission of customerServiceRolePermissions) {
-    await prisma.rolePermission.upsert({
-      where: {
-        roleId_permissionId: {
-          roleId: rolePermission.roleId,
-          permissionId: rolePermission.permissionId,
-        },
-      },
-      update: {},
-      create: rolePermission,
-    });
-  }
-
-  // 普通用户权限
-  const userPermissions = permissions.filter((p) =>
-    ['dashboard:read', 'product:read', 'order:read'].includes(p.code),
-  );
-  const userRolePermissions = userPermissions.map((permission) => ({
-    roleId: roles.user.id,
-    permissionId: permission.id,
-  }));
-
-  for (const rolePermission of userRolePermissions) {
-    await prisma.rolePermission.upsert({
-      where: {
-        roleId_permissionId: {
-          roleId: rolePermission.roleId,
-          permissionId: rolePermission.permissionId,
-        },
-      },
-      update: {},
-      create: rolePermission,
-    });
-  }
-
-  return {
-    permissions,
-    roles,
-  };
+  return permissions;
 }

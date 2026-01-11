@@ -2,14 +2,14 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-31 21:03:49
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-11 02:16:14
+ * @LastEditTime: 2026-01-12 00:52:38
  * @FilePath: /nove_api/prisma/seeds/mock/index.ts
  * @Description:
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
-export { createUsers, type CreatedUsers } from './users';
+export { createUsersWithRoles as createUsers, type CreatedUsers, type RoleMap } from './users';
 
 export { createOrganization } from './organization';
 
@@ -19,7 +19,10 @@ export {
   type CreatedDepartments,
 } from './departments';
 
-export { createPermissions, type CreatedPermissions } from './permissions';
+export {
+  createPermissions,
+  type CreatedPermissions,
+} from './permissions';
 
 export { createProducts, type CreatedProducts } from './products';
 
