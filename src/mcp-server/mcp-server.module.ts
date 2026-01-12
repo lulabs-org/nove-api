@@ -2,8 +2,8 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-29 10:29:37
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-11 07:30:34
- * @FilePath: /lulab_backend/src/mcp-server/mcp-server.module.ts
+ * @LastEditTime: 2026-01-12 18:09:34
+ * @FilePath: /nove_api/src/mcp-server/mcp-server.module.ts
  * @Description:
  *
  * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
@@ -16,6 +16,7 @@ import { UserInfoTool } from './tools/user-info.tool';
 import { UserSearchTool } from './tools/userid-search.tool';
 import { MeetingStatsTool } from './tools/meeting-stats.tool';
 import { Public } from '@/auth/decorators/public.decorator';
+import { McpAuthJwtGuard } from '@/api-key/guards/mcp-auth-api-key.guard';
 
 @Module({
   imports: [
@@ -27,11 +28,12 @@ import { Public } from '@/auth/decorators/public.decorator';
         McpTransportType.STREAMABLE_HTTP,
         McpTransportType.STDIO,
       ],
+      allowUnauthenticatedAccess: true,
       sseEndpoint: 'sse',
       messagesEndpoint: 'messages',
       mcpEndpoint: 'mcp',
       decorators: [Public()],
-      // guards: [AuthGuard], // 保护所有 MCP 端点
+      guards: [McpAuthJwtGuard], // 保护所有 MCP 端点
       sse: {
         pingEnabled: true,
         pingIntervalMs: 30000,

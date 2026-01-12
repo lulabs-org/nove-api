@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Tool, Context } from '@rekog/mcp-nest';
 import { z } from 'zod';
 import { PrismaService } from '@/prisma/prisma.service';
+import { ToolScopes } from '@rekog/mcp-nest';
 
 @Injectable()
 export class MeetingStatsTool {
@@ -30,6 +31,7 @@ export class MeetingStatsTool {
       endDate: z.string().describe('End date in ISO format (YYYY-MM-DD)'),
     }),
   })
+  @ToolScopes(['mcp:all'])
   async getMeetingStats(
     {
       userId,
@@ -161,6 +163,7 @@ export class MeetingStatsTool {
       meetingId: z.string().describe('The ID of the meeting'),
     }),
   })
+  @ToolScopes(['mcp:all'])
   async getMeetingDetails({ meetingId }: { meetingId: string }) {
     const meeting = await this.prisma.meeting.findUnique({
       where: { id: meetingId },

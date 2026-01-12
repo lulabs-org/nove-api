@@ -1,6 +1,17 @@
+/*
+ * @Author: 杨仕明 shiming.y@qq.com
+ * @Date: 2026-01-12 14:56:17
+ * @LastEditors: 杨仕明 shiming.y@qq.com
+ * @LastEditTime: 2026-01-12 18:17:30
+ * @FilePath: /nove_api/src/mcp-server/tools/greeting.tool.ts
+ * @Description:
+ *
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
+ */
 import { Injectable } from '@nestjs/common';
 import { Tool, Context } from '@rekog/mcp-nest';
 import { z } from 'zod';
+import { PublicTool } from '@rekog/mcp-nest';
 
 type Language = 'en' | 'zh' | 'es' | 'fr';
 
@@ -14,6 +25,7 @@ export class GreetingTool {
       language: z.enum(['en', 'zh', 'es', 'fr']).default('en'),
     }),
   })
+  @PublicTool()
   async sayHello(
     { name, language }: { name: string; language: Language },
     context: Context,

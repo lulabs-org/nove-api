@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Tool } from '@rekog/mcp-nest';
 import { z } from 'zod';
 import { PrismaService } from '@/prisma/prisma.service';
+import { ToolScopes } from '@rekog/mcp-nest';
 
 @Injectable()
 export class UserSearchTool {
@@ -14,6 +15,7 @@ export class UserSearchTool {
       username: z.string().describe('The username to search for'),
     }),
   })
+  @ToolScopes(['mcp:all'])
   async findUserByUsername({ username }: { username: string }) {
     const user = await this.prisma.user.findUnique({
       where: { username },
@@ -43,6 +45,7 @@ export class UserSearchTool {
       phone: z.string().describe('Phone number'),
     }),
   })
+  @ToolScopes(['mcp:all'])
   async findUserByPhone({
     countryCode,
     phone,
@@ -77,6 +80,7 @@ export class UserSearchTool {
       email: z.string().email().describe('The email address to search for'),
     }),
   })
+  @ToolScopes(['mcp:all'])
   async findUserByEmail({ email }: { email: string }) {
     const user = await this.prisma.user.findUnique({
       where: { email },
@@ -112,6 +116,7 @@ export class UserSearchTool {
         .describe('Maximum number of results to return'),
     }),
   })
+  @ToolScopes(['mcp:all'])
   async searchUsersByUsername({
     username,
     limit = 10,
@@ -161,6 +166,7 @@ export class UserSearchTool {
         .describe('Maximum number of results to return'),
     }),
   })
+  @ToolScopes(['mcp:all'])
   async searchUsersByEmail({
     email,
     limit = 10,
@@ -211,6 +217,7 @@ export class UserSearchTool {
         .describe('Maximum number of results to return'),
     }),
   })
+  @ToolScopes(['mcp:all'])
   async searchUsers({ query, limit = 10 }: { query: string; limit?: number }) {
     const users = await this.prisma.user.findMany({
       where: {

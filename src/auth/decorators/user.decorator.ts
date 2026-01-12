@@ -25,8 +25,17 @@ export interface CurrentUser {
   lastLoginAt?: Date | null;
 }
 
+export interface ApiKeyUser {
+  id: string;
+  organizationId: string;
+  apiKeyId: string;
+  scopes: string[];
+  roles?: string[];
+  authType: 'api_key';
+}
+
 interface RequestWithUser {
-  user?: CurrentUser;
+  user?: CurrentUser | ApiKeyUser;
 }
 
 export const User = createParamDecorator(

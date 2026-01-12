@@ -2,8 +2,8 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-11 02:24:26
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-11 03:11:15
- * @FilePath: /lulab_backend/src/mcp-server/tools/user-info.tool.ts
+ * @LastEditTime: 2026-01-12 19:00:54
+ * @FilePath: /nove_api/src/mcp-server/tools/user-info.tool.ts
  * @Description:
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
@@ -12,6 +12,7 @@ import { Injectable } from '@nestjs/common';
 import { Tool } from '@rekog/mcp-nest';
 import { z } from 'zod';
 import { PrismaService } from '@/prisma/prisma.service';
+import { PublicTool, ToolScopes, ToolRoles } from '@rekog/mcp-nest';
 
 @Injectable()
 export class UserInfoTool {
@@ -24,6 +25,7 @@ export class UserInfoTool {
       userId: z.string().describe('The ID of the user to fetch'),
     }),
   })
+  @ToolScopes(['mcp:all'])
   async getUserInfo({ userId }: { userId: string }) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },

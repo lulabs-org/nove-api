@@ -70,7 +70,7 @@
     "@nestjs/schedule": "^6.0.0",
     "@nestjs/swagger": "^11.2.0",
     "@prisma/client": "^6.10.1",
-    "@rekog/mcp-nest": "^1.8.4",
+    "@rekog/mcp-nest": "^1.9.0",
     "@types/nodemailer": "^6.4.17",
     "@types/passport-jwt": "^4.0.1",
     "@types/passport-local": "^1.0.38",
