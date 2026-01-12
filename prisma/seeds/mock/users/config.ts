@@ -1,4 +1,15 @@
-import { $Enums, Gender } from '@prisma/client';
+/*
+ * @Author: 杨仕明 shiming.y@qq.com
+ * @Date: 2026-01-12 00:51:27
+ * @LastEditors: 杨仕明 shiming.y@qq.com
+ * @LastEditTime: 2026-01-12 08:27:11
+ * @FilePath: /nove_api/prisma/seeds/mock/users/config.ts
+ * @Description:
+ *
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
+ */
+
+import { $Enums } from '@prisma/client';
 
 export const PASSWORDS = {
   ADMIN: 'admin123',
@@ -7,24 +18,6 @@ export const PASSWORDS = {
 
 export const COUNTRY_CODE = '+86' as const;
 export const COUNTRY = '中国' as const;
-
-export interface UserProfileConfig {
-  displayName: string;
-  firstName: string;
-  lastName: string;
-  gender: Gender;
-  bio: string;
-  city?: string;
-  country?: string;
-  dateOfBirth?: Date;
-}
-
-export interface RoleMap {
-  admin: any;
-  finance: any;
-  customerService: any;
-  user: any;
-}
 
 export const USER_CONFIGS = {
   admin: {

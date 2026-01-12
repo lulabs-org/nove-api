@@ -1,5 +1,16 @@
+/*
+ * @Author: 杨仕明 shiming.y@qq.com
+ * @Date: 2026-01-12 00:40:36
+ * @LastEditors: 杨仕明 shiming.y@qq.com
+ * @LastEditTime: 2026-01-12 09:58:35
+ * @FilePath: /nove_api/prisma/seeds/mock/departments/departments.ts
+ * @Description:
+ *
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
+ */
 import { PrismaClient, Department } from '@prisma/client';
-import { CreatedDepartments, DEPARTMENT_CONFIGS } from './config';
+import { DEPARTMENT_CONFIGS } from './config';
+import type { CreatedDepartments } from './type';
 
 export async function createDepartments(
   prisma: PrismaClient,
@@ -24,12 +35,8 @@ export async function createDepartments(
           sortOrder: config.sortOrder,
         },
         create: {
-          code: config.code,
-          name: config.name,
-          description: config.description,
           organizationId,
-          level: config.level,
-          sortOrder: config.sortOrder,
+          ...config,
         },
       });
 

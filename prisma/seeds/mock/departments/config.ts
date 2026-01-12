@@ -2,34 +2,13 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-12 00:40:20
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-12 00:40:21
+ * @LastEditTime: 2026-01-12 08:25:27
  * @FilePath: /nove_api/prisma/seeds/mock/departments/config.ts
- * @Description: 
- * 
- * Copyright (c) 2026 by LuLab-Team, All Rights Reserved. 
+ * @Description:
+ *
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
-import { Department } from '@prisma/client';
-
-export interface CreatedDepartments {
-  tech: Department;
-  sales: Department;
-  finance: Department;
-  hr: Department;
-  customerService: Department;
-  techDev: Department;
-  techOps: Department;
-  salesDirect: Department;
-  salesChannel: Department;
-}
-
-export interface DepartmentConfig {
-  code: string;
-  name: string;
-  description: string;
-  level: number;
-  sortOrder: number;
-  parentCode?: string;
-}
+import type { DepartmentConfig } from './type';
 
 export const DEPARTMENT_CONFIGS: DepartmentConfig[] = [
   {

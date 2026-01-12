@@ -1,12 +1,12 @@
 import { PrismaClient, User } from '@prisma/client';
-import { COUNTRY_CODE, USER_CONFIGS, NORMAL_USER_PROFILES, UserProfileConfig } from './config';
-
-export interface CreatedUsers {
-  adminUser: User;
-  financeUser: User;
-  customerServiceUser: User;
-  normalUsers: User[];
-}
+import bcrypt from 'bcryptjs';
+import {
+  COUNTRY_CODE,
+  USER_CONFIGS,
+  NORMAL_USER_PROFILES,
+  PASSWORDS,
+} from './config';
+import type { UserProfileConfig, CreatedUsers } from './type';
 
 async function createUserWithProfile(
   prisma: PrismaClient,
@@ -47,12 +47,13 @@ async function createUserWithProfile(
   }
 }
 
-export async function createUsers(
-  prisma: PrismaClient,
-  adminPasswordHash: string,
-  userPasswordHash: string,
-): Promise<CreatedUsers> {
+export async function createUsers(prisma: PrismaClient): Promise<CreatedUsers> {
   try {
+    const [adminPasswordHash, userPasswordHash] = await Promise.all([
+      bcrypt.hash(PASSWORDS.ADMIN, 10),
+      bcrypt.hash(PASSWORDS.USER, 10),
+    ]);
+
     const [adminUser, financeUser, customerServiceUser] = await Promise.all([
       createUserWithProfile(
         prisma,
