@@ -1,6 +1,6 @@
 import { PrismaClient, User } from '@prisma/client';
 
-async function assignRolesToUsers(
+export async function assignRolesToUsers(
   prisma: PrismaClient,
   userIds: string[],
   roleId: string,
