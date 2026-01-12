@@ -9,7 +9,7 @@
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 import { OpenaiService } from '../../integrations/openai/openai.service';
-import { PeriodSummaryRepository } from './repositories/period-summary.repository';
+import { PeriodSummaryRepository } from '../repositories/period-summary.repository';
 import { Injectable, Logger } from '@nestjs/common';
 
 @Injectable()

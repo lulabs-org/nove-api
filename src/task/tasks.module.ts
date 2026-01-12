@@ -19,7 +19,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { OpenaiModule } from '../integrations/openai/openai.module';
 import { PeriodSummary } from './service/period-summary.service';
 import { PeriodSummaryTool } from './service/period-summary-tool';
-import { PeriodSummaryRepository } from './service/repositories/period-summary.repository';
+import { PeriodSummaryRepository } from './repositories/period-summary.repository';
 
 @Module({
   imports: [
