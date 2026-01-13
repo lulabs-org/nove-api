@@ -37,8 +37,8 @@ model ParticipantSummary {
   asChild  SummaryRelation[] @relation("ChildSummary") // 作为子级总结，属于哪些父级总结
 
   // 时间戳 
-  summaryStart DateTime? @db.Timestamptz(6)  @map("summary_start") // 总结时间段开始（必填）
-  summaryEnd   DateTime? @db.Timestamptz(6)  @map("summary_end")   // 总结时间段结束（必填）
+  periodStart DateTime? @db.Timestamptz(6)  @map("period_start") // 总结时间段开始（必填）
+  periodEnd   DateTime? @db.Timestamptz(6)  @map("period_end")   // 总结时间段结束（必填）
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
   // 软删除

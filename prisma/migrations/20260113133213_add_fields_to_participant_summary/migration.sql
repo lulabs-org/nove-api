@@ -1,6 +1,6 @@
 -- AlterTable
-ALTER TABLE "participant_summaries" ADD COLUMN     "summary_end" TIMESTAMPTZ(6),
-ADD COLUMN     "summary_start" TIMESTAMPTZ(6),
+ALTER TABLE "participant_summaries" ADD COLUMN     "period_end" TIMESTAMPTZ(6),
+ADD COLUMN     "period_start" TIMESTAMPTZ(6),
 ADD COLUMN     "user_id" TEXT;
 
 -- AddForeignKey
