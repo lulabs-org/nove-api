@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { Tool } from '@rekog/mcp-nest';
 import { z } from 'zod';
-import { PrismaService } from '@/prisma/prisma.service';
 import { ToolScopes } from '@rekog/mcp-nest';
+import { UserIdSearchRepository } from '../repositories/userid-search.repository';
 
 @Injectable()
 export class UserSearchTool {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly userIdSearchRepos: UserIdSearchRepository) {}
 
   @Tool({
     name: 'find-userid-by-username',
@@ -17,10 +17,7 @@ export class UserSearchTool {
   })
   @ToolScopes(['mcp:all'])
   async findUserByUsername({ username }: { username: string }) {
-    const user = await this.prisma.user.findUnique({
-      where: { username },
-      select: { id: true },
-    });
+    const user = await this.userIdSearchRepos.findUserIdByUsername(username);
 
     if (!user) {
       return {
@@ -53,10 +50,10 @@ export class UserSearchTool {
     countryCode: string;
     phone: string;
   }) {
-    const user = await this.prisma.user.findFirst({
-      where: { countryCode, phone },
-      select: { id: true },
-    });
+    const user = await this.userIdSearchRepos.findUserIdByPhone(
+      countryCode,
+      phone,
+    );
 
     if (!user) {
       return {
@@ -82,10 +79,7 @@ export class UserSearchTool {
   })
   @ToolScopes(['mcp:all'])
   async findUserByEmail({ email }: { email: string }) {
-    const user = await this.prisma.user.findUnique({
-      where: { email },
-      select: { id: true },
-    });
+    const user = await this.userIdSearchRepos.findUserIdByEmail(email);
 
     if (!user) {
       return {
@@ -124,16 +118,10 @@ export class UserSearchTool {
     username: string;
     limit?: number;
   }) {
-    const users = await this.prisma.user.findMany({
-      where: {
-        username: {
-          contains: username,
-          mode: 'insensitive',
-        },
-      },
-      select: { id: true },
-      take: limit,
-    });
+    const users = await this.userIdSearchRepos.searchUserIdsByUsername(
+      username,
+      limit,
+    );
 
     if (users.length === 0) {
       return {
@@ -174,16 +162,10 @@ export class UserSearchTool {
     email: string;
     limit?: number;
   }) {
-    const users = await this.prisma.user.findMany({
-      where: {
-        email: {
-          contains: email,
-          mode: 'insensitive',
-        },
-      },
-      select: { id: true },
-      take: limit,
-    });
+    const users = await this.userIdSearchRepos.searchUserIdsByEmail(
+      email,
+      limit,
+    );
 
     if (users.length === 0) {
       return {
@@ -219,26 +201,7 @@ export class UserSearchTool {
   })
   @ToolScopes(['mcp:all'])
   async searchUsers({ query, limit = 10 }: { query: string; limit?: number }) {
-    const users = await this.prisma.user.findMany({
-      where: {
-        OR: [
-          {
-            username: {
-              contains: query,
-              mode: 'insensitive',
-            },
-          },
-          {
-            email: {
-              contains: query,
-              mode: 'insensitive',
-            },
-          },
-        ],
-      },
-      select: { id: true },
-      take: limit,
-    });
+    const users = await this.userIdSearchRepos.searchUserIds(query, limit);
 
     if (users.length === 0) {
       return {

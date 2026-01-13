@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-29 10:29:37
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-12 18:09:34
+ * @LastEditTime: 2026-01-13 09:03:57
  * @FilePath: /nove_api/src/mcp-server/mcp-server.module.ts
  * @Description:
  *
@@ -16,7 +16,9 @@ import { UserInfoTool } from './tools/user-info.tool';
 import { UserSearchTool } from './tools/userid-search.tool';
 import { MeetingStatsTool } from './tools/meeting-stats.tool';
 import { Public } from '@/auth/decorators/public.decorator';
-import { McpAuthJwtGuard } from '@/api-key/guards/mcp-auth-api-key.guard';
+import { McpAuthJwtGuard } from '@/api-key/guards/api-key-mcp-auth.guard';
+import { UserIdSearchRepository } from './repositories/userid-search.repository';
+import { MeetingStatsRepository } from './repositories/meeting-stats.repository';
 
 @Module({
   imports: [
@@ -44,6 +46,13 @@ import { McpAuthJwtGuard } from '@/api-key/guards/mcp-auth-api-key.guard';
       },
     }),
   ],
-  providers: [GreetingTool, UserInfoTool, UserSearchTool, MeetingStatsTool],
+  providers: [
+    GreetingTool,
+    UserInfoTool,
+    UserSearchTool,
+    MeetingStatsTool,
+    UserIdSearchRepository,
+    MeetingStatsRepository,
+  ],
 })
 export class McpServerModule {}

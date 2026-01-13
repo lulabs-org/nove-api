@@ -2,8 +2,8 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-12 15:10:02
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-12 15:33:32
- * @FilePath: /nove_api/src/api-key/guards/mcp-auth-api-key.guard.ts
+ * @LastEditTime: 2026-01-14 00:27:29
+ * @FilePath: /nove_api/src/api-key/guards/api-key-mcp-auth.guard.ts
  * @Description:
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
@@ -17,7 +17,7 @@ import {
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { ApiKeyService } from '@/api-key/services/api-key.service';
-import type { ApiKeyUser } from '@/auth/decorators/user.decorator';
+import type { ApiKeyUser } from '@/auth/decorators/api-key-user.decorator';
 
 type ApiKeyAuthContext = {
   organizationId: string;
@@ -25,12 +25,9 @@ type ApiKeyAuthContext = {
   scopes: string[];
 };
 
-// 给 express Request 扩展字段（可选，但推荐）
-declare global {
-  namespace Express {
-    interface Request {
-      apiAuth?: ApiKeyAuthContext;
-    }
+declare module 'express' {
+  interface Request {
+    apiAuth?: ApiKeyAuthContext;
   }
 }
 

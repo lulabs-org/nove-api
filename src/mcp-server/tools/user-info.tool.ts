@@ -9,10 +9,9 @@
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 import { Injectable } from '@nestjs/common';
-import { Tool } from '@rekog/mcp-nest';
+import { Tool, ToolScopes } from '@rekog/mcp-nest';
 import { z } from 'zod';
 import { PrismaService } from '@/prisma/prisma.service';
-import { PublicTool, ToolScopes, ToolRoles } from '@rekog/mcp-nest';
 
 @Injectable()
 export class UserInfoTool {

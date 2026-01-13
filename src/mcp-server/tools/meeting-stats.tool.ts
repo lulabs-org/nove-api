@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { Tool, Context } from '@rekog/mcp-nest';
+import { Tool, Context, ToolScopes } from '@rekog/mcp-nest';
 import { z } from 'zod';
-import { PrismaService } from '@/prisma/prisma.service';
-import { ToolScopes } from '@rekog/mcp-nest';
+import { MeetingStatsRepository } from '../repositories/meeting-stats.repository';
 
 @Injectable()
 export class MeetingStatsTool {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly meetingStatsRepository: MeetingStatsRepository,
+  ) {}
 
   private validateDateRange(startDate: Date, endDate: Date): void {
     const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
@@ -49,39 +50,21 @@ export class MeetingStatsTool {
 
     await context.reportProgress({ progress: 20, total: 100 });
 
-    const platformUsers = await this.prisma.platformUser.findMany({
-      where: {
-        localUserId: userId,
-        active: true,
-        deletedAt: null,
-      },
-    });
+    const platformUsers =
+      await this.meetingStatsRepository.findActivePlatformUsersByLocalUserId(
+        userId,
+      );
 
     await context.reportProgress({ progress: 40, total: 100 });
 
     const platformUserIds = platformUsers.map((u) => u.id);
 
-    const participantSummaries = await this.prisma.participantSummary.findMany({
-      where: {
-        platformUserId: { in: platformUserIds },
-        createdAt: {
-          gte: startDateObj,
-          lte: endDateObj,
-        },
-        deletedAt: null,
-      },
-      include: {
-        meeting: {
-          select: {
-            id: true,
-            title: true,
-            startAt: true,
-            endAt: true,
-            durationSeconds: true,
-          },
-        },
-      },
-    });
+    const participantSummaries =
+      await this.meetingStatsRepository.findParticipantSummaries({
+        platformUserIds,
+        startDate: startDateObj,
+        endDate: endDateObj,
+      });
 
     await context.reportProgress({ progress: 70, total: 100 });
 
@@ -93,15 +76,12 @@ export class MeetingStatsTool {
         .map((s) => s.meetingId),
     );
 
-    const meetings = await this.prisma.meeting.findMany({
-      where: {
-        id: { in: Array.from(uniqueMeetingIds) },
-        startAt: {
-          gte: startDateObj,
-          lte: endDateObj,
-        },
-      },
-    });
+    const meetings =
+      await this.meetingStatsRepository.findMeetingsByIdsAndStartAtRange({
+        meetingIds: Array.from(uniqueMeetingIds),
+        startDate: startDateObj,
+        endDate: endDateObj,
+      });
 
     const totalDuration = meetings.reduce(
       (sum, m) => sum + (m.durationSeconds || 0),
@@ -165,44 +145,8 @@ export class MeetingStatsTool {
   })
   @ToolScopes(['mcp:all'])
   async getMeetingDetails({ meetingId }: { meetingId: string }) {
-    const meeting = await this.prisma.meeting.findUnique({
-      where: { id: meetingId },
-      include: {
-        createdBy: {
-          select: {
-            id: true,
-            displayName: true,
-            email: true,
-          },
-        },
-        host: {
-          select: {
-            id: true,
-            displayName: true,
-            email: true,
-          },
-        },
-        participants: {
-          include: {
-            platformUser: {
-              select: {
-                id: true,
-                displayName: true,
-                email: true,
-              },
-            },
-          },
-        },
-        recordings: {
-          where: {
-            deletedAt: null,
-          },
-          include: {
-            files: true,
-          },
-        },
-      },
-    });
+    const meeting =
+      await this.meetingStatsRepository.findMeetingDetailsById(meetingId);
 
     if (!meeting) {
       return {
