@@ -12,6 +12,7 @@
 export * from './random';
 export * from './validators';
 export * from './http-file';
+export * from './http.util';
 export * from './user-mapper';
 export * from './password.util';
 export * from './time.util';

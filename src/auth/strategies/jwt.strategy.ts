@@ -21,13 +21,12 @@ import type { ConfigType } from '@nestjs/config';
 import {
   JWT_USER_LOOKUP,
   type JwtUserLookup,
-  JWT_TOKEN_BLACKLIST,
-  type JwtTokenBlacklist,
   type JwtPayload,
   type AuthenticatedUser,
   TokenBlacklistScope,
 } from '@/auth/types/jwt.types';
 import { jwtConfig } from '@/configs/jwt.config';
+import { TokenBlacklistService } from '@/auth/services/token-blacklist.service';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -37,8 +36,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     @Inject(JWT_USER_LOOKUP)
     private readonly userLookup: JwtUserLookup,
     @Optional()
-    @Inject(JWT_TOKEN_BLACKLIST)
-    private readonly blacklist?: JwtTokenBlacklist,
+    private readonly blacklist?: TokenBlacklistService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -48,7 +46,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: JwtPayload): Promise<AuthenticatedUser> {
-    // Optional token blacklist check (if provided by the app layer)
     if (payload?.jti && this.blacklist) {
       const revoked = await this.blacklist.isTokenBlacklisted(
         payload.jti,
@@ -68,5 +65,4 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 }
 
-// Export the symbols for use in other modules
-export { JWT_USER_LOOKUP, JWT_TOKEN_BLACKLIST };
+export { JWT_USER_LOOKUP };

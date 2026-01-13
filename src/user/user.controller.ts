@@ -2,8 +2,8 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-09-23 06:15:34
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-09 01:33:12
- * @FilePath: /lulab_backend/src/user/user.controller.ts
+ * @LastEditTime: 2026-01-14 00:37:19
+ * @FilePath: /nove_api/src/user/user.controller.ts
  * @Description:
  *
  * Copyright (c) 2025 by ${git_name_email}, All Rights Reserved.
@@ -27,6 +27,7 @@ import {
   ApiGetUserProfileDocs,
   ApiUpdateUserProfileDocs,
 } from './decorators/user.decorators';
+import { HttpUtil } from '@/common/utils';
 
 @ApiTags('User')
 @Controller('api/user')
@@ -46,27 +47,13 @@ export class UserController {
     @Body(ValidationPipe) updateProfileDto: UpdateProfileDto,
     @Req() req: Request,
   ): Promise<UserProfileResponseDto> {
-    const ip = this.getClientIp(req);
+    const ip = HttpUtil.getClientIp(req);
     const userAgent = req.get('User-Agent');
     return await this.profileService.updateProfile(
       user.id,
       updateProfileDto,
       ip,
       userAgent,
-    );
-  }
-
-  private getClientIp(req: Request): string {
-    const xff = req.headers['x-forwarded-for'];
-    const xReal = req.headers['x-real-ip'];
-    const forwarded = Array.isArray(xff) ? xff[0] : xff?.split(',')[0];
-    const realIp = Array.isArray(xReal) ? xReal[0] : xReal;
-    return (
-      forwarded?.trim() ||
-      realIp?.trim() ||
-      req.ip ||
-      req.socket?.remoteAddress ||
-      '127.0.0.1'
     );
   }
 }

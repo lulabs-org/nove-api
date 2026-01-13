@@ -1,3 +1,13 @@
+/*
+ * @Author: 杨仕明 shiming.y@qq.com
+ * @Date: 2025-12-28 11:37:14
+ * @LastEditors: 杨仕明 shiming.y@qq.com
+ * @LastEditTime: 2026-01-14 02:40:43
+ * @FilePath: /nove_api/src/auth/services/auth-policy.service.ts
+ * @Description:
+ *
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
+ */
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { LoginLogRepository } from '../repositories/login-log.repository';
 import { LoginType, AuthType } from '@/auth/enums';
@@ -5,7 +15,8 @@ import { LoginType, AuthType } from '@/auth/enums';
 @Injectable()
 export class AuthPolicyService {
   private readonly maxLoginAttempts = 5;
-  private readonly lockoutDuration = 15 * 60 * 1000; // 15分钟
+  private readonly lockoutDuration = 15 * 60 * 1000;
+  private readonly lockoutMinutes = this.lockoutDuration / 60000;
 
   constructor(private readonly loginLogRepo: LoginLogRepository) {}
 
@@ -21,14 +32,14 @@ export class AuthPolicyService {
 
     if (targetFailures >= this.maxLoginAttempts) {
       throw new HttpException(
-        `登录失败次数过多，请${this.lockoutDuration / 60000}分钟后再试`,
+        `登录失败次数过多，请${this.lockoutMinutes}分钟后再试`,
         HttpStatus.TOO_MANY_REQUESTS,
       );
     }
 
     if (ipFailures >= this.maxLoginAttempts * 2) {
       throw new HttpException(
-        `该IP登录失败次数过多，请${this.lockoutDuration / 60000}分钟后再试`,
+        `该IP登录失败次数过多，请${this.lockoutMinutes}分钟后再试`,
         HttpStatus.TOO_MANY_REQUESTS,
       );
     }

@@ -39,6 +39,7 @@ import { TokenBlacklistService } from './services/token-blacklist.service';
 import { User, CurrentUser } from '@/auth/decorators/user.decorator';
 import { ClientType } from '@/auth/types/jwt.types';
 import { PermissionService } from '@/permission/services/permission.service';
+import { HttpUtil } from '@/common/utils';
 
 @ApiTags('Auth')
 @Controller({
@@ -57,6 +58,29 @@ export class AuthController {
     private readonly permissionService: PermissionService,
   ) {}
 
+  private setRefreshTokenCookie(
+    res: Response,
+    token: string,
+    expiresIn?: number,
+  ): void {
+    res.cookie('refreshToken', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: expiresIn ? expiresIn * 1000 : 0,
+      path: '/',
+    });
+  }
+
+  private clearRefreshTokenCookie(res: Response): void {
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+    });
+  }
+
   @Public()
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
@@ -66,7 +90,7 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<AuthResponseDto> {
-    const ip = this.getClientIp(req);
+    const ip = HttpUtil.getClientIp(req);
     const userAgent = req.get('User-Agent');
     const result = await this.registerService.register(
       registerDto,
@@ -76,18 +100,18 @@ export class AuthController {
 
     const isWebClient = registerDto.clientType === ClientType.Web;
     if (isWebClient) {
-      res.cookie('refreshToken', result.refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: (result.refreshExpiresIn || 0) * 1000,
-        path: '/',
-      });
+      if (result.refreshToken) {
+        this.setRefreshTokenCookie(
+          res,
+          result.refreshToken,
+          result.refreshExpiresIn,
+        );
+      }
 
       return {
         accessToken: result.accessToken,
         expiresIn: result.expiresIn,
-        user: result.user, // 如果有
+        user: result.user,
       } as AuthResponseDto;
     }
 
@@ -103,24 +127,24 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<AuthResponseDto> {
-    const ip = this.getClientIp(req);
+    const ip = HttpUtil.getClientIp(req);
     const userAgent = req.get('User-Agent');
     const result = await this.loginService.login(loginDto, ip, userAgent);
 
     const isWebClient = loginDto.clientType === ClientType.Web;
     if (isWebClient) {
-      res.cookie('refreshToken', result.refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: (result.refreshExpiresIn || 0) * 1000,
-        path: '/',
-      });
+      if (result.refreshToken) {
+        this.setRefreshTokenCookie(
+          res,
+          result.refreshToken,
+          result.refreshExpiresIn,
+        );
+      }
 
       return {
         accessToken: result.accessToken,
         expiresIn: result.expiresIn,
-        user: result.user, // 如果有
+        user: result.user,
       } as AuthResponseDto;
     }
 
@@ -135,7 +159,7 @@ export class AuthController {
     @Body(ValidationPipe) resetPasswordDto: ResetPasswordDto,
     @Req() req: Request,
   ): Promise<{ success: boolean; message: string }> {
-    const ip = this.getClientIp(req);
+    const ip = HttpUtil.getClientIp(req);
     const userAgent = req.get('User-Agent');
     return await this.passwordService.resetPassword(
       resetPasswordDto,
@@ -158,7 +182,7 @@ export class AuthController {
     refreshToken?: string;
     refreshExpiresIn?: number;
   }> {
-    const ip = this.getClientIp(req);
+    const ip = HttpUtil.getClientIp(req);
     const userAgent = req.get('User-Agent');
     const result = await this.tokenService.refreshToken(
       refreshTokenDto.refreshToken,
@@ -172,13 +196,11 @@ export class AuthController {
 
     const isWebClient = refreshTokenDto.clientType === ClientType.Web;
     if (isWebClient) {
-      res.cookie('refreshToken', result.refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: (result.refreshExpiresIn || 0) * 1000,
-        path: '/',
-      });
+      this.setRefreshTokenCookie(
+        res,
+        result.refreshToken,
+        result.refreshExpiresIn,
+      );
       return {
         accessToken: result.accessToken,
         expiresIn: result.expiresIn,
@@ -219,7 +241,7 @@ export class AuthController {
       }
 
       // 获取请求上下文
-      const ip = this.getClientIp(req);
+      const ip = HttpUtil.getClientIp(req);
       const userAgent = req.get('User-Agent');
       const isWebClient = logoutDto.clientType === ClientType.Web;
 
@@ -250,12 +272,7 @@ export class AuthController {
 
       // 如果是Web客户端，清除refreshToken cookie
       if (isWebClient) {
-        res.clearCookie('refreshToken', {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'strict',
-          path: '/',
-        });
+        this.clearRefreshTokenCookie(res);
       }
 
       this.logger.log(
@@ -360,20 +377,5 @@ export class AuthController {
       roles,
       permissions,
     };
-  }
-
-  private getClientIp(req: Request): string {
-    const xff = req.headers['x-forwarded-for'];
-    const xReal = req.headers['x-real-ip'];
-    const forwarded = Array.isArray(xff) ? xff[0] : xff?.split(',')[0];
-    const realIp = Array.isArray(xReal) ? xReal[0] : xReal;
-
-    return (
-      forwarded?.trim() ||
-      realIp?.trim() ||
-      req.ip ||
-      req.socket?.remoteAddress ||
-      '127.0.0.1'
-    );
   }
 }

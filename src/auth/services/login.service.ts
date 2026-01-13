@@ -41,7 +41,7 @@ export class LoginService {
 
     await this.authPolicy.checkLoginLockout(target, ip);
 
-    const user = await this.findUserByTarget(target, countryCode);
+    const user = await this.userRepo.findUserByTarget(target, countryCode);
     if (!user) {
       await this.authPolicy.createLoginLog({
         userId: null,
@@ -119,20 +119,5 @@ export class LoginService {
       });
       throw error;
     }
-  }
-
-  private async findUserByTarget(target: string, countryCode?: string) {
-    const conditions: Array<Record<string, unknown>> = [
-      { username: target },
-      { email: target },
-    ];
-    if (countryCode) {
-      conditions.push({
-        unique_phone_combination: { countryCode, phone: target },
-      });
-    } else {
-      conditions.push({ phone: target });
-    }
-    return await this.userRepo.findUserByTarget(target, countryCode);
   }
 }

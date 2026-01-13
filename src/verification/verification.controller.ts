@@ -2,8 +2,8 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-09-23 06:15:34
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2025-10-02 02:54:18
- * @FilePath: /lulab_backend/src/verification/verification.controller.ts
+ * @LastEditTime: 2026-01-14 00:38:07
+ * @FilePath: /nove_api/src/verification/verification.controller.ts
  * @Description: 验证服务控制器
  *
  * Copyright (c) 2025 by 杨仕明 shiming.y@qq.com, All Rights Reserved.
@@ -28,6 +28,7 @@ import {
 } from '@/verification/decorators/api-docs.decorator';
 import { Request } from 'express';
 import { Req } from '@nestjs/common';
+import { HttpUtil } from '@/common/utils';
 
 @ApiTags('Verification')
 @Controller({ path: 'api/verification', version: '1' })
@@ -39,7 +40,7 @@ export class VerificationController {
   @HttpCode(HttpStatus.OK)
   @ApiSendCodeDocs()
   async send(@Body(ValidationPipe) dto: SendCodeDto, @Req() req: Request) {
-    const ip = this.getClientIp(req);
+    const ip = HttpUtil.getClientIp(req);
     const userAgent = req.get('User-Agent');
     return this.verificationService.sendCode(
       dto.target,
@@ -56,15 +57,5 @@ export class VerificationController {
   @ApiVerifyCodeDocs()
   async verify(@Body(ValidationPipe) dto: VerifyCodeDto) {
     return this.verificationService.verifyCode(dto.target, dto.code, dto.type);
-  }
-
-  private getClientIp(req: Request): string {
-    return (
-      (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
-      (req.headers['x-real-ip'] as string) ||
-      req.connection?.remoteAddress ||
-      req.socket?.remoteAddress ||
-      '127.0.0.1'
-    );
   }
 }

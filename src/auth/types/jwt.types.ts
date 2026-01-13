@@ -50,14 +50,3 @@ export interface JwtUserLookup {
 
 // Injection token for providing JwtUserLookup implementation from the app layer
 export const JWT_USER_LOOKUP = Symbol('JWT_USER_LOOKUP');
-
-// Optional token blacklist check used by JWT strategy
-export interface JwtTokenBlacklist {
-  isTokenBlacklisted(
-    jti: string,
-    scope?: TokenBlacklistScope,
-  ): Promise<boolean> | boolean;
-}
-
-// Injection token for providing a token blacklist implementation from the app layer
-export const JWT_TOKEN_BLACKLIST = Symbol('JWT_TOKEN_BLACKLIST');

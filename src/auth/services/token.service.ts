@@ -2,8 +2,8 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-10-01 21:54:50
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-09 00:52:45
- * @FilePath: /lulab_backend/src/auth/services/token.service.ts
+ * @LastEditTime: 2026-01-14 01:43:58
+ * @FilePath: /nove_api/src/auth/services/token.service.ts
  * @Description:
  *
  * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
@@ -48,7 +48,6 @@ export class TokenService {
   ) {
     this.accessSecret = this.config.accessSecret;
     this.accessExpiresIn = this.config.accessExpiresIn;
-    this.refreshExpiresIn = this.config.refreshExpiresIn;
   }
 
   /**

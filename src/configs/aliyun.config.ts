@@ -1,9 +1,9 @@
 /*
  * @Author: 杨仕明 shiming.y@qq.com
- * @Date: 2025-10-01 06:03:38
+ * @Date: 2025-12-28 11:37:14
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2025-10-01 06:03:39
- * @FilePath: /lulab_backend/src/configs/aliyun.config.ts
+ * @LastEditTime: 2026-01-14 01:32:12
+ * @FilePath: /nove_api/src/configs/aliyun.config.ts
  * @Description:
  *
  * Copyright (c) 2025 by ${git_name_email}, All Rights Reserved.
