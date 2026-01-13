@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-10-01 21:54:50
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-14 01:43:58
+ * @LastEditTime: 2026-01-14 02:57:00
  * @FilePath: /nove_api/src/auth/services/token.service.ts
  * @Description:
  *
@@ -48,6 +48,7 @@ export class TokenService {
   ) {
     this.accessSecret = this.config.accessSecret;
     this.accessExpiresIn = this.config.accessExpiresIn;
+    this.refreshExpiresIn = this.config.refreshExpiresIn;
   }
 
   /**

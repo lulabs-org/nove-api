@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-10-01 06:58:19
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-14 02:15:31
+ * @LastEditTime: 2026-01-14 02:50:57
  * @FilePath: /nove_api/src/auth/auth.module.ts
  * @Description:
  *
@@ -12,6 +12,7 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
+import { ConfigModule } from '@nestjs/config';
 import { AuthController } from './auth.controller';
 import { RegisterService } from './services/register.service';
 import { LoginService } from './services/login.service';
@@ -32,6 +33,7 @@ import { jwtConfig } from '@/configs/jwt.config';
 
 @Module({
   imports: [
+    ConfigModule.forFeature(jwtConfig),
     RedisModule,
     UserModule,
     VerificationModule,

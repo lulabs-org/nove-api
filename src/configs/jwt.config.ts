@@ -20,6 +20,7 @@ export const jwtConfig = registerAs('jwt', () => ({
       );
     })(),
   accessExpiresIn: process.env.JWT_EXPIRES_IN ?? '15m',
+  refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN ?? '7d',
 }));
 
 export type JwtConfig = ConfigType<typeof jwtConfig>;
