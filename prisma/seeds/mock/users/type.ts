@@ -1,19 +1,23 @@
-import { Gender, User } from '@prisma/client';
+import { Gender } from '@prisma/client';
 
-export interface UserProfileConfig {
-  displayName: string;
-  firstName: string;
-  lastName: string;
-  gender: Gender;
-  bio: string;
+export interface UserProfileCreateInput {
+  displayName?: string;
+  avatar?: string;
+  bio?: string;
+  firstName?: string;
+  lastName?: string;
+  dateOfBirth?: Date;
+  gender?: Gender;
   city?: string;
   country?: string;
-  dateOfBirth?: Date;
+  address?: string;
+  postalCode?: string;
+  state?: string;
 }
 
-export interface CreatedUsers {
-  adminUser: User;
-  financeUser: User;
-  customerServiceUser: User;
-  normalUsers: User[];
+export interface UserConfig {
+  email: string;
+  phone: string;
+  password: string;
+  profile: UserProfileCreateInput;
 }

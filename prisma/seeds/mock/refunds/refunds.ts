@@ -1,20 +1,25 @@
+/*
+ * @Author: 杨仕明 shiming.y@qq.com
+ * @Date: 2026-01-12 12:44:09
+ * @LastEditors: 杨仕明 shiming.y@qq.com
+ * @LastEditTime: 2026-01-13 12:46:19
+ * @FilePath: /lulab_backend/prisma/seeds/mock/refunds/refunds.ts
+ * @Description:
+ *
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
+ */
+
 import { PrismaClient, OrderRefund, Prisma } from '@prisma/client';
-import { CreateRefundsParams, RefundConfig, RefundCreateInput } from './type';
+import { RefundConfig, RefundCreateInput } from './type';
 import { REFUND_CONFIGS } from './config';
 
-function convertToRefundCreateInput(
-  config: RefundConfig,
-  orderId: string,
-  creatorId: string,
-): RefundCreateInput {
+function convertToRefundCreateInput(config: RefundConfig): RefundCreateInput {
   return {
     afterSaleCode: config.afterSaleCode,
-    orderId,
     submittedAt: config.submittedAt,
     refundedAt: config.refundedAt,
     refundChannel: config.refundChannel,
     approvalUrl: config.approvalUrl,
-    createdBy: creatorId,
     refundAmount: new Prisma.Decimal(config.refundAmount),
     refundReason: config.refundReason,
     benefitEndedAt: config.benefitEndedAt,
@@ -30,23 +35,12 @@ function convertToRefundCreateInput(
 
 export async function createRefunds(
   prisma: PrismaClient,
-  params: CreateRefundsParams,
 ): Promise<OrderRefund[]> {
   console.log('💰 开始创建退款数据...');
 
-  const { users, orders } = params;
-  const { adminUser, financeUser } = users;
-
   try {
     const refundPromises = REFUND_CONFIGS.map((config) => {
-      const orderId = orders[config.orderIndex].id;
-      const creatorId =
-        config.creatorType === 'admin' ? adminUser.id : financeUser.id;
-      const createInput = convertToRefundCreateInput(
-        config,
-        orderId,
-        creatorId,
-      );
+      const createInput = convertToRefundCreateInput(config);
 
       return prisma.orderRefund.create({
         data: createInput,

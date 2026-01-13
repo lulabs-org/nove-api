@@ -9,14 +9,4 @@ export interface DepartmentConfig {
   parentCode?: string;
 }
 
-export interface CreatedDepartments {
-  tech: Department;
-  sales: Department;
-  finance: Department;
-  hr: Department;
-  customerService: Department;
-  techDev: Department;
-  techOps: Department;
-  salesDirect: Department;
-  salesChannel: Department;
-}
+export type CreatedDepartments = Department[];

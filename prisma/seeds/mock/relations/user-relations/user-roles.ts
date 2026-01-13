@@ -1,4 +1,15 @@
-import { PrismaClient, User } from '@prisma/client';
+/*
+ * @Author: 杨仕明 shiming.y@qq.com
+ * @Date: 2026-01-12 12:44:09
+ * @LastEditors: 杨仕明 shiming.y@qq.com
+ * @LastEditTime: 2026-01-13 12:17:43
+ * @FilePath: /lulab_backend/prisma/seeds/mock/relations/user-relations/user-roles.ts
+ * @Description:
+ *
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
+ */
+
+import { PrismaClient, User, Role } from '@prisma/client';
 
 export async function assignRolesToUsers(
   prisma: PrismaClient,
@@ -24,30 +35,18 @@ export async function assignRolesToUsers(
 
 export async function assignUserRoles(
   prisma: PrismaClient,
-  adminUserId: string,
-  financeUserId: string,
-  customerServiceUserId: string,
-  normalUsers: User[],
-  roles: {
-    admin: { id: string };
-    finance: { id: string };
-    customerService: { id: string };
-    user: { id: string };
-  },
+  userData: User[],
+  roleIds: Role[],
 ): Promise<void> {
   try {
     await Promise.all([
-      assignRolesToUsers(prisma, [adminUserId], roles.admin.id),
-      assignRolesToUsers(prisma, [financeUserId], roles.finance.id),
+      assignRolesToUsers(prisma, [userData[0].id], roleIds[0].id),
+      assignRolesToUsers(prisma, [userData[1].id], roleIds[1].id),
+      assignRolesToUsers(prisma, [userData[2].id], roleIds[2].id),
       assignRolesToUsers(
         prisma,
-        [customerServiceUserId],
-        roles.customerService.id,
-      ),
-      assignRolesToUsers(
-        prisma,
-        normalUsers.map((u) => u.id),
-        roles.user.id,
+        userData.slice(3).map((u) => u.id),
+        roleIds[3].id,
       ),
     ]);
   } catch (error) {

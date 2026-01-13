@@ -1,161 +1,125 @@
-import { PrismaClient, Permission } from '@prisma/client';
-import { CreatedRoles } from '../../core/roles';
+import { PrismaClient, Permission, Role } from '@prisma/client';
 
+// 管理员角色排除的权限列表
+const ADMIN_EXCLUDED_PERMISSIONS = ['system:config'];
+
+// 经理角色权限列表
+const MANAGER_PERMISSIONS = [
+  'user:read',
+  'user:create',
+  'user:update',
+  'department:read',
+  'department:create',
+  'department:update',
+  'product:read',
+  'product:create',
+  'product:update',
+  'order:read',
+  'order:create',
+  'order:update',
+  'order:status',
+  'dashboard:read',
+];
+
+// 财务角色权限列表
+const FINANCE_PERMISSIONS = [
+  'finance:read',
+  'finance:export',
+  'finance:audit',
+  'order:read',
+  'dashboard:read',
+];
+
+// 客服角色权限列表
+const CUSTOMER_SERVICE_PERMISSIONS = [
+  'user:read',
+  'order:read',
+  'order:update',
+  'order:status',
+  'product:read',
+  'dashboard:read',
+];
+
+// 普通用户角色权限列表
+const USER_PERMISSIONS = ['dashboard:read', 'product:read', 'order:read'];
+
+/**
+ * 为指定角色分配权限
+ * @param prisma Prisma 客户端实例
+ * @param roleId 角色ID
+ * @param permissions 权限列表
+ */
+async function assignPermissionsToRole(
+  prisma: PrismaClient,
+  roleId: string,
+  permissions: Permission[],
+): Promise<void> {
+  const rolePermissions = permissions.map((permission) => ({
+    roleId,
+    permissionId: permission.id,
+  }));
+
+  for (const rolePermission of rolePermissions) {
+    await prisma.rolePermission.upsert({
+      where: {
+        roleId_permissionId: {
+          roleId: rolePermission.roleId,
+          permissionId: rolePermission.permissionId,
+        },
+      },
+      update: {},
+      create: rolePermission,
+    });
+  }
+}
+
+/**
+ * 为所有角色分配对应的权限
+ * @param prisma Prisma 客户端实例
+ * @param permissions 所有可用权限列表
+ * @param roles 所有角色列表
+ */
 export async function assignRolePermissions(
   prisma: PrismaClient,
   permissions: Permission[],
-  roles: CreatedRoles,
+  roles: Role[],
 ): Promise<void> {
-  const superAdminRolePermissions = permissions.map((permission) => ({
-    roleId: roles.superAdmin.id,
-    permissionId: permission.id,
-  }));
+  const superAdminRoleId =
+    roles.find((role) => role.code === 'SUPER_ADMIN')?.id || '';
+  await assignPermissionsToRole(prisma, superAdminRoleId, permissions);
 
-  for (const rolePermission of superAdminRolePermissions) {
-    await prisma.rolePermission.upsert({
-      where: {
-        roleId_permissionId: {
-          roleId: rolePermission.roleId,
-          permissionId: rolePermission.permissionId,
-        },
-      },
-      update: {},
-      create: rolePermission,
-    });
-  }
-
+  const adminRoleId = roles.find((role) => role.code === 'ADMIN')?.id || '';
   const adminPermissions = permissions.filter(
-    (p) => !['system:config'].includes(p.code),
+    (p) => !ADMIN_EXCLUDED_PERMISSIONS.includes(p.code),
   );
-  const adminRolePermissions = adminPermissions.map((permission) => ({
-    roleId: roles.admin.id,
-    permissionId: permission.id,
-  }));
+  await assignPermissionsToRole(prisma, adminRoleId, adminPermissions);
 
-  for (const rolePermission of adminRolePermissions) {
-    await prisma.rolePermission.upsert({
-      where: {
-        roleId_permissionId: {
-          roleId: rolePermission.roleId,
-          permissionId: rolePermission.permissionId,
-        },
-      },
-      update: {},
-      create: rolePermission,
-    });
-  }
-
+  const managerRoleId = roles.find((role) => role.code === 'MANAGER')?.id || '';
   const managerPermissions = permissions.filter((p) =>
-    [
-      'user:read',
-      'user:create',
-      'user:update',
-      'department:read',
-      'department:create',
-      'department:update',
-      'product:read',
-      'product:create',
-      'product:update',
-      'order:read',
-      'order:create',
-      'order:update',
-      'order:status',
-      'dashboard:read',
-    ].includes(p.code),
+    MANAGER_PERMISSIONS.includes(p.code),
   );
-  const managerRolePermissions = managerPermissions.map((permission) => ({
-    roleId: roles.manager.id,
-    permissionId: permission.id,
-  }));
+  await assignPermissionsToRole(prisma, managerRoleId, managerPermissions);
 
-  for (const rolePermission of managerRolePermissions) {
-    await prisma.rolePermission.upsert({
-      where: {
-        roleId_permissionId: {
-          roleId: rolePermission.roleId,
-          permissionId: rolePermission.permissionId,
-        },
-      },
-      update: {},
-      create: rolePermission,
-    });
-  }
-
+  const financeRoleId = roles.find((role) => role.code === 'FINANCE')?.id || '';
   const financePermissions = permissions.filter((p) =>
-    [
-      'finance:read',
-      'finance:export',
-      'finance:audit',
-      'order:read',
-      'dashboard:read',
-    ].includes(p.code),
+    FINANCE_PERMISSIONS.includes(p.code),
   );
-  const financeRolePermissions = financePermissions.map((permission) => ({
-    roleId: roles.finance.id,
-    permissionId: permission.id,
-  }));
+  await assignPermissionsToRole(prisma, financeRoleId, financePermissions);
 
-  for (const rolePermission of financeRolePermissions) {
-    await prisma.rolePermission.upsert({
-      where: {
-        roleId_permissionId: {
-          roleId: rolePermission.roleId,
-          permissionId: rolePermission.permissionId,
-        },
-      },
-      update: {},
-      create: rolePermission,
-    });
-  }
-
+  const customerServiceRoleId =
+    roles.find((role) => role.code === 'CUSTOMER_SERVICE')?.id || '';
   const customerServicePermissions = permissions.filter((p) =>
-    [
-      'user:read',
-      'order:read',
-      'order:update',
-      'order:status',
-      'product:read',
-      'dashboard:read',
-    ].includes(p.code),
+    CUSTOMER_SERVICE_PERMISSIONS.includes(p.code),
   );
-  const customerServiceRolePermissions = customerServicePermissions.map(
-    (permission) => ({
-      roleId: roles.customerService.id,
-      permissionId: permission.id,
-    }),
+  await assignPermissionsToRole(
+    prisma,
+    customerServiceRoleId,
+    customerServicePermissions,
   );
 
-  for (const rolePermission of customerServiceRolePermissions) {
-    await prisma.rolePermission.upsert({
-      where: {
-        roleId_permissionId: {
-          roleId: rolePermission.roleId,
-          permissionId: rolePermission.permissionId,
-        },
-      },
-      update: {},
-      create: rolePermission,
-    });
-  }
-
+  const userRoleId = roles.find((role) => role.code === 'USER')?.id || '';
   const userPermissions = permissions.filter((p) =>
-    ['dashboard:read', 'product:read', 'order:read'].includes(p.code),
+    USER_PERMISSIONS.includes(p.code),
   );
-  const userRolePermissions = userPermissions.map((permission) => ({
-    roleId: roles.user.id,
-    permissionId: permission.id,
-  }));
-
-  for (const rolePermission of userRolePermissions) {
-    await prisma.rolePermission.upsert({
-      where: {
-        roleId_permissionId: {
-          roleId: rolePermission.roleId,
-          permissionId: rolePermission.permissionId,
-        },
-      },
-      update: {},
-      create: rolePermission,
-    });
-  }
+  await assignPermissionsToRole(prisma, userRoleId, userPermissions);
 }

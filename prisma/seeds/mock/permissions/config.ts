@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client';
 import type { PermissionConfig } from './type';
 
 export const PERMISSION_CONFIGS: readonly PermissionConfig[] = [
+  // ========== 用户管理 ==========
   {
     name: '查看用户',
     code: 'user:read',
@@ -37,6 +38,8 @@ export const PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     resource: 'user',
     action: 'reset-password',
   },
+
+  // ========== 角色管理 ==========
   {
     name: '查看角色',
     code: 'role:read',
@@ -72,6 +75,8 @@ export const PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     resource: 'role',
     action: 'assign-permission',
   },
+
+  // ========== 权限管理 ==========
   {
     name: '查看权限',
     code: 'permission:read',
@@ -100,6 +105,8 @@ export const PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     resource: 'permission',
     action: 'delete',
   },
+
+  // ========== 组织管理 ==========
   {
     name: '查看组织',
     code: 'organization:read',
@@ -128,6 +135,8 @@ export const PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     resource: 'organization',
     action: 'delete',
   },
+
+  // ========== 部门管理 ==========
   {
     name: '查看部门',
     code: 'department:read',
@@ -156,6 +165,8 @@ export const PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     resource: 'department',
     action: 'delete',
   },
+
+  // ========== 产品管理 ==========
   {
     name: '查看产品',
     code: 'product:read',
@@ -191,6 +202,8 @@ export const PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     resource: 'product',
     action: 'toggle-status',
   },
+
+  // ========== 订单管理 ==========
   {
     name: '查看订单',
     code: 'order:read',
@@ -226,6 +239,8 @@ export const PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     resource: 'order',
     action: 'status',
   },
+
+  // ========== 财务管理 ==========
   {
     name: '查看财务报表',
     code: 'finance:read',
@@ -247,6 +262,8 @@ export const PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     resource: 'finance',
     action: 'audit',
   },
+
+  // ========== 系统管理 ==========
   {
     name: '系统配置',
     code: 'system:config',
@@ -268,6 +285,8 @@ export const PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     resource: 'system',
     action: 'log',
   },
+
+  // ========== 仪表板管理 ==========
   {
     name: '查看仪表板',
     code: 'dashboard:read',

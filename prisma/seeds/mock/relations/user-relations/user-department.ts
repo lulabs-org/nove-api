@@ -1,23 +1,21 @@
-import { PrismaClient } from '@prisma/client';
-import type { CreatedDepartments } from '../../departments/type';
-import type { CreatedUsers } from '../../users/type';
+import { PrismaClient, User, Department } from '@prisma/client';
 
 export async function createUserDepartmentRelations(
   prisma: PrismaClient,
-  departments: CreatedDepartments,
-  users: CreatedUsers,
+  departments: Department[],
+  users: User[],
 ): Promise<void> {
   await prisma.userDepartment.upsert({
     where: {
       userId_departmentId: {
-        userId: users.adminUser.id,
-        departmentId: departments.tech.id,
+        userId: users[0].id,
+        departmentId: departments[0].id,
       },
     },
     update: {},
     create: {
-      userId: users.adminUser.id,
-      departmentId: departments.tech.id,
+      userId: users[0].id,
+      departmentId: departments[0].id,
       isPrimary: true,
     },
   });
@@ -25,14 +23,14 @@ export async function createUserDepartmentRelations(
   await prisma.userDepartment.upsert({
     where: {
       userId_departmentId: {
-        userId: users.financeUser.id,
-        departmentId: departments.finance.id,
+        userId: users[1].id,
+        departmentId: departments[1].id,
       },
     },
     update: {},
     create: {
-      userId: users.financeUser.id,
-      departmentId: departments.finance.id,
+      userId: users[1].id,
+      departmentId: departments[1].id,
       isPrimary: true,
     },
   });
@@ -40,40 +38,40 @@ export async function createUserDepartmentRelations(
   await prisma.userDepartment.upsert({
     where: {
       userId_departmentId: {
-        userId: users.customerServiceUser.id,
-        departmentId: departments.customerService.id,
+        userId: users[2].id,
+        departmentId: departments[2].id,
       },
     },
     update: {},
     create: {
-      userId: users.customerServiceUser.id,
-      departmentId: departments.customerService.id,
+      userId: users[2].id,
+      departmentId: departments[2].id,
       isPrimary: true,
     },
   });
 
   const departmentAssignments = [
     {
-      user: users.normalUsers[0],
-      department: departments.techDev,
+      user: users[3],
+      department: departments[3],
       isPrimary: true,
     },
     {
-      user: users.normalUsers[1],
-      department: departments.salesDirect,
+      user: users[4],
+      department: departments[4],
       isPrimary: true,
     },
     {
-      user: users.normalUsers[2],
-      department: departments.techOps,
+      user: users[5],
+      department: departments[5],
       isPrimary: true,
     },
     {
-      user: users.normalUsers[3],
-      department: departments.salesChannel,
+      user: users[6],
+      department: departments[6],
       isPrimary: true,
     },
-    { user: users.normalUsers[4], department: departments.hr, isPrimary: true },
+    { user: users[7], department: departments[7], isPrimary: true },
   ];
 
   for (const assignment of departmentAssignments) {
@@ -92,34 +90,4 @@ export async function createUserDepartmentRelations(
       },
     });
   }
-
-  await prisma.userDepartment.upsert({
-    where: {
-      userId_departmentId: {
-        userId: users.normalUsers[0].id,
-        departmentId: departments.tech.id,
-      },
-    },
-    update: {},
-    create: {
-      userId: users.normalUsers[0].id,
-      departmentId: departments.tech.id,
-      isPrimary: false,
-    },
-  });
-
-  await prisma.userDepartment.upsert({
-    where: {
-      userId_departmentId: {
-        userId: users.normalUsers[1].id,
-        departmentId: departments.sales.id,
-      },
-    },
-    update: {},
-    create: {
-      userId: users.normalUsers[1].id,
-      departmentId: departments.sales.id,
-      isPrimary: false,
-    },
-  });
 }

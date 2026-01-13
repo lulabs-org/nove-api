@@ -2,12 +2,13 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-11 00:39:44
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-12 12:05:19
- * @FilePath: /nove_api/prisma/seed-utils/database-seed.ts
+ * @LastEditTime: 2026-01-13 14:34:00
+ * @FilePath: /lulab_backend/prisma/seed-utils/database-seed.ts
  * @Description:
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
+
 import { PrismaClient } from '@prisma/client';
 import type { SeedMode } from './types';
 import * as seedFunctions from '../seeds/mock/index';
@@ -29,14 +30,10 @@ export async function seedDatabase(
 }
 
 async function seedRealDatabase(prisma: PrismaClient): Promise<void> {
-  log('👤 创建真实数据：管理员账户...');
+  log('\n🏢 步骤 1: 创建组织');
+  const organization = await seedFunctions.createOrganization(prisma);
 
-  const { adminUser, adminRole } = await seedFunctions.createAdmin(prisma);
-
-  log('\n✅ 真实数据初始化完成！');
-  log('\n📊 统计信息:');
-  log(`👤 管理员用户: 1 个 (${adminUser.email})`);
-  log(`🎭 管理员角色: 1 个 (${adminRole.code})`);
+  log(`\n🏢 organization: ${organization.name}`);
 }
 
 async function seedMockDatabase(prisma: PrismaClient): Promise<void> {
@@ -46,29 +43,30 @@ async function seedMockDatabase(prisma: PrismaClient): Promise<void> {
   log('\n🏬 步骤 2: 创建部门结构');
   const departments = await seedFunctions.createDepartments(
     prisma,
-    organization.organization.id,
+    organization.id,
   );
 
   log('\n🔐 步骤 3: 创建权限体系');
-  const permissionData = await seedFunctions.createPermissions(prisma);
+
+  log('  3.1 创建权限');
+  const permissions = await seedFunctions.createPermissions(prisma);
+
+  log('  3.2 创建角色');
+  const roles = await seedFunctions.createRoles(prisma);
+
+  log('  3.3 分配角色权限');
+  await seedFunctions.assignRolePermissions(prisma, permissions, roles);
 
   log('\n👥 步骤 4: 创建用户');
   const userData = await seedFunctions.createUsers(prisma);
 
   log('\n🎭 步骤 5: 为用户分配角色');
-  await seedFunctions.assignUserRoles(
-    prisma,
-    userData.adminUser.id,
-    userData.financeUser.id,
-    userData.customerServiceUser.id,
-    userData.normalUsers,
-    permissionData.roles,
-  );
+  await seedFunctions.assignUserRoles(prisma, userData, roles);
 
   log('\n🔗 步骤 6: 创建用户组织关联');
   await seedFunctions.createUserOrganizationRelations(
     prisma,
-    organization.organization.id,
+    organization.id,
     userData,
   );
 
@@ -81,21 +79,8 @@ async function seedMockDatabase(prisma: PrismaClient): Promise<void> {
 
   log('\n🔗 步骤 8: 创建权限关联数据');
 
-  log('  8.1 创建角色权限关联');
-  await seedFunctions.createRolePermissionRelations(
-    prisma,
-    permissionData.roles,
-  );
-
-  log('  8.2 创建用户权限关联');
+  log('  8.1 创建用户权限关联');
   await seedFunctions.createUserPermissionRelations(prisma, userData);
-
-  log('  8.3 创建数据权限关联');
-  await seedFunctions.createDataPermissionRelations(
-    prisma,
-    permissionData.roles,
-    userData,
-  );
 
   log('\n📺 步骤 9: 创建渠道数据');
   const channelData = await seedFunctions.createChannels(prisma);
@@ -109,23 +94,13 @@ async function seedMockDatabase(prisma: PrismaClient): Promise<void> {
   });
 
   log('\n📦 步骤 12: 创建产品数据');
-  const productData = await seedFunctions.createProducts(
-    prisma,
-    userData.adminUser,
-  );
+  const productData = await seedFunctions.createProducts(prisma);
 
   log('\n🛒 步骤 13: 创建订单数据');
-  const orders = await seedFunctions.createOrders(prisma, {
-    users: userData,
-    products: productData.products,
-    channels: channelData.channels,
-  });
+  const orders = await seedFunctions.createOrders(prisma);
 
   log('\n💰 步骤 14: 创建退款数据');
-  const refunds = await seedFunctions.createRefunds(prisma, {
-    users: userData,
-    orders,
-  });
+  const refunds = await seedFunctions.createRefunds(prisma);
 
   log('\n🎯 步骤 15: 创建会议数据');
 
@@ -149,28 +124,26 @@ async function seedMockDatabase(prisma: PrismaClient): Promise<void> {
     platformUsers,
   );
 
+  const meetingCount = Object.keys(meetings).length;
+  const platformUserCount = Object.keys(platformUsers).length;
+  const recordingCount = meetingRecording ? 1 : 0;
+  const summaryCount = teamSummary ? 1 : 0;
+
   log('\n✅ 数据库种子数据初始化完成！');
   log('\n📊 统计信息:');
-  log(`👥 用户: ${userData.normalUsers.length + 3} 个`);
-  log(`🎭 角色: ${Object.keys(permissionData.roles).length} 个`);
-  log(`🔑 权限: ${permissionData.permissions.length} 个`);
-  log(`🏢 组织: 1 个`);
+  log(`🏢 组织: ${organization.name} `);
   log(`🏬 部门: ${Object.keys(departments).length} 个`);
+  log(`🔑 权限: ${permissions.length} 个`);
+  log(`👤 角色: ${roles.length} 个`);
+  log(`👥 用户: ${userData.length + 3} 个`);
   log(`📺 渠道: ${channelData.channels.length} 个`);
   log(`📚 项目: ${projectData.projects.length} 个`);
   log(`📖 课程: ${curriculumData.curriculums.length} 个`);
-  log(`📦 产品: ${productData.products.length} 个`);
+  log(`📦 产品: ${productData.length} 个`);
   log(`🛒 订单: ${orders.length} 个`);
   log(`💰 退款: ${refunds.length} 个`);
-
-  if (meetings) {
-    const meetingCount = Object.keys(meetings).length;
-    const platformUserCount = Object.keys(platformUsers).length;
-    const recordingCount = meetingRecording ? 1 : 0;
-    const summaryCount = teamSummary ? 1 : 0;
-    log(`🎯 会议: ${meetingCount} 个`);
-    log(`👥 平台用户: ${platformUserCount} 个`);
-    log(`📁 会议录音: ${recordingCount} 个`);
-    log(`📝 会议总结: ${summaryCount} 个`);
-  }
+  log(`👥 平台用户: ${platformUserCount} 个`);
+  log(`🎯 会议: ${meetingCount} 个`);
+  log(`📁 会议录音: ${recordingCount} 个`);
+  log(`📝 会议总结: ${summaryCount} 个`);
 }

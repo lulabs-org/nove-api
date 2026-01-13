@@ -1,25 +1,13 @@
-import { PrismaClient, Permission } from '@prisma/client';
-import { createPermissions as createPermissionsOnly } from './permissions';
-import { createRoles, CreatedRoles } from '../core/roles';
-import { assignRolePermissions } from '../relations/permission-relations/role-permissions';
-
-export interface CreatedPermissions {
-  permissions: Permission[];
-  roles: CreatedRoles;
-}
-
-export async function createPermissions(
-  prisma: PrismaClient,
-): Promise<CreatedPermissions> {
-  const permissions = await createPermissionsOnly(prisma);
-  const roles = await createRoles(prisma);
-  await assignRolePermissions(prisma, permissions, roles);
-
-  return {
-    permissions,
-    roles,
-  };
-}
-
-export { createPermissions as createPermissionsOnly } from './permissions';
-export { createRoles, type CreatedRoles } from '../core/roles';
+/*
+ * @Author: 杨仕明 shiming.y@qq.com
+ * @Date: 2026-01-12 12:44:09
+ * @LastEditors: 杨仕明 shiming.y@qq.com
+ * @LastEditTime: 2026-01-13 11:24:34
+ * @FilePath: /lulab_backend/prisma/seeds/mock/permissions/index.ts
+ * @Description:
+ *
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
+ */
+export * from './permissions';
+export * from './config';
+export * from './type';

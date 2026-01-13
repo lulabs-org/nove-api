@@ -1,2 +1,2 @@
 export { createOrders } from './orders';
-export type { CreateOrdersParams, OrderConfig } from './type';
+export type { CreateOrdersParams } from './type';

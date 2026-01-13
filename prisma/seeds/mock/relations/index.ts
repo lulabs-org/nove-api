@@ -9,7 +9,8 @@
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 export * from './config';
-export * from './permission-relations/role-permission';
+export * from './permission-relations';
+export * from './permission-relations/role-permissions';
 export * from './permission-relations/user-permission';
 export * from './permission-relations/data-permission';
 export * from './user-relations/user-organization';

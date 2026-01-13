@@ -2,17 +2,13 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-12 03:39:57
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-12 03:39:58
- * @FilePath: /nove_api/prisma/seeds/mock/products/type.ts
+ * @LastEditTime: 2026-01-13 11:58:09
+ * @FilePath: /lulab_backend/prisma/seeds/mock/products/type.ts
  * @Description:
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
-import { Product, ProductCategory } from '@prisma/client';
-
-export interface CreatedProducts {
-  products: Product[];
-}
+import { ProductCategory } from '@prisma/client';
 
 export interface ProductConfig {
   productCode: string;

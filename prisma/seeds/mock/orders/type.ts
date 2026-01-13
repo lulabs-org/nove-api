@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
-import { Product, User, Channel, Currency } from '@prisma/client';
+import { Product, User, Channel } from '@prisma/client';
 
 export interface CreateOrdersParams {
   users: {
@@ -18,21 +18,4 @@ export interface CreateOrdersParams {
   };
   products: Product[];
   channels: Channel[];
-}
-
-export interface OrderConfig {
-  productIndex: number;
-  userIndex: number;
-  channelIndex: number;
-  externalOrderId: string;
-  amount: number;
-  currency: Currency;
-  amountCny?: number;
-  paidAt: string;
-  effectiveDate: string;
-  benefitDurationDays: number;
-  activeDays: number;
-  financialClosed: boolean;
-  financialClosedAt?: string;
-  customerEmail?: string;
 }
