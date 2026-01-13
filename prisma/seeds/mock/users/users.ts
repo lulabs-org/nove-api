@@ -14,8 +14,6 @@ import bcrypt from 'bcryptjs';
 import { COUNTRY_CODE, USERS_MOCK, USERS_REAL } from './config';
 import { UserConfig, UserProfileCreateInput } from './type';
 
-
-
 async function createUserWithProfile(
   prisma: PrismaClient,
   email: string,
