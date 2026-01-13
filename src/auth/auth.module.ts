@@ -20,6 +20,7 @@ import { PasswordService } from './services/password.service';
 import { TokenService } from './services/token.service';
 import { AuthPolicyService } from './services/auth-policy.service';
 import { JwtStrategy, JWT_USER_LOOKUP } from './strategies/jwt.strategy';
+import { LocalStrategy } from './strategies/local.strategy';
 import { RedisModule } from '@/redis/redis.module';
 import { MailModule } from '@/mail/mail.module';
 import { UserModule } from '@/user/user.module';
@@ -55,6 +56,7 @@ import { jwtConfig } from '@/configs/jwt.config';
     TokenService,
     AuthPolicyService,
     JwtStrategy,
+    LocalStrategy,
     RefreshTokenRepository,
     LoginLogRepository,
     { provide: JWT_USER_LOOKUP, useClass: JwtUserLookupService },

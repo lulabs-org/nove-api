@@ -9,11 +9,12 @@ import { LoginDto } from '../dto/login.dto';
 import { AuthResponseDto } from '../dto/auth-response.dto';
 import { AuthType } from '@/auth/enums';
 import { CodeType } from '@/verification/enums';
-import * as bcrypt from 'bcryptjs';
 import { TokenService } from './token.service';
 import { AuthPolicyService } from './auth-policy.service';
 import { UserRepository } from '@/user/repositories/user.repository';
 import { formatAuthUserResponse } from '@/auth/utils/auth-user-mapper';
+import { LocalStrategy } from '../strategies/local.strategy';
+import type { User } from '@prisma/client';
 
 @Injectable()
 export class LoginService {
@@ -24,6 +25,7 @@ export class LoginService {
     private readonly verificationService: VerificationService,
     private readonly tokenService: TokenService,
     private readonly authPolicy: AuthPolicyService,
+    private readonly localStrategy: LocalStrategy,
   ) {}
 
   async login(
@@ -41,24 +43,17 @@ export class LoginService {
 
     await this.authPolicy.checkLoginLockout(target, ip);
 
-    const user = await this.userRepo.findUserByTarget(target, countryCode);
-    if (!user) {
-      await this.authPolicy.createLoginLog({
-        userId: null,
-        target,
-        loginType: this.authPolicy.getLoginType(type),
-        success: false,
-        ip,
-        userAgent,
-        failReason: '用户不存在',
-      });
-      throw new UnauthorizedException('用户名或密码错误');
-    }
-
+    let user: User | null = null;
     let failureReason = '';
 
     try {
       if (type === AuthType.EMAIL_CODE || type === AuthType.PHONE_CODE) {
+        user = await this.userRepo.findUserByTarget(target, countryCode);
+        if (!user) {
+          failureReason = '用户不存在';
+          throw new UnauthorizedException('用户不存在');
+        }
+
         const verifyResult = await this.verificationService.verifyCode(
           target,
           code!,
@@ -69,17 +64,13 @@ export class LoginService {
           throw new UnauthorizedException(verifyResult.message);
         }
       } else {
-        if (!user.passwordHash) {
-          failureReason = '该账户未设置密码，请使用验证码登录';
-          throw new UnauthorizedException(failureReason);
-        }
-        const isPasswordValid = await bcrypt.compare(
-          password!,
-          user.passwordHash,
-        );
-        if (!isPasswordValid) {
-          failureReason = '密码错误';
-          throw new UnauthorizedException('用户名或密码错误');
+        try {
+          user = await this.localStrategy.validate(target, password!);
+        } catch (error) {
+          if (error instanceof UnauthorizedException) {
+            failureReason = error.message;
+          }
+          throw error;
         }
       }
 
@@ -94,6 +85,9 @@ export class LoginService {
         userAgent,
       });
 
+      const userWithProfileAndRoles =
+        await this.userRepo.getUserByIdWithProfileAndRoles(user.id);
+
       const tokens = await this.tokenService.generateTokens(user.id, {
         ip,
         userAgent,
@@ -102,14 +96,15 @@ export class LoginService {
       });
 
       return {
-        user: formatAuthUserResponse(user),
+        user: formatAuthUserResponse(userWithProfileAndRoles!),
         ...tokens,
       };
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
+      const userId = user?.id || null;
       await this.authPolicy.createLoginLog({
-        userId: user.id,
+        userId,
         target,
         loginType: this.authPolicy.getLoginType(type),
         success: false,
