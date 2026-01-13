@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-11 00:39:44
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-13 14:34:00
+ * @LastEditTime: 2026-01-13 14:57:26
  * @FilePath: /lulab_backend/prisma/seed-utils/database-seed.ts
  * @Description:
  *
@@ -11,7 +11,7 @@
 
 import { PrismaClient } from '@prisma/client';
 import type { SeedMode } from './types';
-import * as seedFunctions from '../seeds/mock/index';
+import * as seedFunctions from '../seeds/index';
 
 const log = (message: string) => console.log(message);
 
