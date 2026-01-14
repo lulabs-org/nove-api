@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-09-23 06:15:34
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2025-10-01 19:26:58
+ * @LastEditTime: 2026-01-14 10:29:14
  * @FilePath: /lulab_backend/src/auth/strategies/jwt.strategy.ts
  * @Description: JWT 策略，用于验证和解析 JWT 令牌
  *
@@ -17,11 +17,10 @@ import {
 } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import type { ConfigType } from '@nestjs/config';
 import {
   JWT_USER_LOOKUP,
-  type JwtUserLookup,
   JWT_TOKEN_BLACKLIST,
+  type JwtUserLookup,
   type JwtTokenBlacklist,
   type JwtPayload,
   type AuthenticatedUser,
@@ -33,7 +32,7 @@ import { jwtConfig } from '@/configs/jwt.config';
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     @Inject(jwtConfig.KEY)
-    private readonly config: ConfigType<typeof jwtConfig>,
+    private readonly cfg: ReturnType<typeof jwtConfig>,
     @Inject(JWT_USER_LOOKUP)
     private readonly userLookup: JwtUserLookup,
     @Optional()
@@ -43,7 +42,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: config.accessSecret,
+      secretOrKey: cfg.accessSecret,
     });
   }
 
@@ -67,6 +66,3 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     return authUser;
   }
 }
-
-// Export the symbols for use in other modules
-export { JWT_USER_LOOKUP, JWT_TOKEN_BLACKLIST };
