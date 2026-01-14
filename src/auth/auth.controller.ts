@@ -39,6 +39,7 @@ import { TokenBlacklistService } from './services/token-blacklist.service';
 import { User, CurrentUser } from '@/auth/decorators/user.decorator';
 import { ClientType } from '@/auth/types/jwt.types';
 import { PermissionService } from '@/permission/services/permission.service';
+import { HttpUtil } from '@/common/utils/http.util';
 
 @ApiTags('Auth')
 @Controller({
@@ -66,7 +67,7 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<AuthResponseDto> {
-    const ip = this.getClientIp(req);
+    const ip = HttpUtil.getClientIp(req);
     const userAgent = req.get('User-Agent');
     const result = await this.registerService.register(
       registerDto,
@@ -103,7 +104,7 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ): Promise<AuthResponseDto> {
-    const ip = this.getClientIp(req);
+    const ip = HttpUtil.getClientIp(req);
     const userAgent = req.get('User-Agent');
     const result = await this.loginService.login(loginDto, ip, userAgent);
 
@@ -135,7 +136,7 @@ export class AuthController {
     @Body(ValidationPipe) resetPasswordDto: ResetPasswordDto,
     @Req() req: Request,
   ): Promise<{ success: boolean; message: string }> {
-    const ip = this.getClientIp(req);
+    const ip = HttpUtil.getClientIp(req);
     const userAgent = req.get('User-Agent');
     return await this.passwordService.resetPassword(
       resetPasswordDto,
@@ -158,7 +159,7 @@ export class AuthController {
     refreshToken?: string;
     refreshExpiresIn?: number;
   }> {
-    const ip = this.getClientIp(req);
+    const ip = HttpUtil.getClientIp(req);
     const userAgent = req.get('User-Agent');
     const result = await this.tokenService.refreshToken(
       refreshTokenDto.refreshToken,
@@ -219,7 +220,7 @@ export class AuthController {
       }
 
       // 获取请求上下文
-      const ip = this.getClientIp(req);
+      const ip = HttpUtil.getClientIp(req);
       const userAgent = req.get('User-Agent');
       const isWebClient = logoutDto.clientType === ClientType.Web;
 
@@ -360,20 +361,5 @@ export class AuthController {
       roles,
       permissions,
     };
-  }
-
-  private getClientIp(req: Request): string {
-    const xff = req.headers['x-forwarded-for'];
-    const xReal = req.headers['x-real-ip'];
-    const forwarded = Array.isArray(xff) ? xff[0] : xff?.split(',')[0];
-    const realIp = Array.isArray(xReal) ? xReal[0] : xReal;
-
-    return (
-      forwarded?.trim() ||
-      realIp?.trim() ||
-      req.ip ||
-      req.socket?.remoteAddress ||
-      '127.0.0.1'
-    );
   }
 }
