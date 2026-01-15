@@ -377,6 +377,7 @@ describe('ApiKeyService', () => {
         organizationId: 'org-123',
         apiKeyId: 'key-123',
         scopes: mockApiKey.scopes,
+        userId: 'user-123',
       });
     });
 

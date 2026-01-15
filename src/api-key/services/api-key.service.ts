@@ -329,6 +329,7 @@ export class ApiKeyService {
       organizationId: apiKey.organizationId,
       apiKeyId: apiKey.id,
       scopes: apiKey.scopes,
+      userId: apiKey.createdBy,
     };
   }
 

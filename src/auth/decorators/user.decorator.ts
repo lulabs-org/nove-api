@@ -2,8 +2,8 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-09-23 06:15:34
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2025-10-01 19:15:09
- * @FilePath: /lulab_backend/src/auth/decorators/user.decorator.ts
+ * @LastEditTime: 2026-01-14 00:29:07
+ * @FilePath: /nove_api/src/auth/decorators/user.decorator.ts
  * @Description:
  *
  * Copyright (c) 2025 by ${git_name_email}, All Rights Reserved.

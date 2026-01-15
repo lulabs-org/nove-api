@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from '@/prisma/prisma.module';
 import { apiKeyConfig } from '@/configs/api-key.config';
@@ -27,6 +27,7 @@ import { UsageLoggingInterceptor } from './interceptors/usage-logging.intercepto
  * API Key 管理模块
  * 提供 API Key 的创建、管理、认证和使用日志功能
  */
+@Global()
 @Module({
   imports: [PrismaModule, ConfigModule.forFeature(apiKeyConfig)],
   controllers: [ApiKeyController, V1Controller],
