@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-29 10:29:37
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-13 09:03:57
+ * @LastEditTime: 2026-01-15 12:40:53
  * @FilePath: /nove_api/src/mcp-server/mcp-server.module.ts
  * @Description:
  *
@@ -23,7 +23,7 @@ import { MeetingStatsRepository } from './repositories/meeting-stats.repository'
 @Module({
   imports: [
     McpModule.forRoot({
-      name: 'lulab-mcp-server',
+      name: 'Nove-Mcp',
       version: '1.0.0',
       transport: [
         McpTransportType.SSE,

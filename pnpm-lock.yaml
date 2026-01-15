@@ -75,8 +75,8 @@ importers:
         specifier: ^6.10.1
         version: 6.17.1(prisma@6.17.1(typescript@5.9.3))(typescript@5.9.3)
       '@rekog/mcp-nest':
-        specifier: ^1.8.4
-        version: 1.8.4(@modelcontextprotocol/sdk@1.25.1(hono@4.11.3)(zod@3.25.76))(@nestjs/common@11.1.9(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.9)(@nestjs/jwt@11.0.0(@nestjs/common@11.1.9(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)))(@nestjs/passport@11.0.5(@nestjs/common@11.1.9(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(passport@0.7.0))(express@5.1.0)(reflect-metadata@0.2.2)(zod-to-json-schema@3.25.1(zod@3.25.76))(zod@3.25.76)
+        specifier: ^1.9.0
+        version: 1.9.2(@modelcontextprotocol/sdk@1.25.1(hono@4.11.3)(zod@3.25.76))(@nestjs/common@11.1.9(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.9)(@nestjs/jwt@11.0.0(@nestjs/common@11.1.9(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)))(@nestjs/passport@11.0.5(@nestjs/common@11.1.9(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(passport@0.7.0))(express@5.1.0)(reflect-metadata@0.2.2)(zod@3.25.76)
       '@types/nodemailer':
         specifier: ^6.4.17
         version: 6.4.20
@@ -2151,8 +2151,8 @@ packages:
   '@protobufjs/utf8@1.1.0':
     resolution: {integrity: sha512-Vvn3zZrhQZkkBE8LSuW3em98c0FwgO4nxzv6OdSxPKJIEKY2bGbHn+mhGIPerzI4twdxaP8/0+06HBpwf345Lw==}
 
-  '@rekog/mcp-nest@1.8.4':
-    resolution: {integrity: sha512-ldp46mi8rQXxPbNbAdhXubzbFVoHk6gwN77kW5hp9FwD5ZZtmJh6jw4LAMLdtPNw8SkVwkGMiPpgQUNMFooYIA==}
+  '@rekog/mcp-nest@1.9.2':
+    resolution: {integrity: sha512-iCixNVah0VrrsuHxvkInLTtDfZCLALohXgz0HYdQuUHm4f4uDIZDMkw6/rdJMH5cjqV6HRMLkaQhd4TQz6B3eg==}
     peerDependencies:
       '@modelcontextprotocol/sdk': '>=1.10.0'
       '@nestjs/common': '>=9.0.0'
@@ -2164,8 +2164,7 @@ packages:
       express: '>=4.0.0'
       reflect-metadata: '>=0.1.14'
       typeorm: '>=0.3.25'
-      zod: ^3.0.0
-      zod-to-json-schema: '>=3.23.0'
+      zod: ^4.0.0
     peerDependenciesMeta:
       '@nestjs/platform-fastify':
         optional: true
@@ -8813,7 +8812,7 @@ snapshots:
 
   '@protobufjs/utf8@1.1.0': {}
 
-  '@rekog/mcp-nest@1.8.4(@modelcontextprotocol/sdk@1.25.1(hono@4.11.3)(zod@3.25.76))(@nestjs/common@11.1.9(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.9)(@nestjs/jwt@11.0.0(@nestjs/common@11.1.9(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)))(@nestjs/passport@11.0.5(@nestjs/common@11.1.9(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(passport@0.7.0))(express@5.1.0)(reflect-metadata@0.2.2)(zod-to-json-schema@3.25.1(zod@3.25.76))(zod@3.25.76)':
+  '@rekog/mcp-nest@1.9.2(@modelcontextprotocol/sdk@1.25.1(hono@4.11.3)(zod@3.25.76))(@nestjs/common@11.1.9(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.9)(@nestjs/jwt@11.0.0(@nestjs/common@11.1.9(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)))(@nestjs/passport@11.0.5(@nestjs/common@11.1.9(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(passport@0.7.0))(express@5.1.0)(reflect-metadata@0.2.2)(zod@3.25.76)':
     dependencies:
       '@modelcontextprotocol/sdk': 1.25.1(hono@4.11.3)(zod@3.25.76)
       '@nestjs/common': 11.1.9(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -8823,6 +8822,7 @@ snapshots:
       '@nestjs/passport': 11.0.5(@nestjs/common@11.1.9(class-transformer@0.5.1)(class-validator@0.14.2)(reflect-metadata@0.2.2)(rxjs@7.8.2))(passport@0.7.0)
       cookie-parser: 1.4.7
       express: 5.1.0
+      multer: 2.0.2
       passport: 0.7.0
       passport-azure-ad-oauth2: 0.0.4
       passport-github: 1.1.0
@@ -8831,7 +8831,6 @@ snapshots:
       reflect-metadata: 0.2.2
       rxjs: 7.8.2
       zod: 3.25.76
-      zod-to-json-schema: 3.25.1(zod@3.25.76)
 
   '@scarf/scarf@1.4.0': {}
 
@@ -12138,8 +12137,6 @@ snapshots:
   oauth@0.9.15: {}
 
   object-assign@4.1.1: {}
-
-  object-hash@3.0.0: {}
 
   object-inspect@1.13.4: {}
 
