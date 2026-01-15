@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-29 10:29:37
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-15 12:40:53
+ * @LastEditTime: 2026-01-15 18:10:20
  * @FilePath: /nove_api/src/mcp-server/mcp-server.module.ts
  * @Description:
  *
@@ -10,42 +10,31 @@
  */
 
 import { Module } from '@nestjs/common';
-import { McpModule, McpTransportType } from '@rekog/mcp-nest';
+import { McpModule } from '@rekog/mcp-nest';
 import { GreetingTool } from './tools/greeting.tool';
 import { UserInfoTool } from './tools/user-info.tool';
 import { UserSearchTool } from './tools/userid-search.tool';
 import { MeetingStatsTool } from './tools/meeting-stats.tool';
-import { Public } from '@/auth/decorators/public.decorator';
-import { McpAuthJwtGuard } from '@/api-key/guards/api-key-mcp-auth.guard';
 import { UserIdSearchRepository } from './repositories/userid-search.repository';
 import { MeetingStatsRepository } from './repositories/meeting-stats.repository';
+import { SseController } from './controllers/sse.controller';
+import { StreamableHttpController } from './controllers/streamable-http.controller';
 
 @Module({
   imports: [
     McpModule.forRoot({
       name: 'Nove-Mcp',
       version: '1.0.0',
-      transport: [
-        McpTransportType.SSE,
-        McpTransportType.STREAMABLE_HTTP,
-        McpTransportType.STDIO,
-      ],
+      logging: {
+        level: ['error', 'warn'], // Only show errors and warnings
+      },
+      transport: [],
       allowUnauthenticatedAccess: true,
-      sseEndpoint: 'sse',
-      messagesEndpoint: 'messages',
-      mcpEndpoint: 'mcp',
-      decorators: [Public()],
-      guards: [McpAuthJwtGuard], // 保护所有 MCP 端点
-      sse: {
-        pingEnabled: true,
-        pingIntervalMs: 30000,
-      },
-      streamableHttp: {
-        enableJsonResponse: true,
-        statelessMode: true,
-      },
+      // decorators: [Public()],
+      // guards: [McpAuthJwtGuard], // 保护所有 MCP 端点
     }),
   ],
+  controllers: [SseController, StreamableHttpController],
   providers: [
     GreetingTool,
     UserInfoTool,

@@ -2,8 +2,8 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-12 02:29:16
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-13 12:14:58
- * @FilePath: /lulab_backend/prisma/seeds/mock/core/roles/config.ts
+ * @LastEditTime: 2026-01-15 18:46:19
+ * @FilePath: /nove_api/prisma/seeds/core/roles/config.ts
  * @Description:
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
@@ -53,6 +53,27 @@ export const ROLE_CONFIGS: RoleConfig[] = [
     name: '普通用户',
     description: '普通用户，基础查看权限',
     level: 5,
+    type: RoleType.CUSTOM,
+  },
+  {
+    code: 'MEMBER',
+    name: '会员',
+    description: '会员用户，拥有更多权益和功能权限',
+    level: 6,
+    type: RoleType.CUSTOM,
+  },
+  {
+    code: 'HEAD_TEACHER',
+    name: '班主任',
+    description: '班主任，负责班级管理和学员指导',
+    level: 7,
+    type: RoleType.CUSTOM,
+  },
+  {
+    code: 'MENTOR',
+    name: '师傅',
+    description: '师傅，负责学员技能传授和指导',
+    level: 8,
     type: RoleType.CUSTOM,
   },
 ];

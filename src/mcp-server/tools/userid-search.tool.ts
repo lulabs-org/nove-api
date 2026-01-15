@@ -1,3 +1,14 @@
+/*
+ * @Author: 杨仕明 shiming.y@qq.com
+ * @Date: 2026-01-14 13:14:26
+ * @LastEditors: 杨仕明 shiming.y@qq.com
+ * @LastEditTime: 2026-01-15 18:32:59
+ * @FilePath: /nove_api/src/mcp-server/tools/userid-search.tool.ts
+ * @Description:
+ *
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
+ */
+
 import { Injectable } from '@nestjs/common';
 import { Tool } from '@rekog/mcp-nest';
 import { z } from 'zod';
@@ -15,7 +26,7 @@ export class UserSearchTool {
       username: z.string().describe('The username to search for'),
     }),
   })
-  @ToolScopes(['mcp:all'])
+  @ToolScopes(['mcp-tool:userid-search'])
   async findUserByUsername({ username }: { username: string }) {
     const user = await this.userIdSearchRepos.findUserIdByUsername(username);
 
@@ -42,7 +53,7 @@ export class UserSearchTool {
       phone: z.string().describe('Phone number'),
     }),
   })
-  @ToolScopes(['mcp:all'])
+  @ToolScopes(['mcp-tool:userid-search'])
   async findUserByPhone({
     countryCode,
     phone,
@@ -77,7 +88,7 @@ export class UserSearchTool {
       email: z.string().email().describe('The email address to search for'),
     }),
   })
-  @ToolScopes(['mcp:all'])
+  @ToolScopes(['mcp-tool:userid-search'])
   async findUserByEmail({ email }: { email: string }) {
     const user = await this.userIdSearchRepos.findUserIdByEmail(email);
 
@@ -93,130 +104,6 @@ export class UserSearchTool {
       userId: user.id,
       status: 'success',
       message: 'User ID found successfully',
-    };
-  }
-
-  @Tool({
-    name: 'search-users-by-username',
-    description: 'Search user IDs by username pattern (fuzzy search)',
-    parameters: z.object({
-      username: z.string().describe('The username pattern to search for'),
-      limit: z
-        .number()
-        .min(1)
-        .max(50)
-        .optional()
-        .default(10)
-        .describe('Maximum number of results to return'),
-    }),
-  })
-  @ToolScopes(['mcp:all'])
-  async searchUsersByUsername({
-    username,
-    limit = 10,
-  }: {
-    username: string;
-    limit?: number;
-  }) {
-    const users = await this.userIdSearchRepos.searchUserIdsByUsername(
-      username,
-      limit,
-    );
-
-    if (users.length === 0) {
-      return {
-        status: 'success',
-        message: `No user IDs found matching username: ${username}`,
-        count: 0,
-        userIds: [],
-      };
-    }
-
-    return {
-      status: 'success',
-      message: `Found ${users.length} user ID(s) matching username: ${username}`,
-      count: users.length,
-      userIds: users.map((user) => user.id),
-    };
-  }
-
-  @Tool({
-    name: 'search-userids-by-email',
-    description: 'Search user IDs by email pattern (fuzzy search)',
-    parameters: z.object({
-      email: z.string().describe('The email pattern to search for'),
-      limit: z
-        .number()
-        .min(1)
-        .max(50)
-        .optional()
-        .default(10)
-        .describe('Maximum number of results to return'),
-    }),
-  })
-  @ToolScopes(['mcp:all'])
-  async searchUsersByEmail({
-    email,
-    limit = 10,
-  }: {
-    email: string;
-    limit?: number;
-  }) {
-    const users = await this.userIdSearchRepos.searchUserIdsByEmail(
-      email,
-      limit,
-    );
-
-    if (users.length === 0) {
-      return {
-        status: 'success',
-        message: `No user IDs found matching email: ${email}`,
-        count: 0,
-        userIds: [],
-      };
-    }
-
-    return {
-      status: 'success',
-      message: `Found ${users.length} user ID(s) matching email: ${email}`,
-      count: users.length,
-      userIds: users.map((user) => user.id),
-    };
-  }
-
-  @Tool({
-    name: 'search-userids',
-    description:
-      'Search user IDs by username or email pattern (combined search)',
-    parameters: z.object({
-      query: z.string().describe('The search query (username or email)'),
-      limit: z
-        .number()
-        .min(1)
-        .max(50)
-        .optional()
-        .default(10)
-        .describe('Maximum number of results to return'),
-    }),
-  })
-  @ToolScopes(['mcp:all'])
-  async searchUsers({ query, limit = 10 }: { query: string; limit?: number }) {
-    const users = await this.userIdSearchRepos.searchUserIds(query, limit);
-
-    if (users.length === 0) {
-      return {
-        status: 'success',
-        message: `No user IDs found matching query: ${query}`,
-        count: 0,
-        userIds: [],
-      };
-    }
-
-    return {
-      status: 'success',
-      message: `Found ${users.length} user ID(s) matching query: ${query}`,
-      count: users.length,
-      userIds: users.map((user) => user.id),
     };
   }
 }

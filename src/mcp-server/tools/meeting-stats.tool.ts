@@ -32,7 +32,7 @@ export class MeetingStatsTool {
       endDate: z.string().describe('End date in ISO format (YYYY-MM-DD)'),
     }),
   })
-  @ToolScopes(['mcp:all'])
+  @ToolScopes(['mcp-tool:meeting-stats'])
   async getMeetingStats(
     {
       userId,
@@ -143,7 +143,7 @@ export class MeetingStatsTool {
       meetingId: z.string().describe('The ID of the meeting'),
     }),
   })
-  @ToolScopes(['mcp:all'])
+  @ToolScopes(['mcp-tool:meeting-details'])
   async getMeetingDetails({ meetingId }: { meetingId: string }) {
     const meeting =
       await this.meetingStatsRepository.findMeetingDetailsById(meetingId);

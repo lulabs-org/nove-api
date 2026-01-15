@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-12 15:10:02
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-14 00:27:29
+ * @LastEditTime: 2026-01-15 17:40:56
  * @FilePath: /nove_api/src/api-key/guards/api-key-mcp-auth.guard.ts
  * @Description:
  *
@@ -58,6 +58,7 @@ export class McpAuthJwtGuard implements CanActivate {
       req.user = {
         authType: 'api_key',
         id: authContext.apiKeyId,
+        sub: authContext.userId,
         organizationId: authContext.organizationId,
         apiKeyId: authContext.apiKeyId,
         scopes: authContext.scopes ?? [],

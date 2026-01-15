@@ -2,8 +2,8 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-12 00:51:27
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-13 11:05:06
- * @FilePath: /lulab_backend/prisma/seeds/mock/users/config.ts
+ * @LastEditTime: 2026-01-15 18:21:24
+ * @FilePath: /nove_api/prisma/seeds/users/config.ts
  * @Description:
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
