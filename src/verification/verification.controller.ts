@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-09-23 06:15:34
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-14 11:37:48
+ * @LastEditTime: 2026-01-15 12:06:59
  * @FilePath: /lulab_backend/src/verification/verification.controller.ts
  * @Description: 验证服务控制器
  *
@@ -22,16 +22,13 @@ import { VerificationService } from './verification.service';
 import { SendCodeDto } from './dto/send-code.dto';
 import { VerifyCodeDto } from './dto/verify-code.dto';
 import { Public } from '@/auth/decorators/public.decorator';
-import {
-  ApiSendCodeDocs,
-  ApiVerifyCodeDocs,
-} from '@/verification/decorators/api-docs.decorator';
+import { ApiSendCodeDocs, ApiVerifyCodeDocs } from '@/verification/decorators';
 import { Request } from 'express';
 import { Req } from '@nestjs/common';
 import { HttpUtil } from '@/common/utils/http.util';
 
-@ApiTags('Verification')
-@Controller({ path: 'api/verification', version: '1' })
+@ApiTags('Auth')
+@Controller({ path: 'api/auth/otp', version: '1' })
 export class VerificationController {
   constructor(private readonly verificationService: VerificationService) {}
 

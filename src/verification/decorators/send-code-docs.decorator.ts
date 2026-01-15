@@ -14,7 +14,6 @@ export function ApiSendCodeDocs() {
       summary: '发送验证码',
       description:
         '向指定的邮箱或手机号发送验证码。支持注册、登录、重置密码等场景。发送频率限制：同一目标60秒内只能发送一次。验证码有效期为5分钟。',
-      tags: ['Verification'],
     }),
     ApiConsumes('application/json'),
     ApiProduces('application/json'),
@@ -119,54 +118,6 @@ export function ApiSendCodeDocs() {
         },
         required: ['target', 'type'],
       },
-    }),
-    ApiHeader({
-      name: 'Content-Type',
-      description: '请求内容类型',
-      required: true,
-      schema: { type: 'string', default: 'application/json' },
-    }),
-  );
-}
-
-// 校验验证码接口文档装饰器（从 Auth 模块迁移）
-export function ApiVerifyCodeDocs() {
-  return applyDecorators(
-    ApiOperation({
-      summary: '验证验证码',
-      description:
-        '验证指定邮箱或手机号的验证码是否有效，用于注册、登录、重置密码等场景。',
-      tags: ['Verification'],
-    }),
-    ApiConsumes('application/json'),
-    ApiProduces('application/json'),
-    ApiResponse({
-      status: 200,
-      description: '验证结果返回',
-      schema: {
-        type: 'object',
-        properties: {
-          valid: { type: 'boolean', description: '验证码是否有效' },
-          message: { type: 'string', description: '验证结果消息' },
-        },
-        example: { valid: true, message: '验证码验证成功' },
-      },
-    }),
-    ApiResponse({
-      status: 400,
-      description: '请求参数错误',
-      schema: {
-        example: {
-          statusCode: 400,
-          message: ['验证码至少4位', '目标不能为空'],
-          error: 'Bad Request',
-        },
-      },
-    }),
-    ApiResponse({
-      status: 422,
-      description: '验证码错误或已过期',
-      schema: { example: { valid: false, message: '验证码错误或已过期' } },
     }),
     ApiHeader({
       name: 'Content-Type',
