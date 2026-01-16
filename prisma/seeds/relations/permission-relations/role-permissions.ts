@@ -49,7 +49,7 @@ const USER_PERMISSIONS = ['dashboard:read', 'product:read', 'order:read'];
  * @param roleId 角色ID
  * @param permissions 权限列表
  */
-async function assignPermissionsToRole(
+export async function assignPermissionsToRole(
   prisma: PrismaClient,
   roleId: string,
   permissions: Permission[],

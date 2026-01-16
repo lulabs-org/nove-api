@@ -10,21 +10,30 @@
  */
 
 import { PrismaClient, Organization } from '@prisma/client';
-import { ORGANIZATION_CONFIG } from './config';
+import {
+  ORGANIZATION_CONFIG,
+  REAL_ORGANIZATION_CONFIG,
+} from './config';
 
 export async function createOrganization(
   prisma: PrismaClient,
+  useRealData = false,
 ): Promise<Organization> {
-  console.log('🏢 开始创建组织数据...');
+  const dataSource = useRealData ? '真实数据' : '模拟数据';
+  console.log(`🏢 开始创建组织数据，使用${dataSource}...`);
+
+  const organizationConfig = useRealData
+    ? REAL_ORGANIZATION_CONFIG
+    : ORGANIZATION_CONFIG;
 
   try {
     const organization = await prisma.organization.upsert({
-      where: { code: ORGANIZATION_CONFIG.code },
+      where: { code: organizationConfig.code },
       update: {
-        name: ORGANIZATION_CONFIG.name,
-        description: ORGANIZATION_CONFIG.description,
+        name: organizationConfig.name,
+        description: organizationConfig.description,
       },
-      create: ORGANIZATION_CONFIG,
+      create: organizationConfig,
     });
 
     console.log(`✅ 创建/更新组织: ${organization.name}`);
