@@ -12,11 +12,14 @@ import { Module, Global } from '@nestjs/common';
 import { PrismaModule } from '../prisma/prisma.module';
 import { PermissionService } from './services/permission.service';
 import { PermissionRepository } from './repositories/permission.repository';
+import { PermissionController } from './controllers/permission.controller';
+import { DataPermissionRuleController } from './controllers/data-permission-rule.controller';
 
 @Global()
 @Module({
   imports: [PrismaModule],
   providers: [PermissionRepository, PermissionService],
+  controllers: [PermissionController, DataPermissionRuleController],
   exports: [PermissionRepository, PermissionService],
 })
 export class PermissionModule {}

@@ -8,6 +8,7 @@ import {
   IsBoolean,
 } from 'class-validator';
 import { RoleType } from '@prisma/client';
+import { Transform } from 'class-transformer';
 
 export class CreateRoleDto {
   @ApiProperty({
@@ -61,5 +62,10 @@ export class CreateRoleDto {
   })
   @IsBoolean()
   @IsOptional()
+  @Transform(({ value }) => {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return value as boolean;
+  })
   active?: boolean;
 }
