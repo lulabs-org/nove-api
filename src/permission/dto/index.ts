@@ -9,3 +9,11 @@
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 export * from './permission.dto';
+export * from './create-permission.dto';
+export * from './update-permission.dto';
+export * from './query-permission.dto';
+export * from './permission-tree.dto';
+export * from './create-data-permission-rule.dto';
+export * from './update-data-permission-rule.dto';
+export * from './query-data-permission-rule.dto';
+export * from './data-permission-rule.dto';

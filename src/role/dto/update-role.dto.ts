@@ -6,6 +6,7 @@ import {
   IsBoolean,
   IsArray,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class UpdateRoleDto {
   @ApiPropertyOptional({
@@ -38,6 +39,11 @@ export class UpdateRoleDto {
   })
   @IsBoolean()
   @IsOptional()
+  @Transform(({ value }) => {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return value as boolean;
+  })
   active?: boolean;
 
   @ApiPropertyOptional({
