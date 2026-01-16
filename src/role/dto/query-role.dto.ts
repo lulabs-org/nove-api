@@ -2,15 +2,21 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-16 12:47:35
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-16 12:55:45
- * @FilePath: /nove_project/nove_api/src/role/dto/query-role.dto.ts
+ * @LastEditTime: 2026-01-16 13:38:44
+ * @FilePath: /nove_api/src/role/dto/query-role.dto.ts
  * @Description:
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsOptional, IsEnum, IsBoolean, IsInt } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsBoolean,
+  IsInt,
+} from 'class-validator';
 import { RoleType } from '@prisma/client';
 import { Type, Transform } from 'class-transformer';
 
@@ -49,7 +55,7 @@ export class QueryRoleDto {
   @Transform(({ value }) => {
     if (value === 'true') return true;
     if (value === 'false') return false;
-    return value;
+    return value as boolean;
   })
   active?: boolean;
 
