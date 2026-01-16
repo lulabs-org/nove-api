@@ -131,4 +131,65 @@ export class RoleRepository {
 
     return !!role;
   }
+
+  async findUserRoles(userId: string) {
+    const userRoles = await this.prisma.userRole.findMany({
+      where: { userId },
+      include: {
+        role: true,
+      },
+      orderBy: {
+        role: {
+          level: 'asc',
+        },
+      },
+    });
+
+    return userRoles
+      .filter((ur) => ur.role && !ur.role.isDeleted && ur.role.active)
+      .map((ur) => ({
+        id: ur.role.id,
+        code: ur.role.code,
+        name: ur.role.name,
+        type: ur.role.type,
+        level: ur.role.level,
+      }));
+  }
+
+  async hasAnyRole(userId: string, roleCodes: string[]): Promise<boolean> {
+    const userRole = await this.prisma.userRole.findFirst({
+      where: {
+        userId,
+        role: {
+          code: { in: roleCodes },
+          isDeleted: false,
+          active: true,
+        },
+      },
+      include: {
+        role: true,
+      },
+    });
+
+    return !!userRole;
+  }
+
+  async hasAllRoles(userId: string, roleCodes: string[]): Promise<boolean> {
+    const userRoles = await this.prisma.userRole.findMany({
+      where: {
+        userId,
+        role: {
+          code: { in: roleCodes },
+          isDeleted: false,
+          active: true,
+        },
+      },
+      include: {
+        role: true,
+      },
+    });
+
+    const userRoleCodes = new Set(userRoles.map((ur) => ur.role.code));
+    return roleCodes.every((code) => userRoleCodes.has(code));
+  }
 }
