@@ -34,6 +34,7 @@ import { ApiKeyModule } from './api-key/api-key.module';
 import { McpServerModule } from './mcp-server/mcp-server.module';
 import { PermissionModule } from './permission/permission.module';
 import { TasksModule } from './task/tasks.module';
+import { RoleModule } from './role/role.module';
 
 @Module({
   imports: [
@@ -68,6 +69,7 @@ import { TasksModule } from './task/tasks.module';
     ApiKeyModule,
     PermissionModule,
     McpServerModule,
+    RoleModule,
   ],
   controllers: [AppController],
   providers: [
