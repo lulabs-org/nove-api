@@ -2,8 +2,8 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-12 12:44:09
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-13 12:17:43
- * @FilePath: /lulab_backend/prisma/seeds/mock/relations/user-relations/user-roles.ts
+ * @LastEditTime: 2026-01-15 19:57:49
+ * @FilePath: /nove_api/prisma/seeds/relations/user-relations/user-roles.ts
  * @Description:
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.

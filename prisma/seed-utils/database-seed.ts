@@ -2,8 +2,8 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-11 00:39:44
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-13 14:57:26
- * @FilePath: /lulab_backend/prisma/seed-utils/database-seed.ts
+ * @LastEditTime: 2026-01-15 19:47:13
+ * @FilePath: /nove_api/prisma/seed-utils/database-seed.ts
  * @Description:
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
@@ -31,9 +31,19 @@ export async function seedDatabase(
 
 async function seedRealDatabase(prisma: PrismaClient): Promise<void> {
   log('\n🏢 步骤 1: 创建组织');
-  const organization = await seedFunctions.createOrganization(prisma);
+  const organization = await seedFunctions.createOrganization(prisma, true);
+
+  log('  2 创建权限');
+  const permissions = await seedFunctions.createPermissions(prisma, true);
+
+  log('  2: 创建角色');
+  const roles = await seedFunctions.createRoles(prisma, true);
 
   log(`\n🏢 organization: ${organization.name}`);
+  log(
+    `\n🏢 permissions: ${permissions.map((permission) => permission.name).join(', ')}`,
+  );
+  log(`\n🏢 roles: ${roles.map((role) => role.name).join(', ')}`);
 }
 
 async function seedMockDatabase(prisma: PrismaClient): Promise<void> {
