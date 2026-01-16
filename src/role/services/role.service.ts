@@ -159,4 +159,16 @@ export class RoleService {
       updatedAt: role.updatedAt,
     };
   }
+
+  async getUserRoles(userId: string) {
+    return this.roleRepository.findUserRoles(userId);
+  }
+
+  async hasAnyRole(userId: string, roleCodes: string[]): Promise<boolean> {
+    return this.roleRepository.hasAnyRole(userId, roleCodes);
+  }
+
+  async hasAllRoles(userId: string, roleCodes: string[]): Promise<boolean> {
+    return this.roleRepository.hasAllRoles(userId, roleCodes);
+  }
 }
