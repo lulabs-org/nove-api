@@ -1,51 +1,62 @@
-import { PrismaClient, User, Department } from '@prisma/client';
+/*
+ * @Author: 杨仕明 shiming.y@qq.com
+ * @Date: 2026-01-14 00:30:50
+ * @LastEditors: 杨仕明 shiming.y@qq.com
+ * @LastEditTime: 2026-01-17 17:19:06
+ * @FilePath: /nove_api/prisma/seeds/relations/user-relations/user-department.ts
+ * @Description: 
+ * 
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved. 
+ */
+
+import { PrismaClient, User, Dept } from '@prisma/client';
 
 export async function createUserDepartmentRelations(
   prisma: PrismaClient,
-  departments: Department[],
+  departments: Dept[],
   users: User[],
 ): Promise<void> {
-  await prisma.userDepartment.upsert({
+  await prisma.memberDepartment.upsert({
     where: {
-      userId_departmentId: {
-        userId: users[0].id,
-        departmentId: departments[0].id,
+      memberId_deptId: {
+        memberId: users[0].id,
+        deptId: departments[0].id,
       },
     },
     update: {},
     create: {
-      userId: users[0].id,
-      departmentId: departments[0].id,
+      memberId: users[0].id,
+      deptId: departments[0].id,
       isPrimary: true,
     },
   });
 
-  await prisma.userDepartment.upsert({
+  await prisma.memberDepartment.upsert({
     where: {
-      userId_departmentId: {
-        userId: users[1].id,
-        departmentId: departments[1].id,
+      memberId_deptId: {
+        memberId: users[1].id,
+        deptId: departments[1].id,
       },
     },
     update: {},
     create: {
-      userId: users[1].id,
-      departmentId: departments[1].id,
+      memberId: users[1].id,
+      deptId: departments[1].id,
       isPrimary: true,
     },
   });
 
-  await prisma.userDepartment.upsert({
+  await prisma.memberDepartment.upsert({
     where: {
-      userId_departmentId: {
-        userId: users[2].id,
-        departmentId: departments[2].id,
+      memberId_deptId: {
+        memberId: users[2].id,
+        deptId: departments[2].id,
       },
     },
     update: {},
     create: {
-      userId: users[2].id,
-      departmentId: departments[2].id,
+      memberId: users[2].id,
+      deptId: departments[2].id,
       isPrimary: true,
     },
   });
@@ -75,17 +86,17 @@ export async function createUserDepartmentRelations(
   ];
 
   for (const assignment of departmentAssignments) {
-    await prisma.userDepartment.upsert({
+    await prisma.memberDepartment.upsert({
       where: {
-        userId_departmentId: {
-          userId: assignment.user.id,
-          departmentId: assignment.department.id,
+        memberId_deptId: {
+          memberId: assignment.user.id,
+          deptId: assignment.department.id,
         },
       },
       update: {},
       create: {
-        userId: assignment.user.id,
-        departmentId: assignment.department.id,
+        memberId: assignment.user.id,
+        deptId: assignment.department.id,
         isPrimary: assignment.isPrimary,
       },
     });

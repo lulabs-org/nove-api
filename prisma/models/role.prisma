@@ -10,7 +10,7 @@ model Role {
   isDeleted   Boolean  @default(false)
 
   // 关联关系
-  users           UserRole[]
+  members         MemberRole[]
   permissions     RolePermission[]
   dataPermissions RoleDataPermission[]
 

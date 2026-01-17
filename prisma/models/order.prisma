@@ -1,38 +1,25 @@
-// 币种枚举
-enum Currency {
-  CNY // 人民币
-  USD // 美元
-  EUR // 欧元
-  GBP // 英镑
-  JPY // 日元
-  HKD // 港币
-  TWD // 台币
-  SGD // 新加坡元
-  AUD // 澳元
-  CAD // 加元
-}
-
 // 订单表
 model Order {
   id                   String    @id @default(cuid()) // 内部主键
-  orderCode            String    @unique // 系统生成的订单编号
-  orderNumber          String    @unique // 订单号码（对外显示）
-  externalOrderId      String? // 外部平台订单编号
+  orderCode            String    @unique @map("order_code") // 系统生成的订单编号
+  orderNumber          String    @unique @map("order_number") // 订单号码（对外显示）
+  externalOrderId      String?   @map("external_order_id") // 外部平台订单编号
   externalOrderData    Json?     @db.JsonB // 外部订单数据
-  productId            String? // 产品ID（外键）
-  productName          String? // 产品标题（冗余存储）
-  customerEmail        String? // 用户邮箱
-  customerPhone        String? // 订单手机号
-  customerPhoneCode    String? // 手机号区号
-  userId               String? // 用户ID（外键）
-  channelId            Int? // 渠道ID（外键）
-  currentOwnerId       String? // 当前负责人（系统用户ID）
-  financialCloserId    String? // 财务结单人（系统用户ID）
-  financialClosedAt    DateTime? // 财务结单时间
-  financialClosed      Boolean   @default(false) // 是否财务结单
+  productId            String?   @map("product_id") // 产品ID（外键）
+  productName          String?   @map("product_name") // 产品标题（冗余存储）
+  customerEmail        String?   @map("customer_email") // 用户邮箱
+  customerPhone        String?   @map("customer_phone") // 订单手机号
+  customerPhoneCode    String?   @map("customer_phone_code") // 手机号区号
+  userId               String?   @map("user_id") // 用户ID（外键）
+  channelId            Int?      @map("channel_id") // 渠道ID（外键）
+  currentOwnerId       String?   @map("current_owner_id") // 当前负责人（系统用户ID）
+  financialCloserId    String?   @map("financial_closer_id") // 财务结单人（系统用户ID）
+  financialClosedAt    DateTime? @map("financial_closed_at") // 财务结单时间
+  financialClosed      Boolean   @default(false) @map("financial_closed") // 是否财务结单
   amount               Int // 金额（分为单位）
   currency             Currency? // 币种
   amountCny            Int // 折算后的人民币金额
+  
   paidAt               DateTime? // 支付时间
   effectiveDate        DateTime? @db.Date // 生效时间
   benefitStartDate     DateTime? @db.Date // 权益开始时间
@@ -61,4 +48,18 @@ model Order {
   @@index([userId, paidAt]) // 用户订单历史
   @@index([financialClosed, paidAt]) // 财务报表查询
   @@map("orders")
+}
+
+// 币种枚举
+enum Currency {
+  CNY // 人民币
+  USD // 美元
+  EUR // 欧元
+  GBP // 英镑
+  JPY // 日元
+  HKD // 港币
+  TWD // 台币
+  SGD // 新加坡元
+  AUD // 澳元
+  CAD // 加元
 }

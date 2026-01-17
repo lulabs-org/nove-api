@@ -94,7 +94,7 @@ export class UsageLogRepository {
     },
   ): Promise<{ items: ApiKeyUsageLog[]; total: number }> {
     const where: Prisma.ApiKeyUsageLogWhereInput = {
-      organizationId,
+      orgId: organizationId,
       ...(options?.startDate || options?.endDate
         ? {
             createdAt: {

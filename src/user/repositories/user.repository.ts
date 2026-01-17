@@ -6,7 +6,6 @@ import type { User, UserProfile } from '@prisma/client';
 export class UserRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  // User queries
   getUserById(id: string): Promise<User | null> {
     return this.prisma.user.findUnique({ where: { id } });
   }
@@ -23,7 +22,11 @@ export class UserRepository {
   getUserByIdWithProfileAndRoles(id: string): Promise<
     | (User & {
         profile: UserProfile | null;
-        roles: Array<{ role: { code: string } }>;
+        orgMembers: Array<{
+          memberRoles: Array<{
+            role: { code: string };
+          }>;
+        }>;
       })
     | null
   > {
@@ -31,17 +34,21 @@ export class UserRepository {
       where: { id },
       include: {
         profile: true,
-        roles: {
+        orgMembers: {
           include: {
-            role: {
-              select: {
-                code: true,
+            memberRoles: {
+              include: {
+                role: {
+                  select: {
+                    code: true,
+                  },
+                },
               },
-            },
-          },
-          orderBy: {
-            role: {
-              level: 'asc',
+              orderBy: {
+                role: {
+                  level: 'asc',
+                },
+              },
             },
           },
         },
@@ -49,7 +56,11 @@ export class UserRepository {
     }) as Promise<
       | (User & {
           profile: UserProfile | null;
-          roles: Array<{ role: { code: string } }>;
+          orgMembers: Array<{
+            memberRoles: Array<{
+              role: { code: string };
+            }>;
+          }>;
         })
       | null
     >;
@@ -83,7 +94,11 @@ export class UserRepository {
   ): Promise<
     | (User & {
         profile: UserProfile | null;
-        roles: Array<{ role: { code: string } }>;
+        orgMembers: Array<{
+          memberRoles: Array<{
+            role: { code: string };
+          }>;
+        }>;
       })
     | null
   > {
@@ -93,7 +108,7 @@ export class UserRepository {
     ];
     if (countryCode) {
       conditions.push({
-        unique_phone_combination: { countryCode, phone: target },
+        uq_users_country_code_phone: { countryCode, phone: target },
       });
     } else {
       conditions.push({ phone: target });
@@ -103,26 +118,34 @@ export class UserRepository {
       where: { OR: conditions },
       include: {
         profile: true,
-        roles: {
+        orgMembers: {
           include: {
-            role: {
-              select: {
-                code: true,
+            memberRoles: {
+              include: {
+                role: {
+                  select: {
+                    code: true,
+                  },
+                },
               },
+              orderBy: {
+                role: {
+                  level: 'asc',
+                },
+              },
+              take: 1,
             },
           },
-          orderBy: {
-            role: {
-              level: 'asc',
-            },
-          },
-          take: 1,
         },
       },
     }) as Promise<
       | (User & {
           profile: UserProfile | null;
-          roles: Array<{ role: { code: string } }>;
+          orgMembers: Array<{
+            memberRoles: Array<{
+              role: { code: string };
+            }>;
+          }>;
         })
       | null
     >;
@@ -144,7 +167,11 @@ export class UserRepository {
   }): Promise<
     User & {
       profile: UserProfile | null;
-      roles: Array<{ role: { code: string } }>;
+      orgMembers: Array<{
+        memberRoles: Array<{
+          role: { code: string };
+        }>;
+      }>;
     }
   > {
     return this.prisma.user.create({
@@ -164,26 +191,34 @@ export class UserRepository {
       },
       include: {
         profile: true,
-        roles: {
+        orgMembers: {
           include: {
-            role: {
-              select: {
-                code: true,
+            memberRoles: {
+              include: {
+                role: {
+                  select: {
+                    code: true,
+                  },
+                },
               },
+              orderBy: {
+                role: {
+                  level: 'asc',
+                },
+              },
+              take: 1,
             },
           },
-          orderBy: {
-            role: {
-              level: 'asc',
-            },
-          },
-          take: 1,
         },
       },
     }) as Promise<
       User & {
         profile: UserProfile | null;
-        roles: Array<{ role: { code: string } }>;
+        orgMembers: Array<{
+          memberRoles: Array<{
+            role: { code: string };
+          }>;
+        }>;
       }
     >;
   }

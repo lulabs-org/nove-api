@@ -37,14 +37,25 @@ export class PermissionRepository {
   }
 
   async findUserRoles(userId: string) {
-    return this.prisma.userRole.findMany({
-      where: {
-        userId,
-      },
+    const orgMembers = await this.prisma.orgMember.findMany({
+      where: { userId },
       include: {
-        role: true,
+        memberRoles: {
+          include: {
+            role: true,
+          },
+        },
       },
     });
+
+    return orgMembers.flatMap((orgMember) =>
+      orgMember.memberRoles.map((mr) => ({
+        id: mr.id,
+        userId: orgMember.userId,
+        roleId: mr.roleId,
+        role: mr.role,
+      })),
+    );
   }
 
   async findAllPermissions() {

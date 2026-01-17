@@ -34,7 +34,7 @@ export class UsageLogService {
         apiKey: {
           connect: { id: apiKeyId },
         },
-        organization: {
+        org: {
           connect: { id: organizationId },
         },
         method: request.method,

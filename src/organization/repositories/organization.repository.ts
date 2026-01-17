@@ -1,25 +1,25 @@
 import { Injectable } from '@nestjs/common';
-import { Organization, Prisma } from '@prisma/client';
+import { Org, Prisma } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 
 @Injectable()
 export class OrganizationRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(data: Prisma.OrganizationCreateInput): Promise<Organization> {
-    return this.prisma.organization.create({
+  async create(data: Prisma.OrgCreateInput): Promise<Org> {
+    return this.prisma.org.create({
       data,
     });
   }
 
-  async findById(id: string): Promise<Organization | null> {
-    return this.prisma.organization.findUnique({
+  async findById(id: string): Promise<Org | null> {
+    return this.prisma.org.findUnique({
       where: { id },
     });
   }
 
-  async findByCode(code: string): Promise<Organization | null> {
-    return this.prisma.organization.findUnique({
+  async findByCode(code: string): Promise<Org | null> {
+    return this.prisma.org.findUnique({
       where: { code },
     });
   }
@@ -27,19 +27,19 @@ export class OrganizationRepository {
   async findMany(options?: {
     skip?: number;
     take?: number;
-    orderBy?: Prisma.OrganizationOrderByWithRelationInput;
-    where?: Prisma.OrganizationWhereInput;
-  }): Promise<{ items: Organization[]; total: number }> {
+    orderBy?: Prisma.OrgOrderByWithRelationInput;
+    where?: Prisma.OrgWhereInput;
+  }): Promise<{ items: Org[]; total: number }> {
     const { skip, take, orderBy, where } = options || {};
 
     const [items, total] = await Promise.all([
-      this.prisma.organization.findMany({
+      this.prisma.org.findMany({
         where,
         skip,
         take,
         orderBy: orderBy || { createdAt: 'desc' },
       }),
-      this.prisma.organization.count({ where }),
+      this.prisma.org.count({ where }),
     ]);
 
     return { items, total };
@@ -47,29 +47,29 @@ export class OrganizationRepository {
 
   async update(
     id: string,
-    data: Prisma.OrganizationUpdateInput,
-  ): Promise<Organization> {
-    return this.prisma.organization.update({
+    data: Prisma.OrgUpdateInput,
+  ): Promise<Org> {
+    return this.prisma.org.update({
       where: { id },
       data,
     });
   }
 
-  async updateStatus(id: string, active: boolean): Promise<Organization> {
-    return this.prisma.organization.update({
+  async updateStatus(id: string, active: boolean): Promise<Org> {
+    return this.prisma.org.update({
       where: { id },
       data: { active },
     });
   }
 
-  async delete(id: string): Promise<Organization> {
-    return this.prisma.organization.delete({
+  async delete(id: string): Promise<Org> {
+    return this.prisma.org.delete({
       where: { id },
     });
   }
 
-  async softDelete(id: string): Promise<Organization> {
-    return this.prisma.organization.update({
+  async softDelete(id: string): Promise<Org> {
+    return this.prisma.org.update({
       where: { id },
       data: { deletedAt: new Date() },
     });
@@ -86,33 +86,31 @@ export class OrganizationRepository {
   }> {
     const [totalUsers, totalDepartments, totalApiKeys, activeApiKeys] =
       await Promise.all([
-        this.prisma.userOrganization.count({
-          where: { organizationId: id },
+        this.prisma.orgMember.count({
+          where: { orgId: id },
         }),
-        this.prisma.department.count({
+        this.prisma.dept.count({
           where: { orgId: id },
         }),
         this.prisma.apiKey.count({
-          where: { organizationId: id },
+          where: { orgId: id },
         }),
         this.prisma.apiKey.count({
-          where: { organizationId: id, status: 'ACTIVE' },
+          where: { orgId: id, status: 'ACTIVE' },
         }),
       ]);
 
     const [disabledUsers, activeUsers, adminUsers] = await Promise.all([
-      this.prisma.userOrganization.count({
-        where: { organizationId: id, user: { active: false } },
+      this.prisma.orgMember.count({
+        where: { orgId: id, user: { active: false } },
       }),
-      this.prisma.userOrganization.count({
-        where: { organizationId: id, user: { active: true } },
+      this.prisma.orgMember.count({
+        where: { orgId: id, user: { active: true } },
       }),
-      this.prisma.userRole.count({
+      this.prisma.memberRole.count({
         where: {
-          user: {
-            organizations: {
-              some: { organizationId: id },
-            },
+          member: {
+            orgId: id,
           },
           role: {
             code: 'ADMIN',

@@ -1,20 +1,13 @@
-// API Key 状态枚举
-enum ApiKeyStatus {
-  ACTIVE // 活跃状态
-  REVOKED // 已撤销
-  EXPIRED // 已过期
-}
-
 // API Key 表
 model ApiKey {
-  id             String       @id @default(cuid())
-  organizationId String       @map("organization_id") // 所属组织ID
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  id    String @id @default(cuid())
+  orgId String @map("org_id") // 所属组织ID
+  org   Org    @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
-  name   String // API Key 名称
-  prefix String @unique // Key 前缀（用于快速查找）
+  name    String // API Key 名称
+  prefix  String @unique // Key 前缀（用于快速查找）
   keyHash String @map("key_hash") // Key 的 HMAC-SHA256 哈希值
-  last4  String // Key 最后4位（用于显示）
+  last4   String // Key 最后4位（用于显示）
 
   status ApiKeyStatus @default(ACTIVE) // Key 状态
   scopes String[]     @default([]) // 权限范围
@@ -27,9 +20,9 @@ model ApiKey {
   createdByUser User?   @relation(fields: [createdBy], references: [id], onDelete: SetNull)
 
   // Key 轮换关系（自关联）
-  rotatedFromId String?  @unique @map("rotated_from_id") // 从哪个 Key 轮换而来
-  rotatedFrom   ApiKey?  @relation("KeyRotation", fields: [rotatedFromId], references: [id], onDelete: SetNull)
-  rotatedTo     ApiKey?  @relation("KeyRotation") // 轮换到哪个 Key
+  rotatedFromId String? @unique @map("rotated_from_id") // 从哪个 Key 轮换而来
+  rotatedFrom   ApiKey? @relation("KeyRotation", fields: [rotatedFromId], references: [id], onDelete: SetNull)
+  rotatedTo     ApiKey? @relation("KeyRotation") // 轮换到哪个 Key
 
   // 使用日志关联
   usageLogs ApiKeyUsageLog[]
@@ -37,8 +30,8 @@ model ApiKey {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  @@index([organizationId, status]) // 组织+状态查询优化
-  @@index([organizationId, createdAt]) // 组织+创建时间查询优化
+  @@index([orgId, status]) // 组织+状态查询优化
+  @@index([orgId, createdAt]) // 组织+创建时间查询优化
   @@index([status, expiresAt]) // 过期 Key 清理查询优化
   @@index([createdBy]) // 创建者查询优化
   @@map("api_keys")
@@ -46,11 +39,11 @@ model ApiKey {
 
 // API Key 使用日志表
 model ApiKeyUsageLog {
-  id             String       @id @default(cuid())
-  apiKeyId       String       @map("api_key_id") // API Key ID
-  apiKey         ApiKey       @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
-  organizationId String       @map("organization_id") // 所属组织ID
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  apiKeyId String @map("api_key_id") // API Key ID
+  apiKey   ApiKey @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
+  orgId    String @map("org_id") // 所属组织ID
+  org      Org    @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
   method     String // HTTP 方法
   path       String // 请求路径
@@ -64,7 +57,14 @@ model ApiKeyUsageLog {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@index([apiKeyId, createdAt]) // API Key + 时间查询优化
-  @@index([organizationId, createdAt]) // 组织 + 时间查询优化
+  @@index([orgId, createdAt]) // 组织 + 时间查询优化
   @@index([createdAt]) // 时间范围查询优化
   @@map("api_key_usage_logs")
+}
+
+// API Key 状态枚举
+enum ApiKeyStatus {
+  ACTIVE // 活跃状态
+  REVOKED // 已撤销
+  EXPIRED // 已过期
 }

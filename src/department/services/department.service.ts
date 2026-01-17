@@ -48,7 +48,7 @@ export class DepartmentService {
       name: dto.name,
       code: dto.code,
       description: dto.description,
-      organization: {
+      org: {
         connect: { id: organizationId },
       },
       parent: dto.parentId
@@ -104,7 +104,7 @@ export class DepartmentService {
     const pageSize = pagination?.pageSize || 10;
     const skip = (page - 1) * pageSize;
 
-    const where: Prisma.DepartmentWhereInput = {};
+    const where: Prisma.DeptWhereInput = {};
 
     if (pagination?.parentId) {
       where.parentId = pagination.parentId;

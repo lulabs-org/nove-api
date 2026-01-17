@@ -1,25 +1,25 @@
 import { Injectable } from '@nestjs/common';
-import { Department, Prisma } from '@prisma/client';
+import { Dept, Prisma } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 
 @Injectable()
 export class DepartmentRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(data: Prisma.DepartmentCreateInput): Promise<Department> {
-    return this.prisma.department.create({
+  async create(data: Prisma.DeptCreateInput): Promise<Dept> {
+    return this.prisma.dept.create({
       data,
     });
   }
 
-  async findById(id: string): Promise<Department | null> {
-    return this.prisma.department.findUnique({
+  async findById(id: string): Promise<Dept | null> {
+    return this.prisma.dept.findUnique({
       where: { id },
     });
   }
 
-  async findByCode(code: string): Promise<Department | null> {
-    return this.prisma.department.findUnique({
+  async findByCode(code: string): Promise<Dept | null> {
+    return this.prisma.dept.findUnique({
       where: { code },
     });
   }
@@ -29,33 +29,33 @@ export class DepartmentRepository {
     options?: {
       skip?: number;
       take?: number;
-      orderBy?: Prisma.DepartmentOrderByWithRelationInput;
-      where?: Prisma.DepartmentWhereInput;
+      orderBy?: Prisma.DeptOrderByWithRelationInput;
+      where?: Prisma.DeptWhereInput;
     },
-  ): Promise<{ items: Department[]; total: number }> {
+  ): Promise<{ items: Dept[]; total: number }> {
     const { skip, take, orderBy, where } = options || {};
 
-    const baseWhere: Prisma.DepartmentWhereInput = {
+    const baseWhere: Prisma.DeptWhereInput = {
       orgId: organizationId,
       deletedAt: null,
       ...where,
     };
 
     const [items, total] = await Promise.all([
-      this.prisma.department.findMany({
+      this.prisma.dept.findMany({
         where: baseWhere,
         skip,
         take,
         orderBy: orderBy || { sortOrder: 'asc', createdAt: 'desc' },
       }),
-      this.prisma.department.count({ where: baseWhere }),
+      this.prisma.dept.count({ where: baseWhere }),
     ]);
 
     return { items, total };
   }
 
-  async findTree(organizationId: string): Promise<Department[]> {
-    const departments = await this.prisma.department.findMany({
+  async findTree(organizationId: string): Promise<Dept[]> {
+    const departments = await this.prisma.dept.findMany({
       where: {
         orgId: organizationId,
         deletedAt: null,
@@ -67,9 +67,9 @@ export class DepartmentRepository {
   }
 
   private buildTree(
-    departments: Department[],
+    departments: Dept[],
     parentId: string | null = null,
-  ): Department[] {
+  ): Dept[] {
     return departments
       .filter((dept) => dept.parentId === parentId)
       .map((dept) => ({
@@ -78,8 +78,8 @@ export class DepartmentRepository {
       }));
   }
 
-  async findChildren(parentId: string): Promise<Department[]> {
-    return this.prisma.department.findMany({
+  async findChildren(parentId: string): Promise<Dept[]> {
+    return this.prisma.dept.findMany({
       where: {
         parentId,
         deletedAt: null,
@@ -88,8 +88,8 @@ export class DepartmentRepository {
     });
   }
 
-  async findAncestors(departmentId: string): Promise<Department[]> {
-    const ancestors: Department[] = [];
+  async findAncestors(departmentId: string): Promise<Dept[]> {
+    const ancestors: Dept[] = [];
     let current = await this.findById(departmentId);
 
     while (current && current.parentId) {
@@ -127,42 +127,53 @@ export class DepartmentRepository {
   }> {
     const { skip, take } = options || {};
 
-    const where: Prisma.UserDepartmentWhereInput = {
-      departmentId,
+    const where: Prisma.MemberDepartmentWhereInput = {
+      deptId: departmentId,
     };
 
     if (includeChildren) {
       const allDepartmentIds =
         await this.getAllChildDepartmentIds(departmentId);
-      where.departmentId = { in: allDepartmentIds };
+      where.deptId = { in: allDepartmentIds };
     }
 
     const [items, total] = await Promise.all([
-      this.prisma.userDepartment.findMany({
+      this.prisma.memberDepartment.findMany({
         where,
         skip,
         take,
         orderBy: { createdAt: 'desc' },
         include: {
-          user: {
-            select: {
-              id: true,
-              username: true,
-              profile: {
+          member: {
+            include: {
+              user: {
                 select: {
-                  displayName: true,
-                  avatar: true,
+                  id: true,
+                  username: true,
+                  profile: {
+                    select: {
+                      displayName: true,
+                      avatar: true,
+                    },
+                  },
+                  email: true,
                 },
               },
-              email: true,
             },
           },
         },
       }),
-      this.prisma.userDepartment.count({ where }),
+      this.prisma.memberDepartment.count({ where }),
     ]);
 
-    return { items, total };
+    return {
+      items: items.map((item) => ({
+        user: item.member.user,
+        isPrimary: item.isPrimary,
+        createdAt: item.createdAt,
+      })),
+      total,
+    };
   }
 
   private async getAllChildDepartmentIds(parentId: string): Promise<string[]> {
@@ -177,7 +188,7 @@ export class DepartmentRepository {
   }
 
   async hasChildren(departmentId: string): Promise<boolean> {
-    const count = await this.prisma.department.count({
+    const count = await this.prisma.dept.count({
       where: {
         parentId: departmentId,
         deletedAt: null,
@@ -191,33 +202,30 @@ export class DepartmentRepository {
     departmentId: string,
     includeChildren: boolean = false,
   ): Promise<boolean> {
-    const where: Prisma.UserDepartmentWhereInput = {
-      departmentId,
+    const where: Prisma.MemberDepartmentWhereInput = {
+      deptId: departmentId,
     };
 
     if (includeChildren) {
       const allDepartmentIds =
         await this.getAllChildDepartmentIds(departmentId);
-      where.departmentId = { in: allDepartmentIds };
+      where.deptId = { in: allDepartmentIds };
     }
 
-    const count = await this.prisma.userDepartment.count({ where });
+    const count = await this.prisma.memberDepartment.count({ where });
 
     return count > 0;
   }
 
-  async update(
-    id: string,
-    data: Prisma.DepartmentUpdateInput,
-  ): Promise<Department> {
-    return this.prisma.department.update({
+  async update(id: string, data: Prisma.DeptUpdateInput): Promise<Dept> {
+    return this.prisma.dept.update({
       where: { id },
       data,
     });
   }
 
-  async updateStatus(id: string, active: boolean): Promise<Department> {
-    return this.prisma.department.update({
+  async updateStatus(id: string, active: boolean): Promise<Dept> {
+    return this.prisma.dept.update({
       where: { id },
       data: { active },
     });
@@ -227,8 +235,8 @@ export class DepartmentRepository {
     id: string,
     parentId: string | null,
     sortOrder?: number,
-  ): Promise<Department> {
-    return this.prisma.department.update({
+  ): Promise<Dept> {
+    return this.prisma.dept.update({
       where: { id },
       data: {
         parentId,
@@ -237,14 +245,14 @@ export class DepartmentRepository {
     });
   }
 
-  async delete(id: string): Promise<Department> {
-    return this.prisma.department.delete({
+  async delete(id: string): Promise<Dept> {
+    return this.prisma.dept.delete({
       where: { id },
     });
   }
 
-  async softDelete(id: string): Promise<Department> {
-    return this.prisma.department.update({
+  async softDelete(id: string): Promise<Dept> {
+    return this.prisma.dept.update({
       where: { id },
       data: { deletedAt: new Date() },
     });

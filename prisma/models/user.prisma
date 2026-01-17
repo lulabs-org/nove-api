@@ -34,14 +34,17 @@ model User {
   Authenticator Authenticator[]
   refreshTokens RefreshToken[] // User's refresh tokens
 
+  // 组织成员关联
+  orgMembers OrgMember[] // 用户所属的组织成员关系
+
   // 个人详细信息
   profile     UserProfile?
   settings    UserSettings?
   preferences UserPreference?
 
   // 登录日志关联
-  loginLogs LoginLog[] // 登录日志
-    // API Key 关联
+  loginLogs      LoginLog[] // 登录日志
+  // API Key 关联
   createdApiKeys ApiKey[] // 创建的 API Keys
 
   // 订单相关关联
@@ -53,13 +56,6 @@ model User {
   // 产品相关关联
   createdProducts Product[] @relation("ProductCreator") // 创建的产品
   updatedProducts Product[] @relation("ProductUpdater") // 更新的产品
-
-  // 权限系统关联
-  organizations   UserOrganization[] // 用户所属组织
-  departments     UserDepartment[] // 用户所属部门
-  roles           UserRole[] // 用户角色
-  permissions     UserPermission[] // 用户特殊权限
-  dataPermissions UserDataPermission[] // 用户数据权限
 
   // 平台与存储相关关联
   platformUsers          PlatformUser[] // 平台用户关联

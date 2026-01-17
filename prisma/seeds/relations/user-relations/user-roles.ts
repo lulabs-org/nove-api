@@ -17,9 +17,9 @@ export async function assignRolesToUsers(
   roleId: string,
 ): Promise<void> {
   try {
-    await prisma.userRole.createMany({
+    await prisma.memberRole.createMany({
       data: userIds.map((userId) => ({
-        userId,
+        memberId: userId,
         roleId,
       })),
       skipDuplicates: true,

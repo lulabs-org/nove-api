@@ -2,20 +2,20 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-12 12:44:09
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-13 13:58:46
- * @FilePath: /lulab_backend/prisma/seeds/mock/core/organization/organization.ts
+ * @LastEditTime: 2026-01-17 16:37:19
+ * @FilePath: /nove_api/prisma/seeds/core/organization/organization.ts
  * @Description:
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
-import { PrismaClient, Organization } from '@prisma/client';
+import { PrismaClient, Org } from '@prisma/client';
 import { ORGANIZATION_CONFIG, REAL_ORGANIZATION_CONFIG } from './config';
 
 export async function createOrganization(
   prisma: PrismaClient,
   useRealData = false,
-): Promise<Organization> {
+): Promise<Org> {
   const dataSource = useRealData ? '真实数据' : '模拟数据';
   console.log(`🏢 开始创建组织数据，使用${dataSource}...`);
 
@@ -24,7 +24,7 @@ export async function createOrganization(
     : ORGANIZATION_CONFIG;
 
   try {
-    const organization = await prisma.organization.upsert({
+    const organization = await prisma.org.upsert({
       where: { code: organizationConfig.code },
       update: {
         name: organizationConfig.name,

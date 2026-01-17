@@ -1,84 +1,48 @@
-// model Membership {
-//     id     String       @id @default(cuid())
-//     orgId  String       @map("org_id")
-//     userId String       @map("user_id")
-//     type   MemberType   @default(INTERNAL)
-//     status MemberStatus @default(ACTIVE)
+model OrgMember {
+  id     String       @id @default(cuid())
+  orgId  String       @map("org_id")
+  userId String       @map("user_id")
+  type   MemberType   @default(INTERNAL)
+  status MemberStatus @default(ACTIVE)
 
-//     // 外部用户常用字段（可选）
-//     externalCompany String? @map("external_company")
-//     title           String?
+  // 组织内信息（可与 User 全局信息不同）
+  orgDisplayName String? @map("org_display_name") // 组织显示名称（可选）
+  employeeNo     String? @map("employee_no") // 内部员工工号（外部用户可为空）
+  primaryDeptId  String? @map("primary_dept_id") // 主要部门（可选）
 
-//     createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-//     updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
-//     deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6) // 软删除时间戳
+  // 外部用户常用字段（可选）
+  externalCompany String? @map("external_company")
+  title           String?
 
-//     org  Organization  @relation(fields: [orgId], references: [id], onDelete: Cascade)
-//     user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt  DateTime  @default(now()) @map("joined_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6) // 软删除时间戳
 
-//     deptMembers     DeptMember[]
-//     orgRoleBindings OrgRoleBinding[]
-//     roleBindings    RoleBinding[]
+  org         Org   @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user        User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  primaryDept Dept? @relation(fields: [primaryDeptId], references: [id], onDelete: SetNull)
 
-//     @@unique([orgId, userId]) // 一个用户在一个组织只有一个 Membership
-//     @@index([orgId])
-//     @@index([userId])
-//     @@index([orgId, type, status])
-// }
+  memberRoles           MemberRole[]
+  memberDepartments     MemberDepartment[]
+  memberPermissions     MemberPermission[]
+  memberDataPermissions MemberDataPermission[]
 
-// enum MemberType {
-//     INTERNAL
-//     EXTERNAL
-// }
+  @@unique([orgId, userId]) // 一个用户在一个组织只有一个 Membership
+  @@index([orgId])
+  @@index([userId])
+  @@index([orgId, type, status])
+  @@map("org_members")
+}
 
-// enum MemberStatus {
-//     INVITED
-//     ACTIVE
-//     SUSPENDED
-//     LEFT
-// }
+enum MemberType {
+  INTERNAL // 组织内部员工
+  EXTERNAL // 外部用户（供应商/客户/合作方）
+}
 
-// model OrgMember {
-//   id            String        @id @default(uuid())
-//   orgId         String
-//   userId        String
-
-//   type          MemberType    @default(INTERNAL)
-//   status        MemberStatus  @default(ACTIVE)
-
-//   // 组织内信息（可与 User 全局信息不同）
-//   orgDisplayName String?
-//   title          String?
-//   employeeNo     String?      // 内部员工工号（外部用户可为空）
-//   primaryDeptId  String?      // 主要部门（可选）
-
-//   joinedAt      DateTime      @default(now())
-//   createdAt     DateTime      @default(now())
-//   updatedAt     DateTime      @updatedAt
-
-//   org     Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
-//   user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-//   primaryDept Department? @relation(fields: [primaryDeptId], references: [id], onDelete: SetNull)
-
-//   deptMemberships DeptMember[]
-//   roles          MemberRole[]
-
-//   @@unique([orgId, userId]) // 一个 user 在一个 org 只能有一个成员身份
-//   @@index([userId])
-//   @@index([orgId, status])
-//   @@index([orgId, type])
-//   @@index([orgId, primaryDeptId])
-// }
-
-// enum MemberType {
-//   INTERNAL  // 组织内部员工
-//   EXTERNAL  // 外部用户（供应商/客户/合作方）
-// }
-
-// enum MemberStatus {
-//   INVITED
-//   ACTIVE
-//   SUSPENDED
-//   LEFT
-// }
-
+enum MemberStatus {
+  INVITED
+  ACTIVE
+  SUSPENDED
+  LEFT
+}

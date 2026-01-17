@@ -1,22 +1,22 @@
 // 组织机构表
-model Organization {
+model Org {
   id          String  @id @default(cuid())
   name        String // 组织名称
   code        String  @unique // 组织编码
   description String? // 组织描述
   logo        String? // 组织logo
-  parentId    String? // 父组织ID
+  parentId    String? @map("parent_id") // 父组织ID
   level       Int     @default(1) // 组织层级
-  sortOrder   Int     @default(0) // 排序
+  sortOrder   Int     @default(0) @map("sort_order") // 排序
   active      Boolean @default(true) // 是否启用
 
   // 自关联
-  parent   Organization?  @relation("OrganizationHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
-  children Organization[] @relation("OrganizationHierarchy")
+  parent   Org?  @relation("OrgHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  children Org[] @relation("OrgHierarchy")
 
   // 关联关系
-  departments     Department[]
-  users           UserOrganization[]
+  depts           Dept[]
+  members         OrgMember[]
   apiKeys         ApiKey[] // API Keys
   apiKeyUsageLogs ApiKeyUsageLog[] // API Key 使用日志
 
@@ -28,5 +28,5 @@ model Organization {
   @@index([code])
   @@index([active]) // 活跃组织查询
   @@index([parentId, sortOrder]) // 子组织排序查询
-  @@map("organizations")
+  @@map("orgs")
 }

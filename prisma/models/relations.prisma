@@ -1,74 +1,57 @@
-// 用户组织关联表
-model UserOrganization {
-  id             String  @id @default(cuid())
-  userId         String // 用户ID
-  organizationId String // 组织ID
-  isPrimary      Boolean @default(false) // 是否主要组织
+// 成员部门关联表
+model MemberDepartment {
+  id        String  @id @default(cuid())
+  memberId  String  @map("member_id") // 成员ID
+  deptId    String  @map("dept_id") // 部门ID
+  isPrimary Boolean @default(false) // 是否主要部门
 
   // 关联关系
-  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  member OrgMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  dept   Dept      @relation(fields: [deptId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6) // 软删除时间戳
 
-  @@unique([userId, organizationId])
-  @@index([userId])
-  @@index([organizationId])
-  @@map("user_organizations")
+  @@unique([memberId, deptId])
+  @@index([memberId])
+  @@index([deptId])
+  @@map("member_departments")
 }
 
-// 用户部门关联表
-model UserDepartment {
-  id           String  @id @default(cuid())
-  userId       String // 用户ID
-  departmentId String // 部门ID
-  isPrimary    Boolean @default(false) // 是否主要部门
+// 成员角色关联表
+model MemberRole {
+  id       String @id @default(cuid())
+  memberId String @map("member_id") // 成员ID
+  roleId   String @map("role_id") // 角色ID
 
   // 关联关系
-  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  department Department @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  member OrgMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  role   Role      @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6) // 软删除时间戳
 
-  @@unique([userId, departmentId])
-  @@index([userId])
-  @@index([departmentId])
-  @@map("user_departments")
-}
-
-// 用户角色关联表
-model UserRole {
-  id     String @id @default(cuid())
-  userId String // 用户ID
-  roleId String // 角色ID
-
-  // 关联关系
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([userId, roleId])
-  @@index([userId])
+  @@unique([memberId, roleId])
+  @@index([memberId])
   @@index([roleId])
-  @@map("user_roles")
+  @@map("member_roles")
 }
 
 // 角色权限关联表
 model RolePermission {
   id           String @id @default(cuid())
-  roleId       String // 角色ID
-  permissionId String // 权限ID
+  roleId       String @map("role_id") // 角色ID
+  permissionId String @map("permission_id") // 权限ID
 
   // 关联关系
   role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
   permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6) // 软删除时间戳
 
   @@unique([roleId, permissionId])
   @@index([roleId])
@@ -76,38 +59,40 @@ model RolePermission {
   @@map("role_permissions")
 }
 
-// 用户权限关联表（用于特殊权限授权）
-model UserPermission {
+// 成员权限关联表（用于特殊权限授权）
+model MemberPermission {
   id           String  @id @default(cuid())
-  userId       String // 用户ID
-  permissionId String // 权限ID
+  memberId     String  @map("member_id") // 成员ID
+  permissionId String  @map("permission_id") // 权限ID
   granted      Boolean @default(true) // 是否授权（true: 授权, false: 拒绝）
 
   // 关联关系
-  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  member     OrgMember  @relation(fields: [memberId], references: [id], onDelete: Cascade)
   permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6) // 软删除时间戳
 
-  @@unique([userId, permissionId])
-  @@index([userId])
+  @@unique([memberId, permissionId])
+  @@index([memberId])
   @@index([permissionId])
-  @@map("user_permissions")
+  @@map("member_permissions")
 }
 
 // 角色数据权限关联表
 model RoleDataPermission {
   id     String @id @default(cuid())
-  roleId String // 角色ID
-  ruleId String // 数据权限规则ID
+  roleId String @map("role_id") // 角色ID
+  ruleId String @map("rule_id") // 数据权限规则ID
 
   // 关联关系
   role Role               @relation(fields: [roleId], references: [id], onDelete: Cascade)
   rule DataPermissionRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6) // 软删除时间戳
 
   @@unique([roleId, ruleId])
   @@index([roleId])
@@ -115,22 +100,23 @@ model RoleDataPermission {
   @@map("role_data_permissions")
 }
 
-// 用户数据权限关联表
-model UserDataPermission {
-  id      String  @id @default(cuid())
-  userId  String // 用户ID
-  ruleId  String // 数据权限规则ID
-  granted Boolean @default(true) // 是否授权
+// 成员数据权限关联表
+model MemberDataPermission {
+  id       String  @id @default(cuid())
+  memberId String  @map("member_id") // 成员ID
+  ruleId   String  @map("rule_id") // 数据权限规则ID
+  granted  Boolean @default(true) // 是否授权
 
   // 关联关系
-  user User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  rule DataPermissionRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  member OrgMember          @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  rule   DataPermissionRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6) // 软删除时间戳
 
-  @@unique([userId, ruleId])
-  @@index([userId])
+  @@unique([memberId, ruleId])
+  @@index([memberId])
   @@index([ruleId])
-  @@map("user_data_permissions")
+  @@map("member_data_permissions")
 }

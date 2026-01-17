@@ -53,7 +53,7 @@ export class OrganizationService {
     const pageSize = pagination?.pageSize || 10;
     const skip = (page - 1) * pageSize;
 
-    const where: Prisma.OrganizationWhereInput = {
+    const where: Prisma.OrgWhereInput = {
       deletedAt: null,
     };
 

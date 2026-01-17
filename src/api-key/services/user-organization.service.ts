@@ -15,28 +15,28 @@ export class UserOrganizationService {
    * @returns 组织 ID
    */
   async getPrimaryOrganizationId(userId: string): Promise<string> {
-    // 首先尝试获取主要组织
-    const primaryOrg = await this.prisma.userOrganization.findFirst({
+    // 首先尝试获取主要部门
+    const primaryDept = await this.prisma.orgMember.findFirst({
       where: {
         userId,
-        isPrimary: true,
+        primaryDeptId: { not: null },
       },
-      select: {
-        organizationId: true,
+      include: {
+        primaryDept: true,
       },
     });
 
-    if (primaryOrg) {
-      return primaryOrg.organizationId;
+    if (primaryDept && primaryDept.primaryDept) {
+      return primaryDept.orgId;
     }
 
-    // 如果没有主要组织，获取第一个组织
-    const firstOrg = await this.prisma.userOrganization.findFirst({
+    // 如果没有主要部门，获取第一个组织
+    const firstOrg = await this.prisma.orgMember.findFirst({
       where: {
         userId,
       },
       select: {
-        organizationId: true,
+        orgId: true,
       },
       orderBy: {
         createdAt: 'asc',
@@ -49,7 +49,7 @@ export class UserOrganizationService {
       );
     }
 
-    return firstOrg.organizationId;
+    return firstOrg.orgId;
   }
 
   /**
@@ -58,16 +58,16 @@ export class UserOrganizationService {
    * @returns 组织 ID 数组
    */
   async getAllOrganizationIds(userId: string): Promise<string[]> {
-    const orgs = await this.prisma.userOrganization.findMany({
+    const orgs = await this.prisma.orgMember.findMany({
       where: {
         userId,
       },
       select: {
-        organizationId: true,
+        orgId: true,
       },
     });
 
-    return orgs.map((org) => org.organizationId);
+    return orgs.map((org) => org.orgId);
   }
 
   /**
@@ -80,10 +80,10 @@ export class UserOrganizationService {
     userId: string,
     organizationId: string,
   ): Promise<boolean> {
-    const count = await this.prisma.userOrganization.count({
+    const count = await this.prisma.orgMember.count({
       where: {
         userId,
-        organizationId,
+        orgId: organizationId,
       },
     });
 
