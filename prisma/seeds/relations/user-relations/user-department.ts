@@ -4,9 +4,9 @@
  * @LastEditors: 杨仕明 shiming.y@qq.com
  * @LastEditTime: 2026-01-17 17:19:06
  * @FilePath: /nove_api/prisma/seeds/relations/user-relations/user-department.ts
- * @Description: 
- * 
- * Copyright (c) 2026 by LuLab-Team, All Rights Reserved. 
+ * @Description:
+ *
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
 import { PrismaClient, User, Dept } from '@prisma/client';

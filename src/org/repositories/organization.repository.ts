@@ -45,10 +45,7 @@ export class OrganizationRepository {
     return { items, total };
   }
 
-  async update(
-    id: string,
-    data: Prisma.OrgUpdateInput,
-  ): Promise<Org> {
+  async update(id: string, data: Prisma.OrgUpdateInput): Promise<Org> {
     return this.prisma.org.update({
       where: { id },
       data,
