@@ -36,7 +36,7 @@ export class DepartmentRepository {
     const { skip, take, orderBy, where } = options || {};
 
     const baseWhere: Prisma.DepartmentWhereInput = {
-      organizationId,
+      orgId: organizationId,
       deletedAt: null,
       ...where,
     };
@@ -57,7 +57,7 @@ export class DepartmentRepository {
   async findTree(organizationId: string): Promise<Department[]> {
     const departments = await this.prisma.department.findMany({
       where: {
-        organizationId,
+        orgId: organizationId,
         deletedAt: null,
       },
       orderBy: { sortOrder: 'asc', createdAt: 'desc' },

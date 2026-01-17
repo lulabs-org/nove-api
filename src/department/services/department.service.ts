@@ -37,7 +37,7 @@ export class DepartmentService {
       if (!parent) {
         throw new NotFoundException('Parent department not found');
       }
-      if (parent.organizationId !== organizationId) {
+      if (parent.orgId !== organizationId) {
         throw new BadRequestException(
           'Parent department must belong to the same organization',
         );
@@ -78,7 +78,7 @@ export class DepartmentService {
       name: string;
       code: string;
       description: string | null;
-      organizationId: string;
+      orgId: string;
       parentId: string | null;
       level: number;
       sortOrder: number;
@@ -161,7 +161,7 @@ export class DepartmentService {
       if (!parent) {
         throw new NotFoundException('Parent department not found');
       }
-      if (parent.organizationId !== existingDept.organizationId) {
+      if (parent.orgId !== existingDept.orgId) {
         throw new BadRequestException(
           'Parent department must belong to the same organization',
         );
@@ -207,7 +207,7 @@ export class DepartmentService {
       if (!parent) {
         throw new NotFoundException('Parent department not found');
       }
-      if (parent.organizationId !== existingDept.organizationId) {
+      if (parent.orgId !== existingDept.orgId) {
         throw new BadRequestException(
           'Parent department must belong to the same organization',
         );
@@ -319,7 +319,7 @@ export class DepartmentService {
     name: string;
     code: string;
     description: string | null;
-    organizationId: string;
+    orgId: string;
     parentId: string | null;
     level: number;
     sortOrder: number;
@@ -333,7 +333,7 @@ export class DepartmentService {
       name: department.name,
       code: department.code,
       description: department.description,
-      organizationId: department.organizationId,
+      organizationId: department.orgId,
       parentId: department.parentId,
       level: department.level,
       sortOrder: department.sortOrder,

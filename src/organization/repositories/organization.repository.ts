@@ -90,7 +90,7 @@ export class OrganizationRepository {
           where: { organizationId: id },
         }),
         this.prisma.department.count({
-          where: { organizationId: id },
+          where: { orgId: id },
         }),
         this.prisma.apiKey.count({
           where: { organizationId: id },
