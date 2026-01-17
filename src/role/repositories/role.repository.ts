@@ -133,63 +133,88 @@ export class RoleRepository {
   }
 
   async findUserRoles(userId: string) {
-    const userRoles = await this.prisma.userRole.findMany({
+    const orgMembers = await this.prisma.orgMember.findMany({
       where: { userId },
       include: {
-        role: true,
-      },
-      orderBy: {
-        role: {
-          level: 'asc',
+        memberRoles: {
+          include: {
+            role: true,
+          },
         },
       },
     });
 
-    return userRoles
-      .filter((ur) => ur.role && !ur.role.isDeleted && ur.role.active)
-      .map((ur) => ({
-        id: ur.role.id,
-        code: ur.role.code,
-        name: ur.role.name,
-        type: ur.role.type,
-        level: ur.role.level,
-      }));
+    const roles = orgMembers.flatMap((orgMember) =>
+      orgMember.memberRoles
+        .filter((mr) => mr.role && !mr.role.isDeleted && mr.role.active)
+        .map((mr) => ({
+          id: mr.role.id,
+          code: mr.role.code,
+          name: mr.role.name,
+          type: mr.role.type,
+          level: mr.role.level,
+        })),
+    );
+
+    return roles;
   }
 
   async hasAnyRole(userId: string, roleCodes: string[]): Promise<boolean> {
-    const userRole = await this.prisma.userRole.findFirst({
+    const orgMember = await this.prisma.orgMember.findFirst({
       where: {
         userId,
-        role: {
-          code: { in: roleCodes },
-          isDeleted: false,
-          active: true,
+        memberRoles: {
+          some: {
+            role: {
+              code: { in: roleCodes },
+              isDeleted: false,
+              active: true,
+            },
+          },
         },
       },
       include: {
-        role: true,
+        memberRoles: {
+          include: {
+            role: true,
+          },
+        },
       },
     });
 
-    return !!userRole;
+    return !!orgMember;
   }
 
   async hasAllRoles(userId: string, roleCodes: string[]): Promise<boolean> {
-    const userRoles = await this.prisma.userRole.findMany({
+    const orgMembers = await this.prisma.orgMember.findMany({
       where: {
         userId,
-        role: {
-          code: { in: roleCodes },
-          isDeleted: false,
-          active: true,
+        memberRoles: {
+          some: {
+            role: {
+              code: { in: roleCodes },
+              isDeleted: false,
+              active: true,
+            },
+          },
         },
       },
       include: {
-        role: true,
+        memberRoles: {
+          include: {
+            role: true,
+          },
+        },
       },
     });
 
-    const userRoleCodes = new Set(userRoles.map((ur) => ur.role.code));
+    const userRoleCodes = new Set(
+      orgMembers.flatMap((orgMember) =>
+        orgMember.memberRoles
+          .filter((mr) => mr.role && !mr.role.isDeleted && mr.role.active)
+          .map((mr) => mr.role.code),
+      ),
+    );
     return roleCodes.every((code) => userRoleCodes.has(code));
   }
 }

@@ -35,26 +35,26 @@ export class ApiKeyRepository {
   /**
    * 根据 ID 和组织 ID 查找 API Key（多租户隔离）
    * @param id API Key ID
-   * @param organizationId 组织 ID
+   * @param orgId 组织 ID
    * @returns API Key 或 null
    */
-  async findById(id: string, organizationId: string): Promise<ApiKey | null> {
+  async findById(id: string, orgId: string): Promise<ApiKey | null> {
     return this.prisma.apiKey.findFirst({
       where: {
         id,
-        organizationId,
+        orgId,
       },
     });
   }
 
   /**
    * 查询组织的 API Keys（支持分页）
-   * @param organizationId 组织 ID
+   * @param orgId 组织 ID
    * @param options 查询选项
    * @returns API Keys 数组和总数
    */
   async findMany(
-    organizationId: string,
+    orgId: string,
     options?: {
       skip?: number;
       take?: number;
@@ -63,7 +63,7 @@ export class ApiKeyRepository {
     },
   ): Promise<{ items: ApiKey[]; total: number }> {
     const where: Prisma.ApiKeyWhereInput = {
-      organizationId,
+      orgId,
     };
 
     if (options?.createdBy) {
@@ -86,17 +86,17 @@ export class ApiKeyRepository {
   /**
    * 更新 API Key（多租户隔离）
    * @param id API Key ID
-   * @param organizationId 组织 ID
+   * @param orgId 组织 ID
    * @param data 更新数据
    * @returns 更新后的 API Key
    */
   async update(
     id: string,
-    organizationId: string,
+    orgId: string,
     data: Prisma.ApiKeyUpdateInput,
   ): Promise<ApiKey> {
     // 先验证 key 属于该组织
-    await this.findById(id, organizationId);
+    await this.findById(id, orgId);
 
     return this.prisma.apiKey.update({
       where: { id },
@@ -107,11 +107,11 @@ export class ApiKeyRepository {
   /**
    * 撤销 API Key（软删除，设置状态为 REVOKED）
    * @param id API Key ID
-   * @param organizationId 组织 ID
+   * @param orgId 组织 ID
    * @returns 更新后的 API Key
    */
-  async revoke(id: string, organizationId: string): Promise<ApiKey> {
-    return this.update(id, organizationId, {
+  async revoke(id: string, orgId: string): Promise<ApiKey> {
+    return this.update(id, orgId, {
       status: ApiKeyStatus.REVOKED,
       revokedAt: new Date(),
     });

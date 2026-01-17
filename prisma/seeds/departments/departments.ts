@@ -2,8 +2,8 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-12 00:40:36
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-13 14:18:37
- * @FilePath: /lulab_backend/prisma/seeds/mock/departments/departments.ts
+ * @LastEditTime: 2026-01-17 16:39:03
+ * @FilePath: /nove_api/prisma/seeds/departments/departments.ts
  * @Description:
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
@@ -24,7 +24,7 @@ export async function createDepartments(
       let parentId: string | undefined;
 
       if (config.parentCode) {
-        const parentDepartment = await prisma.department.findUnique({
+        const parentDepartment = await prisma.dept.findUnique({
           where: { code: config.parentCode },
         });
         if (!parentDepartment) {
@@ -33,7 +33,7 @@ export async function createDepartments(
         parentId = parentDepartment.id;
       }
 
-      const department = await prisma.department.upsert({
+      const department = await prisma.dept.upsert({
         where: { code: config.code },
         update: {
           name: config.name,
@@ -61,7 +61,7 @@ export async function createDepartments(
 
     console.log(`🏢 部门数据创建完成，共 ${DEPARTMENT_CONFIGS.length} 个部门`);
 
-    return await prisma.department.findMany({
+    return await prisma.dept.findMany({
       where: { orgId: organizationId },
     });
   } catch (error) {

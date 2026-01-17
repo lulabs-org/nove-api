@@ -20,18 +20,17 @@ export async function createUserOrganizationRelations(
   try {
     await Promise.all(
       users.map((user) =>
-        prisma.userOrganization.upsert({
+        prisma.orgMember.upsert({
           where: {
-            userId_organizationId: {
+            orgId_userId: {
+              orgId: organizationId,
               userId: user.id,
-              organizationId,
             },
           },
           update: {},
           create: {
             userId: user.id,
-            organizationId,
-            isPrimary: true,
+            orgId: organizationId,
           },
         }),
       ),

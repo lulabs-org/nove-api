@@ -31,8 +31,10 @@ export class JwtUserLookupService implements JwtUserLookup {
     }
 
     const roles =
-      user.roles && user.roles.length > 0
-        ? user.roles.map((r) => r.role.code)
+      user.orgMembers && user.orgMembers.length > 0
+        ? user.orgMembers.flatMap((orgMember) =>
+            orgMember.memberRoles.map((mr) => mr.role.code),
+          )
         : ['USER'];
 
     return {

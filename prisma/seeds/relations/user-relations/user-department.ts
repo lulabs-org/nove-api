@@ -1,91 +1,122 @@
-import { PrismaClient, User, Department } from '@prisma/client';
+/*
+ * @Author: 杨仕明 shiming.y@qq.com
+ * @Date: 2026-01-14 00:30:50
+ * @LastEditors: 杨仕明 shiming.y@qq.com
+ * @LastEditTime: 2026-01-17 17:19:06
+ * @FilePath: /nove_api/prisma/seeds/relations/user-relations/user-department.ts
+ * @Description:
+ *
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
+ */
+
+import { PrismaClient, User, Dept } from '@prisma/client';
+
+async function getOrgMemberId(
+  prisma: PrismaClient,
+  userId: string,
+): Promise<string> {
+  const orgMember = await prisma.orgMember.findFirst({
+    where: { userId },
+    select: { id: true },
+  });
+
+  if (!orgMember) {
+    throw new Error(`OrgMember not found for user ID: ${userId}`);
+  }
+
+  return orgMember.id;
+}
 
 export async function createUserDepartmentRelations(
   prisma: PrismaClient,
-  departments: Department[],
+  departments: Dept[],
   users: User[],
 ): Promise<void> {
-  await prisma.userDepartment.upsert({
+  const memberIds = await Promise.all(
+    users.map((user) => getOrgMemberId(prisma, user.id)),
+  );
+
+  await prisma.memberDepartment.upsert({
     where: {
-      userId_departmentId: {
-        userId: users[0].id,
-        departmentId: departments[0].id,
+      memberId_deptId: {
+        memberId: memberIds[0],
+        deptId: departments[0].id,
       },
     },
     update: {},
     create: {
-      userId: users[0].id,
-      departmentId: departments[0].id,
+      memberId: memberIds[0],
+      deptId: departments[0].id,
       isPrimary: true,
     },
   });
 
-  await prisma.userDepartment.upsert({
+  await prisma.memberDepartment.upsert({
     where: {
-      userId_departmentId: {
-        userId: users[1].id,
-        departmentId: departments[1].id,
+      memberId_deptId: {
+        memberId: memberIds[1],
+        deptId: departments[1].id,
       },
     },
     update: {},
     create: {
-      userId: users[1].id,
-      departmentId: departments[1].id,
+      memberId: memberIds[1],
+      deptId: departments[1].id,
       isPrimary: true,
     },
   });
 
-  await prisma.userDepartment.upsert({
+  await prisma.memberDepartment.upsert({
     where: {
-      userId_departmentId: {
-        userId: users[2].id,
-        departmentId: departments[2].id,
+      memberId_deptId: {
+        memberId: memberIds[2],
+        deptId: departments[2].id,
       },
     },
     update: {},
     create: {
-      userId: users[2].id,
-      departmentId: departments[2].id,
+      memberId: memberIds[2],
+      deptId: departments[2].id,
       isPrimary: true,
     },
   });
 
   const departmentAssignments = [
     {
-      user: users[3],
+      memberId: memberIds[3],
       department: departments[3],
       isPrimary: true,
     },
     {
-      user: users[4],
+      memberId: memberIds[4],
       department: departments[4],
       isPrimary: true,
     },
     {
-      user: users[5],
+      memberId: memberIds[5],
       department: departments[5],
       isPrimary: true,
     },
     {
-      user: users[6],
+      memberId: memberIds[6],
       department: departments[6],
       isPrimary: true,
     },
-    { user: users[7], department: departments[7], isPrimary: true },
+    { memberId: memberIds[7], department: departments[7], isPrimary: true },
   ];
 
   for (const assignment of departmentAssignments) {
-    await prisma.userDepartment.upsert({
+    await prisma.memberDepartment.upsert({
       where: {
-        userId_departmentId: {
-          userId: assignment.user.id,
-          departmentId: assignment.department.id,
+        memberId_deptId: {
+          memberId: assignment.memberId,
+          deptId: assignment.department.id,
         },
       },
       update: {},
       create: {
-        userId: assignment.user.id,
-        departmentId: assignment.department.id,
+        memberId: assignment.memberId,
+        deptId: assignment.department.id,
         isPrimary: assignment.isPrimary,
       },
     });

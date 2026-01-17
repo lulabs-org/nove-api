@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-07-06 05:06:37
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-10 23:24:09
+ * @LastEditTime: 2026-01-17 17:44:10
  * @FilePath: /nove_api/src/app.module.ts
  * @Description: Application module that defines the application's entry point and dependency injection
  *
@@ -35,8 +35,8 @@ import { McpServerModule } from './mcp-server/mcp-server.module';
 import { PermissionModule } from './permission/permission.module';
 import { TasksModule } from './task/tasks.module';
 import { RoleModule } from './role/role.module';
-import { OrganizationModule } from './organization/organization.module';
-import { DepartmentModule } from './department/department.module';
+import { OrganizationModule } from './org/organization.module';
+import { DepartmentModule } from './dept/department.module';
 
 @Module({
   imports: [

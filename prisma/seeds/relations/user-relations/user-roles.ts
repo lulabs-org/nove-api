@@ -17,9 +17,27 @@ export async function assignRolesToUsers(
   roleId: string,
 ): Promise<void> {
   try {
-    await prisma.userRole.createMany({
-      data: userIds.map((userId) => ({
-        userId,
+    const orgMembers = await prisma.orgMember.findMany({
+      where: {
+        userId: {
+          in: userIds,
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (orgMembers.length === 0) {
+      console.warn(
+        `No OrgMember records found for user IDs: ${userIds.join(', ')}`,
+      );
+      return;
+    }
+
+    await prisma.memberRole.createMany({
+      data: orgMembers.map((member) => ({
+        memberId: member.id,
         roleId,
       })),
       skipDuplicates: true,

@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-11 00:39:44
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-15 19:47:13
+ * @LastEditTime: 2026-01-17 17:53:05
  * @FilePath: /nove_api/prisma/seed-utils/database-seed.ts
  * @Description:
  *
@@ -70,15 +70,15 @@ async function seedMockDatabase(prisma: PrismaClient): Promise<void> {
   log('\n👥 步骤 4: 创建用户');
   const userData = await seedFunctions.createUsers(prisma);
 
-  log('\n🎭 步骤 5: 为用户分配角色');
-  await seedFunctions.assignUserRoles(prisma, userData, roles);
-
-  log('\n🔗 步骤 6: 创建用户组织关联');
+  log('\n🔗 步骤 5: 创建用户组织关联');
   await seedFunctions.createUserOrganizationRelations(
     prisma,
     organization.id,
     userData,
   );
+
+  log('\n🎭 步骤 6: 为用户分配角色');
+  await seedFunctions.assignUserRoles(prisma, userData, roles);
 
   log('\n🔗 步骤 7: 创建用户部门关联');
   await seedFunctions.createUserDepartmentRelations(

@@ -85,7 +85,7 @@ export class ApiKeyService {
     );
 
     const apiKey = await this.apiKeyRepository.create({
-      organization: {
+      org: {
         connect: { id: organizationId },
       },
       createdByUser: userId
@@ -256,7 +256,7 @@ export class ApiKeyService {
     );
 
     const newKey = await this.apiKeyRepository.create({
-      organization: {
+      org: {
         connect: { id: organizationId },
       },
       createdByUser: oldKey.createdBy
@@ -326,7 +326,7 @@ export class ApiKeyService {
 
     // 返回认证上下文
     return {
-      organizationId: apiKey.organizationId,
+      organizationId: apiKey.orgId,
       apiKeyId: apiKey.id,
       scopes: apiKey.scopes,
       userId: apiKey.createdBy,

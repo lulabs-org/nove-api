@@ -40,7 +40,7 @@ describe('ApiKeyService', () => {
     lastUsedAt: null,
     revokedAt: null,
     rotatedFromId: null,
-    organizationId: 'org-123',
+    orgId: 'org-123',
     createdBy: 'user-123',
     keyHash: validKeyHash,
   };
@@ -52,7 +52,9 @@ describe('ApiKeyService', () => {
     findMany: jest.fn(),
     update: jest.fn(),
     revoke: jest.fn(),
-    updateLastUsedAt: jest.fn(),
+    updateLastUsedAt: jest.fn().mockImplementation(() => {
+      return Promise.resolve();
+    }),
   };
 
   const mockPermissionService = {
