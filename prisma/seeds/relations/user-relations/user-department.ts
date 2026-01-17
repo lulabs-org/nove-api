@@ -11,21 +11,41 @@
 
 import { PrismaClient, User, Dept } from '@prisma/client';
 
+async function getOrgMemberId(
+  prisma: PrismaClient,
+  userId: string,
+): Promise<string> {
+  const orgMember = await prisma.orgMember.findFirst({
+    where: { userId },
+    select: { id: true },
+  });
+
+  if (!orgMember) {
+    throw new Error(`OrgMember not found for user ID: ${userId}`);
+  }
+
+  return orgMember.id;
+}
+
 export async function createUserDepartmentRelations(
   prisma: PrismaClient,
   departments: Dept[],
   users: User[],
 ): Promise<void> {
+  const memberIds = await Promise.all(
+    users.map((user) => getOrgMemberId(prisma, user.id)),
+  );
+
   await prisma.memberDepartment.upsert({
     where: {
       memberId_deptId: {
-        memberId: users[0].id,
+        memberId: memberIds[0],
         deptId: departments[0].id,
       },
     },
     update: {},
     create: {
-      memberId: users[0].id,
+      memberId: memberIds[0],
       deptId: departments[0].id,
       isPrimary: true,
     },
@@ -34,13 +54,13 @@ export async function createUserDepartmentRelations(
   await prisma.memberDepartment.upsert({
     where: {
       memberId_deptId: {
-        memberId: users[1].id,
+        memberId: memberIds[1],
         deptId: departments[1].id,
       },
     },
     update: {},
     create: {
-      memberId: users[1].id,
+      memberId: memberIds[1],
       deptId: departments[1].id,
       isPrimary: true,
     },
@@ -49,13 +69,13 @@ export async function createUserDepartmentRelations(
   await prisma.memberDepartment.upsert({
     where: {
       memberId_deptId: {
-        memberId: users[2].id,
+        memberId: memberIds[2],
         deptId: departments[2].id,
       },
     },
     update: {},
     create: {
-      memberId: users[2].id,
+      memberId: memberIds[2],
       deptId: departments[2].id,
       isPrimary: true,
     },
@@ -63,39 +83,39 @@ export async function createUserDepartmentRelations(
 
   const departmentAssignments = [
     {
-      user: users[3],
+      memberId: memberIds[3],
       department: departments[3],
       isPrimary: true,
     },
     {
-      user: users[4],
+      memberId: memberIds[4],
       department: departments[4],
       isPrimary: true,
     },
     {
-      user: users[5],
+      memberId: memberIds[5],
       department: departments[5],
       isPrimary: true,
     },
     {
-      user: users[6],
+      memberId: memberIds[6],
       department: departments[6],
       isPrimary: true,
     },
-    { user: users[7], department: departments[7], isPrimary: true },
+    { memberId: memberIds[7], department: departments[7], isPrimary: true },
   ];
 
   for (const assignment of departmentAssignments) {
     await prisma.memberDepartment.upsert({
       where: {
         memberId_deptId: {
-          memberId: assignment.user.id,
+          memberId: assignment.memberId,
           deptId: assignment.department.id,
         },
       },
       update: {},
       create: {
-        memberId: assignment.user.id,
+        memberId: assignment.memberId,
         deptId: assignment.department.id,
         isPrimary: assignment.isPrimary,
       },
