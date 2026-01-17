@@ -10,10 +10,7 @@
  */
 
 import { PrismaClient, Organization } from '@prisma/client';
-import {
-  ORGANIZATION_CONFIG,
-  REAL_ORGANIZATION_CONFIG,
-} from './config';
+import { ORGANIZATION_CONFIG, REAL_ORGANIZATION_CONFIG } from './config';
 
 export async function createOrganization(
   prisma: PrismaClient,

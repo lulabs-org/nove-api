@@ -4,9 +4,9 @@
  * @LastEditors: 杨仕明 shiming.y@qq.com
  * @LastEditTime: 2026-01-16 18:01:29
  * @FilePath: /nove_api/src/role/decorators/roles.decorator.ts
- * @Description: 
- * 
- * Copyright (c) 2026 by LuLab-Team, All Rights Reserved. 
+ * @Description:
+ *
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 import { SetMetadata } from '@nestjs/common';
 
@@ -27,11 +27,7 @@ export const RequireAnyRole = (...roles: string[]) => {
     propertyKey?: string,
     descriptor?: PropertyDescriptor,
   ) => {
-    SetMetadata(ROLES_KEY, roles)(
-      target as object,
-      propertyKey!,
-      descriptor!,
-    );
+    SetMetadata(ROLES_KEY, roles)(target as object, propertyKey!, descriptor!);
     SetMetadata(ROLE_MODE_KEY, RoleMode.ANY)(
       target as object,
       propertyKey!,
@@ -46,11 +42,7 @@ export const RequireAllRoles = (...roles: string[]) => {
     propertyKey?: string,
     descriptor?: PropertyDescriptor,
   ) => {
-    SetMetadata(ROLES_KEY, roles)(
-      target as object,
-      propertyKey!,
-      descriptor!,
-    );
+    SetMetadata(ROLES_KEY, roles)(target as object, propertyKey!, descriptor!);
     SetMetadata(ROLE_MODE_KEY, RoleMode.ALL)(
       target as object,
       propertyKey!,

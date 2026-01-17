@@ -1,0 +1,84 @@
+// model Membership {
+//     id     String       @id @default(cuid())
+//     orgId  String       @map("org_id")
+//     userId String       @map("user_id")
+//     type   MemberType   @default(INTERNAL)
+//     status MemberStatus @default(ACTIVE)
+
+//     // 外部用户常用字段（可选）
+//     externalCompany String? @map("external_company")
+//     title           String?
+
+//     createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+//     updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+//     deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6) // 软删除时间戳
+
+//     org  Organization  @relation(fields: [orgId], references: [id], onDelete: Cascade)
+//     user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+//     deptMembers     DeptMember[]
+//     orgRoleBindings OrgRoleBinding[]
+//     roleBindings    RoleBinding[]
+
+//     @@unique([orgId, userId]) // 一个用户在一个组织只有一个 Membership
+//     @@index([orgId])
+//     @@index([userId])
+//     @@index([orgId, type, status])
+// }
+
+// enum MemberType {
+//     INTERNAL
+//     EXTERNAL
+// }
+
+// enum MemberStatus {
+//     INVITED
+//     ACTIVE
+//     SUSPENDED
+//     LEFT
+// }
+
+// model OrgMember {
+//   id            String        @id @default(uuid())
+//   orgId         String
+//   userId        String
+
+//   type          MemberType    @default(INTERNAL)
+//   status        MemberStatus  @default(ACTIVE)
+
+//   // 组织内信息（可与 User 全局信息不同）
+//   orgDisplayName String?
+//   title          String?
+//   employeeNo     String?      // 内部员工工号（外部用户可为空）
+//   primaryDeptId  String?      // 主要部门（可选）
+
+//   joinedAt      DateTime      @default(now())
+//   createdAt     DateTime      @default(now())
+//   updatedAt     DateTime      @updatedAt
+
+//   org     Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+//   user    User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+//   primaryDept Department? @relation(fields: [primaryDeptId], references: [id], onDelete: SetNull)
+
+//   deptMemberships DeptMember[]
+//   roles          MemberRole[]
+
+//   @@unique([orgId, userId]) // 一个 user 在一个 org 只能有一个成员身份
+//   @@index([userId])
+//   @@index([orgId, status])
+//   @@index([orgId, type])
+//   @@index([orgId, primaryDeptId])
+// }
+
+// enum MemberType {
+//   INTERNAL  // 组织内部员工
+//   EXTERNAL  // 外部用户（供应商/客户/合作方）
+// }
+
+// enum MemberStatus {
+//   INVITED
+//   ACTIVE
+//   SUSPENDED
+//   LEFT
+// }
+

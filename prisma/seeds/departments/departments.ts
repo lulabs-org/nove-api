@@ -38,7 +38,7 @@ export async function createDepartments(
         update: {
           name: config.name,
           description: config.description,
-          organizationId,
+          orgId: organizationId,
           parentId,
           level: config.level,
           sortOrder: config.sortOrder,
@@ -47,7 +47,7 @@ export async function createDepartments(
           code: config.code,
           name: config.name,
           description: config.description,
-          organizationId,
+          orgId: organizationId,
           parentId,
           level: config.level,
           sortOrder: config.sortOrder,
@@ -62,7 +62,7 @@ export async function createDepartments(
     console.log(`🏢 部门数据创建完成，共 ${DEPARTMENT_CONFIGS.length} 个部门`);
 
     return await prisma.department.findMany({
-      where: { organizationId },
+      where: { orgId: organizationId },
     });
   } catch (error) {
     console.error('❌ 创建部门数据失败:', error);

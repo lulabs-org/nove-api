@@ -4,9 +4,9 @@
  * @LastEditors: 杨仕明 shiming.y@qq.com
  * @LastEditTime: 2026-01-15 19:46:04
  * @FilePath: /nove_api/prisma/seeds/permissions/permissions.ts
- * @Description: 
- * 
- * Copyright (c) 2026 by LuLab-Team, All Rights Reserved. 
+ * @Description:
+ *
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
 import { PrismaClient, Permission } from '@prisma/client';

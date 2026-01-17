@@ -35,6 +35,8 @@ import { McpServerModule } from './mcp-server/mcp-server.module';
 import { PermissionModule } from './permission/permission.module';
 import { TasksModule } from './task/tasks.module';
 import { RoleModule } from './role/role.module';
+import { OrganizationModule } from './organization/organization.module';
+import { DepartmentModule } from './department/department.module';
 
 @Module({
   imports: [
@@ -70,6 +72,8 @@ import { RoleModule } from './role/role.module';
     PermissionModule,
     McpServerModule,
     RoleModule,
+    OrganizationModule,
+    DepartmentModule,
   ],
   controllers: [AppController],
   providers: [
