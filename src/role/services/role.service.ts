@@ -10,8 +10,12 @@ import {
   QueryRoleDto,
   RoleDto,
   RoleListResponse,
+  SetRolePermissionsDto,
+  CreateRoleBindingDto,
+  RoleBindingDto,
 } from '../dto';
-import { Role, RoleType } from '@prisma/client';
+import { Role, RoleType, Permission } from '@prisma/client';
+import { PermissionDto } from '@/permission/dto';
 
 interface RoleWithPermissions extends Role {
   permissions: Array<{
@@ -170,5 +174,72 @@ export class RoleService {
 
   async hasAllRoles(userId: string, roleCodes: string[]): Promise<boolean> {
     return this.roleRepository.hasAllRoles(userId, roleCodes);
+  }
+
+  async setRolePermissions(
+    roleId: string,
+    dto: SetRolePermissionsDto,
+  ): Promise<PermissionDto[]> {
+    const existingRole = await this.roleRepository.findById(roleId);
+    if (!existingRole) {
+      throw new NotFoundException('Role not found');
+    }
+
+    if (existingRole.type === RoleType.SYSTEM) {
+      throw new BadRequestException('Cannot update system roles');
+    }
+
+    const updatedRole = await this.roleRepository.setRolePermissionsByKeys(
+      roleId,
+      dto.permissionKeys,
+    );
+
+    return updatedRole.permissions.map((rp) =>
+      this.toPermissionDto(rp.permission),
+    );
+  }
+
+  private toPermissionDto(permission: Permission): PermissionDto {
+    return {
+      id: permission.id,
+      name: permission.name,
+      code: permission.code,
+      description: permission.description,
+      resource: permission.resource,
+      action: permission.action,
+      type: permission.type,
+    };
+  }
+
+  async createRoleBinding(
+    orgId: string,
+    dto: CreateRoleBindingDto,
+  ): Promise<RoleBindingDto> {
+    const role = await this.roleRepository.findById(dto.roleId);
+    if (!role) {
+      throw new NotFoundException('Role not found');
+    }
+
+    const binding = await this.roleRepository.createRoleBinding({
+      roleId: dto.roleId,
+      membershipId: dto.membershipId,
+    });
+
+    return {
+      id: binding.id,
+      roleId: binding.roleId,
+      membershipId: binding.memberId,
+      deptId: undefined,
+      createdAt: binding.createdAt,
+    };
+  }
+
+  async deleteRoleBinding(bindingId: string): Promise<void> {
+    const binding = await this.roleRepository.findRoleBindingById(bindingId);
+    if (!binding) {
+      throw new NotFoundException('Role binding not found');
+    }
+
+    await this.roleRepository.deleteRoleBinding(bindingId);
   }
 }

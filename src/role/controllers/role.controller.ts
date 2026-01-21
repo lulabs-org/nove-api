@@ -26,7 +26,11 @@ import {
   QueryRoleDto,
   RoleDto,
   RoleListResponse,
+  SetRolePermissionsDto,
+  CreateRoleBindingDto,
+  RoleBindingDto,
 } from '../dto';
+import { PermissionDto } from '@/permission/dto';
 
 @ApiTags('Admin - Roles')
 @Controller('admin/roles')
@@ -188,5 +192,112 @@ export class RoleController {
   })
   async delete(@Param('id') id: string): Promise<void> {
     return this.roleService.delete(id);
+  }
+
+  @Put('orgs/:orgId/roles/:roleId/permissions')
+  @ApiOperation({
+    summary: '配置角色权限',
+    description: '为角色配置权限列表',
+  })
+  @ApiParam({
+    name: 'orgId',
+    description: '组织 ID',
+    example: 'clx1234567890abcdef',
+  })
+  @ApiParam({
+    name: 'roleId',
+    description: '角色 ID',
+    example: 'clx1234567890abcdef',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '权限配置成功',
+    type: [PermissionDto],
+  })
+  @ApiResponse({
+    status: 400,
+    description: '请求参数无效',
+  })
+  @ApiResponse({
+    status: 401,
+    description: '未授权',
+  })
+  @ApiResponse({
+    status: 404,
+    description: '角色不存在',
+  })
+  async setRolePermissions(
+    @Param('roleId') roleId: string,
+    @Body() dto: SetRolePermissionsDto,
+  ): Promise<PermissionDto[]> {
+    return this.roleService.setRolePermissions(roleId, dto);
+  }
+
+  @Post('orgs/:orgId/role-bindings')
+  @ApiOperation({
+    summary: '绑定角色给成员',
+    description: '为成员绑定角色（组织级或部门级）',
+  })
+  @ApiParam({
+    name: 'orgId',
+    description: '组织 ID',
+    example: 'clx1234567890abcdef',
+  })
+  @ApiResponse({
+    status: 201,
+    description: '角色绑定成功',
+    type: RoleBindingDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: '请求参数无效',
+  })
+  @ApiResponse({
+    status: 401,
+    description: '未授权',
+  })
+  @ApiResponse({
+    status: 404,
+    description: '角色或成员不存在',
+  })
+  async createRoleBinding(
+    @Param('orgId') orgId: string,
+    @Body() dto: CreateRoleBindingDto,
+  ): Promise<RoleBindingDto> {
+    return this.roleService.createRoleBinding(orgId, dto);
+  }
+
+  @Delete('orgs/:orgId/role-bindings/:bindingId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: '解绑角色',
+    description: '解除成员的角色绑定',
+  })
+  @ApiParam({
+    name: 'orgId',
+    description: '组织 ID',
+    example: 'clx1234567890abcdef',
+  })
+  @ApiParam({
+    name: 'bindingId',
+    description: '绑定 ID',
+    example: 'clx1234567890abcdef',
+  })
+  @ApiResponse({
+    status: 204,
+    description: '角色解绑成功',
+  })
+  @ApiResponse({
+    status: 401,
+    description: '未授权',
+  })
+  @ApiResponse({
+    status: 404,
+    description: '角色绑定不存在',
+  })
+  async deleteRoleBinding(
+    @Param('bindingId') bindingId: string,
+  ): Promise<void> {
+    return this.roleService.deleteRoleBinding(bindingId);
   }
 }

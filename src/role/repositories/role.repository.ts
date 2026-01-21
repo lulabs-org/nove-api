@@ -217,4 +217,66 @@ export class RoleRepository {
     );
     return roleCodes.every((code) => userRoleCodes.has(code));
   }
+
+  async setRolePermissionsByKeys(roleId: string, permissionKeys: string[]) {
+    const permissions = await this.prisma.permission.findMany({
+      where: {
+        code: { in: permissionKeys },
+      },
+    });
+
+    const permissionIds = permissions.map((p) => p.id);
+
+    return this.prisma.role.update({
+      where: { id: roleId },
+      data: {
+        permissions: {
+          deleteMany: {},
+          create: permissionIds.map((permissionId) => ({
+            permissionId,
+          })),
+        },
+      },
+      include: {
+        permissions: {
+          include: {
+            permission: true,
+          },
+        },
+      },
+    });
+  }
+
+  async createRoleBinding(data: {
+    roleId: string;
+    membershipId: string;
+    deptId?: string;
+  }) {
+    return this.prisma.memberRole.create({
+      data: {
+        roleId: data.roleId,
+        memberId: data.membershipId,
+      },
+      include: {
+        role: true,
+        member: true,
+      },
+    });
+  }
+
+  async deleteRoleBinding(bindingId: string) {
+    return this.prisma.memberRole.delete({
+      where: { id: bindingId },
+    });
+  }
+
+  async findRoleBindingById(bindingId: string) {
+    return this.prisma.memberRole.findUnique({
+      where: { id: bindingId },
+      include: {
+        role: true,
+        member: true,
+      },
+    });
+  }
 }
