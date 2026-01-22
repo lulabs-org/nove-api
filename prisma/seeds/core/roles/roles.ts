@@ -33,12 +33,15 @@ async function upsertRole(
 export async function createRoles(
   prisma: PrismaClient,
   useRealData = false,
+  orgId: string,
 ): Promise<Role[]> {
   const dataSource = useRealData ? '真实数据' : '模拟数据';
   console.log(`🔐 开始创建角色数据，使用${dataSource}...`);
 
   const roleConfigs = useRealData ? REAL_ROLE_CONFIGS : ROLE_CONFIGS;
-  const rolePromises = roleConfigs.map((config) => upsertRole(prisma, config));
+  const rolePromises = roleConfigs.map((config) =>
+    upsertRole(prisma, { ...config, orgId }),
+  );
   const roles = await Promise.all(rolePromises);
 
   return roles;

@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-11 00:39:44
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-17 17:53:05
+ * @LastEditTime: 2026-01-22 19:52:47
  * @FilePath: /nove_api/prisma/seed-utils/database-seed.ts
  * @Description:
  *
@@ -37,7 +37,7 @@ async function seedRealDatabase(prisma: PrismaClient): Promise<void> {
   const permissions = await seedFunctions.createPermissions(prisma, true);
 
   log('  2: 创建角色');
-  const roles = await seedFunctions.createRoles(prisma, true);
+  const roles = await seedFunctions.createRoles(prisma, true, organization.id);
 
   log(`\n🏢 organization: ${organization.name}`);
   log(
@@ -62,7 +62,7 @@ async function seedMockDatabase(prisma: PrismaClient): Promise<void> {
   const permissions = await seedFunctions.createPermissions(prisma);
 
   log('  3.2 创建角色');
-  const roles = await seedFunctions.createRoles(prisma);
+  const roles = await seedFunctions.createRoles(prisma, false, organization.id);
 
   log('  3.3 分配角色权限');
   await seedFunctions.assignRolePermissions(prisma, permissions, roles);
@@ -85,6 +85,7 @@ async function seedMockDatabase(prisma: PrismaClient): Promise<void> {
     prisma,
     departments,
     userData,
+    organization.id,
   );
 
   log('\n🔗 步骤 8: 创建权限关联数据');

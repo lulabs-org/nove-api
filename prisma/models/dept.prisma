@@ -12,8 +12,8 @@ model Dept {
 
   // 关联关系
   org      Org                @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  parent   Dept?        @relation("DepartmentHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
-  children Dept[]       @relation("DepartmentHierarchy")
+  parent   Dept?              @relation("DepartmentHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  children Dept[]             @relation("DepartmentHierarchy")
   members  MemberDepartment[]
 
   createdAt  DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -21,7 +21,7 @@ model Dept {
   deletedAt  DateTime?   @map("deleted_at") @db.Timestamptz(6) // 软删除时间戳
   orgMembers OrgMember[]
 
-  @@index([orgId])
+  @@unique([orgId, code])
   @@index([parentId])
   @@index([code])
   @@index([orgId, active]) // 活跃部门查询

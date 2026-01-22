@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-14 00:30:50
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-17 17:19:06
+ * @LastEditTime: 2026-01-22 19:53:49
  * @FilePath: /nove_api/prisma/seeds/relations/user-relations/user-department.ts
  * @Description:
  *
@@ -31,6 +31,7 @@ export async function createUserDepartmentRelations(
   prisma: PrismaClient,
   departments: Dept[],
   users: User[],
+  orgId: string,
 ): Promise<void> {
   const memberIds = await Promise.all(
     users.map((user) => getOrgMemberId(prisma, user.id)),
@@ -47,6 +48,7 @@ export async function createUserDepartmentRelations(
     create: {
       memberId: memberIds[0],
       deptId: departments[0].id,
+      orgId,
       isPrimary: true,
     },
   });
@@ -62,6 +64,7 @@ export async function createUserDepartmentRelations(
     create: {
       memberId: memberIds[1],
       deptId: departments[1].id,
+      orgId,
       isPrimary: true,
     },
   });
@@ -77,6 +80,7 @@ export async function createUserDepartmentRelations(
     create: {
       memberId: memberIds[2],
       deptId: departments[2].id,
+      orgId,
       isPrimary: true,
     },
   });
@@ -117,6 +121,7 @@ export async function createUserDepartmentRelations(
       create: {
         memberId: assignment.memberId,
         deptId: assignment.department.id,
+        orgId,
         isPrimary: assignment.isPrimary,
       },
     });
