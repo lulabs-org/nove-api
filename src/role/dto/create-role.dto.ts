@@ -1,3 +1,13 @@
+/*
+ * @Author: 杨仕明 shiming.y@qq.com
+ * @Date: 2026-01-16 16:30:18
+ * @LastEditors: 杨仕明 shiming.y@qq.com
+ * @LastEditTime: 2026-01-22 20:14:23
+ * @FilePath: /nove_api/src/role/dto/create-role.dto.ts
+ * @Description:
+ *
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
+ */
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsString,
@@ -11,6 +21,14 @@ import { RoleType } from '@prisma/client';
 import { Transform } from 'class-transformer';
 
 export class CreateRoleDto {
+  @ApiProperty({
+    description: '组织 ID',
+    example: 'clx1234567890abcdef',
+  })
+  @IsString()
+  @IsNotEmpty()
+  orgId: string;
+
   @ApiProperty({
     description: '角色名称',
     example: '管理员',

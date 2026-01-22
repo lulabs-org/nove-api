@@ -245,6 +245,7 @@ export class OrgMemberService {
             data: {
               memberId,
               deptId,
+              orgId: member.orgId,
               isPrimary: deptId === finalPrimaryDeptId,
             },
           });

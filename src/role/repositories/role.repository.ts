@@ -13,6 +13,7 @@ export class RoleRepository {
     type: RoleType;
     level: number;
     active: boolean;
+    orgId: string;
   }) {
     return this.prisma.role.create({
       data,

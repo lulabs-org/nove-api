@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-12 01:46:42
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-15 19:41:23
+ * @LastEditTime: 2026-01-22 20:06:39
  * @FilePath: /nove_api/prisma/seeds/core/roles/roles.ts
  * @Description:
  *
@@ -15,7 +15,7 @@ import { RoleConfig } from './type';
 
 async function upsertRole(
   prisma: PrismaClient,
-  config: RoleConfig,
+  config: RoleConfig & { orgId: string },
 ): Promise<Role> {
   const role = await prisma.role.upsert({
     where: { code: config.code },

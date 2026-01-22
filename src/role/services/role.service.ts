@@ -40,6 +40,7 @@ export class RoleService {
       type: dto.type || RoleType.CUSTOM,
       level: dto.level || 1,
       active: dto.active !== undefined ? dto.active : true,
+      orgId: dto.orgId,
     });
 
     const roleWithPermissions: RoleWithPermissions = {
