@@ -24,7 +24,7 @@ describe('ApiKeyService', () => {
     secret: 'test-secret-key-for-testing',
   };
 
-  const validRawKey = 'sk_prod_AbCdEfGhIj.1234567890abcdefghijklmnopqrstuvwxyz';
+  const validRawKey = 'sk_AbCdEfGhIj.1234567890abcdefghijklmnopqrstuvwxyz';
   const validKeyHash = computeKeyHash(validRawKey, mockConfig.secret);
 
   const mockApiKey = {

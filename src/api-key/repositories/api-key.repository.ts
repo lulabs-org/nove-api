@@ -60,6 +60,7 @@ export class ApiKeyRepository {
       take?: number;
       orderBy?: Prisma.ApiKeyOrderByWithRelationInput;
       createdBy?: string;
+      status?: ApiKeyStatus;
     },
   ): Promise<{ items: ApiKey[]; total: number }> {
     const where: Prisma.ApiKeyWhereInput = {
@@ -68,6 +69,10 @@ export class ApiKeyRepository {
 
     if (options?.createdBy) {
       where.createdBy = options.createdBy;
+    }
+
+    if (options?.status) {
+      where.status = options.status;
     }
 
     const [items, total] = await Promise.all([

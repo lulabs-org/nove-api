@@ -1,16 +1,26 @@
+/*
+ * @Author: 杨仕明 shiming.y@qq.com
+ * @Date: 2026-01-12 14:56:17
+ * @LastEditors: 杨仕明 shiming.y@qq.com
+ * @LastEditTime: 2026-01-23 19:53:14
+ * @FilePath: /nove_api/src/api-key/utils/crypto.util.ts
+ * @Description:
+ *
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
+ */
 import { createHmac, randomBytes, timingSafeEqual } from 'crypto';
 
 /**
- * 生成随机的 base64url 编码字符串
- * @param length 字节长度
- * @returns base64url 编码的字符串
+ * 生成随机 base64url 字符串（length = 随机字节数）
+ * - 输出使用 RFC 4648 base64url（'-','_'，无 '=' padding）
  */
-export function generateRandomBase64Url(length: number): string {
-  return randomBytes(length)
-    .toString('base64')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=/g, '');
+export function randomBase64Url(length: number): string {
+  if (!Number.isInteger(length) || length <= 0) {
+    throw new RangeError('length must be a positive integer');
+  }
+
+  // Node 原生支持 base64url：无需 replace
+  return randomBytes(length).toString('base64url');
 }
 
 /**
@@ -51,15 +61,14 @@ export function verifyKeyHash(
 
 /**
  * 解析 API Key 格式
- * @param rawKey 原始 API Key (格式: sk_<env>_<prefix>.<secret>)
+ * @param rawKey 原始 API Key (格式: sk_<prefix>.<secret>)
  * @returns 解析后的 prefix 和 secret，如果格式无效则返回 null
  */
 export function parseApiKey(rawKey: string): {
   prefix: string;
   secret: string;
 } | null {
-  // 匹配格式: sk_<env>_<prefix>.<secret>
-  const match = rawKey.match(/^sk_\w+_([^.]+)\.(.+)$/);
+  const match = rawKey.match(/^sk_([^.]+)\.(.+)$/);
 
   if (!match) {
     return null;
@@ -71,32 +80,25 @@ export function parseApiKey(rawKey: string): {
 
 /**
  * 生成完整的 API Key
- * @param env 环境标识 (dev, staging, prod)
+ * @param secret 服务器密钥
  * @returns 包含原始 key、prefix、secret、hash 和 last4 的对象
  */
-export function generateApiKey(
-  env: string,
-  secret: string,
-): {
+export function generateApiKey(secret: string): {
   rawKey: string;
   prefix: string;
   secret: string;
   keyHash: string;
   last4: string;
 } {
-  // 生成 prefix: 10 字节 = ~13 个 base64url 字符，取前 10 个
-  const prefix = generateRandomBase64Url(10).substring(0, 10);
-
-  // 生成 secret: 30 字节 = ~40 个 base64url 字符
-  const keySecret = generateRandomBase64Url(30);
-
-  // 组装完整的 key: sk_<env>_<prefix>.<secret>
-  const rawKey = `sk_${env}_${prefix}.${keySecret}`;
-
-  // 计算哈希
+  // 生成10字节长度的随机前缀
+  const prefix = randomBase64Url(10).substring(0, 10);
+  // 生成30字节长度的随机密钥
+  const keySecret = randomBase64Url(30);
+  // 组合前缀和密钥生成完整的API Key
+  const rawKey = `sk_${prefix}.${keySecret}`;
+  // 计算API Key的哈希值用于存储
   const keyHash = computeKeyHash(rawKey, secret);
-
-  // 获取最后 4 位用于显示
+  // 获取密钥最后4位用于显示
   const last4 = keySecret.slice(-4);
 
   return {

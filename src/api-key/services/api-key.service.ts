@@ -80,7 +80,6 @@ export class ApiKeyService {
     }
 
     const { rawKey, prefix, keyHash, last4 } = generateApiKey(
-      this.config.environment,
       this.config.secret,
     );
 
@@ -130,6 +129,7 @@ export class ApiKeyService {
         take: pageSize,
         orderBy: { createdAt: 'desc' },
         createdBy: userId,
+        status: pagination?.status,
       },
     );
 
@@ -251,7 +251,6 @@ export class ApiKeyService {
     }
 
     const { rawKey, prefix, keyHash, last4 } = generateApiKey(
-      this.config.environment,
       this.config.secret,
     );
 

@@ -83,7 +83,7 @@ export class ApiKeyController {
   @Get()
   @ApiOperation({
     summary: '列出 API Keys',
-    description: '获取当前组织的所有 API Keys（分页）',
+    description: '获取当前组织的所有 API Keys（分页），支持按状态筛选',
   })
   @ApiResponse({
     status: 200,

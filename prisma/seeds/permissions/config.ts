@@ -345,6 +345,50 @@ export const REAL_PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     resource: 'mcp-tool',
     action: 'userid-search',
   },
+
+  // ========== API Key 管理 ==========
+  {
+    name: '查看 API Key',
+    code: 'api_key:read',
+    description: '查看 API Key 信息',
+    resource: 'api_key',
+    action: 'read',
+  },
+  {
+    name: '创建 API Key',
+    code: 'api_key:create',
+    description: '创建新 API Key',
+    resource: 'api_key',
+    action: 'create',
+  },
+  {
+    name: '编辑 API Key',
+    code: 'api_key:update',
+    description: '编辑 API Key 信息',
+    resource: 'api_key',
+    action: 'update',
+  },
+  {
+    name: '删除 API Key',
+    code: 'api_key:delete',
+    description: '删除 API Key',
+    resource: 'api_key',
+    action: 'delete',
+  },
+  {
+    name: '撤销 API Key',
+    code: 'api_key:revoke',
+    description: '撤销 API Key',
+    resource: 'api_key',
+    action: 'revoke',
+  },
+  {
+    name: '轮换 API Key',
+    code: 'api_key:rotate',
+    description: '轮换 API Key',
+    resource: 'api_key',
+    action: 'rotate',
+  },
 ] as const satisfies readonly Prisma.PermissionCreateInput[];
 
 export const PERMISSION_CONFIGS: readonly PermissionConfig[] = [
@@ -690,5 +734,49 @@ export const PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     description: '使用 MCP 用户ID搜索工具',
     resource: 'mcp-tool',
     action: 'userid-search',
+  },
+
+  // ========== API Key 管理 ==========
+  {
+    name: '查看 API Key',
+    code: 'api_key:read',
+    description: '查看 API Key 信息',
+    resource: 'api_key',
+    action: 'read',
+  },
+  {
+    name: '创建 API Key',
+    code: 'api_key:create',
+    description: '创建新 API Key',
+    resource: 'api_key',
+    action: 'create',
+  },
+  {
+    name: '编辑 API Key',
+    code: 'api_key:update',
+    description: '编辑 API Key 信息',
+    resource: 'api_key',
+    action: 'update',
+  },
+  {
+    name: '删除 API Key',
+    code: 'api_key:delete',
+    description: '删除 API Key',
+    resource: 'api_key',
+    action: 'delete',
+  },
+  {
+    name: '撤销 API Key',
+    code: 'api_key:revoke',
+    description: '撤销 API Key',
+    resource: 'api_key',
+    action: 'revoke',
+  },
+  {
+    name: '轮换 API Key',
+    code: 'api_key:rotate',
+    description: '轮换 API Key',
+    resource: 'api_key',
+    action: 'rotate',
   },
 ] as const satisfies readonly Prisma.PermissionCreateInput[];
