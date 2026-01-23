@@ -3,11 +3,13 @@ model MemberDepartment {
   id        String  @id @default(cuid())
   memberId  String  @map("member_id") // 成员ID
   deptId    String  @map("dept_id") // 部门ID
+  orgId     String  @map("org_id") // 所属组织ID
   isPrimary Boolean @default(false) // 是否主要部门
 
   // 关联关系
   member OrgMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
   dept   Dept      @relation(fields: [deptId], references: [id], onDelete: Cascade)
+  org    Org       @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -16,6 +18,9 @@ model MemberDepartment {
   @@unique([memberId, deptId])
   @@index([memberId])
   @@index([deptId])
+  @@index([orgId]) // 组织索引，避免跨组织误关联
+  @@index([orgId, memberId]) // 组织内成员查询
+  @@index([orgId, deptId]) // 组织内部门查询
   @@map("member_departments")
 }
 

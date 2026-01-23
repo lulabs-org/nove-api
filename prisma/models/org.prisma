@@ -15,10 +15,11 @@ model Org {
   children Org[] @relation("OrgHierarchy")
 
   // 关联关系
-  depts           Dept[]
-  members         OrgMember[]
-  apiKeys         ApiKey[] // API Keys
-  apiKeyUsageLogs ApiKeyUsageLog[] // API Key 使用日志
+  depts             Dept[]
+  members           OrgMember[]
+  apiKeys           ApiKey[] // API Keys
+  apiKeyUsageLogs   ApiKeyUsageLog[] // API Key 使用日志
+  memberDepartments MemberDepartment[]
 
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)

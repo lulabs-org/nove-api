@@ -1,6 +1,7 @@
 // 角色表
 model Role {
   id          String   @id @default(cuid())
+  orgId       String   @map("org_id") // 组织ID
   name        String // 角色名称
   code        String   @unique // 角色编码
   description String? // 角色描述
@@ -14,10 +15,11 @@ model Role {
   permissions     RolePermission[]
   dataPermissions RoleDataPermission[]
 
-  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6) // 软删除时间戳
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6) // 软删除时间戳
 
+  @@unique([orgId, code])
   @@index([code])
   @@index([type])
   @@index([active]) // 活跃角色查询
