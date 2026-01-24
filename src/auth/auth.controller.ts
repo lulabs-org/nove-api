@@ -161,15 +161,17 @@ export class AuthController {
   }> {
     const ip = HttpUtil.getClientIp(req);
     const userAgent = req.get('User-Agent');
-    const result = await this.tokenService.refreshToken(
-      refreshTokenDto.refreshToken,
-      {
-        ip,
-        userAgent,
-        deviceInfo: refreshTokenDto.deviceInfo,
-        deviceId: refreshTokenDto.deviceId,
-      },
-    );
+
+    // 优先从请求体中读取，如果没有则从 Cookie 中读取
+    const refreshToken =
+      refreshTokenDto.refreshToken || req.cookies?.refreshToken;
+
+    const result = await this.tokenService.refreshToken(refreshToken, {
+      ip,
+      userAgent,
+      deviceInfo: refreshTokenDto.deviceInfo,
+      deviceId: refreshTokenDto.deviceId,
+    });
 
     const isWebClient = refreshTokenDto.clientType === ClientType.Web;
     if (isWebClient) {

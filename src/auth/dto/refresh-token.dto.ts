@@ -14,9 +14,10 @@ import { IsOptional, IsString, IsEnum } from 'class-validator';
 import { ClientType } from '@/auth/types/jwt.types';
 
 export class RefreshTokenDto {
-  @ApiProperty({ description: '刷新令牌' })
+  @ApiProperty({ description: '刷新令牌', required: false })
+  @IsOptional()
   @IsString()
-  refreshToken: string;
+  refreshToken?: string;
 
   @ApiProperty({
     required: false,
