@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-11 00:39:44
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-22 19:52:47
+ * @LastEditTime: 2026-01-24 12:37:55
  * @FilePath: /nove_api/prisma/seed-utils/database-seed.ts
  * @Description:
  *
