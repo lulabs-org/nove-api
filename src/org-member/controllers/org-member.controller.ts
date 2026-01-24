@@ -96,7 +96,7 @@ export class OrgMemberController {
     return this.orgMemberService.listMembers(orgId, pagination);
   }
 
-  @Get('orgs/:orgId/members/batch')
+  @Post('orgs/:orgId/members/batch')
   @ApiOperation({
     summary: '批量导入成员',
     description: '批量导入成员到组织',
