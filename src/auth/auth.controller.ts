@@ -164,7 +164,12 @@ export class AuthController {
 
     // 优先从请求体中读取，如果没有则从 Cookie 中读取
     const refreshToken =
-      refreshTokenDto.refreshToken || req.cookies?.refreshToken;
+      refreshTokenDto.refreshToken ||
+      (req.cookies?.refreshToken as string | undefined);
+
+    if (!refreshToken) {
+      throw new UnauthorizedException('刷新令牌不能为空');
+    }
 
     const result = await this.tokenService.refreshToken(refreshToken, {
       ip,
