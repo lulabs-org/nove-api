@@ -2,7 +2,7 @@
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2026-01-03 09:40:30
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-25 09:52:57
+ * @LastEditTime: 2026-01-25 10:12:38
  * @FilePath: \nove-api\src\task\service\period-summary-tool.ts
  * @Description:
  *
@@ -21,6 +21,36 @@ export class PeriodSummaryTool {
     private readonly periodSummaryRepository: PeriodSummaryRepository,
   ) {}
 
+  // 生成今天从早到晚的时间范围
+  getTodayRange(): {
+    startOfDay: Date;
+    endOfDay: Date;
+  } {
+    const now = new Date();
+
+    const startOfDay = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      0,
+      0,
+      0,
+      0,
+    );
+
+    const endOfDay = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      23,
+      59,
+      59,
+      999,
+    );
+
+    return { startOfDay, endOfDay };
+  }
+
   /**
    * 获取所有符合条件的 participantSummary 记录，并按 userId 分组
    * @returns 分组数组，每个元素包含 userId 和对应 platformUserIds
@@ -28,9 +58,15 @@ export class PeriodSummaryTool {
   async getGroupedPlatformUsers(): Promise<
     { userId: string | null; platformUserIds: string[] }[]
   > {
+    // 获取今天是时间范围
+    const { startOfDay, endOfDay } = this.getTodayRange();
+
     // 查所有participantSummary的记录，但只拿平台用户的 id 和 userId
     const summaries =
-      await this.periodSummaryRepository.findAllMeetingSummaries();
+      await this.periodSummaryRepository.findAllMeetingSummaries({
+        startOfDay,
+        endOfDay,
+      });
 
     // 如果没有值，直接返回
     if (summaries.length === 0) {
@@ -165,25 +201,8 @@ export class PeriodSummaryTool {
   }) {
     const { realName, reply, userId, platformUserIds, summaries } = params;
 
-    const now = new Date();
-    // 当天凌晨0点
-    const startOfDay = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-      0,
-      0,
-      0,
-    );
-    // 当天23:59:59
-    const endOfDay = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-      23,
-      59,
-      59,
-    );
+    // 获取今天是时间范围
+    const { startOfDay, endOfDay } = this.getTodayRange();
 
     // 保存ai总结内容至ParticipantSummary
     const parentSummary =

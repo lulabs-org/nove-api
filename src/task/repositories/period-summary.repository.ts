@@ -2,7 +2,7 @@
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2026-01-11 15:11:23
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-25 09:47:53
+ * @LastEditTime: 2026-01-25 10:06:51
  * @FilePath: \nove-api\src\task\repositories\period-summary.repository.ts
  * @Description:
  *
@@ -18,7 +18,13 @@ export class PeriodSummaryRepository {
   /**
    * 查所有participantSummary的记录，但只拿平台用户的 id 和 userId
    */
-  async findAllMeetingSummaries() {
+  async findAllMeetingSummaries({
+    startOfDay,
+    endOfDay,
+  }: {
+    startOfDay: Date;
+    endOfDay: Date;
+  }) {
     return (
       (await this.prisma.participantSummary.findMany({
         where: {
