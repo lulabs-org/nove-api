@@ -1,9 +1,9 @@
 /*
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-10-03 06:03:56
- * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2025-10-03 06:08:58
- * @FilePath: /lulab_backend/src/task/task.processor.ts
+ * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
+ * @LastEditTime: 2026-01-11 16:09:30
+ * @FilePath: \nove-api\src\task\processors\task.processor.ts
  * @Description:
  *
  * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
@@ -17,16 +17,21 @@ import {
   OnQueueEvent,
 } from '@nestjs/bullmq';
 import type { Job } from 'bullmq';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { TaskStatus } from '@prisma/client';
+
+import { PeriodSummary } from '../service/period-summary.service';
 
 @Injectable()
 @Processor('tasks')
 export class TaskProcessor extends WorkerHost {
   private readonly logger = new Logger(TaskProcessor.name);
 
-  constructor(private readonly prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly periodSummary: PeriodSummary,
+  ) {
     super();
   }
 
@@ -34,14 +39,20 @@ export class TaskProcessor extends WorkerHost {
   override async process(
     job: Job<Record<string, unknown>, unknown, string>,
   ): Promise<unknown> {
-    this.logger.debug(`Processing job name=${job.name} id=${job.id}`);
+    // 🔹 修改日志，显示 originalName
+    const taskName = job.data.originalName ?? job.name; // 如果没有 originalName 就 fallback
+    this.logger.debug(
+      `Processing job name=${JSON.stringify(taskName)} id=${job.id}`,
+    );
 
     // —— 在这里编写你真实的业务逻辑 ——
     // 举例：调用第三方 API、发送邮件、生成报表等
 
     // TODO: 示例任务实现
     // 根据 job.name 或 payload.type 分流到不同的业务逻辑
-    switch (job.name) {
+    switch (
+      taskName //  job.data.originalName 匹配，而不是 job.name
+    ) {
       case 'sendEmail':
         // TODO: 调用邮件服务发送邮件
         // await this.emailService.sendEmail(job.data.to, job.data.subject, job.data.body);
@@ -68,8 +79,34 @@ export class TaskProcessor extends WorkerHost {
         // await this.cleanupService.removeExpiredData(job.data.retentionDays);
         break;
 
+      case 'personalDailyMeetingSummary': {
+        // 周期性使用方法：
+        // {
+        //   "name": "helloWorld",
+        //   "cron": "* * * * * *",
+        //   "payload": {
+        //     "originalName": "helloWorld"
+        //   }
+        // }
+
+        return await this.periodSummary.processDailySummary();
+      }
+
+      // case 'openaiChat': {
+      //   const payload = (job.data as any).payload ?? {};
+      //   const question: string = payload.question ?? '你好';
+      //   const systemPrompt: string = payload.systemPrompt ?? '你是人工智能助手';
+      //   const messages = [
+      //     { role: 'system' as const, content: systemPrompt },
+      //     { role: 'user' as const, content: question },
+      //   ];
+      //   const reply = await this.openaiService.createChatCompletion(messages);
+      //   this.logger.log(`OpenAI聊天完成: ${reply?.slice(0, 200)}`);
+      //   return { reply };
+      // }
+
       default:
-        this.logger.warn(`Unknown job type: ${job.name}`);
+        this.logger.warn(`Unknown job type: ${JSON.stringify(taskName)}`);
     }
 
     // 模拟：sleep 500ms
