@@ -21,7 +21,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiTags, ApiExtraModels } from '@nestjs/swagger';
-import { TasksService } from './tasks.service';
+import { TasksService } from './service/tasks.service';
 import { CreateOnceDto } from './dtos/create-once.dto';
 import { CreateCronDto } from './dtos/create-cron.dto';
 import { UpdateTaskDto } from './dtos/update-task.dto';
