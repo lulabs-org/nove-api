@@ -25,6 +25,8 @@ export async function createParticipantSummaries(
     const participantSummaries = await Promise.all(
       PARTICIPANT_SUMMARY_CONFIGS.map(async (config) => {
         const meeting = meetings.meetings[0].meeting;
+        const now = new Date();
+        const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
 
         return await prisma.participantSummary.create({
           data: {
@@ -38,6 +40,8 @@ export async function createParticipantSummaries(
             confidence: 0.85 + Math.random() * 0.1,
             version: 1,
             isLatest: true,
+            periodStart: now,
+            periodEnd: oneHourLater,
           },
         });
       }),
