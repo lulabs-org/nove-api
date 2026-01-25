@@ -2,7 +2,7 @@
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2026-01-03 09:40:30
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-25 10:12:38
+ * @LastEditTime: 2026-01-25 10:21:36
  * @FilePath: \nove-api\src\task\service\period-summary-tool.ts
  * @Description:
  *
@@ -58,7 +58,7 @@ export class PeriodSummaryTool {
   async getGroupedPlatformUsers(): Promise<
     { userId: string | null; platformUserIds: string[] }[]
   > {
-    // 获取今天是时间范围
+    // 获取今天的时间范围
     const { startOfDay, endOfDay } = this.getTodayRange();
 
     // 查所有participantSummary的记录，但只拿平台用户的 id 和 userId
@@ -127,11 +127,16 @@ export class PeriodSummaryTool {
       username: string; // 这个是参会人在平台上的用户名(user.username)
     }[]
   > {
+    // 获取今天的时间范围
+    const { startOfDay, endOfDay } = this.getTodayRange();
+
     // 查找当前分组下所有 platformUserId 对应的 participantSummary
     const summaries =
-      await this.periodSummaryRepository.findSummaryByPlatformUserIds(
+      await this.periodSummaryRepository.findSummaryByPlatformUserIds({
         platformUserIds,
-      );
+        startOfDay,
+        endOfDay,
+      });
 
     // 扁平化 username
     return summaries.map((s) => ({

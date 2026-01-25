@@ -2,7 +2,7 @@
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2026-01-11 15:11:23
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-25 10:06:51
+ * @LastEditTime: 2026-01-25 10:21:22
  * @FilePath: \nove-api\src\task\repositories\period-summary.repository.ts
  * @Description:
  *
@@ -30,6 +30,8 @@ export class PeriodSummaryRepository {
         where: {
           platformUserId: { not: null }, // 平台用户不为空
           periodType: 'SINGLE', // 仅单次会议
+          periodStart: { gte: startOfDay }, // 开始时间大于等于当天凌晨
+          periodEnd: { lte: endOfDay }, // 结束时间小于等于当天结束
         },
         select: {
           platformUser: {
@@ -48,11 +50,21 @@ export class PeriodSummaryRepository {
   /**
    * 查找当前分组下所有 platformUserId 对应的 participantSummary
    */
-  async findSummaryByPlatformUserIds(platformUserIds: string[]) {
+  async findSummaryByPlatformUserIds({
+    platformUserIds,
+    startOfDay,
+    endOfDay,
+  }: {
+    platformUserIds: string[];
+    startOfDay: Date;
+    endOfDay: Date;
+  }) {
     return await this.prisma.participantSummary.findMany({
       where: {
         platformUserId: { in: platformUserIds }, // 当前分组的所有 platformUserId
         periodType: 'SINGLE', // 仅单次会议
+        periodStart: { gte: startOfDay }, // 开始时间大于等于当天凌晨
+        periodEnd: { lte: endOfDay }, // 结束时间小于等于当天结束
       },
       select: {
         id: true, // 会议总结ID，用于创建 SummaryRelation
