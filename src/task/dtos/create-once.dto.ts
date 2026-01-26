@@ -17,6 +17,7 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
+import { IsFutureDate } from '../../common/decorators';
 
 export class CreateOnceDto {
   @IsString()
@@ -24,6 +25,7 @@ export class CreateOnceDto {
   name!: string;
 
   @IsISO8601()
+  @IsFutureDate({ message: '执行时间必须是未来的时间' })
   runAt!: string; // ISO 时间字符串
 
   @IsObject()

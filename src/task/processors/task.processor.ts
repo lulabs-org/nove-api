@@ -1,15 +1,14 @@
 /*
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-10-03 06:03:56
- * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-11 16:09:30
- * @FilePath: \nove-api\src\task\processors\task.processor.ts
+ * @LastEditors: 杨仕明 shiming.y@qq.com
+ * @LastEditTime: 2026-01-25 14:13:23
+ * @FilePath: /nove_api/src/task/processors/task.processor.ts
  * @Description:
  *
  * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
  */
 
-// src/tasks/task.processor.ts
 import {
   Processor,
   WorkerHost,
@@ -17,11 +16,9 @@ import {
   OnQueueEvent,
 } from '@nestjs/bullmq';
 import type { Job } from 'bullmq';
-import { PrismaService } from '../../prisma/prisma.service';
 import { Injectable, Logger } from '@nestjs/common';
-import { TaskStatus } from '@prisma/client';
-
 import { PeriodSummary } from '../service/period-summary.service';
+import { ScheduledTaskRepository } from '../repositories/scheduled-task.repository';
 
 @Injectable()
 @Processor('tasks')
@@ -29,7 +26,7 @@ export class TaskProcessor extends WorkerHost {
   private readonly logger = new Logger(TaskProcessor.name);
 
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly taskRepo: ScheduledTaskRepository,
     private readonly periodSummary: PeriodSummary,
   ) {
     super();
@@ -109,41 +106,29 @@ export class TaskProcessor extends WorkerHost {
         this.logger.warn(`Unknown job type: ${JSON.stringify(taskName)}`);
     }
 
-    // 模拟：sleep 500ms
-    await new Promise((r) => setTimeout(r, 500));
-
     return { ok: true, at: new Date().toISOString() };
   }
 
   @OnWorkerEvent('active')
   async onActive(job: Job): Promise<void> {
-    await this.prisma.scheduledTask
-      .updateMany({
-        where: { jobId: String(job.id) },
-        data: { status: TaskStatus.RUNNING },
-      })
+    await this.taskRepo
+      .updateStatusToRunning(String(job.id))
       .catch(() => undefined);
   }
 
   @OnWorkerEvent('completed')
   async onCompleted(job: Job, result: unknown): Promise<void> {
     this.logger.debug(`Job ${job.id} completed: ${JSON.stringify(result)}`);
-    await this.prisma.scheduledTask
-      .updateMany({
-        where: { jobId: String(job.id) },
-        data: { status: TaskStatus.COMPLETED, lastError: null },
-      })
+    await this.taskRepo
+      .updateStatusToCompleted(String(job.id))
       .catch(() => undefined);
   }
 
   @OnWorkerEvent('failed')
   async onFailed(job: Job, err: Error): Promise<void> {
     this.logger.error(`Job ${job.id} failed: ${err.message}`);
-    await this.prisma.scheduledTask
-      .updateMany({
-        where: { jobId: String(job.id) },
-        data: { status: TaskStatus.FAILED, lastError: err.message },
-      })
+    await this.taskRepo
+      .updateStatusToFailed(String(job.id), err.message)
       .catch(() => undefined);
   }
 

@@ -1,18 +1,14 @@
-// src/tasks/tasks.service.ts
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import type { Queue, JobsOptions, RepeatOptions } from 'bullmq';
-import { PrismaService } from '../../prisma/prisma.service';
-import { CreateOnceDto } from '../dtos/create-once.dto';
-import { CreateCronDto } from '../dtos/create-cron.dto';
-import { UpdateTaskDto } from '../dtos/update-task.dto';
-import { QueryDto } from '../dtos/query.dto';
+import { CreateCronDto, CreateOnceDto, QueryDto, UpdateTaskDto } from '../dtos';
+import { ScheduledTaskRepository } from '../repositories/scheduled-task.repository';
 import { ScheduledTask, TaskStatus, TaskType } from '@prisma/client';
 
 @Injectable()
 export class TasksService {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly taskRepo: ScheduledTaskRepository,
     @InjectQueue('tasks') private readonly queue: Queue,
   ) {}
 
@@ -29,18 +25,16 @@ export class TasksService {
 
     const job = await this.queue.add('once', dto.payload, opts);
 
-    const jobIdVal = job.id ?? null; // 👈 兜底
+    const jobIdVal = job.id ?? null;
 
-    return this.prisma.scheduledTask.create({
-      data: {
-        name: dto.name,
-        type: TaskType.ONCE,
-        queueName: this.queue.name,
-        jobId: jobIdVal === null ? null : String(jobIdVal), // 👈 避免 'undefined'
-        payload: dto.payload as unknown as object,
-        status: TaskStatus.SCHEDULED,
-        runAt,
-      },
+    return this.taskRepo.create({
+      name: dto.name,
+      type: TaskType.ONCE,
+      queueName: this.queue.name,
+      jobId: jobIdVal === null ? null : String(jobIdVal),
+      payload: dto.payload as unknown as object,
+      status: TaskStatus.SCHEDULED,
+      runAt,
     });
   }
 
@@ -51,71 +45,45 @@ export class TasksService {
     };
 
     // 🔹 修改：把原始任务名放到 job.data 里，而不是改 job.name
-    const job = await this.queue.add(
-      'cron',
-      {
-        originalName: dto.name, // 🔹 保存任务标识，用于 Processor 匹配
-        ...dto.payload, // 🔹 保留原 payload
-      },
-      {
-        repeat,
-        removeOnComplete: { age: 3600, count: 1000 },
-        removeOnFail: { age: 24 * 3600, count: 1000 },
-      } as JobsOptions,
-    );
+    const job = await this.queue.add('cron', dto.payload, {
+      repeat,
+      removeOnComplete: { age: 3600, count: 1000 },
+      removeOnFail: { age: 24 * 3600, count: 1000 },
+    } as JobsOptions);
 
-    const jobIdVal = job.id ?? null; // 👈 兜底
+    const jobIdVal = job.id ?? null;
 
     const repeatKey =
       job.opts.repeat?.key ??
       (job as { repeatJobKey?: string }).repeatJobKey ??
       null;
 
-    return this.prisma.scheduledTask.create({
-      data: {
-        name: dto.name,
-        type: TaskType.CRON,
-        queueName: this.queue.name,
-        jobId: jobIdVal === null ? null : String(jobIdVal), // 👈
-        repeatKey,
-        payload: dto.payload as unknown as object,
-        status: TaskStatus.SCHEDULED,
-        cron: dto.cron,
-      },
+    return this.taskRepo.create({
+      name: dto.name,
+      type: TaskType.CRON,
+      queueName: this.queue.name,
+      jobId: jobIdVal === null ? null : String(jobIdVal),
+      payload: dto.payload as unknown as object,
+      status: TaskStatus.SCHEDULED,
+      cron: dto.cron,
+      repeatKey,
     });
   }
 
   async list(q: QueryDto) {
-    const page = q.page ?? 1;
-    const pageSize = q.pageSize ?? 20;
-
-    const where = {
-      AND: [
-        q.search
-          ? { name: { contains: q.search, mode: 'insensitive' as const } }
-          : {},
-        q.status ? { status: q.status as TaskStatus } : {},
-        q.type ? { type: q.type as TaskType } : {},
-      ],
-    };
-
-    const [items, total] = await this.prisma.$transaction([
-      this.prisma.scheduledTask.findMany({
-        where,
-        orderBy: { [q.orderBy ?? 'createdAt']: q.orderDir ?? 'desc' },
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-      }),
-      this.prisma.scheduledTask.count({ where }),
-    ]);
-
-    return { items, total, page, pageSize };
+    return this.taskRepo.list({
+      page: q.page ?? 1,
+      pageSize: q.pageSize ?? 20,
+      search: q.search,
+      status: q.status as TaskStatus,
+      type: q.type as TaskType,
+      orderBy: q.orderBy,
+      orderDir: q.orderDir,
+    });
   }
 
   async detail(id: string): Promise<ScheduledTask> {
-    const task = await this.prisma.scheduledTask.findUnique({ where: { id } });
-    if (!task) throw new NotFoundException('Task not found');
-    return task;
+    return this.taskRepo.detail(id);
   }
 
   async update(id: string, dto: UpdateTaskDto): Promise<ScheduledTask> {
@@ -127,7 +95,7 @@ export class TasksService {
       dto.cron !== existing.cron
     ) {
       if (existing.repeatKey) {
-        await this.queue.removeRepeatableByKey(existing.repeatKey);
+        await this.queue.removeJobScheduler(existing.repeatKey);
       }
       const job = await this.queue.add(
         'cron',
@@ -142,25 +110,19 @@ export class TasksService {
       const repeatKey =
         job.opts.repeat?.key ?? (job as { repeatJobKey?: string }).repeatJobKey;
 
-      return this.prisma.scheduledTask.update({
-        where: { id },
-        data: {
-          name: dto.name ?? existing.name,
-          cron: dto.cron,
-          repeatKey: repeatKey ?? null,
-          payload: (dto.payload ?? existing.payload) as unknown as object,
-          status: dto.status ?? existing.status,
-        },
+      return this.taskRepo.update(id, {
+        name: dto.name ?? existing.name,
+        cron: dto.cron,
+        repeatKey: repeatKey ?? null,
+        payload: (dto.payload ?? existing.payload) as unknown as object,
+        status: dto.status ?? existing.status,
       });
     }
 
-    return this.prisma.scheduledTask.update({
-      where: { id },
-      data: {
-        name: dto.name ?? existing.name,
-        payload: (dto.payload ?? existing.payload) as unknown as object,
-        status: dto.status ?? existing.status,
-      },
+    return this.taskRepo.update(id, {
+      name: dto.name ?? existing.name,
+      payload: (dto.payload ?? existing.payload) as unknown as object,
+      status: dto.status ?? existing.status,
     });
   }
 
@@ -169,34 +131,37 @@ export class TasksService {
 
     if (existing.type === TaskType.CRON) {
       if (existing.repeatKey) {
-        await this.queue.removeRepeatableByKey(existing.repeatKey);
+        await this.queue.removeJobScheduler(existing.repeatKey);
       }
     } else if (existing.jobId) {
       await this.queue.remove(existing.jobId).catch(() => undefined);
     }
 
-    await this.prisma.scheduledTask.delete({ where: { id } });
+    await this.taskRepo.delete(id);
     return { ok: true };
   }
 
   async pauseQueue(): Promise<{ ok: true }> {
     await this.queue.pause();
-    await this.prisma.scheduledTask.updateMany({
-      where: {
+    await this.taskRepo.updateMany(
+      {
         queueName: this.queue.name,
-        status: { in: [TaskStatus.SCHEDULED] },
+        statusIn: [TaskStatus.SCHEDULED],
       },
-      data: { status: TaskStatus.PAUSED },
-    });
+      { status: TaskStatus.PAUSED },
+    );
     return { ok: true };
   }
 
   async resumeQueue(): Promise<{ ok: true }> {
     await this.queue.resume();
-    await this.prisma.scheduledTask.updateMany({
-      where: { queueName: this.queue.name, status: TaskStatus.PAUSED },
-      data: { status: TaskStatus.SCHEDULED },
-    });
+    await this.taskRepo.updateMany(
+      {
+        queueName: this.queue.name,
+        status: TaskStatus.PAUSED,
+      },
+      { status: TaskStatus.SCHEDULED },
+    );
     return { ok: true };
   }
 

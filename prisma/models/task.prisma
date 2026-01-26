@@ -1,17 +1,21 @@
 model ScheduledTask {
-  id        String     @id @default(cuid())
+  id        String   @id @default(cuid())
   name      String
   type      TaskType
-  queueName String
-  jobId     String? // BullMQ job id (once 任务可能有，cron 的每次实例化也会生成临时 id)
-  repeatKey String? // BullMQ repeatable job 的唯一键 (removeRepeatable 用)
-  cron      String? // CRON 表达式（type=CRON 时必填）
-  runAt     DateTime? // 一次性任务的执行时间（精确到毫秒）
+  queueName String   @map("queue_name")
+  jobId     String?  @map("job_id") // BullMQ job id (once 任务可能有，cron 的每次实例化也会生成临时 id)
+  repeatKey String?  @map("repeat_key") // BullMQ repeatable job 的唯一键 (removeRepeatable 用)
+  cron      String?  @map("cron") // CRON 表达式（type=CRON 时必填）
+
   payload   Json // 任意业务数据
   status    TaskStatus @default(PENDING)
-  lastError String?
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  lastError String?    @map("last_error")
+
+  runAt DateTime? @map("run_at") @db.Timestamptz(6) // 一次性任务的执行时间（精确到毫秒）
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
 
   @@index([queueName])
   @@index([type])
