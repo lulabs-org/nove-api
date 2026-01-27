@@ -14,7 +14,7 @@ export class TasksService {
   constructor(
     private readonly prisma: PrismaService,
     @InjectQueue('tasks') private readonly queue: Queue,
-  ) {}
+  ) { }
 
   // v5: 不需要 QueueScheduler，删除 onModuleInit
 
@@ -45,9 +45,11 @@ export class TasksService {
   }
 
   async createCron(dto: CreateCronDto): Promise<ScheduledTask> {
+    const timezone = dto.timezone ?? 'Asia/Shanghai'; // 使用传入的时区或默认值
+
     const repeat: RepeatOptions = {
       pattern: dto.cron,
-      tz: 'Asia/Shanghai', // 可改为配置项
+      tz: timezone, // 使用动态时区
     };
 
     // 🔹 修改：把原始任务名放到 job.data 里，而不是改 job.name
@@ -81,6 +83,7 @@ export class TasksService {
         payload: dto.payload as unknown as object,
         status: TaskStatus.SCHEDULED,
         cron: dto.cron,
+        timezone, // 保存时区到数据库
       },
     });
   }
@@ -126,6 +129,8 @@ export class TasksService {
       dto.cron &&
       dto.cron !== existing.cron
     ) {
+      const timezone = dto.timezone ?? existing.timezone ?? 'Asia/Shanghai'; // 优先使用新时区
+
       if (existing.repeatKey) {
         await this.queue.removeRepeatableByKey(existing.repeatKey);
       }
@@ -133,7 +138,7 @@ export class TasksService {
         'cron',
         dto.payload ?? (existing.payload as Record<string, unknown>),
         {
-          repeat: { cron: dto.cron, tz: 'Asia/Shanghai' },
+          repeat: { cron: dto.cron, tz: timezone }, // 使用动态时区
           removeOnComplete: { age: 3600, count: 1000 },
           removeOnFail: { age: 24 * 3600, count: 1000 },
         } as JobsOptions,
@@ -147,6 +152,7 @@ export class TasksService {
         data: {
           name: dto.name ?? existing.name,
           cron: dto.cron,
+          timezone, // 更新时区
           repeatKey: repeatKey ?? null,
           payload: (dto.payload ?? existing.payload) as unknown as object,
           status: dto.status ?? existing.status,
@@ -158,6 +164,7 @@ export class TasksService {
       where: { id },
       data: {
         name: dto.name ?? existing.name,
+        timezone: dto.timezone ?? existing.timezone, // 更新时区
         payload: (dto.payload ?? existing.payload) as unknown as object,
         status: dto.status ?? existing.status,
       },

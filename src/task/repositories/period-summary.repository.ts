@@ -2,7 +2,7 @@
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2026-01-11 15:11:23
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-25 10:21:22
+ * @LastEditTime: 2026-01-26 20:18:56
  * @FilePath: \nove-api\src\task\repositories\period-summary.repository.ts
  * @Description:
  *
@@ -30,8 +30,24 @@ export class PeriodSummaryRepository {
         where: {
           platformUserId: { not: null }, // 平台用户不为空
           periodType: 'SINGLE', // 仅单次会议
-          periodStart: { gte: startOfDay }, // 开始时间大于等于当天凌晨
-          periodEnd: { lte: endOfDay }, // 结束时间小于等于当天结束
+          OR: [
+            {
+              // 情况 1：periodStart 有值，用 periodStart 判断
+              // 会议开始时间在当天凌晨到结束时间之间
+              periodStart: {
+                gte: startOfDay,
+                lte: endOfDay,
+              },
+            },
+            {
+              // 情况 2：periodStart 为空，用 createdAt 判断
+              periodStart: null,
+              createdAt: {
+                gte: startOfDay,
+                lte: endOfDay,
+              },
+            },
+          ],
         },
         select: {
           platformUser: {
@@ -63,8 +79,24 @@ export class PeriodSummaryRepository {
       where: {
         platformUserId: { in: platformUserIds }, // 当前分组的所有 platformUserId
         periodType: 'SINGLE', // 仅单次会议
-        periodStart: { gte: startOfDay }, // 开始时间大于等于当天凌晨
-        periodEnd: { lte: endOfDay }, // 结束时间小于等于当天结束
+        OR: [
+          {
+            // 情况 1：periodStart 有值，用 periodStart 判断
+            // 会议开始时间在当天凌晨到结束时间之间
+            periodStart: {
+              gte: startOfDay,
+              lte: endOfDay,
+            },
+          },
+          {
+            // 情况 2：periodStart 为空，用 createdAt 判断
+            periodStart: null,
+            createdAt: {
+              gte: startOfDay,
+              lte: endOfDay,
+            },
+          },
+        ],
       },
       select: {
         id: true, // 会议总结ID，用于创建 SummaryRelation

@@ -2,7 +2,7 @@
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2026-01-03 09:40:30
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-25 10:21:36
+ * @LastEditTime: 2026-01-26 21:30:03
  * @FilePath: \nove-api\src\task\service\period-summary-tool.ts
  * @Description:
  *
@@ -21,8 +21,8 @@ export class PeriodSummaryTool {
     private readonly periodSummaryRepository: PeriodSummaryRepository,
   ) {}
 
-  // 生成今天从早到晚的时间范围
-  getTodayRange(): {
+  // 生成昨天从早到晚的时间范围
+  getYesterdayRange(): {
     startOfDay: Date;
     endOfDay: Date;
   } {
@@ -31,7 +31,7 @@ export class PeriodSummaryTool {
     const startOfDay = new Date(
       now.getFullYear(),
       now.getMonth(),
-      now.getDate(),
+      now.getDate() - 1,
       0,
       0,
       0,
@@ -41,7 +41,7 @@ export class PeriodSummaryTool {
     const endOfDay = new Date(
       now.getFullYear(),
       now.getMonth(),
-      now.getDate(),
+      now.getDate() - 1,
       23,
       59,
       59,
@@ -58,8 +58,8 @@ export class PeriodSummaryTool {
   async getGroupedPlatformUsers(): Promise<
     { userId: string | null; platformUserIds: string[] }[]
   > {
-    // 获取今天的时间范围
-    const { startOfDay, endOfDay } = this.getTodayRange();
+    // 获取昨天的时间范围
+    const { startOfDay, endOfDay } = this.getYesterdayRange();
 
     // 查所有participantSummary的记录，但只拿平台用户的 id 和 userId
     const summaries =
@@ -127,8 +127,8 @@ export class PeriodSummaryTool {
       username: string; // 这个是参会人在平台上的用户名(user.username)
     }[]
   > {
-    // 获取今天的时间范围
-    const { startOfDay, endOfDay } = this.getTodayRange();
+    // 获取昨天的时间范围
+    const { startOfDay, endOfDay } = this.getYesterdayRange();
 
     // 查找当前分组下所有 platformUserId 对应的 participantSummary
     const summaries =
@@ -206,8 +206,8 @@ export class PeriodSummaryTool {
   }) {
     const { realName, reply, userId, platformUserIds, summaries } = params;
 
-    // 获取今天是时间范围
-    const { startOfDay, endOfDay } = this.getTodayRange();
+    // 获取昨天是时间范围
+    const { startOfDay, endOfDay } = this.getYesterdayRange();
 
     // 保存ai总结内容至ParticipantSummary
     const parentSummary =

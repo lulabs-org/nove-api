@@ -6,6 +6,7 @@ model ScheduledTask {
   jobId     String? // BullMQ job id (once 任务可能有，cron 的每次实例化也会生成临时 id)
   repeatKey String? // BullMQ repeatable job 的唯一键 (removeRepeatable 用)
   cron      String? // CRON 表达式（type=CRON 时必填）
+  timezone  String? // 时区（type=CRON 时使用，例如 "Asia/Shanghai"）
   runAt     DateTime? // 一次性任务的执行时间（精确到毫秒）
   payload   Json // 任意业务数据
   status    TaskStatus @default(PENDING)

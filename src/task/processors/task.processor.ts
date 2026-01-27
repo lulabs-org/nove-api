@@ -80,10 +80,20 @@ export class TaskProcessor extends WorkerHost {
         break;
 
       case 'personalDailyMeetingSummary': {
-        // 周期性使用方法：
+        // 周期性使用方法(默认时区是Asia/Shanghai)：
         // {
         //   "name": "helloWorld",
         //   "cron": "* * * * * *",
+        //   "payload": {
+        //     "originalName": "helloWorld"
+        //   }
+        // }
+
+        // 使用方法二，添加指定时区
+        // {
+        //   "name": "helloWorld",
+        //   "cron": "0 0 3 * * *",
+        //   "timezone": "Asia/Shanghai",
         //   "payload": {
         //     "originalName": "helloWorld"
         //   }
