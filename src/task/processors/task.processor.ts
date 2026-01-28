@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-10-03 06:03:56
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-11 16:09:30
+ * @LastEditTime: 2026-01-28 20:16:13
  * @FilePath: \nove-api\src\task\processors\task.processor.ts
  * @Description:
  *
@@ -99,7 +99,12 @@ export class TaskProcessor extends WorkerHost {
         //   }
         // }
 
-        return await this.periodSummary.processDailySummary();
+        return await this.periodSummary.processSummary('DAILY');
+      }
+
+      case 'personalWeeklyMeetingSummary': {
+        // 每周个人总结
+        return await this.periodSummary.processSummary('WEEKLY');
       }
 
       // case 'openaiChat': {

@@ -2,7 +2,7 @@
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2026-01-03 09:40:30
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-26 21:30:03
+ * @LastEditTime: 2026-01-28 20:44:00
  * @FilePath: \nove-api\src\task\service\period-summary-tool.ts
  * @Description:
  *
@@ -11,6 +11,7 @@
 import { OpenaiService } from '../../integrations/openai/openai.service';
 import { PeriodSummaryRepository } from '../repositories/period-summary.repository';
 import { Injectable, Logger } from '@nestjs/common';
+import { PeriodType } from '@prisma/client';
 
 @Injectable()
 export class PeriodSummaryTool {
@@ -22,7 +23,7 @@ export class PeriodSummaryTool {
   ) {}
 
   // 生成昨天从早到晚的时间范围
-  getYesterdayRange(): {
+  getdayRange(periodType: PeriodType): {
     startOfDay: Date;
     endOfDay: Date;
   } {
@@ -55,17 +56,18 @@ export class PeriodSummaryTool {
    * 获取所有符合条件的 participantSummary 记录，并按 userId 分组
    * @returns 分组数组，每个元素包含 userId 和对应 platformUserIds
    */
-  async getGroupedPlatformUsers(): Promise<
-    { userId: string | null; platformUserIds: string[] }[]
-  > {
+  async getGroupedPlatformUsers(
+    periodType: PeriodType,
+  ): Promise<{ userId: string | null; platformUserIds: string[] }[]> {
     // 获取昨天的时间范围
-    const { startOfDay, endOfDay } = this.getYesterdayRange();
+    const { startOfDay, endOfDay } = this.getdayRange(periodType);
 
     // 查所有participantSummary的记录，但只拿平台用户的 id 和 userId
     const summaries =
       await this.periodSummaryRepository.findAllMeetingSummaries({
         startOfDay,
         endOfDay,
+        periodType,
       });
 
     // 如果没有值，直接返回
@@ -117,7 +119,10 @@ export class PeriodSummaryTool {
    * @param platformUserIds 平台用户 ID 数组
    * @returns 每条记录包含 id、partSummary、partName、startAt、endAt、username
    */
-  async getSummariesByPlatformUserIds(platformUserIds: string[]): Promise<
+  async getSummariesByPlatformUserIds(
+    periodType: PeriodType,
+    platformUserIds: string[],
+  ): Promise<
     {
       id: string;
       partSummary: string;
@@ -128,12 +133,13 @@ export class PeriodSummaryTool {
     }[]
   > {
     // 获取昨天的时间范围
-    const { startOfDay, endOfDay } = this.getYesterdayRange();
+    const { startOfDay, endOfDay } = this.getdayRange(periodType);
 
     // 查找当前分组下所有 platformUserId 对应的 participantSummary
     const summaries =
       await this.periodSummaryRepository.findSummaryByPlatformUserIds({
         platformUserIds,
+        periodType,
         startOfDay,
         endOfDay,
       });
@@ -202,12 +208,14 @@ export class PeriodSummaryTool {
     reply: string;
     userId: string | null;
     platformUserIds: string[];
+    periodType: PeriodType;
     summaries: { id: string }[];
   }) {
-    const { realName, reply, userId, platformUserIds, summaries } = params;
+    const { realName, reply, userId, platformUserIds, periodType, summaries } =
+      params;
 
     // 获取昨天是时间范围
-    const { startOfDay, endOfDay } = this.getYesterdayRange();
+    const { startOfDay, endOfDay } = this.getdayRange(periodType);
 
     // 保存ai总结内容至ParticipantSummary
     const parentSummary =
@@ -247,14 +255,20 @@ export class PeriodSummaryTool {
    * - 打印日志
    * @param group 单个用户分组信息，包含 userId 和 platformUserIds
    */
-  async processOneUserDailySummary(group: {
-    userId: string | null;
-    platformUserIds: string[];
-  }) {
+  async processOneUserSummary(
+    group: {
+      userId: string | null;
+      platformUserIds: string[];
+    },
+    periodType: PeriodType,
+  ) {
     const { userId, platformUserIds } = group;
 
     // 查找当前分组下所有 platformUserId 对应的 participantSummary
-    const summaries = await this.getSummariesByPlatformUserIds(platformUserIds);
+    const summaries = await this.getSummariesByPlatformUserIds(
+      periodType,
+      platformUserIds,
+    );
 
     let realName: string;
 
@@ -286,6 +300,7 @@ export class PeriodSummaryTool {
 
     // 保存总结内容和关系至ParticipantSummary
     const saveResult = await this.saveSummaryWithRelations({
+      periodType,
       realName,
       reply,
       userId,
