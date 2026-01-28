@@ -2,7 +2,7 @@
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2026-01-03 09:40:30
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-28 21:18:42
+ * @LastEditTime: 2026-01-28 21:30:29
  * @FilePath: \nove-api\src\task\service\period-summary-tool.ts
  * @Description:
  *
@@ -198,8 +198,8 @@ export class PeriodSummaryTool {
     return this.openaiService.createChatCompletion(messages);
   }
 
-  // derivePeriodType 根据周期类型返回父周期类型和子周期类型
-  derivePeriodType(periodType: PeriodType) {
+  // deriveChildPeriodType 根据周期类型返回子周期类型
+  deriveChildPeriodType(periodType: PeriodType) {
     let childPeriodType: PeriodType;
 
     switch (periodType) {
@@ -244,8 +244,8 @@ export class PeriodSummaryTool {
     // 获取昨天是时间范围
     const { startOfDay, endOfDay } = this.getdayRange(periodType);
 
-    // derivePeriodType 根据周期类型返回父周期类型和子周期类型
-    const childPeriodType = this.derivePeriodType(periodType);
+    // deriveChildPeriodType 根据周期类型返回子周期类型
+    const childPeriodType = this.deriveChildPeriodType(periodType);
 
     // 保存ai总结内容至ParticipantSummary
     const parentSummary =
