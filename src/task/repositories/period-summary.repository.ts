@@ -2,7 +2,7 @@
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2026-01-11 15:11:23
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-28 20:49:15
+ * @LastEditTime: 2026-01-28 22:10:09
  * @FilePath: \nove-api\src\task\repositories\period-summary.repository.ts
  * @Description:
  *
@@ -20,12 +20,12 @@ export class PeriodSummaryRepository {
    * 查所有participantSummary的记录，但只拿平台用户的 id 和 userId
    */
   async findAllMeetingSummaries({
-    startOfDay,
-    endOfDay,
+    periodStart,
+    periodEnd,
     periodType,
   }: {
-    startOfDay: Date;
-    endOfDay: Date;
+    periodStart: Date;
+    periodEnd: Date;
     periodType: PeriodType;
   }) {
     return (
@@ -38,16 +38,16 @@ export class PeriodSummaryRepository {
               // 情况 1：periodStart 有值，用 periodStart 判断
               // 会议开始时间在当天凌晨到结束时间之间
               periodStart: {
-                gte: startOfDay,
-                lte: endOfDay,
+                gte: periodStart,
+                lte: periodEnd,
               },
             },
             {
               // 情况 2：periodStart 为空，用 createdAt 判断
               periodStart: null,
               createdAt: {
-                gte: startOfDay,
-                lte: endOfDay,
+                gte: periodStart,
+                lte: periodEnd,
               },
             },
           ],
@@ -72,13 +72,13 @@ export class PeriodSummaryRepository {
   async findSummaryByPlatformUserIds({
     periodType,
     platformUserIds,
-    startOfDay,
-    endOfDay,
+    periodStart,
+    periodEnd,
   }: {
     periodType: PeriodType;
     platformUserIds: string[];
-    startOfDay: Date;
-    endOfDay: Date;
+    periodStart: Date;
+    periodEnd: Date;
   }) {
     return await this.prisma.participantSummary.findMany({
       where: {
@@ -89,16 +89,16 @@ export class PeriodSummaryRepository {
             // 情况 1：periodStart 有值，用 periodStart 判断
             // 会议开始时间在当天凌晨到结束时间之间
             periodStart: {
-              gte: startOfDay,
-              lte: endOfDay,
+              gte: periodStart,
+              lte: periodEnd,
             },
           },
           {
             // 情况 2：periodStart 为空，用 createdAt 判断
             periodStart: null,
             createdAt: {
-              gte: startOfDay,
-              lte: endOfDay,
+              gte: periodStart,
+              lte: periodEnd,
             },
           },
         ],

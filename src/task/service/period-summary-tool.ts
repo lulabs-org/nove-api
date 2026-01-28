@@ -2,7 +2,7 @@
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2026-01-03 09:40:30
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-28 21:30:29
+ * @LastEditTime: 2026-01-28 22:10:27
  * @FilePath: \nove-api\src\task\service\period-summary-tool.ts
  * @Description:
  *
@@ -12,6 +12,7 @@ import { OpenaiService } from '../../integrations/openai/openai.service';
 import { PeriodSummaryRepository } from '../repositories/period-summary.repository';
 import { Injectable, Logger } from '@nestjs/common';
 import { PeriodType } from '@prisma/client';
+import { PeriodTimeRange } from '../utils/period-time-range';
 
 @Injectable()
 export class PeriodSummaryTool {
@@ -20,37 +21,8 @@ export class PeriodSummaryTool {
   constructor(
     private readonly openaiService: OpenaiService,
     private readonly periodSummaryRepository: PeriodSummaryRepository,
+    private readonly periodTimeRange: PeriodTimeRange,
   ) {}
-
-  // 生成昨天从早到晚的时间范围
-  getdayRange(periodType: PeriodType): {
-    startOfDay: Date;
-    endOfDay: Date;
-  } {
-    const now = new Date();
-
-    const startOfDay = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate() - 1,
-      0,
-      0,
-      0,
-      0,
-    );
-
-    const endOfDay = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate() - 1,
-      23,
-      59,
-      59,
-      999,
-    );
-
-    return { startOfDay, endOfDay };
-  }
 
   /**
    * 获取所有符合条件的 participantSummary 记录，并按 userId 分组
@@ -60,13 +32,14 @@ export class PeriodSummaryTool {
     periodType: PeriodType,
   ): Promise<{ userId: string | null; platformUserIds: string[] }[]> {
     // 获取昨天的时间范围
-    const { startOfDay, endOfDay } = this.getdayRange(periodType);
+    const { periodStart, periodEnd } =
+      this.periodTimeRange.getdayRange(periodType);
 
     // 查所有participantSummary的记录，但只拿平台用户的 id 和 userId
     const summaries =
       await this.periodSummaryRepository.findAllMeetingSummaries({
-        startOfDay,
-        endOfDay,
+        periodStart,
+        periodEnd,
         periodType,
       });
 
@@ -133,15 +106,16 @@ export class PeriodSummaryTool {
     }[]
   > {
     // 获取昨天的时间范围
-    const { startOfDay, endOfDay } = this.getdayRange(periodType);
+    const { periodStart, periodEnd } =
+      this.periodTimeRange.getdayRange(periodType);
 
     // 查找当前分组下所有 platformUserId 对应的 participantSummary
     const summaries =
       await this.periodSummaryRepository.findSummaryByPlatformUserIds({
         platformUserIds,
         periodType,
-        startOfDay,
-        endOfDay,
+        periodStart,
+        periodEnd,
       });
 
     // 扁平化 username
@@ -242,7 +216,8 @@ export class PeriodSummaryTool {
       params;
 
     // 获取昨天是时间范围
-    const { startOfDay, endOfDay } = this.getdayRange(periodType);
+    const { periodStart, periodEnd } =
+      this.periodTimeRange.getdayRange(periodType);
 
     // deriveChildPeriodType 根据周期类型返回子周期类型
     const childPeriodType = this.deriveChildPeriodType(periodType);
@@ -251,8 +226,8 @@ export class PeriodSummaryTool {
     const parentSummary =
       await this.periodSummaryRepository.createPeriodSummary({
         periodType: periodType,
-        periodStart: startOfDay,
-        periodEnd: endOfDay,
+        periodStart: periodStart,
+        periodEnd: periodEnd,
         userName: realName,
         partSummary: reply,
         userId: userId ?? undefined,
