@@ -2,7 +2,7 @@
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2026-01-03 09:40:30
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-28 20:44:00
+ * @LastEditTime: 2026-01-28 21:18:42
  * @FilePath: \nove-api\src\task\service\period-summary-tool.ts
  * @Description:
  *
@@ -198,6 +198,33 @@ export class PeriodSummaryTool {
     return this.openaiService.createChatCompletion(messages);
   }
 
+  // derivePeriodType 根据周期类型返回父周期类型和子周期类型
+  derivePeriodType(periodType: PeriodType) {
+    let childPeriodType: PeriodType;
+
+    switch (periodType) {
+      case PeriodType.YEARLY:
+        childPeriodType = PeriodType.QUARTERLY;
+        break;
+      case PeriodType.QUARTERLY:
+        childPeriodType = PeriodType.MONTHLY;
+        break;
+      case PeriodType.MONTHLY:
+        childPeriodType = PeriodType.DAILY;
+        break;
+      case PeriodType.WEEKLY:
+        childPeriodType = PeriodType.DAILY;
+        break;
+      case PeriodType.DAILY:
+        childPeriodType = PeriodType.SINGLE;
+        break;
+      default:
+        childPeriodType = PeriodType.SINGLE;
+    }
+
+    return childPeriodType;
+  }
+
   /**
    * 保存 AI 总结到 participantSummary，并创建 summaryRelation 关联
    * @param params 传入 realName、reply、userId、platformUserIds、summaries
@@ -217,10 +244,13 @@ export class PeriodSummaryTool {
     // 获取昨天是时间范围
     const { startOfDay, endOfDay } = this.getdayRange(periodType);
 
+    // derivePeriodType 根据周期类型返回父周期类型和子周期类型
+    const childPeriodType = this.derivePeriodType(periodType);
+
     // 保存ai总结内容至ParticipantSummary
     const parentSummary =
       await this.periodSummaryRepository.createPeriodSummary({
-        periodType: 'DAILY',
+        periodType: periodType,
         periodStart: startOfDay,
         periodEnd: endOfDay,
         userName: realName,
@@ -234,8 +264,8 @@ export class PeriodSummaryTool {
       await this.periodSummaryRepository.createSummaryRelation({
         parentSummaryId: parentSummary.id, // parentSummary 已经定义
         childSummaryId: childSummary.id,
-        parentPeriodType: 'DAILY',
-        childPeriodType: 'SINGLE',
+        parentPeriodType: periodType,
+        childPeriodType: childPeriodType,
       });
     }
 
