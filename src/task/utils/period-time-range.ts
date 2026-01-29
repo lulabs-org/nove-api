@@ -2,7 +2,7 @@
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2026-01-28 21:34:04
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-28 21:48:46
+ * @LastEditTime: 2026-01-29 17:51:51
  * @FilePath: \nove-api\src\task\utils\period-time-range.ts
  * @Description:
  *
@@ -50,27 +50,29 @@ export class PeriodTimeRange {
   } {
     const now = new Date();
 
-    const periodStart = new Date(
+    // 上周一的日期
+    const lastMonday = new Date(
       now.getFullYear(),
       now.getMonth(),
-      now.getDate() - now.getDay(),
+      now.getDate() - now.getDay() - 6 + 1, // 调整到上周一
       0,
       0,
       0,
       0,
     );
 
-    const periodEnd = new Date(
+    // 上周日的日期
+    const lastSunday = new Date(
       now.getFullYear(),
       now.getMonth(),
-      now.getDate() - now.getDay() + 6,
+      now.getDate() - now.getDay(), // 上周日
       23,
       59,
       59,
       999,
     );
 
-    return { periodStart, periodEnd };
+    return { periodStart: lastMonday, periodEnd: lastSunday };
   }
 
   // 获取总结的时间范围
