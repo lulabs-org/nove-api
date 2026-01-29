@@ -2,7 +2,7 @@
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2026-01-03 09:40:30
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-29 18:48:05
+ * @LastEditTime: 2026-01-29 19:32:02
  * @FilePath: \nove-api\src\task\service\period-summary-tool.ts
  * @Description:
  *
@@ -36,7 +36,13 @@ export class PeriodSummaryTool {
       this.periodTimeRange.getdayRange(periodType);
 
     // 查询子总结的周期类型(这里先获取类型)
-    const childPeriodType = this.deriveChildPeriodType(periodType);
+    const { childPeriodType } = this.deriveChildPeriodType(periodType);
+    if (!childPeriodType) {
+      this.logger.warn(
+        `deriveChildPeriodType 返回了 undefined, 周期类型: ${periodType}`,
+      );
+      return [];
+    }
 
     // 查所有participantSummary的记录，但只拿平台用户的 id 和 userId
     const summaries =
@@ -109,7 +115,13 @@ export class PeriodSummaryTool {
     }[]
   > {
     // deriveChildPeriodType 根据周期类型返回子周期类型
-    const childPeriodType = this.deriveChildPeriodType(periodType);
+    const { childPeriodType } = this.deriveChildPeriodType(periodType);
+    if (!childPeriodType) {
+      this.logger.warn(
+        `deriveChildPeriodType 返回了 undefined, 周期类型: ${periodType}`,
+      );
+      return [];
+    }
 
     // 获取昨天的时间范围
     const { periodStart, periodEnd } =
@@ -157,9 +169,17 @@ export class PeriodSummaryTool {
   ): Promise<string> {
     const question = JSON.stringify(summaries);
 
+    let { periodTypeStr } = this.deriveChildPeriodType(periodType);
+    if (!periodTypeStr) {
+      this.logger.warn(
+        `deriveChildPeriodType 返回了 undefined, 周期类型: ${periodType}`,
+      );
+      return '';
+    }
+
     const systemPrompt = `
       ${prompt}
-      你是人工智能助手，需要总结用户 ${realName},${periodType} 的会议记录。
+      你是人工智能助手，需要总结用户"${realName}"${periodTypeStr} 的会议记录。
       字段说明：
       - partName: 参会人在 onstage会议的昵称
       - partSummary: 参会人 onstage会议的总结
@@ -180,30 +200,46 @@ export class PeriodSummaryTool {
   }
 
   // deriveChildPeriodType 根据周期类型返回子周期类型
-  deriveChildPeriodType(periodType: PeriodType) {
-    let childPeriodType: PeriodType;
+  deriveChildPeriodType(periodType: PeriodType): {
+    childPeriodType?: PeriodType;
+    periodTypeStr?: string;
+  } {
+    let childPeriodType: PeriodType | undefined;
+    let periodTypeStr: string | undefined;
 
     switch (periodType) {
       case PeriodType.YEARLY:
         childPeriodType = PeriodType.QUARTERLY;
+        periodTypeStr = '本年';
         break;
       case PeriodType.QUARTERLY:
         childPeriodType = PeriodType.MONTHLY;
+        periodTypeStr = '本季度';
         break;
       case PeriodType.MONTHLY:
         childPeriodType = PeriodType.DAILY;
+        periodTypeStr = '本月';
         break;
       case PeriodType.WEEKLY:
         childPeriodType = PeriodType.DAILY;
+        periodTypeStr = '本周';
         break;
       case PeriodType.DAILY:
         childPeriodType = PeriodType.SINGLE;
+        periodTypeStr = '本日';
         break;
       default:
-        childPeriodType = PeriodType.SINGLE;
+        this.logger.warn(
+          `deriveChildPeriodType 返回了 undefined, 周期类型: ${periodType}`,
+        );
+        childPeriodType = undefined;
+        periodTypeStr = undefined;
     }
 
-    return childPeriodType;
+    return {
+      childPeriodType,
+      periodTypeStr,
+    };
   }
 
   /**
@@ -227,7 +263,13 @@ export class PeriodSummaryTool {
       this.periodTimeRange.getdayRange(periodType);
 
     // deriveChildPeriodType 根据周期类型返回子周期类型
-    const childPeriodType = this.deriveChildPeriodType(periodType);
+    const { childPeriodType } = this.deriveChildPeriodType(periodType);
+    if (!childPeriodType) {
+      this.logger.warn(
+        `deriveChildPeriodType 返回了 undefined, 周期类型: ${periodType}`,
+      );
+      return [];
+    }
 
     // 保存ai总结内容至ParticipantSummary
     const parentSummary =
