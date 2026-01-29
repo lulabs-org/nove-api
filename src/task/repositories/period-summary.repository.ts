@@ -22,17 +22,17 @@ export class PeriodSummaryRepository {
   async findAllMeetingSummaries({
     periodStart,
     periodEnd,
-    periodType,
+    childPeriodType,
   }: {
     periodStart: Date;
     periodEnd: Date;
-    periodType: PeriodType;
+    childPeriodType: PeriodType;
   }) {
     return (
       (await this.prisma.participantSummary.findMany({
         where: {
           platformUserId: { not: null }, // 平台用户不为空
-          periodType: periodType, // 仅单次会议
+          periodType: childPeriodType, // 仅单次会议
           OR: [
             {
               // 情况 1：periodStart 有值，用 periodStart 判断
@@ -70,12 +70,12 @@ export class PeriodSummaryRepository {
    * 查找当前分组下所有 platformUserId 对应的 participantSummary
    */
   async findSummaryByPlatformUserIds({
-    periodType,
+    childPeriodType,
     platformUserIds,
     periodStart,
     periodEnd,
   }: {
-    periodType: PeriodType;
+    childPeriodType: PeriodType;
     platformUserIds: string[];
     periodStart: Date;
     periodEnd: Date;
@@ -83,7 +83,7 @@ export class PeriodSummaryRepository {
     return await this.prisma.participantSummary.findMany({
       where: {
         platformUserId: { in: platformUserIds }, // 当前分组的所有 platformUserId
-        periodType: periodType, // 仅单次会议
+        periodType: childPeriodType, // 仅单次会议
         OR: [
           {
             // 情况 1：periodStart 有值，用 periodStart 判断

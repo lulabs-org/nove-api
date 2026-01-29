@@ -2,7 +2,7 @@
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2026-01-03 09:40:30
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-28 22:10:27
+ * @LastEditTime: 2026-01-29 18:22:08
  * @FilePath: \nove-api\src\task\service\period-summary-tool.ts
  * @Description:
  *
@@ -35,12 +35,15 @@ export class PeriodSummaryTool {
     const { periodStart, periodEnd } =
       this.periodTimeRange.getdayRange(periodType);
 
+    // 查询子总结的周期类型(这里先获取类型)
+    const childPeriodType = this.deriveChildPeriodType(periodType);
+
     // 查所有participantSummary的记录，但只拿平台用户的 id 和 userId
     const summaries =
       await this.periodSummaryRepository.findAllMeetingSummaries({
         periodStart,
         periodEnd,
-        periodType,
+        childPeriodType,
       });
 
     // 如果没有值，直接返回
@@ -105,6 +108,9 @@ export class PeriodSummaryTool {
       username: string; // 这个是参会人在平台上的用户名(user.username)
     }[]
   > {
+    // deriveChildPeriodType 根据周期类型返回子周期类型
+    const childPeriodType = this.deriveChildPeriodType(periodType);
+
     // 获取昨天的时间范围
     const { periodStart, periodEnd } =
       this.periodTimeRange.getdayRange(periodType);
@@ -113,7 +119,7 @@ export class PeriodSummaryTool {
     const summaries =
       await this.periodSummaryRepository.findSummaryByPlatformUserIds({
         platformUserIds,
-        periodType,
+        childPeriodType,
         periodStart,
         periodEnd,
       });
@@ -146,16 +152,17 @@ export class PeriodSummaryTool {
       periodEnd: Date | null;
       username: string;
     }[],
+    periodType: PeriodType,
     prompt: string,
   ): Promise<string> {
     const question = JSON.stringify(summaries);
 
     const systemPrompt = `
       ${prompt}
-      你是人工智能助手，需要总结用户 ${realName} 当天的会议记录。
+      你是人工智能助手，需要总结用户 ${realName},${periodType} 的会议记录。
       字段说明：
-      - partName: 参会人在当堂会议的昵称
-      - partSummary: 参会人当堂会议的总结
+      - partName: 参会人在 onstage会议的昵称
+      - partSummary: 参会人 onstage会议的总结
       - startAt: 会议总结的开始区间
       - endAt: 会议总结的结束区间
       - username: 用户的真实姓名
@@ -268,7 +275,6 @@ export class PeriodSummaryTool {
     periodType: PeriodType,
   ) {
     const { userId, platformUserIds } = group;
-
     // 查找当前分组下所有 platformUserId 对应的 participantSummary
     const summaries = await this.getSummariesByPlatformUserIds(
       periodType,
@@ -294,6 +300,7 @@ export class PeriodSummaryTool {
     const reply = await this.generateSummary(
       realName,
       summaries,
+      periodType,
       '', // 或者你之后自定义 prompt
     );
     this.logger.debug(`OpenAI聊天完成: ${reply?.slice(0, 200)}`);
