@@ -2,7 +2,7 @@
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2026-01-03 09:40:30
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-29 18:22:08
+ * @LastEditTime: 2026-01-29 18:48:05
  * @FilePath: \nove-api\src\task\service\period-summary-tool.ts
  * @Description:
  *
@@ -31,7 +31,7 @@ export class PeriodSummaryTool {
   async getGroupedPlatformUsers(
     periodType: PeriodType,
   ): Promise<{ userId: string | null; platformUserIds: string[] }[]> {
-    // 获取昨天的时间范围
+    // 获取时间范围
     const { periodStart, periodEnd } =
       this.periodTimeRange.getdayRange(periodType);
 
