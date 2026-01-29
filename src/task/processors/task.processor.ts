@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-10-03 06:03:56
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-28 20:16:13
+ * @LastEditTime: 2026-01-29 18:07:24
  * @FilePath: \nove-api\src\task\processors\task.processor.ts
  * @Description:
  *
@@ -19,9 +19,15 @@ import {
 import type { Job } from 'bullmq';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Injectable, Logger } from '@nestjs/common';
-import { TaskStatus } from '@prisma/client';
+import { TaskStatus, PeriodType } from '@prisma/client';
 
 import { PeriodSummary } from '../service/period-summary.service';
+
+// 任务队列中 Job 的 payload 接口定义
+interface JobPayload {
+  originalName?: string;
+  periodType?: PeriodType;
+}
 
 @Injectable()
 @Processor('tasks')
@@ -79,13 +85,14 @@ export class TaskProcessor extends WorkerHost {
         // await this.cleanupService.removeExpiredData(job.data.retentionDays);
         break;
 
-      case 'personalDailyMeetingSummary': {
+      case 'personalMeetingSummary': {
         // 周期性使用方法(默认时区是Asia/Shanghai)：
         // {
         //   "name": "helloWorld",
         //   "cron": "* * * * * *",
         //   "payload": {
-        //     "originalName": "helloWorld"
+        //     "originalName": "helloWorld",
+        //     "periodType": "DAILY"
         //   }
         // }
 
@@ -95,16 +102,27 @@ export class TaskProcessor extends WorkerHost {
         //   "cron": "0 0 3 * * *",
         //   "timezone": "Asia/Shanghai",
         //   "payload": {
-        //     "originalName": "helloWorld"
+        //     "originalName": "helloWorld",
+        //     "periodType": "DAILY"
         //   }
         // }
 
-        return await this.periodSummary.processSummary('DAILY');
-      }
+        // SINGLE // 单次会议
+        // DAILY // 每日
+        // WEEKLY // 每周
+        // MONTHLY // 每月
+        // QUARTERLY // 每季度
+        // YEARLY // 每年
 
-      case 'personalWeeklyMeetingSummary': {
-        // 每周个人总结
-        return await this.periodSummary.processSummary('WEEKLY');
+        const jobData = job.data as JobPayload;
+        const periodType = jobData.periodType;
+
+        if (!periodType) {
+          this.logger.warn('periodType 未提供，任务跳过执行');
+          return { ok: false, message: 'periodType is required' };
+        }
+
+        return await this.periodSummary.processSummary(periodType);
       }
 
       // case 'openaiChat': {
