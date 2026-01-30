@@ -2,7 +2,7 @@
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2026-01-28 21:34:04
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-30 19:43:50
+ * @LastEditTime: 2026-01-30 19:50:01
  * @FilePath: \nove-api\src\task\utils\period-time-range.ts
  * @Description:
  *
@@ -111,6 +111,41 @@ export class PeriodTimeRange {
     };
   }
 
+  // 获取“上一个完整年份”的时间范围
+  yearlyRange(): {
+    periodStart: Date;
+    periodEnd: Date;
+  } {
+    const now = new Date();
+
+    // 去年最后一天 23:59:59.999
+    const lastYearEnd = new Date(
+      now.getFullYear(),
+      0, // 1 月
+      0, // 第 0 天 → 回退到上一年的最后一天
+      23,
+      59,
+      59,
+      999,
+    );
+
+    // 去年第一天 00:00:00.000
+    const lastYearStart = new Date(
+      lastYearEnd.getFullYear(),
+      0, // 1 月
+      1,
+      0,
+      0,
+      0,
+      0,
+    );
+
+    return {
+      periodStart: lastYearStart,
+      periodEnd: lastYearEnd,
+    };
+  }
+
   // 获取总结的时间范围
   getdayRange(periodType: PeriodType): {
     periodStart: Date;
@@ -120,6 +155,9 @@ export class PeriodTimeRange {
     let periodEnd: Date;
 
     switch (periodType) {
+      case PeriodType.YEARLY:
+        ({ periodStart, periodEnd } = this.yearlyRange());
+        break;
       case PeriodType.MONTHLY:
         ({ periodStart, periodEnd } = this.monthlyRange());
         break;
