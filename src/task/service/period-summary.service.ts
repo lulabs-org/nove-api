@@ -2,7 +2,7 @@
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2025-12-25 20:04:17
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-11 16:49:08
+ * @LastEditTime: 2026-01-28 20:53:14
  * @FilePath: \nove-api\src\task\service\period-summary.service.ts
  * @Description:
  *
@@ -11,6 +11,7 @@
 // import type { Job } from 'bullmq';
 import { PeriodSummaryTool } from './period-summary-tool';
 import { Injectable, Logger } from '@nestjs/common';
+import { PeriodType } from '@prisma/client';
 
 @Injectable()
 export class PeriodSummary {
@@ -27,14 +28,16 @@ export class PeriodSummary {
    * @param job BullMQ Job 对象（可用于任务追踪），暂时用不到删除了
    * @returns 处理完成状态及时间戳
    */
-  async processDailySummary(): Promise<{ ok: boolean; at: string }> {
+  async processSummary(
+    periodType: PeriodType,
+  ): Promise<{ ok: boolean; at: string }> {
     this.logger.log(
-      '开始执行任务: personalDailyMeetingSummary',
+      `开始执行任务: personal${periodType}MeetingSummary`,
       new Date().toISOString(),
     );
 
     // 调用 getGroupedPlatformUsers 方法获取分组结果
-    const data = await this.summaryTool.getGroupedPlatformUsers();
+    const data = await this.summaryTool.getGroupedPlatformUsers(periodType);
 
     // 如果没有值，直接返回
     if (data.length === 0) {
@@ -53,7 +56,7 @@ export class PeriodSummary {
 
     // 遍历每个分组，处理一个用户的会议记录
     for (const group of data) {
-      await this.summaryTool.processOneUserDailySummary(group);
+      await this.summaryTool.processOneUserSummary(group, periodType);
 
       // 等待 5 秒
       await new Promise((resolve) => setTimeout(resolve, 5000));

@@ -2,7 +2,7 @@
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2026-01-11 15:11:23
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-26 20:18:56
+ * @LastEditTime: 2026-01-28 22:10:09
  * @FilePath: \nove-api\src\task\repositories\period-summary.repository.ts
  * @Description:
  *
@@ -10,6 +10,7 @@
  */
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
+import { PeriodType } from '@prisma/client';
 
 @Injectable()
 export class PeriodSummaryRepository {
@@ -19,32 +20,34 @@ export class PeriodSummaryRepository {
    * 查所有participantSummary的记录，但只拿平台用户的 id 和 userId
    */
   async findAllMeetingSummaries({
-    startOfDay,
-    endOfDay,
+    periodStart,
+    periodEnd,
+    childPeriodType,
   }: {
-    startOfDay: Date;
-    endOfDay: Date;
+    periodStart: Date;
+    periodEnd: Date;
+    childPeriodType: PeriodType;
   }) {
     return (
       (await this.prisma.participantSummary.findMany({
         where: {
           platformUserId: { not: null }, // 平台用户不为空
-          periodType: 'SINGLE', // 仅单次会议
+          periodType: childPeriodType, // 仅单次会议
           OR: [
             {
               // 情况 1：periodStart 有值，用 periodStart 判断
               // 会议开始时间在当天凌晨到结束时间之间
               periodStart: {
-                gte: startOfDay,
-                lte: endOfDay,
+                gte: periodStart,
+                lte: periodEnd,
               },
             },
             {
               // 情况 2：periodStart 为空，用 createdAt 判断
               periodStart: null,
               createdAt: {
-                gte: startOfDay,
-                lte: endOfDay,
+                gte: periodStart,
+                lte: periodEnd,
               },
             },
           ],
@@ -67,33 +70,35 @@ export class PeriodSummaryRepository {
    * 查找当前分组下所有 platformUserId 对应的 participantSummary
    */
   async findSummaryByPlatformUserIds({
+    childPeriodType,
     platformUserIds,
-    startOfDay,
-    endOfDay,
+    periodStart,
+    periodEnd,
   }: {
+    childPeriodType: PeriodType;
     platformUserIds: string[];
-    startOfDay: Date;
-    endOfDay: Date;
+    periodStart: Date;
+    periodEnd: Date;
   }) {
     return await this.prisma.participantSummary.findMany({
       where: {
         platformUserId: { in: platformUserIds }, // 当前分组的所有 platformUserId
-        periodType: 'SINGLE', // 仅单次会议
+        periodType: childPeriodType, // 仅单次会议
         OR: [
           {
             // 情况 1：periodStart 有值，用 periodStart 判断
             // 会议开始时间在当天凌晨到结束时间之间
             periodStart: {
-              gte: startOfDay,
-              lte: endOfDay,
+              gte: periodStart,
+              lte: periodEnd,
             },
           },
           {
             // 情况 2：periodStart 为空，用 createdAt 判断
             periodStart: null,
             createdAt: {
-              gte: startOfDay,
-              lte: endOfDay,
+              gte: periodStart,
+              lte: periodEnd,
             },
           },
         ],
@@ -121,7 +126,7 @@ export class PeriodSummaryRepository {
    * 创建周期性总结
    */
   async createPeriodSummary(data: {
-    periodType: 'DAILY' | 'WEEKLY' | 'MONTHLY';
+    periodType: PeriodType;
     periodStart: Date;
     periodEnd: Date;
     userName: string;
@@ -151,8 +156,8 @@ export class PeriodSummaryRepository {
   async createSummaryRelation(data: {
     parentSummaryId: string;
     childSummaryId: string;
-    parentPeriodType: 'SINGLE' | 'DAILY' | 'WEEKLY' | 'MONTHLY';
-    childPeriodType: 'SINGLE' | 'DAILY' | 'WEEKLY' | 'MONTHLY';
+    parentPeriodType: PeriodType;
+    childPeriodType: PeriodType;
   }) {
     return this.prisma.summaryRelation.create({
       data,

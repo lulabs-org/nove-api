@@ -2,7 +2,7 @@
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2026-01-03 09:40:30
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-26 21:30:03
+ * @LastEditTime: 2026-01-29 19:32:02
  * @FilePath: \nove-api\src\task\service\period-summary-tool.ts
  * @Description:
  *
@@ -11,6 +11,8 @@
 import { OpenaiService } from '../../integrations/openai/openai.service';
 import { PeriodSummaryRepository } from '../repositories/period-summary.repository';
 import { Injectable, Logger } from '@nestjs/common';
+import { PeriodType } from '@prisma/client';
+import { PeriodTimeRange } from '../utils/period-time-range';
 
 @Injectable()
 export class PeriodSummaryTool {
@@ -19,53 +21,35 @@ export class PeriodSummaryTool {
   constructor(
     private readonly openaiService: OpenaiService,
     private readonly periodSummaryRepository: PeriodSummaryRepository,
+    private readonly periodTimeRange: PeriodTimeRange,
   ) {}
-
-  // 生成昨天从早到晚的时间范围
-  getYesterdayRange(): {
-    startOfDay: Date;
-    endOfDay: Date;
-  } {
-    const now = new Date();
-
-    const startOfDay = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate() - 1,
-      0,
-      0,
-      0,
-      0,
-    );
-
-    const endOfDay = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate() - 1,
-      23,
-      59,
-      59,
-      999,
-    );
-
-    return { startOfDay, endOfDay };
-  }
 
   /**
    * 获取所有符合条件的 participantSummary 记录，并按 userId 分组
    * @returns 分组数组，每个元素包含 userId 和对应 platformUserIds
    */
-  async getGroupedPlatformUsers(): Promise<
-    { userId: string | null; platformUserIds: string[] }[]
-  > {
-    // 获取昨天的时间范围
-    const { startOfDay, endOfDay } = this.getYesterdayRange();
+  async getGroupedPlatformUsers(
+    periodType: PeriodType,
+  ): Promise<{ userId: string | null; platformUserIds: string[] }[]> {
+    // 获取时间范围
+    const { periodStart, periodEnd } =
+      this.periodTimeRange.getdayRange(periodType);
+
+    // 查询子总结的周期类型(这里先获取类型)
+    const { childPeriodType } = this.deriveChildPeriodType(periodType);
+    if (!childPeriodType) {
+      this.logger.warn(
+        `deriveChildPeriodType 返回了 undefined, 周期类型: ${periodType}`,
+      );
+      return [];
+    }
 
     // 查所有participantSummary的记录，但只拿平台用户的 id 和 userId
     const summaries =
       await this.periodSummaryRepository.findAllMeetingSummaries({
-        startOfDay,
-        endOfDay,
+        periodStart,
+        periodEnd,
+        childPeriodType,
       });
 
     // 如果没有值，直接返回
@@ -117,7 +101,10 @@ export class PeriodSummaryTool {
    * @param platformUserIds 平台用户 ID 数组
    * @returns 每条记录包含 id、partSummary、partName、startAt、endAt、username
    */
-  async getSummariesByPlatformUserIds(platformUserIds: string[]): Promise<
+  async getSummariesByPlatformUserIds(
+    periodType: PeriodType,
+    platformUserIds: string[],
+  ): Promise<
     {
       id: string;
       partSummary: string;
@@ -127,15 +114,26 @@ export class PeriodSummaryTool {
       username: string; // 这个是参会人在平台上的用户名(user.username)
     }[]
   > {
+    // deriveChildPeriodType 根据周期类型返回子周期类型
+    const { childPeriodType } = this.deriveChildPeriodType(periodType);
+    if (!childPeriodType) {
+      this.logger.warn(
+        `deriveChildPeriodType 返回了 undefined, 周期类型: ${periodType}`,
+      );
+      return [];
+    }
+
     // 获取昨天的时间范围
-    const { startOfDay, endOfDay } = this.getYesterdayRange();
+    const { periodStart, periodEnd } =
+      this.periodTimeRange.getdayRange(periodType);
 
     // 查找当前分组下所有 platformUserId 对应的 participantSummary
     const summaries =
       await this.periodSummaryRepository.findSummaryByPlatformUserIds({
         platformUserIds,
-        startOfDay,
-        endOfDay,
+        childPeriodType,
+        periodStart,
+        periodEnd,
       });
 
     // 扁平化 username
@@ -166,16 +164,25 @@ export class PeriodSummaryTool {
       periodEnd: Date | null;
       username: string;
     }[],
+    periodType: PeriodType,
     prompt: string,
   ): Promise<string> {
     const question = JSON.stringify(summaries);
 
+    let { periodTypeStr } = this.deriveChildPeriodType(periodType);
+    if (!periodTypeStr) {
+      this.logger.warn(
+        `deriveChildPeriodType 返回了 undefined, 周期类型: ${periodType}`,
+      );
+      return '';
+    }
+
     const systemPrompt = `
       ${prompt}
-      你是人工智能助手，需要总结用户 ${realName} 当天的会议记录。
+      你是人工智能助手，需要总结用户"${realName}"${periodTypeStr} 的会议记录。
       字段说明：
-      - partName: 参会人在当堂会议的昵称
-      - partSummary: 参会人当堂会议的总结
+      - partName: 参会人在 onstage会议的昵称
+      - partSummary: 参会人 onstage会议的总结
       - startAt: 会议总结的开始区间
       - endAt: 会议总结的结束区间
       - username: 用户的真实姓名
@@ -192,6 +199,49 @@ export class PeriodSummaryTool {
     return this.openaiService.createChatCompletion(messages);
   }
 
+  // deriveChildPeriodType 根据周期类型返回子周期类型
+  deriveChildPeriodType(periodType: PeriodType): {
+    childPeriodType?: PeriodType;
+    periodTypeStr?: string;
+  } {
+    let childPeriodType: PeriodType | undefined;
+    let periodTypeStr: string | undefined;
+
+    switch (periodType) {
+      case PeriodType.YEARLY:
+        childPeriodType = PeriodType.QUARTERLY;
+        periodTypeStr = '本年';
+        break;
+      case PeriodType.QUARTERLY:
+        childPeriodType = PeriodType.MONTHLY;
+        periodTypeStr = '本季度';
+        break;
+      case PeriodType.MONTHLY:
+        childPeriodType = PeriodType.DAILY;
+        periodTypeStr = '本月';
+        break;
+      case PeriodType.WEEKLY:
+        childPeriodType = PeriodType.DAILY;
+        periodTypeStr = '本周';
+        break;
+      case PeriodType.DAILY:
+        childPeriodType = PeriodType.SINGLE;
+        periodTypeStr = '本日';
+        break;
+      default:
+        this.logger.warn(
+          `deriveChildPeriodType 返回了 undefined, 周期类型: ${periodType}`,
+        );
+        childPeriodType = undefined;
+        periodTypeStr = undefined;
+    }
+
+    return {
+      childPeriodType,
+      periodTypeStr,
+    };
+  }
+
   /**
    * 保存 AI 总结到 participantSummary，并创建 summaryRelation 关联
    * @param params 传入 realName、reply、userId、platformUserIds、summaries
@@ -202,19 +252,31 @@ export class PeriodSummaryTool {
     reply: string;
     userId: string | null;
     platformUserIds: string[];
+    periodType: PeriodType;
     summaries: { id: string }[];
   }) {
-    const { realName, reply, userId, platformUserIds, summaries } = params;
+    const { realName, reply, userId, platformUserIds, periodType, summaries } =
+      params;
 
     // 获取昨天是时间范围
-    const { startOfDay, endOfDay } = this.getYesterdayRange();
+    const { periodStart, periodEnd } =
+      this.periodTimeRange.getdayRange(periodType);
+
+    // deriveChildPeriodType 根据周期类型返回子周期类型
+    const { childPeriodType } = this.deriveChildPeriodType(periodType);
+    if (!childPeriodType) {
+      this.logger.warn(
+        `deriveChildPeriodType 返回了 undefined, 周期类型: ${periodType}`,
+      );
+      return [];
+    }
 
     // 保存ai总结内容至ParticipantSummary
     const parentSummary =
       await this.periodSummaryRepository.createPeriodSummary({
-        periodType: 'DAILY',
-        periodStart: startOfDay,
-        periodEnd: endOfDay,
+        periodType: periodType,
+        periodStart: periodStart,
+        periodEnd: periodEnd,
         userName: realName,
         partSummary: reply,
         userId: userId ?? undefined,
@@ -226,8 +288,8 @@ export class PeriodSummaryTool {
       await this.periodSummaryRepository.createSummaryRelation({
         parentSummaryId: parentSummary.id, // parentSummary 已经定义
         childSummaryId: childSummary.id,
-        parentPeriodType: 'DAILY',
-        childPeriodType: 'SINGLE',
+        parentPeriodType: periodType,
+        childPeriodType: childPeriodType,
       });
     }
 
@@ -247,14 +309,19 @@ export class PeriodSummaryTool {
    * - 打印日志
    * @param group 单个用户分组信息，包含 userId 和 platformUserIds
    */
-  async processOneUserDailySummary(group: {
-    userId: string | null;
-    platformUserIds: string[];
-  }) {
+  async processOneUserSummary(
+    group: {
+      userId: string | null;
+      platformUserIds: string[];
+    },
+    periodType: PeriodType,
+  ) {
     const { userId, platformUserIds } = group;
-
     // 查找当前分组下所有 platformUserId 对应的 participantSummary
-    const summaries = await this.getSummariesByPlatformUserIds(platformUserIds);
+    const summaries = await this.getSummariesByPlatformUserIds(
+      periodType,
+      platformUserIds,
+    );
 
     let realName: string;
 
@@ -275,6 +342,7 @@ export class PeriodSummaryTool {
     const reply = await this.generateSummary(
       realName,
       summaries,
+      periodType,
       '', // 或者你之后自定义 prompt
     );
     this.logger.debug(`OpenAI聊天完成: ${reply?.slice(0, 200)}`);
@@ -286,6 +354,7 @@ export class PeriodSummaryTool {
 
     // 保存总结内容和关系至ParticipantSummary
     const saveResult = await this.saveSummaryWithRelations({
+      periodType,
       realName,
       reply,
       userId,
