@@ -2,7 +2,7 @@
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2026-01-03 09:40:30
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-29 19:32:02
+ * @LastEditTime: 2026-01-30 19:50:48
  * @FilePath: \nove-api\src\task\service\period-summary-tool.ts
  * @Description:
  *
@@ -209,7 +209,7 @@ export class PeriodSummaryTool {
 
     switch (periodType) {
       case PeriodType.YEARLY:
-        childPeriodType = PeriodType.QUARTERLY;
+        childPeriodType = PeriodType.MONTHLY;
         periodTypeStr = '本年';
         break;
       case PeriodType.QUARTERLY:
