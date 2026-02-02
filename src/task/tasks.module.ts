@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-10-03 05:55:35
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-29 18:39:01
+ * @LastEditTime: 2026-02-02 21:03:01
  * @FilePath: \nove-api\src\task\tasks.module.ts
  * @Description:
  *
@@ -22,12 +22,16 @@ import { PeriodSummaryTool } from './service/period-summary-tool';
 import { PeriodSummaryRepository } from './repositories/period-summary.repository';
 import { PeriodTimeRange } from './utils/period-time-range';
 
+import { ConfigModule } from '@nestjs/config';
+import { openaiConfig } from '../configs/openai.config';
+
 @Module({
   imports: [
     BullModule.registerQueue({
       name: 'tasks', // 队列名
     }),
     OpenaiModule,
+    ConfigModule.forFeature(openaiConfig),
   ],
   controllers: [TasksController],
   providers: [
