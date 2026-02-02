@@ -2,7 +2,7 @@
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2026-01-11 15:11:23
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-28 22:10:09
+ * @LastEditTime: 2026-02-02 20:09:46
  * @FilePath: \nove-api\src\task\repositories\period-summary.repository.ts
  * @Description:
  *
@@ -133,6 +133,7 @@ export class PeriodSummaryRepository {
     partSummary: string;
     userId?: string;
     platformUserId?: string;
+    aiModel?: string;
   }) {
     return await this.prisma.participantSummary.create({
       data: {
@@ -141,7 +142,7 @@ export class PeriodSummaryRepository {
         periodEnd: data.periodEnd,
         userName: data.userName,
         partSummary: data.partSummary,
-
+        aiModel: data.aiModel,
         // 关键逻辑：有 userId 就只存 userId，没有才存 platformUserId
         ...(data.userId
           ? { userId: data.userId }

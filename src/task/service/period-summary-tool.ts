@@ -2,7 +2,7 @@
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2026-01-03 09:40:30
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-30 19:50:48
+ * @LastEditTime: 2026-02-02 20:06:55
  * @FilePath: \nove-api\src\task\service\period-summary-tool.ts
  * @Description:
  *
@@ -14,6 +14,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PeriodType } from '@prisma/client';
 import { PeriodTimeRange } from '../utils/period-time-range';
 
+import { openaiConfig } from '../../configs/openai.config';
+import { ConfigType } from '@nestjs/config';
+
 @Injectable()
 export class PeriodSummaryTool {
   private readonly logger = new Logger(PeriodSummaryTool.name);
@@ -22,6 +25,7 @@ export class PeriodSummaryTool {
     private readonly openaiService: OpenaiService,
     private readonly periodSummaryRepository: PeriodSummaryRepository,
     private readonly periodTimeRange: PeriodTimeRange,
+    private readonly config: ConfigType<typeof openaiConfig>,
   ) {}
 
   /**
@@ -271,6 +275,9 @@ export class PeriodSummaryTool {
       return [];
     }
 
+    // 获取对话ai的模型信息
+    const configModel = this.config.model;
+
     // 保存ai总结内容至ParticipantSummary
     const parentSummary =
       await this.periodSummaryRepository.createPeriodSummary({
@@ -281,6 +288,7 @@ export class PeriodSummaryTool {
         partSummary: reply,
         userId: userId ?? undefined,
         platformUserId: platformUserIds[0] ?? undefined, // 取第一个 platformUserId 作为关联
+        aiModel: configModel,
       });
 
     // 遍历 summaries，把每条记录的 id 作为 childSummaryId 创建 SummaryRelation
