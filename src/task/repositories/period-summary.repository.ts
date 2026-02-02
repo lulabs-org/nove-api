@@ -2,7 +2,7 @@
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2026-01-11 15:11:23
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-28 22:10:09
+ * @LastEditTime: 2026-02-02 20:42:42
  * @FilePath: \nove-api\src\task\repositories\period-summary.repository.ts
  * @Description:
  *
@@ -22,17 +22,17 @@ export class PeriodSummaryRepository {
   async findAllMeetingSummaries({
     periodStart,
     periodEnd,
-    childPeriodType,
+    parentPeriodType,
   }: {
     periodStart: Date;
     periodEnd: Date;
-    childPeriodType: PeriodType;
+    parentPeriodType: PeriodType;
   }) {
     return (
       (await this.prisma.participantSummary.findMany({
         where: {
           platformUserId: { not: null }, // 平台用户不为空
-          periodType: childPeriodType, // 仅单次会议
+          periodType: parentPeriodType, // 仅单次会议
           OR: [
             {
               // 情况 1：periodStart 有值，用 periodStart 判断
@@ -70,12 +70,12 @@ export class PeriodSummaryRepository {
    * 查找当前分组下所有 platformUserId 对应的 participantSummary
    */
   async findSummaryByPlatformUserIds({
-    childPeriodType,
+    parentPeriodType,
     platformUserIds,
     periodStart,
     periodEnd,
   }: {
-    childPeriodType: PeriodType;
+    parentPeriodType: PeriodType;
     platformUserIds: string[];
     periodStart: Date;
     periodEnd: Date;
@@ -83,7 +83,7 @@ export class PeriodSummaryRepository {
     return await this.prisma.participantSummary.findMany({
       where: {
         platformUserId: { in: platformUserIds }, // 当前分组的所有 platformUserId
-        periodType: childPeriodType, // 仅单次会议
+        periodType: parentPeriodType, // 仅单次会议
         OR: [
           {
             // 情况 1：periodStart 有值，用 periodStart 判断
@@ -133,6 +133,7 @@ export class PeriodSummaryRepository {
     partSummary: string;
     userId?: string;
     platformUserId?: string;
+    aiModel?: string;
   }) {
     return await this.prisma.participantSummary.create({
       data: {
@@ -141,7 +142,7 @@ export class PeriodSummaryRepository {
         periodEnd: data.periodEnd,
         userName: data.userName,
         partSummary: data.partSummary,
-
+        aiModel: data.aiModel,
         // 关键逻辑：有 userId 就只存 userId，没有才存 platformUserId
         ...(data.userId
           ? { userId: data.userId }

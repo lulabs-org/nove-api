@@ -2,7 +2,7 @@
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2026-01-03 09:40:30
  * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-30 19:50:48
+ * @LastEditTime: 2026-02-02 20:42:33
  * @FilePath: \nove-api\src\task\service\period-summary-tool.ts
  * @Description:
  *
@@ -10,9 +10,12 @@
  */
 import { OpenaiService } from '../../integrations/openai/openai.service';
 import { PeriodSummaryRepository } from '../repositories/period-summary.repository';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject } from '@nestjs/common';
 import { PeriodType } from '@prisma/client';
 import { PeriodTimeRange } from '../utils/period-time-range';
+
+import { openaiConfig } from '../../configs/openai.config';
+import { ConfigType } from '@nestjs/config';
 
 @Injectable()
 export class PeriodSummaryTool {
@@ -22,6 +25,9 @@ export class PeriodSummaryTool {
     private readonly openaiService: OpenaiService,
     private readonly periodSummaryRepository: PeriodSummaryRepository,
     private readonly periodTimeRange: PeriodTimeRange,
+
+    @Inject(openaiConfig.KEY)
+    private readonly config: ConfigType<typeof openaiConfig>,
   ) {}
 
   /**
@@ -36,10 +42,10 @@ export class PeriodSummaryTool {
       this.periodTimeRange.getdayRange(periodType);
 
     // 查询子总结的周期类型(这里先获取类型)
-    const { childPeriodType } = this.deriveChildPeriodType(periodType);
-    if (!childPeriodType) {
+    const { parentPeriodType } = this.deriveParentPeriodType(periodType);
+    if (!parentPeriodType) {
       this.logger.warn(
-        `deriveChildPeriodType 返回了 undefined, 周期类型: ${periodType}`,
+        `deriveParentPeriodType 返回了 undefined, 周期类型: ${periodType}`,
       );
       return [];
     }
@@ -49,7 +55,7 @@ export class PeriodSummaryTool {
       await this.periodSummaryRepository.findAllMeetingSummaries({
         periodStart,
         periodEnd,
-        childPeriodType,
+        parentPeriodType,
       });
 
     // 如果没有值，直接返回
@@ -115,10 +121,10 @@ export class PeriodSummaryTool {
     }[]
   > {
     // deriveChildPeriodType 根据周期类型返回子周期类型
-    const { childPeriodType } = this.deriveChildPeriodType(periodType);
-    if (!childPeriodType) {
+    const { parentPeriodType } = this.deriveParentPeriodType(periodType);
+    if (!parentPeriodType) {
       this.logger.warn(
-        `deriveChildPeriodType 返回了 undefined, 周期类型: ${periodType}`,
+        `deriveParentPeriodType 返回了 undefined, 周期类型: ${periodType}`,
       );
       return [];
     }
@@ -131,7 +137,7 @@ export class PeriodSummaryTool {
     const summaries =
       await this.periodSummaryRepository.findSummaryByPlatformUserIds({
         platformUserIds,
-        childPeriodType,
+        parentPeriodType,
         periodStart,
         periodEnd,
       });
@@ -169,10 +175,10 @@ export class PeriodSummaryTool {
   ): Promise<string> {
     const question = JSON.stringify(summaries);
 
-    let { periodTypeStr } = this.deriveChildPeriodType(periodType);
+    let { periodTypeStr } = this.deriveParentPeriodType(periodType);
     if (!periodTypeStr) {
       this.logger.warn(
-        `deriveChildPeriodType 返回了 undefined, 周期类型: ${periodType}`,
+        `deriveParentPeriodType 返回了 undefined, 周期类型: ${periodType}`,
       );
       return '';
     }
@@ -200,44 +206,44 @@ export class PeriodSummaryTool {
   }
 
   // deriveChildPeriodType 根据周期类型返回子周期类型
-  deriveChildPeriodType(periodType: PeriodType): {
-    childPeriodType?: PeriodType;
+  deriveParentPeriodType(periodType: PeriodType): {
+    parentPeriodType?: PeriodType;
     periodTypeStr?: string;
   } {
-    let childPeriodType: PeriodType | undefined;
+    let parentPeriodType: PeriodType | undefined;
     let periodTypeStr: string | undefined;
 
     switch (periodType) {
       case PeriodType.YEARLY:
-        childPeriodType = PeriodType.MONTHLY;
+        parentPeriodType = PeriodType.MONTHLY;
         periodTypeStr = '本年';
         break;
       case PeriodType.QUARTERLY:
-        childPeriodType = PeriodType.MONTHLY;
+        parentPeriodType = PeriodType.MONTHLY;
         periodTypeStr = '本季度';
         break;
       case PeriodType.MONTHLY:
-        childPeriodType = PeriodType.DAILY;
+        parentPeriodType = PeriodType.DAILY;
         periodTypeStr = '本月';
         break;
       case PeriodType.WEEKLY:
-        childPeriodType = PeriodType.DAILY;
+        parentPeriodType = PeriodType.DAILY;
         periodTypeStr = '本周';
         break;
       case PeriodType.DAILY:
-        childPeriodType = PeriodType.SINGLE;
+        parentPeriodType = PeriodType.SINGLE;
         periodTypeStr = '本日';
         break;
       default:
         this.logger.warn(
-          `deriveChildPeriodType 返回了 undefined, 周期类型: ${periodType}`,
+          `deriveParentPeriodType 返回了 undefined, 周期类型: ${periodType}`,
         );
-        childPeriodType = undefined;
+        parentPeriodType = undefined;
         periodTypeStr = undefined;
     }
 
     return {
-      childPeriodType,
+      parentPeriodType,
       periodTypeStr,
     };
   }
@@ -262,14 +268,17 @@ export class PeriodSummaryTool {
     const { periodStart, periodEnd } =
       this.periodTimeRange.getdayRange(periodType);
 
-    // deriveChildPeriodType 根据周期类型返回子周期类型
-    const { childPeriodType } = this.deriveChildPeriodType(periodType);
-    if (!childPeriodType) {
+    // deriveParentPeriodType 根据周期类型返回父周期类型
+    const { parentPeriodType } = this.deriveParentPeriodType(periodType);
+    if (!parentPeriodType) {
       this.logger.warn(
-        `deriveChildPeriodType 返回了 undefined, 周期类型: ${periodType}`,
+        `deriveParentPeriodType 返回了 undefined, 周期类型: ${periodType}`,
       );
       return [];
     }
+
+    // 获取对话ai的模型信息
+    const configModel = this.config.model;
 
     // 保存ai总结内容至ParticipantSummary
     const parentSummary =
@@ -281,6 +290,7 @@ export class PeriodSummaryTool {
         partSummary: reply,
         userId: userId ?? undefined,
         platformUserId: platformUserIds[0] ?? undefined, // 取第一个 platformUserId 作为关联
+        aiModel: configModel,
       });
 
     // 遍历 summaries，把每条记录的 id 作为 childSummaryId 创建 SummaryRelation
@@ -288,8 +298,8 @@ export class PeriodSummaryTool {
       await this.periodSummaryRepository.createSummaryRelation({
         parentSummaryId: parentSummary.id, // parentSummary 已经定义
         childSummaryId: childSummary.id,
-        parentPeriodType: periodType,
-        childPeriodType: childPeriodType,
+        parentPeriodType: parentPeriodType,
+        childPeriodType: periodType,
       });
     }
 
