@@ -10,7 +10,7 @@
  */
 import { OpenaiService } from '../../integrations/openai/openai.service';
 import { PeriodSummaryRepository } from '../repositories/period-summary.repository';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject } from '@nestjs/common';
 import { PeriodType } from '@prisma/client';
 import { PeriodTimeRange } from '../utils/period-time-range';
 
@@ -25,6 +25,8 @@ export class PeriodSummaryTool {
     private readonly openaiService: OpenaiService,
     private readonly periodSummaryRepository: PeriodSummaryRepository,
     private readonly periodTimeRange: PeriodTimeRange,
+
+    @Inject(openaiConfig.KEY)
     private readonly config: ConfigType<typeof openaiConfig>,
   ) {}
 
