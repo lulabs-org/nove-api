@@ -2,7 +2,7 @@
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2026-01-03 09:40:30
  * @LastEditors: Mingxuan songmingxuan936@gmail.com
- * @LastEditTime: 2026-02-16 16:36:28
+ * @LastEditTime: 2026-02-16 16:52:46
  * @FilePath: /nove-api/src/task/service/period-summary-tool.ts
  * @Description:
  *
@@ -16,7 +16,6 @@ import { PeriodTimeRange } from '../utils/period-time-range';
 
 import { openaiConfig } from '../../configs/openai.config';
 import { ConfigType } from '@nestjs/config';
-import { log } from 'node:console';
 
 @Injectable()
 export class PeriodSummaryTool {
