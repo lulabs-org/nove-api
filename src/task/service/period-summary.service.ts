@@ -2,7 +2,7 @@
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2025-12-25 20:04:17
  * @LastEditors: Mingxuan songmingxuan936@gmail.com
- * @LastEditTime: 2026-02-16 16:46:10
+ * @LastEditTime: 2026-02-16 16:57:57
  * @FilePath: /nove-api/src/task/service/period-summary.service.ts
  * @Description:
  *
@@ -58,8 +58,8 @@ export class PeriodSummary {
     for (const platformUserId of data) {
       await this.summaryTool.processOneUserSummary(platformUserId, periodType);
 
-      // 等待 5 秒
-      await new Promise((resolve) => setTimeout(resolve, 5000));
+      // // 等待 5 秒
+      // await new Promise((resolve) => setTimeout(resolve, 5000));
     }
 
     return { ok: true, at: new Date().toISOString() };
