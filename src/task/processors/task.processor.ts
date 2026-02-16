@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-10-03 06:03:56
  * @LastEditors: Mingxuan songmingxuan936@gmail.com
- * @LastEditTime: 2026-02-16 16:40:25
+ * @LastEditTime: 2026-02-16 16:47:30
  * @FilePath: /nove-api/src/task/processors/task.processor.ts
  * @Description:
  *
@@ -47,7 +47,7 @@ export class TaskProcessor extends WorkerHost {
   ): Promise<unknown> {
     // 🔹 修改日志，显示 originalName
     const taskName = job.data.originalName ?? job.name; // 如果没有 originalName 就 fallback
-    this.logger.debug(
+    this.logger.log(
       `Processing job name=${JSON.stringify(taskName)} id=${job.id}`,
     );
 
@@ -160,7 +160,7 @@ export class TaskProcessor extends WorkerHost {
 
   @OnWorkerEvent('completed')
   async onCompleted(job: Job, result: unknown): Promise<void> {
-    this.logger.debug(`Job ${job.id} completed: ${JSON.stringify(result)}`);
+    this.logger.log(`Job ${job.id} completed: ${JSON.stringify(result)}`);
     await this.prisma.scheduledTask
       .updateMany({
         where: { jobId: String(job.id) },

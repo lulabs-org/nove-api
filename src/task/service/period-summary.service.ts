@@ -2,7 +2,7 @@
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2025-12-25 20:04:17
  * @LastEditors: Mingxuan songmingxuan936@gmail.com
- * @LastEditTime: 2026-02-16 16:13:04
+ * @LastEditTime: 2026-02-16 16:46:10
  * @FilePath: /nove-api/src/task/service/period-summary.service.ts
  * @Description:
  *
@@ -52,7 +52,7 @@ export class PeriodSummary {
       '在participantSummary表检索到以下用户:\n' + JSON.stringify(data, null, 2),
     ); // 第二个参数 null 表示不格式化，第三个参数 2 表示缩进 2 个空格
 
-    this.logger.debug('开始依次总结每个用户的会议记录');
+    this.logger.log('开始依次总结每个用户的会议记录');
 
     // 遍历每个分组，处理一个用户的会议记录
     for (const platformUserId of data) {
