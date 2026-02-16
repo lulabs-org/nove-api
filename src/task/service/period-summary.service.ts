@@ -1,8 +1,8 @@
 /*
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2025-12-25 20:04:17
- * @LastEditors: error: error: git config user.name & please set dead value or install git && error: git config user.email & please set dead value or install git & please set dead value or install git
- * @LastEditTime: 2026-02-16 15:46:12
+ * @LastEditors: Mingxuan songmingxuan936@gmail.com
+ * @LastEditTime: 2026-02-16 16:13:04
  * @FilePath: /nove-api/src/task/service/period-summary.service.ts
  * @Description:
  *
@@ -48,7 +48,7 @@ export class PeriodSummary {
     }
 
     // 打印分组结果
-    this.logger.debug(
+    this.logger.log(
       '在participantSummary表检索到以下用户:\n' + JSON.stringify(data, null, 2),
     ); // 第二个参数 null 表示不格式化，第三个参数 2 表示缩进 2 个空格
 

@@ -1,8 +1,8 @@
 /*
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2026-01-11 15:11:23
- * @LastEditors: error: error: git config user.name & please set dead value or install git && error: git config user.email & please set dead value or install git & please set dead value or install git
- * @LastEditTime: 2026-02-16 15:46:10
+ * @LastEditors: Mingxuan songmingxuan936@gmail.com
+ * @LastEditTime: 2026-02-16 16:30:47
  * @FilePath: /nove-api/src/task/repositories/period-summary.repository.ts
  * @Description:
  *
@@ -116,7 +116,6 @@ export class PeriodSummaryRepository {
     periodEnd: Date;
     userName: string;
     partSummary: string;
-    userId?: string;
     platformUserId?: string;
     aiModel?: string;
   }) {
@@ -128,10 +127,7 @@ export class PeriodSummaryRepository {
         userName: data.userName,
         partSummary: data.partSummary,
         aiModel: data.aiModel,
-        // 关键逻辑：有 userId 就只存 userId，没有才存 platformUserId
-        ...(data.userId
-          ? { userId: data.userId }
-          : { platformUserId: data.platformUserId }),
+        platformUserId: data.platformUserId,
       },
     });
   }

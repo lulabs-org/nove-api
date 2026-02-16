@@ -1,8 +1,8 @@
 /*
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2026-01-03 09:40:30
- * @LastEditors: error: error: git config user.name & please set dead value or install git && error: git config user.email & please set dead value or install git & please set dead value or install git
- * @LastEditTime: 2026-02-16 15:34:11
+ * @LastEditors: Mingxuan songmingxuan936@gmail.com
+ * @LastEditTime: 2026-02-16 16:33:50
  * @FilePath: /nove-api/src/task/service/period-summary-tool.ts
  * @Description:
  *
@@ -16,6 +16,7 @@ import { PeriodTimeRange } from '../utils/period-time-range';
 
 import { openaiConfig } from '../../configs/openai.config';
 import { ConfigType } from '@nestjs/config';
+import { log } from 'node:console';
 
 @Injectable()
 export class PeriodSummaryTool {
@@ -117,20 +118,19 @@ export class PeriodSummaryTool {
 
   /**
    * 调用 OpenAI 生成每日会议总结
-   * @param realName 用户真实姓名或昵称
+   * @param userName 用户真实姓名或昵称
    * @param summaries 当前用户当天的所有会议记录
    * @param prompt 系统提示词，可自定义
    * @returns AI 生成的总结文本
    */
   async generateSummary(
-    realName: string,
+    userName: string,
     summaries: {
       id: string;
       partSummary: string;
       userName: string;
       periodStart: Date | null;
       periodEnd: Date | null;
-      username: string;
     }[],
     periodType: PeriodType,
     prompt: string,
@@ -147,16 +147,15 @@ export class PeriodSummaryTool {
 
     const systemPrompt = `
       ${prompt}
-      你是人工智能助手，需要总结用户"${realName}"${periodTypeStr} 的会议记录。
+      你是人工智能助手，需要总结用户"${userName}"${periodTypeStr} 的会议记录。
       字段说明：
-      - partName: 参会人在 onstage会议的昵称
+      - userName: 参会人在 onstage会议的昵称
       - partSummary: 参会人 onstage会议的总结
-      - startAt: 会议总结的开始区间
-      - endAt: 会议总结的结束区间
-      - username: 用户的真实姓名
+      - periodStart: 会议总结的开始区间
+      - periodEnd: 会议总结的结束区间
 
       切记以上只是字段解释，不是输出内容。
-      你只需要根据用户输入，总结用户在会议中的活动，不需要特别格式。
+      你只需要根据用户输入，总结用户在会议中的活动，输出 markdown 格式的总结。
       `.trim();
 
     const messages = [
@@ -216,15 +215,13 @@ export class PeriodSummaryTool {
    * @returns 保存结果对象，包含成功状态、parentSummary ID 和提示信息
    */
   async saveSummaryWithRelations(params: {
-    realName: string;
+    userName: string;
     reply: string;
-    userId: string | null;
-    platformUserIds: string[];
+    platformUserId: string;
     periodType: PeriodType;
     summaries: { id: string }[];
   }) {
-    const { realName, reply, userId, platformUserIds, periodType, summaries } =
-      params;
+    const { userName, reply, platformUserId, periodType, summaries } = params;
 
     // 获取昨天是时间范围
     const { periodStart, periodEnd } =
@@ -248,10 +245,9 @@ export class PeriodSummaryTool {
         periodType: periodType,
         periodStart: periodStart,
         periodEnd: periodEnd,
-        userName: realName,
+        userName: userName,
         partSummary: reply,
-        userId: userId ?? undefined,
-        platformUserId: platformUserIds[0] ?? undefined, // 取第一个 platformUserId 作为关联
+        platformUserId,
         aiModel: configModel,
       });
 
@@ -265,11 +261,9 @@ export class PeriodSummaryTool {
       });
     }
 
-    return {
-      ok: true,
-      id: parentSummary.id,
-      message: `ParticipantSummary for ${realName} saved successfully`,
-    };
+    this.logger.log(
+      `创建了 ${summaries.length} 条关联记录, 父总结 ID: ${parentSummary.id}`,
+    );
   }
 
   /**
@@ -288,44 +282,34 @@ export class PeriodSummaryTool {
       platformUserId,
     );
 
-    let realName: string;
+    let userName: string = summaries[0]?.userName ?? '未知用户';
 
-    if (userId === null) {
-      // userId 为 null：realName = userName
-      realName = summaries[0]?.userName ?? '未知用户';
-    } else {
-      // userId 不为 null：realName = username
-      realName = summaries[0]?.username ?? '未知用户';
-    }
-
-    this.logger.debug(
-      `\x1b[96m获取到用户(${userId})的参会议记录:\x1b[0m\n` +
+    this.logger.log(
+      `获取到用户(${platformUserId})的参会议记录` +
         JSON.stringify(summaries, null, 2),
     );
 
     // 总结会议记录
     const reply = await this.generateSummary(
-      realName,
+      userName,
       summaries,
       periodType,
       '', // 或者你之后自定义 prompt
     );
-    this.logger.debug(`OpenAI聊天完成: ${reply?.slice(0, 200)}`);
+    this.logger.log(`OpenAI聊天完成: ${reply?.slice(0, 200)}`);
 
-    this.logger.debug(
-      `\x1b[92m当前用户(${userId})的会议记录已完成:\x1b[0m\n` +
+    this.logger.log(
+      `当前用户(${platformUserId})的会议记录已完成:` +
         JSON.stringify(summaries, null, 2),
     );
 
     // 保存总结内容和关系至ParticipantSummary
-    const saveResult = await this.saveSummaryWithRelations({
+    await this.saveSummaryWithRelations({
+      userName,
       periodType,
-      realName,
       reply,
-      userId,
-      platformUserIds,
+      platformUserId,
       summaries,
     });
-    this.logger.debug(saveResult);
   }
 }
