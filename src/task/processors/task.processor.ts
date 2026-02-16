@@ -1,9 +1,9 @@
 /*
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-10-03 06:03:56
- * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-29 18:07:24
- * @FilePath: \nove-api\src\task\processors\task.processor.ts
+ * @LastEditors: Mingxuan songmingxuan936@gmail.com
+ * @LastEditTime: 2026-02-16 16:40:25
+ * @FilePath: /nove-api/src/task/processors/task.processor.ts
  * @Description:
  *
  * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
@@ -88,21 +88,21 @@ export class TaskProcessor extends WorkerHost {
       case 'personalMeetingSummary': {
         // 周期性使用方法(默认时区是Asia/Shanghai)：
         // {
-        //   "name": "helloWorld",
-        //   "cron": "* * * * * *",
+        //   "name": "personalMeetingSummary",
+        //   "cron": "0 * * * * *",
         //   "payload": {
-        //     "originalName": "helloWorld",
+        //     "originalName": "personalMeetingSummary",
         //     "periodType": "DAILY"
         //   }
         // }
 
         // 使用方法二，添加指定时区
         // {
-        //   "name": "helloWorld",
+        //   "name": "personalMeetingSummary",
         //   "cron": "0 0 3 * * *",
         //   "timezone": "Asia/Shanghai",
         //   "payload": {
-        //     "originalName": "helloWorld",
+        //     "originalName": "personalMeetingSummary",
         //     "periodType": "DAILY"
         //   }
         // }
