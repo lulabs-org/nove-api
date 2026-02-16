@@ -2,7 +2,7 @@
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2026-01-03 09:40:30
  * @LastEditors: Mingxuan songmingxuan936@gmail.com
- * @LastEditTime: 2026-02-16 16:33:50
+ * @LastEditTime: 2026-02-16 16:36:28
  * @FilePath: /nove-api/src/task/service/period-summary-tool.ts
  * @Description:
  *
@@ -75,6 +75,53 @@ export class PeriodSummaryTool {
         seen.add(id);
         return true;
       });
+  }
+
+  /**
+   * 处理单个用户的每日会议总结流程
+   * - 获取该用户的会议记录
+   * - 判断 realName（userId / platformUser）
+   * - 调用 AI 生成总结
+   * - 保存总结并创建关联
+   * - 打印日志
+   * @param group 单个用户分组信息，包含 userId 和 platformUserIds
+   */
+  async processOneUserSummary(platformUserId: string, periodType: PeriodType) {
+    // 查找当前 platformUserId 对应的 participantSummary
+    const summaries = await this.getSummariesByPlatformUserIds(
+      periodType,
+      platformUserId,
+    );
+
+    let userName: string = summaries[0]?.userName ?? '未知用户';
+
+    this.logger.log(
+      `获取到用户(${platformUserId})的参会议记录` +
+        JSON.stringify(summaries, null, 2),
+    );
+
+    // 总结会议记录
+    const reply = await this.generateSummary(
+      userName,
+      summaries,
+      periodType,
+      '', // 或者你之后自定义 prompt
+    );
+    this.logger.log(`OpenAI聊天完成: ${reply?.slice(0, 200)}`);
+
+    this.logger.log(
+      `当前用户(${platformUserId})的会议记录已完成:` +
+        JSON.stringify(summaries, null, 2),
+    );
+
+    // 保存总结内容和关系至ParticipantSummary
+    await this.saveSummaryWithRelations({
+      userName,
+      periodType,
+      reply,
+      platformUserId,
+      summaries,
+    });
   }
 
   /**
@@ -264,52 +311,5 @@ export class PeriodSummaryTool {
     this.logger.log(
       `创建了 ${summaries.length} 条关联记录, 父总结 ID: ${parentSummary.id}`,
     );
-  }
-
-  /**
-   * 处理单个用户的每日会议总结流程
-   * - 获取该用户的会议记录
-   * - 判断 realName（userId / platformUser）
-   * - 调用 AI 生成总结
-   * - 保存总结并创建关联
-   * - 打印日志
-   * @param group 单个用户分组信息，包含 userId 和 platformUserIds
-   */
-  async processOneUserSummary(platformUserId: string, periodType: PeriodType) {
-    // 查找当前 platformUserId 对应的 participantSummary
-    const summaries = await this.getSummariesByPlatformUserIds(
-      periodType,
-      platformUserId,
-    );
-
-    let userName: string = summaries[0]?.userName ?? '未知用户';
-
-    this.logger.log(
-      `获取到用户(${platformUserId})的参会议记录` +
-        JSON.stringify(summaries, null, 2),
-    );
-
-    // 总结会议记录
-    const reply = await this.generateSummary(
-      userName,
-      summaries,
-      periodType,
-      '', // 或者你之后自定义 prompt
-    );
-    this.logger.log(`OpenAI聊天完成: ${reply?.slice(0, 200)}`);
-
-    this.logger.log(
-      `当前用户(${platformUserId})的会议记录已完成:` +
-        JSON.stringify(summaries, null, 2),
-    );
-
-    // 保存总结内容和关系至ParticipantSummary
-    await this.saveSummaryWithRelations({
-      userName,
-      periodType,
-      reply,
-      platformUserId,
-      summaries,
-    });
   }
 }
