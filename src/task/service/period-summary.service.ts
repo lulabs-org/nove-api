@@ -1,9 +1,9 @@
 /*
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2025-12-25 20:04:17
- * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-28 20:53:14
- * @FilePath: \nove-api\src\task\service\period-summary.service.ts
+ * @LastEditors: error: error: git config user.name & please set dead value or install git && error: git config user.email & please set dead value or install git & please set dead value or install git
+ * @LastEditTime: 2026-02-16 15:46:12
+ * @FilePath: /nove-api/src/task/service/period-summary.service.ts
  * @Description:
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
@@ -40,7 +40,7 @@ export class PeriodSummary {
     const data = await this.summaryTool.getGroupedPlatformUsers(periodType);
 
     // 如果没有值，直接返回
-    if (data.length === 0) {
+    if (!data) {
       this.logger.warn(
         '没有找到符合条件的记录, participantSummary的新增记录为空',
       );
@@ -55,8 +55,8 @@ export class PeriodSummary {
     this.logger.debug('开始依次总结每个用户的会议记录');
 
     // 遍历每个分组，处理一个用户的会议记录
-    for (const group of data) {
-      await this.summaryTool.processOneUserSummary(group, periodType);
+    for (const platformUserId of data) {
+      await this.summaryTool.processOneUserSummary(platformUserId, periodType);
 
       // 等待 5 秒
       await new Promise((resolve) => setTimeout(resolve, 5000));

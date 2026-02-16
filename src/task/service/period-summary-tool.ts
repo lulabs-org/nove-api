@@ -1,9 +1,9 @@
 /*
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2026-01-03 09:40:30
- * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-02-02 20:42:33
- * @FilePath: \nove-api\src\task\service\period-summary-tool.ts
+ * @LastEditors: error: error: git config user.name & please set dead value or install git && error: git config user.email & please set dead value or install git & please set dead value or install git
+ * @LastEditTime: 2026-02-16 15:34:11
+ * @FilePath: /nove-api/src/task/service/period-summary-tool.ts
  * @Description:
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
@@ -36,7 +36,7 @@ export class PeriodSummaryTool {
    */
   async getGroupedPlatformUsers(
     periodType: PeriodType,
-  ): Promise<{ userId: string | null; platformUserIds: string[] }[]> {
+  ): Promise<string[] | null> {
     // 获取时间范围
     const { periodStart, periodEnd } =
       this.periodTimeRange.getdayRange(periodType);
@@ -60,46 +60,20 @@ export class PeriodSummaryTool {
 
     // 如果没有值，直接返回
     if (summaries.length === 0) {
-      return []; // 只返回数组
+      return null; // 如果没有值，返回 null
     }
 
     // 去重
     const seen = new Set<string>();
     // filter 会一条条遍历 summaries，如果 id 重复就不放入 uniqueSummaries，第一次出现的保留。
-    const uniqueSummaries = summaries.filter((item) => {
-      const id = item.platformUser?.id;
-      if (!id) return false; // 如果 platformUser 或 id 为 null，直接过滤掉
-      if (seen.has(id)) return false;
-      seen.add(id);
-      return true;
-    });
-
-    // console.log(uniqueSummaries);
-
-    // 按 userId 分组，把相同 userId 的 platformUser.id 收集到同一组，userId 为 null 也单独分组
-    const groupedMap = new Map<
-      string | null,
-      { userId: string | null; platformUserIds: string[] }
-    >();
-
-    for (const item of uniqueSummaries) {
-      const userId = item.platformUser?.user?.id ?? null; // 取 userId，null 也作为 key
-      // mapKey 为 userId 或 platformUserId，用于分组
-      const mapKey =
-        userId === null
-          ? `__null__:${item.platformUser!.id}` // 每个 null 都不同
-          : userId;
-
-      if (!groupedMap.has(mapKey)) {
-        // 如果 groupedMap 没有这个 mapKey 的分组，就初始化一个新的组
-        groupedMap.set(mapKey, { userId, platformUserIds: [] }); // 初始化分组(第一个 userId 是检索用的key)
-      }
-      // 如果有这个 mapKey 的分组，就添加这条 platformUser.id
-      groupedMap.get(mapKey)!.platformUserIds.push(item.platformUser!.id); // 添加 platformUser.id
-    }
-
-    // 转成数组方便使用 (Map 是数据结构，不方便直接当作普通数组使用)
-    return Array.from(groupedMap.values());
+    return summaries
+      .map((item) => item.platformUserId)
+      .filter((id): id is string => {
+        if (!id) return false; // 如果 platformUserId 为 null，直接过滤掉
+        if (seen.has(id)) return false;
+        seen.add(id);
+        return true;
+      });
   }
 
   /**
@@ -109,15 +83,14 @@ export class PeriodSummaryTool {
    */
   async getSummariesByPlatformUserIds(
     periodType: PeriodType,
-    platformUserIds: string[],
+    platformUserId: string,
   ): Promise<
     {
       id: string;
       partSummary: string;
-      userName: string; // 这个是参会人在会议中的昵称(platformUser.userName)
+      userName: string;
       periodStart: Date | null;
       periodEnd: Date | null;
-      username: string; // 这个是参会人在平台上的用户名(user.username)
     }[]
   > {
     // deriveChildPeriodType 根据周期类型返回子周期类型
@@ -134,23 +107,12 @@ export class PeriodSummaryTool {
       this.periodTimeRange.getdayRange(periodType);
 
     // 查找当前分组下所有 platformUserId 对应的 participantSummary
-    const summaries =
-      await this.periodSummaryRepository.findSummaryByPlatformUserIds({
-        platformUserIds,
-        parentPeriodType,
-        periodStart,
-        periodEnd,
-      });
-
-    // 扁平化 username
-    return summaries.map((s) => ({
-      id: s.id,
-      partSummary: s.partSummary,
-      userName: s.userName,
-      periodStart: s.periodStart ?? null,
-      periodEnd: s.periodEnd ?? null,
-      username: s.platformUser?.user?.username ?? '未知用户', // 处理 null
-    }));
+    return await this.periodSummaryRepository.findSummaryByPlatformUserId({
+      platformUserId,
+      parentPeriodType,
+      periodStart,
+      periodEnd,
+    });
   }
 
   /**
@@ -319,18 +281,11 @@ export class PeriodSummaryTool {
    * - 打印日志
    * @param group 单个用户分组信息，包含 userId 和 platformUserIds
    */
-  async processOneUserSummary(
-    group: {
-      userId: string | null;
-      platformUserIds: string[];
-    },
-    periodType: PeriodType,
-  ) {
-    const { userId, platformUserIds } = group;
-    // 查找当前分组下所有 platformUserId 对应的 participantSummary
+  async processOneUserSummary(platformUserId: string, periodType: PeriodType) {
+    // 查找当前 platformUserId 对应的 participantSummary
     const summaries = await this.getSummariesByPlatformUserIds(
       periodType,
-      platformUserIds,
+      platformUserId,
     );
 
     let realName: string;

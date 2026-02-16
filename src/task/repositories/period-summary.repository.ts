@@ -1,9 +1,9 @@
 /*
  * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
  * @Date: 2026-01-11 15:11:23
- * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-02-02 20:42:42
- * @FilePath: \nove-api\src\task\repositories\period-summary.repository.ts
+ * @LastEditors: error: error: git config user.name & please set dead value or install git && error: git config user.email & please set dead value or install git & please set dead value or install git
+ * @LastEditTime: 2026-02-16 15:46:10
+ * @FilePath: /nove-api/src/task/repositories/period-summary.repository.ts
  * @Description:
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
@@ -53,14 +53,7 @@ export class PeriodSummaryRepository {
           ],
         },
         select: {
-          platformUser: {
-            select: {
-              id: true,
-              user: {
-                select: { id: true },
-              },
-            },
-          },
+          platformUserId: true,
         },
       })) ?? [] // 如果返回 null/undefined，默认是空数组
     );
@@ -69,21 +62,21 @@ export class PeriodSummaryRepository {
   /**
    * 查找当前分组下所有 platformUserId 对应的 participantSummary
    */
-  async findSummaryByPlatformUserIds({
+  async findSummaryByPlatformUserId({
     parentPeriodType,
-    platformUserIds,
+    platformUserId,
     periodStart,
     periodEnd,
   }: {
     parentPeriodType: PeriodType;
-    platformUserIds: string[];
+    platformUserId: string;
     periodStart: Date;
     periodEnd: Date;
   }) {
     return await this.prisma.participantSummary.findMany({
       where: {
-        platformUserId: { in: platformUserIds }, // 当前分组的所有 platformUserId
-        periodType: parentPeriodType, // 仅单次会议
+        platformUserId,
+        periodType: parentPeriodType, // 会议类型
         OR: [
           {
             // 情况 1：periodStart 有值，用 periodStart 判断
@@ -109,15 +102,7 @@ export class PeriodSummaryRepository {
         userName: true, // 参会人信息
         periodStart: true, // 开始时间(总结的时间区间)
         periodEnd: true, // 结束时间(总结的时间区间)
-        platformUser: {
-          select: {
-            user: {
-              select: {
-                username: true, // 通过平台用户检索到真实user的用户名
-              },
-            },
-          },
-        },
+        platformUserId: true, // 平台用户ID
       },
     });
   }
