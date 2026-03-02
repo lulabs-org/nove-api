@@ -2,7 +2,7 @@
  * @Author: Mingxuan songmingxuan936@gmail.com
  * @Date: 2026-03-02 20:41:36
  * @LastEditors: Mingxuan songmingxuan936@gmail.com
- * @LastEditTime: 2026-03-02 21:12:33
+ * @LastEditTime: 2026-03-02 21:20:40
  * @FilePath: /nove-api/src/mcp-server/tools/period-summary.tool.ts
  * @Description:
  *
@@ -17,14 +17,16 @@ import { PublicTool } from '@rekog/mcp-nest';
 export class PeriodSummaryTool {
   @Tool({
     name: 'get-period-summary',
-    description: '测试期间汇总功能，返回简单的测试数据',
+    description: 'Get meeting summaries within a specified time range',
     parameters: z.object({
       userId: z.string().describe('The ID of the user'),
       startDate: z.string().describe('Start date in ISO format (YYYY-MM-DD)'),
       endDate: z.string().describe('End date in ISO format (YYYY-MM-DD)'),
       period: z
         .enum(['SINGLE', 'DAILY', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY'])
-        .describe('The period to summarize'),
+        .describe(
+          'The period to summarize, SINGLE refers to the summary of a single meeting.',
+        ),
     }),
   })
   @PublicTool()
