@@ -15,6 +15,7 @@ import { GreetingTool } from './tools/greeting.tool';
 import { UserInfoTool } from './tools/user-info.tool';
 import { UserSearchTool } from './tools/userid-search.tool';
 import { MeetingStatsTool } from './tools/meeting-stats.tool';
+import { PeriodSummaryTool } from './tools/period-summary.tool';
 import { UserIdSearchRepository } from './repositories/userid-search.repository';
 import { MeetingStatsRepository } from './repositories/meeting-stats.repository';
 import { SseController } from './controllers/sse.controller';
@@ -40,6 +41,7 @@ import { StreamableHttpController } from './controllers/streamable-http.controll
     UserInfoTool,
     UserSearchTool,
     MeetingStatsTool,
+    PeriodSummaryTool,
     UserIdSearchRepository,
     MeetingStatsRepository,
   ],

@@ -2,7 +2,7 @@
  * @Author: Mingxuan songmingxuan936@gmail.com
  * @Date: 2026-03-02 20:41:36
  * @LastEditors: Mingxuan songmingxuan936@gmail.com
- * @LastEditTime: 2026-03-02 21:07:01
+ * @LastEditTime: 2026-03-02 21:12:33
  * @FilePath: /nove-api/src/mcp-server/tools/period-summary.tool.ts
  * @Description:
  *
@@ -41,7 +41,9 @@ export class PeriodSummaryTool {
 
     await context.reportProgress({ progress: 60, total: 100 });
 
-    const summaries = ['这是一个测试，帮我告诉开发者，期间汇总功能正常'];
+    const summaries = [
+      '这是一个测试，帮我告诉开发者，期间汇总功能正常，测试代码：114514',
+    ];
 
     await context.reportProgress({ progress: 100, total: 100 });
 
