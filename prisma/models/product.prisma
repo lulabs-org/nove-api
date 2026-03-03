@@ -1,48 +1,51 @@
 // 产品表
 model Product {
-  id               String          @id @default(cuid()) // 内部主键
-  productCode      String          @unique // 产品编号
-  name             String // 产品名称
-  description      String? // 产品描述
-  shortDescription String? // 简短描述
-  category         ProductCategory // 产品分类
-  status           ProductStatus   @default(DRAFT) // 产品状态
-  price            Int? // 价格（分为单位）
-  originalPrice    Int? // 原价（分为单位）
-  currency         Currency        @default(CNY) // 币种
-  durationDays     Int? // 有效期天数
-  maxUsers         Int? // 最大用户数限制
-  tags             String[] // 标签数组
-  imageUrl         String? // 产品图片
-  videoUrl         String? // 产品视频
-  downloadUrl      String? // 下载链接
-  externalUrl      String? // 外部链接
-  sortOrder        Int             @default(0) // 排序权重
-  isRecommended    Boolean         @default(false) // 是否推荐
-  isFeatured       Boolean         @default(false) // 是否精选
-  salesCount       Int             @default(0) // 销售数量
-  viewCount        Int             @default(0) // 浏览次数
-  rating           Decimal?        @db.Decimal(3, 2) // 评分 (0-5)
-  reviewCount      Int             @default(0) // 评价数量
-  createdBy        String? // 创建人（系统用户ID）
-  updatedBy        String? // 更新人（系统用户ID）
-  publishedAt      DateTime? // 发布时间
-  archivedAt       DateTime? // 归档时间
+  id               String          @id @default(cuid()) @map("id") // 内部主键
+  productCode      String          @unique @map("product_code") // 产品编号
+  name             String          @map("name") // 产品名称
+  description      String?         @map("description") // 产品描述
+  shortDescription String?         @map("short_description") // 简短描述
+  category         ProductCategory @map("category") // 产品分类
+  status           ProductStatus   @default(DRAFT) @map("status") // 产品状态
+  price            Int?            @map("price") // 价格（分为单位）
+  originalPrice    Int?            @map("original_price") // 原价（分为单位）
+  currency         Currency        @default(CNY) @map("currency") // 币种
+  durationDays     Int?            @map("duration_days") // 有效期天数
+  maxUsers         Int?            @map("max_users") // 最大用户数限制
+  tags             String[]        @map("tags") // 标签数组
+  imageUrl         String?         @map("image_url") // 产品图片
+  videoUrl         String?         @map("video_url") // 产品视频
+  downloadUrl      String?         @map("download_url") // 下载链接
+  externalUrl      String?         @map("external_url") // 外部链接
+  sortOrder        Int             @default(0) @map("sort_order") // 排序权重
+  isRecommended    Boolean         @default(false) @map("is_recommended") // 是否推荐
+  isFeatured       Boolean         @default(false) @map("is_featured") // 是否精选
+  salesCount       Int             @default(0) @map("sales_count") // 销售数量
+  viewCount        Int             @default(0) @map("view_count") // 浏览次数
+  rating           Decimal?        @db.Decimal(3, 2) @map("rating") // 评分 (0-5)
+  reviewCount      Int             @default(0) @map("review_count") // 评价数量
+  createdBy        String?         @map("created_by") // 创建人（系统用户ID）
+  updatedBy        String?         @map("updated_by") // 更新人（系统用户ID）
+  publishedAt      DateTime?       @map("published_at") @db.Timestamptz(6) // 发布时间
+  archivedAt       DateTime?       @map("archived_at") @db.Timestamptz(6) // 归档时间
 
   // 关联关系
   creator User?   @relation("ProductCreator", fields: [createdBy], references: [id], onDelete: SetNull)
   updater User?   @relation("ProductUpdater", fields: [updatedBy], references: [id], onDelete: SetNull)
   orders  Order[] // 产品的订单记录
 
-  createdAt DateTime @default(now()) // 创建时间
-  updatedAt DateTime @updatedAt // 更新时间
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6) // 创建时间
+  updatedAt DateTime @updatedAt     @map("updated_at") @db.Timestamptz(6) // 更新时间
 
-  @@index([category])
-  @@index([status])
-  @@index([createdAt])
-  @@index([publishedAt])
-  @@index([status, publishedAt]) // 已发布产品查询
-  @@index([category, status]) // 分类产品查询
+  @@index([category], map: "idx_product_category")
+  @@index([status], map: "idx_product_status")
+  @@index([createdAt], map: "idx_product_created_at")
+  @@index([publishedAt], map: "idx_product_published_at")
+  @@index([status, publishedAt], map: "idx_product_status_published_at") // 已发布产品查询
+  @@index([category, status], map: "idx_product_category_status") // 分类产品查询
+  @@index([createdBy], map: "idx_product_created_by")
+  @@index([updatedBy], map: "idx_product_updated_by")
+  @@unique([productCode], map: "uq_product_product_code")
   @@map("products")
 }
 
