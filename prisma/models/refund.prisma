@@ -1,25 +1,29 @@
 // 退款记录表
 model OrderRefund {
   id                 String    @id @default(cuid()) // 内部主键
-  afterSaleCode      String? // 售后编号
-  orderId            String? // 所属订单ID
-  submittedAt        DateTime? // 提交时间
-  refundedAt         DateTime? // 退款时间
-  refundChannel      String? // 退款渠道枚举值，如 '抖音平台退款'
-  approvalUrl        String? // 审批链接
-  createdBy          String? // 登记人（系统用户ID）
-  refundAmount       Decimal?  @db.Decimal(10, 2) // 退款金额
-  refundReason       String? // 退款原因描述
-  benefitEndedAt     DateTime? @db.Date // 权益终止时间
-  benefitUsedDays    Int? // 实际权益使用天数
-  applicantName      String? // 申请人姓名
-  isFinancialSettled Boolean   @default(false) // 财务结算状态
-  financialSettledAt DateTime? @db.Date // 财务结算时间
-  financialNote      String? // 结算备注
-  parentId           String? // 父退款记录ID（如有）
-  productCategory    String? // 产品类别（冗余存储）
-  createdAt          DateTime  @default(now()) // 创建时间
-  updatedAt          DateTime  @updatedAt // 更新时间
+  afterSaleCode      String?   @map("after_sale_code") // 售后编号
+  orderId            String?   @map("order_id") // 所属订单ID
+
+  refundChannel      String?   @map("refund_channel") // 退款渠道枚举值，如 '抖音平台退款'
+  approvalUrl        String?   @map("approval_url") // 审批链接
+  createdBy          String?   @map("created_by") // 登记人（系统用户ID）
+  refundAmount       Decimal?  @map("refund_amount") @db.Decimal(10, 2) // 退款金额
+  refundReason       String?   @map("refund_reason") // 退款原因描述
+  benefitUsedDays    Int?      @map("benefit_used_days") // 实际权益使用天数
+  applicantName      String?   @map("applicant_name") // 申请人姓名
+  status             Int       @default(0) @map("status") @db.SmallInt // 退款状态：0-未结算，1-已结算
+
+  financialNote      String?   @map("financial_note") // 结算备注
+  parentId           String?   @map("parent_id") // 父退款记录ID（如有）
+  productCategory    String?   @map("product_category") // 产品类别（冗余存储）
+
+  submittedAt        DateTime? @map("submitted_at") @db.Timestamptz(6) // 提交时间
+  refundedAt         DateTime? @map("refunded_at") @db.Timestamptz(6) // 退款时间
+  financialSettledAt DateTime? @map("financial_settled_at") @db.Timestamptz(6) // 财务结算时间
+
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6) // 创建时间
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6) // 更新时间
+  deletedAt          DateTime? @map("deleted_at") @db.Timestamptz(6) // 删除时间（软删除）
 
   // 关联关系
   order        Order?        @relation(fields: [orderId], references: [id], onDelete: SetNull)
@@ -27,10 +31,37 @@ model OrderRefund {
   parentRefund OrderRefund?  @relation("RefundHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
   childRefunds OrderRefund[] @relation("RefundHierarchy")
 
-  @@index([orderId]) // 订单退款查询
-  @@index([createdBy]) // 创建人查询
-  @@index([isFinancialSettled]) // 财务结算状态
-  @@index([submittedAt]) // 提交时间查询
-  @@index([isFinancialSettled, submittedAt]) // 财务结算报表查询
+  // ========= 约束/唯一性 =========
+
+  // 售后编号唯一
+  @@unique([afterSaleCode], map: "uk_order_refunds_after_sale_code")
+
+  // 订单维度唯一（同一订单的售后编号唯一）
+  @@unique([orderId, afterSaleCode], map: "uk_order_refunds_order_after_sale_code")
+
+  // ========= 索引（按真实查询习惯组织） =========
+  // 外键索引（必须）
+  @@index([orderId], map: "idx_order_refunds_order_id")
+  @@index([createdBy], map: "idx_order_refunds_created_by")
+  @@index([parentId], map: "idx_order_refunds_parent_id")
+
+  // 状态查询
+  @@index([status], map: "idx_order_refunds_status")
+
+  // 时间查询
+  @@index([submittedAt], map: "idx_order_refunds_submitted_at")
+  @@index([refundedAt], map: "idx_order_refunds_refunded_at")
+
+  // 复合索引：财务结算报表查询
+  @@index([status, submittedAt], map: "idx_order_refunds_status_submitted_at")
+  @@index([status, financialSettledAt], map: "idx_order_refunds_status_financial_settled_at")
+
+  // 订单维度查询
+  @@index([orderId, status], map: "idx_order_refunds_order_status")
+  @@index([orderId, submittedAt], map: "idx_order_refunds_order_submitted_at")
+
+  // 软删除过滤（常用）
+  @@index([deletedAt], map: "idx_order_refunds_deleted_at")
+
   @@map("order_refunds")
 }
