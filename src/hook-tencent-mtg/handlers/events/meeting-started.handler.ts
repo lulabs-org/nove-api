@@ -2,8 +2,8 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-23 09:15:35
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2025-12-31 17:53:44
- * @FilePath: /lulab_backend/src/hook-tencent-mtg/handlers/events/meeting-started.handler.ts
+ * @LastEditTime: 2026-03-05 01:48:37
+ * @FilePath: /nove_api/src/hook-tencent-mtg/handlers/events/meeting-started.handler.ts
  * @Description:
  *
  * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
@@ -49,7 +49,7 @@ export class MeetingStartedHandler extends BaseEventHandler {
         meeting_info,
         operator,
       ),
-      this.meetingDatabaseService.upsertMeetingRecord(payload),
+      this.meetingDatabaseService.upsertMeetingRecord(payload, this.SUPPORTED_EVENT),
       this.meetingDatabaseService.upsertPlatformUser(operator),
     ];
 
