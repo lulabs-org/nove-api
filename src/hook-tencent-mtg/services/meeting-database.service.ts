@@ -2,8 +2,8 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-24
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-04 01:50:50
- * @FilePath: /lulab_backend/src/hook-tencent-mtg/services/meeting-database.service.ts
+ * @LastEditTime: 2026-03-05 19:22:21
+ * @FilePath: /nove_api/src/hook-tencent-mtg/services/meeting-database.service.ts
  * @Description: 会议数据库服务，处理会议记录的创建和更新
  *
  * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
@@ -17,7 +17,7 @@ import {
 import { TencentEventUtils } from '../utils/tencent-event.utils';
 import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
 import { MeetingRepository } from '@/meeting/repositories/meeting.repository';
-import { Platform, PlatformUser, ProcessingStatus } from '@prisma/client';
+import { Platform, PlatformUser, Prisma } from '@prisma/client';
 
 /**
  * 会议数据库服务
@@ -34,8 +34,11 @@ export class MeetingDatabaseService {
    * 创建或更新会议记录
    * @param payload 腾讯会议事件载荷
    */
-  async upsertMeetingRecord(payload: TencentMeetingInfoPayload): Promise<void> {
-    const { meeting_info } = payload;
+  async upsertMeetingRecord(
+    payload: TencentMeetingInfoPayload,
+    event: string,
+  ): Promise<void> {
+    const { meeting_info, operate_time } = payload;
 
     if (!meeting_info) {
       throw new Error('Meeting info is required but not provided');
@@ -49,23 +52,38 @@ export class MeetingDatabaseService {
 
     const creatorUser = await this.upsertPlatformUser(creator);
 
+    type MeetingData = Omit<
+      Prisma.MeetingUncheckedCreateInput,
+      | 'id'
+      | 'createdAt'
+      | 'updatedAt'
+      | 'deletedAt'
+      | 'platform'
+      | 'meetingId'
+      | 'subMeetingId'
+    >;
+
+    const meetingData: Partial<MeetingData> = {
+      title: meeting_info.subject,
+      meetingCode: meeting_info.meeting_code,
+      type: meetingType,
+      hostId: creatorUser.id,
+      createdById: creatorUser.id,
+    };
+
+    if (event === 'meeting.started') {
+      meetingData.startAt = new Date(operate_time * 1000);
+    }
+
+    if (event === 'meeting.ended') {
+      meetingData.endAt = new Date(operate_time * 1000);
+    }
+
     await this.meetingRepository.upsert(
       Platform.TENCENT_MEETING,
       meeting_info.meeting_id,
       meeting_info.sub_meeting_id || '__ROOT__',
-      {
-        title: meeting_info.subject,
-        meetingCode: meeting_info.meeting_code,
-        type: meetingType,
-        hostId: creatorUser.id,
-        createdById: creatorUser.id,
-        startAt: new Date(meeting_info.start_time * 1000),
-        endAt: new Date(meeting_info.end_time * 1000),
-        durationSeconds: meeting_info.end_time - meeting_info.start_time,
-        hasRecording: false,
-        recordingStatus: ProcessingStatus.PENDING,
-        processingStatus: ProcessingStatus.PENDING,
-      },
+      meetingData as MeetingData,
     );
   }
 
