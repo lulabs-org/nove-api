@@ -14,7 +14,7 @@ export class TasksService {
   constructor(
     private readonly prisma: PrismaService,
     @InjectQueue('tasks') private readonly queue: Queue,
-  ) { }
+  ) {}
 
   // v5: 不需要 QueueScheduler，删除 onModuleInit
 

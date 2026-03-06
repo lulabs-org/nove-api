@@ -92,7 +92,7 @@ export class PeriodSummaryTool {
       platformUserId,
     );
 
-    let userName: string = summaries[0]?.userName ?? '未知用户';
+    const userName: string = summaries[0]?.userName ?? '未知用户';
 
     this.logger.log(
       `获取到用户(${platformUserId})的参会议记录` +
@@ -183,7 +183,7 @@ export class PeriodSummaryTool {
   ): Promise<string> {
     const question = JSON.stringify(summaries);
 
-    let { periodTypeStr } = this.deriveParentPeriodType(periodType);
+    const { periodTypeStr } = this.deriveParentPeriodType(periodType);
     if (!periodTypeStr) {
       this.logger.warn(
         `deriveParentPeriodType 返回了 undefined, 周期类型: ${periodType}`,
