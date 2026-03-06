@@ -38,6 +38,7 @@ import { RoleModule } from './role/role.module';
 import { OrganizationModule } from './org/organization.module';
 import { DepartmentModule } from './dept/department.module';
 import { OrgMemberModule } from './org-member/org-member.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -76,6 +77,7 @@ import { OrgMemberModule } from './org-member/org-member.module';
     OrganizationModule,
     DepartmentModule,
     OrgMemberModule,
+    ChatModule,
   ],
   controllers: [AppController],
   providers: [
