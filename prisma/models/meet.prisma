@@ -43,6 +43,7 @@ model Meeting {
   recordings           MeetingRecording[] // 关联的录制
   summaries            MeetingSummary[] // 关联的总结记录
   participantSummaries ParticipantSummary[] @relation("MeetingParticipantSummaries") // 参与者总结
+  userActions          MeetingUserAction[] @relation("MeetingUserActions") // 用户操作记录
 
   // 系统字段及时间
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -197,55 +198,6 @@ model MeetingSummary {
   @@index([meetingId, isLatest], map: "idx_meeting_summary_meeting_latest") // 查询会议的最新总结
   @@index([status, createdAt], map: "idx_meeting_summary_status_created") // 按状态查询总结列表
   @@map("meet_summaries")
-}
-
-model MeetingParticipant {
-  id String @id @default(cuid())
-
-  // 关联会议和用户
-  meetingId String
-  meeting   Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
-
-  // 参会人员
-  platformUserId String?
-  platformUser   PlatformUser? @relation("ParticipantUser", fields: [platformUserId], references: [id], onDelete: SetNull)
-
-  // 参会行为数据
-  joinTime        DateTime?
-  leftTime        DateTime?
-  durationSeconds Int? // 参与时长
-
-  // 平台特定的参会数据
-  instanceId  Int? // 腾讯会议实例ID
-  userRole    Int? // 平台用户角色
-  sessionData Json? // 本次参会的特定数据
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([meetingId])
-  @@index([platformUserId])
-  @@map("meet_participants")
-}
-
-model MeetingUserAction {
-  id String @id @default(cuid())
-
-  action     String
-  targetType String  @map("target_type")
-  targetId   String? @map("target_id") @db.Uuid
-  metadata   Json    @default("{}") @db.JsonB
-  ip         String? @db.Inet
-  userAgent  String? @map("user_agent")
-
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-
-  platformUserId String?       @map("user_id")
-  platformUser   PlatformUser? @relation("UserActions", fields: [platformUserId], references: [id], onDelete: SetNull)
-
-  @@index([platformUserId, createdAt], map: "idx_actions_user_time")
-  @@index([targetType, targetId], map: "idx_actions_target")
-  @@map("meet_user_actions")
 }
 
 // 录制来源枚举

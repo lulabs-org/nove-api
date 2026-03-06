@@ -1,0 +1,53 @@
+model MeetingUserAction {
+    id String @id @default(cuid())
+
+    action     MeetingControlAction
+    targetType String               @map("target_type")
+    targetId   String?              @map("target_id") @db.Uuid
+    metadata   Json                 @default("{}") @db.JsonB
+    ip         String?              @db.Inet
+    userAgent  String?              @map("user_agent")
+
+    meetingId String  @map("meeting_id")
+    meeting   Meeting @relation("MeetingUserActions", fields: [meetingId], references: [id], onDelete: Cascade)
+
+    ptUserId String?       @map("pt_user_id")
+    ptUser   PlatformUser? @relation("UserActions", fields: [ptUserId], references: [id], onDelete: SetNull)
+
+    actionAt  DateTime @map("action_at") @db.Timestamptz(6)
+    createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+    updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+    @@index([ptUserId, createdAt], map: "idx_actions_user_time")
+    @@index([targetType, targetId], map: "idx_actions_target")
+    @@index([meetingId, createdAt], map: "idx_actions_meeting_time")
+    @@index([meetingId, actionAt], map: "idx_actions_meeting_action_time")
+    @@map("meet_user_actions")
+}
+
+// 会中控制动作枚举
+enum MeetingControlAction {
+    MUTE_ALL // 全体静音
+    UNMUTE_ALL // 解除全体静音
+    START_SCREEN_SHARE // 开始共享屏幕
+    STOP_SCREEN_SHARE // 停止共享屏幕
+    MUTE_PARTICIPANT // 静音指定参与者
+    UNMUTE_PARTICIPANT // 解除静音指定参与者
+    REMOVE_PARTICIPANT // 移除参与者
+    LOCK_MEETING // 锁定会议
+    UNLOCK_MEETING // 解锁会议
+    START_RECORDING // 开始录制
+    STOP_RECORDING // 停止录制
+    START_WHITEBOARD // 开始白板
+    STOP_WHITEBOARD // 停止白板
+    START_POLL // 开始投票
+    STOP_POLL // 停止投票
+    START_BREAKOUT_ROOM // 开始分组讨论
+    STOP_BREAKOUT_ROOM // 停止分组讨论
+    RAISE_HAND // 举手
+    LOWER_HAND // 放下举手
+    START_CHAT // 开始聊天
+    STOP_CHAT // 停止聊天
+    START_REACTION // 开始表情反应
+    STOP_REACTION // 停止表情反应
+}
