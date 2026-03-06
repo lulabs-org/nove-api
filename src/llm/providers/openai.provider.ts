@@ -34,4 +34,29 @@ export class OpenAiProvider implements LlmProvider {
 
     return { text: res.choices?.[0]?.message?.content ?? "" };
   }
+
+  async *streamComplete(input: {
+    model: string;
+    messages: ChatMessage[];
+    temperature?: number;
+    responseFormat?: "text" | "json";
+  }): AsyncGenerator<{ text: string }> {
+    const stream = await this.client.chat.completions.create({
+      model: input.model,
+      temperature: input.temperature ?? 0.2,
+      messages: input.messages,
+      response_format:
+        input.responseFormat === "json"
+          ? { type: "json_object" }
+          : undefined,
+      stream: true,
+    });
+
+    for await (const chunk of stream) {
+      const content = chunk.choices?.[0]?.delta?.content;
+      if (content) {
+        yield { text: content };
+      }
+    }
+  }
 }

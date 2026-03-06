@@ -22,7 +22,6 @@ export class AnthropicProvider implements LlmProvider {
     temperature?: number;
     responseFormat?: "text" | "json";
   }): Promise<{ text: string }> {
-    // Anthropic 的 messages 结构略不同，这里做最小适配：把 system 拆出来
     const system = input.messages.filter(m => m.role === "system").map(m => m.content).join("\n\n");
     const msgs = input.messages
       .filter(m => m.role !== "system")
@@ -41,5 +40,32 @@ export class AnthropicProvider implements LlmProvider {
       .join("");
 
     return { text };
+  }
+
+  async *streamComplete(input: {
+    model: string;
+    messages: ChatMessage[];
+    temperature?: number;
+    responseFormat?: "text" | "json";
+  }): AsyncGenerator<{ text: string }> {
+    const system = input.messages.filter(m => m.role === "system").map(m => m.content).join("\n\n");
+    const msgs = input.messages
+      .filter(m => m.role !== "system")
+      .map(m => ({ role: m.role, content: m.content }));
+
+    const stream = await this.client.messages.create({
+      model: input.model,
+      temperature: input.temperature ?? 0.2,
+      system: system || undefined,
+      messages: msgs as any,
+      max_tokens: 4096,
+      stream: true,
+    });
+
+    for await (const event of stream) {
+      if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+        yield { text: event.delta.text };
+      }
+    }
   }
 }

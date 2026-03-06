@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-03-06 00:56:17
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-06 00:56:26
+ * @LastEditTime: 2026-03-06 14:41:11
  * @FilePath: /nove_api/src/llm/providers/llm-provider.interface.ts
  * @Description: 
  * 
@@ -12,11 +12,18 @@
 export type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
 
 export interface LlmProvider {
-  id: string; // "openai" | "anthropic" | "gemini" ...
+  id: string;
   complete(input: {
     model: string;
     messages: ChatMessage[];
     temperature?: number;
     responseFormat?: "text" | "json";
   }): Promise<{ text: string }>;
+
+  streamComplete(input: {
+    model: string;
+    messages: ChatMessage[];
+    temperature?: number;
+    responseFormat?: "text" | "json";
+  }): AsyncGenerator<{ text: string }>;
 }

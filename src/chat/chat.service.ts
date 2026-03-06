@@ -14,24 +14,20 @@ export class ChatService {
     private readonly llm: LlmService,
   ) {}
 
-  async chat(userId: string, input: ChatDto) {
-    // 1) conversation
+  private async prepareChatContext(userId: string, input: ChatDto) {
     const conv =
       input.conversationId
         ? await this.prisma.conversation.findFirst({ where: { id: input.conversationId, userId } })
         : await this.prisma.conversation.create({ data: { userId } });
 
     if (!conv) {
-      // 简化处理：实际可抛 404
       throw new Error("Conversation not found");
     }
 
-    // 2) save user message
     await this.prisma.message.create({
       data: { conversationId: conv.id, role: "user", content: input.message },
     });
 
-    // 3) load recent history
     const history = await this.prisma.message.findMany({
       where: { conversationId: conv.id },
       orderBy: { createdAt: "asc" },
@@ -39,7 +35,6 @@ export class ChatService {
       select: { role: true, content: true },
     });
 
-    // 4) discovery: send ONLY name+description list to model to choose skills
     const allSkills = await this.skills.listSkills(userId);
     const selectionPrompt = buildSkillSelectionSystemPrompt(
       allSkills.map(s => ({ name: s.name, description: s.description })),
@@ -65,7 +60,6 @@ export class ChatService {
       selected = [];
     }
 
-    // 5) activation: load full SKILL.md body only for selected skills
     const activatedSkills: { name: string; bodyMarkdown: string }[] = [];
     for (const name of selected) {
       const skill = await this.skills.getSkillByName(userId, name);
@@ -79,22 +73,28 @@ export class ChatService {
             .map(s => `## SKILL: ${s.name}\n${s.bodyMarkdown}`)
             .join("\n\n")}`;
 
-    // 6) final completion with history + (optional) skill instructions
+    const messages = [
+      {
+        role: "system",
+        content:
+          `You are a helpful assistant. Follow any activated skill instructions if present.\n\n` +
+          skillContext,
+      },
+      ...history.map(m => ({ role: m.role as any, content: m.content })),
+    ];
+
+    return { conv, provider, messages, activatedSkills };
+  }
+
+  async chat(userId: string, input: ChatDto) {
+    const { conv, provider, messages, activatedSkills } = await this.prepareChatContext(userId, input);
+
     const finalRes = await provider.complete({
       model: input.model,
       temperature: input.temperature ?? 0.3,
-      messages: [
-        {
-          role: "system",
-          content:
-            `You are a helpful assistant. Follow any activated skill instructions if present.\n\n` +
-            skillContext,
-        },
-        ...history.map(m => ({ role: m.role as any, content: m.content })),
-      ],
+      messages,
     });
 
-    // 7) save assistant message
     const assistantMsg = await this.prisma.message.create({
       data: { conversationId: conv.id, role: "assistant", content: finalRes.text },
     });
@@ -104,5 +104,27 @@ export class ChatService {
       selectedSkills: activatedSkills.map(s => s.name),
       message: { id: assistantMsg.id, role: assistantMsg.role, content: assistantMsg.content },
     };
+  }
+
+  async *streamChat(userId: string, input: ChatDto) {
+    const { conv, provider, messages, activatedSkills } = await this.prepareChatContext(userId, input);
+
+    const stream = provider.streamComplete({
+      model: input.model,
+      temperature: input.temperature ?? 0.3,
+      messages,
+    });
+
+    let fullText = "";
+    for await (const chunk of stream) {
+      fullText += chunk.text;
+      yield { text: chunk.text, done: false };
+    }
+
+    const assistantMsg = await this.prisma.message.create({
+      data: { conversationId: conv.id, role: "assistant", content: fullText },
+    });
+
+    yield { text: "", done: true, messageId: assistantMsg.id, conversationId: conv.id, selectedSkills: activatedSkills.map(s => s.name) };
   }
 }
