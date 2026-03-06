@@ -158,9 +158,9 @@ export class MeetingStatsTool {
     }
 
     const participants = meeting.participants.map((p) => ({
-      userId: p.platformUser?.id,
-      name: p.platformUser?.displayName || 'Unknown',
-      email: p.platformUser?.email,
+      userId: p.ptUser?.id,
+      name: p.ptUser?.displayName || 'Unknown',
+      email: p.ptUser?.email,
       joinTime: p.joinTime?.toISOString(),
       leaveTime: p.leftTime?.toISOString(),
       duration: p.durationSeconds,
