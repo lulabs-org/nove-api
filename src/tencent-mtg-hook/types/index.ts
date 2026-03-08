@@ -2,8 +2,8 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-03 08:11:41
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-04 04:04:16
- * @FilePath: /lulab_backend/src/hook-tencent-mtg/types/index.ts
+ * @LastEditTime: 2026-03-09 00:57:03
+ * @FilePath: /nove_api/src/tencent-mtg-hook/types/index.ts
  * @Description: 腾讯会议事件相关类型定义 - 统一导出
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.

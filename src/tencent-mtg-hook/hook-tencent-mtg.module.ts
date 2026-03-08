@@ -2,8 +2,8 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-01-03 10:00:00
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-05 23:34:47
- * @FilePath: /lulab_backend/src/hook-tencent-mtg/hook-tencent-mtg.module.ts
+ * @LastEditTime: 2026-03-09 01:27:53
+ * @FilePath: /nove_api/src/tencent-mtg-hook/hook-tencent-mtg.module.ts
  * @Description: 腾讯会议模块，处理腾讯会议相关的Webhook事件
  *
  * Copyright (c) 2025 by ${git_name_email}, All Rights Reserved.
@@ -17,15 +17,11 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { LarkModule } from '@/integrations/lark/lark.module';
 import { OpenaiModule } from '@/integrations/openai/openai.module';
 import { UserModule } from '@/user/user.module';
-
 import { TencentWebhookController } from './controllers/tencent-webhook.controller';
 import { TencentEventHandlerService } from './services/event-handler.service';
 import { MeetingBitableService } from './services/meeting-bitable.service';
 import { MeetingDatabaseService } from './services/meeting-database.service';
 import { MeetingParticipantService } from './services/meeting-participant.service';
-import { TranscriptService } from './services/transcript.service';
-import { TranscriptFormatterService } from './services/transcript-formatter.service';
-import { RecordingContentService } from './services/recording-content.service';
 import { MeetingRepository } from '@/meeting/repositories/meeting.repository';
 import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
 import {
@@ -71,9 +67,6 @@ import {
     MeetingBitableService,
     MeetingDatabaseService,
     MeetingParticipantService,
-    TranscriptService,
-    TranscriptFormatterService,
-    RecordingContentService,
     SpeakerService,
     TranscriptBatchProcessor,
     MeetingStartedHandler,

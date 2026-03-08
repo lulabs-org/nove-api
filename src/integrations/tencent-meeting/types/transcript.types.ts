@@ -2,8 +2,8 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-03 08:55:09
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-03 22:31:46
- * @FilePath: /lulab_backend/src/integrations/tencent-meeting/types/transcript.types.ts
+ * @LastEditTime: 2026-03-09 00:54:56
+ * @FilePath: /nove_api/src/integrations/tencent-meeting/types/transcript.types.ts
  * @Description:
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
@@ -53,4 +53,11 @@ export interface RecordingTranscriptResponse {
     new_error_code?: number;
     message: string;
   };
+}
+
+export interface TranscriptResult {
+  paragraphs: RecordingTranscriptParagraph[];
+  uniqueSpeakerInfos: SpeakerInfo[];
+  formattedText: string;
+  keywords: string[];
 }

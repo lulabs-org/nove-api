@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TencentApiService } from '@/integrations/tencent-meeting/api.service';
+import { TencentApiService } from '@/integrations/tencent-meeting/services/api.service';
 import { tencentMeetingConfig } from '@/configs/tencent-mtg.config';
 import { config } from 'dotenv';
 import {

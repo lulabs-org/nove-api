@@ -1,5 +1,5 @@
 import { createHash } from 'crypto';
-import { verifySignature } from './index';
+import { verifySignature } from '../index';
 
 describe('TencentCryptoService', () => {
   describe('verifySignature', () => {
