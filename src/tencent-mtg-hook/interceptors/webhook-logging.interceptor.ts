@@ -2,8 +2,8 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-10-01 01:08:34
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2025-12-23 01:21:48
- * @FilePath: /lulab_backend/src/hook-tencent-mtg/interceptors/webhook-logging.interceptor.ts
+ * @LastEditTime: 2026-03-08 23:39:40
+ * @FilePath: /nove_api/src/tencent-mtg-hook/interceptors/webhook-logging.interceptor.ts
  * @Description: Tencent Meeting Webhook logging interceptor that records detailed information for all Webhook requests
  */
 
