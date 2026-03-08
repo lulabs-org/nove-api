@@ -1,71 +1,71 @@
 // 订单表
 model Order {
-  id                   String    @id @default(cuid()) // 内部主键
+  id String @id @default(cuid()) // 内部主键
 
   // 编码体系：内部号 + 对外展示号
-  orderCode         String   @map("order_code")    // 内部订单号（系统生成）
-  orderNumber       String   @map("order_number")  // 对外订单号（展示/客服）
+  orderCode   String @map("order_code") // 内部订单号（系统生成）
+  orderNumber String @map("order_number") // 对外订单号（展示/客服）
 
   // 外部平台订单号（建议按渠道维度做唯一）
-  externalId        String?  @map("external_order_id")
+  externalId String? @map("external_order_id")
 
   // 可变/非核心字段（AI输出/实验字段等）
-  metadata          Json?    @default("{}") @db.JsonB
+  metadata Json? @default("{}") @db.JsonB
 
   // 关联
-  productId         String?  @map("product_id") // 产品ID
-  productName       String?  @map("product_name") // 冗余快照（下单时的标题）
-  userId            String?  @map("user_id") // 用户ID
-  channelId         Int?     @map("channel_id") // 渠道ID
+  productId   String? @map("product_id") // 产品ID
+  productName String? @map("product_name") // 冗余快照（下单时的标题）
+  purchaserId String? @map("purchaser_id") // 购买者ID（外键）
+  channelId   Int?    @map("channel_id") // 渠道ID
 
-  email             String?   @map("customer_email") // 用户邮箱
-  phone             String?   @map("customer_phone") // 订单手机号
-  phoneCode         String?   @map("customer_phone_code") // 手机号区号
+  email     String? @map("customer_email") // 用户邮箱
+  phone     String? @map("customer_phone") // 订单手机号
+  phoneCode String? @map("customer_phone_code") // 手机号区号
 
-  currentOwnerId    String?   @map("current_owner_id") // 当前负责人（系统用户ID）
+  currentOwnerId String? @map("current_owner_id") // 当前负责人（系统用户ID）
 
   // 财务结单：去掉 isFinancialClosed，避免布尔与时间不一致
   financialCloserId String?   @map("financial_closer_id") // 财务结单人（系统用户ID）
   financialClosedAt DateTime? @map("financial_closed_at") @db.Timestamptz(6) // 财务结单时间
   // 金额（最小货币单位：分/cent；JPY则是"1"代表1日元）
-  amountOriginal    Int      @map("amount") // 原始金额（最小单位）
-  currency          Currency @default(CNY) // 币种
+  amountOriginal    Int       @map("amount") // 原始金额（最小单位）
+  currency          Currency  @default(CNY) // 币种
 
   // 换算信息：建议在"支付成功"时锁定
-  amountCny         Int?     @map("amount_cny") // 可空：未支付/未换算/免费单等
-  fxRateToCny       Decimal? @map("fx_rate_to_cny") @db.Decimal(18, 8) // 汇率
-  fxLockedAt        DateTime? @map("fx_locked_at") @db.Timestamptz(6) // 锁汇率时间（通常=paidAt）
+  amountCny   Int?      @map("amount_cny") // 可空：未支付/未换算/免费单等
+  fxRateToCny Decimal?  @map("fx_rate_to_cny") @db.Decimal(18, 8) // 汇率
+  fxLockedAt  DateTime? @map("fx_locked_at") @db.Timestamptz(6) // 锁汇率时间（通常=paidAt）
 
   // 订单状态：用 enum 替代 Int，小心值漂移
-  status            OrderStatus @default(UNPAID) @map("status")
-  
+  status OrderStatus @default(UNPAID) @map("status")
+
   // 支付与生命周期关键时间（统一用 timestamptz）
-  paidAt            DateTime? @map("paid_at") @db.Timestamptz(6) // 支付时间
-  cancelledAt       DateTime? @map("cancelled_at") @db.Timestamptz(6) // 取消时间
-  refundedAt        DateTime? @map("refunded_at") @db.Timestamptz(6) // 退款时间
-  completedAt       DateTime? @map("completed_at") @db.Timestamptz(6) // 完成时间
+  paidAt      DateTime? @map("paid_at") @db.Timestamptz(6) // 支付时间
+  cancelledAt DateTime? @map("cancelled_at") @db.Timestamptz(6) // 取消时间
+  refundedAt  DateTime? @map("refunded_at") @db.Timestamptz(6) // 退款时间
+  completedAt DateTime? @map("completed_at") @db.Timestamptz(6) // 完成时间
 
   // 生效/权益（建议存"确定性边界"，不要存每天变化的 remaining/activeDays）
-  effectiveAt       DateTime? @map("effective_at") @db.Timestamptz(6) // 生效时间
-  benefitStartAt    DateTime? @map("benefit_start_at") @db.Timestamptz(6) // 权益开始时间
-  benefitDurationDays Int?    @map("benefit_duration_days") // 权益时长（天）
-  benefitEndAt      DateTime? @map("benefit_end_at") @db.Timestamptz(6) // 权益结束时间
+  effectiveAt         DateTime? @map("effective_at") @db.Timestamptz(6) // 生效时间
+  benefitStartAt      DateTime? @map("benefit_start_at") @db.Timestamptz(6) // 权益开始时间
+  benefitDurationDays Int?      @map("benefit_duration_days") // 权益时长（天）
+  benefitEndAt        DateTime? @map("benefit_end_at") @db.Timestamptz(6) // 权益结束时间
 
   // 支付渠道（可选，但通常很快就会用到）
-  paymentProvider   PaymentProvider? @map("payment_provider") // 支付提供商
-  providerTradeNo   String?          @map("provider_trade_no") // 支付平台流水号/交易号
+  paymentProvider PaymentProvider? @map("payment_provider") // 支付提供商
+  providerTradeNo String?          @map("provider_trade_no") // 支付平台流水号/交易号
 
   // 关联关系
   product         Product?      @relation(fields: [productId], references: [id], onDelete: SetNull) // 产品
-  user            User?         @relation("UserOrders", fields: [userId], references: [id], onDelete: SetNull) // 用户
+  purchaser       User?         @relation("UserOrders", fields: [purchaserId], references: [id], onDelete: SetNull) // 购买者
   channel         Channel?      @relation(fields: [channelId], references: [id], onDelete: SetNull) // 渠道
   currentOwner    User?         @relation("CurrentOwnerOrders", fields: [currentOwnerId], references: [id], onDelete: SetNull) // 当前负责人
   financialCloser User?         @relation("FinancialCloserOrders", fields: [financialCloserId], references: [id], onDelete: SetNull) // 财务结单人
   refunds         OrderRefund[] // 订单的退款记录
 
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6) // 创建时间
-  updatedAt DateTime @updatedAt      @map("updated_at") @db.Timestamptz(6) // 更新时间
-  deletedAt DateTime?                @map("deleted_at") @db.Timestamptz(6) // 删除时间（软删除）
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6) // 创建时间
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6) // 更新时间
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6) // 删除时间（软删除）
 
   // ========= 约束/唯一性 =========
 
@@ -74,30 +74,23 @@ model Order {
   // Prisma 原生不支持 partial unique，建议在 migration 里写 raw SQL。
   @@unique([orderCode], map: "uk_orders_order_code")
   @@unique([orderNumber], map: "uk_orders_order_number")
-
   // 外部订单号：通常同一外部平台在不同渠道/店铺可能重复，所以建议复合唯一
   @@unique([channelId, externalId], map: "uk_orders_channel_external_id")
-
   // ========= 索引（按真实查询习惯组织） =========
-  @@index([userId, createdAt], map: "idx_orders_user_created_at")
-  @@index([userId, status], map: "idx_orders_user_status")
+  @@index([purchaserId, createdAt], map: "idx_orders_purchaser_created_at")
+  @@index([purchaserId, status], map: "idx_orders_purchaser_status")
   @@index([channelId, createdAt], map: "idx_orders_channel_created_at")
-
   // 已支付订单按时间范围统计/对账很常见
   @@index([status, paidAt], map: "idx_orders_status_paid_at")
   @@index([paidAt], map: "idx_orders_paid_at")
-
   // 结单对账：按结单时间筛选/分组
   @@index([financialClosedAt], map: "idx_orders_financial_closed_at")
   @@index([channelId, financialClosedAt], map: "idx_orders_channel_fin_closed_at")
-
   // 负责人/产品维度
   @@index([currentOwnerId], map: "idx_orders_current_owner_id")
   @@index([productId, createdAt], map: "idx_orders_product_created_at")
-
   // 软删除过滤（常用）
   @@index([deletedAt], map: "idx_orders_deleted_at")
-
   @@map("orders")
 }
 
@@ -117,20 +110,20 @@ enum Currency {
 
 // 订单状态枚举（可按你业务继续细分）
 enum OrderStatus {
-  UNPAID     // 未支付
-  PAID       // 已支付
-  CANCELLED  // 已取消
-  REFUNDED   // 已退款（全额）
-  COMPLETED  // 已完成/已交付
+  UNPAID // 未支付
+  PAID // 已支付
+  CANCELLED // 已取消
+  REFUNDED // 已退款（全额）
+  COMPLETED // 已完成/已交付
 }
 
 // 支付提供方（示例：按你实际接入增删）
 enum PaymentProvider {
-  STRIPE     // Stripe
-  PAYPAL     // PayPal
-  WECHAT     // 微信支付
-  ALIPAY     // 支付宝
-  APPLE_PAY  // Apple Pay
+  STRIPE // Stripe
+  PAYPAL // PayPal
+  WECHAT // 微信支付
+  ALIPAY // 支付宝
+  APPLE_PAY // Apple Pay
   GOOGLE_PAY // Google Pay
-  OTHER      // 其他
+  OTHER // 其他
 }
