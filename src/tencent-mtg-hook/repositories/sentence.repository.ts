@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import { PrismaTransaction } from '@/hook-tencent-mtg/types';
+import { PrismaTransaction } from '@/tencent-mtg-hook/types';
 
 @Injectable()
 export class SentenceRepository {

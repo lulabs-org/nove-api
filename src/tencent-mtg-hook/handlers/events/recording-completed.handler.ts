@@ -30,7 +30,7 @@ import { PlatformUserRepository } from '@/user-platform/repositories/platform-us
 import {
   NewSpeakerInfo,
   NewRecordingTranscriptParagraph,
-} from '@/hook-tencent-mtg/types';
+} from '@/tencent-mtg-hook/types';
 import {
   Prisma,
   MeetingRecording,

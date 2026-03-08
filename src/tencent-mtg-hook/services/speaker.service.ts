@@ -2,15 +2,15 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-29 01:59:25
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-06 01:13:21
- * @FilePath: /lulab_backend/src/hook-tencent-mtg/services/speaker.service.ts
+ * @LastEditTime: 2026-03-08 23:43:10
+ * @FilePath: /nove_api/src/tencent-mtg-hook/services/speaker.service.ts
  * @Description:
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
 import { Injectable, Logger } from '@nestjs/common';
-import { NewSpeakerInfo } from '@/hook-tencent-mtg/types';
+import { NewSpeakerInfo } from '@/tencent-mtg-hook/types';
 import { Platform, PlatformUser, User } from '@prisma/client';
 import { UserRepository } from '@/user/repositories/user.repository';
 import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';

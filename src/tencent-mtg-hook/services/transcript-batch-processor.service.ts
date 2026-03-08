@@ -6,13 +6,13 @@ import {
   ParagraphRepository,
   SentenceRepository,
   WordRepository,
-} from '@/hook-tencent-mtg/repositories';
+} from '@/tencent-mtg-hook/repositories';
 import {
   PrismaTransaction,
   NewRecordingTranscriptParagraph,
   ParagraphData,
   SentenceData,
-} from '@/hook-tencent-mtg/types';
+} from '@/tencent-mtg-hook/types';
 
 @Injectable()
 export class TranscriptBatchProcessor {

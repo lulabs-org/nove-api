@@ -2,11 +2,11 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-20 22:01:42
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2025-12-23 01:39:22
- * @FilePath: /lulab_backend/src/hook-tencent-mtg/handlers/base/base-event.handler.ts
+ * @LastEditTime: 2026-03-08 23:39:53
+ * @FilePath: /nove_api/src/tencent-mtg-hook/handlers/base/base-event.handler.ts
  * @Description: Base event handler for Tencent Meeting
  *
- * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
 import { Injectable, Logger } from '@nestjs/common';

@@ -1,50 +1,48 @@
 /*
  * @Author: 杨仕明 shiming.y@qq.com
- * @Date: 2025-12-29 01:47:59
+ * @Date: 2025-12-30 06:21:51
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2025-12-29 04:12:22
- * @FilePath: /lulab_backend/src/hook-tencent-mtg/repositories/word.repository.ts
+ * @LastEditTime: 2025-12-30 20:22:47
+ * @FilePath: /lulab_backend/src/hook-tencent-mtg/repositories/paragraph.repository.ts
  * @Description:
  *
  * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
  */
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import { PrismaTransaction } from '@/hook-tencent-mtg/types';
+import { PrismaTransaction } from '@/tencent-mtg-hook/types';
 
 @Injectable()
-export class WordRepository {
+export class ParagraphRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(
     tx: PrismaTransaction,
     data: {
-      wid: number;
-      order?: number;
+      pid: number;
       startTimeMs: bigint;
       endTimeMs: bigint;
-      text: string;
-      sentenceId: string;
+      speakerId?: string;
+      transcriptId: string;
     },
   ) {
-    return tx.word.create({
+    return tx.paragraph.create({
       data,
     });
   }
 
   async createMany(
     tx: PrismaTransaction,
-    words: Array<{
-      wid: number;
-      order?: number;
+    paragraphs: Array<{
+      pid: number;
       startTimeMs: bigint;
       endTimeMs: bigint;
-      text: string;
-      sentenceId: string;
+      speakerId?: string;
+      transcriptId: string;
     }>,
   ) {
-    return tx.word.createMany({
-      data: words,
+    return tx.paragraph.createMany({
+      data: paragraphs,
       skipDuplicates: true,
     });
   }
