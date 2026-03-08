@@ -10,7 +10,7 @@ model Order {
   externalId String? @map("external_order_id")
 
   // 可变/非核心字段（AI输出/实验字段等）
-  metadata Json? @default("{}") @db.JsonB
+  metadata Json? @db.JsonB
 
   // 关联
   productId   String? @map("product_id") // 产品ID
@@ -27,12 +27,13 @@ model Order {
   // 财务结单：去掉 isFinancialClosed，避免布尔与时间不一致
   financialCloserId String?   @map("financial_closer_id") // 财务结单人（系统用户ID）
   financialClosedAt DateTime? @map("financial_closed_at") @db.Timestamptz(6) // 财务结单时间
+
   // 金额（最小货币单位：分/cent；JPY则是"1"代表1日元）
-  amountOriginal    Int       @map("amount") // 原始金额（最小单位）
-  currency          Currency  @default(CNY) // 币种
+  amount    Int      @map("amount") // 订单金额（最小单位：分）
+  currency  Currency @default(CNY) // 币种
 
   // 换算信息：建议在"支付成功"时锁定
-  amountCny   Int?      @map("amount_cny") // 可空：未支付/未换算/免费单等
+  amountCny   Int?      @map("amount_cny") // 人民币金额（最小单位：分），可空：未支付/未换算/免费单等
   fxRateToCny Decimal?  @map("fx_rate_to_cny") @db.Decimal(18, 8) // 汇率
   fxLockedAt  DateTime? @map("fx_locked_at") @db.Timestamptz(6) // 锁汇率时间（通常=paidAt）
 
@@ -46,10 +47,9 @@ model Order {
   completedAt DateTime? @map("completed_at") @db.Timestamptz(6) // 完成时间
 
   // 生效/权益（建议存"确定性边界"，不要存每天变化的 remaining/activeDays）
-  effectiveAt         DateTime? @map("effective_at") @db.Timestamptz(6) // 生效时间
-  benefitStartAt      DateTime? @map("benefit_start_at") @db.Timestamptz(6) // 权益开始时间
-  benefitDurationDays Int?      @map("benefit_duration_days") // 权益时长（天）
-  benefitEndAt        DateTime? @map("benefit_end_at") @db.Timestamptz(6) // 权益结束时间
+  effectiveAt  DateTime? @map("effective_at") @db.Timestamptz(6) // 生效时间
+  benefitStart DateTime? @map("benefit_start") @db.Timestamptz(6) // 权益开始时间
+  benefitEnd   DateTime? @map("benefit_end") @db.Timestamptz(6) // 权益结束时间
 
   // 支付渠道（可选，但通常很快就会用到）
   paymentProvider PaymentProvider? @map("payment_provider") // 支付提供商
@@ -76,6 +76,7 @@ model Order {
   @@unique([orderNumber], map: "uk_orders_order_number")
   // 外部订单号：通常同一外部平台在不同渠道/店铺可能重复，所以建议复合唯一
   @@unique([channelId, externalId], map: "uk_orders_channel_external_id")
+
   // ========= 索引（按真实查询习惯组织） =========
   @@index([purchaserId, createdAt], map: "idx_orders_purchaser_created_at")
   @@index([purchaserId, status], map: "idx_orders_purchaser_status")
@@ -91,6 +92,7 @@ model Order {
   @@index([productId, createdAt], map: "idx_orders_product_created_at")
   // 软删除过滤（常用）
   @@index([deletedAt], map: "idx_orders_deleted_at")
+
   @@map("orders")
 }
 
