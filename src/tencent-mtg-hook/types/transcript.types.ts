@@ -13,7 +13,6 @@ import {
   RecordingTranscriptResponse,
   RecordingTranscriptParagraph,
   RecordingTranscriptSentence,
-  SpeakerInfo,
 } from '@/integrations/tencent-meeting/types';
 
 export type PrismaTransaction = Omit<
