@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-24 00:00:00
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-09 01:02:53
+ * @LastEditTime: 2026-03-09 13:54:25
  * @FilePath: /nove_api/src/tencent-mtg-hook/services/meeting-participant.service.ts
  * @Description: 会议参与者服务，负责处理会议参与者相关逻辑
  *
@@ -22,7 +22,7 @@ import { MeetingParticipantsResult } from '../types';
 export class MeetingParticipantService {
   private readonly logger = new Logger(MeetingParticipantService.name);
 
-  constructor(private readonly tencentMeetingApi: TencentApiService) {}
+  constructor(private readonly api: TencentApiService) {}
 
   /**
    * 获取唯一的会议参与者列表
@@ -37,7 +37,7 @@ export class MeetingParticipantService {
     subMeetingId?: string,
   ): Promise<MeetingParticipantsResult> {
     try {
-      const response = await this.tencentMeetingApi.getParticipants(
+      const response = await this.api.getParticipants(
         meetingId,
         userId,
         subMeetingId,

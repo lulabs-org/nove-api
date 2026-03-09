@@ -45,7 +45,9 @@ export class RecordingContentService {
 
     try {
       const response = await this.api.getSmartFullSummary(fileId, userId);
-      result.fullsummary = ContentUtils.decodeBase64Content(response.ai_summary);
+      result.fullsummary = ContentUtils.decodeBase64Content(
+        response.ai_summary,
+      );
       this.logger.log(`智能摘要获取成功: fileId=${fileId}`);
     } catch (error) {
       this.logger.error(
@@ -54,7 +56,9 @@ export class RecordingContentService {
     }
 
     try {
-      const { minute, todo } = (await this.api.getSmartMeetingMinutes(fileId, userId)).meeting_minute || {};
+      const { minute, todo } =
+        (await this.api.getSmartMeetingMinutes(fileId, userId))
+          .meeting_minute || {};
       result.ai_minutes = minute || '';
       result.todo = todo || '';
       this.logger.log(`会议纪要获取成功: fileId=${fileId}`);

@@ -4,9 +4,9 @@
  * @LastEditors: 杨仕明 shiming.y@qq.com
  * @LastEditTime: 2026-03-09 00:54:46
  * @FilePath: /nove_api/src/tencent-mtg-hook/types/transcript.types.ts
- * @Description: 
- * 
- * Copyright (c) 2026 by LuLab-Team, All Rights Reserved. 
+ * @Description:
+ *
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 import { PrismaClient } from '@prisma/client';
 import {
