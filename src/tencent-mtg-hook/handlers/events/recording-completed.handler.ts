@@ -2,35 +2,14 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-09-13 02:54:40
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-05 06:46:10
- * @FilePath: /lulab_backend/src/hook-tencent-mtg/handlers/events/recording-completed.handler.ts
+ * @LastEditTime: 2026-03-09 14:39:20
+ * @FilePath: /nove_api/src/tencent-mtg-hook/handlers/events/recording-completed.handler.ts
  * @Description: 录制完成事件处理器
  *
  * Copyright (c) 2025 by ${git_name_email}, All Rights Reserved.
  */
 
 import { Injectable } from '@nestjs/common';
-import { BaseEventHandler } from '../base/base-event.handler';
-import { RecordingCompletedPayload } from '../../types/tencent-event.types';
-import { NumberRecordBitableRepository } from '@/integrations/lark/repositories';
-import { OpenaiService } from '@/integrations/openai/openai.service';
-import { RecordingContentService } from '../../../integrations/tencent-meeting/services/recording-content.service';
-import { TranscriptService } from '../../../integrations/tencent-meeting/services/transcript.service';
-import { MeetingBitableService } from '../../services/meeting-bitable.service';
-import { MeetingParticipantService } from '../../../integrations/tencent-meeting/services/meeting-participant.service';
-import { SpeakerService } from '../../services/speaker.service';
-import { MeetingRecordingRepository } from '../../repositories/meeting-recording.repository';
-import { MeetingRepository } from '@/meeting/repositories/meeting.repository';
-import { PARTICIPANT_SUMMARY_PROMPT } from '../../constants/prompts';
-import { ParticipantSummaryRepository } from '../../repositories/participant-summary.repository';
-import { MeetingSummaryRepository } from '../../repositories/meeting-summary.repository';
-import { TranscriptBatchProcessor } from '../../services/transcript-batch-processor.service';
-import { TranscriptRepository } from '../../repositories/transcript.repository';
-import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
-import {
-  NewSpeakerInfo,
-  NewRecordingTranscriptParagraph,
-} from '@/tencent-mtg-hook/types';
 import {
   Prisma,
   MeetingRecording,
@@ -41,6 +20,35 @@ import {
   MeetingPlatform,
 } from '@prisma/client';
 
+import { BaseEventHandler } from '../base/base-event.handler';
+import {
+  RecordingCompletedPayload,
+  NewSpeakerInfo,
+  NewRecordingTranscriptParagraph,
+} from '../../types';
+import {
+  MeetingBitableService,
+  MeetingParticipantService,
+  SpeakerService,
+  TranscriptBatchProcessor,
+} from '../../services';
+import {
+  MeetingRecordingRepository,
+  MeetingSummaryRepository,
+  ParticipantSummaryRepository,
+  TranscriptRepository,
+} from '../../repositories';
+import { PARTICIPANT_SUMMARY_PROMPT } from '../../constants/prompts';
+
+import { NumberRecordBitableRepository } from '@/integrations/lark/repositories';
+import { OpenaiService } from '@/integrations/openai/openai.service';
+import {
+  RecordingContentService,
+  TranscriptService,
+} from '@/integrations/tencent-meeting/services';
+import { MeetingRepository } from '@/meeting/repositories/meeting.repository';
+import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
+
 /**
  * 录制完成事件处理器
  */
@@ -50,6 +58,7 @@ export class RecordingCompletedHandler extends BaseEventHandler {
   private readonly SUPPORTED_EVENT = 'recording.completed';
 
   constructor(
+    private readonly batchProcessor: TranscriptBatchProcessor,
     private readonly numberRecordBitable: NumberRecordBitableRepository,
     private readonly openaiService: OpenaiService,
     private readonly recordingContentService: RecordingContentService,
@@ -57,13 +66,12 @@ export class RecordingCompletedHandler extends BaseEventHandler {
     private readonly bitableService: MeetingBitableService,
     private readonly participantService: MeetingParticipantService,
     private readonly speakerService: SpeakerService,
-    private readonly meetingRecordingRepository: MeetingRecordingRepository,
-    private readonly meetingRepository: MeetingRepository,
-    private readonly participantSummaryRepository: ParticipantSummaryRepository,
-    private readonly meetingSummaryRepository: MeetingSummaryRepository,
-    private readonly transcriptRepository: TranscriptRepository,
-    private readonly batchProcessor: TranscriptBatchProcessor,
-    private readonly ptUserRepository: PlatformUserRepository,
+    private readonly meetingRecordingRepo: MeetingRecordingRepository,
+    private readonly meetingRepo: MeetingRepository,
+    private readonly participantSummaryRepo: ParticipantSummaryRepository,
+    private readonly meetingSummaryRepo: MeetingSummaryRepository,
+    private readonly transcriptRepo: TranscriptRepository,
+    private readonly ptUserRepo: PlatformUserRepository,
   ) {
     super();
   }
@@ -169,7 +177,7 @@ export class RecordingCompletedHandler extends BaseEventHandler {
             formattedText,
           );
 
-        const meeting = await this.meetingRepository.findByPtId(
+        const meeting = await this.meetingRepo.findByPtId(
           MeetingPlatform.TENCENT_MEETING,
           meeting_id,
           sub_meeting_id || '__ROOT__',
@@ -181,7 +189,7 @@ export class RecordingCompletedHandler extends BaseEventHandler {
           this.logger.warn(
             `找到会议记录: ${meeting_id} ${sub_meeting_id || '__ROOT__'}`,
           );
-          recording = await this.meetingRecordingRepository.upsert({
+          recording = await this.meetingRecordingRepo.upsert({
             meetingId: meeting.id,
             externalId: fileId,
             source: RecordingSource.PLATFORM_AUTO,
@@ -190,7 +198,7 @@ export class RecordingCompletedHandler extends BaseEventHandler {
             endAt: meeting.endAt || undefined,
           });
 
-          await this.meetingSummaryRepository.upsert({
+          await this.meetingSummaryRepo.upsert({
             meetingId: meeting.id,
             recordingId: recording.id,
             content: fullsummary,
@@ -205,10 +213,10 @@ export class RecordingCompletedHandler extends BaseEventHandler {
           });
 
           const existingTranscript =
-            await this.transcriptRepository.findByRecordingId(recording.id);
+            await this.transcriptRepo.findByRecordingId(recording.id);
 
           if (!existingTranscript) {
-            const transcript = await this.transcriptRepository.create({
+            const transcript = await this.transcriptRepo.create({
               source: `tencent-meeting:${fileId}`,
               rawJson: paragraphs as unknown as Prisma.InputJsonValue,
               status: 2,
@@ -225,7 +233,6 @@ export class RecordingCompletedHandler extends BaseEventHandler {
         }
 
         // 对参会者逐个进行会议总结
-
         for (const u of uniqueParticipants) {
           const uId = await this.bitableService.safeUpsertMeetingUserRecord(u);
 
@@ -261,7 +268,7 @@ export class RecordingCompletedHandler extends BaseEventHandler {
 
             // 同步保存参会者总结到数据库
             if (meeting && recording) {
-              const platformUser = await this.ptUserRepository.upsert(
+              const platformUser = await this.ptUserRepo.upsert(
                 {
                   platform: MeetingPlatform.TENCENT_MEETING,
                   ptUnionId: u.uuid,
@@ -273,7 +280,7 @@ export class RecordingCompletedHandler extends BaseEventHandler {
                 },
               );
 
-              await this.participantSummaryRepository.upsert({
+              await this.participantSummaryRepo.upsert({
                 periodType: 'SINGLE',
                 platformUserId: platformUser.id,
                 meetingId: meeting.id,
