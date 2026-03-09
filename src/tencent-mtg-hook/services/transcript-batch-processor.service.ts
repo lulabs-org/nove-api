@@ -21,10 +21,10 @@ export class TranscriptBatchProcessor {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly paragraphRepository: ParagraphRepository,
-    private readonly sentenceRepository: SentenceRepository,
-    private readonly wordRepository: WordRepository,
-    private readonly ptUserRepository: PlatformUserRepository,
+    private readonly paraRepo: ParagraphRepository,
+    private readonly sentRepo: SentenceRepository,
+    private readonly wordRepo: WordRepository,
+    private readonly ptUserRepo: PlatformUserRepository,
   ) {}
 
   async processParagraphsInBatches(
@@ -50,7 +50,7 @@ export class TranscriptBatchProcessor {
 
         let platformUser: PlatformUser | null = null;
         if (ptUnionId) {
-          platformUser = await this.ptUserRepository.upsert(
+          platformUser = await this.ptUserRepo.upsert(
             { platform: Platform.TENCENT_MEETING, ptUnionId },
             {
               displayName: speakerInfo.username,
@@ -62,7 +62,7 @@ export class TranscriptBatchProcessor {
 
         const speakerId = platformUser?.id;
 
-        const createdParagraph = await this.paragraphRepository.create(tx, {
+        const createdParagraph = await this.paraRepo.create(tx, {
           pid: parseInt(paragraph.pid, 10),
           startTimeMs: BigInt(paragraph.start_time),
           endTimeMs: BigInt(paragraph.end_time),
@@ -106,7 +106,7 @@ export class TranscriptBatchProcessor {
     tx: PrismaTransaction,
   ): Promise<void> {
     for (const sentenceData of batch) {
-      const createdSentence = await this.sentenceRepository.create(tx, {
+      const createdSentence = await this.sentRepo.create(tx, {
         sid: parseInt(sentenceData.sentence.sid, 10),
         startTimeMs: BigInt(sentenceData.sentence.start_time),
         endTimeMs: BigInt(sentenceData.sentence.end_time),
@@ -122,7 +122,7 @@ export class TranscriptBatchProcessor {
         sentenceId: createdSentence.id,
       }));
 
-      await this.wordRepository.createMany(tx, words);
+      await this.wordRepo.createMany(tx, words);
     }
   }
 }
