@@ -1,7 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { ConfigType } from '@nestjs/config';
 import { tencentMeetingConfig } from '@/configs/tencent-mtg.config';
-import { generateSignature } from './crypto.util';
+import { generateSignature } from '../utils/crypto.util';
 import {
   RecordingDetail,
   RecordMeetingsResponse,
@@ -11,7 +11,7 @@ import {
   SmartFullSummaryResponse,
   SmartMeetingMinutesResponse,
   RecordingTranscriptResponse,
-} from './types';
+} from '../types';
 
 /**
  * Tencent Meeting API Service

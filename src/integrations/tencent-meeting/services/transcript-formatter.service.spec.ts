@@ -2,8 +2,8 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-24 00:00:00
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-03 22:33:13
- * @FilePath: /lulab_backend/src/hook-tencent-mtg/services/transcript-formatter.service.spec.ts
+ * @LastEditTime: 2026-03-09 01:26:13
+ * @FilePath: /nove_api/src/integrations/tencent-meeting/services/transcript-formatter.service.spec.ts
  * @Description: 转写格式化服务测试
  *
  * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
@@ -18,16 +18,16 @@ describe('TranscriptFormatterService', () => {
     service = new TranscriptFormatterService();
   });
 
-  describe('formatTranscript', () => {
+  describe('format', () => {
     it('should return empty string when transcript is null or undefined', () => {
-      expect(service.formatTranscript(undefined)).toEqual({
+      expect(service.format(undefined)).toEqual({
         formattedText: '',
         speakerInfos: [],
       });
     });
 
     it('should return empty string when transcript has no minutes or paragraphs', () => {
-      expect(service.formatTranscript([])).toEqual({
+      expect(service.format([])).toEqual({
         formattedText: '',
         speakerInfos: [],
       });
@@ -106,7 +106,7 @@ describe('TranscriptFormatterService', () => {
         },
       ];
 
-      const result = service.formatTranscript(transcript);
+      const result = service.format(transcript);
       expect(result.formattedText).toBe(
         '张三(01:00:00)：大家好，今天我们讨论项目进展',
       );
@@ -200,7 +200,7 @@ describe('TranscriptFormatterService', () => {
         },
       ];
 
-      const result = service.formatTranscript(transcript);
+      const result = service.format(transcript);
       expect(result.formattedText).toBe(
         '李四(01:01:05)：首先，我来介绍一下这个功能。',
       );
@@ -302,7 +302,7 @@ describe('TranscriptFormatterService', () => {
         },
       ];
 
-      const result = service.formatTranscript(transcript);
+      const result = service.format(transcript);
       expect(result.formattedText).toBe(
         '王五(00:30:00)：项目目前进展顺利\n\n赵六(00:31:00)：下一阶段计划是',
       );
@@ -352,7 +352,7 @@ describe('TranscriptFormatterService', () => {
         },
       ];
 
-      const result = service.formatTranscript(transcript);
+      const result = service.format(transcript);
       expect(result.formattedText).toBe('未知发言人(00:01:00)：没有发言人信息');
     });
 
@@ -393,7 +393,7 @@ describe('TranscriptFormatterService', () => {
         },
       ];
 
-      const result = service.formatTranscript(transcript);
+      const result = service.format(transcript);
       expect(result.formattedText).toBe('未知发言人(00:02:00)：用户名为空');
     });
 
@@ -414,7 +414,7 @@ describe('TranscriptFormatterService', () => {
         },
       ];
 
-      const result = service.formatTranscript(transcript);
+      const result = service.format(transcript);
       expect(result.formattedText).toBe('');
     });
 
@@ -442,7 +442,7 @@ describe('TranscriptFormatterService', () => {
         },
       ];
 
-      const result = service.formatTranscript(transcript);
+      const result = service.format(transcript);
       expect(result.formattedText).toBe('测试用户(00:00:30)：');
     });
   });

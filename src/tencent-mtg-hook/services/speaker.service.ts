@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-29 01:59:25
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-08 23:43:10
+ * @LastEditTime: 2026-03-09 14:09:01
  * @FilePath: /nove_api/src/tencent-mtg-hook/services/speaker.service.ts
  * @Description:
  *
@@ -14,7 +14,6 @@ import { NewSpeakerInfo } from '@/tencent-mtg-hook/types';
 import { Platform, PlatformUser, User } from '@prisma/client';
 import { UserRepository } from '@/user/repositories/user.repository';
 import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
-
 import {
   SpeakerInfo,
   MeetingParticipantDetail,

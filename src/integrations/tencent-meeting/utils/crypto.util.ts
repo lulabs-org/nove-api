@@ -2,7 +2,7 @@ import { createHash, createHmac, createDecipheriv } from 'node:crypto';
 import {
   WebhookSignatureVerificationException,
   WebhookUrlVerificationException,
-} from './exceptions';
+} from '../exceptions';
 
 /**
  * Verifies the signature for Tencent Meeting webhook requests

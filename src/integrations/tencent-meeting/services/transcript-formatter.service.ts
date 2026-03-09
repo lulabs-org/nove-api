@@ -2,8 +2,8 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-24 00:00:00
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-03 22:09:28
- * @FilePath: /lulab_backend/src/hook-tencent-mtg/services/transcript-formatter.service.ts
+ * @LastEditTime: 2026-03-09 01:26:27
+ * @FilePath: /nove_api/src/integrations/tencent-meeting/services/transcript-formatter.service.ts
  * @Description: 转写格式化服务，负责格式化录音转写内容
  *
  * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
@@ -15,7 +15,7 @@ import {
   RecordingTranscriptWord,
   RecordingTranscriptParagraph,
   SpeakerInfo,
-} from '@/integrations/tencent-meeting/types/transcript.types';
+} from '../types/transcript.types';
 import { FormatUtils } from '../utils/format.utils';
 
 /**
@@ -39,7 +39,7 @@ export class TranscriptFormatterService {
    * @param transcript 转写响应数据
    * @returns 格式化后的转写文本和唯一用户名
    */
-  formatTranscript(
+  format(
     transcript?: RecordingTranscriptParagraph[],
   ): FormattedTranscriptResult {
     if (!transcript?.length) {

@@ -2,18 +2,19 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-24 00:00:00
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-04 01:12:17
- * @FilePath: /lulab_backend/src/hook-tencent-mtg/services/meeting-participant.service.ts
+ * @LastEditTime: 2026-03-09 14:06:07
+ * @FilePath: /nove_api/src/integrations/tencent-meeting/services/meeting-participant.service.ts
  * @Description: 会议参与者服务，负责处理会议参与者相关逻辑
  *
  * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
  */
 
 import { Injectable, Logger } from '@nestjs/common';
-import { TencentApiService } from '@/integrations/tencent-meeting/api.service';
-import { MeetingParticipantDetail } from '@/integrations/tencent-meeting/types';
-import { MeetingParticipantsResult } from '../types';
-// import { MeetingUserBitableRepository } from '@/integrations/lark/repositories';
+import { TencentApiService } from '@/integrations/tencent-meeting/services/api.service';
+import {
+  MeetingParticipantDetail,
+  MeetingParticipantsResult,
+} from '@/integrations/tencent-meeting/types';
 
 /**
  * 会议参与者服务
@@ -23,7 +24,7 @@ import { MeetingParticipantsResult } from '../types';
 export class MeetingParticipantService {
   private readonly logger = new Logger(MeetingParticipantService.name);
 
-  constructor(private readonly tencentMeetingApi: TencentApiService) {}
+  constructor(private readonly api: TencentApiService) {}
 
   /**
    * 获取唯一的会议参与者列表
@@ -38,7 +39,7 @@ export class MeetingParticipantService {
     subMeetingId?: string,
   ): Promise<MeetingParticipantsResult> {
     try {
-      const response = await this.tencentMeetingApi.getParticipants(
+      const response = await this.api.getParticipants(
         meetingId,
         userId,
         subMeetingId,
