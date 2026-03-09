@@ -2,8 +2,8 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-24
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-05 19:22:21
- * @FilePath: /nove_api/src/hook-tencent-mtg/services/meeting-database.service.ts
+ * @LastEditTime: 2026-03-09 13:58:13
+ * @FilePath: /nove_api/src/tencent-mtg-hook/services/meeting-database.service.ts
  * @Description: 会议数据库服务，处理会议记录的创建和更新
  *
  * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
@@ -26,8 +26,8 @@ import { Platform, PlatformUser, Prisma } from '@prisma/client';
 @Injectable()
 export class MeetingDatabaseService {
   constructor(
-    private readonly ptUserRepository: PlatformUserRepository,
-    private readonly meetingRepository: MeetingRepository,
+    private readonly ptUserRepo: PlatformUserRepository,
+    private readonly meetingRepo: MeetingRepository,
   ) {}
 
   /**
@@ -79,7 +79,7 @@ export class MeetingDatabaseService {
       meetingData.endAt = new Date(operate_time * 1000);
     }
 
-    await this.meetingRepository.upsert(
+    await this.meetingRepo.upsert(
       Platform.TENCENT_MEETING,
       meeting_info.meeting_id,
       meeting_info.sub_meeting_id || '__ROOT__',
@@ -99,7 +99,7 @@ export class MeetingDatabaseService {
     }
 
     try {
-      const result = await this.ptUserRepository.upsert(
+      const result = await this.ptUserRepo.upsert(
         {
           platform: Platform.TENCENT_MEETING,
           ptUnionId: user.uuid,
