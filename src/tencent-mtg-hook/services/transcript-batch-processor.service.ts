@@ -76,11 +76,11 @@ export class TranscriptBatchProcessor {
         });
       }
 
-      await this.processSentencesAndWordsInBatches(paragraphDataList, tx);
+      await this.processSentencesInBatches(paragraphDataList, tx);
     });
   }
 
-  private async processSentencesAndWordsInBatches(
+  private async processSentencesInBatches(
     paragraphDataList: Array<ParagraphData>,
     tx: PrismaTransaction,
   ): Promise<void> {
