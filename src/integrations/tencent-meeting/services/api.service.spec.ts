@@ -40,7 +40,7 @@ const mockTencentMeetingConfig = {
 
 global.fetch = jest.fn();
 
-jest.mock('./crypto.util', () => ({
+jest.mock('../utils/crypto.util', () => ({
   generateSignature: jest.fn(() => 'mock-signature'),
 }));
 
