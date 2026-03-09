@@ -2,8 +2,8 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-24 00:00:00
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-09 13:54:25
- * @FilePath: /nove_api/src/tencent-mtg-hook/services/meeting-participant.service.ts
+ * @LastEditTime: 2026-03-09 14:06:07
+ * @FilePath: /nove_api/src/integrations/tencent-meeting/services/meeting-participant.service.ts
  * @Description: 会议参与者服务，负责处理会议参与者相关逻辑
  *
  * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
@@ -11,8 +11,10 @@
 
 import { Injectable, Logger } from '@nestjs/common';
 import { TencentApiService } from '@/integrations/tencent-meeting/services/api.service';
-import { MeetingParticipantDetail } from '@/integrations/tencent-meeting/types';
-import { MeetingParticipantsResult } from '../types';
+import {
+  MeetingParticipantDetail,
+  MeetingParticipantsResult,
+} from '@/integrations/tencent-meeting/types';
 
 /**
  * 会议参与者服务

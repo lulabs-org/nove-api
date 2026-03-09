@@ -12,6 +12,6 @@
 export { TencentEventHandlerService } from './event-handler.service';
 export { MeetingBitableService } from './meeting-bitable.service';
 export { MeetingDatabaseService } from './meeting-database.service';
-export { MeetingParticipantService } from './meeting-participant.service';
+export { MeetingParticipantService } from '../../integrations/tencent-meeting/services/meeting-participant.service';
 export { SpeakerService } from './speaker.service';
 export { TranscriptBatchProcessor } from './transcript-batch-processor.service';

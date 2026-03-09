@@ -17,7 +17,7 @@ import { OpenaiService } from '@/integrations/openai/openai.service';
 import { RecordingContentService } from '../../../integrations/tencent-meeting/services/recording-content.service';
 import { TranscriptService } from '../../../integrations/tencent-meeting/services/transcript.service';
 import { MeetingBitableService } from '../../services/meeting-bitable.service';
-import { MeetingParticipantService } from '../../services/meeting-participant.service';
+import { MeetingParticipantService } from '../../../integrations/tencent-meeting/services/meeting-participant.service';
 import { SpeakerService } from '../../services/speaker.service';
 import { MeetingRecordingRepository } from '../../repositories/meeting-recording.repository';
 import { MeetingRepository } from '@/meeting/repositories/meeting.repository';
