@@ -1,37 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import type {
-  PlatformUser,
-  Meeting,
-  ParticipantSummary,
-  MeetingRecording,
-  MeetingParticipant,
-} from '@prisma/client';
-
-type MeetingDetailsResult = Meeting & {
-  createdBy: {
-    id: string;
-    displayName: string | null;
-    email: string | null;
-  } | null;
-  host: { id: string; displayName: string | null; email: string | null } | null;
-  participants: Array<
-    MeetingParticipant & {
-      ptUser: {
-        id: string;
-        displayName: string | null;
-        email: string | null;
-      } | null;
-    }
-  >;
-  recordings: Array<
-    MeetingRecording & {
-      files: Array<{
-        durationMs: bigint | null;
-      }>;
-    }
-  >;
-};
+import type { PlatformUser, Meeting, ParticipantSummary } from '@prisma/client';
+import type { MeetingDetailsResult } from '../types/meeting-stats.types';
 
 @Injectable()
 export class MeetingStatsRepository {
