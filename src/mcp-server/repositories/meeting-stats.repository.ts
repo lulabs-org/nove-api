@@ -37,9 +37,7 @@ type MeetingDetailsResult = Meeting & {
 export class MeetingStatsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findActivePlatformUsersByLocalUserId(
-    localUserId: string,
-  ): Promise<PlatformUser[]> {
+  async findActiveUsers(localUserId: string): Promise<PlatformUser[]> {
     return this.prisma.platformUser.findMany({
       where: {
         localUserId,

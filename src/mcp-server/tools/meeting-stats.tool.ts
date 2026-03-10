@@ -51,9 +51,7 @@ export class MeetingStatsTool {
     await context.reportProgress({ progress: 20, total: 100 });
 
     const platformUsers =
-      await this.meetingStatsRepository.findActivePlatformUsersByLocalUserId(
-        userId,
-      );
+      await this.meetingStatsRepository.findActiveUsers(userId);
 
     await context.reportProgress({ progress: 40, total: 100 });
 
