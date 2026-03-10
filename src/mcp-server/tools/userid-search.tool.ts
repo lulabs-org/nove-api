@@ -61,10 +61,7 @@ export class UserSearchTool {
     countryCode: string;
     phone: string;
   }) {
-    const user = await this.userIdSearchRepos.byPhone(
-      countryCode,
-      phone,
-    );
+    const user = await this.userIdSearchRepos.byPhone(countryCode, phone);
 
     if (!user) {
       return {

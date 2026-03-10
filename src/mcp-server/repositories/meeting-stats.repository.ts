@@ -37,7 +37,7 @@ type MeetingDetailsResult = Meeting & {
 export class MeetingStatsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findActiveUsers(localUserId: string): Promise<PlatformUser[]> {
+  async getActiveUsers(localUserId: string): Promise<PlatformUser[]> {
     return this.prisma.platformUser.findMany({
       where: {
         localUserId,
@@ -47,7 +47,7 @@ export class MeetingStatsRepository {
     });
   }
 
-  async findParticipantSummaries(params: {
+  async getSummaries(params: {
     platformUserIds: string[];
     startDate: Date;
     endDate: Date;
@@ -83,7 +83,7 @@ export class MeetingStatsRepository {
     });
   }
 
-  async findMeetingsByIdsAndStartAtRange(params: {
+  async getMeetings(params: {
     meetingIds: string[];
     startDate: Date;
     endDate: Date;
@@ -100,9 +100,7 @@ export class MeetingStatsRepository {
     });
   }
 
-  async findMeetingDetailsById(
-    meetingId: string,
-  ): Promise<MeetingDetailsResult | null> {
+  async getDetails(meetingId: string): Promise<MeetingDetailsResult | null> {
     return this.prisma.meeting.findUnique({
       where: { id: meetingId },
       include: {
