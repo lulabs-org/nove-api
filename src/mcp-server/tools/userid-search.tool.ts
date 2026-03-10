@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-14 13:14:26
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-10 02:37:47
+ * @LastEditTime: 2026-03-10 20:37:31
  * @FilePath: /nove_api/src/mcp-server/tools/userid-search.tool.ts
  * @Description:
  *
@@ -10,9 +10,8 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import { Tool } from '@rekog/mcp-nest';
+import { Tool, ToolScopes } from '@rekog/mcp-nest';
 import { z } from 'zod';
-import { ToolScopes } from '@rekog/mcp-nest';
 import { UserSearchRepository } from '../repositories/userid-search.repository';
 
 @Injectable()
