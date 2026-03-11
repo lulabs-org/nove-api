@@ -5,9 +5,7 @@ import { MeetingStatsRepository } from '../repositories/meeting-stats.repository
 
 @Injectable()
 export class MeetingStatsTool {
-  constructor(
-    private readonly meetingStatsRepository: MeetingStatsRepository,
-  ) {}
+  constructor(private readonly meetingStatsRepo: MeetingStatsRepository) {}
 
   private validateDateRange(startDate: Date, endDate: Date): void {
     const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
@@ -50,21 +48,17 @@ export class MeetingStatsTool {
 
     await context.reportProgress({ progress: 20, total: 100 });
 
-    const platformUsers =
-      await this.meetingStatsRepository.findActivePlatformUsersByLocalUserId(
-        userId,
-      );
+    const platformUsers = await this.meetingStatsRepo.getActiveUsers(userId);
 
     await context.reportProgress({ progress: 40, total: 100 });
 
     const platformUserIds = platformUsers.map((u) => u.id);
 
-    const participantSummaries =
-      await this.meetingStatsRepository.findParticipantSummaries({
-        platformUserIds,
-        startDate: startDateObj,
-        endDate: endDateObj,
-      });
+    const participantSummaries = await this.meetingStatsRepo.getSummaries({
+      platformUserIds,
+      startDate: startDateObj,
+      endDate: endDateObj,
+    });
 
     await context.reportProgress({ progress: 70, total: 100 });
 
@@ -76,12 +70,11 @@ export class MeetingStatsTool {
         .map((s) => s.meetingId),
     );
 
-    const meetings =
-      await this.meetingStatsRepository.findMeetingsByIdsAndStartAtRange({
-        meetingIds: Array.from(uniqueMeetingIds),
-        startDate: startDateObj,
-        endDate: endDateObj,
-      });
+    const meetings = await this.meetingStatsRepo.getMeetings({
+      meetingIds: Array.from(uniqueMeetingIds),
+      startDate: startDateObj,
+      endDate: endDateObj,
+    });
 
     const totalDuration = meetings.reduce(
       (sum, m) => sum + (m.durationSeconds || 0),
@@ -145,8 +138,7 @@ export class MeetingStatsTool {
   })
   @ToolScopes(['mcp-tool:meeting-details'])
   async getMeetingDetails({ meetingId }: { meetingId: string }) {
-    const meeting =
-      await this.meetingStatsRepository.findMeetingDetailsById(meetingId);
+    const meeting = await this.meetingStatsRepo.getDetails(meetingId);
 
     if (!meeting) {
       return {

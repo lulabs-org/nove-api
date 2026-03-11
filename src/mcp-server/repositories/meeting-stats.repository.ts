@@ -1,45 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import type {
-  PlatformUser,
-  Meeting,
-  ParticipantSummary,
-  MeetingRecording,
-  MeetingParticipant,
-} from '@prisma/client';
-
-type MeetingDetailsResult = Meeting & {
-  createdBy: {
-    id: string;
-    displayName: string | null;
-    email: string | null;
-  } | null;
-  host: { id: string; displayName: string | null; email: string | null } | null;
-  participants: Array<
-    MeetingParticipant & {
-      ptUser: {
-        id: string;
-        displayName: string | null;
-        email: string | null;
-      } | null;
-    }
-  >;
-  recordings: Array<
-    MeetingRecording & {
-      files: Array<{
-        durationMs: bigint | null;
-      }>;
-    }
-  >;
-};
+import type { PlatformUser, Meeting, ParticipantSummary } from '@prisma/client';
+import type { MeetingDetailsResult } from '../types/meeting-stats.types';
 
 @Injectable()
 export class MeetingStatsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findActivePlatformUsersByLocalUserId(
-    localUserId: string,
-  ): Promise<PlatformUser[]> {
+  async getActiveUsers(localUserId: string): Promise<PlatformUser[]> {
     return this.prisma.platformUser.findMany({
       where: {
         localUserId,
@@ -49,7 +17,7 @@ export class MeetingStatsRepository {
     });
   }
 
-  async findParticipantSummaries(params: {
+  async getSummaries(params: {
     platformUserIds: string[];
     startDate: Date;
     endDate: Date;
@@ -85,7 +53,7 @@ export class MeetingStatsRepository {
     });
   }
 
-  async findMeetingsByIdsAndStartAtRange(params: {
+  async getMeetings(params: {
     meetingIds: string[];
     startDate: Date;
     endDate: Date;
@@ -102,9 +70,7 @@ export class MeetingStatsRepository {
     });
   }
 
-  async findMeetingDetailsById(
-    meetingId: string,
-  ): Promise<MeetingDetailsResult | null> {
+  async getDetails(meetingId: string): Promise<MeetingDetailsResult | null> {
     return this.prisma.meeting.findUnique({
       where: { id: meetingId },
       include: {
