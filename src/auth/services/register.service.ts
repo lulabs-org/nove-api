@@ -52,7 +52,7 @@ export class RegisterService {
     const hashedPassword = password ? await hashPassword(password) : null;
     const now = new Date();
 
-    const user = await this.userRepo.createUserWithProfile({
+    const user = await this.userRepo.createWithProfile({
       username,
       email: email || null,
       phone,
@@ -148,7 +148,7 @@ export class RegisterService {
 
     if (conditions.length === 0) return;
 
-    const existingUser = await this.userRepo.findFirstByConditions(conditions);
+    const existingUser = await this.userRepo.findFirst(conditions);
 
     if (existingUser) {
       if (username && existingUser.username === username) {

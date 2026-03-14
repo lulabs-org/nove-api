@@ -83,7 +83,7 @@ export class LoginService {
         }
       }
 
-      await this.userRepo.updateUserLastLoginAt(user.id, new Date());
+      await this.userRepo.updateLastLogin(user.id, new Date());
 
       await this.authPolicy.createLoginLog({
         userId: user.id,
@@ -133,6 +133,6 @@ export class LoginService {
     } else {
       conditions.push({ phone: target });
     }
-    return await this.userRepo.findUserByTarget(target, countryCode);
+    return await this.userRepo.findByTarget(target, countryCode);
   }
 }

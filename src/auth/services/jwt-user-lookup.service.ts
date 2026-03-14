@@ -19,7 +19,7 @@ export class JwtUserLookupService implements JwtUserLookup {
   async getAuthenticatedUserById(
     id: string,
   ): Promise<AuthenticatedUser | null> {
-    const user = await this.userRepo.getUserByIdWithProfileAndRoles(id);
+    const user = await this.userRepo.findWithRoles(id);
     if (!user) return null;
 
     if (!user.active) {
