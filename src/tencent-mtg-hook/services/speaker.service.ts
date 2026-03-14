@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-29 01:59:25
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-09 14:09:01
+ * @LastEditTime: 2026-03-14 20:02:23
  * @FilePath: /nove_api/src/tencent-mtg-hook/services/speaker.service.ts
  * @Description:
  *
@@ -24,8 +24,8 @@ export class SpeakerService {
   private readonly logger = new Logger(SpeakerService.name);
 
   constructor(
-    private readonly ptUserRepository: PlatformUserRepository,
-    private readonly userRepository: UserRepository,
+    private readonly ptUserRepo: PlatformUserRepository,
+    private readonly userRepo: UserRepository,
   ) {}
 
   async enrichSpeakerInfo(
@@ -96,10 +96,7 @@ export class SpeakerService {
     if (!userid) {
       return null;
     }
-    return this.ptUserRepository.findByPtUserId(
-      Platform.TENCENT_MEETING,
-      userid,
-    );
+    return this.ptUserRepo.findByPtUserId(Platform.TENCENT_MEETING, userid);
   }
 
   private async findUserByName(
@@ -108,10 +105,7 @@ export class SpeakerService {
     if (!username) {
       return null;
     }
-    return this.ptUserRepository.findByPtName(
-      Platform.TENCENT_MEETING,
-      username,
-    );
+    return this.ptUserRepo.findByPtName(Platform.TENCENT_MEETING, username);
   }
 
   private enrichParticipant(
@@ -160,7 +154,7 @@ export class SpeakerService {
       for (const participant of uniqueParticipants) {
         if (participant.phone && participant.phone !== excludedPhoneHash) {
           const ptByPhone =
-            await this.ptUserRepository.findByPlatformAndPhoneHashWithoutLocalUser(
+            await this.ptUserRepo.findByPlatformAndPhoneHashWithoutLocalUser(
               Platform.TENCENT_MEETING,
               countryCode,
               participant.phone,
@@ -169,20 +163,19 @@ export class SpeakerService {
           let userByPhone: User | null = null;
 
           if (ptByPhone?.phone) {
-            userByPhone = await this.userRepository.findUserByPhoneCombination(
+            userByPhone = await this.userRepo.findByPhone(
               countryCode,
               ptByPhone.phone,
             );
           }
 
-          const ptByUnionId =
-            await this.ptUserRepository.findByPlatformAndUnionId(
-              Platform.TENCENT_MEETING,
-              participant.uuid,
-            );
+          const ptByUnionId = await this.ptUserRepo.findByPlatformAndUnionId(
+            Platform.TENCENT_MEETING,
+            participant.uuid,
+          );
 
           if (ptByPhone && !ptByUnionId && userByPhone) {
-            await this.ptUserRepository.update(ptByPhone.id, {
+            await this.ptUserRepo.update(ptByPhone.id, {
               ptUserId: participant.userid,
               displayName: participant.user_name,
               phoneHash: participant.phone,
@@ -192,7 +185,7 @@ export class SpeakerService {
           }
 
           if (ptByPhone && ptByUnionId && userByPhone) {
-            const updatedPtByUnionId = await this.ptUserRepository.update(
+            const updatedPtByUnionId = await this.ptUserRepo.update(
               ptByUnionId.id,
               {
                 ptUserId: participant.userid,
@@ -205,12 +198,12 @@ export class SpeakerService {
             );
 
             if (updatedPtByUnionId) {
-              await this.ptUserRepository.deleteById(ptByPhone.id);
+              await this.ptUserRepo.deleteById(ptByPhone.id);
             }
           }
 
           if (!ptByPhone && !ptByUnionId) {
-            await this.ptUserRepository.upsert(
+            await this.ptUserRepo.upsert(
               {
                 platform: Platform.TENCENT_MEETING,
                 ptUnionId: participant.uuid,
@@ -225,7 +218,7 @@ export class SpeakerService {
 
           if (!ptByPhone && ptByUnionId && !userByPhone) {
             const ptByPhoneHasUser =
-              await this.ptUserRepository.findByPlatformAndPhoneHash(
+              await this.ptUserRepo.findByPlatformAndPhoneHash(
                 Platform.TENCENT_MEETING,
                 countryCode,
                 participant.phone,
@@ -236,14 +229,13 @@ export class SpeakerService {
             }
 
             if (ptByPhoneHasUser?.phone) {
-              const userByPhoneHasUser =
-                await this.userRepository.findUserByPhoneCombination(
-                  countryCode,
-                  ptByPhoneHasUser.phone,
-                );
+              const userByPhoneHasUser = await this.userRepo.findByPhone(
+                countryCode,
+                ptByPhoneHasUser.phone,
+              );
 
               if (userByPhoneHasUser) {
-                await this.ptUserRepository.update(ptByUnionId.id, {
+                await this.ptUserRepo.update(ptByUnionId.id, {
                   ptUserId: participant.userid,
                   displayName: participant.user_name,
                   phoneHash: participant.phone,
@@ -257,7 +249,7 @@ export class SpeakerService {
         }
 
         if (!participant.phone || participant.phone == excludedPhoneHash) {
-          await this.ptUserRepository.upsert(
+          await this.ptUserRepo.upsert(
             {
               platform: Platform.TENCENT_MEETING,
               ptUnionId: participant.uuid,

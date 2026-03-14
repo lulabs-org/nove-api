@@ -6,11 +6,11 @@ import type { User, UserProfile } from '@prisma/client';
 export class UserRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  getUserById(id: string): Promise<User | null> {
+  findById(id: string): Promise<User | null> {
     return this.prisma.user.findUnique({ where: { id } });
   }
 
-  getUserByIdWithProfile(
+  findWithProfile(
     id: string,
   ): Promise<(User & { profile: UserProfile | null }) | null> {
     return this.prisma.user.findUnique({
@@ -19,7 +19,7 @@ export class UserRepository {
     });
   }
 
-  getUserByIdWithProfileAndRoles(id: string): Promise<
+  findWithRoles(id: string): Promise<
     | (User & {
         profile: UserProfile | null;
         orgMembers: Array<{
@@ -66,18 +66,15 @@ export class UserRepository {
     >;
   }
 
-  findUserByUsername(username: string): Promise<User | null> {
+  findByUsername(username: string): Promise<User | null> {
     return this.prisma.user.findUnique({ where: { username } });
   }
 
-  findUserByEmail(email: string): Promise<User | null> {
+  findByEmail(email: string): Promise<User | null> {
     return this.prisma.user.findUnique({ where: { email } });
   }
 
-  findUserByPhoneCombination(
-    countryCode: string,
-    phone: string,
-  ): Promise<User | null> {
+  findByPhone(countryCode: string, phone: string): Promise<User | null> {
     return this.prisma.user.findUnique({
       where: {
         uq_users_country_code_phone: {
@@ -88,7 +85,7 @@ export class UserRepository {
     });
   }
 
-  findUserByTarget(
+  findByTarget(
     target: string,
     countryCode?: string,
   ): Promise<
@@ -151,11 +148,11 @@ export class UserRepository {
     >;
   }
 
-  findFirstByConditions(conditions: Array<Record<string, unknown>>) {
+  findFirst(conditions: Array<Record<string, unknown>>) {
     return this.prisma.user.findFirst({ where: { OR: conditions } });
   }
 
-  createUserWithProfile(data: {
+  createWithProfile(data: {
     username?: string | null;
     email?: string | null;
     phone?: string | null;
@@ -223,21 +220,21 @@ export class UserRepository {
     >;
   }
 
-  updateUserLastLoginAt(id: string, date: Date): Promise<User> {
+  updateLastLogin(id: string, date: Date): Promise<User> {
     return this.prisma.user.update({
       where: { id },
       data: { lastLoginAt: date },
     });
   }
 
-  updateUserPassword(id: string, password: string): Promise<User> {
+  updatePassword(id: string, password: string): Promise<User> {
     return this.prisma.user.update({
       where: { id },
       data: { passwordHash: password },
     });
   }
 
-  updateUserWithProfileUpsert(
+  updateProfile(
     id: string,
     data: {
       username?: string;

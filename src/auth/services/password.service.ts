@@ -46,7 +46,7 @@ export class PasswordService {
       throw new BadRequestException(verifyResult.message);
     }
 
-    const user = await this.userRepo.findUserByTarget(target);
+    const user = await this.userRepo.findByTarget(target);
     if (!user) {
       throw new BadRequestException('用户不存在');
     }
@@ -54,7 +54,7 @@ export class PasswordService {
     validatePassword(newPassword);
 
     const hashedPassword = await hashPassword(newPassword);
-    await this.userRepo.updateUserPassword(user.id, hashedPassword);
+    await this.userRepo.updatePassword(user.id, hashedPassword);
 
     await this.authPolicy.createLoginLog({
       userId: user.id,
