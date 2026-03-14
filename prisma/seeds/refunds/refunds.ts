@@ -2,14 +2,14 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-12 12:44:09
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-13 12:46:19
- * @FilePath: /lulab_backend/prisma/seeds/mock/refunds/refunds.ts
+ * @LastEditTime: 2026-03-14 20:15:49
+ * @FilePath: /nove_api/prisma/seeds/refunds/refunds.ts
  * @Description:
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
-import { PrismaClient, OrderRefund, Prisma } from '@prisma/client';
+import { PrismaClient, OrderRefund } from '@prisma/client';
 import { RefundConfig, RefundCreateInput } from './type';
 import { REFUND_CONFIGS } from './config';
 
@@ -20,7 +20,7 @@ function convertToRefundCreateInput(config: RefundConfig): RefundCreateInput {
     refundedAt: config.refundedAt,
     refundChannel: config.refundChannel,
     approvalUrl: config.approvalUrl,
-    refundAmount: new Prisma.Decimal(config.refundAmount),
+    refundAmount: config.refundAmount,
     refundReason: config.refundReason,
     benefitEndedAt: config.benefitEndedAt,
     benefitUsedDays: config.benefitUsedDays,
