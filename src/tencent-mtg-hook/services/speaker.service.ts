@@ -154,7 +154,7 @@ export class SpeakerService {
       for (const participant of uniqueParticipants) {
         if (participant.phone && participant.phone !== excludedPhoneHash) {
           const ptByPhone =
-            await this.ptUserRepo.findByPlatformAndPhoneHashWithoutLocalUser(
+            await this.ptUserRepo.findByPhoneHashWithoutLocalUser(
               Platform.TENCENT_MEETING,
               countryCode,
               participant.phone,
@@ -169,7 +169,7 @@ export class SpeakerService {
             );
           }
 
-          const ptByUnionId = await this.ptUserRepo.findByPlatformAndUnionId(
+          const ptByUnionId = await this.ptUserRepo.findByUnionId(
             Platform.TENCENT_MEETING,
             participant.uuid,
           );
@@ -217,12 +217,11 @@ export class SpeakerService {
           }
 
           if (!ptByPhone && ptByUnionId && !userByPhone) {
-            const ptByPhoneHasUser =
-              await this.ptUserRepo.findByPlatformAndPhoneHash(
-                Platform.TENCENT_MEETING,
-                countryCode,
-                participant.phone,
-              );
+            const ptByPhoneHasUser = await this.ptUserRepo.findByPhoneHash(
+              Platform.TENCENT_MEETING,
+              countryCode,
+              participant.phone,
+            );
 
             if (ptByPhoneHasUser?.ptUnionId === participant.uuid) {
               continue;

@@ -82,7 +82,7 @@ export class PlatformUserRepository {
     );
   }
 
-  async findByPlatformAndUnionId(
+  async findByUnionId(
     platform: Platform,
     ptUnionId: string,
   ): Promise<PlatformUser | null> {
@@ -108,9 +108,7 @@ export class PlatformUserRepository {
     });
   }
 
-  async findActivePlatformUsersByPlatform(
-    platform: Platform,
-  ): Promise<PlatformUser[]> {
+  async findActiveByPlatform(platform: Platform): Promise<PlatformUser[]> {
     return this.prisma.platformUser.findMany({
       where: {
         platform,
@@ -145,7 +143,7 @@ export class PlatformUserRepository {
     });
   }
 
-  async findByPlatformAndPhoneHashWithoutLocalUser(
+  async findByPhoneHashWithoutLocalUser(
     platform: Platform,
     countryCode: string,
     phoneHash: string,
@@ -161,7 +159,7 @@ export class PlatformUserRepository {
     });
   }
 
-  async findByPlatformAndPhoneHash(
+  async findByPhoneHash(
     platform: Platform,
     countryCode: string,
     phoneHash: string,
@@ -176,28 +174,28 @@ export class PlatformUserRepository {
     });
   }
 
-  async updateLastSeenAt(id: string): Promise<PlatformUser> {
+  async updateLastSeen(id: string): Promise<PlatformUser> {
     return this.prisma.platformUser.update({
       where: { id },
       data: { lastSeenAt: new Date() },
     });
   }
 
-  async deactivatePlatformUser(id: string): Promise<PlatformUser> {
+  async deactivate(id: string): Promise<PlatformUser> {
     return this.prisma.platformUser.update({
       where: { id },
       data: { active: false },
     });
   }
 
-  async activatePlatformUser(id: string): Promise<PlatformUser> {
+  async activate(id: string): Promise<PlatformUser> {
     return this.prisma.platformUser.update({
       where: { id },
       data: { active: true },
     });
   }
 
-  async deleteByCountryCodeAndPhone(
+  async deleteByPhone(
     countryCode: string,
     phone: string,
   ): Promise<{ count: number }> {
