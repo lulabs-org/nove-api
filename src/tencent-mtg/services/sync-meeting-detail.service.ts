@@ -44,7 +44,7 @@ export class SyncMeetingDetailService {
         1,
       );
 
-      const meetingData = this.extractMeetingData(meetingDetail);
+      const meetingData = this.extractMeetingData(meetingDetail, subMeetingId);
 
       await this.meetingRepository.upsert(
         MeetingPlatform.TENCENT_MEETING,
@@ -61,7 +61,6 @@ export class SyncMeetingDetailService {
         meetingId,
         subMeetingId,
         title: meetingData.title,
-        status: meetingData.status,
         success: true,
         syncedAt: new Date().toISOString(),
         message: '会议详情同步成功',
@@ -76,77 +75,78 @@ export class SyncMeetingDetailService {
     }
   }
 
-  private extractMeetingData(meetingDetail: MeetingDetailResponse): {
+  private extractMeetingData(
+    meetingDetail: MeetingDetailResponse,
+    subMeetingId: string,
+  ): {
     title: string;
     meetingCode: string;
-    description: string | null;
     type: MeetingType;
-    status: string;
-    startAt: Date | null;
-    endAt: Date | null;
-    durationSeconds: number | null;
-    participantCount: number | null;
-    hostId: string | null;
+    startAt?: Date | null;
+    endAt?: Date | null;
+    scheduledStartAt?: Date | null;
+    scheduledEndAt?: Date | null;
     metadata: Prisma.InputJsonValue;
   } {
-    const meetingInfo = meetingDetail.meeting_info_list?.[0] || meetingDetail;
+    const meetingInfo = meetingDetail.meeting_info_list?.[0];
 
-    const startTime = meetingInfo.start_time
-      ? new Date(meetingInfo.start_time)
-      : null;
-    const endTime = meetingInfo.end_time
-      ? new Date(meetingInfo.end_time)
-      : null;
-    const durationSeconds =
-      startTime && endTime
-        ? Math.floor((endTime.getTime() - startTime.getTime()) / 1000)
+    if (meetingInfo.meeting_type === 0) {
+      const scheduledStartAt = meetingInfo.start_time
+        ? new Date(Number(meetingInfo.start_time) * 1000)
         : null;
 
-    const hostId =
-      meetingInfo.hosts?.[0]?.userid ||
-      (
-        meetingDetail as MeetingDetailResponse & {
-          creator?: { userid: string };
-        }
-      ).creator?.userid ||
-      null;
+      const scheduledEndAt = meetingInfo.end_time
+        ? new Date(Number(meetingInfo.end_time) * 1000)
+        : null;
+
+      return {
+        title: meetingInfo.subject || '',
+        meetingCode: meetingInfo.meeting_code || '',
+        type: this.mapMeetingType(meetingInfo.meeting_type),
+        startAt: null,
+        endAt: null,
+        scheduledStartAt,
+        scheduledEndAt,
+        metadata: {
+          joinUrl: meetingInfo.join_url,
+          password: meetingInfo.password,
+          settings: meetingInfo.settings,
+          recurringRule: meetingInfo.recurring_rule,
+          liveConfig: meetingInfo.live_config,
+          enableLive: meetingInfo.enable_live,
+        } as unknown as Prisma.InputJsonValue,
+      };
+    }
+
+    if (meetingInfo.meeting_type === 1) {
+      const subMeetingStartMs = Number(subMeetingId) * 1000;
+      const durationMs = (Number(meetingInfo.end_time) - Number(meetingInfo.start_time)) * 1000;
+
+      const scheduledStartAt = new Date(subMeetingStartMs);
+      const scheduledEndAt = new Date(subMeetingStartMs + durationMs);
+
+      return {
+        title: meetingInfo.subject || '',
+        meetingCode: meetingInfo.meeting_code || '',
+        type: this.mapMeetingType(meetingInfo.meeting_type),
+        scheduledStartAt,
+        scheduledEndAt,
+        metadata: {
+          joinUrl: meetingInfo.join_url,
+          password: meetingInfo.password,
+          settings: meetingInfo.settings,
+          recurringRule: meetingInfo.recurring_rule,
+          liveConfig: meetingInfo.live_config,
+          enableLive: meetingInfo.enable_live,
+        } as unknown as Prisma.InputJsonValue,
+      };
+    }
 
     return {
-      title: meetingInfo.subject || meetingDetail.subject || '',
-      meetingCode:
-        meetingInfo.meeting_code ||
-        meetingDetail.meeting_code ||
-        meetingDetail.meeting_number?.toString() ||
-        '',
-      description:
-        (
-          meetingDetail as MeetingDetailResponse & {
-            description?: string;
-          }
-        ).description || null,
-      type: this.mapMeetingType(meetingInfo.meeting_type || meetingDetail.type),
-      status: meetingInfo.status || meetingDetail.status || '',
-      startAt: startTime,
-      endAt: endTime,
-      durationSeconds,
-      participantCount: meetingInfo.participants?.length || null,
-      hostId,
-      metadata: {
-        meetingNumber: meetingDetail.meeting_number,
-        joinUrl: meetingInfo.join_url || meetingDetail.join_url,
-        password: meetingInfo.password || meetingDetail.password,
-        needPassword: meetingInfo.need_password || meetingDetail.need_password,
-        settings: meetingInfo.settings || meetingDetail.settings,
-        recurringRule:
-          meetingInfo.recurring_rule || meetingDetail.recurring_rule,
-        liveConfig: meetingInfo.live_config || meetingDetail.live_config,
-        enableLive: meetingInfo.enable_live || meetingDetail.enable_live,
-        subMeetings: meetingInfo.sub_meetings || meetingDetail.sub_meetings,
-        currentSubMeetingId:
-          meetingInfo.current_sub_meeting_id ||
-          meetingDetail.current_sub_meeting_id,
-        rawMeetingDetail: meetingDetail,
-      } as unknown as Prisma.InputJsonValue,
+      title: meetingInfo.subject || '',
+      meetingCode: meetingInfo.meeting_code || '',
+      type: this.mapMeetingType(meetingInfo.meeting_type),
+      metadata: {} as Prisma.InputJsonValue,
     };
   }
 
@@ -154,10 +154,8 @@ export class SyncMeetingDetailService {
     if (!type) return MeetingType.SCHEDULED;
 
     const typeMap: Record<number, MeetingType> = {
-      0: MeetingType.SCHEDULED,
-      1: MeetingType.INSTANT,
-      2: MeetingType.SCHEDULED,
-      3: MeetingType.SCHEDULED,
+      0: MeetingType.ONE_TIME,
+      1: MeetingType.RECURRING,
     };
 
     return typeMap[type] || MeetingType.SCHEDULED;

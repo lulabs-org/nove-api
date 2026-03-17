@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-03-17 12:31:00
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-17 12:31:01
+ * @LastEditTime: 2026-03-17 16:39:41
  * @FilePath: /nove_api/src/tencent-mtg/dto/sync-meeting-detail.dto.ts
  * @Description:
  *
@@ -57,12 +57,6 @@ export class SyncMeetingDetailResponseDto {
     example: '项目周会',
   })
   title: string;
-
-  @ApiProperty({
-    description: '会议状态',
-    example: 'ended',
-  })
-  status: string;
 
   @ApiProperty({
     description: '是否成功同步',

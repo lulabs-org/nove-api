@@ -282,16 +282,18 @@ describe('Tencent Meeting Real API Integration Tests', () => {
           const meetingDetail: MeetingDetailResponse =
             await apiService.getMeetingDetail(meetingId, userId || '');
 
+          const meetingInfo = meetingDetail.meeting_info_list?.[0];
+
           console.log('🏢 会议详情:', {
-            meeting_id: meetingDetail.meeting_id,
-            subject: meetingDetail.subject,
-            start_time: meetingDetail.start_time,
-            creator: meetingDetail.creator,
+            meeting_id: meetingInfo?.meeting_id,
+            subject: meetingInfo?.subject,
+            start_time: meetingInfo?.start_time,
+            creator: meetingInfo?.hosts?.[0],
           });
 
           expect(meetingDetail).toBeDefined();
-          expect(meetingDetail.meeting_id).toBe(meetingId);
-          expect(meetingDetail.subject).toBeDefined();
+          expect(meetingInfo?.meeting_id).toBe(meetingId);
+          expect(meetingInfo?.subject).toBeDefined();
         } else {
           console.warn('⚠️  没有找到会议记录，跳过会议详情测试');
         }
