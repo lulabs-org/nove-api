@@ -1,0 +1,51 @@
+{
+  "meeting_number": 1,
+  "meeting_info_list": [
+    {
+      "subject": "杨仕明的快速会议",
+      "meeting_id": "6581367678345698571",
+      "meeting_code": "350833911",
+      "status": "MEETING_STATE_RECYCLED",
+      "type": 1,
+      "join_url": "https://work.weixin.qq.com/webapp/tm/3LtR85ypKw7",
+      "start_time": "1773675869",
+      "end_time": "1773679469",
+      "settings": {
+        "mute_enable_join": false,
+        "allow_unmute_self": true,
+        "allow_in_before_host": true,
+        "auto_in_waiting_room": true,
+        "allow_screen_shared_watermark": true,
+        "water_mark_type": 1,
+        "only_allow_enterprise_user_join": false,
+        "auto_record_type": "none",
+        "only_enterprise_user_allowed": false,
+        "auto_asr": false,
+        "allow_multi_device": true,
+        "open_asr_view": 0,
+        "change_nickname": 1,
+        "only_user_join_type": 1,
+        "allow_dev_switch": true,
+        "mute_enable_type_join": 2,
+        "audio_watermark": false
+      },
+      "meeting_type": 0,
+      "enable_live": false,
+      "enable_doc_upload_permission": true,
+      "has_vote": false,
+      "current_hosts": [
+        {
+          "userid": "woa***************************A",
+          "operator_id": "woa***************************A",
+          "operator_id_type": 1
+        }
+      ],
+      "location": "",
+      "enable_enroll": false,
+      "enable_host_key": false,
+      "time_zone": "",
+      "sync_to_wework": true,
+      "disable_invitation": 0
+    }
+  ]
+}

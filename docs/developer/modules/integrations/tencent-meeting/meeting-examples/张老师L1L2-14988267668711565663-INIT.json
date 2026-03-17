@@ -1,0 +1,1247 @@
+{
+  "meeting_number": 1,
+  "meeting_info_list": [
+    {
+      "subject": "张老师L1L2",
+      "meeting_id": "14988267668711565663",
+      "meeting_code": "36383572144",
+      "status": "MEETING_STATE_INIT",
+      "type": 0,
+      "join_url": "https://work.weixin.qq.com/webapp/tm/PtZrwy2ULZa",
+      "participants": [
+        {
+          "userid": "woa***************************A",
+          "operator_id": "woa***************************A",
+          "operator_id_type": 1
+        }
+      ],
+      "start_time": "1774054800",
+      "end_time": "1774058400",
+      "settings": {
+        "mute_enable_join": false,
+        "allow_unmute_self": true,
+        "allow_in_before_host": true,
+        "auto_in_waiting_room": false,
+        "allow_screen_shared_watermark": true,
+        "water_mark_type": 1,
+        "only_allow_enterprise_user_join": false,
+        "auto_record_type": "cloud",
+        "participant_join_auto_record": false,
+        "enable_host_pause_auto_record": true,
+        "only_enterprise_user_allowed": false,
+        "auto_asr": false,
+        "allow_multi_device": true,
+        "open_asr_view": 0,
+        "change_nickname": 1,
+        "only_user_join_type": 1,
+        "allow_dev_switch": true,
+        "mute_enable_type_join": 2,
+        "audio_watermark": false
+      },
+      "meeting_type": 1,
+      "recurring_rule": {
+        "recurring_type": 5,
+        "until_type": 0,
+        "until_date": 1832860799,
+        "customized_recurring_type": 1,
+        "customized_recurring_step": 1,
+        "customized_recurring_days": 65
+      },
+      "sub_meetings": [
+        {
+          "sub_meeting_id": "1774054800",
+          "status": 0,
+          "start_time": "1774054800",
+          "end_time": "1774058400"
+        },
+        {
+          "sub_meeting_id": "1774141200",
+          "status": 0,
+          "start_time": "1774141200",
+          "end_time": "1774144800"
+        },
+        {
+          "sub_meeting_id": "1774659600",
+          "status": 0,
+          "start_time": "1774659600",
+          "end_time": "1774663200"
+        },
+        {
+          "sub_meeting_id": "1774746000",
+          "status": 0,
+          "start_time": "1774746000",
+          "end_time": "1774749600"
+        },
+        {
+          "sub_meeting_id": "1775264400",
+          "status": 0,
+          "start_time": "1775264400",
+          "end_time": "1775268000"
+        },
+        {
+          "sub_meeting_id": "1775350800",
+          "status": 0,
+          "start_time": "1775350800",
+          "end_time": "1775354400"
+        },
+        {
+          "sub_meeting_id": "1775869200",
+          "status": 0,
+          "start_time": "1775869200",
+          "end_time": "1775872800"
+        },
+        {
+          "sub_meeting_id": "1775955600",
+          "status": 0,
+          "start_time": "1775955600",
+          "end_time": "1775959200"
+        },
+        {
+          "sub_meeting_id": "1776474000",
+          "status": 0,
+          "start_time": "1776474000",
+          "end_time": "1776477600"
+        },
+        {
+          "sub_meeting_id": "1776560400",
+          "status": 0,
+          "start_time": "1776560400",
+          "end_time": "1776564000"
+        },
+        {
+          "sub_meeting_id": "1777078800",
+          "status": 0,
+          "start_time": "1777078800",
+          "end_time": "1777082400"
+        },
+        {
+          "sub_meeting_id": "1777165200",
+          "status": 0,
+          "start_time": "1777165200",
+          "end_time": "1777168800"
+        },
+        {
+          "sub_meeting_id": "1777683600",
+          "status": 0,
+          "start_time": "1777683600",
+          "end_time": "1777687200"
+        },
+        {
+          "sub_meeting_id": "1777770000",
+          "status": 0,
+          "start_time": "1777770000",
+          "end_time": "1777773600"
+        },
+        {
+          "sub_meeting_id": "1778288400",
+          "status": 0,
+          "start_time": "1778288400",
+          "end_time": "1778292000"
+        },
+        {
+          "sub_meeting_id": "1778374800",
+          "status": 0,
+          "start_time": "1778374800",
+          "end_time": "1778378400"
+        },
+        {
+          "sub_meeting_id": "1778893200",
+          "status": 0,
+          "start_time": "1778893200",
+          "end_time": "1778896800"
+        },
+        {
+          "sub_meeting_id": "1778979600",
+          "status": 0,
+          "start_time": "1778979600",
+          "end_time": "1778983200"
+        },
+        {
+          "sub_meeting_id": "1779498000",
+          "status": 0,
+          "start_time": "1779498000",
+          "end_time": "1779501600"
+        },
+        {
+          "sub_meeting_id": "1779584400",
+          "status": 0,
+          "start_time": "1779584400",
+          "end_time": "1779588000"
+        },
+        {
+          "sub_meeting_id": "1780102800",
+          "status": 0,
+          "start_time": "1780102800",
+          "end_time": "1780106400"
+        },
+        {
+          "sub_meeting_id": "1780189200",
+          "status": 0,
+          "start_time": "1780189200",
+          "end_time": "1780192800"
+        },
+        {
+          "sub_meeting_id": "1780707600",
+          "status": 0,
+          "start_time": "1780707600",
+          "end_time": "1780711200"
+        },
+        {
+          "sub_meeting_id": "1780794000",
+          "status": 0,
+          "start_time": "1780794000",
+          "end_time": "1780797600"
+        },
+        {
+          "sub_meeting_id": "1781312400",
+          "status": 0,
+          "start_time": "1781312400",
+          "end_time": "1781316000"
+        },
+        {
+          "sub_meeting_id": "1781398800",
+          "status": 0,
+          "start_time": "1781398800",
+          "end_time": "1781402400"
+        },
+        {
+          "sub_meeting_id": "1781917200",
+          "status": 0,
+          "start_time": "1781917200",
+          "end_time": "1781920800"
+        },
+        {
+          "sub_meeting_id": "1782003600",
+          "status": 0,
+          "start_time": "1782003600",
+          "end_time": "1782007200"
+        },
+        {
+          "sub_meeting_id": "1782522000",
+          "status": 0,
+          "start_time": "1782522000",
+          "end_time": "1782525600"
+        },
+        {
+          "sub_meeting_id": "1782608400",
+          "status": 0,
+          "start_time": "1782608400",
+          "end_time": "1782612000"
+        },
+        {
+          "sub_meeting_id": "1783126800",
+          "status": 0,
+          "start_time": "1783126800",
+          "end_time": "1783130400"
+        },
+        {
+          "sub_meeting_id": "1783213200",
+          "status": 0,
+          "start_time": "1783213200",
+          "end_time": "1783216800"
+        },
+        {
+          "sub_meeting_id": "1783731600",
+          "status": 0,
+          "start_time": "1783731600",
+          "end_time": "1783735200"
+        },
+        {
+          "sub_meeting_id": "1783818000",
+          "status": 0,
+          "start_time": "1783818000",
+          "end_time": "1783821600"
+        },
+        {
+          "sub_meeting_id": "1784336400",
+          "status": 0,
+          "start_time": "1784336400",
+          "end_time": "1784340000"
+        },
+        {
+          "sub_meeting_id": "1784422800",
+          "status": 0,
+          "start_time": "1784422800",
+          "end_time": "1784426400"
+        },
+        {
+          "sub_meeting_id": "1784941200",
+          "status": 0,
+          "start_time": "1784941200",
+          "end_time": "1784944800"
+        },
+        {
+          "sub_meeting_id": "1785027600",
+          "status": 0,
+          "start_time": "1785027600",
+          "end_time": "1785031200"
+        },
+        {
+          "sub_meeting_id": "1785546000",
+          "status": 0,
+          "start_time": "1785546000",
+          "end_time": "1785549600"
+        },
+        {
+          "sub_meeting_id": "1785632400",
+          "status": 0,
+          "start_time": "1785632400",
+          "end_time": "1785636000"
+        },
+        {
+          "sub_meeting_id": "1786150800",
+          "status": 0,
+          "start_time": "1786150800",
+          "end_time": "1786154400"
+        },
+        {
+          "sub_meeting_id": "1786237200",
+          "status": 0,
+          "start_time": "1786237200",
+          "end_time": "1786240800"
+        },
+        {
+          "sub_meeting_id": "1786755600",
+          "status": 0,
+          "start_time": "1786755600",
+          "end_time": "1786759200"
+        },
+        {
+          "sub_meeting_id": "1786842000",
+          "status": 0,
+          "start_time": "1786842000",
+          "end_time": "1786845600"
+        },
+        {
+          "sub_meeting_id": "1787360400",
+          "status": 0,
+          "start_time": "1787360400",
+          "end_time": "1787364000"
+        },
+        {
+          "sub_meeting_id": "1787446800",
+          "status": 0,
+          "start_time": "1787446800",
+          "end_time": "1787450400"
+        },
+        {
+          "sub_meeting_id": "1787965200",
+          "status": 0,
+          "start_time": "1787965200",
+          "end_time": "1787968800"
+        },
+        {
+          "sub_meeting_id": "1788051600",
+          "status": 0,
+          "start_time": "1788051600",
+          "end_time": "1788055200"
+        },
+        {
+          "sub_meeting_id": "1788570000",
+          "status": 0,
+          "start_time": "1788570000",
+          "end_time": "1788573600"
+        },
+        {
+          "sub_meeting_id": "1788656400",
+          "status": 0,
+          "start_time": "1788656400",
+          "end_time": "1788660000"
+        },
+        {
+          "sub_meeting_id": "1789174800",
+          "status": 0,
+          "start_time": "1789174800",
+          "end_time": "1789178400"
+        },
+        {
+          "sub_meeting_id": "1789261200",
+          "status": 0,
+          "start_time": "1789261200",
+          "end_time": "1789264800"
+        },
+        {
+          "sub_meeting_id": "1789779600",
+          "status": 0,
+          "start_time": "1789779600",
+          "end_time": "1789783200"
+        },
+        {
+          "sub_meeting_id": "1789866000",
+          "status": 0,
+          "start_time": "1789866000",
+          "end_time": "1789869600"
+        },
+        {
+          "sub_meeting_id": "1790384400",
+          "status": 0,
+          "start_time": "1790384400",
+          "end_time": "1790388000"
+        },
+        {
+          "sub_meeting_id": "1790470800",
+          "status": 0,
+          "start_time": "1790470800",
+          "end_time": "1790474400"
+        },
+        {
+          "sub_meeting_id": "1790989200",
+          "status": 0,
+          "start_time": "1790989200",
+          "end_time": "1790992800"
+        },
+        {
+          "sub_meeting_id": "1791075600",
+          "status": 0,
+          "start_time": "1791075600",
+          "end_time": "1791079200"
+        },
+        {
+          "sub_meeting_id": "1791594000",
+          "status": 0,
+          "start_time": "1791594000",
+          "end_time": "1791597600"
+        },
+        {
+          "sub_meeting_id": "1791680400",
+          "status": 0,
+          "start_time": "1791680400",
+          "end_time": "1791684000"
+        },
+        {
+          "sub_meeting_id": "1792198800",
+          "status": 0,
+          "start_time": "1792198800",
+          "end_time": "1792202400"
+        },
+        {
+          "sub_meeting_id": "1792285200",
+          "status": 0,
+          "start_time": "1792285200",
+          "end_time": "1792288800"
+        },
+        {
+          "sub_meeting_id": "1792803600",
+          "status": 0,
+          "start_time": "1792803600",
+          "end_time": "1792807200"
+        },
+        {
+          "sub_meeting_id": "1792890000",
+          "status": 0,
+          "start_time": "1792890000",
+          "end_time": "1792893600"
+        },
+        {
+          "sub_meeting_id": "1793408400",
+          "status": 0,
+          "start_time": "1793408400",
+          "end_time": "1793412000"
+        },
+        {
+          "sub_meeting_id": "1793494800",
+          "status": 0,
+          "start_time": "1793494800",
+          "end_time": "1793498400"
+        },
+        {
+          "sub_meeting_id": "1794013200",
+          "status": 0,
+          "start_time": "1794013200",
+          "end_time": "1794016800"
+        },
+        {
+          "sub_meeting_id": "1794099600",
+          "status": 0,
+          "start_time": "1794099600",
+          "end_time": "1794103200"
+        },
+        {
+          "sub_meeting_id": "1794618000",
+          "status": 0,
+          "start_time": "1794618000",
+          "end_time": "1794621600"
+        },
+        {
+          "sub_meeting_id": "1794704400",
+          "status": 0,
+          "start_time": "1794704400",
+          "end_time": "1794708000"
+        },
+        {
+          "sub_meeting_id": "1795222800",
+          "status": 0,
+          "start_time": "1795222800",
+          "end_time": "1795226400"
+        },
+        {
+          "sub_meeting_id": "1795309200",
+          "status": 0,
+          "start_time": "1795309200",
+          "end_time": "1795312800"
+        },
+        {
+          "sub_meeting_id": "1795827600",
+          "status": 0,
+          "start_time": "1795827600",
+          "end_time": "1795831200"
+        },
+        {
+          "sub_meeting_id": "1795914000",
+          "status": 0,
+          "start_time": "1795914000",
+          "end_time": "1795917600"
+        },
+        {
+          "sub_meeting_id": "1796432400",
+          "status": 0,
+          "start_time": "1796432400",
+          "end_time": "1796436000"
+        },
+        {
+          "sub_meeting_id": "1796518800",
+          "status": 0,
+          "start_time": "1796518800",
+          "end_time": "1796522400"
+        },
+        {
+          "sub_meeting_id": "1797037200",
+          "status": 0,
+          "start_time": "1797037200",
+          "end_time": "1797040800"
+        },
+        {
+          "sub_meeting_id": "1797123600",
+          "status": 0,
+          "start_time": "1797123600",
+          "end_time": "1797127200"
+        },
+        {
+          "sub_meeting_id": "1797642000",
+          "status": 0,
+          "start_time": "1797642000",
+          "end_time": "1797645600"
+        },
+        {
+          "sub_meeting_id": "1797728400",
+          "status": 0,
+          "start_time": "1797728400",
+          "end_time": "1797732000"
+        },
+        {
+          "sub_meeting_id": "1798246800",
+          "status": 0,
+          "start_time": "1798246800",
+          "end_time": "1798250400"
+        },
+        {
+          "sub_meeting_id": "1798333200",
+          "status": 0,
+          "start_time": "1798333200",
+          "end_time": "1798336800"
+        },
+        {
+          "sub_meeting_id": "1798851600",
+          "status": 0,
+          "start_time": "1798851600",
+          "end_time": "1798855200"
+        },
+        {
+          "sub_meeting_id": "1798938000",
+          "status": 0,
+          "start_time": "1798938000",
+          "end_time": "1798941600"
+        },
+        {
+          "sub_meeting_id": "1799456400",
+          "status": 0,
+          "start_time": "1799456400",
+          "end_time": "1799460000"
+        },
+        {
+          "sub_meeting_id": "1799542800",
+          "status": 0,
+          "start_time": "1799542800",
+          "end_time": "1799546400"
+        },
+        {
+          "sub_meeting_id": "1800061200",
+          "status": 0,
+          "start_time": "1800061200",
+          "end_time": "1800064800"
+        },
+        {
+          "sub_meeting_id": "1800147600",
+          "status": 0,
+          "start_time": "1800147600",
+          "end_time": "1800151200"
+        },
+        {
+          "sub_meeting_id": "1800666000",
+          "status": 0,
+          "start_time": "1800666000",
+          "end_time": "1800669600"
+        },
+        {
+          "sub_meeting_id": "1800752400",
+          "status": 0,
+          "start_time": "1800752400",
+          "end_time": "1800756000"
+        },
+        {
+          "sub_meeting_id": "1801270800",
+          "status": 0,
+          "start_time": "1801270800",
+          "end_time": "1801274400"
+        },
+        {
+          "sub_meeting_id": "1801357200",
+          "status": 0,
+          "start_time": "1801357200",
+          "end_time": "1801360800"
+        },
+        {
+          "sub_meeting_id": "1801875600",
+          "status": 0,
+          "start_time": "1801875600",
+          "end_time": "1801879200"
+        },
+        {
+          "sub_meeting_id": "1801962000",
+          "status": 0,
+          "start_time": "1801962000",
+          "end_time": "1801965600"
+        },
+        {
+          "sub_meeting_id": "1802480400",
+          "status": 0,
+          "start_time": "1802480400",
+          "end_time": "1802484000"
+        },
+        {
+          "sub_meeting_id": "1802566800",
+          "status": 0,
+          "start_time": "1802566800",
+          "end_time": "1802570400"
+        },
+        {
+          "sub_meeting_id": "1803085200",
+          "status": 0,
+          "start_time": "1803085200",
+          "end_time": "1803088800"
+        },
+        {
+          "sub_meeting_id": "1803171600",
+          "status": 0,
+          "start_time": "1803171600",
+          "end_time": "1803175200"
+        },
+        {
+          "sub_meeting_id": "1803690000",
+          "status": 0,
+          "start_time": "1803690000",
+          "end_time": "1803693600"
+        },
+        {
+          "sub_meeting_id": "1803776400",
+          "status": 0,
+          "start_time": "1803776400",
+          "end_time": "1803780000"
+        },
+        {
+          "sub_meeting_id": "1804294800",
+          "status": 0,
+          "start_time": "1804294800",
+          "end_time": "1804298400"
+        },
+        {
+          "sub_meeting_id": "1804381200",
+          "status": 0,
+          "start_time": "1804381200",
+          "end_time": "1804384800"
+        },
+        {
+          "sub_meeting_id": "1804899600",
+          "status": 0,
+          "start_time": "1804899600",
+          "end_time": "1804903200"
+        },
+        {
+          "sub_meeting_id": "1804986000",
+          "status": 0,
+          "start_time": "1804986000",
+          "end_time": "1804989600"
+        },
+        {
+          "sub_meeting_id": "1805504400",
+          "status": 0,
+          "start_time": "1805504400",
+          "end_time": "1805508000"
+        },
+        {
+          "sub_meeting_id": "1805590800",
+          "status": 0,
+          "start_time": "1805590800",
+          "end_time": "1805594400"
+        },
+        {
+          "sub_meeting_id": "1806109200",
+          "status": 0,
+          "start_time": "1806109200",
+          "end_time": "1806112800"
+        },
+        {
+          "sub_meeting_id": "1806195600",
+          "status": 0,
+          "start_time": "1806195600",
+          "end_time": "1806199200"
+        },
+        {
+          "sub_meeting_id": "1806714000",
+          "status": 0,
+          "start_time": "1806714000",
+          "end_time": "1806717600"
+        },
+        {
+          "sub_meeting_id": "1806800400",
+          "status": 0,
+          "start_time": "1806800400",
+          "end_time": "1806804000"
+        },
+        {
+          "sub_meeting_id": "1807318800",
+          "status": 0,
+          "start_time": "1807318800",
+          "end_time": "1807322400"
+        },
+        {
+          "sub_meeting_id": "1807405200",
+          "status": 0,
+          "start_time": "1807405200",
+          "end_time": "1807408800"
+        },
+        {
+          "sub_meeting_id": "1807923600",
+          "status": 0,
+          "start_time": "1807923600",
+          "end_time": "1807927200"
+        },
+        {
+          "sub_meeting_id": "1808010000",
+          "status": 0,
+          "start_time": "1808010000",
+          "end_time": "1808013600"
+        },
+        {
+          "sub_meeting_id": "1808528400",
+          "status": 0,
+          "start_time": "1808528400",
+          "end_time": "1808532000"
+        },
+        {
+          "sub_meeting_id": "1808614800",
+          "status": 0,
+          "start_time": "1808614800",
+          "end_time": "1808618400"
+        },
+        {
+          "sub_meeting_id": "1809133200",
+          "status": 0,
+          "start_time": "1809133200",
+          "end_time": "1809136800"
+        },
+        {
+          "sub_meeting_id": "1809219600",
+          "status": 0,
+          "start_time": "1809219600",
+          "end_time": "1809223200"
+        },
+        {
+          "sub_meeting_id": "1809738000",
+          "status": 0,
+          "start_time": "1809738000",
+          "end_time": "1809741600"
+        },
+        {
+          "sub_meeting_id": "1809824400",
+          "status": 0,
+          "start_time": "1809824400",
+          "end_time": "1809828000"
+        },
+        {
+          "sub_meeting_id": "1810342800",
+          "status": 0,
+          "start_time": "1810342800",
+          "end_time": "1810346400"
+        },
+        {
+          "sub_meeting_id": "1810429200",
+          "status": 0,
+          "start_time": "1810429200",
+          "end_time": "1810432800"
+        },
+        {
+          "sub_meeting_id": "1810947600",
+          "status": 0,
+          "start_time": "1810947600",
+          "end_time": "1810951200"
+        },
+        {
+          "sub_meeting_id": "1811034000",
+          "status": 0,
+          "start_time": "1811034000",
+          "end_time": "1811037600"
+        },
+        {
+          "sub_meeting_id": "1811552400",
+          "status": 0,
+          "start_time": "1811552400",
+          "end_time": "1811556000"
+        },
+        {
+          "sub_meeting_id": "1811638800",
+          "status": 0,
+          "start_time": "1811638800",
+          "end_time": "1811642400"
+        },
+        {
+          "sub_meeting_id": "1812157200",
+          "status": 0,
+          "start_time": "1812157200",
+          "end_time": "1812160800"
+        },
+        {
+          "sub_meeting_id": "1812243600",
+          "status": 0,
+          "start_time": "1812243600",
+          "end_time": "1812247200"
+        },
+        {
+          "sub_meeting_id": "1812762000",
+          "status": 0,
+          "start_time": "1812762000",
+          "end_time": "1812765600"
+        },
+        {
+          "sub_meeting_id": "1812848400",
+          "status": 0,
+          "start_time": "1812848400",
+          "end_time": "1812852000"
+        },
+        {
+          "sub_meeting_id": "1813366800",
+          "status": 0,
+          "start_time": "1813366800",
+          "end_time": "1813370400"
+        },
+        {
+          "sub_meeting_id": "1813453200",
+          "status": 0,
+          "start_time": "1813453200",
+          "end_time": "1813456800"
+        },
+        {
+          "sub_meeting_id": "1813971600",
+          "status": 0,
+          "start_time": "1813971600",
+          "end_time": "1813975200"
+        },
+        {
+          "sub_meeting_id": "1814058000",
+          "status": 0,
+          "start_time": "1814058000",
+          "end_time": "1814061600"
+        },
+        {
+          "sub_meeting_id": "1814576400",
+          "status": 0,
+          "start_time": "1814576400",
+          "end_time": "1814580000"
+        },
+        {
+          "sub_meeting_id": "1814662800",
+          "status": 0,
+          "start_time": "1814662800",
+          "end_time": "1814666400"
+        },
+        {
+          "sub_meeting_id": "1815181200",
+          "status": 0,
+          "start_time": "1815181200",
+          "end_time": "1815184800"
+        },
+        {
+          "sub_meeting_id": "1815267600",
+          "status": 0,
+          "start_time": "1815267600",
+          "end_time": "1815271200"
+        },
+        {
+          "sub_meeting_id": "1815786000",
+          "status": 0,
+          "start_time": "1815786000",
+          "end_time": "1815789600"
+        },
+        {
+          "sub_meeting_id": "1815872400",
+          "status": 0,
+          "start_time": "1815872400",
+          "end_time": "1815876000"
+        },
+        {
+          "sub_meeting_id": "1816390800",
+          "status": 0,
+          "start_time": "1816390800",
+          "end_time": "1816394400"
+        },
+        {
+          "sub_meeting_id": "1816477200",
+          "status": 0,
+          "start_time": "1816477200",
+          "end_time": "1816480800"
+        },
+        {
+          "sub_meeting_id": "1816995600",
+          "status": 0,
+          "start_time": "1816995600",
+          "end_time": "1816999200"
+        },
+        {
+          "sub_meeting_id": "1817082000",
+          "status": 0,
+          "start_time": "1817082000",
+          "end_time": "1817085600"
+        },
+        {
+          "sub_meeting_id": "1817600400",
+          "status": 0,
+          "start_time": "1817600400",
+          "end_time": "1817604000"
+        },
+        {
+          "sub_meeting_id": "1817686800",
+          "status": 0,
+          "start_time": "1817686800",
+          "end_time": "1817690400"
+        },
+        {
+          "sub_meeting_id": "1818205200",
+          "status": 0,
+          "start_time": "1818205200",
+          "end_time": "1818208800"
+        },
+        {
+          "sub_meeting_id": "1818291600",
+          "status": 0,
+          "start_time": "1818291600",
+          "end_time": "1818295200"
+        },
+        {
+          "sub_meeting_id": "1818810000",
+          "status": 0,
+          "start_time": "1818810000",
+          "end_time": "1818813600"
+        },
+        {
+          "sub_meeting_id": "1818896400",
+          "status": 0,
+          "start_time": "1818896400",
+          "end_time": "1818900000"
+        },
+        {
+          "sub_meeting_id": "1819414800",
+          "status": 0,
+          "start_time": "1819414800",
+          "end_time": "1819418400"
+        },
+        {
+          "sub_meeting_id": "1819501200",
+          "status": 0,
+          "start_time": "1819501200",
+          "end_time": "1819504800"
+        },
+        {
+          "sub_meeting_id": "1820019600",
+          "status": 0,
+          "start_time": "1820019600",
+          "end_time": "1820023200"
+        },
+        {
+          "sub_meeting_id": "1820106000",
+          "status": 0,
+          "start_time": "1820106000",
+          "end_time": "1820109600"
+        },
+        {
+          "sub_meeting_id": "1820624400",
+          "status": 0,
+          "start_time": "1820624400",
+          "end_time": "1820628000"
+        },
+        {
+          "sub_meeting_id": "1820710800",
+          "status": 0,
+          "start_time": "1820710800",
+          "end_time": "1820714400"
+        },
+        {
+          "sub_meeting_id": "1821229200",
+          "status": 0,
+          "start_time": "1821229200",
+          "end_time": "1821232800"
+        },
+        {
+          "sub_meeting_id": "1821315600",
+          "status": 0,
+          "start_time": "1821315600",
+          "end_time": "1821319200"
+        },
+        {
+          "sub_meeting_id": "1821834000",
+          "status": 0,
+          "start_time": "1821834000",
+          "end_time": "1821837600"
+        },
+        {
+          "sub_meeting_id": "1821920400",
+          "status": 0,
+          "start_time": "1821920400",
+          "end_time": "1821924000"
+        },
+        {
+          "sub_meeting_id": "1822438800",
+          "status": 0,
+          "start_time": "1822438800",
+          "end_time": "1822442400"
+        },
+        {
+          "sub_meeting_id": "1822525200",
+          "status": 0,
+          "start_time": "1822525200",
+          "end_time": "1822528800"
+        },
+        {
+          "sub_meeting_id": "1823043600",
+          "status": 0,
+          "start_time": "1823043600",
+          "end_time": "1823047200"
+        },
+        {
+          "sub_meeting_id": "1823130000",
+          "status": 0,
+          "start_time": "1823130000",
+          "end_time": "1823133600"
+        },
+        {
+          "sub_meeting_id": "1823648400",
+          "status": 0,
+          "start_time": "1823648400",
+          "end_time": "1823652000"
+        },
+        {
+          "sub_meeting_id": "1823734800",
+          "status": 0,
+          "start_time": "1823734800",
+          "end_time": "1823738400"
+        },
+        {
+          "sub_meeting_id": "1824253200",
+          "status": 0,
+          "start_time": "1824253200",
+          "end_time": "1824256800"
+        },
+        {
+          "sub_meeting_id": "1824339600",
+          "status": 0,
+          "start_time": "1824339600",
+          "end_time": "1824343200"
+        },
+        {
+          "sub_meeting_id": "1824858000",
+          "status": 0,
+          "start_time": "1824858000",
+          "end_time": "1824861600"
+        },
+        {
+          "sub_meeting_id": "1824944400",
+          "status": 0,
+          "start_time": "1824944400",
+          "end_time": "1824948000"
+        },
+        {
+          "sub_meeting_id": "1825462800",
+          "status": 0,
+          "start_time": "1825462800",
+          "end_time": "1825466400"
+        },
+        {
+          "sub_meeting_id": "1825549200",
+          "status": 0,
+          "start_time": "1825549200",
+          "end_time": "1825552800"
+        },
+        {
+          "sub_meeting_id": "1826067600",
+          "status": 0,
+          "start_time": "1826067600",
+          "end_time": "1826071200"
+        },
+        {
+          "sub_meeting_id": "1826154000",
+          "status": 0,
+          "start_time": "1826154000",
+          "end_time": "1826157600"
+        },
+        {
+          "sub_meeting_id": "1826672400",
+          "status": 0,
+          "start_time": "1826672400",
+          "end_time": "1826676000"
+        },
+        {
+          "sub_meeting_id": "1826758800",
+          "status": 0,
+          "start_time": "1826758800",
+          "end_time": "1826762400"
+        },
+        {
+          "sub_meeting_id": "1827277200",
+          "status": 0,
+          "start_time": "1827277200",
+          "end_time": "1827280800"
+        },
+        {
+          "sub_meeting_id": "1827363600",
+          "status": 0,
+          "start_time": "1827363600",
+          "end_time": "1827367200"
+        },
+        {
+          "sub_meeting_id": "1827882000",
+          "status": 0,
+          "start_time": "1827882000",
+          "end_time": "1827885600"
+        },
+        {
+          "sub_meeting_id": "1827968400",
+          "status": 0,
+          "start_time": "1827968400",
+          "end_time": "1827972000"
+        },
+        {
+          "sub_meeting_id": "1828486800",
+          "status": 0,
+          "start_time": "1828486800",
+          "end_time": "1828490400"
+        },
+        {
+          "sub_meeting_id": "1828573200",
+          "status": 0,
+          "start_time": "1828573200",
+          "end_time": "1828576800"
+        },
+        {
+          "sub_meeting_id": "1829091600",
+          "status": 0,
+          "start_time": "1829091600",
+          "end_time": "1829095200"
+        },
+        {
+          "sub_meeting_id": "1829178000",
+          "status": 0,
+          "start_time": "1829178000",
+          "end_time": "1829181600"
+        },
+        {
+          "sub_meeting_id": "1829696400",
+          "status": 0,
+          "start_time": "1829696400",
+          "end_time": "1829700000"
+        },
+        {
+          "sub_meeting_id": "1829782800",
+          "status": 0,
+          "start_time": "1829782800",
+          "end_time": "1829786400"
+        },
+        {
+          "sub_meeting_id": "1830301200",
+          "status": 0,
+          "start_time": "1830301200",
+          "end_time": "1830304800"
+        },
+        {
+          "sub_meeting_id": "1830387600",
+          "status": 0,
+          "start_time": "1830387600",
+          "end_time": "1830391200"
+        },
+        {
+          "sub_meeting_id": "1830906000",
+          "status": 0,
+          "start_time": "1830906000",
+          "end_time": "1830909600"
+        },
+        {
+          "sub_meeting_id": "1830992400",
+          "status": 0,
+          "start_time": "1830992400",
+          "end_time": "1830996000"
+        },
+        {
+          "sub_meeting_id": "1831510800",
+          "status": 0,
+          "start_time": "1831510800",
+          "end_time": "1831514400"
+        },
+        {
+          "sub_meeting_id": "1831597200",
+          "status": 0,
+          "start_time": "1831597200",
+          "end_time": "1831600800"
+        },
+        {
+          "sub_meeting_id": "1832115600",
+          "status": 0,
+          "start_time": "1832115600",
+          "end_time": "1832119200"
+        },
+        {
+          "sub_meeting_id": "1832202000",
+          "status": 0,
+          "start_time": "1832202000",
+          "end_time": "1832205600"
+        },
+        {
+          "sub_meeting_id": "1832720400",
+          "status": 0,
+          "start_time": "1832720400",
+          "end_time": "1832724000"
+        },
+        {
+          "sub_meeting_id": "1832806800",
+          "status": 0,
+          "start_time": "1832806800",
+          "end_time": "1832810400"
+        }
+      ],
+      "has_more_sub_meeting": 0,
+      "remain_sub_meetings": 196,
+      "current_sub_meeting_id": "1774054800",
+      "enable_doc_upload_permission": true,
+      "current_hosts": [
+        {
+          "userid": "woaJARCQAAvMwXKrKbaQm5gWOTfegL_A",
+          "operator_id": "woaJARCQAAvMwXKrKbaQm5gWOTfegL_A",
+          "operator_id_type": 1
+        }
+      ],
+      "location": "",
+      "enable_enroll": false,
+      "enable_host_key": false,
+      "time_zone": "QXNpYS9TaGFuZ2hhaQ==",
+      "sync_to_wework": true,
+      "disable_invitation": 0
+    }
+  ]
+}
