@@ -21,6 +21,7 @@ import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
 import { PrismaModule } from './prisma/prisma.module';
 import { MeetingModule } from './meeting/meeting.module';
 import { HookTencentMtgModule } from './tencent-mtg-hook/hook-tencent-mtg.module';
+import { TencentMtgModule } from './tencent-mtg/tencent-mtg.module';
 import { LarkMeetingModule } from './lark-meeting/lark-meeting.module';
 import { VerificationModule } from '@/verification/verification.module';
 import { GraphQLModule } from '@nestjs/graphql';
@@ -66,6 +67,7 @@ import { OrgMemberModule } from './org-member/org-member.module';
     UserModule,
     MeetingModule,
     HookTencentMtgModule,
+    TencentMtgModule,
     LarkMeetingModule,
     VerificationModule,
     OpenaiModule,

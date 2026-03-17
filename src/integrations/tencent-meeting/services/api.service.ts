@@ -137,6 +137,10 @@ export class TencentApiService {
       throw new Error('IP白名单错误');
     }
 
+    if (code === 190001) {
+      throw new Error('用户未注册：提供的用户ID在腾讯会议系统中不存在');
+    }
+
     throw new Error(message || `API error at ${requestUri} (${timestamp})`);
   }
 
@@ -197,39 +201,22 @@ export class TencentApiService {
    * Retrieves detailed information about a specific meeting
    * https://cloud.tencent.com/document/product/1095/93432#9bc6b875-6415-4cda-931e-0d987e4da5bf
    * @param meetingId - Unique meeting identifier
-   * @param userId - User ID making the request (required if operatorId is not provided)
-   * @param instanceId - Meeting instance ID (default: 1)
-   * @param operatorId - Operator ID (optional, if provided takes precedence over userId)
-   * @param operatorIdType - Operator ID type (default: 1 for userid)
-   * @param subMeetingId - Sub-meeting ID for recurring meetings (optional)
+   * @param operatorId - Operator ID (required)
+   * @param operatorIdType - Operator ID type: 1=userid, 2=openid, 3=rooms_id (default: 1)
+   * @param instanceId - User terminal device type (default: 1 for PC)
    * @returns Promise resolving to meeting details
    */
   async getMeetingDetail(
     meetingId: string,
-    userId?: string,
-    instanceId: number = 1,
-    operatorId?: string,
+    operatorId: string,
     operatorIdType: number = 1,
-    subMeetingId?: string,
+    instanceId: number = 1,
   ): Promise<MeetingDetailResponse> {
     const queryParams: Record<string, unknown> = {
+      operator_id: operatorId,
+      operator_id_type: operatorIdType,
       instanceid: instanceId,
     };
-
-    // 根据文档，operator_id和userid二者必填一项，若两者都填，以operator_id字段为准
-    if (operatorId) {
-      queryParams.operator_id = operatorId;
-      queryParams.operator_id_type = operatorIdType;
-    } else if (userId) {
-      queryParams.userid = userId;
-    } else {
-      throw new Error('Either operatorId or userId must be provided');
-    }
-
-    // 添加子会议ID（用于周期性会议）
-    if (subMeetingId) {
-      queryParams.sub_meeting_id = subMeetingId;
-    }
 
     return this.sendRequest<MeetingDetailResponse>(
       'GET',
