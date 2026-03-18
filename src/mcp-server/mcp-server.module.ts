@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-29 10:29:37
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-15 18:10:20
+ * @LastEditTime: 2026-03-18 20:46:52
  * @FilePath: /nove_api/src/mcp-server/mcp-server.module.ts
  * @Description:
  *
@@ -17,6 +17,8 @@ import { UserSearchTool } from './tools/userid-search.tool';
 import { MeetingStatsTool } from './tools/meeting-stats.tool';
 import { UserSearchRepository } from './repositories/userid-search.repository';
 import { MeetingStatsRepository } from './repositories/meeting-stats.repository';
+import { PlatformUserRepository } from './repositories/platform-user.repository';
+import { ParticipantSummaryRepository } from './repositories/participant-summary.repository';
 import { SseController } from './controllers/sse.controller';
 import { StreamableHttpController } from './controllers/streamable-http.controller';
 
@@ -42,6 +44,8 @@ import { StreamableHttpController } from './controllers/streamable-http.controll
     MeetingStatsTool,
     UserSearchRepository,
     MeetingStatsRepository,
+    PlatformUserRepository,
+    ParticipantSummaryRepository,
   ],
 })
 export class McpServerModule {}
