@@ -1,4 +1,4 @@
-import { Order, User } from '@prisma/client';
+import { Order, RefundChannel, RefundStatus, User } from '@prisma/client';
 import { Prisma } from '@prisma/client';
 
 export interface CreateRefundsParams {
@@ -15,15 +15,14 @@ export interface RefundConfig {
   orderIndex: number;
   submittedAt: Date;
   refundedAt: Date | null;
-  refundChannel: string;
+  refundChannel: RefundChannel;
   approvalUrl: string;
   creatorType: 'admin' | 'finance';
-  refundAmount: number;
+  refundAmount: number; // 存储最小货币单位（分）
   refundReason: string;
-  benefitEndedAt: Date | null;
   benefitUsedDays: number;
   applicantName: string;
-  isFinancialSettled: boolean;
+  status: RefundStatus;
   financialSettledAt: Date | null;
   financialNote: string | null;
   productCategory: string;
