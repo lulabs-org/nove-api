@@ -19,7 +19,7 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
-import { PermissionService } from '../services/permission.service';
+import { PermService } from '../services/permission.service';
 import {
   CreateDataPermissionRuleDto,
   UpdateDataPermissionRuleDto,
@@ -33,7 +33,7 @@ import {
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class DataPermissionRuleController {
-  constructor(private readonly permissionService: PermissionService) {}
+  constructor(private readonly permService: PermService) {}
 
   @Post()
   @ApiOperation({
@@ -56,7 +56,7 @@ export class DataPermissionRuleController {
   async create(
     @Body() dto: CreateDataPermissionRuleDto,
   ): Promise<DataPermissionRuleDto> {
-    return this.permissionService.createDataPermissionRule(dto);
+    return this.permService.createDataPermissionRule(dto);
   }
 
   @Get()
@@ -76,7 +76,7 @@ export class DataPermissionRuleController {
   async findAll(
     @Query() query: QueryDataPermissionRuleDto,
   ): Promise<DataPermissionRuleListResponse> {
-    return this.permissionService.findAllDataPermissionRules(query);
+    return this.permService.findAllDataPermissionRules(query);
   }
 
   @Get(':id')
@@ -103,7 +103,7 @@ export class DataPermissionRuleController {
     description: '数据权限规则不存在',
   })
   async findById(@Param('id') id: string): Promise<DataPermissionRuleDto> {
-    return this.permissionService.findDataPermissionRuleById(id);
+    return this.permService.findDataPermissionRuleById(id);
   }
 
   @Get('code/:code')
@@ -132,7 +132,7 @@ export class DataPermissionRuleController {
   async findByCode(
     @Param('code') code: string,
   ): Promise<DataPermissionRuleDto> {
-    return this.permissionService.findDataPermissionRuleByCode(code);
+    return this.permService.findDataPermissionRuleByCode(code);
   }
 
   @Put(':id')
@@ -166,7 +166,7 @@ export class DataPermissionRuleController {
     @Param('id') id: string,
     @Body() dto: UpdateDataPermissionRuleDto,
   ): Promise<DataPermissionRuleDto> {
-    return this.permissionService.updateDataPermissionRule(id, dto);
+    return this.permService.updateDataPermissionRule(id, dto);
   }
 
   @Delete(':id')
@@ -193,6 +193,6 @@ export class DataPermissionRuleController {
     description: '数据权限规则不存在',
   })
   async delete(@Param('id') id: string): Promise<void> {
-    return this.permissionService.deleteDataPermissionRule(id);
+    return this.permService.deleteDataPermissionRule(id);
   }
 }

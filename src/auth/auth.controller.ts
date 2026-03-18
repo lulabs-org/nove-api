@@ -38,7 +38,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { TokenBlacklistService } from './services/token-blacklist.service';
 import { User, CurrentUser } from '@/auth/decorators/user.decorator';
 import { ClientType } from '@/auth/types/jwt.types';
-import { PermissionService } from '@/permission/services/permission.service';
+import { PermService } from '@/permission/services/permission.service';
 import { HttpUtil } from '@/common/utils/http.util';
 
 @ApiTags('Auth')
@@ -55,7 +55,7 @@ export class AuthController {
     private readonly passwordService: PasswordService,
     private readonly tokenService: TokenService,
     private readonly tokenBlacklist: TokenBlacklistService,
-    private readonly permissionService: PermissionService,
+    private readonly permissionService: PermService,
   ) {}
 
   @Public()

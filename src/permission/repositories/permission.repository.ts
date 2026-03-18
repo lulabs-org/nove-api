@@ -8,8 +8,8 @@ interface PermissionWithChildren extends Permission {
 }
 
 @Injectable()
-export class PermissionRepository {
-  private readonly logger = new Logger(PermissionRepository.name);
+export class PermRepository {
+  private readonly logger = new Logger(PermRepository.name);
 
   constructor(private readonly prisma: PrismaService) {}
 
@@ -58,7 +58,7 @@ export class PermissionRepository {
     );
   }
 
-  async findAllPermissions() {
+  async findAll() {
     return this.prisma.permission.findMany({
       where: {
         active: true,
@@ -86,7 +86,7 @@ export class PermissionRepository {
     });
   }
 
-  async findPermissionsByResource(resource: string) {
+  async findByResource(resource: string) {
     return this.prisma.permission.findMany({
       where: {
         resource,

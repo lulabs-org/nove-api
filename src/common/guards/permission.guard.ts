@@ -10,7 +10,7 @@ import {
   PERMISSION_MODE_KEY,
   PermissionMode,
 } from '../decorators/permissions.decorator';
-import { PermissionService } from '../../permission/services/permission.service';
+import { PermService } from '../../permission/services/permission.service';
 
 interface RequestWithUser {
   user?: {
@@ -24,7 +24,7 @@ export class PermissionGuard implements CanActivate {
 
   constructor(
     private readonly reflector: Reflector,
-    private readonly permissionService: PermissionService,
+    private readonly permissionService: PermService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
