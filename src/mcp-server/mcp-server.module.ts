@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-29 10:29:37
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-18 20:46:52
+ * @LastEditTime: 2026-03-19 01:45:05
  * @FilePath: /nove_api/src/mcp-server/mcp-server.module.ts
  * @Description:
  *
@@ -11,16 +11,19 @@
 
 import { Module } from '@nestjs/common';
 import { McpModule } from '@rekog/mcp-nest';
-import { GreetingTool } from './tools/greeting.tool';
-import { UserInfoTool } from './tools/user-info.tool';
-import { UserSearchTool } from './tools/userid-search.tool';
-import { MeetingStatsTool } from './tools/meeting-stats.tool';
-import { UserSearchRepository } from './repositories/userid-search.repository';
-import { MeetingStatsRepository } from './repositories/meeting-stats.repository';
-import { PlatformUserRepository } from './repositories/platform-user.repository';
-import { ParticipantSummaryRepository } from './repositories/participant-summary.repository';
-import { SseController } from './controllers/sse.controller';
-import { StreamableHttpController } from './controllers/streamable-http.controller';
+import {
+  GreetingTool,
+  UserInfoTool,
+  UserSearchTool,
+  MeetingStatsTool,
+} from './tools';
+import {
+  UserSearchRepository,
+  MeetingStatsRepository,
+  PlatformUserRepository,
+  ParticipantSummaryRepository,
+} from './repositories';
+import { SseController, StreamableHttpController } from './controllers';
 
 @Module({
   imports: [
