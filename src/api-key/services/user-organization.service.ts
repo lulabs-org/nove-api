@@ -1,3 +1,14 @@
+/*
+ * @Author: 杨仕明 shiming.y@qq.com
+ * @Date: 2026-03-04 18:05:33
+ * @LastEditors: 杨仕明 shiming.y@qq.com
+ * @LastEditTime: 2026-03-19 05:06:55
+ * @FilePath: /nove_api/src/api-key/services/user-organization.service.ts
+ * @Description:
+ *
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
+ */
+
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 
@@ -6,7 +17,7 @@ import { PrismaService } from '@/prisma/prisma.service';
  * 用于获取用户的组织信息
  */
 @Injectable()
-export class UserOrganizationService {
+export class UserOrgService {
   constructor(private readonly prisma: PrismaService) {}
 
   /**
@@ -14,7 +25,7 @@ export class UserOrganizationService {
    * @param userId 用户 ID
    * @returns 组织 ID
    */
-  async getPrimaryOrganizationId(userId: string): Promise<string> {
+  async getPrimaryOrgId(userId: string): Promise<string> {
     // 首先尝试获取主要部门
     const primaryDept = await this.prisma.orgMember.findFirst({
       where: {
@@ -57,7 +68,7 @@ export class UserOrganizationService {
    * @param userId 用户 ID
    * @returns 组织 ID 数组
    */
-  async getAllOrganizationIds(userId: string): Promise<string[]> {
+  async getAllOrgIds(userId: string): Promise<string[]> {
     const orgs = await this.prisma.orgMember.findMany({
       where: {
         userId,
@@ -73,17 +84,14 @@ export class UserOrganizationService {
   /**
    * 验证用户是否属于指定组织
    * @param userId 用户 ID
-   * @param organizationId 组织 ID
+   * @param orgId 组织 ID
    * @returns 是否属于该组织
    */
-  async belongsToOrganization(
-    userId: string,
-    organizationId: string,
-  ): Promise<boolean> {
+  async belongsToOrg(userId: string, orgId: string): Promise<boolean> {
     const count = await this.prisma.orgMember.count({
       where: {
         userId,
-        orgId: organizationId,
+        orgId,
       },
     });
 

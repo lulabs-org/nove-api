@@ -1,14 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ApiKeyController } from './api-key.controller';
 import { ApiKeyService } from '../services/api-key.service';
-import { UserOrganizationService } from '../services/user-organization.service';
+import { UserOrgService } from '../services/user-organization.service';
 import { ApiKeyStatus } from '@prisma/client';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 describe('ApiKeyController', () => {
   let controller: ApiKeyController;
   let apiKeyService: ApiKeyService;
-  let userOrgService: UserOrganizationService;
+  let userOrgService: UserOrgService;
 
   const mockUser = {
     id: 'user-123',
@@ -68,9 +68,9 @@ describe('ApiKeyController', () => {
           },
         },
         {
-          provide: UserOrganizationService,
+          provide: UserOrgService,
           useValue: {
-            getPrimaryOrganizationId: jest.fn(),
+            getPrimaryOrgId: jest.fn(),
           },
         },
       ],
@@ -78,9 +78,7 @@ describe('ApiKeyController', () => {
 
     controller = module.get<ApiKeyController>(ApiKeyController);
     apiKeyService = module.get<ApiKeyService>(ApiKeyService);
-    userOrgService = module.get<UserOrganizationService>(
-      UserOrganizationService,
-    );
+    userOrgService = module.get<UserOrgService>(UserOrgService);
   });
 
   afterEach(() => {
@@ -99,8 +97,8 @@ describe('ApiKeyController', () => {
         expiresAt: '2026-12-31T23:59:59Z',
       };
 
-      const getPrimaryOrganizationIdSpy = jest
-        .spyOn(userOrgService, 'getPrimaryOrganizationId')
+      const getPrimaryOrgIdSpy = jest
+        .spyOn(userOrgService, 'getPrimaryOrgId')
         .mockResolvedValue(mockOrganizationId);
       const createKeySpy = jest
         .spyOn(apiKeyService, 'createKey')
@@ -108,7 +106,7 @@ describe('ApiKeyController', () => {
 
       const result = await controller.createKey(mockUser, createDto);
 
-      expect(getPrimaryOrganizationIdSpy).toHaveBeenCalledWith(mockUser.id);
+      expect(getPrimaryOrgIdSpy).toHaveBeenCalledWith(mockUser.id);
       expect(createKeySpy).toHaveBeenCalledWith(
         mockOrganizationId,
         mockUser.id,
@@ -123,7 +121,7 @@ describe('ApiKeyController', () => {
       };
 
       jest
-        .spyOn(userOrgService, 'getPrimaryOrganizationId')
+        .spyOn(userOrgService, 'getPrimaryOrgId')
         .mockResolvedValue(mockOrganizationId);
       const createKeySpy = jest
         .spyOn(apiKeyService, 'createKey')
@@ -146,7 +144,7 @@ describe('ApiKeyController', () => {
       };
 
       jest
-        .spyOn(userOrgService, 'getPrimaryOrganizationId')
+        .spyOn(userOrgService, 'getPrimaryOrgId')
         .mockResolvedValue(mockOrganizationId);
       jest
         .spyOn(apiKeyService, 'createKey')
@@ -164,8 +162,8 @@ describe('ApiKeyController', () => {
     it('should list API keys with default pagination', async () => {
       const pagination = {};
 
-      const getPrimaryOrganizationIdSpy = jest
-        .spyOn(userOrgService, 'getPrimaryOrganizationId')
+      const getPrimaryOrgIdSpy = jest
+        .spyOn(userOrgService, 'getPrimaryOrgId')
         .mockResolvedValue(mockOrganizationId);
       const listKeysSpy = jest
         .spyOn(apiKeyService, 'listKeys')
@@ -173,7 +171,7 @@ describe('ApiKeyController', () => {
 
       const result = await controller.listKeys(mockUser, pagination);
 
-      expect(getPrimaryOrganizationIdSpy).toHaveBeenCalledWith(mockUser.id);
+      expect(getPrimaryOrgIdSpy).toHaveBeenCalledWith(mockUser.id);
       expect(listKeysSpy).toHaveBeenCalledWith(
         mockOrganizationId,
         pagination,
@@ -195,7 +193,7 @@ describe('ApiKeyController', () => {
       };
 
       jest
-        .spyOn(userOrgService, 'getPrimaryOrganizationId')
+        .spyOn(userOrgService, 'getPrimaryOrgId')
         .mockResolvedValue(mockOrganizationId);
       const listKeysSpy = jest
         .spyOn(apiKeyService, 'listKeys')
@@ -221,7 +219,7 @@ describe('ApiKeyController', () => {
       };
 
       jest
-        .spyOn(userOrgService, 'getPrimaryOrganizationId')
+        .spyOn(userOrgService, 'getPrimaryOrgId')
         .mockResolvedValue(mockOrganizationId);
       jest
         .spyOn(apiKeyService, 'listKeys')
@@ -244,8 +242,8 @@ describe('ApiKeyController', () => {
         name: 'Updated API Key Name',
       };
 
-      const getPrimaryOrganizationIdSpy = jest
-        .spyOn(userOrgService, 'getPrimaryOrganizationId')
+      const getPrimaryOrgIdSpy = jest
+        .spyOn(userOrgService, 'getPrimaryOrgId')
         .mockResolvedValue(mockOrganizationId);
       const updateKeySpy = jest
         .spyOn(apiKeyService, 'updateKey')
@@ -253,7 +251,7 @@ describe('ApiKeyController', () => {
 
       const result = await controller.updateKey(mockUser, 'key-123', updateDto);
 
-      expect(getPrimaryOrganizationIdSpy).toHaveBeenCalledWith(mockUser.id);
+      expect(getPrimaryOrgIdSpy).toHaveBeenCalledWith(mockUser.id);
       expect(updateKeySpy).toHaveBeenCalledWith(
         mockOrganizationId,
         'key-123',
@@ -274,7 +272,7 @@ describe('ApiKeyController', () => {
       };
 
       jest
-        .spyOn(userOrgService, 'getPrimaryOrganizationId')
+        .spyOn(userOrgService, 'getPrimaryOrgId')
         .mockResolvedValue(mockOrganizationId);
       const updateKeySpy = jest
         .spyOn(apiKeyService, 'updateKey')
@@ -302,7 +300,7 @@ describe('ApiKeyController', () => {
       };
 
       jest
-        .spyOn(userOrgService, 'getPrimaryOrganizationId')
+        .spyOn(userOrgService, 'getPrimaryOrgId')
         .mockResolvedValue(mockOrganizationId);
       const updateKeySpy = jest
         .spyOn(apiKeyService, 'updateKey')
@@ -325,7 +323,7 @@ describe('ApiKeyController', () => {
       };
 
       jest
-        .spyOn(userOrgService, 'getPrimaryOrganizationId')
+        .spyOn(userOrgService, 'getPrimaryOrgId')
         .mockResolvedValue(mockOrganizationId);
       jest
         .spyOn(apiKeyService, 'updateKey')
@@ -342,7 +340,7 @@ describe('ApiKeyController', () => {
       };
 
       jest
-        .spyOn(userOrgService, 'getPrimaryOrganizationId')
+        .spyOn(userOrgService, 'getPrimaryOrgId')
         .mockResolvedValue(mockOrganizationId);
       jest
         .spyOn(apiKeyService, 'updateKey')
@@ -358,8 +356,8 @@ describe('ApiKeyController', () => {
 
   describe('revokeKey', () => {
     it('should revoke API key successfully', async () => {
-      const getPrimaryOrganizationIdSpy = jest
-        .spyOn(userOrgService, 'getPrimaryOrganizationId')
+      const getPrimaryOrgIdSpy = jest
+        .spyOn(userOrgService, 'getPrimaryOrgId')
         .mockResolvedValue(mockOrganizationId);
       const revokeKeySpy = jest
         .spyOn(apiKeyService, 'revokeKey')
@@ -367,7 +365,7 @@ describe('ApiKeyController', () => {
 
       await controller.revokeKey(mockUser, 'key-123');
 
-      expect(getPrimaryOrganizationIdSpy).toHaveBeenCalledWith(mockUser.id);
+      expect(getPrimaryOrgIdSpy).toHaveBeenCalledWith(mockUser.id);
       expect(revokeKeySpy).toHaveBeenCalledWith(
         mockOrganizationId,
         'key-123',
@@ -377,7 +375,7 @@ describe('ApiKeyController', () => {
 
     it('should throw NotFoundException when key does not exist', async () => {
       jest
-        .spyOn(userOrgService, 'getPrimaryOrganizationId')
+        .spyOn(userOrgService, 'getPrimaryOrgId')
         .mockResolvedValue(mockOrganizationId);
       jest
         .spyOn(apiKeyService, 'revokeKey')
@@ -391,8 +389,8 @@ describe('ApiKeyController', () => {
 
   describe('rotateKey', () => {
     it('should rotate API key successfully', async () => {
-      const getPrimaryOrganizationIdSpy = jest
-        .spyOn(userOrgService, 'getPrimaryOrganizationId')
+      const getPrimaryOrgIdSpy = jest
+        .spyOn(userOrgService, 'getPrimaryOrgId')
         .mockResolvedValue(mockOrganizationId);
       const rotateKeySpy = jest
         .spyOn(apiKeyService, 'rotateKey')
@@ -400,7 +398,7 @@ describe('ApiKeyController', () => {
 
       const result = await controller.rotateKey(mockUser, 'key-123');
 
-      expect(getPrimaryOrganizationIdSpy).toHaveBeenCalledWith(mockUser.id);
+      expect(getPrimaryOrgIdSpy).toHaveBeenCalledWith(mockUser.id);
       expect(rotateKeySpy).toHaveBeenCalledWith(
         mockOrganizationId,
         'key-123',
@@ -413,7 +411,7 @@ describe('ApiKeyController', () => {
 
     it('should throw NotFoundException when key does not exist', async () => {
       jest
-        .spyOn(userOrgService, 'getPrimaryOrganizationId')
+        .spyOn(userOrgService, 'getPrimaryOrgId')
         .mockResolvedValue(mockOrganizationId);
       jest
         .spyOn(apiKeyService, 'rotateKey')
@@ -433,7 +431,7 @@ describe('ApiKeyController', () => {
       };
 
       jest
-        .spyOn(userOrgService, 'getPrimaryOrganizationId')
+        .spyOn(userOrgService, 'getPrimaryOrgId')
         .mockResolvedValue(mockOrganizationId);
       jest.spyOn(apiKeyService, 'rotateKey').mockResolvedValue(rotateResponse);
 

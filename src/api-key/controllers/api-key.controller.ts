@@ -20,7 +20,7 @@ import {
 import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
 import { User, CurrentUser } from '@/auth/decorators/user.decorator';
 import { ApiKeyService } from '../services/api-key.service';
-import { UserOrganizationService } from '../services/user-organization.service';
+import { UserOrgService } from '../services/user-organization.service';
 import {
   CreateApiKeyDto,
   UpdateApiKeyDto,
@@ -42,7 +42,7 @@ import {
 export class ApiKeyController {
   constructor(
     private readonly apiKeyService: ApiKeyService,
-    private readonly userOrgService: UserOrganizationService,
+    private readonly userOrgService: UserOrgService,
   ) {}
 
   /**
@@ -70,9 +70,7 @@ export class ApiKeyController {
     @User() user: CurrentUser,
     @Body() dto: CreateApiKeyDto,
   ): Promise<CreateApiKeyResponse> {
-    const organizationId = await this.userOrgService.getPrimaryOrganizationId(
-      user.id,
-    );
+    const organizationId = await this.userOrgService.getPrimaryOrgId(user.id);
 
     return this.apiKeyService.createKey(organizationId, user.id, dto);
   }
@@ -98,9 +96,7 @@ export class ApiKeyController {
     @User() user: CurrentUser,
     @Query() pagination: PaginationDto,
   ): Promise<ApiKeyListResponse> {
-    const organizationId = await this.userOrgService.getPrimaryOrganizationId(
-      user.id,
-    );
+    const organizationId = await this.userOrgService.getPrimaryOrgId(user.id);
 
     return this.apiKeyService.listKeys(organizationId, pagination, user.id);
   }
@@ -140,9 +136,7 @@ export class ApiKeyController {
     @Param('id') id: string,
     @Body() dto: UpdateApiKeyDto,
   ): Promise<ApiKeyDto> {
-    const organizationId = await this.userOrgService.getPrimaryOrganizationId(
-      user.id,
-    );
+    const organizationId = await this.userOrgService.getPrimaryOrgId(user.id);
 
     return this.apiKeyService.updateKey(organizationId, id, dto, user.id);
   }
@@ -177,9 +171,7 @@ export class ApiKeyController {
     @User() user: CurrentUser,
     @Param('id') id: string,
   ): Promise<void> {
-    const organizationId = await this.userOrgService.getPrimaryOrganizationId(
-      user.id,
-    );
+    const organizationId = await this.userOrgService.getPrimaryOrgId(user.id);
 
     await this.apiKeyService.revokeKey(organizationId, id, user.id);
   }
@@ -215,9 +207,7 @@ export class ApiKeyController {
     @User() user: CurrentUser,
     @Param('id') id: string,
   ): Promise<RotateApiKeyResponse> {
-    const organizationId = await this.userOrgService.getPrimaryOrganizationId(
-      user.id,
-    );
+    const organizationId = await this.userOrgService.getPrimaryOrgId(user.id);
 
     return this.apiKeyService.rotateKey(organizationId, id, user.id);
   }

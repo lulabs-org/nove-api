@@ -1,3 +1,14 @@
+/*
+ * @Author: 杨仕明 shiming.y@qq.com
+ * @Date: 2026-03-04 18:05:33
+ * @LastEditors: 杨仕明 shiming.y@qq.com
+ * @LastEditTime: 2026-03-19 05:08:06
+ * @FilePath: /nove_api/src/api-key/api-key.module.ts
+ * @Description:
+ *
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
+ */
+
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from '@/prisma/prisma.module';
@@ -10,7 +21,7 @@ import { V1Controller } from './controllers/v1.controller';
 // Services
 import { ApiKeyService } from './services/api-key.service';
 import { UsageLogService } from './services/usage-log.service';
-import { UserOrganizationService } from './services/user-organization.service';
+import { UserOrgService } from './services/user-organization.service';
 
 // Repositories
 import { ApiKeyRepository } from './repositories/api-key.repository';
@@ -35,7 +46,7 @@ import { UsageLoggingInterceptor } from './interceptors/usage-logging.intercepto
     // Services
     ApiKeyService,
     UsageLogService,
-    UserOrganizationService,
+    UserOrgService,
 
     // Repositories
     ApiKeyRepository,
