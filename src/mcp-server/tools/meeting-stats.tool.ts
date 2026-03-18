@@ -1,11 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { Tool, Context, ToolScopes } from '@rekog/mcp-nest';
 import { z } from 'zod';
-import { MeetingStatsRepository } from '../repositories/meeting-stats.repository';
+import {
+  MeetingStatsRepository,
+  ParticipantSummaryRepository,
+  PlatformUserRepository,
+} from '../repositories';
 
 @Injectable()
 export class MeetingStatsTool {
-  constructor(private readonly meetingStatsRepo: MeetingStatsRepository) {}
+  constructor(
+    private readonly meetingRepo: MeetingStatsRepository,
+    private readonly ptUserRepo: PlatformUserRepository,
+    private readonly participantSummaryRepo: ParticipantSummaryRepository,
+  ) {}
 
   private validateDateRange(startDate: Date, endDate: Date): void {
     const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
@@ -48,13 +56,13 @@ export class MeetingStatsTool {
 
     await context.reportProgress({ progress: 20, total: 100 });
 
-    const platformUsers = await this.meetingStatsRepo.getActiveUsers(userId);
+    const platformUsers = await this.ptUserRepo.getActiveUsers(userId);
 
     await context.reportProgress({ progress: 40, total: 100 });
 
     const platformUserIds = platformUsers.map((u) => u.id);
 
-    const participantSummaries = await this.meetingStatsRepo.getSummaries({
+    const summaries = await this.participantSummaryRepo.getSummaries({
       platformUserIds,
       startDate: startDateObj,
       endDate: endDateObj,
@@ -63,25 +71,18 @@ export class MeetingStatsTool {
     await context.reportProgress({ progress: 70, total: 100 });
 
     const uniqueMeetingIds = new Set<string>(
-      participantSummaries
+      summaries
         .filter(
           (s): s is typeof s & { meetingId: string } => s.meetingId !== null,
         )
         .map((s) => s.meetingId),
     );
 
-    const meetings = await this.meetingStatsRepo.getMeetings({
+    const meetings = await this.meetingRepo.getMeetings({
       meetingIds: Array.from(uniqueMeetingIds),
       startDate: startDateObj,
       endDate: endDateObj,
     });
-
-    const totalDuration = meetings.reduce(
-      (sum, m) => sum + (m.durationSeconds || 0),
-      0,
-    );
-    const averageDuration =
-      meetings.length > 0 ? totalDuration / meetings.length : 0;
 
     const meetingsByDay = new Map<string, number>();
     meetings.forEach((meeting) => {
@@ -102,11 +103,9 @@ export class MeetingStatsTool {
       period: { startDate, endDate },
       platformUsers: platformUsers.length,
       totalMeetings: meetings.length,
-      totalDuration,
-      totalParticipants: participantSummaries.length,
-      averageDuration: Math.round(averageDuration),
+      totalParticipants: summaries.length,
       meetingsByDay: sortedMeetingsByDay,
-      summaries: participantSummaries.map((s) => ({
+      summaries: summaries.map((s) => ({
         id: s.id,
         userName: s.userName,
         periodType: s.periodType,
@@ -138,7 +137,7 @@ export class MeetingStatsTool {
   })
   @ToolScopes(['mcp-tool:meeting-details'])
   async getMeetingDetails({ meetingId }: { meetingId: string }) {
-    const meeting = await this.meetingStatsRepo.getDetails(meetingId);
+    const meeting = await this.meetingRepo.getDetails(meetingId);
 
     if (!meeting) {
       return {

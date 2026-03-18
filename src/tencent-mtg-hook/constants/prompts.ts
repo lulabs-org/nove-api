@@ -2,8 +2,8 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-24 00:00:00
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2025-12-31 20:33:24
- * @FilePath: /lulab_backend/src/hook-tencent-mtg/constants/prompts.ts
+ * @LastEditTime: 2026-03-18 13:56:36
+ * @FilePath: /nove_api/src/tencent-mtg-hook/constants/prompts.ts
  * @Description: 提示词常量
  *
  * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
@@ -37,20 +37,20 @@ export const PARTICIPANT_SUMMARY_PROMPT = (
 - 会议时间：${startTime} - ${endTime}
 - 参会者：${username}
 
-会议内容：
+会议总结内容：
 ${aiMinutes}
 
-待办事项：
+会议待办事项：
 ${todo}
 
-录音转写：
+会议录音转写：
 ${transcript}
 
 请为参会者「${username}」生成一份个性化的会议总结，包含：
 1. 会议要点回顾
-2. 与该参会者相关的重要讨论
-3. 该参会者需要关注的待办事项
-4. 后续行动建议
+2. 与该参会者相关的项目进展
+3. 与该参会者相关的重要讨论
+4. 与该参会者需要关注的待办事项
 5. 其他重要内容
 
 请用中文回答，保持简洁专业。

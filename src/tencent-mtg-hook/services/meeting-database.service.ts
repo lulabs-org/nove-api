@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-24
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-17 00:08:14
+ * @LastEditTime: 2026-03-18 12:54:02
  * @FilePath: /nove_api/src/tencent-mtg-hook/services/meeting-database.service.ts
  * @Description: 会议数据库服务，处理会议记录的创建和更新
  *
@@ -69,6 +69,8 @@ export class MeetingDatabaseService {
       type: meetingType,
       hostId: creatorUser.id,
       createdById: creatorUser.id,
+      scheduledStartAt: new Date(meeting_info.start_time * 1000),
+      scheduledEndAt: new Date(meeting_info.end_time * 1000),
     };
 
     if (event === 'meeting.started') {
