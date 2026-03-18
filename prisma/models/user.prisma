@@ -60,7 +60,6 @@ model User {
   // 平台与存储相关关联
   platformUsers          PlatformUser[] // 平台用户关联
   uploadedStorageObjects StorageObject[]
-  ParticipantSummary     ParticipantSummary[] @relation("UserParticipantSummaries") // 用户参与的订单摘要
 
   @@unique([countryCode, phone], name: "uq_users_country_code_phone")
   @@index([username]) // 用户名登录优化
