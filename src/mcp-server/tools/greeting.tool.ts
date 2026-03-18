@@ -21,7 +21,7 @@ export class GreetingTool {
     name: 'greeting-tool',
     description: 'Returns a greeting with progress updates',
     parameters: z.object({
-      name: z.string().default('World'),
+      name: z.string().default('Guest'),
       language: z.enum(['en', 'zh', 'es', 'fr']).default('en'),
     }),
   })
