@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-14 00:26:40
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-15 17:40:41
+ * @LastEditTime: 2026-03-19 02:49:41
  * @FilePath: /nove_api/src/auth/decorators/api-key-user.decorator.ts
  * @Description:
  *
@@ -14,7 +14,7 @@ import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 export interface ApiKeyUser {
   id: string;
   sub: string; // user_id
-  organizationId: string;
+  orgId: string;
   apiKeyId: string;
   scopes: string[];
   roles?: string[];

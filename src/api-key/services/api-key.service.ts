@@ -325,7 +325,7 @@ export class ApiKeyService {
 
     // 返回认证上下文
     return {
-      organizationId: apiKey.orgId,
+      orgId: apiKey.orgId,
       apiKeyId: apiKey.id,
       scopes: apiKey.scopes,
       userId: apiKey.createdBy,

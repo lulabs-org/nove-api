@@ -376,7 +376,7 @@ describe('ApiKeyService', () => {
       expect(repository.findByPrefix).toHaveBeenCalledWith('AbCdEfGhIj');
       expect(repository.updateLastUsedAt).toHaveBeenCalledWith('key-123');
       expect(result).toEqual({
-        organizationId: 'org-123',
+        orgId: 'org-123',
         apiKeyId: 'key-123',
         scopes: mockApiKey.scopes,
         userId: 'user-123',
@@ -436,7 +436,7 @@ describe('ApiKeyService', () => {
 
       const result = await service.verifyKey(validRawKey);
 
-      expect(result).toHaveProperty('organizationId', 'org-123');
+      expect(result).toHaveProperty('orgId', 'org-123');
     });
   });
 });

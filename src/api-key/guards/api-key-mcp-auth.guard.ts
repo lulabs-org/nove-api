@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-12 15:10:02
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-15 17:40:56
+ * @LastEditTime: 2026-03-19 02:49:47
  * @FilePath: /nove_api/src/api-key/guards/api-key-mcp-auth.guard.ts
  * @Description:
  *
@@ -20,7 +20,7 @@ import { ApiKeyService } from '@/api-key/services/api-key.service';
 import type { ApiKeyUser } from '@/auth/decorators/api-key-user.decorator';
 
 type ApiKeyAuthContext = {
-  organizationId: string;
+  orgId: string;
   apiKeyId: string;
   scopes: string[];
 };
@@ -59,7 +59,7 @@ export class McpAuthJwtGuard implements CanActivate {
         authType: 'api_key',
         id: authContext.apiKeyId,
         sub: authContext.userId,
-        organizationId: authContext.organizationId,
+        orgId: authContext.orgId,
         apiKeyId: authContext.apiKeyId,
         scopes: authContext.scopes ?? [],
         roles: [],
