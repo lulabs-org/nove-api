@@ -290,7 +290,6 @@ export class ApiKeyService {
    * @returns 认证上下文
    */
   async verifyKey(rawKey: string): Promise<ApiKeyAuthContext> {
-    // 解析 key 格式
     const parsed = parseApiKey(rawKey);
     if (!parsed) {
       throw new UnauthorizedException('Invalid API key format');
@@ -298,36 +297,47 @@ export class ApiKeyService {
 
     const { prefix } = parsed;
 
-    // 根据 prefix 查找 key
     const apiKey = await this.apiKeyRepository.findByPrefix(prefix);
     if (!apiKey) {
       throw new UnauthorizedException('Invalid API key');
     }
 
-    // 验证哈希
     const isValid = verifyKeyHash(rawKey, apiKey.keyHash, this.config.secret);
     if (!isValid) {
       throw new UnauthorizedException('Invalid API key');
     }
 
-    // 验证状态
     if (apiKey.status !== ApiKeyStatus.ACTIVE) {
       throw new UnauthorizedException('API key is not active');
     }
 
-    // 验证过期时间
     if (apiKey.expiresAt && apiKey.expiresAt < new Date()) {
       throw new UnauthorizedException('API key has expired');
     }
 
-    // 异步更新最后使用时间（不阻塞请求）
     void this.apiKeyRepository.updateLastUsedAt(apiKey.id);
 
-    // 返回认证上下文
+    let validScopes: string[] = [];
+
+    if (apiKey.createdBy) {
+      try {
+        const userPermissions =
+          await this.permissionService.getPermissionsByUserId(apiKey.createdBy);
+
+        validScopes = apiKey.scopes.filter((scope) =>
+          userPermissions.includes(scope),
+        );
+      } catch {
+        validScopes = [];
+      }
+    } else {
+      validScopes = apiKey.scopes;
+    }
+
     return {
       orgId: apiKey.orgId,
       apiKeyId: apiKey.id,
-      scopes: apiKey.scopes,
+      scopes: validScopes,
       userId: apiKey.createdBy,
     };
   }

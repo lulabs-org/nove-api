@@ -368,12 +368,19 @@ describe('ApiKeyService', () => {
   describe('verifyKey', () => {
     const invalidFormatKey = 'invalid-key';
 
-    it('should verify a valid API key successfully', async () => {
+    it('should verify a valid API key successfully and validate scopes against user permissions', async () => {
+      const userPermissions = ['meetings:read', 'meetings:write'];
+      permissionService.getPermissionsByUserId.mockResolvedValue(
+        userPermissions,
+      );
       repository.findByPrefix.mockResolvedValue(mockApiKey);
 
       const result = await service.verifyKey(validRawKey);
 
       expect(repository.findByPrefix).toHaveBeenCalledWith('AbCdEfGhIj');
+      expect(permissionService.getPermissionsByUserId).toHaveBeenCalledWith(
+        'user-123',
+      );
       expect(repository.updateLastUsedAt).toHaveBeenCalledWith('key-123');
       expect(result).toEqual({
         orgId: 'org-123',
@@ -381,6 +388,49 @@ describe('ApiKeyService', () => {
         scopes: mockApiKey.scopes,
         userId: 'user-123',
       });
+    });
+
+    it('should filter scopes when user permissions have been revoked', async () => {
+      const userPermissions = ['meetings:read'];
+      permissionService.getPermissionsByUserId.mockResolvedValue(
+        userPermissions,
+      );
+      repository.findByPrefix.mockResolvedValue(mockApiKey);
+
+      const result = await service.verifyKey(validRawKey);
+
+      expect(result.scopes).toEqual(['meetings:read']);
+      expect(result.scopes).not.toContain('meetings:write');
+    });
+
+    it('should return empty scopes when user has no permissions', async () => {
+      permissionService.getPermissionsByUserId.mockResolvedValue([]);
+      repository.findByPrefix.mockResolvedValue(mockApiKey);
+
+      const result = await service.verifyKey(validRawKey);
+
+      expect(result.scopes).toEqual([]);
+    });
+
+    it('should use original scopes when API key has no creator', async () => {
+      const apiKeyWithoutCreator = { ...mockApiKey, createdBy: null };
+      repository.findByPrefix.mockResolvedValue(apiKeyWithoutCreator);
+
+      const result = await service.verifyKey(validRawKey);
+
+      expect(permissionService.getPermissionsByUserId).not.toHaveBeenCalled();
+      expect(result.scopes).toEqual(mockApiKey.scopes);
+    });
+
+    it('should return empty scopes when permission service fails', async () => {
+      permissionService.getPermissionsByUserId.mockRejectedValue(
+        new Error('Permission service error'),
+      );
+      repository.findByPrefix.mockResolvedValue(mockApiKey);
+
+      const result = await service.verifyKey(validRawKey);
+
+      expect(result.scopes).toEqual([]);
     });
 
     it('should throw UnauthorizedException for invalid key format', async () => {
@@ -432,6 +482,9 @@ describe('ApiKeyService', () => {
 
     it('should accept key without expiration', async () => {
       const keyWithoutExpiration = { ...mockApiKey, expiresAt: null };
+      permissionService.getPermissionsByUserId.mockResolvedValue(
+        mockApiKey.scopes,
+      );
       repository.findByPrefix.mockResolvedValue(keyWithoutExpiration);
 
       const result = await service.verifyKey(validRawKey);
