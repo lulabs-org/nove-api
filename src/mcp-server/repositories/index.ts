@@ -13,3 +13,4 @@ export * from './meeting-stats.repository';
 export * from './participant-summary.repository';
 export * from './platform-user.repository';
 export * from './userid-search.repository';
+export * from './period-summary.respository';

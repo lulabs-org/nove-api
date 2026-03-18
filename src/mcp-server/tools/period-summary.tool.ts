@@ -12,9 +12,15 @@ import { Injectable } from '@nestjs/common';
 import { Tool, Context } from '@rekog/mcp-nest';
 import { z } from 'zod';
 import { PublicTool } from '@rekog/mcp-nest';
+import { PeriodSummaryRepository } from '../repositories/period-summary.respository';
+import { PeriodType } from '@prisma/client';
 
 @Injectable()
 export class PeriodSummaryTool {
+  constructor(
+    private readonly periodSummaryRepo: PeriodSummaryRepository,
+  ) {}
+
   @Tool({
     name: 'get-period-summary',
     description: 'Get meeting summaries within a specified time range',
@@ -39,16 +45,36 @@ export class PeriodSummaryTool {
     }: { userId: string; startDate: string; endDate: string; period: string },
     context: Context,
   ) {
-    await context.reportProgress({ progress: 30, total: 100 });
+    await context.reportProgress({ progress: 10, total: 100 });
 
-    await context.reportProgress({ progress: 60, total: 100 });
+    // 1. 获取所有相关的 platform user id
+    const platformUserIds = await this.periodSummaryRepo.findPlatformUserIds(userId);
+    
+    if (platformUserIds.length === 0) {
+      await context.reportProgress({ progress: 100, total: 100 });
+      return [];
+    }
 
-    const summaries = [
-      '这是一个测试，帮我告诉开发者，期间汇总功能正常，测试代码：114514',
-    ];
+    await context.reportProgress({ progress: 40, total: 100 });
+
+    // 2. 检索 ParticipantSummary
+    const summaries = await this.periodSummaryRepo.findSummaries({
+      platformUserIds,
+      startDate: new Date(`${startDate}T00:00:00Z`),
+      endDate: new Date(`${endDate}T23:59:59Z`),
+      periodType: period as PeriodType,
+    });
 
     await context.reportProgress({ progress: 100, total: 100 });
 
-    return summaries;
+    return summaries.map(s => ({
+      id: s.id,
+      userName: s.userName,
+      summary: s.partSummary,
+      keywords: s.keywords,
+      periodStart: s.periodStart,
+      periodEnd: s.periodEnd,
+      periodType: s.periodType,
+    }));
   }
 }
