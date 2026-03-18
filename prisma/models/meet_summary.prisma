@@ -9,10 +9,6 @@ model ParticipantSummary {
   platformUserId String?       @map("platform_user_id")
   platformUser   PlatformUser? @relation("ParticipantSummaries", fields: [platformUserId], references: [id], onDelete: Restrict)
 
-  // 用户ID
-  userId String? @map("user_id")
-  user   User?   @relation("UserParticipantSummaries", fields: [userId], references: [id], onDelete: Cascade)
-
   meetingId String?  @map("meeting_id") // 对应 Meeting 的 ID
   meeting   Meeting? @relation("MeetingParticipantSummaries", fields: [meetingId], references: [id], onDelete: SetNull)
 
