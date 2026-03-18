@@ -1,9 +1,9 @@
 /*
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-29 10:29:37
- * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-15 18:10:20
- * @FilePath: /nove_api/src/mcp-server/mcp-server.module.ts
+ * @LastEditors: Mingxuan songmingxuan936@gmail.com
+ * @LastEditTime: 2026-03-18 20:11:40
+ * @FilePath: /nove-api/src/mcp-server/mcp-server.module.ts
  * @Description:
  *
  * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
@@ -19,6 +19,7 @@ import { UserSearchRepository } from './repositories/userid-search.repository';
 import { MeetingStatsRepository } from './repositories/meeting-stats.repository';
 import { SseController } from './controllers/sse.controller';
 import { StreamableHttpController } from './controllers/streamable-http.controller';
+import { PeriodSummaryTool } from './tools/period-summary.tool';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { StreamableHttpController } from './controllers/streamable-http.controll
   providers: [
     GreetingTool,
     UserInfoTool,
+    PeriodSummaryTool,
     UserSearchTool,
     MeetingStatsTool,
     UserSearchRepository,
