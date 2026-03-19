@@ -2,18 +2,19 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-03-19 04:53:27
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-19 04:55:48
+ * @LastEditTime: 2026-03-19 10:58:24
  * @FilePath: /nove_api/src/permission/repositories/data-permission.repository.ts
  * @Description:
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
+
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
-export class DataPermissionRepository {
-  private readonly logger = new Logger(DataPermissionRepository.name);
+export class DataPermRepository {
+  private readonly logger = new Logger(DataPermRepository.name);
 
   constructor(private readonly prisma: PrismaService) {}
 

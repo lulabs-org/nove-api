@@ -4,7 +4,7 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { PermRepository, DataPermissionRepository } from '../repositories';
+import { PermRepository, DataPermRepository } from '../repositories';
 import {
   CreatePermissionDto,
   UpdatePermissionDto,
@@ -35,7 +35,7 @@ export class PermService {
 
   constructor(
     private readonly permRepo: PermRepository,
-    private readonly dataPermRepo: DataPermissionRepository,
+    private readonly dataPermRepo: DataPermRepository,
   ) {}
 
   async getPermissionsByRoleCodes(roleCodes: string[]): Promise<string[]> {
