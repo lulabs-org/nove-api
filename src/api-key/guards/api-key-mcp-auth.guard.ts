@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-12 15:10:02
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-19 02:49:47
+ * @LastEditTime: 2026-03-19 11:06:47
  * @FilePath: /nove_api/src/api-key/guards/api-key-mcp-auth.guard.ts
  * @Description:
  *
@@ -18,6 +18,7 @@ import {
 import type { Request } from 'express';
 import { ApiKeyService } from '@/api-key/services/api-key.service';
 import type { ApiKeyUser } from '@/auth/decorators/api-key-user.decorator';
+import { RoleService } from '@/role/services/role.service';
 
 type ApiKeyAuthContext = {
   orgId: string;
@@ -33,7 +34,10 @@ declare module 'express' {
 
 @Injectable()
 export class McpAuthJwtGuard implements CanActivate {
-  constructor(private readonly apiKeyService: ApiKeyService) {}
+  constructor(
+    private readonly apiKeyService: ApiKeyService,
+    private readonly roleService: RoleService,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest<Request>();
@@ -53,6 +57,10 @@ export class McpAuthJwtGuard implements CanActivate {
       // 兼容你原来的写法
       req.apiAuth = authContext;
 
+      const roles = authContext.userId
+        ? await this.roleService.getUserRoles(authContext.userId)
+        : [];
+
       // ✅ 关键：把 scopes 等挂到 request.user
       // 这样 @ToolScopes(['admin']) 才能生效
       req.user = {
@@ -62,7 +70,7 @@ export class McpAuthJwtGuard implements CanActivate {
         orgId: authContext.orgId,
         apiKeyId: authContext.apiKeyId,
         scopes: authContext.scopes ?? [],
-        roles: [],
+        roles: roles.map((role) => role.code),
       } as ApiKeyUser;
 
       return true;
