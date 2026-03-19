@@ -32,7 +32,7 @@ import {
 @Controller('admin/permissions')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
-export class PermissionController {
+export class PermController {
   constructor(private readonly permService: PermService) {}
 
   @Post()
@@ -54,7 +54,7 @@ export class PermissionController {
     description: '未授权',
   })
   async create(@Body() dto: CreatePermissionDto): Promise<PermissionTreeDto> {
-    return this.permService.createPermission(dto);
+    return this.permService.createPerm(dto);
   }
 
   @Get()

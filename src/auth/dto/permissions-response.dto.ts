@@ -11,5 +11,5 @@ export class PermissionsResponseDto {
   roles: string[];
 
   @ApiProperty({ description: '权限列表', type: [String] })
-  permissions: string[];
+  perm: string[];
 }

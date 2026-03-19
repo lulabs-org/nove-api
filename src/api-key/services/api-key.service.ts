@@ -55,16 +55,15 @@ export class ApiKeyService {
     const requestedScopes = dto.scopes || [];
 
     if (requestedScopes.length > 0) {
-      const userPermissions =
-        await this.permService.getPermissionsByUserId(userId);
+      const userPerm = await this.permService.getPermByUserId(userId);
 
       const hasAllScopes = requestedScopes.every((scope) =>
-        userPermissions.includes(scope),
+        userPerm.includes(scope),
       );
 
       if (!hasAllScopes) {
         const missingScopes = requestedScopes.filter(
-          (scope) => !userPermissions.includes(scope),
+          (scope) => !userPerm.includes(scope),
         );
         throw new ForbiddenException(
           `Cannot create API key with scopes you don't have. Missing permissions: ${missingScopes.join(', ')}`,
@@ -168,16 +167,15 @@ export class ApiKeyService {
     }
 
     if (dto.scopes && dto.scopes.length > 0) {
-      const userPermissions =
-        await this.permService.getPermissionsByUserId(userId);
+      const userPerm = await this.permService.getPermByUserId(userId);
 
       const hasAllScopes = dto.scopes.every((scope) =>
-        userPermissions.includes(scope),
+        userPerm.includes(scope),
       );
 
       if (!hasAllScopes) {
         const missingScopes = dto.scopes.filter(
-          (scope) => !userPermissions.includes(scope),
+          (scope) => !userPerm.includes(scope),
         );
         throw new ForbiddenException(
           `Cannot update API key with scopes you don't have. Missing permissions: ${missingScopes.join(', ')}`,
@@ -323,26 +321,10 @@ export class ApiKeyService {
     // 异步更新最后使用时间（不阻塞请求）
     void this.apiKeyRepository.updateLastUsedAt(apiKey.id);
 
-    let validScopes: string[] = [];
-
-    if (apiKey.createdBy) {
-      try {
-        const userPerm = await this.permService.getPermissionsByUserId(
-          apiKey.createdBy,
-        );
-
-        validScopes = apiKey.scopes.filter((scope) => userPerm.includes(scope));
-      } catch {
-        validScopes = [];
-      }
-    } else {
-      validScopes = apiKey.scopes;
-    }
-
     return {
       orgId: apiKey.orgId,
       apiKeyId: apiKey.id,
-      scopes: validScopes,
+      scopes: apiKey.scopes,
       userId: apiKey.createdBy,
     };
   }

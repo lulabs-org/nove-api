@@ -1,3 +1,14 @@
+/*
+ * @Author: 杨仕明 shiming.y@qq.com
+ * @Date: 2026-03-04 18:05:33
+ * @LastEditors: 杨仕明 shiming.y@qq.com
+ * @LastEditTime: 2026-03-19 11:34:38
+ * @FilePath: /nove_api/src/auth/dto/auth-user-with-permissions.dto.ts
+ * @Description:
+ *
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
+ */
+
 import { ApiProperty } from '@nestjs/swagger';
 
 export class AuthUserWithPermissionsDto {
@@ -26,7 +37,7 @@ export class AuthUserWithPermissionsDto {
   roles: string[];
 
   @ApiProperty({ description: '权限列表', type: [String] })
-  permissions: string[];
+  perm: string[];
 
   @ApiProperty({ description: '账户是否激活' })
   active: boolean;
