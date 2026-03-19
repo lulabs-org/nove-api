@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-29 10:29:37
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-19 17:38:58
+ * @LastEditTime: 2026-03-19 21:09:45
  * @FilePath: /nove_api/src/mcp-server/mcp-server.module.ts
  * @Description:
  *
@@ -21,10 +21,12 @@ import {
 import {
   UserSearchRepository,
   MeetingStatsRepository,
+  PeriodSummaryRepository,
   PlatformUserRepository,
   ParticipantSummaryRepository,
 } from './repositories';
 import { SseController, StreamableHttpController } from './controllers';
+import { PeriodSummaryTool } from './tools/period-summary.tool';
 
 @Module({
   imports: [
@@ -45,10 +47,12 @@ import { SseController, StreamableHttpController } from './controllers';
   providers: [
     GreetingTool,
     UserInfoTool,
+    PeriodSummaryTool,
     UserSearchTool,
     MeetingStatsTool,
     UserSearchRepository,
     MeetingStatsRepository,
+    PeriodSummaryRepository,
     PlatformUserRepository,
     ParticipantSummaryRepository
   ],
