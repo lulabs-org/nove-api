@@ -58,14 +58,19 @@ export class McpAuthJwtGuard implements CanActivate {
     try {
       authContext = await this.apiKeyService.verifyKey(rawKey);
     } catch (error) {
-      this.logger.warn('API key verification failed', error instanceof Error ? error.message : String(error));
+      this.logger.warn(
+        'API key verification failed',
+        error instanceof Error ? error.message : String(error),
+      );
       throw new UnauthorizedException('Invalid API key');
     }
 
     req.apiAuth = authContext;
 
     const [roles, validScopes] = await Promise.all([
-      authContext.userId ? this.roleService.getUserRoles(authContext.userId) : Promise.resolve([]),
+      authContext.userId
+        ? this.roleService.getUserRoles(authContext.userId)
+        : Promise.resolve([]),
       this.filterScopesByPermissions(authContext.userId, authContext.scopes),
     ]);
 
