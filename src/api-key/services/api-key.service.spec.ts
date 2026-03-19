@@ -10,14 +10,14 @@ import { apiKeyConfig } from '@/configs/api-key.config';
 import { ApiKeyStatus } from '@prisma/client';
 import { CreateApiKeyDto, UpdateApiKeyDto } from '../dto';
 import { computeKeyHash } from '../utils/crypto.util';
-import { PermissionService } from '@/permission/services/permission.service';
+import { PermService } from '@/permission/services/permission.service';
 
 /* eslint-disable @typescript-eslint/unbound-method */
 
 describe('ApiKeyService', () => {
   let service: ApiKeyService;
   let repository: jest.Mocked<ApiKeyRepository>;
-  let permissionService: jest.Mocked<PermissionService>;
+  let permService: jest.Mocked<PermService>;
 
   const mockConfig = {
     environment: 'prod',
@@ -58,7 +58,7 @@ describe('ApiKeyService', () => {
   };
 
   const mockPermissionService = {
-    getPermissionsByUserId: jest.fn(),
+    getPermByUserId: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -74,7 +74,7 @@ describe('ApiKeyService', () => {
           useValue: mockConfig,
         },
         {
-          provide: PermissionService,
+          provide: PermService,
           useValue: mockPermissionService,
         },
       ],
@@ -82,7 +82,7 @@ describe('ApiKeyService', () => {
 
     service = module.get<ApiKeyService>(ApiKeyService);
     repository = module.get(ApiKeyRepository);
-    permissionService = module.get(PermissionService);
+    permService = module.get(PermService);
   });
 
   afterEach(() => {
@@ -101,9 +101,7 @@ describe('ApiKeyService', () => {
         expiresAt: '2026-12-31T23:59:59Z',
       };
 
-      permissionService.getPermissionsByUserId.mockResolvedValue([
-        'meetings:read',
-      ]);
+      permService.getPermByUserId.mockResolvedValue(['meetings:read']);
       repository.create.mockResolvedValue(mockApiKey);
 
       const result = await service.createKey('org-123', 'user-123', dto);
@@ -231,9 +229,7 @@ describe('ApiKeyService', () => {
         name: dto.name!,
         scopes: dto.scopes!,
       };
-      permissionService.getPermissionsByUserId.mockResolvedValue([
-        'meetings:write',
-      ]);
+      permService.getPermByUserId.mockResolvedValue(['meetings:write']);
       repository.findById.mockResolvedValue(mockApiKey);
       repository.update.mockResolvedValue(updatedKey);
 
@@ -368,19 +364,62 @@ describe('ApiKeyService', () => {
   describe('verifyKey', () => {
     const invalidFormatKey = 'invalid-key';
 
-    it('should verify a valid API key successfully', async () => {
+    it('should verify a valid API key successfully and return original scopes', async () => {
+      const userPermissions = ['meetings:read', 'meetings:write'];
+      permService.getPermByUserId.mockResolvedValue(userPermissions);
       repository.findByPrefix.mockResolvedValue(mockApiKey);
 
       const result = await service.verifyKey(validRawKey);
 
       expect(repository.findByPrefix).toHaveBeenCalledWith('AbCdEfGhIj');
+      expect(permService.getPermByUserId).not.toHaveBeenCalled();
       expect(repository.updateLastUsedAt).toHaveBeenCalledWith('key-123');
       expect(result).toEqual({
-        organizationId: 'org-123',
+        orgId: 'org-123',
         apiKeyId: 'key-123',
         scopes: mockApiKey.scopes,
         userId: 'user-123',
       });
+    });
+
+    it('should return original scopes (filtering is done in guard)', async () => {
+      const userPermissions = ['meetings:read'];
+      permService.getPermByUserId.mockResolvedValue(userPermissions);
+      repository.findByPrefix.mockResolvedValue(mockApiKey);
+
+      const result = await service.verifyKey(validRawKey);
+
+      expect(result.scopes).toEqual(mockApiKey.scopes);
+    });
+
+    it('should return original scopes when user has no permissions (guard filters)', async () => {
+      permService.getPermByUserId.mockResolvedValue([]);
+      repository.findByPrefix.mockResolvedValue(mockApiKey);
+
+      const result = await service.verifyKey(validRawKey);
+
+      expect(result.scopes).toEqual(mockApiKey.scopes);
+    });
+
+    it('should use original scopes when API key has no creator', async () => {
+      const apiKeyWithoutCreator = { ...mockApiKey, createdBy: null };
+      repository.findByPrefix.mockResolvedValue(apiKeyWithoutCreator);
+
+      const result = await service.verifyKey(validRawKey);
+
+      expect(permService.getPermByUserId).not.toHaveBeenCalled();
+      expect(result.scopes).toEqual(mockApiKey.scopes);
+    });
+
+    it('should return original scopes when permission service fails (guard filters)', async () => {
+      permService.getPermByUserId.mockRejectedValue(
+        new Error('Permission service error'),
+      );
+      repository.findByPrefix.mockResolvedValue(mockApiKey);
+
+      const result = await service.verifyKey(validRawKey);
+
+      expect(result.scopes).toEqual(mockApiKey.scopes);
     });
 
     it('should throw UnauthorizedException for invalid key format', async () => {
@@ -432,11 +471,12 @@ describe('ApiKeyService', () => {
 
     it('should accept key without expiration', async () => {
       const keyWithoutExpiration = { ...mockApiKey, expiresAt: null };
+      permService.getPermByUserId.mockResolvedValue(mockApiKey.scopes);
       repository.findByPrefix.mockResolvedValue(keyWithoutExpiration);
 
       const result = await service.verifyKey(validRawKey);
 
-      expect(result).toHaveProperty('organizationId', 'org-123');
+      expect(result).toHaveProperty('orgId', 'org-123');
     });
   });
 });

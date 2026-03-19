@@ -1,3 +1,13 @@
+/*
+ * @Author: 杨仕明 shiming.y@qq.com
+ * @Date: 2026-02-15 21:10:16
+ * @LastEditors: 杨仕明 shiming.y@qq.com
+ * @LastEditTime: 2026-03-19 03:11:55
+ * @FilePath: /nove_api/src/api-key/interceptors/usage-logging.interceptor.ts
+ * @Description:
+ *
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
+ */
 import {
   Injectable,
   NestInterceptor,
@@ -34,22 +44,20 @@ export class UsageLoggingInterceptor implements NestInterceptor {
 
     return next.handle().pipe(
       tap(() => {
-        // 请求成功，记录日志
         const latencyMs = Date.now() - startTime;
         void this.usageLogService.logRequest(
           apiAuth.apiKeyId,
-          apiAuth.organizationId,
+          apiAuth.orgId,
           request,
           response,
           latencyMs,
         );
       }),
       catchError((error: Error) => {
-        // 请求失败，记录错误日志
         const latencyMs = Date.now() - startTime;
         void this.usageLogService.logRequest(
           apiAuth.apiKeyId,
-          apiAuth.organizationId,
+          apiAuth.orgId,
           request,
           response,
           latencyMs,

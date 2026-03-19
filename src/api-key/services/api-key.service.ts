@@ -25,11 +25,11 @@ import {
   RotateApiKeyResponse,
 } from '../dto';
 import { ApiKeyAuthContext } from '../types';
-import { PermissionService } from '@/permission/services/permission.service';
+import { PermService } from '@/permission/services/permission.service';
 
 /**
  * API Key Service
- * 处理所有 API Key 相关的业务逻辑
+ * Handle all API Key related business logic
  */
 @Injectable()
 export class ApiKeyService {
@@ -37,15 +37,15 @@ export class ApiKeyService {
     private readonly apiKeyRepository: ApiKeyRepository,
     @Inject(apiKeyConfig.KEY)
     private readonly config: ConfigType<typeof apiKeyConfig>,
-    private readonly permissionService: PermissionService,
+    private readonly permService: PermService,
   ) {}
 
   /**
-   * 创建 API Key
-   * @param organizationId 组织 ID
-   * @param userId 创建者用户 ID
-   * @param dto 创建 DTO
-   * @returns 包含明文 key 的响应（仅返回一次）
+   * Create API Key
+   * @param organizationId Organization ID
+   * @param userId Creator user ID
+   * @param dto Create DTO
+   * @returns Response containing plain key (returned only once)
    */
   async createKey(
     organizationId: string,
@@ -55,16 +55,15 @@ export class ApiKeyService {
     const requestedScopes = dto.scopes || [];
 
     if (requestedScopes.length > 0) {
-      const userPermissions =
-        await this.permissionService.getPermissionsByUserId(userId);
+      const userPerm = await this.permService.getPermByUserId(userId);
 
       const hasAllScopes = requestedScopes.every((scope) =>
-        userPermissions.includes(scope),
+        userPerm.includes(scope),
       );
 
       if (!hasAllScopes) {
         const missingScopes = requestedScopes.filter(
-          (scope) => !userPermissions.includes(scope),
+          (scope) => !userPerm.includes(scope),
         );
         throw new ForbiddenException(
           `Cannot create API key with scopes you don't have. Missing permissions: ${missingScopes.join(', ')}`,
@@ -108,10 +107,10 @@ export class ApiKeyService {
   }
 
   /**
-   * 列出组织的 API Keys
-   * @param organizationId 组织 ID
-   * @param pagination 分页参数
-   * @returns API Key 列表
+   * List organization's API Keys
+   * @param organizationId Organization ID
+   * @param pagination Pagination parameters
+   * @returns API Key list
    */
   async listKeys(
     organizationId: string,
@@ -143,11 +142,11 @@ export class ApiKeyService {
   }
 
   /**
-   * 更新 API Key
-   * @param organizationId 组织 ID
+   * Update API Key
+   * @param organizationId Organization ID
    * @param keyId API Key ID
-   * @param dto 更新 DTO
-   * @returns 更新后的 API Key
+   * @param dto Update DTO
+   * @returns Updated API Key
    */
   async updateKey(
     organizationId: string,
@@ -168,16 +167,15 @@ export class ApiKeyService {
     }
 
     if (dto.scopes && dto.scopes.length > 0) {
-      const userPermissions =
-        await this.permissionService.getPermissionsByUserId(userId);
+      const userPerm = await this.permService.getPermByUserId(userId);
 
       const hasAllScopes = dto.scopes.every((scope) =>
-        userPermissions.includes(scope),
+        userPerm.includes(scope),
       );
 
       if (!hasAllScopes) {
         const missingScopes = dto.scopes.filter(
-          (scope) => !userPermissions.includes(scope),
+          (scope) => !userPerm.includes(scope),
         );
         throw new ForbiddenException(
           `Cannot update API key with scopes you don't have. Missing permissions: ${missingScopes.join(', ')}`,
@@ -206,8 +204,8 @@ export class ApiKeyService {
   }
 
   /**
-   * 撤销 API Key
-   * @param organizationId 组织 ID
+   * Revoke API Key
+   * @param organizationId Organization ID
    * @param keyId API Key ID
    */
   async revokeKey(
@@ -231,10 +229,10 @@ export class ApiKeyService {
   }
 
   /**
-   * 轮换 API Key
-   * @param organizationId 组织 ID
+   * Rotate API Key
+   * @param organizationId Organization ID
    * @param keyId API Key ID
-   * @returns 包含新明文 key 的响应（仅返回一次）
+   * @returns Response containing new plain key (returned only once)
    */
   async rotateKey(
     organizationId: string,
@@ -285,9 +283,9 @@ export class ApiKeyService {
   }
 
   /**
-   * 验证 API Key
-   * @param rawKey 原始 API Key
-   * @returns 认证上下文
+   * Verify API Key
+   * @param rawKey Raw API Key
+   * @returns Authentication context
    */
   async verifyKey(rawKey: string): Promise<ApiKeyAuthContext> {
     // 解析 key 格式
@@ -323,9 +321,8 @@ export class ApiKeyService {
     // 异步更新最后使用时间（不阻塞请求）
     void this.apiKeyRepository.updateLastUsedAt(apiKey.id);
 
-    // 返回认证上下文
     return {
-      organizationId: apiKey.orgId,
+      orgId: apiKey.orgId,
       apiKeyId: apiKey.id,
       scopes: apiKey.scopes,
       userId: apiKey.createdBy,
@@ -333,8 +330,8 @@ export class ApiKeyService {
   }
 
   /**
-   * 将 Prisma 模型转换为 DTO
-   * @param apiKey Prisma ApiKey 模型
+   * Convert Prisma model to DTO
+   * @param apiKey Prisma ApiKey model
    * @returns ApiKeyDto
    */
   private toDto(apiKey: {

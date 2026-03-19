@@ -16,7 +16,7 @@ export interface ApiKeyAuthContext {
   /**
    * 组织 ID（多租户隔离）
    */
-  organizationId: string;
+  orgId: string;
 
   /**
    * API Key ID

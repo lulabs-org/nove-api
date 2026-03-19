@@ -19,7 +19,7 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
-import { PermissionService } from '../services/permission.service';
+import { PermService } from '../services/permission.service';
 import {
   CreatePermissionDto,
   UpdatePermissionDto,
@@ -32,8 +32,8 @@ import {
 @Controller('admin/permissions')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
-export class PermissionController {
-  constructor(private readonly permissionService: PermissionService) {}
+export class PermController {
+  constructor(private readonly permService: PermService) {}
 
   @Post()
   @ApiOperation({
@@ -54,7 +54,7 @@ export class PermissionController {
     description: '未授权',
   })
   async create(@Body() dto: CreatePermissionDto): Promise<PermissionTreeDto> {
-    return this.permissionService.createPermission(dto);
+    return this.permService.createPerm(dto);
   }
 
   @Get()
@@ -74,7 +74,7 @@ export class PermissionController {
   async findAll(
     @Query() query: QueryPermissionDto,
   ): Promise<PermissionListResponse> {
-    return this.permissionService.findAll(query);
+    return this.permService.findAll(query);
   }
 
   @Get('tree')
@@ -92,7 +92,7 @@ export class PermissionController {
     description: '未授权',
   })
   async getTree(): Promise<PermissionTreeDto[]> {
-    return this.permissionService.getTree();
+    return this.permService.getTree();
   }
 
   @Get(':id')
@@ -119,7 +119,7 @@ export class PermissionController {
     description: '权限不存在',
   })
   async findById(@Param('id') id: string): Promise<PermissionTreeDto> {
-    return this.permissionService.findById(id);
+    return this.permService.findById(id);
   }
 
   @Get('code/:code')
@@ -146,7 +146,7 @@ export class PermissionController {
     description: '权限不存在',
   })
   async findByCode(@Param('code') code: string): Promise<PermissionTreeDto> {
-    return this.permissionService.findByCode(code);
+    return this.permService.findByCode(code);
   }
 
   @Put(':id')
@@ -180,7 +180,7 @@ export class PermissionController {
     @Param('id') id: string,
     @Body() dto: UpdatePermissionDto,
   ): Promise<PermissionTreeDto> {
-    return this.permissionService.update(id, dto);
+    return this.permService.update(id, dto);
   }
 
   @Delete(':id')
@@ -207,6 +207,6 @@ export class PermissionController {
     description: '权限不存在',
   })
   async delete(@Param('id') id: string): Promise<void> {
-    return this.permissionService.delete(id);
+    return this.permService.delete(id);
   }
 }

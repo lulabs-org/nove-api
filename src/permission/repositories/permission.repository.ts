@@ -8,8 +8,8 @@ interface PermissionWithChildren extends Permission {
 }
 
 @Injectable()
-export class PermissionRepository {
-  private readonly logger = new Logger(PermissionRepository.name);
+export class PermRepository {
+  private readonly logger = new Logger(PermRepository.name);
 
   constructor(private readonly prisma: PrismaService) {}
 
@@ -58,7 +58,7 @@ export class PermissionRepository {
     );
   }
 
-  async findAllPermissions() {
+  async findAll() {
     return this.prisma.permission.findMany({
       where: {
         active: true,
@@ -86,7 +86,7 @@ export class PermissionRepository {
     });
   }
 
-  async findPermissionsByResource(resource: string) {
+  async findByResource(resource: string) {
     return this.prisma.permission.findMany({
       where: {
         resource,
@@ -253,91 +253,5 @@ export class PermissionRepository {
     }
 
     return tree;
-  }
-
-  async findDataPermissionRules(options?: {
-    skip?: number;
-    take?: number;
-    where?: {
-      name?: { contains: string };
-      code?: string;
-      resource?: string;
-      active?: boolean;
-    };
-    orderBy?: {
-      createdAt?: 'asc' | 'desc';
-    };
-  }) {
-    const { skip, take, where, orderBy } = options || {};
-
-    const [items, total] = await Promise.all([
-      this.prisma.dataPermissionRule.findMany({
-        where,
-        skip,
-        take,
-        orderBy: orderBy || { createdAt: 'desc' },
-      }),
-      this.prisma.dataPermissionRule.count({ where }),
-    ]);
-
-    return { items, total };
-  }
-
-  async findDataPermissionRuleById(id: string) {
-    return this.prisma.dataPermissionRule.findUnique({
-      where: { id },
-    });
-  }
-
-  async findDataPermissionRuleByCode(code: string) {
-    return this.prisma.dataPermissionRule.findUnique({
-      where: { code },
-    });
-  }
-
-  async createDataPermissionRule(data: {
-    name: string;
-    code: string;
-    description?: string;
-    resource: string;
-    condition: string;
-    active?: boolean;
-  }) {
-    return this.prisma.dataPermissionRule.create({
-      data,
-    });
-  }
-
-  async updateDataPermissionRule(
-    id: string,
-    data: {
-      name?: string;
-      description?: string;
-      resource?: string;
-      condition?: string;
-      active?: boolean;
-    },
-  ) {
-    return this.prisma.dataPermissionRule.update({
-      where: { id },
-      data,
-    });
-  }
-
-  async deleteDataPermissionRule(id: string) {
-    return this.prisma.dataPermissionRule.delete({
-      where: { id },
-    });
-  }
-
-  async checkDataPermissionRuleCodeExists(code: string, excludeId?: string) {
-    const rule = await this.prisma.dataPermissionRule.findFirst({
-      where: {
-        code,
-        id: excludeId ? { not: excludeId } : undefined,
-      },
-    });
-
-    return !!rule;
   }
 }

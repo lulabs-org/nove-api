@@ -1,7 +1,20 @@
+/*
+ * @Author: 杨仕明 shiming.y@qq.com
+ * @Date: 2026-03-04 18:05:33
+ * @LastEditors: 杨仕明 shiming.y@qq.com
+ * @LastEditTime: 2026-03-19 17:43:43
+ * @FilePath: /nove_api/src/api-key/api-key.module.ts
+ * @Description:
+ *
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
+ */
+
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from '@/prisma/prisma.module';
 import { apiKeyConfig } from '@/configs/api-key.config';
+import { RoleModule } from '@/role/role.module';
+import { PermissionModule } from '@/permission/permission.module';
 
 // Controllers
 import { ApiKeyController } from './controllers/api-key.controller';
@@ -10,7 +23,7 @@ import { V1Controller } from './controllers/v1.controller';
 // Services
 import { ApiKeyService } from './services/api-key.service';
 import { UsageLogService } from './services/usage-log.service';
-import { UserOrganizationService } from './services/user-organization.service';
+import { UserOrgService } from './services/user-organization.service';
 
 // Repositories
 import { ApiKeyRepository } from './repositories/api-key.repository';
@@ -19,6 +32,7 @@ import { UsageLogRepository } from './repositories/usage-log.repository';
 // Guards
 import { ApiKeyGuard } from './guards/api-key.guard';
 import { ApiScopesGuard } from './guards/api-scopes.guard';
+import { McpAuthJwtGuard } from './guards/api-key-mcp-auth.guard';
 
 // Interceptors
 import { UsageLoggingInterceptor } from './interceptors/usage-logging.interceptor';
@@ -29,13 +43,18 @@ import { UsageLoggingInterceptor } from './interceptors/usage-logging.intercepto
  */
 @Global()
 @Module({
-  imports: [PrismaModule, ConfigModule.forFeature(apiKeyConfig)],
+  imports: [
+    PrismaModule,
+    ConfigModule.forFeature(apiKeyConfig),
+    RoleModule,
+    PermissionModule,
+  ],
   controllers: [ApiKeyController, V1Controller],
   providers: [
     // Services
     ApiKeyService,
     UsageLogService,
-    UserOrganizationService,
+    UserOrgService,
 
     // Repositories
     ApiKeyRepository,
@@ -44,6 +63,7 @@ import { UsageLoggingInterceptor } from './interceptors/usage-logging.intercepto
     // Guards
     ApiKeyGuard,
     ApiScopesGuard,
+    McpAuthJwtGuard,
 
     // Interceptors
     UsageLoggingInterceptor,
@@ -56,6 +76,7 @@ import { UsageLoggingInterceptor } from './interceptors/usage-logging.intercepto
     // 导出守卫供其他模块使用
     ApiKeyGuard,
     ApiScopesGuard,
+    McpAuthJwtGuard,
 
     // 导出拦截器供其他模块使用
     UsageLoggingInterceptor,

@@ -2,8 +2,8 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-05 10:55:08
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-05 11:25:56
- * @FilePath: /lulab_backend/src/api-key/controllers/v1.controller.ts
+ * @LastEditTime: 2026-03-19 02:50:32
+ * @FilePath: /nove_api/src/api-key/controllers/v1.controller.ts
  * @Description:
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
@@ -80,7 +80,7 @@ export class V1Controller {
     const apiAuth = request.apiAuth!; // Guard 确保 apiAuth 存在
 
     return {
-      organizationId: apiAuth.organizationId,
+      orgId: apiAuth.orgId,
       apiKeyId: apiAuth.apiKeyId,
       scopes: apiAuth.scopes,
     };

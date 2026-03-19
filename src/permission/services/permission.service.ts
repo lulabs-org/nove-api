@@ -4,44 +4,34 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { PermissionRepository } from '../repositories/permission.repository';
+import { PermRepository } from '../repositories';
 import {
   CreatePermissionDto,
   UpdatePermissionDto,
   QueryPermissionDto,
   PermissionTreeDto,
   PermissionListResponse,
-  CreateDataPermissionRuleDto,
-  UpdateDataPermissionRuleDto,
-  QueryDataPermissionRuleDto,
-  DataPermissionRuleDto,
-  DataPermissionRuleListResponse,
 } from '../dto';
-import { Permission, DataPermissionRule } from '@prisma/client';
+import { Permission } from '@prisma/client';
 
 interface PermissionWithChildren extends Permission {
   parent?: Permission | null;
   children?: Permission[];
 }
 
-interface DataPermissionRuleWithFields extends DataPermissionRule {
-  createdAt: Date;
-  updatedAt: Date;
-}
-
 @Injectable()
-export class PermissionService {
-  private readonly logger = new Logger(PermissionService.name);
+export class PermService {
+  private readonly logger = new Logger(PermService.name);
 
-  constructor(private readonly permissionRepository: PermissionRepository) {}
+  constructor(private readonly permRepo: PermRepository) {}
 
-  async getPermissionsByRoleCodes(roleCodes: string[]): Promise<string[]> {
+  async getPermByRoleCodes(roleCodes: string[]): Promise<string[]> {
     if (!roleCodes || roleCodes.length === 0) {
       return [];
     }
 
     try {
-      const roles = await this.permissionRepository.findRolesByCodes(roleCodes);
+      const roles = await this.permRepo.findRolesByCodes(roleCodes);
 
       const permissionSet = new Set<string>();
 
@@ -61,22 +51,22 @@ export class PermissionService {
     }
   }
 
-  async getPermissionsByUserId(userId: string): Promise<string[]> {
+  async getPermByUserId(userId: string): Promise<string[]> {
     try {
-      const userRoles = await this.permissionRepository.findUserRoles(userId);
+      const userRoles = await this.permRepo.findUserRoles(userId);
 
       const roleCodes = userRoles
         .map((userRole) => userRole.role?.code)
         .filter((code): code is string => !!code);
 
-      return this.getPermissionsByRoleCodes(roleCodes);
+      return this.getPermByRoleCodes(roleCodes);
     } catch (error) {
       this.logger.error(`Failed to get permissions for user: ${userId}`, error);
       throw error;
     }
   }
 
-  async getAllPermissions(): Promise<
+  async getAllPerm(): Promise<
     Array<{
       id: string;
       name: string;
@@ -88,14 +78,14 @@ export class PermissionService {
     }>
   > {
     try {
-      return await this.permissionRepository.findAllPermissions();
+      return await this.permRepo.findAll();
     } catch (error) {
       this.logger.error('Failed to get all permissions', error);
       throw error;
     }
   }
 
-  async getPermissionsByResource(resource: string): Promise<
+  async getPermByResource(resource: string): Promise<
     Array<{
       id: string;
       name: string;
@@ -106,9 +96,7 @@ export class PermissionService {
     }>
   > {
     try {
-      return await this.permissionRepository.findPermissionsByResource(
-        resource,
-      );
+      return await this.permRepo.findByResource(resource);
     } catch (error) {
       this.logger.error(
         `Failed to get permissions for resource: ${resource}`,
@@ -123,8 +111,8 @@ export class PermissionService {
     permissionCode: string,
   ): Promise<boolean> {
     try {
-      const permissions = await this.getPermissionsByUserId(userId);
-      return permissions.includes(permissionCode);
+      const perm = await this.getPermByUserId(userId);
+      return perm.includes(permissionCode);
     } catch (error) {
       this.logger.error(
         `Failed to check permission ${permissionCode} for user ${userId}`,
@@ -139,8 +127,8 @@ export class PermissionService {
     permissionCodes: string[],
   ): Promise<boolean> {
     try {
-      const permissions = await this.getPermissionsByUserId(userId);
-      return permissionCodes.some((code) => permissions.includes(code));
+      const perm = await this.getPermByUserId(userId);
+      return permissionCodes.some((code) => perm.includes(code));
     } catch (error) {
       this.logger.error(
         `Failed to check permissions for user ${userId}`,
@@ -155,8 +143,8 @@ export class PermissionService {
     permissionCodes: string[],
   ): Promise<boolean> {
     try {
-      const permissions = await this.getPermissionsByUserId(userId);
-      return permissionCodes.every((code) => permissions.includes(code));
+      const perm = await this.getPermByUserId(userId);
+      return permissionCodes.every((code) => perm.includes(code));
     } catch (error) {
       this.logger.error(
         `Failed to check permissions for user ${userId}`,
@@ -166,22 +154,20 @@ export class PermissionService {
     }
   }
 
-  async createPermission(dto: CreatePermissionDto): Promise<PermissionTreeDto> {
-    const codeExists = await this.permissionRepository.checkCodeExists(
-      dto.code,
-    );
+  async createPerm(dto: CreatePermissionDto): Promise<PermissionTreeDto> {
+    const codeExists = await this.permRepo.checkCodeExists(dto.code);
     if (codeExists) {
       throw new BadRequestException(
         `Permission code "${dto.code}" already exists`,
       );
     }
 
-    const permission = await this.permissionRepository.create(dto);
+    const permission = await this.permRepo.create(dto);
     return this.toTreeDto(permission);
   }
 
   async findById(id: string): Promise<PermissionTreeDto> {
-    const permission = await this.permissionRepository.findById(id);
+    const permission = await this.permRepo.findById(id);
     if (!permission) {
       throw new NotFoundException('Permission not found');
     }
@@ -190,7 +176,7 @@ export class PermissionService {
   }
 
   async findByCode(code: string): Promise<PermissionTreeDto> {
-    const permission = await this.permissionRepository.findByCode(code);
+    const permission = await this.permRepo.findByCode(code);
     if (!permission) {
       throw new NotFoundException('Permission not found');
     }
@@ -229,7 +215,7 @@ export class PermissionService {
       where.active = query.active;
     }
 
-    const { items, total } = await this.permissionRepository.findMany({
+    const { items, total } = await this.permRepo.findMany({
       skip,
       take: pageSize,
       where,
@@ -246,7 +232,7 @@ export class PermissionService {
   }
 
   async getTree(): Promise<PermissionTreeDto[]> {
-    const tree = await this.permissionRepository.findTree();
+    const tree = await this.permRepo.findTree();
     return tree;
   }
 
@@ -254,127 +240,22 @@ export class PermissionService {
     id: string,
     dto: UpdatePermissionDto,
   ): Promise<PermissionTreeDto> {
-    const existingPermission = await this.permissionRepository.findById(id);
+    const existingPermission = await this.permRepo.findById(id);
     if (!existingPermission) {
       throw new NotFoundException('Permission not found');
     }
 
-    const updatedPermission = await this.permissionRepository.update(id, dto);
+    const updatedPermission = await this.permRepo.update(id, dto);
     return this.toTreeDto(updatedPermission);
   }
 
   async delete(id: string): Promise<void> {
-    const existingPermission = await this.permissionRepository.findById(id);
+    const existingPermission = await this.permRepo.findById(id);
     if (!existingPermission) {
       throw new NotFoundException('Permission not found');
     }
 
-    await this.permissionRepository.delete(id);
-  }
-
-  async createDataPermissionRule(
-    dto: CreateDataPermissionRuleDto,
-  ): Promise<DataPermissionRuleDto> {
-    const codeExists =
-      await this.permissionRepository.checkDataPermissionRuleCodeExists(
-        dto.code,
-      );
-    if (codeExists) {
-      throw new BadRequestException(
-        `Data permission rule code "${dto.code}" already exists`,
-      );
-    }
-
-    const rule = await this.permissionRepository.createDataPermissionRule(dto);
-    return this.toDataPermissionRuleDto(rule);
-  }
-
-  async findDataPermissionRuleById(id: string): Promise<DataPermissionRuleDto> {
-    const rule = await this.permissionRepository.findDataPermissionRuleById(id);
-    if (!rule) {
-      throw new NotFoundException('Data permission rule not found');
-    }
-
-    return this.toDataPermissionRuleDto(rule);
-  }
-
-  async findDataPermissionRuleByCode(
-    code: string,
-  ): Promise<DataPermissionRuleDto> {
-    const rule =
-      await this.permissionRepository.findDataPermissionRuleByCode(code);
-    if (!rule) {
-      throw new NotFoundException('Data permission rule not found');
-    }
-
-    return this.toDataPermissionRuleDto(rule);
-  }
-
-  async findAllDataPermissionRules(
-    query: QueryDataPermissionRuleDto,
-  ): Promise<DataPermissionRuleListResponse> {
-    const page = query.page || 1;
-    const pageSize = query.pageSize || 10;
-    const skip = (page - 1) * pageSize;
-
-    const where: Record<string, any> = {};
-
-    if (query.name) {
-      where.name = { contains: query.name };
-    }
-
-    if (query.code) {
-      where.code = query.code;
-    }
-
-    if (query.resource) {
-      where.resource = query.resource;
-    }
-
-    if (query.active !== undefined) {
-      where.active = query.active;
-    }
-
-    const { items, total } =
-      await this.permissionRepository.findDataPermissionRules({
-        skip,
-        take: pageSize,
-        where,
-        orderBy: { createdAt: 'desc' },
-      });
-
-    return {
-      items: items.map((item) => this.toDataPermissionRuleDto(item)),
-      total,
-      page,
-      pageSize,
-      totalPages: Math.ceil(total / pageSize),
-    };
-  }
-
-  async updateDataPermissionRule(
-    id: string,
-    dto: UpdateDataPermissionRuleDto,
-  ): Promise<DataPermissionRuleDto> {
-    const existingRule =
-      await this.permissionRepository.findDataPermissionRuleById(id);
-    if (!existingRule) {
-      throw new NotFoundException('Data permission rule not found');
-    }
-
-    const updatedRule =
-      await this.permissionRepository.updateDataPermissionRule(id, dto);
-    return this.toDataPermissionRuleDto(updatedRule);
-  }
-
-  async deleteDataPermissionRule(id: string): Promise<void> {
-    const existingRule =
-      await this.permissionRepository.findDataPermissionRuleById(id);
-    if (!existingRule) {
-      throw new NotFoundException('Data permission rule not found');
-    }
-
-    await this.permissionRepository.deleteDataPermissionRule(id);
+    await this.permRepo.delete(id);
   }
 
   private toTreeDto(permission: PermissionWithChildren): PermissionTreeDto {
@@ -393,22 +274,6 @@ export class PermissionService {
       createdAt: permission.createdAt,
       updatedAt: permission.updatedAt,
       children: permission.children?.map((child) => this.toTreeDto(child)),
-    };
-  }
-
-  private toDataPermissionRuleDto(
-    rule: DataPermissionRuleWithFields,
-  ): DataPermissionRuleDto {
-    return {
-      id: rule.id,
-      name: rule.name,
-      code: rule.code,
-      description: rule.description,
-      resource: rule.resource,
-      condition: rule.condition,
-      active: rule.active,
-      createdAt: rule.createdAt,
-      updatedAt: rule.updatedAt,
     };
   }
 }

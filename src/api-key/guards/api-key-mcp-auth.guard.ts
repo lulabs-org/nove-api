@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-12 15:10:02
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-15 17:40:56
+ * @LastEditTime: 2026-03-19 12:19:37
  * @FilePath: /nove_api/src/api-key/guards/api-key-mcp-auth.guard.ts
  * @Description:
  *
@@ -13,16 +13,20 @@ import {
   CanActivate,
   ExecutionContext,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { ApiKeyService } from '@/api-key/services/api-key.service';
 import type { ApiKeyUser } from '@/auth/decorators/api-key-user.decorator';
+import { RoleService } from '@/role/services/role.service';
+import { PermService } from '@/permission/services/permission.service';
 
 type ApiKeyAuthContext = {
-  organizationId: string;
+  orgId: string;
   apiKeyId: string;
   scopes: string[];
+  userId: string | null;
 };
 
 declare module 'express' {
@@ -33,42 +37,73 @@ declare module 'express' {
 
 @Injectable()
 export class McpAuthJwtGuard implements CanActivate {
-  constructor(private readonly apiKeyService: ApiKeyService) {}
+  private readonly logger = new Logger(McpAuthJwtGuard.name);
+
+  constructor(
+    private readonly apiKeyService: ApiKeyService,
+    private readonly roleService: RoleService,
+    private readonly permService: PermService,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = context.switchToHttp().getRequest<Request>();
 
     const rawKey = this.extractKey(req);
 
-    // ✅ 没有 key：交给 McpModule.allowUnauthenticatedAccess 决定能否继续
-    // - allowUnauthenticatedAccess=true → 允许匿名进入（只能用 @PublicTool）
-    // - allowUnauthenticatedAccess=false → 你也可以在这里直接 401（见下方可选严格模式）
     if (!rawKey) {
       return true;
     }
 
+    let authContext: ApiKeyAuthContext;
     try {
-      const authContext = await this.apiKeyService.verifyKey(rawKey);
-
-      // 兼容你原来的写法
-      req.apiAuth = authContext;
-
-      // ✅ 关键：把 scopes 等挂到 request.user
-      // 这样 @ToolScopes(['admin']) 才能生效
-      req.user = {
-        authType: 'api_key',
-        id: authContext.apiKeyId,
-        sub: authContext.userId,
-        organizationId: authContext.organizationId,
-        apiKeyId: authContext.apiKeyId,
-        scopes: authContext.scopes ?? [],
-        roles: [],
-      } as ApiKeyUser;
-
-      return true;
-    } catch {
-      // 统一返回通用错误消息，防止信息泄露
+      authContext = await this.apiKeyService.verifyKey(rawKey);
+    } catch (error) {
+      this.logger.warn(
+        'API key verification failed',
+        error instanceof Error ? error.message : String(error),
+      );
       throw new UnauthorizedException('Invalid API key');
+    }
+
+    req.apiAuth = authContext;
+
+    const [roles, validScopes] = await Promise.all([
+      authContext.userId
+        ? this.roleService.getUserRoles(authContext.userId)
+        : Promise.resolve([]),
+      this.filterScopesByPermissions(authContext.userId, authContext.scopes),
+    ]);
+
+    req.user = {
+      authType: 'api_key',
+      id: authContext.apiKeyId,
+      sub: authContext.userId || '',
+      orgId: authContext.orgId,
+      apiKeyId: authContext.apiKeyId,
+      scopes: validScopes,
+      roles: roles.map((role) => role.code),
+    } as ApiKeyUser;
+
+    return true;
+  }
+
+  private async filterScopesByPermissions(
+    userId: string | null,
+    scopes: string[],
+  ): Promise<string[]> {
+    if (!userId) {
+      return scopes;
+    }
+
+    try {
+      const userPerm = await this.permService.getPermByUserId(userId);
+      return scopes.filter((scope) => userPerm.includes(scope));
+    } catch (error) {
+      this.logger.warn(
+        `Failed to get permissions for user ${userId}, returning all scopes`,
+        error instanceof Error ? error.message : String(error),
+      );
+      return scopes;
     }
   }
 
@@ -85,9 +120,7 @@ export class McpAuthJwtGuard implements CanActivate {
 
     const apiKeyHeader = req.headers['x-api-key'];
     if (apiKeyHeader) {
-      return (
-        Array.isArray(apiKeyHeader) ? apiKeyHeader[0] : apiKeyHeader
-      ).trim();
+      return Array.isArray(apiKeyHeader) ? apiKeyHeader[0] : apiKeyHeader;
     }
 
     return null;

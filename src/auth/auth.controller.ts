@@ -1,3 +1,14 @@
+/*
+ * @Author: 杨仕明 shiming.y@qq.com
+ * @Date: 2026-03-04 18:05:33
+ * @LastEditors: 杨仕明 shiming.y@qq.com
+ * @LastEditTime: 2026-03-19 11:36:32
+ * @FilePath: /nove_api/src/auth/auth.controller.ts
+ * @Description:
+ *
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
+ */
+
 import {
   Controller,
   Post,
@@ -38,7 +49,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 import { TokenBlacklistService } from './services/token-blacklist.service';
 import { User, CurrentUser } from '@/auth/decorators/user.decorator';
 import { ClientType } from '@/auth/types/jwt.types';
-import { PermissionService } from '@/permission/services/permission.service';
+import { PermService } from '@/permission/services/permission.service';
 import { HttpUtil } from '@/common/utils/http.util';
 
 @ApiTags('Auth')
@@ -55,7 +66,7 @@ export class AuthController {
     private readonly passwordService: PasswordService,
     private readonly tokenService: TokenService,
     private readonly tokenBlacklist: TokenBlacklistService,
-    private readonly permissionService: PermissionService,
+    private readonly permService: PermService,
   ) {}
 
   @Public()
@@ -320,8 +331,7 @@ export class AuthController {
   @ApiBearerAuth()
   async getMe(@User() user: CurrentUser): Promise<AuthUserWithPermissionsDto> {
     const roles = user.roles || ['USER'];
-    const permissions =
-      await this.permissionService.getPermissionsByRoleCodes(roles);
+    const perm = await this.permService.getPermByRoleCodes(roles);
 
     return {
       id: user.id,
@@ -337,7 +347,7 @@ export class AuthController {
         'Unknown',
       avatar: (user.profile?.avatar as string) || undefined,
       roles,
-      permissions,
+      perm,
       active: user.active,
       emailVerified: user.emailVerified,
       phoneVerified: user.phoneVerified,
@@ -354,8 +364,7 @@ export class AuthController {
     @User() user: CurrentUser,
   ): Promise<PermissionsResponseDto> {
     const roles = user.roles || ['USER'];
-    const permissions =
-      await this.permissionService.getPermissionsByRoleCodes(roles);
+    const perm = await this.permService.getPermByRoleCodes(roles);
 
     return {
       id: user.id,
@@ -366,7 +375,7 @@ export class AuthController {
         user.phone ||
         'Unknown',
       roles,
-      permissions,
+      perm,
     };
   }
 }
