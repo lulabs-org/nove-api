@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-29 10:29:37
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-19 12:07:13
+ * @LastEditTime: 2026-03-19 17:38:58
  * @FilePath: /nove_api/src/mcp-server/mcp-server.module.ts
  * @Description:
  *
@@ -25,7 +25,6 @@ import {
   ParticipantSummaryRepository,
 } from './repositories';
 import { SseController, StreamableHttpController } from './controllers';
-import { McpAuthJwtGuard } from '@/api-key/guards/api-key-mcp-auth.guard';
 
 @Module({
   imports: [
@@ -51,8 +50,7 @@ import { McpAuthJwtGuard } from '@/api-key/guards/api-key-mcp-auth.guard';
     UserSearchRepository,
     MeetingStatsRepository,
     PlatformUserRepository,
-    ParticipantSummaryRepository,
-    McpAuthJwtGuard,
+    ParticipantSummaryRepository
   ],
 })
 export class McpServerModule {}
