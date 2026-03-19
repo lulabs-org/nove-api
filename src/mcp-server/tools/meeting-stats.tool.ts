@@ -6,6 +6,7 @@ import {
   ParticipantSummaryRepository,
   PlatformUserRepository,
 } from '../repositories';
+import { PeriodType } from '@prisma/client';
 
 @Injectable()
 export class MeetingStatsTool {
@@ -66,6 +67,7 @@ export class MeetingStatsTool {
       platformUserIds,
       startDate: startDateObj,
       endDate: endDateObj,
+      periodType: PeriodType.SINGLE,
     });
 
     await context.reportProgress({ progress: 70, total: 100 });
@@ -169,14 +171,12 @@ export class MeetingStatsTool {
           ? {
               userId: meeting.createdBy.id,
               name: meeting.createdBy.displayName,
-              email: meeting.createdBy.email,
             }
           : null,
         host: meeting.host
           ? {
               userId: meeting.host.id,
               name: meeting.host.displayName,
-              email: meeting.host.email,
             }
           : null,
         startTime: meeting.startAt?.toISOString(),
