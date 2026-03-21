@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-24
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-18 12:54:02
+ * @LastEditTime: 2026-03-21 21:09:51
  * @FilePath: /nove_api/src/tencent-mtg-hook/services/meeting-database.service.ts
  * @Description: 会议数据库服务，处理会议记录的创建和更新
  *
@@ -10,10 +10,7 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import {
-  TencentMeetingInfoPayload,
-  Meetuser,
-} from '../types/tencent-event.types';
+import { Meetuser, EventPayload } from '../types';
 import { TencentEventUtils } from '../utils/tencent-event.utils';
 import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
 import { MeetingRepository } from '@/meeting/repositories/meeting.repository';
@@ -35,7 +32,7 @@ export class MeetingDatabaseService {
    * @param payload 腾讯会议事件载荷
    */
   async upsertMeetingRecord(
-    payload: TencentMeetingInfoPayload,
+    payload: EventPayload,
     event: string,
   ): Promise<void> {
     const { meeting_info, operate_time } = payload;
@@ -50,7 +47,7 @@ export class MeetingDatabaseService {
       meeting_info.meeting_type as number,
     );
 
-    const creatorUser = await this.upsertPlatformUser(creator);
+    const creatorUser = await this.upsertPlatformUser(creator as Meetuser);
 
     type MeetingData = Omit<
       Prisma.MeetingUncheckedCreateInput,
@@ -84,7 +81,9 @@ export class MeetingDatabaseService {
     await this.meetingRepo.upsert(
       Platform.TENCENT_MEETING,
       meeting_info.meeting_id,
-      meeting_info.sub_meeting_id || '__ROOT__',
+      'sub_meeting_id' in meeting_info
+        ? meeting_info.sub_meeting_id || '__ROOT__'
+        : '__ROOT__',
       meetingData as MeetingData,
     );
   }

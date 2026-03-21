@@ -1,8 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import {
-  TencentEventOperator,
-  TencentEventMeetingInfo,
-} from '../types/tencent-event.types';
+import { MeetingSessionInfo, Meetuser } from '../types';
 import { TencentEventUtils } from '../utils/tencent-event.utils';
 import {
   MeetingBitableRepository,
@@ -29,7 +26,7 @@ export class MeetingBitableService {
    * 创建或更新会议用户记录
    * @param user 用户信息
    */
-  async upsertMeetingUserRecord(user: TencentEventOperator): Promise<string> {
+  async upsertMeetingUserRecord(user: Meetuser): Promise<string> {
     if (!user.uuid) {
       throw new Error(
         `User UUID is required but not provided for user ${user.user_name || 'unknown'}`,
@@ -141,8 +138,8 @@ export class MeetingBitableService {
    * @param operator 操作者信息
    */
   async updateMeetingParticipants(
-    meetingInfo: TencentEventMeetingInfo,
-    operator?: TencentEventOperator,
+    meetingInfo: MeetingSessionInfo,
+    operator?: Meetuser,
   ): Promise<void> {
     try {
       // 查找现有会议记录
@@ -229,7 +226,7 @@ export class MeetingBitableService {
    * @param participants 参与者记录ID列表
    */
   async upsertMeetingRecord(
-    meetingInfo: TencentEventMeetingInfo,
+    meetingInfo: MeetingSessionInfo,
     creatorRecordId: string = '',
     participants: string[] = [],
   ): Promise<void> {
@@ -265,7 +262,7 @@ export class MeetingBitableService {
    * @returns 会议记录ID
    */
   async createMeetingRecord(
-    meetingInfo: TencentEventMeetingInfo,
+    meetingInfo: MeetingSessionInfo,
   ): Promise<string | undefined> {
     try {
       const meetingResult = await this.meetingBitable.upsertMeetingRecord({
@@ -304,7 +301,7 @@ export class MeetingBitableService {
    */
   async upsertRecordingFileRecord(
     recordFileId: string,
-    meetingInfo: TencentEventMeetingInfo,
+    meetingInfo: MeetingSessionInfo,
     fullsummary: string,
     todo: string,
     aiMinutes: string,

@@ -2,8 +2,8 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-23 02:20:00
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2025-12-23 02:15:05
- * @FilePath: /lulab_backend/src/hook-tencent-mtg/handlers/factories/event-handler.factory.spec.ts
+ * @LastEditTime: 2026-03-21 21:13:59
+ * @FilePath: /nove_api/src/tencent-mtg-hook/handlers/factories/event-handler.factory.spec.ts
  * @Description: Event handler factory test
  *
  * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
@@ -11,7 +11,7 @@
 
 import { EventHandlerFactory } from './event-handler.factory';
 import { BaseEventHandler } from '../base/base-event.handler';
-import { TencentEventPayload } from '../../types/tencent-event.types';
+import { EventPayload } from '../../types';
 
 // Mock event handlers
 class TestEventHandler1 extends BaseEventHandler {
@@ -21,7 +21,7 @@ class TestEventHandler1 extends BaseEventHandler {
     return event === TestEventHandler1.SUPPORTED_EVENT;
   }
 
-  handle(payload: TencentEventPayload, index: number): Promise<void> {
+  handle(payload: EventPayload, index: number): Promise<void> {
     // Mock implementation - ignore parameters
     void payload;
     void index;
@@ -36,7 +36,7 @@ class TestEventHandler2 extends BaseEventHandler {
     return TestEventHandler2.SUPPORTED_EVENTS.includes(event);
   }
 
-  handle(payload: TencentEventPayload, index: number): Promise<void> {
+  handle(payload: EventPayload, index: number): Promise<void> {
     // Mock implementation - ignore parameters
     void payload;
     void index;

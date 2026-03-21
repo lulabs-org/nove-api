@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-20 22:01:42
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-08 23:39:53
+ * @LastEditTime: 2026-03-21 21:12:25
  * @FilePath: /nove_api/src/tencent-mtg-hook/handlers/base/base-event.handler.ts
  * @Description: Base event handler for Tencent Meeting
  *
@@ -10,7 +10,7 @@
  */
 
 import { Injectable, Logger } from '@nestjs/common';
-import { TencentEventPayload } from '../../types/tencent-event.types';
+import { EventPayload } from '../../types';
 
 /**
  * Base event handler for Tencent Meeting events
@@ -32,14 +32,14 @@ export abstract class BaseEventHandler {
    * @param payload Event payload
    * @param index Payload index in batch processing
    */
-  abstract handle(payload: TencentEventPayload, index: number): Promise<void>;
+  abstract handle(payload: EventPayload, index: number): Promise<void>;
 
   /**
    * Log event processing details
    */
   protected logEventProcessing(
     eventName: string,
-    payload: TencentEventPayload,
+    payload: EventPayload,
     index: number,
   ): void {
     const logData: Record<string, unknown> = {
