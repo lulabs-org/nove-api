@@ -5,7 +5,7 @@ import {
   MeetingEventType,
 } from '../enums/tencent-mtg.enum';
 import {
-  TencentMeetingEvent,
+  MeetingEvent,
   MeetingSessionInfo as MeetInfo,
   Meetuser,
 } from '../types';
@@ -118,7 +118,7 @@ export class TencentEventUtils {
   /**
    * 验证事件数据是否完整有效
    */
-  static validateEvent(event: TencentMeetingEvent): boolean {
+  static validateEvent(event: MeetingEvent): boolean {
     if (
       !event ||
       !event.event ||
@@ -204,7 +204,7 @@ export class TencentEventUtils {
   /**
    * 获取事件的简短描述
    */
-  static getEventDesc(event: TencentMeetingEvent): string {
+  static getEventDesc(event: MeetingEvent): string {
     const payload = event.payload?.[0];
     if (!payload) return '未知事件';
 

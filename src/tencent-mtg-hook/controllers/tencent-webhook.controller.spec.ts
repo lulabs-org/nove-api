@@ -2,8 +2,8 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-11-24 00:09:58
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2025-12-09 18:15:33
- * @FilePath: /lulab_backend/src/hook-tencent-mtg/controllers/tencent-webhook.controller.spec.ts
+ * @LastEditTime: 2026-03-21 21:16:37
+ * @FilePath: /nove_api/src/tencent-mtg-hook/controllers/tencent-webhook.controller.spec.ts
  * @Description:
  *
  * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
@@ -12,7 +12,7 @@
 import { Logger } from '@nestjs/common';
 import { TencentWebhookController } from './tencent-webhook.controller';
 import { TencentEventHandlerService } from '../services/event-handler.service';
-import { TencentMeetingEvent } from '../types';
+import { MeetingEvent } from '../types';
 
 describe('TencentWebhookController', () => {
   let controller: TencentWebhookController;
@@ -48,11 +48,11 @@ describe('TencentWebhookController', () => {
   });
 
   describe('handleTencentWebhook', () => {
-    const mockEvent: TencentMeetingEvent = {
+    const mockEvent: MeetingEvent = {
       event: 'meeting.ended',
       trace_id: 'trace-123',
       payload: [],
-    } as unknown as TencentMeetingEvent;
+    } as unknown as MeetingEvent;
 
     it('should return success and call event handler', async () => {
       eventHandlerService.handleEvent.mockResolvedValue(undefined);

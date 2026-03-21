@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-18 20:10:49
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-21 20:33:55
+ * @LastEditTime: 2026-03-21 21:14:58
  * @FilePath: /nove_api/src/tencent-mtg-hook/types/tencent-event.types.ts
  * @Description:
  *
@@ -63,7 +63,7 @@ export interface SmartTranscriptsEvent extends EventBase {
   result: number;
 }
 
-export type TencentMeetingEvent =
+export type MeetingEvent =
   | StartedEvent
   | ParticipantJoinedEvent
   | ParticipantLeftEvent

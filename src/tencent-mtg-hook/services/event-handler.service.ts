@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-20 22:01:42
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-21 21:12:09
+ * @LastEditTime: 2026-03-21 21:15:54
  * @FilePath: /nove_api/src/tencent-mtg-hook/services/event-handler.service.ts
  * @Description: Tencent Meeting event handler service
  *
@@ -10,7 +10,7 @@
  */
 
 import { Injectable, Logger } from '@nestjs/common';
-import { TencentMeetingEvent, EventPayload } from '../types';
+import { MeetingEvent, EventPayload } from '../types';
 import { EventHandlerFactory } from '../handlers/factories/event-handler.factory';
 
 /**
@@ -28,7 +28,7 @@ export class TencentEventHandlerService {
   /**
    * Handle Tencent Meeting events
    */
-  async handleEvent(eventData: TencentMeetingEvent): Promise<void> {
+  async handleEvent(eventData: MeetingEvent): Promise<void> {
     const { event, payload } = eventData;
 
     this.logEventDetails(eventData);
@@ -67,7 +67,7 @@ export class TencentEventHandlerService {
   /**
    * Log event details
    */
-  private logEventDetails(eventData: TencentMeetingEvent): void {
+  private logEventDetails(eventData: MeetingEvent): void {
     this.logger.log('Event received details:', {
       event: eventData.event,
       traceId: eventData.trace_id,

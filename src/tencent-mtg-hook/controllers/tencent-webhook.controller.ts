@@ -2,8 +2,8 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-10-01 01:08:34
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2025-12-23 00:55:49
- * @FilePath: /lulab_backend/src/hook-tencent-mtg/controllers/tencent-webhook.controller.ts
+ * @LastEditTime: 2026-03-21 21:15:37
+ * @FilePath: /nove_api/src/tencent-mtg-hook/controllers/tencent-webhook.controller.ts
  * @Description: 腾讯会议Webhook控制器
  *
  * Copyright (c) 2025 by ${git_name_email}, All Rights Reserved.
@@ -29,7 +29,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { Public } from '@/auth/decorators/public.decorator';
 import { TencentEventHandlerService } from '../services/event-handler.service';
 import { WebhookLoggingInterceptor } from '../interceptors/webhook-logging.interceptor';
-import { TencentMeetingEvent } from '../types';
+import { MeetingEvent } from '../types';
 import {
   TencentUrlVerificationPipe,
   TencentWebhookDecryptionPipe,
@@ -92,7 +92,7 @@ export class TencentWebhookController {
       new ValidationPipe({ transform: true, whitelist: true }),
       TencentWebhookDecryptionPipe,
     )
-    eventData: TencentMeetingEvent,
+    eventData: MeetingEvent,
   ): Promise<string> {
     // 异步处理业务逻辑，不阻塞主流程
     this.tencentEventHandlerService
