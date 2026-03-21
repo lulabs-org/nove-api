@@ -2,8 +2,8 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-23 09:15:35
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-05 01:48:37
- * @FilePath: /nove_api/src/hook-tencent-mtg/handlers/events/meeting-started.handler.ts
+ * @LastEditTime: 2026-03-21 20:58:05
+ * @FilePath: /nove_api/src/tencent-mtg-hook/handlers/events/meeting-started.handler.ts
  * @Description:
  *
  * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
@@ -11,7 +11,7 @@
 
 import { Injectable } from '@nestjs/common';
 import { BaseEventHandler } from '../base/base-event.handler';
-import { StartedPayload } from '../../types/tencent-event.types';
+import { StartedPayload } from '../../types';
 import { MeetingBitableService } from '../../services/meeting-bitable.service';
 import { MeetingDatabaseService } from '../../services/meeting-database.service';
 

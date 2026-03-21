@@ -50,7 +50,7 @@ import { SseController, StreamableHttpController } from './controllers';
     UserSearchRepository,
     MeetingStatsRepository,
     PlatformUserRepository,
-    ParticipantSummaryRepository
+    ParticipantSummaryRepository,
   ],
 })
 export class McpServerModule {}

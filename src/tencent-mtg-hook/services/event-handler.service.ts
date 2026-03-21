@@ -2,15 +2,15 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-20 22:01:42
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2025-12-31 19:28:24
- * @FilePath: /lulab_backend/src/hook-tencent-mtg/services/event-handler.service.ts
+ * @LastEditTime: 2026-03-21 21:12:09
+ * @FilePath: /nove_api/src/tencent-mtg-hook/services/event-handler.service.ts
  * @Description: Tencent Meeting event handler service
  *
  * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
  */
 
 import { Injectable, Logger } from '@nestjs/common';
-import { TencentMeetingEvent, TencentEventPayload } from '../types';
+import { TencentMeetingEvent, EventPayload } from '../types';
 import { EventHandlerFactory } from '../handlers/factories/event-handler.factory';
 
 /**
@@ -48,7 +48,7 @@ export class TencentEventHandlerService {
     try {
       // Batch process payloads
       const processingPromises = payload.map((item, index: number) =>
-        handler.handle(item as TencentEventPayload, index),
+        handler.handle(item as EventPayload, index),
       );
 
       // 并行处理所有负载
