@@ -48,7 +48,7 @@ export class MeetingParticipantJoinedHandler extends BaseEventHandler {
     }
 
     await Promise.allSettled([
-      this.meetingDatabaseService.upsertPlatformUser(operator),
+      this.meetingDatabaseService.upsertPtUser(operator),
       this.meetingBitableService.upsertMeetingUserRecord(meeting_info.creator),
       this.meetingBitableService.upsertMeetingUserRecord(operator),
       this.meetingBitableService.updateMeetingParticipants(

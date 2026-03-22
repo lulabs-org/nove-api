@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-23 09:15:35
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-21 21:05:08
+ * @LastEditTime: 2026-03-22 02:51:51
  * @FilePath: /nove_api/src/tencent-mtg-hook/handlers/events/meeting-ended.handler.ts
  * @Description:
  *
@@ -49,10 +49,7 @@ export class MeetingEndedHandler extends BaseEventHandler {
         meeting_info,
         operator,
       ),
-      this.meetingDatabaseService.upsertMeetingRecord(
-        payload,
-        this.SUPPORTED_EVENT,
-      ),
+      this.meetingDatabaseService.upsert(payload, this.SUPPORTED_EVENT),
     ];
 
     if (operator.uuid !== meeting_info.creator.uuid) {

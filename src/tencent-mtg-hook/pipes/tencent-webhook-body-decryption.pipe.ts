@@ -37,9 +37,7 @@ export class TencentWebhookDecryptionPipe implements PipeTransform {
     private readonly tencentConfig: ConfigType<typeof tencentMeetingConfig>,
   ) {}
 
-  async transform(
-    value: TencentWebhookEventBodyDto,
-  ): Promise<MeetingEvent> {
+  async transform(value: TencentWebhookEventBodyDto): Promise<MeetingEvent> {
     // 1. 基础参数校验
     if (!value || !value.data) {
       throw new BadRequestException(

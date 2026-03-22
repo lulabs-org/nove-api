@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-24 00:00:00
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-09 01:26:27
+ * @LastEditTime: 2026-03-22 03:04:38
  * @FilePath: /nove_api/src/integrations/tencent-meeting/services/transcript-formatter.service.ts
  * @Description: 转写格式化服务，负责格式化录音转写内容
  *
@@ -88,13 +88,13 @@ export class TranscriptFormatterService {
       }
     }
 
-    const formattedTranscript = formattedLines.join('\n\n');
+    const formattedText = formattedLines.join('\n\n');
     this.logger.log(
       `格式化转写成功, 共 ${formattedLines.length} 条记录, 提取到 ${speakerInfos.length} 个唯一发言人`,
     );
 
     return {
-      formattedText: formattedTranscript,
+      formattedText,
       speakerInfos,
     };
   }

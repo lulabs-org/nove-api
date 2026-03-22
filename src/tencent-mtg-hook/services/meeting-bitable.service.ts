@@ -299,7 +299,7 @@ export class MeetingBitableService {
    * @param formattedTranscript 格式化转写内容
    * @returns 录制文件记录ID
    */
-  async upsertRecordingFileRecord(
+  async upsertRecording(
     recordFileId: string,
     meetingInfo: MeetingSessionInfo,
     fullsummary: string,
