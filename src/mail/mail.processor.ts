@@ -43,6 +43,6 @@ export class MailProcessor extends WorkerHost {
 
   @OnWorkerEvent('completed')
   onCompleted(job: Job) {
-    console.log(`🎉 任务完成: ${job.id}`);
+    this.logger.log(`🎉 任务完成: ${job.id}`);
   }
 }
