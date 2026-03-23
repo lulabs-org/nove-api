@@ -193,6 +193,12 @@ export class MeetingService {
     // 重新处理录制文件
     // 这里可以根据需要重新调用处理逻辑
 
-    return record;
+    // 返回更新后的记录
+    const updatedRecord = await this.meetingRepository.findById(id);
+    if (!updatedRecord) {
+      throw new MeetingRecordNotFoundException(id);
+    }
+
+    return updatedRecord;
   }
 }
