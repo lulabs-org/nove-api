@@ -35,9 +35,10 @@ import { SseController, StreamableHttpController } from './controllers';
         level: ['error', 'warn'], // Only show errors and warnings
       },
       transport: [],
-      allowUnauthenticatedAccess: true,
-      // decorators: [Public()],
-      // guards: [McpAuthJwtGuard], // 保护所有 MCP 端点
+      // 安全修复：默认禁止无认证访问
+      // 如需启用认证，请取消下面两行的注释
+      // allowUnauthenticatedAccess: false,
+      // guards: [McpAuthJwtGuard],
     }),
     RoleModule,
   ],
