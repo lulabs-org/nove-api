@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ApiKey, ApiKeyStatus, Prisma } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 
@@ -8,6 +8,8 @@ import { PrismaService } from '@/prisma/prisma.service';
  */
 @Injectable()
 export class ApiKeyRepository {
+  private readonly logger = new Logger(ApiKeyRepository.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   /**
@@ -135,7 +137,7 @@ export class ApiKeyRepository {
       })
       .catch((error) => {
         // 静默失败，记录错误但不影响主流程
-        console.error('Failed to update lastUsedAt:', error);
+        this.logger.error('Failed to update lastUsedAt:', error instanceof Error ? error.message : String(error));
       });
   }
 
