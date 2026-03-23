@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, Logger } from '@nestjs/common';
 import { ConfigType } from '@nestjs/config';
 import { tencentMeetingConfig } from '@/configs/tencent-mtg.config';
 import { generateSignature } from '../utils/crypto.util';
@@ -21,6 +21,7 @@ import {
 @Injectable()
 export class TencentApiService {
   private readonly BASE_URL = 'https://api.meeting.qq.com';
+  private readonly logger = new Logger(TencentApiService.name);
 
   constructor(
     @Inject(tencentMeetingConfig.KEY)
@@ -108,7 +109,7 @@ export class TencentApiService {
 
       return responseData;
     } catch (error: unknown) {
-      console.error('API请求失败:', error);
+      this.logger.error('API请求失败:', error instanceof Error ? error.message : String(error));
       throw error;
     }
   }
