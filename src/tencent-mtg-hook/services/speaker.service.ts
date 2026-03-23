@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-29 01:59:25
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-14 20:02:23
+ * @LastEditTime: 2026-03-22 02:12:41
  * @FilePath: /nove_api/src/tencent-mtg-hook/services/speaker.service.ts
  * @Description:
  *
@@ -143,7 +143,7 @@ export class SpeakerService {
     };
   }
 
-  async syncPlatformUsers(
+  async syncPtUsers(
     uniqueParticipants: MeetingParticipantDetail[],
   ): Promise<void> {
     const excludedPhoneHash =

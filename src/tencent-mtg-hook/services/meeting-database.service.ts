@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-24
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-21 21:09:51
+ * @LastEditTime: 2026-03-22 02:49:17
  * @FilePath: /nove_api/src/tencent-mtg-hook/services/meeting-database.service.ts
  * @Description: 会议数据库服务，处理会议记录的创建和更新
  *
@@ -31,10 +31,7 @@ export class MeetingDatabaseService {
    * 创建或更新会议记录
    * @param payload 腾讯会议事件载荷
    */
-  async upsertMeetingRecord(
-    payload: EventPayload,
-    event: string,
-  ): Promise<void> {
+  async upsert(payload: EventPayload, event: string): Promise<void> {
     const { meeting_info, operate_time } = payload;
 
     if (!meeting_info) {
@@ -47,7 +44,7 @@ export class MeetingDatabaseService {
       meeting_info.meeting_type as number,
     );
 
-    const creatorUser = await this.upsertPlatformUser(creator as Meetuser);
+    const creatorUser = await this.upsertPtUser(creator as Meetuser);
 
     type MeetingData = Omit<
       Prisma.MeetingUncheckedCreateInput,
@@ -92,7 +89,7 @@ export class MeetingDatabaseService {
    * 创建或更新平台用户记录
    * @param user 用户信息
    */
-  async upsertPlatformUser(user: Meetuser): Promise<PlatformUser> {
+  async upsertPtUser(user: Meetuser): Promise<PlatformUser> {
     if (!user.uuid) {
       throw new Error(
         `User UUID is required but not provided for user ${user.user_name || 'unknown'}`,

@@ -3,8 +3,8 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-23 04:23:42
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2025-12-31 19:22:18
- * @FilePath: /lulab_backend/src/hook-tencent-mtg/handlers/events/meeting-participant-joined.handler.spec.ts
+ * @LastEditTime: 2026-03-23 20:34:45
+ * @FilePath: /nove_api/src/tencent-mtg-hook/handlers/events/meeting-participant-joined.handler.spec.ts
  * @Description:
  *
  * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
@@ -34,7 +34,7 @@ describe('MeetingParticipantJoinedHandler', () => {
         {
           provide: MeetingDatabaseService,
           useValue: {
-            upsertPlatformUser: jest.fn().mockImplementation(() => {}),
+            upsertPtUser: jest.fn().mockImplementation(() => {}),
           },
         },
       ],

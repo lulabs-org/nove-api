@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-23 09:15:35
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-21 20:58:05
+ * @LastEditTime: 2026-03-22 02:51:40
  * @FilePath: /nove_api/src/tencent-mtg-hook/handlers/events/meeting-started.handler.ts
  * @Description:
  *
@@ -49,11 +49,8 @@ export class MeetingStartedHandler extends BaseEventHandler {
         meeting_info,
         operator,
       ),
-      this.meetingDatabaseService.upsertMeetingRecord(
-        payload,
-        this.SUPPORTED_EVENT,
-      ),
-      this.meetingDatabaseService.upsertPlatformUser(operator),
+      this.meetingDatabaseService.upsert(payload, this.SUPPORTED_EVENT),
+      this.meetingDatabaseService.upsertPtUser(operator),
     ];
 
     if (operator.uuid !== meeting_info.creator.uuid) {

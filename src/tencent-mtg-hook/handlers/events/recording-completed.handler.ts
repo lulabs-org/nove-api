@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-09-13 02:54:40
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-09 14:39:20
+ * @LastEditTime: 2026-03-22 03:30:05
  * @FilePath: /nove_api/src/tencent-mtg-hook/handlers/events/recording-completed.handler.ts
  * @Description: 录制完成事件处理器
  *
@@ -28,7 +28,6 @@ import {
 } from '../../types';
 import {
   MeetingBitableService,
-  MeetingParticipantService,
   SpeakerService,
   TranscriptBatchProcessor,
 } from '../../services';
@@ -43,8 +42,9 @@ import { PARTICIPANT_SUMMARY_PROMPT } from '../../constants/prompts';
 import { NumberRecordBitableRepository } from '@/integrations/lark/repositories';
 import { OpenaiService } from '@/integrations/openai/openai.service';
 import {
-  RecordingContentService,
+  SummaryService,
   TranscriptService,
+  ParticipantService,
 } from '@/integrations/tencent-meeting/services';
 import { MeetingRepository } from '@/meeting/repositories/meeting.repository';
 import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
@@ -61,14 +61,14 @@ export class RecordingCompletedHandler extends BaseEventHandler {
     private readonly batchProcessor: TranscriptBatchProcessor,
     private readonly numberRecordBitable: NumberRecordBitableRepository,
     private readonly openaiService: OpenaiService,
-    private readonly recordingContentService: RecordingContentService,
-    private readonly transcriptService: TranscriptService,
+    private readonly summarySvc: SummaryService,
+    private readonly transcriptSvc: TranscriptService,
     private readonly bitableService: MeetingBitableService,
-    private readonly participantService: MeetingParticipantService,
-    private readonly speakerService: SpeakerService,
+    private readonly participantSvc: ParticipantService,
+    private readonly speakerSvc: SpeakerService,
     private readonly meetingRecordingRepo: MeetingRecordingRepository,
     private readonly meetingRepo: MeetingRepository,
-    private readonly participantSummaryRepo: ParticipantSummaryRepository,
+    private readonly partSummaryRepo: ParticipantSummaryRepository,
     private readonly meetingSummaryRepo: MeetingSummaryRepository,
     private readonly transcriptRepo: TranscriptRepository,
     private readonly ptUserRepo: PlatformUserRepository,
@@ -96,14 +96,13 @@ export class RecordingCompletedHandler extends BaseEventHandler {
     const { meeting_id, sub_meeting_id } = meeting_info;
     const creatorUserId = meeting_info.creator.userid || '';
 
-    const { uniqueParticipants } =
-      await this.participantService.getUniqueParticipants(
-        meeting_id,
-        creatorUserId,
-        sub_meeting_id,
-      );
+    const { deduplicated } = await this.participantSvc.list(
+      meeting_id,
+      creatorUserId,
+      sub_meeting_id,
+    );
 
-    await this.speakerService.syncPlatformUsers(uniqueParticipants);
+    await this.speakerSvc.syncPtUsers(deduplicated);
 
     // 处理录制文件记录
     for (const file of recording_files) {
@@ -116,38 +115,33 @@ export class RecordingCompletedHandler extends BaseEventHandler {
         let todo = '';
         // 获取录音转写内容
         let formattedText = '';
-        let uniqueSpeakerInfos: NewSpeakerInfo[] = [];
+        let speakerList: NewSpeakerInfo[] = [];
         let paragraphs: NewRecordingTranscriptParagraph[] = [];
 
-        const [meetingContentResult, transcriptResult] =
-          await Promise.allSettled([
-            this.recordingContentService.getMeetingContent(
-              fileId,
-              creatorUserId,
-            ),
-            this.transcriptService.getTranscript(fileId, creatorUserId),
-          ]);
+        const [content, transcript] = await Promise.allSettled([
+          this.summarySvc.getContent(fileId, creatorUserId),
+          this.transcriptSvc.fetch(fileId, creatorUserId),
+        ]);
 
         // 处理会议内容结果
-        if (meetingContentResult.status === 'fulfilled') {
-          ({ fullsummary, todo, ai_minutes } = meetingContentResult.value);
+        if (content.status === 'fulfilled') {
+          fullsummary = content.value.fullSummary || '';
+          todo = content.value.todo || '';
+          ai_minutes = content.value.aiMinutes || '';
         } else {
           this.logger.warn(`获取会议内容失败: ${fileId}`);
         }
 
         // 处理转写内容结果
-        if (transcriptResult.status === 'fulfilled') {
-          formattedText = transcriptResult.value.formattedText;
-          uniqueSpeakerInfos = transcriptResult.value.uniqueSpeakerInfos;
-          paragraphs = transcriptResult.value.paragraphs;
+        if (transcript.status === 'fulfilled') {
+          formattedText = transcript.value.formattedText;
+          speakerList = transcript.value.uniqueSpeakerInfos;
+          paragraphs = transcript.value.paragraphs;
 
           // 扩展 speaker info 信息
-          uniqueSpeakerInfos = await Promise.all(
-            uniqueSpeakerInfos.map((speakerInfo) =>
-              this.speakerService.enrichSpeakerInfo(
-                speakerInfo,
-                uniqueParticipants,
-              ),
+          speakerList = await Promise.all(
+            speakerList.map((speakerInfo) =>
+              this.speakerSvc.enrichSpeakerInfo(speakerInfo, deduplicated),
             ),
           );
 
@@ -155,9 +149,9 @@ export class RecordingCompletedHandler extends BaseEventHandler {
           paragraphs = await Promise.all(
             paragraphs.map(async (paragraph) => ({
               ...paragraph,
-              speaker_info: await this.speakerService.enrichSpeakerInfo(
+              speaker_info: await this.speakerSvc.enrichSpeakerInfo(
                 paragraph.speaker_info,
-                uniqueParticipants,
+                deduplicated,
               ),
             })),
           );
@@ -166,16 +160,15 @@ export class RecordingCompletedHandler extends BaseEventHandler {
         }
 
         // 创建会议记录和录制文件记录
-        const recordingRecordId =
-          await this.bitableService.upsertRecordingFileRecord(
-            fileId,
-            meeting_info,
-            fullsummary,
-            todo,
-            ai_minutes,
-            uniqueSpeakerInfos.map((u) => u.username).join(','),
-            formattedText,
-          );
+        const recordId = await this.bitableService.upsertRecording(
+          fileId,
+          meeting_info,
+          fullsummary,
+          todo,
+          ai_minutes,
+          speakerList.map((u) => u.username).join(','),
+          formattedText,
+        );
 
         const meeting = await this.meetingRepo.findByPtId(
           MeetingPlatform.TENCENT_MEETING,
@@ -233,14 +226,12 @@ export class RecordingCompletedHandler extends BaseEventHandler {
         }
 
         // 对参会者逐个进行会议总结
-        for (const u of uniqueParticipants) {
+        for (const u of deduplicated) {
           const uId = await this.bitableService.safeUpsertMeetingUserRecord(u);
 
-          if (
-            uniqueSpeakerInfos.find((uInfo) => uInfo.username === u.user_name)
-          ) {
+          if (speakerList.find((uInfo) => uInfo.username === u.user_name)) {
             // 构建参会者的会议总结提示词
-            const participantSummaryPrompt = PARTICIPANT_SUMMARY_PROMPT(
+            const prompt = PARTICIPANT_SUMMARY_PROMPT(
               meeting_info.subject,
               new Date(meeting_info.start_time * 1000).toLocaleString(),
               new Date(meeting_info.end_time * 1000).toLocaleString(),
@@ -252,7 +243,7 @@ export class RecordingCompletedHandler extends BaseEventHandler {
 
             // 调用OpenAI生成个性化总结
             const participantSummary = await this.openaiService.ask(
-              participantSummaryPrompt,
+              prompt,
               '你是专业的会议总结助手，擅长为参会者提供个性化、实用的会议总结。',
             );
 
@@ -262,7 +253,7 @@ export class RecordingCompletedHandler extends BaseEventHandler {
             await this.numberRecordBitable.upsertNumberRecord({
               meet_participant: [uId],
               participant_summary: participantSummary,
-              record_file: [recordingRecordId ?? ''],
+              record_file: [recordId ?? ''],
             });
             this.logger.log(`参会者 ${u.user_name}总结记录已保存`);
 
@@ -280,7 +271,7 @@ export class RecordingCompletedHandler extends BaseEventHandler {
                 },
               );
 
-              await this.participantSummaryRepo.upsert({
+              await this.partSummaryRepo.upsert({
                 periodType: 'SINGLE',
                 platformUserId: platformUser.id,
                 meetingId: meeting.id,

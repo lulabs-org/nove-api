@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-03-09 14:04:49
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-09 14:04:53
+ * @LastEditTime: 2026-03-22 02:00:45
  * @FilePath: /nove_api/src/integrations/tencent-meeting/types/base.types.ts
  * @Description:
  *
@@ -11,7 +11,7 @@
 
 import { MeetingParticipantDetail } from '@/integrations/tencent-meeting/types';
 
-export interface MeetingParticipantsResult {
-  uniqueParticipants: MeetingParticipantDetail[];
-  allParticipants: MeetingParticipantDetail[];
+export interface ParticipantsList {
+  deduplicated: MeetingParticipantDetail[];
+  original: MeetingParticipantDetail[];
 }
