@@ -51,6 +51,7 @@ import { User, CurrentUser } from '@/auth/decorators/user.decorator';
 import { ClientType } from '@/auth/types/jwt.types';
 import { PermService } from '@/permission/services/permission.service';
 import { HttpUtil } from '@/common/utils/http.util';
+import { DesensitizationUtil } from '@/common/utils/desensitization.util';
 
 @ApiTags('Auth')
 @Controller({
@@ -337,13 +338,13 @@ export class AuthController {
       id: user.id,
       username: user.username || undefined,
       email: user.email,
-      phone: user.phone || undefined,
+      phone: DesensitizationUtil.maskPhone(user.phone),
       countryCode: user.countryCode || undefined,
       name:
         (user.profile?.displayName as string) ||
         user.username ||
         user.email ||
-        user.phone ||
+        DesensitizationUtil.maskPhone(user.phone) ||
         'Unknown',
       avatar: (user.profile?.avatar as string) || undefined,
       roles,
