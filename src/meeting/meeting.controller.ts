@@ -48,6 +48,21 @@ export class MeetingController {
   constructor(private readonly meetingService: MeetingService) {}
 
   /**
+   * 健康检查端点
+   * 注意：此路由必须放在 @Get(':id') 之前，否则会被捕获
+   */
+  @Get('health')
+  @HttpCode(HttpStatus.OK)
+  @ApiHealthCheckDocs()
+  healthCheck() {
+    return {
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      service: 'meeting-service',
+    };
+  }
+
+  /**
    * 获取会议记录列表
    */
   @Get()
@@ -79,20 +94,6 @@ export class MeetingController {
       this.logger.error('获取会议记录失败', (error as Error).stack);
       throw error;
     }
-  }
-
-  /**
-   * 健康检查端点
-   */
-  @Get('health')
-  @HttpCode(HttpStatus.OK)
-  @ApiHealthCheckDocs()
-  healthCheck() {
-    return {
-      status: 'ok',
-      timestamp: new Date().toISOString(),
-      service: 'meeting-service',
-    };
   }
 
   /**
