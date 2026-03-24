@@ -107,6 +107,42 @@ export class RefreshTokenRepository {
   }
 
   /**
+   * 原子操作：检查并撤销刷新令牌
+   * 使用 updateMany + where 条件实现乐观锁，防止竞态条件
+   * 只有当令牌未被撤销时才会更新成功
+   */
+  async atomicRevokeIfNotRevoked(
+    jti: string,
+    options: RevokeRefreshTokenOptions = {},
+  ): Promise<{ success: boolean; token?: RefreshToken }> {
+    const revokedAt = options.revokedAt || new Date();
+
+    // 使用 updateMany 实现原子操作：只有在 revokedAt 为 null 时才更新
+    const result = await this.prisma.refreshToken.updateMany({
+      where: {
+        jti,
+        revokedAt: null, // 只更新未撤销的令牌
+      },
+      data: {
+        revokedAt,
+        replacedBy: options.replacedBy,
+      },
+    });
+
+    if (result.count === 0) {
+      // 没有更新任何记录，说明令牌已被撤销或不存在
+      return { success: false };
+    }
+
+    // 更新成功后，获取完整的令牌记录
+    const token = await this.prisma.refreshToken.findUnique({
+      where: { jti },
+    });
+
+    return { success: true, token: token as RefreshToken };
+  }
+
+  /**
    * 撤销用户的所有刷新令牌
    */
   async revokeAllTokensByUserId(
