@@ -155,24 +155,53 @@ export class MeetingService {
   /**
    * 获取会议统计信息
    */
-  getMeetingStats(params: {
+  async getMeetingStats(params: {
     startDate?: Date;
     endDate?: Date;
     platform?: string;
-  }): MeetingStatsResponseDto {
-    void params;
-    // TODO: 实现统计逻辑 - 根据日期范围、平台等条件统计会议数据
-    // - 统计会议总数
-    // - 按平台分组统计
-    // - 按状态分组统计
-    // - 按类型分组统计
-    // - 获取最近会议记录
+  }): Promise<MeetingStatsResponseDto> {
+    const { startDate, endDate, platform } = params;
+
+    // 构建查询条件
+    const where: Prisma.MeetingWhereInput = {
+      deletedAt: null,
+    };
+
+    if (platform) {
+      where.platform = platform as MeetingPlatform;
+    }
+
+    if (startDate || endDate) {
+      where.startAt = {};
+      if (startDate) {
+        where.startAt.gte = startDate;
+      }
+      if (endDate) {
+        where.startAt.lte = endDate;
+      }
+    }
+
+    // 获取总会议数
+    const total = await this.meetingRepository.count(where);
+
+    // 按平台分组统计
+    const platformStats = await this.meetingRepository.groupByPlatform(where);
+
+    // 按状态分组统计
+    const statusStats = await this.meetingRepository.groupByProcessingStatus(where);
+
+    // 按类型分组统计
+    const typeStats = await this.meetingRepository.groupByType(where);
+
+    // 获取最近的会议记录
+    const recentMeetings = await this.meetingRepository.findRecent(where, 5);
+
     return {
-      total: 0,
-      platformStats: [],
-      statusStats: [],
-      typeStats: [],
-      recentMeetings: [],
+      total,
+      platformStats,
+      statusStats,
+      typeStats,
+      recentMeetings,
     };
   }
 

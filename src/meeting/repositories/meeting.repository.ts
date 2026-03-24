@@ -2,7 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { GetMeetingRecordsParams } from '@/meeting/types';
 
-import { MeetingPlatform, Prisma } from '@prisma/client';
+import { MeetingPlatform, Prisma, ProcessingStatus, MeetingType } from '@prisma/client';
+import { PlatformStatsDto, StatusStatsDto, TypeStatsDto } from '../dto/meeting-record-stats.dto';
+import { MeetingRecordResponseDto } from '../dto/meeting-record-response.dto';
 
 type UpdateMeetingRecordData = Prisma.MeetingUncheckedUpdateInput;
 type CreateMeetingRecordData = Omit<
@@ -210,5 +212,87 @@ export class MeetingRepository {
       limit,
       totalPages: Math.ceil(total / limit),
     };
+  }
+
+  /**
+   * Count meetings matching the given filter
+   */
+  async count(where: Prisma.MeetingWhereInput): Promise<number> {
+    return this.prisma.meeting.count({ where });
+  }
+
+  /**
+   * Group meetings by platform and count
+   */
+  async groupByPlatform(where: Prisma.MeetingWhereInput): Promise<PlatformStatsDto[]> {
+    const results = await this.prisma.meeting.groupBy({
+      by: ['platform'],
+      where,
+      _count: {
+        platform: true,
+      },
+    });
+
+    return results.map((item) => ({
+      platform: item.platform as MeetingPlatform,
+      count: item._count.platform,
+    }));
+  }
+
+  /**
+   * Group meetings by processing status and count
+   */
+  async groupByProcessingStatus(where: Prisma.MeetingWhereInput): Promise<StatusStatsDto[]> {
+    const results = await this.prisma.meeting.groupBy({
+      by: ['processingStatus'],
+      where,
+      _count: {
+        processingStatus: true,
+      },
+    });
+
+    return results.map((item) => ({
+      status: item.processingStatus as ProcessingStatus,
+      count: item._count.processingStatus,
+    }));
+  }
+
+  /**
+   * Group meetings by type and count
+   */
+  async groupByType(where: Prisma.MeetingWhereInput): Promise<TypeStatsDto[]> {
+    const results = await this.prisma.meeting.groupBy({
+      by: ['type'],
+      where,
+      _count: {
+        type: true,
+      },
+    });
+
+    return results.map((item) => ({
+      type: item.type as MeetingType,
+      count: item._count.type,
+    }));
+  }
+
+  /**
+   * Find recent meetings matching the given filter
+   */
+  async findRecent(
+    where: Prisma.MeetingWhereInput,
+    limit: number,
+  ): Promise<MeetingRecordResponseDto[]> {
+    const records = await this.prisma.meeting.findMany({
+      where,
+      include: {
+        recordings: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: limit,
+    });
+
+    return records as MeetingRecordResponseDto[];
   }
 }
