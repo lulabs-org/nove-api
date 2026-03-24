@@ -10,7 +10,7 @@
  */
 
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
@@ -60,11 +60,22 @@ import { WebhookLogModule } from './webhook-log/webhook-log.module';
         limit: 10,
       },
     ]),
-    GraphQLModule.forRoot<ApolloDriverConfig>({
+    GraphQLModule.forRootAsync<ApolloDriverConfig>({
       driver: ApolloDriver,
-      autoSchemaFile: true,
-      playground: process.env.NODE_ENV !== 'production',
-      introspection: process.env.NODE_ENV !== 'production',
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => {
+        const isProduction = configService.get('NODE_ENV') === 'production';
+        const enablePlayground = configService.get('GRAPHQL_PLAYGROUND') === 'true';
+        const enableIntrospection = configService.get('GRAPHQL_INTROSPECTION') === 'true';
+
+        return {
+          autoSchemaFile: true,
+          // 生产环境默认禁用 playground 和 introspection，除非显式启用
+          playground: isProduction ? enablePlayground : true,
+          introspection: isProduction ? enableIntrospection : true,
+        };
+      },
+      inject: [ConfigService],
     }),
     BullModule.forRoot({
       connection: {
