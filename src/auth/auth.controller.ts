@@ -373,7 +373,7 @@ export class AuthController {
         (user.profile?.displayName as string) ||
         user.username ||
         user.email ||
-        user.phone ||
+        DesensitizationUtil.maskPhone(user.phone) ||
         'Unknown',
       roles,
       perm,
