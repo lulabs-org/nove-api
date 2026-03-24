@@ -224,13 +224,26 @@ export class TokenService {
         throw new InternalServerErrorException('刷新令牌轮换失败');
       }
 
-      // 标记旧令牌被替换，实现防重放攻击
+      // 原子操作：标记旧令牌被替换，防止竞态条件
+      // 只有当令牌未被其他请求撤销时才能成功
       try {
-        await this.refreshTokenRepo.revokeTokenByJti(payload.jti, {
-          replacedBy: newRefreshJti,
-        });
+        const revokeResult = await this.refreshTokenRepo.atomicRevokeIfNotRevoked(
+          payload.jti,
+          {
+            replacedBy: newRefreshJti,
+          },
+        );
+
+        if (!revokeResult.success) {
+          // 令牌已被其他请求撤销，说明发生了并发刷新
+          // 这是正常的竞态条件处理，不抛出错误
+          this.logger.warn(
+            `Token ${payload.jti} was already revoked by another request (race condition handled)`,
+          );
+        }
       } catch (error) {
         this.logger.error('Failed to mark old token as replaced', error);
+        // 不阻止流程继续，因为新令牌已成功创建
       }
 
       // 将旧刷新令牌加入黑名单，确保只能使用一次
@@ -241,6 +254,7 @@ export class TokenService {
         );
       } catch (error) {
         this.logger.error('Failed to blacklist old refresh token', error);
+        // 不阻止流程继续，因为新令牌已成功创建
       }
 
       return { accessToken, refreshToken: newRefreshToken };
