@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { GetMeetingRecordsParams } from '@/meeting/types';
+import { MeetingRecordResponseDto } from '@/meeting/dto';
 
 import { MeetingPlatform, Prisma } from '@prisma/client';
 
@@ -133,7 +134,7 @@ export class MeetingRepository {
    * Get meeting records list
    */
   async get(params: GetMeetingRecordsParams): Promise<{
-    records: any[];
+    records: MeetingRecordResponseDto[];
     total: number;
     page: number;
     limit: number;
