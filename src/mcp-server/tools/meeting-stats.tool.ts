@@ -37,6 +37,7 @@ export class MeetingStatsTool {
       userId: z.string().describe('The ID of the user'),
       startDate: z.string().describe('Start date in ISO format (YYYY-MM-DD)'),
       endDate: z.string().describe('End date in ISO format (YYYY-MM-DD)'),
+      periodType: z.enum(['SINGLE', 'DAILY', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY']).default('SINGLE').describe('The period type for statistics'),
     }),
   })
   @ToolScopes(['mcp-tool:meeting-stats'])
@@ -45,13 +46,14 @@ export class MeetingStatsTool {
       userId,
       startDate,
       endDate,
-    }: { userId: string; startDate: string; endDate: string },
+      periodType,
+    }: { userId: string; startDate: string; endDate: string; periodType: PeriodType },
     context: Context,
   ) {
     await context.reportProgress({ progress: 10, total: 100 });
 
-    const startDateObj = new Date(startDate);
-    const endDateObj = new Date(endDate);
+    const startDateObj = new Date(`${startDate}T00:00:00+08:00`);
+    const endDateObj = new Date(`${endDate}T23:59:59+08:00`);
 
     this.validateDateRange(startDateObj, endDateObj);
 
@@ -67,7 +69,7 @@ export class MeetingStatsTool {
       platformUserIds,
       startDate: startDateObj,
       endDate: endDateObj,
-      periodType: PeriodType.SINGLE,
+      periodType,
     });
 
     await context.reportProgress({ progress: 70, total: 100 });
