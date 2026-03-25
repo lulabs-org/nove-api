@@ -53,7 +53,7 @@ export class MeetingStatsTool {
     await context.reportProgress({ progress: 10, total: 100 });
 
     const startDateObj = new Date(`${startDate}T00:00:00+08:00`);
-    const endDateObj = new Date(`${endDate}T23:59:59+08:00`);
+    const endDateObj = new Date(`${endDate}T23:59:59.999+08:00`);
 
     this.validateDateRange(startDateObj, endDateObj);
 
