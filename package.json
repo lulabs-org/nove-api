@@ -31,7 +31,6 @@
     "test:e2e": "jest --selectProjects e2e",
     "test:all": "jest --selectProjects unit,integration,system,e2e",
     "test:ci": "jest --selectProjects unit,integration,system,e2e --coverage",
-    "validate:tencent-api": "tsx scripts/validate-tencent-api.ts",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
@@ -45,7 +44,11 @@
     "db:drop": "tsx prisma/seed.ts drop",
     "db:seed:reset": "tsx prisma/seed.ts reset",
     "db:seed:reset:real": "tsx prisma/seed.ts reset --real",
-    "db:backup": "chmod +x scripts/shell/backup.sh && ./scripts/shell/backup.sh"
+    "db:backup": "chmod +x scripts/shell/backup.sh && ./scripts/shell/backup.sh",
+    "mcp:inspect": "npx @modelcontextprotocol/inspector node dist/main.js",
+    "mcp:inspect:dev": "npx @modelcontextprotocol/inspector npx nest start",
+    "mcp:inspect:sse": "npx @modelcontextprotocol/inspector --transport sse --server-url http://localhost:3000/sse",
+    "mcp:inspect:http": "npx @modelcontextprotocol/inspector --transport http --server-url http://localhost:3000/mcp"
   },
   "dependencies": {
     "@alicloud/credentials": "^2.4.4",
