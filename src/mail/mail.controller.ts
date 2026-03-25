@@ -18,9 +18,11 @@ import {
   HttpException,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth } from '@nestjs/swagger';
 import { MailService } from './mail.service';
 import { SendEmailDto } from './dto/send-email.dto';
 import { Public } from '@/auth/decorators/public.decorator';
+import { User, CurrentUser } from '@/auth/decorators/user.decorator';
 import {
   ApiSendEmailDocs,
   ApiVerifyConnectionDocs,
@@ -94,7 +96,9 @@ export class MailController {
   }
 
   @Post('send-later')
+  @ApiBearerAuth()
   async sendLater(
+    @User() user: CurrentUser,
     @Body('email') email: string,
     @Body('delay') delay: number, // 毫秒
   ) {
