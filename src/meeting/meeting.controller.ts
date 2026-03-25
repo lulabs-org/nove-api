@@ -202,16 +202,18 @@ export class MeetingController {
   @Get('stats/summary')
   @HttpCode(HttpStatus.OK)
   @ApiGetMeetingStatsDocs()
-  getMeetingStats(
+  async getMeetingStats(
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
-  ): MeetingStatsResponseDto {
-    this.logger.log('获取会议统计信息', { startDate, endDate });
+    @Query('platform') platform?: string,
+  ): Promise<MeetingStatsResponseDto> {
+    this.logger.log('获取会议统计信息', { startDate, endDate, platform });
 
     try {
-      const stats = this.meetingService.getMeetingStats({
+      const stats = await this.meetingService.getMeetingStats({
         startDate: startDate ? new Date(startDate) : undefined,
         endDate: endDate ? new Date(endDate) : undefined,
+        platform,
       });
 
       this.logger.log('获取会议统计信息成功');
