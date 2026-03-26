@@ -428,7 +428,7 @@ pnpm test:ci
 
 - 统一 AAA（Arrange / Act / Assert）
 - 命名清晰：
-  - should <do something> when <condition>
+  - `should [do something] when [condition]`
 
 ---
 

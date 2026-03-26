@@ -18,7 +18,7 @@
 
 ```bash
 # 使用您的邮箱和密码登录
-POST /api/v1/auth/login
+POST /api/auth/login
 Content-Type: application/json
 
 {
@@ -55,7 +55,7 @@ Authorization: Bearer <your-access-token>
 
 ```bash
 # 获取用户信息
-GET /api/v1/users/profile
+GET /api/users/profile
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
@@ -63,7 +63,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 ```bash
 # 创建会议
-POST /api/v1/meetings
+POST /api/meetings
 Authorization: Bearer <your-access-token>
 Content-Type: application/json
 
@@ -95,7 +95,7 @@ Content-Type: application/json
 
 ```bash
 # 获取会议列表
-GET /api/v1/meetings?page=1&limit=10
+GET /api/meetings?page=1&limit=10
 Authorization: Bearer <your-access-token>
 ```
 
@@ -105,27 +105,27 @@ Authorization: Bearer <your-access-token>
 
 | 端点 | 方法 | 描述 |
 |------|------|------|
-| `/api/v1/auth/register` | POST | 用户注册 |
-| `/api/v1/auth/login` | POST | 用户登录 |
-| `/api/v1/auth/logout` | POST | 用户登出 |
-| `/api/v1/auth/refresh` | POST | 刷新访问令牌 |
+| `/api/auth/register` | POST | 用户注册 |
+| `/api/auth/login` | POST | 用户登录 |
+| `/api/auth/logout` | POST | 用户登出 |
+| `/api/auth/refresh` | POST | 刷新访问令牌 |
 
 ### 用户相关
 
 | 端点 | 方法 | 描述 |
 |------|------|------|
-| `/api/v1/users/profile` | GET | 获取当前用户信息 |
-| `/api/v1/users/profile` | PUT | 更新用户信息 |
+| `/api/users/profile` | GET | 获取当前用户信息 |
+| `/api/users/profile` | PUT | 更新用户信息 |
 
 ### 会议相关
 
 | 端点 | 方法 | 描述 |
 |------|------|------|
-| `/api/v1/meetings` | GET | 获取会议列表 |
-| `/api/v1/meetings` | POST | 创建会议 |
-| `/api/v1/meetings/:id` | GET | 获取会议详情 |
-| `/api/v1/meetings/:id` | PUT | 更新会议 |
-| `/api/v1/meetings/:id` | DELETE | 删除会议 |
+| `/api/meetings` | GET | 获取会议列表 |
+| `/api/meetings` | POST | 创建会议 |
+| `/api/meetings/:id` | GET | 获取会议详情 |
+| `/api/meetings/:id` | PUT | 更新会议 |
+| `/api/meetings/:id` | DELETE | 删除会议 |
 
 ## 🛠️ 推荐工具
 
@@ -152,7 +152,7 @@ Authorization: Bearer <your-access-token>
 访问令牌有过期时间（默认 24 小时），过期后需要刷新：
 
 ```bash
-POST /api/v1/auth/refresh
+POST /api/auth/refresh
 Content-Type: application/json
 
 {
@@ -189,14 +189,14 @@ API 返回的错误格式：
 示例：
 
 ```bash
-GET /api/v1/meetings?page=2&limit=20
+GET /api/meetings?page=2&limit=20
 ```
 
 ## 📚 下一步
 
 恭喜您已经完成了快速开始！接下来您可以：
 
-1. 阅读 [用户指南](USER_GUIDE.md) 了解更多功能
+1. 阅读 [用户指南](user-guide.md) 了解更多功能
 2. 查看 [API 文档](../api/) 了解所有可用的 API
 3. 查看 [常见问题](../faq/common-questions.md) 解决常见问题
 

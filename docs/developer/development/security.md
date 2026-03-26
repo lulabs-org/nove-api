@@ -136,7 +136,7 @@ export class MFAService {
   // 生成密钥
   generateSecret(user: User): { secret: string; qrCode: string } {
     const secret = authenticator.generateSecret();
-    const issuer = 'LuLab';
+    const issuer = 'Nove API';
     const label = `${issuer} (${user.email})`;
     const otpauthUrl = authenticator.keyuri(user.email, issuer, secret);
     

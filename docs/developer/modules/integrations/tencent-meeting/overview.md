@@ -69,7 +69,7 @@ src/common/
 
 ```bash
 # 数据库配置
-DATABASE_URL="postgresql://username:password@localhost:5432/lulab_backend?schema=public"
+DATABASE_URL="postgresql://username:password@localhost:5432/nove_api?schema=public"
 
 # 腾讯会议配置
 TENCENT_MEETING_APP_ID="your_app_id"

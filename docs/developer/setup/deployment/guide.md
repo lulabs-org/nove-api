@@ -28,7 +28,7 @@
 
 ```bash
 git clone <repository-url>
-cd lulab_backend
+cd nove_api
 ```
 
 ### 2. 安装依赖
@@ -88,7 +88,7 @@ CREATE USER lulab_user WITH PASSWORD 'your_password';
 ALTER USER lulab_user CREATEDB;
 
 # 创建数据库
-CREATE DATABASE lulab_backend OWNER lulab_user;
+CREATE DATABASE nove_api OWNER lulab_user;
 
 # 退出
 \q
@@ -146,7 +146,7 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=test
-      - DATABASE_URL=postgresql://lulab_user:password@postgres:5432/lulab_backend
+      - DATABASE_URL=postgresql://lulab_user:password@postgres:5432/nove_api
     depends_on:
       - postgres
     volumes:
@@ -155,7 +155,7 @@ services:
   postgres:
     image: postgres:15
     environment:
-      - POSTGRES_DB=lulab_backend
+      - POSTGRES_DB=nove_api
       - POSTGRES_USER=lulab_user
       - POSTGRES_PASSWORD=password
     volumes:
@@ -225,11 +225,11 @@ sudo npm install -g pnpm
 
 ```bash
 # 创建应用目录
-sudo mkdir -p /opt/lulab_backend
-sudo chown $USER:$USER /opt/lulab_backend
+sudo mkdir -p /opt/nove_api
+sudo chown $USER:$USER /opt/nove_api
 
 # 克隆代码
-cd /opt/lulab_backend
+cd /opt/nove_api
 git clone <repository-url> .
 ```
 
@@ -252,13 +252,13 @@ node dist/main.js --version
 
 ```bash
 # 创建配置目录
-sudo mkdir -p /etc/lulab_backend
+sudo mkdir -p /etc/nove_api
 
 # 复制配置文件
-sudo cp .env.example /etc/lulab_backend/.env
+sudo cp .env.example /etc/nove_api/.env
 
 # 编辑生产配置
-sudo nano /etc/lulab_backend/.env
+sudo nano /etc/nove_api/.env
 ```
 
 ### 3. 数据库设置
@@ -304,10 +304,10 @@ After=network.target
 [Service]
 Type=simple
 User=www-data
-WorkingDirectory=/opt/lulab_backend
+WorkingDirectory=/opt/nove_api
 Environment=NODE_ENV=production
-EnvironmentFile=/etc/lulab_backend/.env
-ExecStart=/opt/lulab_backend/node_modules/.bin/node dist/main.js
+EnvironmentFile=/etc/nove_api/.env
+ExecStart=/opt/nove_api/node_modules/.bin/node dist/main.js
 Restart=always
 RestartSec=10
 StandardOutput=journal
@@ -391,20 +391,20 @@ sudo apt install logwatch
 
 #### 数据库备份
 
-创建备份脚本 `/opt/lulab_backend/scripts/backup.sh`:
+创建备份脚本 `/opt/nove_api/scripts/backup.sh`:
 
 ```bash
 #!/bin/bash
 
-BACKUP_DIR="/opt/lulab_backend/backups"
+BACKUP_DIR="/opt/nove_api/backups"
 DATE=$(date +%Y%m%d_%H%M%S)
-BACKUP_NAME="lulab_backend_$DATE"
+BACKUP_NAME="nove_api_$DATE"
 
 # 创建备份目录
 mkdir -p $BACKUP_DIR
 
 # 数据库备份
-pg_dump -h localhost -U lulab_user -d lulab_backend > $BACKUP_DIR/${BACKUP_NAME}.sql
+pg_dump -h localhost -U lulab_user -d nove_api > $BACKUP_DIR/${BACKUP_NAME}.sql
 
 # 压缩备份文件
 gzip $BACKUP_DIR/${BACKUP_NAME}.sql
@@ -422,7 +422,7 @@ echo "Backup completed: $BACKUP_NAME.sql.gz"
 crontab -e
 
 # 添加每日凌晨2点备份
-0 2 * * * /opt/lulab_backend/scripts/backup.sh
+0 2 * * * /opt/nove_api/scripts/backup.sh
 ```
 
 ## 环境变量详解
@@ -486,7 +486,7 @@ psql $DATABASE_URL
 printenv | grep YOUR_PREFIX
 
 # 验证配置文件路径
-ls -la /etc/lulab_backend/.env
+ls -la /etc/nove_api/.env
 ```
 
 #### 3. 端口被占用
@@ -515,7 +515,7 @@ pm2 logs lulab-backend
 journalctl -u lulab-backend -f
 
 # 应用日志文件
-tail -f /opt/lulab_backend/logs/app.log
+tail -f /opt/nove_api/logs/app.log
 ```
 
 ## 性能调优
@@ -562,12 +562,12 @@ keepalive_timeout 65;
 
 ```bash
 # 设置文件权限
-chmod 600 /etc/lulab_backend/.env
-chown www-data:www-data /etc/lulab_backend/.env
+chmod 600 /etc/nove_api/.env
+chown www-data:www-data /etc/nove_api/.env
 
 # 限制目录访问
-find /opt/lulab_backend -type d -exec chmod 755 {} \;
-find /opt/lulab_backend -type f -exec chmod 644 {} \;
+find /opt/nove_api -type d -exec chmod 755 {} \;
+find /opt/nove_api -type f -exec chmod 644 {} \;
 ```
 
 ### 网络安全
@@ -595,7 +595,7 @@ sudo ufw enable
 pm2 stop lulab-backend
 
 # 拉取最新代码
-cd /opt/lulab_backend
+cd /opt/nove_api
 git pull
 
 # 安装新依赖
@@ -615,8 +615,8 @@ pm2 start lulab-backend
 
 ```bash
 # 数据库统计信息更新
-psql -d lulab_backend -c "ANALYZE;"
+psql -d nove_api -c "ANALYZE;"
 
 # 数据库清理
-psql -d lulab_backend -c "VACUUM ANALYZE;"
+psql -d nove_api -c "VACUUM ANALYZE;"
 ```
