@@ -37,7 +37,7 @@ export class MeetingStatsTool {
       userId: z.string().describe('The ID of the user'),
       startDate: z.string().describe('Start date in ISO format (YYYY-MM-DD)'),
       endDate: z.string().describe('End date in ISO format (YYYY-MM-DD)'),
-      periodType: z.enum(['SINGLE', 'DAILY', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY']).default('SINGLE').describe('The period type for statistics'),
+      periodType: z.enum(['SINGLE', 'DAILY', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY']).default('SINGLE').describe('The aggregation granularity for statistics. Currently only SINGLE is fully supported; other values will query SINGLE records and aggregate by meeting date.'),
     }),
   })
   @ToolScopes(['mcp-tool:meeting-stats'])
@@ -65,11 +65,14 @@ export class MeetingStatsTool {
 
     const platformUserIds = platformUsers.map((u) => u.id);
 
+    // Fix for Issue #228: Always query SINGLE period type records from database
+    // The periodType parameter controls aggregation granularity, not database filtering
+    // This prevents empty results when periodType doesn't match stored record types
     const summaries = await this.participantSummaryRepo.getSummaries({
       platformUserIds,
       startDate: startDateObj,
       endDate: endDateObj,
-      periodType,
+      periodType: PeriodType.SINGLE,
     });
 
     await context.reportProgress({ progress: 70, total: 100 });
