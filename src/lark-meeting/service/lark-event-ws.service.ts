@@ -9,7 +9,7 @@
  * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
  */
 
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import * as Lark from '@larksuiteoapi/node-sdk';
 import { LarkClient } from '@/integrations/lark/lark.client';
 import { LarkMeetingService } from './lark-meeting.service';
@@ -17,7 +17,7 @@ import { MeetingEndedEventData } from '../types/lark-meeting.types';
 import { LarkEvent } from '../enums/lark-event.enum';
 
 @Injectable()
-export class LarkEventWsService implements OnModuleInit {
+export class LarkEventWsService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly larkClient: LarkClient,
     private readonly larkMeetingService: LarkMeetingService,
@@ -37,5 +37,9 @@ export class LarkEventWsService implements OnModuleInit {
       '*': () => undefined,
     });
     void this.larkClient.wsClient.start({ eventDispatcher: dispatcher });
+  }
+
+  onModuleDestroy() {
+    this.larkClient.wsClient.close();
   }
 }
