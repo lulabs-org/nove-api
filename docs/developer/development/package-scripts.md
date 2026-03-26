@@ -1,6 +1,6 @@
 # Package.json 命令说明
 
-本文档详细说明了 LuLab Backend 项目中 package.json 文件定义的各种脚本命令的用途和使用方法。
+本文档详细说明了 Nove API 项目中 package.json 文件定义的各种脚本命令的用途和使用方法。
 
 ## 开发命令
 
