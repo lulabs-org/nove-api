@@ -8,7 +8,12 @@ import {
   Min,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { MeetingPlatform, MeetingType, ProcessingStatus } from '@prisma/client';
+import {
+  MeetingPlatform,
+  MeetingType,
+  ProcessingStatus,
+  Prisma,
+} from '@prisma/client';
 import { Transform } from 'class-transformer';
 
 export class CreateMeetingRecordDto {
@@ -144,5 +149,5 @@ export class CreateMeetingRecordDto {
     example: { source: 'api' },
   })
   @IsOptional()
-  metadata?: any;
+  metadata?: Prisma.JsonValue;
 }

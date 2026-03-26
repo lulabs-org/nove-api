@@ -7,7 +7,7 @@ import {
   Min,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { MeetingType, ProcessingStatus } from '@prisma/client';
+import { MeetingType, ProcessingStatus, Prisma } from '@prisma/client';
 import { Transform } from 'class-transformer';
 
 export class UpdateMeetingRecordDto {
@@ -113,12 +113,12 @@ export class UpdateMeetingRecordDto {
     example: [{ name: '张三', userId: 'user_123' }],
   })
   @IsOptional()
-  participantList?: any;
+  participantList?: Prisma.JsonValue;
 
   @ApiPropertyOptional({
     description: '元数据',
     example: { updatedBy: 'admin' },
   })
   @IsOptional()
-  metadata?: any;
+  metadata?: Prisma.JsonValue;
 }

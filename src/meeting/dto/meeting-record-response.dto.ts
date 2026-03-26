@@ -1,5 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { MeetingPlatform, MeetingType, ProcessingStatus } from '@prisma/client';
+import {
+  MeetingPlatform,
+  MeetingType,
+  ProcessingStatus,
+  Prisma,
+} from '@prisma/client';
 
 export class MeetingRecordResponseDto {
   @ApiProperty({ description: '会议记录ID' })
@@ -69,7 +74,7 @@ export class MeetingRecordResponseDto {
   processingStatus: ProcessingStatus;
 
   @ApiPropertyOptional({ description: '元数据' })
-  metadata?: any;
+  metadata?: Prisma.JsonValue;
 
   @ApiProperty({ description: '创建时间' })
   createdAt: Date;
