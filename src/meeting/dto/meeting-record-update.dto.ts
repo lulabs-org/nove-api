@@ -74,7 +74,7 @@ export class UpdateMeetingRecordDto {
     minimum: 0,
   })
   @IsOptional()
-  @Transform(({ value }) => (value ? parseInt(String(value)) : undefined))
+  @Transform(({ value }) => (value !== undefined && value !== null ? parseInt(String(value)) : undefined))
   @IsNumber({}, { message: '持续时间必须是数字' })
   @Min(0, { message: '持续时间不能小于0' })
   duration?: number;
@@ -103,7 +103,7 @@ export class UpdateMeetingRecordDto {
     minimum: 0,
   })
   @IsOptional()
-  @Transform(({ value }) => (value ? parseInt(String(value)) : undefined))
+  @Transform(({ value }) => (value !== undefined && value !== null ? parseInt(String(value)) : undefined))
   @IsNumber({}, { message: '参会人数必须是数字' })
   @Min(0, { message: '参会人数不能小于0' })
   participantCount?: number;
