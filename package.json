@@ -48,7 +48,9 @@
     "mcp:inspect": "npx @modelcontextprotocol/inspector node dist/main.js",
     "mcp:inspect:dev": "npx @modelcontextprotocol/inspector npx nest start",
     "mcp:inspect:sse": "npx @modelcontextprotocol/inspector --transport sse --server-url http://localhost:3000/sse",
-    "mcp:inspect:http": "npx @modelcontextprotocol/inspector --transport http --server-url http://localhost:3000/mcp"
+    "mcp:inspect:http": "npx @modelcontextprotocol/inspector --transport http --server-url http://localhost:3000/mcp",
+    "docs:dev": "cd docs && pnpm run docs:dev",
+    "docs:build": "cd docs && pnpm run docs:build"
   },
   "dependencies": {
     "@alicloud/credentials": "^2.4.4",

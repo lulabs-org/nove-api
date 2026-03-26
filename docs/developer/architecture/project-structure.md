@@ -5,7 +5,7 @@
 ## 目录结构概览
 
 ```
-lulab_backend/
+nove_api/
 ├── src/                           # 源代码目录
 │   ├── auth/                      # 认证模块
 │   │   ├── controllers/           # 控制器
@@ -227,25 +227,23 @@ prisma/
 
 ```
 docs/
-├── getting-started/               # 入门文档
-│   ├── installation.md           # 安装指南
-│   ├── configuration.md          # 配置指南
-│   └── quick-start.md            # 快速开始
-├── infrastructure/                # 基础设施文档
-│   ├── deployment.md             # 部署指南
-│   ├── monitoring.md             # 监控指南
-│   └── backup.md                 # 备份指南
-├── reference/                    # 参考文档
-│   ├── api.md                    # API参考
-│   ├── cli.md                    # CLI参考
-│   └── configuration.md          # 配置参考
-└── architecture/                 # 架构文档
-    ├── TECH-STACK.md             # 技术栈
-    ├── MODULES.md                # 模块架构
-    ├── DATA-FLOW.md              # 数据流
-    ├── DATABASE.md               # 数据库设计
-    ├── DEPLOYMENT.md             # 部署架构
-    └── PROJECT-STRUCTURE.md      # 项目结构
+├── .vitepress/                    # VitePress 配置
+│   └── config.mts                 # 主配置文件
+├── developer/                     # 开发者文档
+│   ├── architecture/              # 架构设计
+│   ├── development/               # 开发指南
+│   ├── modules/                   # 核心模块与第三方集成说明
+│   ├── setup/                     # 环境搭建与部署
+│   ├── roadmap/                   # 路线图
+│   └── index.md                   # 开发者文档主页
+├── user/                          # 用户文档
+│   ├── api/                       # API 使用指南
+│   ├── faq/                       # 常见问题
+│   ├── getting-started/           # 快速开始
+│   └── index.md                   # 用户文档主页
+├── public/                        # 静态资源（图片等）
+├── package.json                   # 文档站点依赖
+└── index.md                       # 文档站点主页
 ```
 
 ## 模块间关系

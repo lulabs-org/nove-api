@@ -321,4 +321,4 @@ export class MeetingsController {
 
 ## 许可证
 
-Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
+Copyright (c) 2026 by Nove API-Team, All Rights Reserved.

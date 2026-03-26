@@ -1,0 +1,143 @@
+/**
+ * Nove API Docs — Custom VitePress Styles
+ * Extend the default theme with brand colors and visual polish.
+ */
+
+/* ─── Google Fonts ──────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ─── Brand Colors ─────────────────────────────────────────────────────────── */
+:root {
+  --vp-c-brand-1: #6366f1;          /* Indigo 500 */
+  --vp-c-brand-2: #818cf8;          /* Indigo 400 */
+  --vp-c-brand-3: #a5b4fc;          /* Indigo 300 */
+  --vp-c-brand-soft: rgba(99, 102, 241, 0.14);
+
+  --vp-font-family-base: 'Inter', 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', sans-serif;
+  --vp-font-family-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code',
+    Consolas, monospace;
+}
+
+.dark {
+  --vp-c-brand-1: #818cf8;
+  --vp-c-brand-2: #a5b4fc;
+  --vp-c-brand-3: #c7d2fe;
+  --vp-c-brand-soft: rgba(129, 140, 248, 0.16);
+}
+
+/* ─── Home Hero ─────────────────────────────────────────────────────────────── */
+.VPHero .name {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #06b6d4 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.VPHero .tagline {
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: var(--vp-c-text-2);
+}
+
+/* ─── Home Features ─────────────────────────────────────────────────────────── */
+.VPFeature {
+  border-radius: 12px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.VPFeature:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 40px rgba(99, 102, 241, 0.15);
+}
+
+.VPFeature .icon {
+  font-size: 2rem;
+}
+
+/* ─── Nav ───────────────────────────────────────────────────────────────────── */
+.VPNav {
+  backdrop-filter: saturate(180%) blur(16px);
+}
+
+/* ─── Sidebar ───────────────────────────────────────────────────────────────── */
+.VPSidebarItem.is-active > .item .link {
+  color: var(--vp-c-brand-1);
+  font-weight: 600;
+}
+
+/* ─── Code Blocks ───────────────────────────────────────────────────────────── */
+.vp-code-group .tabs {
+  border-radius: 8px 8px 0 0;
+}
+
+div[class*='language-'] {
+  border-radius: 10px;
+}
+
+/* ─── Custom Containers ─────────────────────────────────────────────────────── */
+.custom-block {
+  border-radius: 8px;
+}
+
+/* ─── Tables ────────────────────────────────────────────────────────────────── */
+.vp-doc table {
+  border-collapse: collapse;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.vp-doc th {
+  background: var(--vp-c-brand-soft);
+  font-weight: 600;
+}
+
+.vp-doc tr:nth-child(even) td {
+  background: var(--vp-c-bg-soft);
+}
+
+/* ─── Scrollbar (WebKit) ────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--vp-c-divider);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--vp-c-brand-2);
+}
+
+/* ─── Mermaid Diagrams ──────────────────────────────────────────────────────── */
+.vp-doc .mermaid svg {
+  border-radius: 10px;
+  padding: 16px;
+  background: var(--vp-c-bg-soft);
+}
+
+/* ─── Footer ────────────────────────────────────────────────────────────────── */
+.VPFooter {
+  border-top: 1px solid var(--vp-c-divider);
+}
+
+/* ─── Button Styles ─────────────────────────────────────────────────────────── */
+.VPButton.medium.brand {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.VPButton.medium.brand:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+/* ─── Outline / TOC ─────────────────────────────────────────────────────────── */
+.VPDocAsideOutline .outline-link.active {
+  color: var(--vp-c-brand-1);
+  font-weight: 600;
+}

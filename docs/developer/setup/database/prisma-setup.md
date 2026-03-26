@@ -18,61 +18,64 @@
 
 ### 3. 数据模型
 
-Prisma schema 包含多个模型文件，位于 `prisma/models/` 目录中：
+所有的数据模型统一集中定义在项目根目录的 `prisma/schema.prisma` 文件中，包括但不限于：
 
-- `auth.prisma` - 认证相关模型
-- `channel.prisma` - 渠道相关模型
-- `curriculum.prisma` - 课程相关模型
-- `department.prisma` - 部门相关模型
-- `login.prisma` - 登录相关模型
-- `meet.prisma` - 会议相关模型（核心功能）
-- `order.prisma` - 订单相关模型
-- `organization.prisma` - 组织相关模型
-- `permission.prisma` - 权限相关模型
-- `product.prisma` - 产品相关模型
-- `profile.prisma` - 用户档案相关模型
-- `project.prisma` - 项目相关模型
-- `refund.prisma` - 退款相关模型
-- `relations.prisma` - 关系相关模型
-- `role.prisma` - 角色相关模型
-- `user.prisma` - 用户相关模型
-- `verification.prisma` - 验证相关模型
+- `User`, `Profile` - 用户与档案管理
+- `Organization`, `Department`, `OrgMember` - 多租户组织结构
+- `Role`, `Permission` - RBAC 角色与权限
+- `Meeting`, `MeetingParticipant`, `MeetingRecording` - 会议与转写相关
+- `VerificationLog`, `LoginLog` - 验证码与登录统计
+- `ApiKey` - API 密钥管理
 
 ### 4. NestJS 服务
 
-- `PrismaService` - 数据库连接服务
+系统在 `src/prisma/prisma.service.ts` 中封装了 `PrismaService`，负责在 Nest 生命周期连接与销毁数据库。
 
 ## 常用 Prisma 命令
+
+项目中通过 `package.json` 的 `scripts` 封装了标准的数据库维护命令：
 
 ### 生成客户端
 
 ```bash
-npx prisma generate
+pnpm db:generate
 ```
 
-### 创建迁移
+### 应用结构变更到数据库（开发环境）
 
 ```bash
-npx prisma migrate dev --name migration_name
+pnpm db:push
 ```
 
-### 查看数据库
+### 创建生产迁移文件
 
 ```bash
-npx prisma studio
+pnpm db:migrate
 ```
 
-### 重置数据库
+### 生产环境部署迁移
 
 ```bash
-npx prisma migrate reset
+pnpm db:migrate:prod
+```
+
+### 查看数据库 GUI (Prisma Studio)
+
+```bash
+pnpm db:studio
+```
+
+### 重置数据库与种子数据 (⚠️会导致数据丢失)
+
+```bash
+pnpm db:reset
 ```
 
 ## 开发建议
 
 1. **修改数据模型**：编辑 `prisma/schema.prisma` 文件
-2. **应用更改**：运行 `npx prisma migrate dev`
-3. **生成客户端**：运行 `npx prisma generate`
+2. **应用更改**：开发环境运行 `pnpm db:push`，如果是协作/生产前置准备，运行 `pnpm db:migrate`
+3. **生成客户端**：运行 `pnpm db:generate`（大部分情况下 push/migrate 会自动生成）
 4. **类型安全**：使用生成的 Prisma 类型确保类型安全
 
 ## 文件结构
@@ -115,7 +118,7 @@ generated/
    psql -U postgres
 
    # 创建数据库
-   CREATE DATABASE lulab_backend;
+   CREATE DATABASE nove_api;
 
    # 退出
    \q
@@ -126,7 +129,7 @@ generated/
 
    ```text
 
-   DATABASE_URL="postgresql://postgres:password@localhost:5432/lulab_backend?schema=public"
+   DATABASE_URL="postgresql://postgres:password@localhost:5432/nove_api?schema=public"
    ```
 
 4. **运行迁移**

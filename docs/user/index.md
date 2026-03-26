@@ -1,6 +1,6 @@
 # 用户文档
 
-欢迎来到 LuLab Backend 用户文档！本文档面向最终用户，提供了如何使用系统功能、API 接口等详细指南。
+欢迎来到 Nove API 用户文档！本文档面向最终用户，提供了如何使用系统功能、API 接口等详细指南。
 
 ## 📚 文档导航
 
@@ -8,8 +8,8 @@
 
 如果您是新用户，建议按以下顺序阅读：
 
-1. [快速开始](getting-started/QUICK_START.md) - 快速了解如何使用系统
-2. [用户指南](getting-started/USER_GUIDE.md) - 详细的使用说明
+1. [快速开始](getting-started/quick-start.md) - 快速了解如何使用系统
+2. [用户指南](getting-started/user-guide.md) - 详细的使用说明
 
 ### API 使用指南
 
@@ -49,7 +49,7 @@
 
 ## 🔗 相关资源
 
-- [开发者文档](../developer/README.md) - 面向开发者的技术文档
+- [开发者文档](../developer/index.md) - 面向开发者的技术文档
 - [项目主页](#) - 项目官方网站
 - [问题反馈](#) - 提交问题和建议
 
