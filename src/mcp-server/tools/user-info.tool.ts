@@ -13,6 +13,7 @@ import { Injectable } from '@nestjs/common';
 import { Tool, ToolScopes, Context } from '@rekog/mcp-nest';
 import { z } from 'zod';
 import { PrismaService } from '@/prisma/prisma.service';
+import { DesensitizationUtil } from '@/common/utils/desensitization.util';
 import type { McpRequestWithUser, McpUserPayload } from '@rekog/mcp-nest';
 
 @Injectable()
@@ -49,9 +50,9 @@ export class UserInfoTool {
       data: {
         id: user.id,
         username: user.username,
-        email: user.email,
+        email: DesensitizationUtil.maskEmail(user.email),
         countryCode: user.countryCode,
-        phone: user.phone,
+        phone: DesensitizationUtil.maskPhone(user.phone),
         emailVerified: !!user.emailVerifiedAt,
         phoneVerified: !!user.phoneVerifiedAt,
         active: user.active,
@@ -124,9 +125,9 @@ export class UserInfoTool {
       data: {
         id: dbUser.id,
         username: dbUser.username,
-        email: dbUser.email,
+        email: DesensitizationUtil.maskEmail(dbUser.email),
         countryCode: dbUser.countryCode,
-        phone: dbUser.phone,
+        phone: DesensitizationUtil.maskPhone(dbUser.phone),
         emailVerified: !!dbUser.emailVerifiedAt,
         phoneVerified: !!dbUser.phoneVerifiedAt,
         active: dbUser.active,
