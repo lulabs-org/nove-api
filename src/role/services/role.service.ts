@@ -14,7 +14,7 @@ import {
   CreateRoleBindingDto,
   RoleBindingDto,
 } from '../dto';
-import { Role, RoleType, Permission } from '@prisma/client';
+import { Role, RoleType, Permission, Prisma } from '@prisma/client';
 import { PermissionDto } from '@/permission/dto';
 
 interface RoleWithPermissions extends Role {
@@ -74,7 +74,7 @@ export class RoleService {
     const pageSize = query.pageSize || 10;
     const skip = (page - 1) * pageSize;
 
-    const where: Record<string, any> = {
+    const where: Prisma.RoleWhereInput = {
       isDeleted: false,
     };
 
@@ -116,7 +116,7 @@ export class RoleService {
       throw new NotFoundException('Role not found');
     }
 
-    if (existingRole.type === (RoleType.SYSTEM as any)) {
+    if (existingRole.type === RoleType.SYSTEM) {
       throw new BadRequestException('Cannot update system roles');
     }
 
