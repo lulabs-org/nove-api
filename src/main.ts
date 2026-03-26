@@ -13,8 +13,10 @@ import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { RedocModule, RedocOptions } from 'nestjs-redoc';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import * as cookieParser from 'cookie-parser';
+
+const logger = new Logger('Bootstrap');
 
 function parseCsv(value?: string): string[] {
   return (value ?? '')
@@ -114,13 +116,13 @@ async function bootstrap() {
 
   const port = process.env.PORT ?? 3000;
   await app.listen(port);
-  console.log(`🚀 Application is running on: http://localhost:${port}`);
-  console.log(`📚 Swagger documentation: http://localhost:${port}/api`);
-  console.log(`📄 Swagger API JSON: http://localhost:${port}/api-json`);
-  console.log(`📖 Redoc documentation: http://localhost:${port}/docs`);
-  console.log(`🎯 GraphQL endpoint: http://localhost:${port}/graphql`);
+  logger.log(`🚀 Application is running on: http://localhost:${port}`);
+  logger.log(`📚 Swagger documentation: http://localhost:${port}/api`);
+  logger.log(`📄 Swagger API JSON: http://localhost:${port}/api-json`);
+  logger.log(`📖 Redoc documentation: http://localhost:${port}/docs`);
+  logger.log(`🎯 GraphQL endpoint: http://localhost:${port}/graphql`);
 }
 bootstrap().catch((error) => {
-  console.error('❌ Application failed to start:', error);
+  logger.error('❌ Application failed to start:', error);
   process.exit(1);
 });
