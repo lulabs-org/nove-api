@@ -45,6 +45,42 @@ export class VerificationRepository {
     });
   }
 
+  /**
+   * 原子性地验证并标记验证码为已使用
+   * 使用数据库事务确保验证和标记为已使用是原子操作，防止重放攻击
+   */
+  async verifyAndMarkCodeUsed(
+    target: string,
+    code: string,
+    type: VerificationCodeType,
+  ): Promise<{ id: string; used: boolean } | null> {
+    return this.prisma.$transaction(async (tx) => {
+      // 1. 查找有效的验证码（未使用且未过期）
+      const verificationCode = await tx.verificationCode.findFirst({
+        where: {
+          target,
+          code,
+          type,
+          used: false,
+          expiresAt: { gt: new Date() },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      if (!verificationCode) {
+        return null;
+      }
+
+      // 2. 立即标记为已使用（在同一事务中）
+      await tx.verificationCode.update({
+        where: { id: verificationCode.id },
+        data: { used: true },
+      });
+
+      return { id: verificationCode.id, used: true };
+    });
+  }
+
   async deleteExpiredVerificationCodes(before: Date): Promise<number> {
     const result = await this.prisma.verificationCode.deleteMany({
       where: { expiresAt: { lt: before } },

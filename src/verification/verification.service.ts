@@ -73,7 +73,9 @@ export class VerificationService {
     type: CodeType,
   ): Promise<{ valid: boolean; message: string }> {
     const codeType = this.convertCodeType(type);
-    const verificationCode = await this.repo.findValidVerificationCode(
+
+    // 使用原子操作验证并标记验证码，防止重放攻击
+    const verificationCode = await this.repo.verifyAndMarkCodeUsed(
       target,
       code,
       codeType,
@@ -83,7 +85,6 @@ export class VerificationService {
       return { valid: false, message: '验证码无效或已过期' };
     }
 
-    await this.repo.markVerificationCodeUsed(verificationCode.id);
     return { valid: true, message: '验证码验证成功' };
   }
 
