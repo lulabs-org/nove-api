@@ -47,23 +47,23 @@
 ### 🔌 第三方集成
 内外部服务接入机制：
 - **飞书/Lark 集成**
-  - [集成概述](modules/integrations/lark/overview.md)
-  - [集成总结](modules/integrations/lark/summary.md)
-  - [Webhook 集成](modules/integrations/lark/webhook/integration.md)
+  - [集成概述](integrations/lark/overview.md)
+  - [集成总结](integrations/lark/summary.md)
+  - [Webhook 集成](integrations/lark/webhook/integration.md)
   - **飞书多维表格 (Bitable) 同步**
-    - [批量操作](modules/integrations/lark/bitable/batch-operations.md)
-    - [Upsert 指南](modules/integrations/lark/bitable/upsert-guide.md)
-    - [Upsert 操作](modules/integrations/lark/bitable/upsert-operations.md)
-    - [测试指南](modules/integrations/lark/bitable/testing-guide.md)
-    - [详细测试指南](modules/integrations/lark/bitable/testing-guide-detailed.md)
-    - [录制文件表](modules/integrations/lark/bitable/recording-file-table.md)
+    - [批量操作](integrations/lark/bitable/batch-operations.md)
+    - [Upsert 指南](integrations/lark/bitable/upsert-guide.md)
+    - [Upsert 操作](integrations/lark/bitable/upsert-operations.md)
+    - [测试指南](integrations/lark/bitable/testing-guide.md)
+    - [详细测试指南](integrations/lark/bitable/testing-guide-detailed.md)
+    - [录制文件表](integrations/lark/bitable/recording-file-table.md)
 - **腾讯会议集成**
-  - [集成概述](modules/integrations/tencent-meeting/overview.md)
-  - [Webhook 处理](modules/integrations/tencent-meeting/webhook.md)
-  - [Webhook 测试](modules/integrations/tencent-meeting/webhook-testing.md)
+  - [集成概述](integrations/tencent-meeting/overview.md)
+  - [Webhook 处理](integrations/tencent-meeting/webhook.md)
+  - [Webhook 测试](integrations/tencent-meeting/webhook-testing.md)
 - **其他基础设施集成**
-  - [阿里云短信](modules/integrations/aliyun/sms-setup.md) - Dysmsapi 接入
-  - [邮件服务](modules/integrations/email/api.md) - SMTP 队列处理
+  - [阿里云短信](integrations/aliyun/sms-setup.md) - Dysmsapi 接入
+  - [邮件服务](integrations/email/api.md) - SMTP 队列处理
 
 ### 🗺️ 路线图
 了解项目未来的架构演进计划：
