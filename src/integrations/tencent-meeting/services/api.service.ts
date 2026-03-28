@@ -109,7 +109,10 @@ export class TencentApiService {
 
       return responseData;
     } catch (error: unknown) {
-      this.logger.error('API请求失败:', error instanceof Error ? error.message : String(error));
+      this.logger.error(
+        'API请求失败:',
+        error instanceof Error ? error.message : String(error),
+      );
       throw error;
     }
   }

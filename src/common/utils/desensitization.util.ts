@@ -12,15 +12,15 @@ export class DesensitizationUtil {
    */
   static maskPhone(phone: string | null | undefined): string | undefined {
     if (!phone) return undefined;
-    
+
     // 移除所有非数字字符
     const cleaned = phone.replace(/\D/g, '');
-    
+
     if (cleaned.length < 7) return phone;
-    
+
     const prefix = cleaned.slice(0, 3);
     const suffix = cleaned.slice(-4);
-    
+
     return `${prefix}****${suffix}`;
   }
 
@@ -32,13 +32,13 @@ export class DesensitizationUtil {
    */
   static maskEmail(email: string | null | undefined): string | undefined {
     if (!email) return undefined;
-    
+
     const atIndex = email.indexOf('@');
     if (atIndex === -1) return email;
-    
+
     const prefix = email.slice(0, Math.min(2, atIndex));
     const domain = email.slice(atIndex);
-    
+
     return `${prefix}***${domain}`;
   }
 
@@ -50,12 +50,12 @@ export class DesensitizationUtil {
    */
   static maskName(name: string | null | undefined): string | undefined {
     if (!name) return undefined;
-    
+
     if (name.length <= 1) return name;
-    
+
     const firstChar = name.charAt(0);
     const masked = '*'.repeat(name.length - 1);
-    
+
     return `${firstChar}${masked}`;
   }
 
@@ -67,12 +67,12 @@ export class DesensitizationUtil {
    */
   static maskIdCard(idCard: string | null | undefined): string | undefined {
     if (!idCard) return undefined;
-    
+
     if (idCard.length < 10) return idCard;
-    
+
     const prefix = idCard.slice(0, 6);
     const suffix = idCard.slice(-4);
-    
+
     return `${prefix}********${suffix}`;
   }
 }
