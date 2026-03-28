@@ -137,7 +137,10 @@ export class ApiKeyRepository {
       })
       .catch((error) => {
         // 静默失败，记录错误但不影响主流程
-        this.logger.error('Failed to update lastUsedAt:', error instanceof Error ? error.message : String(error));
+        this.logger.error(
+          'Failed to update lastUsedAt:',
+          error instanceof Error ? error.message : String(error),
+        );
       });
   }
 
