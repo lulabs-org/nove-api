@@ -4,7 +4,7 @@ services:
     image: ${NOVE_IMAGE:-noveapi:local}
     restart: always
     ports:
-      - '${PORT:-3000}:3000'
+      - '${NOVE_PORT:-3000}:3000'
     env_file:
       - .env
     depends_on:
