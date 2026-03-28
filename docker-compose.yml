@@ -1,17 +1,17 @@
 services:
-  lulabbackend:
-    container_name: lulab-backend
-    build: .
+  nove:
+    container_name: nove
+    image: ${NOVE_IMAGE:-noveapi:local}
     restart: always
     ports:
-      - '3000:3000'
+      - '${PORT:-3000}:3000'
     env_file:
       - .env
     depends_on:
       - redis
       - postgres
     networks:
-      - lulab_net
+      - nove_net
   redis:
     image: redis:8.2.1-alpine
     restart: always
@@ -38,7 +38,7 @@ services:
       timeout: 3s
       retries: 10
     networks:
-      - lulab_net
+      - nove_net
   postgres:
     image: postgres:17.5-alpine
     restart: always
@@ -57,13 +57,13 @@ services:
       timeout: 3s
       retries: 10
     networks:
-      - lulab_net
+      - nove_net
 
 volumes:
   redis_data:
   postgres_data:
 
 networks:
-  lulab_net:
+  nove_net:
     driver: bridge
-    name: lulab_net
+    name: nove_net
