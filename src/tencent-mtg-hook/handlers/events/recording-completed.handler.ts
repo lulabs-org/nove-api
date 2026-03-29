@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-09-13 02:54:40
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-28 20:40:30
+ * @LastEditTime: 2026-03-29 16:59:54
  * @FilePath: /nove_api/src/tencent-mtg-hook/handlers/events/recording-completed.handler.ts
  * @Description: 录制完成事件处理器
  *
@@ -12,10 +12,7 @@
 import { Injectable } from '@nestjs/common';
 import {
   Prisma,
-  RecordingSource,
-  RecordingStatus,
   GenerationMethod,
-  ProcessingStatus,
   MeetingPlatform,
 } from '@prisma/client';
 
@@ -28,7 +25,6 @@ import {
   RecordingDataFetcherService,
 } from '../../services';
 import {
-  MeetingRecordingRepository,
   MeetingSummaryRepository,
   ParticipantSummaryRepository,
   TranscriptRepository,
@@ -55,9 +51,7 @@ export class RecordingCompletedHandler extends BaseEventHandler {
     private readonly bitableService: MeetingBitableService,
     private readonly speakerSvc: SpeakerService,
     private readonly dataFetcher: RecordingDataFetcherService,
-    private readonly meetingRecordingRepo: MeetingRecordingRepository,
     private readonly partSummaryRepo: ParticipantSummaryRepository,
-    private readonly meetingSummaryRepo: MeetingSummaryRepository,
     private readonly transcriptRepo: TranscriptRepository,
     private readonly ptUserRepo: PlatformUserRepository,
     private readonly meetingDatabaseSvc: MeetingDatabaseService,
@@ -105,33 +99,20 @@ export class RecordingCompletedHandler extends BaseEventHandler {
       this.SUPPORTED_EVENT,
     );
 
+    const recordings = await this.meetingDatabaseSvc.upsertRecording(r);
+
+    await this.meetingDatabaseSvc.upsertMeetingSummary(meeting, recording, file);
+
     // 处理录制文件记录
     for (let index = 0; index < (r.files?.length || 0); index++) {
       const file = r.files![index];
+      const recording = recordings[index];
       try {
+        if (!recording) {
+          this.logger.warn(`录制记录不存在: ${file.id}`);
+          continue;
+        }
 
-        const recording = await this.meetingRecordingRepo.upsert({
-          meetingId: meeting.id,
-          externalId: file.id,
-          source: RecordingSource.PLATFORM_AUTO,
-          status: RecordingStatus.COMPLETED,
-          startAt: meeting.startAt || undefined,
-          endAt: meeting.endAt || undefined,
-        });
-
-        await this.meetingSummaryRepo.upsert({
-          meetingId: meeting.id,
-          recordingId: recording.id,
-          content: file.fullsummary || '',
-          aiMinutes: file.aiminutes ? { content: file.aiminutes } : undefined,
-          actionItems: file.todo ? { items: file.todo } : undefined,
-          generatedBy: GenerationMethod.AI,
-          aiModel: 'tencent-meeting-ai',
-          status: ProcessingStatus.COMPLETED,
-          language: 'zh-CN',
-          version: 1,
-          isLatest: true,
-        });
 
         const transcript = await this.transcriptRepo.findByRecordingId(
           recording.id,

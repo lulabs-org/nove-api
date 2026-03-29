@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-24
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-28 18:24:57
+ * @LastEditTime: 2026-03-29 16:53:59
  * @FilePath: /nove_api/src/tencent-mtg-hook/services/meeting-database.service.ts
  * @Description: 会议数据库服务，处理会议记录的创建和更新
  *
@@ -10,11 +10,19 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import { Meetuser, EventPayload } from '../types';
+import { Meetuser, EventPayload, RecordingData } from '../types';
 import { TencentEventUtils } from '../utils/tencent-event.utils';
 import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
 import { MeetingRepository } from '@/meeting/repositories/meeting.repository';
-import { Platform, PlatformUser, Prisma, Meeting } from '@prisma/client';
+import {
+  Platform,
+  PlatformUser,
+  Prisma,
+  Meeting,
+  MeetingRecording,
+} from '@prisma/client';
+import { MeetingRecordingRepository } from '../repositories';
+import { RecordingSource, RecordingStatus } from '@prisma/client';
 
 /**
  * 会议数据库服务
@@ -25,6 +33,7 @@ export class MeetingDatabaseService {
   constructor(
     private readonly ptUserRepo: PlatformUserRepository,
     private readonly meetingRepo: MeetingRepository,
+    private readonly meetingRecordingRepo: MeetingRecordingRepository,
   ) {}
 
   /**
@@ -119,5 +128,41 @@ export class MeetingDatabaseService {
         `Failed to upsert platform user for user ${user.uuid}: ${(error as Error).message}`,
       );
     }
+  }
+
+  /**
+   * 创建或更新录制记录
+   * @param r 录制数据
+   * @returns 录制记录
+   */
+  async upsertRecording(r: RecordingData) {
+    const recordings: MeetingRecording[] = [];
+
+    const meeting = await this.meetingRepo.findByPt(
+      Platform.TENCENT_MEETING,
+      r.meetid || '',
+      r.subid || '__ROOT__',
+    );
+
+    if (!meeting) {
+      throw new Error('Meeting not found');
+    }
+
+    for (let index = 0; index < (r.files?.length || 0); index++) {
+      const file = r.files![index];
+
+      const recording = await this.meetingRecordingRepo.upsert({
+        meetingId: meeting.id,
+        externalId: file.id,
+        source: RecordingSource.PLATFORM_AUTO,
+        status: RecordingStatus.COMPLETED,
+        startAt: meeting.startAt || undefined,
+        endAt: meeting.endAt || undefined,
+      });
+
+      recordings.push(recording);
+    }
+
+    return recordings;
   }
 }
