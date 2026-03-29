@@ -14,3 +14,4 @@ export { MeetingBitableService } from './meeting-bitable.service';
 export { MeetingDatabaseService } from './meeting-database.service';
 export { SpeakerService } from './speaker.service';
 export { TranscriptBatchProcessor } from './transcript-batch-processor.service';
+export { RecordingDataFetcherService } from './recording-data-fetcher.service';

@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-24
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-22 02:49:17
+ * @LastEditTime: 2026-03-28 18:24:57
  * @FilePath: /nove_api/src/tencent-mtg-hook/services/meeting-database.service.ts
  * @Description: 会议数据库服务，处理会议记录的创建和更新
  *
@@ -14,7 +14,7 @@ import { Meetuser, EventPayload } from '../types';
 import { TencentEventUtils } from '../utils/tencent-event.utils';
 import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
 import { MeetingRepository } from '@/meeting/repositories/meeting.repository';
-import { Platform, PlatformUser, Prisma } from '@prisma/client';
+import { Platform, PlatformUser, Prisma, Meeting } from '@prisma/client';
 
 /**
  * 会议数据库服务
@@ -30,8 +30,10 @@ export class MeetingDatabaseService {
   /**
    * 创建或更新会议记录
    * @param payload 腾讯会议事件载荷
+   * @param event 事件类型
+   * @returns 会议记录
    */
-  async upsert(payload: EventPayload, event: string): Promise<void> {
+  async upsert(payload: EventPayload, event: string): Promise<Meeting> {
     const { meeting_info, operate_time } = payload;
 
     if (!meeting_info) {
@@ -75,7 +77,7 @@ export class MeetingDatabaseService {
       meetingData.endAt = new Date(operate_time);
     }
 
-    await this.meetingRepo.upsert(
+    return await this.meetingRepo.upsert(
       Platform.TENCENT_MEETING,
       meeting_info.meeting_id,
       'sub_meeting_id' in meeting_info

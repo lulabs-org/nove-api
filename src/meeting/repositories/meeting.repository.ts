@@ -17,7 +17,7 @@ export class MeetingRepository {
   /**
    * Find meeting record by platform and meeting ID
    */
-  async findByPtId(
+  async findByPt(
     platform: MeetingPlatform,
     meetingId: string,
     subMeetingId: string,

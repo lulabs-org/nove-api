@@ -9,9 +9,9 @@
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
-import { MeetingParticipantDetail } from '@/integrations/tencent-meeting/types';
+import { ParticipantDetail } from '@/integrations/tencent-meeting/types';
 
 export interface ParticipantsList {
-  deduplicated: MeetingParticipantDetail[];
-  original: MeetingParticipantDetail[];
+  deduplicated: ParticipantDetail[];
+  original: ParticipantDetail[];
 }

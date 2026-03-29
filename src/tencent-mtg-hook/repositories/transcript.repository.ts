@@ -74,4 +74,39 @@ export class TranscriptRepository {
       where: { source },
     });
   }
+
+  async upsert(data: {
+    source: string;
+    rawJson: Prisma.InputJsonValue;
+    status: number;
+    startedAt?: Date;
+    finishedAt?: Date;
+    recordingId: string;
+  }) {
+    const existingTranscript = await this.findByRecordingId(data.recordingId);
+
+    if (existingTranscript) {
+      return this.prisma.transcript.update({
+        where: { id: existingTranscript.id },
+        data: {
+          source: data.source,
+          rawJson: data.rawJson,
+          status: data.status,
+          startedAt: data.startedAt,
+          finishedAt: data.finishedAt,
+        },
+      });
+    } else {
+      return this.prisma.transcript.create({
+        data: {
+          source: data.source,
+          rawJson: data.rawJson,
+          status: data.status,
+          startedAt: data.startedAt,
+          finishedAt: data.finishedAt,
+          recordingId: data.recordingId,
+        },
+      });
+    }
+  }
 }

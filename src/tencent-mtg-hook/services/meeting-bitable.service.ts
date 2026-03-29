@@ -1,12 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { MeetingSessionInfo, Meetuser } from '../types';
+import { MeetingSessionInfo, Meetuser, RecordingData } from '../types';
 import { TencentEventUtils } from '../utils/tencent-event.utils';
 import {
   MeetingBitableRepository,
   MeetingUserBitableRepository,
   RecordingFileBitableRepository,
 } from '@/integrations/lark/repositories';
-import { MeetingParticipantDetail } from '@/integrations/tencent-meeting/types';
+import { ParticipantDetail } from '@/integrations/tencent-meeting/types';
 
 /**
  * 会议记录服务
@@ -55,7 +55,7 @@ export class MeetingBitableService {
    * @returns 成功创建/更新的记录ID
    */
   async safeUpsertMeetingUserRecord(
-    participant: MeetingParticipantDetail,
+    participant: ParticipantDetail,
   ): Promise<string> {
     try {
       const result = await this.meetingUserBitable.upsertMeetingUserRecord({
@@ -290,68 +290,60 @@ export class MeetingBitableService {
 
   /**
    * 创建或更新录制文件记录
-   * @param recordFileId 录制文件ID
-   * @param meetingInfo 会议信息
-   * @param fullsummary 会议摘要
-   * @param todo 待办事项
-   * @param aiMinutes 会议纪要
-   * @param participants 参与者列表
-   * @param formattedTranscript 格式化转写内容
-   * @returns 录制文件记录ID
+   * @param r 录制数据
+   * @returns 录制文件记录ID数组
    */
-  async upsertRecording(
-    recordFileId: string,
-    meetingInfo: MeetingSessionInfo,
-    fullsummary: string,
-    todo: string,
-    aiMinutes: string,
-    participants: string,
-    formattedTranscript: string,
-  ): Promise<string | undefined> {
+  async upsertRecording(r: RecordingData): Promise<string[]> {
     try {
-      // 获取会议记录ID
+      const recordingRecordIds: string[] = [];
+
       const meetingResult = await this.meetingBitable.upsertMeetingRecord({
         platform: '腾讯会议',
-        subject: meetingInfo.subject,
-        meeting_id: meetingInfo.meeting_id,
-        sub_meeting_id: meetingInfo.sub_meeting_id,
+        subject: r.subject,
+        meeting_id: r.meetid || '',
+        sub_meeting_id: r.subid,
       });
 
-      let meetingRecordId: string | undefined;
+      let recordId: string | undefined;
       if (meetingResult.data?.record) {
-        meetingRecordId = meetingResult.data.record.record_id;
-        this.logger.log(`操作者记录ID: ${meetingRecordId}`);
+        recordId = meetingResult.data.record.record_id;
+        this.logger.log(`会议记录ID: ${recordId}`);
       }
 
-      const meetIds: string[] = meetingRecordId ? [meetingRecordId] : [];
+      const meetIds: string[] = recordId ? [recordId] : [];
 
-      const recordingResult =
-        await this.recordingFileBitable.upsertRecordingFileRecord({
-          record_file_id: recordFileId,
+      for (let index = 0; index < (r.files?.length || 0); index++) {
+        const file = r.files![index];
+
+        const res = await this.recordingFileBitable.upsertRecordingFileRecord({
+          record_file_id: file.id || '',
           meet: meetIds,
-          start_time: meetingInfo.start_time * 1000,
-          end_time: meetingInfo.end_time * 1000,
-          fullsummary,
-          todo,
-          ai_minutes: aiMinutes,
-          participants,
-          ai_meeting_transcripts: formattedTranscript,
+          start_time: r.start_time! * 1000,
+          end_time: r.end_time! * 1000,
+          fullsummary: file.fullsummary || '',
+          todo: file.todo || '',
+          ai_minutes: file.aiminutes || '',
+          participants:
+            file.speakerlist?.map((u) => u.username).join(',') || '',
+          ai_meeting_transcripts: file.formattedtext || '',
         });
 
-      if (recordingResult.data?.record) {
-        const recordingRecordId = recordingResult.data.record.record_id;
-        this.logger.log(
-          `录制文件记录已创建/更新: ${recordFileId} (记录ID: ${recordingRecordId})`,
-        );
-        return recordingRecordId;
+        if (res.data?.record) {
+          const recordingRecordId = res.data.record.record_id;
+          recordingRecordIds.push(recordingRecordId);
+          this.logger.log(
+            `录制文件记录已创建/更新: ${file.id || ''} (记录ID: ${recordingRecordId})`,
+          );
+        }
       }
-      return undefined;
+
+      return recordingRecordIds;
     } catch (error: unknown) {
       this.logger.error(
-        `创建录制文件记录失败: ${recordFileId}`,
+        `创建录制文件记录失败: ${r.files || ''}`,
         error instanceof Error ? error.stack : undefined,
       );
-      return undefined;
+      return [];
     }
   }
 }

@@ -11,7 +11,7 @@
 
 import { Injectable, Logger } from '@nestjs/common';
 import { TencentApiService } from './api.service';
-import { MeetingParticipantDetail, ParticipantsList } from '../types';
+import { ParticipantDetail, ParticipantsList } from '../types';
 
 /**
  * 会议参与者服务
@@ -42,7 +42,7 @@ export class ParticipantService {
         subMeetingId,
       );
 
-      const decodeBase64Name = (participant: MeetingParticipantDetail) => ({
+      const decodeBase64Name = (participant: ParticipantDetail) => ({
         ...participant,
         user_name: Buffer.from(participant.user_name, 'base64').toString(
           'utf-8',

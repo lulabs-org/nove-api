@@ -1,8 +1,8 @@
 /*
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-29 01:59:25
- * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-22 02:12:41
+ * @LastEditors: 杨仕明 bot@qclaw.ai
+ * @LastEditTime: 2026-03-28 15:57:45
  * @FilePath: /nove_api/src/tencent-mtg-hook/services/speaker.service.ts
  * @Description:
  *
@@ -16,7 +16,7 @@ import { UserRepository } from '@/user/repositories/user.repository';
 import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
 import {
   SpeakerInfo,
-  MeetingParticipantDetail,
+  ParticipantDetail,
 } from '@/integrations/tencent-meeting/types';
 
 @Injectable()
@@ -30,7 +30,7 @@ export class SpeakerService {
 
   async enrichSpeakerInfo(
     speakerInfo: SpeakerInfo,
-    participants: MeetingParticipantDetail[],
+    participants: ParticipantDetail[],
   ): Promise<NewSpeakerInfo> {
     if (!speakerInfo) {
       return speakerInfo;
@@ -70,8 +70,8 @@ export class SpeakerService {
 
   private matchExact(
     speakerInfo: SpeakerInfo,
-    participants: MeetingParticipantDetail[],
-  ): MeetingParticipantDetail | undefined {
+    participants: ParticipantDetail[],
+  ): ParticipantDetail | undefined {
     return participants.find(
       (p) =>
         (speakerInfo.userid && p.userid === speakerInfo.userid) ||
@@ -82,8 +82,8 @@ export class SpeakerService {
 
   private matchName(
     username: string | undefined,
-    participants: MeetingParticipantDetail[],
-  ): MeetingParticipantDetail | undefined {
+    participants: ParticipantDetail[],
+  ): ParticipantDetail | undefined {
     if (!username) {
       return undefined;
     }
@@ -110,7 +110,7 @@ export class SpeakerService {
 
   private enrichParticipant(
     speakerInfo: SpeakerInfo,
-    participant: MeetingParticipantDetail,
+    participant: ParticipantDetail,
   ): NewSpeakerInfo {
     const excludedKeys = [
       'userid',
@@ -144,7 +144,7 @@ export class SpeakerService {
   }
 
   async syncPtUsers(
-    uniqueParticipants: MeetingParticipantDetail[],
+    uniqueParticipants: ParticipantDetail[],
   ): Promise<void> {
     const excludedPhoneHash =
       'df363d826259f591c0f02ce0be670eee8785eaa0477cf152944af46e008a3086';
