@@ -16,7 +16,7 @@ import {
   MeetingBitableService,
   SpeakerService,
   RecordingDataFetcherService,
-  ParticipantSummaryService,
+  TencentParticipantSummaryService,
 } from '../../services';
 import { MeetingDatabaseService } from '../../services/meeting-database.service';
 
@@ -33,7 +33,7 @@ export class RecordingCompletedHandler extends BaseEventHandler {
     private readonly speakerSvc: SpeakerService,
     private readonly dataFetcher: RecordingDataFetcherService,
     private readonly meetingDatabaseSvc: MeetingDatabaseService,
-    private readonly participantSummarySvc: ParticipantSummaryService,
+    private readonly participantSummarySvc: TencentParticipantSummaryService,
   ) {
     super();
   }

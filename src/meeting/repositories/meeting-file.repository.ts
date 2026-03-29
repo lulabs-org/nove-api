@@ -2,8 +2,8 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-17 21:09:15
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2025-12-17 21:14:19
- * @FilePath: /lulab_backend/src/meeting/repositories/meeting-file.repository.ts
+ * @LastEditTime: 2026-03-29 20:43:26
+ * @FilePath: /nove_api/src/meeting/repositories/meeting-file.repository.ts
  * @Description:
  *
  * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
@@ -22,7 +22,7 @@ export class MeetingFileRepository {
   /**
    * 创建会议文件
    */
-  async createMeetingFile(data: CreateMeetingFileData) {
+  async create(data: CreateMeetingFileData) {
     return this.prisma.meetingRecordingFile.create({
       data,
     });
@@ -31,7 +31,7 @@ export class MeetingFileRepository {
   /**
    * 更新会议文件
    */
-  async updateMeetingFile(id: string, data: UpdateMeetingFileData) {
+  async update(id: string, data: UpdateMeetingFileData) {
     return this.prisma.meetingRecordingFile.update({
       where: { id },
       data,

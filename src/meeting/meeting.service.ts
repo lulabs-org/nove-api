@@ -52,7 +52,7 @@ export class MeetingService {
     params: CreateMeetingRecordDto,
   ): Promise<MeetingRecordResponseDto> {
     // 检查是否已存在
-    const existing = await this.meetingRepository.findByPtId(
+    const existing = await this.meetingRepository.findByPt(
       params.platform,
       params.platformMeetingId,
       '', // Default empty subMeetingId

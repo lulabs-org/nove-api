@@ -107,7 +107,7 @@ export class ParticipantSummaryRepository {
     });
   }
 
-  async findByPlatformUserId(platformUserId: string) {
+  async findByPtUserId(platformUserId: string) {
     return this.prisma.participantSummary.findMany({
       where: {
         platformUserId,
@@ -119,7 +119,7 @@ export class ParticipantSummaryRepository {
     });
   }
 
-  async findByMeetingRecordingId(meetingRecordingId: string) {
+  async findByRecordingId(meetingRecordingId: string) {
     return this.prisma.participantSummary.findMany({
       where: {
         meetingRecordingId,
@@ -131,41 +131,41 @@ export class ParticipantSummaryRepository {
     });
   }
 
-    async getSummaries(params: {
-      platformUserIds: string[];
-      startDate: Date;
-      endDate: Date;
-      periodType: PeriodType;
-    }): Promise<
-      (ParticipantSummary & {
-        meeting: Pick<
-          Meeting,
-          'id' | 'title' | 'startAt' | 'endAt' | 'durationSeconds'
-        > | null;
-      })[]
-    > {
-      const { platformUserIds, startDate, endDate, periodType } = params;
-      return this.prisma.participantSummary.findMany({
-        where: {
-          platformUserId: { in: platformUserIds },
-          periodType,
-          createdAt: {
-            gte: startDate,
-            lte: endDate,
-          },
-          deletedAt: null,
+  async getSummaries(params: {
+    platformUserIds: string[];
+    startDate: Date;
+    endDate: Date;
+    periodType: PeriodType;
+  }): Promise<
+    (ParticipantSummary & {
+      meeting: Pick<
+        Meeting,
+        'id' | 'title' | 'startAt' | 'endAt' | 'durationSeconds'
+      > | null;
+    })[]
+  > {
+    const { platformUserIds, startDate, endDate, periodType } = params;
+    return this.prisma.participantSummary.findMany({
+      where: {
+        platformUserId: { in: platformUserIds },
+        periodType,
+        createdAt: {
+          gte: startDate,
+          lte: endDate,
         },
-        include: {
-          meeting: {
-            select: {
-              id: true,
-              title: true,
-              startAt: true,
-              endAt: true,
-              durationSeconds: true,
-            },
+        deletedAt: null,
+      },
+      include: {
+        meeting: {
+          select: {
+            id: true,
+            title: true,
+            startAt: true,
+            endAt: true,
+            durationSeconds: true,
           },
         },
-      });
-    }
+      },
+    });
+  }
 }

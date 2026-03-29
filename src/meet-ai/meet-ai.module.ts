@@ -11,14 +11,26 @@
 
 import { Module } from '@nestjs/common';
 import { MeetAiController } from './controllers/meet-ai.controller';
-import { MeetAiService } from './services/meet-ai.service';
-import { ParticipantSummaryRepository, MeetAiRepository } from './repositories';
+import { MeetAiService, ParticipantSummaryService } from './services';
+import { MeetAiRepository, ParticipantSummaryRepository } from './repositories';
 import { PrismaModule } from '../prisma/prisma.module';
+import { OpenaiModule } from '@/integrations/openai/openai.module';
+import { UserModule } from '@/user/user.module';
+import { MeetingModule } from '@/meeting/meeting.module';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, OpenaiModule, UserModule, MeetingModule],
   controllers: [MeetAiController],
-  providers: [MeetAiService, MeetAiRepository, ParticipantSummaryRepository],
-  exports: [MeetAiService, ParticipantSummaryRepository],
+  providers: [
+    MeetAiService,
+    MeetAiRepository,
+    ParticipantSummaryRepository,
+    ParticipantSummaryService,
+  ],
+  exports: [
+    MeetAiService,
+    ParticipantSummaryRepository,
+    ParticipantSummaryService,
+  ],
 })
 export class MeetAiModule {}

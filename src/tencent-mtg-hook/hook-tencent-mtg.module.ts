@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-01-03 10:00:00
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-29 20:17:46
+ * @LastEditTime: 2026-03-29 20:50:08
  * @FilePath: /nove_api/src/tencent-mtg-hook/hook-tencent-mtg.module.ts
  * @Description: 腾讯会议模块，处理腾讯会议相关的Webhook事件
  *
@@ -26,7 +26,6 @@ import { MeetingRepository } from '@/meeting/repositories/meeting.repository';
 import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
 import {
   MeetingRecordingRepository,
-  MeetingSummaryRepository,
   TranscriptRepository,
   ParagraphRepository,
   SentenceRepository,
@@ -35,6 +34,7 @@ import {
 import { SpeakerService } from './services/speaker.service';
 import { TranscriptBatchProcessor } from './services/transcript-batch-processor.service';
 import { RecordingDataFetcherService } from './services/recording-data-fetcher.service';
+import { TencentParticipantSummaryService } from './services/participant-summary.service';
 
 import {
   TencentUrlVerificationPipe,
@@ -70,6 +70,7 @@ import {
     SpeakerService,
     TranscriptBatchProcessor,
     RecordingDataFetcherService,
+    TencentParticipantSummaryService,
     MeetingStartedHandler,
     MeetingEndedHandler,
     RecordingCompletedHandler,
@@ -80,7 +81,6 @@ import {
     PlatformUserRepository,
     MeetingRepository,
     MeetingRecordingRepository,
-    MeetingSummaryRepository,
     TranscriptRepository,
     ParagraphRepository,
     SentenceRepository,
