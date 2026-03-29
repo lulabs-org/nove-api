@@ -16,17 +16,20 @@ export class PlatformUserController {
   constructor(private readonly platformUserService: PlatformUserService) {}
 
   @Post()
-  create(@Body() data: {
-    platform: Platform;
-    ptUnionId: string;
-    ptUserId?: string;
-    displayName?: string;
-    countryCode?: string;
-    phone?: string;
-    phoneHash?: string;
-    localUserId?: string;
-    active?: boolean;
-  }) {
+  create(
+    @Body()
+    data: {
+      platform: Platform;
+      ptUnionId: string;
+      ptUserId?: string;
+      displayName?: string;
+      countryCode?: string;
+      phone?: string;
+      phoneHash?: string;
+      localUserId?: string;
+      active?: boolean;
+    },
+  ) {
     return this.platformUserService.create(data);
   }
 
@@ -83,39 +86,46 @@ export class PlatformUserController {
   }
 
   @Post('upsert')
-  upsert(@Body() data: {
-    where: { platform: Platform; ptUnionId: string };
+  upsert(
+    @Body()
     data: {
-      ptUserId?: string;
-      displayName?: string;
-      countryCode?: string;
-      phone?: string;
-      phoneHash?: string;
-      localUserId?: string;
-    };
-  }) {
+      where: { platform: Platform; ptUnionId: string };
+      data: {
+        ptUserId?: string;
+        displayName?: string;
+        countryCode?: string;
+        phone?: string;
+        phoneHash?: string;
+        localUserId?: string;
+      };
+    },
+  ) {
     return this.platformUserService.upsert(data.where, data.data);
   }
 
   @Post('upsert-many')
-  upsertMany(@Body() items: Array<{
-    where: { platform: Platform; ptUnionId: string };
-    data: {
-      ptUserId?: string;
-      displayName?: string;
-      countryCode?: string;
-      phone?: string;
-      phoneHash?: string;
-      localUserId?: string;
-    };
-  }>) {
+  upsertMany(
+    @Body()
+    items: Array<{
+      where: { platform: Platform; ptUnionId: string };
+      data: {
+        ptUserId?: string;
+        displayName?: string;
+        countryCode?: string;
+        phone?: string;
+        phoneHash?: string;
+        localUserId?: string;
+      };
+    }>,
+  ) {
     return this.platformUserService.upsertMany(items);
   }
 
   @Put(':id')
   update(
     @Param('id') id: string,
-    @Body() data: {
+    @Body()
+    data: {
       ptUserId?: string;
       displayName?: string;
       countryCode?: string;

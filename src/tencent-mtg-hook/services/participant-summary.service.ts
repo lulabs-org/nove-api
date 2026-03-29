@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-03-29
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-29 19:42:58
+ * @LastEditTime: 2026-03-29 20:26:07
  * @FilePath: /nove_api/src/tencent-mtg-hook/services/participant-summary.service.ts
  * @Description: 参会者总结服务
  *
@@ -15,8 +15,8 @@ import { OpenaiService } from '@/integrations/openai/openai.service';
 import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
 import { RecordingData } from '@/tencent-mtg-hook/types';
 import { MeetingRepository } from '@/meeting/repositories/meeting.repository';
+import { ParticipantSummaryRepository } from '@/meet-ai/repositories';
 import {
-  ParticipantSummaryRepository,
   MeetingRecordingRepository,
   MeetingSummaryRepository,
   TranscriptRepository,
@@ -74,20 +74,21 @@ export class ParticipantSummaryService {
       platformUser.displayName ||
       '未知用户';
 
-    const transcript = await this.transcriptRepo.findById(recording.id);
-    let transcriptText = '暂无转写记录';
-    if (transcript && transcript.paragraphs) {
-      transcriptText = transcript.paragraphs
-        .map((p) => {
-          const speakerName = p.speaker?.displayName || p.speaker?.firstName || '未知发言人';
-          const paragraphText = p.sentences
-            .map((s) => s.text)
-            .filter(Boolean)
-            .join(' ');
-          return `[${speakerName}]: ${paragraphText}`;
-        })
-        .join('\n');
-    }
+    // const transcript = await this.transcriptRepo.findById(recording.id);
+    // let transcriptText = '暂无转写记录';
+    // if (transcript && transcript.paragraphs) {
+    //   transcriptText = transcript.paragraphs
+    //     .map((p) => {
+    //       const speakerName =
+    //         p.speaker?.displayName || p.speaker?.firstName || '未知发言人';
+    //       const paragraphText = p.sentences
+    //         .map((s) => s.text)
+    //         .filter(Boolean)
+    //         .join(' ');
+    //       return `[${speakerName}]: ${paragraphText}`;
+    //     })
+    //     .join('\n');
+    // }
 
     const systemPrompt =
       '你是专业的会议总结助手，擅长为参会者提供个性化、实用的会议总结。';
@@ -102,8 +103,7 @@ export class ParticipantSummaryService {
 会议金句: ${meetingSummary.goldenQuotes ? JSON.stringify(meetingSummary.goldenQuotes) : '暂无会议金句'}
 关键词: ${meetingSummary.keywords?.join(', ') || '暂无关键词'}
 
-会议转写记录:
-${transcriptText}
+
 
 请根据以上信息，为参会者 ${userName} 生成一份个性化的会议总结，重点关注与该参会者相关的内容。`;
 

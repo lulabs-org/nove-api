@@ -4,9 +4,9 @@
  * @LastEditors: 杨仕明 shiming.y@qq.com
  * @LastEditTime: 2026-03-29 19:53:39
  * @FilePath: /nove_api/src/user-platform/exceptions/platform-user.exceptions.ts
- * @Description: 
- * 
- * Copyright (c) 2026 by LuLab-Team, All Rights Reserved. 
+ * @Description:
+ *
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 import { HttpException, HttpStatus } from '@nestjs/common';
 

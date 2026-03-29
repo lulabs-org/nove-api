@@ -46,7 +46,9 @@ export class RecordingDataFetcherService {
       r.participants = original;
       this.logger.log(`获取去重参会者成功: ${deduplicated.length} 人`);
     } catch (error) {
-      this.logger.error(`获取去重参会者失败: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.error(
+        `获取去重参会者失败: ${error instanceof Error ? error.message : String(error)}`,
+      );
       return r;
     }
 

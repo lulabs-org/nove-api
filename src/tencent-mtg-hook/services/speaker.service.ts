@@ -143,9 +143,7 @@ export class SpeakerService {
     };
   }
 
-  async syncPtUsers(
-    uniqueParticipants: ParticipantDetail[],
-  ): Promise<void> {
+  async syncPtUsers(uniqueParticipants: ParticipantDetail[]): Promise<void> {
     const excludedPhoneHash =
       'df363d826259f591c0f02ce0be670eee8785eaa0477cf152944af46e008a3086';
     const countryCode = '+86';

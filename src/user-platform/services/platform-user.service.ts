@@ -59,7 +59,11 @@ export class PlatformUserService {
     countryCode: string,
     phoneHash: string,
   ): Promise<PlatformUser | null> {
-    return this.platformUserRepo.findByPhoneHash(platform, countryCode, phoneHash);
+    return this.platformUserRepo.findByPhoneHash(
+      platform,
+      countryCode,
+      phoneHash,
+    );
   }
 
   async findByPhoneHashWithoutLocalUser(
@@ -136,7 +140,10 @@ export class PlatformUserService {
   }
 
   async deleteByPhone(countryCode: string, phone: string): Promise<number> {
-    const result = await this.platformUserRepo.deleteByPhone(countryCode, phone);
+    const result = await this.platformUserRepo.deleteByPhone(
+      countryCode,
+      phone,
+    );
     return result.count;
   }
 }

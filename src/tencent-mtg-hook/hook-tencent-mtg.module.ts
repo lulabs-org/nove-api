@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-01-03 10:00:00
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-28 17:16:08
+ * @LastEditTime: 2026-03-29 20:17:46
  * @FilePath: /nove_api/src/tencent-mtg-hook/hook-tencent-mtg.module.ts
  * @Description: 腾讯会议模块，处理腾讯会议相关的Webhook事件
  *
@@ -17,6 +17,7 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { LarkModule } from '@/integrations/lark/lark.module';
 import { OpenaiModule } from '@/integrations/openai/openai.module';
 import { UserModule } from '@/user/user.module';
+import { MeetAiModule } from '@/meet-ai/meet-ai.module';
 import { TencentWebhookController } from './controllers/tencent-webhook.controller';
 import { TencentEventHandlerService } from './services/event-handler.service';
 import { MeetingBitableService } from './services/meeting-bitable.service';
@@ -26,7 +27,6 @@ import { PlatformUserRepository } from '@/user-platform/repositories/platform-us
 import {
   MeetingRecordingRepository,
   MeetingSummaryRepository,
-  ParticipantSummaryRepository,
   TranscriptRepository,
   ParagraphRepository,
   SentenceRepository,
@@ -59,6 +59,7 @@ import {
     OpenaiModule,
     PrismaModule,
     UserModule,
+    MeetAiModule,
   ],
   controllers: [TencentWebhookController],
   providers: [
@@ -80,7 +81,6 @@ import {
     MeetingRepository,
     MeetingRecordingRepository,
     MeetingSummaryRepository,
-    ParticipantSummaryRepository,
     TranscriptRepository,
     ParagraphRepository,
     SentenceRepository,

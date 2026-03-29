@@ -72,7 +72,7 @@ export class RecordingCompletedHandler extends BaseEventHandler {
 
     await this.speakerSvc.syncPtUsers(r.deduplicated);
     await this.bitableService.safeUpsertMeetingUserRecords(r.deduplicated);
-    
+
     await this.bitableService.upsertRecording(r);
 
     await this.meetingDatabaseSvc.upsert(payload, this.SUPPORTED_EVENT);
