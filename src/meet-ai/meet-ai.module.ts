@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-03-29 19:59:51
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-29 20:18:33
+ * @LastEditTime: 2026-03-29 21:08:03
  * @FilePath: /nove_api/src/meet-ai/meet-ai.module.ts
  * @Description:
  *
@@ -17,9 +17,16 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { OpenaiModule } from '@/integrations/openai/openai.module';
 import { UserModule } from '@/user/user.module';
 import { MeetingModule } from '@/meeting/meeting.module';
+import { UserPlatformModule } from '@/user-platform/user-platform.module';
 
 @Module({
-  imports: [PrismaModule, OpenaiModule, UserModule, MeetingModule],
+  imports: [
+    PrismaModule,
+    OpenaiModule,
+    UserModule,
+    MeetingModule,
+    UserPlatformModule,
+  ],
   controllers: [MeetAiController],
   providers: [
     MeetAiService,

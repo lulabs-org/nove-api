@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-24
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-29 20:56:18
+ * @LastEditTime: 2026-03-29 21:06:53
  * @FilePath: /nove_api/src/tencent-mtg-hook/services/meeting-database.service.ts
  * @Description: 会议数据库服务，处理会议记录的创建和更新
  *
@@ -24,7 +24,7 @@ import {
 import {
   MeetingRecordingRepository,
   TranscriptRepository,
-} from '../repositories';
+} from '@/meeting/repositories';
 import { MeetingSummaryRepository } from '@/meeting/repositories';
 import {
   RecordingSource,

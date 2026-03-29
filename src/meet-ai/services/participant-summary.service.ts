@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-03-29 20:34:53
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-29 20:55:57
+ * @LastEditTime: 2026-03-29 21:03:59
  * @FilePath: /nove_api/src/meet-ai/services/participant-summary.service.ts
  * @Description:
  *
@@ -15,7 +15,7 @@ import { OpenaiService } from '@/integrations/openai/openai.service';
 import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
 import { MeetingRepository } from '@/meeting/repositories/meeting.repository';
 import { ParticipantSummaryRepository } from '../repositories';
-import { MeetingRecordingRepository } from '@/tencent-mtg-hook/repositories';
+import { MeetingRecordingRepository } from '@/meeting/repositories';
 import { MeetingSummaryRepository } from '@/meeting/repositories';
 
 @Injectable()

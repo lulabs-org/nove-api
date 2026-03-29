@@ -6,7 +6,7 @@ import {
   ParagraphRepository,
   SentenceRepository,
   WordRepository,
-} from '@/tencent-mtg-hook/repositories';
+} from '@/meeting/repositories';
 import {
   PrismaTransaction,
   NewRecordingTranscriptParagraph,

@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-03-29
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-29 20:40:36
+ * @LastEditTime: 2026-03-29 21:07:00
  * @FilePath: /nove_api/src/tencent-mtg-hook/services/participant-summary.service.ts
  * @Description: 参会者总结服务
  *
@@ -14,7 +14,7 @@ import { Platform } from '@prisma/client';
 import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
 import { RecordingData } from '@/tencent-mtg-hook/types';
 import { MeetingRepository } from '@/meeting/repositories/meeting.repository';
-import { MeetingRecordingRepository } from '../repositories';
+import { MeetingRecordingRepository } from '@/meeting/repositories';
 import { ParticipantSummaryService } from '@/meet-ai/services';
 
 @Injectable()
