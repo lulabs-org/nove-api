@@ -42,7 +42,7 @@ export class ParticipantSummaryRepository {
     periodType: PeriodType;
     platformUserId?: string;
     meetingId?: string;
-    meetingRecordingId?: string;
+    recordingId?: string;
     userName: string;
     partSummary: string;
     keywords?: string[];
@@ -56,7 +56,7 @@ export class ParticipantSummaryRepository {
       where: {
         platformUserId: data.platformUserId,
         meetingId: data.meetingId,
-        meetingRecordingId: data.meetingRecordingId,
+        meetingRecordingId: data.recordingId,
         periodType: data.periodType,
         isLatest: true,
       },
@@ -80,7 +80,7 @@ export class ParticipantSummaryRepository {
           periodType: data.periodType,
           platformUserId: data.platformUserId,
           meetingId: data.meetingId,
-          meetingRecordingId: data.meetingRecordingId,
+          meetingRecordingId: data.recordingId,
           userName: data.userName,
           partSummary: data.partSummary,
           keywords: data.keywords || [],

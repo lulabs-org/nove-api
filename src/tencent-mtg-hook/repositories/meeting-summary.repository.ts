@@ -2,8 +2,8 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-03 08:11:41
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-03 09:24:31
- * @FilePath: /lulab_backend/src/hook-tencent-mtg/repositories/meeting-summary.repository.ts
+ * @LastEditTime: 2026-03-29 19:35:27
+ * @FilePath: /nove_api/src/tencent-mtg-hook/repositories/meeting-summary.repository.ts
  * @Description:
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
@@ -70,5 +70,23 @@ export class MeetingSummaryRepository {
         },
       });
     }
+  }
+
+  async findByMeetingId(meetingId: string) {
+    return this.prisma.meetingSummary.findFirst({
+      where: {
+        meetingId,
+        isLatest: true,
+      },
+    });
+  }
+
+  async findByRecordingId(recordingId: string) {
+    return this.prisma.meetingSummary.findFirst({
+      where: {
+        recordingId,
+        isLatest: true,
+      },
+    });
   }
 }

@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-24
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-29 16:53:59
+ * @LastEditTime: 2026-03-29 17:16:51
  * @FilePath: /nove_api/src/tencent-mtg-hook/services/meeting-database.service.ts
  * @Description: 会议数据库服务，处理会议记录的创建和更新
  *
@@ -21,8 +21,18 @@ import {
   Meeting,
   MeetingRecording,
 } from '@prisma/client';
-import { MeetingRecordingRepository } from '../repositories';
-import { RecordingSource, RecordingStatus } from '@prisma/client';
+import {
+  MeetingRecordingRepository,
+  MeetingSummaryRepository,
+  TranscriptRepository,
+} from '../repositories';
+import {
+  RecordingSource,
+  RecordingStatus,
+  GenerationMethod,
+  ProcessingStatus,
+} from '@prisma/client';
+import { TranscriptBatchProcessor } from '../services';
 
 /**
  * 会议数据库服务
@@ -33,7 +43,10 @@ export class MeetingDatabaseService {
   constructor(
     private readonly ptUserRepo: PlatformUserRepository,
     private readonly meetingRepo: MeetingRepository,
-    private readonly meetingRecordingRepo: MeetingRecordingRepository,
+    private readonly recordingRepo: MeetingRecordingRepository,
+    private readonly meetingSummaryRepo: MeetingSummaryRepository,
+    private readonly transcriptRepo: TranscriptRepository,
+    private readonly batchProcessor: TranscriptBatchProcessor,
   ) {}
 
   /**
@@ -151,7 +164,7 @@ export class MeetingDatabaseService {
     for (let index = 0; index < (r.files?.length || 0); index++) {
       const file = r.files![index];
 
-      const recording = await this.meetingRecordingRepo.upsert({
+      const recording = await this.recordingRepo.upsert({
         meetingId: meeting.id,
         externalId: file.id,
         source: RecordingSource.PLATFORM_AUTO,
@@ -164,5 +177,90 @@ export class MeetingDatabaseService {
     }
 
     return recordings;
+  }
+
+  /**
+   * 创建或更新会议总结
+   * @param r 录制数据
+   * @returns 会议总结
+   */
+  async upsertMeetingSummary(r: RecordingData) {
+    const meeting = await this.meetingRepo.findByPt(
+      Platform.TENCENT_MEETING,
+      r.meetid || '',
+      r.subid || '__ROOT__',
+    );
+
+    if (!meeting) {
+      throw new Error('Meeting not found');
+    }
+
+    for (let index = 0; index < (r.files?.length || 0); index++) {
+      const file = r.files![index];
+
+      const recording = await this.recordingRepo.find(meeting.id, file.id);
+
+      if (!recording) {
+        throw new Error('Recording not found');
+      }
+
+      return await this.meetingSummaryRepo.upsert({
+        meetingId: meeting.id,
+        recordingId: recording.id,
+        content: file.fullsummary || '',
+        aiMinutes: file.aiminutes ? { content: file.aiminutes } : undefined,
+        actionItems: file.todo ? { items: file.todo } : undefined,
+        generatedBy: GenerationMethod.AI,
+        aiModel: 'tencent-meeting-ai',
+        status: ProcessingStatus.COMPLETED,
+        language: 'zh-CN',
+        version: 1,
+        isLatest: true,
+      });
+    }
+  }
+
+  /**
+   * 创建或更新转写记录
+   * @param r 录制数据
+   */
+  async upsertTranscript(r: RecordingData) {
+    const meeting = await this.meetingRepo.findByPt(
+      Platform.TENCENT_MEETING,
+      r.meetid || '',
+      r.subid || '__ROOT__',
+    );
+
+    if (!meeting) {
+      throw new Error('Meeting not found');
+    }
+
+    for (let index = 0; index < (r.files?.length || 0); index++) {
+      const file = r.files![index];
+
+      const recording = await this.recordingRepo.find(meeting.id, file.id);
+
+      if (!recording) {
+        throw new Error(`Recording not found for file ${file.id}`);
+      }
+
+      const transcript = await this.transcriptRepo.findByRecordingId(
+        recording.id,
+      );
+
+      if (!transcript) {
+        const res = await this.transcriptRepo.create({
+          source: `tencent-meeting:${file.id}`,
+          rawJson: file.paragraphs as unknown as Prisma.InputJsonValue,
+          status: 2,
+          recordingId: recording.id,
+        });
+
+        await this.batchProcessor.processParagraphsInBatches(
+          file.paragraphs || [],
+          res.id,
+        );
+      }
+    }
   }
 }

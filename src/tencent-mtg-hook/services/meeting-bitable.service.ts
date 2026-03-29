@@ -76,6 +76,26 @@ export class MeetingBitableService {
   }
 
   /**
+   * 批量安全地创建或更新会议用户记录，包含错误处理
+   * @param participants 参与者信息数组
+   * @returns 成功创建/更新的记录ID数组
+   */
+  async safeUpsertMeetingUserRecords(
+    participants: ParticipantDetail[],
+  ): Promise<string[]> {
+    const recordIds: string[] = [];
+
+    for (const participant of participants) {
+      const recordId = await this.safeUpsertMeetingUserRecord(participant);
+      if (recordId) {
+        recordIds.push(recordId);
+      }
+    }
+
+    return recordIds;
+  }
+
+  /**
    * 通过UUID搜索用户记录并返回记录ID列表
    * @param uuid 用户UUID
    * @param username 用户名（用于日志）

@@ -20,6 +20,12 @@ export class MeetingRecordingRepository {
     });
   }
 
+  async findById(id: string) {
+    return this.prisma.meetingRecording.findUnique({
+      where: { id },
+    });
+  }
+
   async upsert(data: {
     meetingId: string;
     externalId: string;

@@ -52,6 +52,7 @@ export class TranscriptRepository {
       include: {
         paragraphs: {
           include: {
+            speaker: true,
             sentences: {
               include: {
                 words: true,
