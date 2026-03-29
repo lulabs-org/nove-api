@@ -1,0 +1,100 @@
+/*
+ * @Author: 杨仕明 shiming.y@qq.com
+ * @Date: 2026-03-29 19:49:18
+ * @LastEditors: 杨仕明 shiming.y@qq.com
+ * @LastEditTime: 2026-03-29 19:51:26
+ * @FilePath: /nove_api/src/user-platform/dto/create-platform-user.dto.ts
+ * @Description: 
+ * 
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved. 
+ */
+import { ApiProperty } from '@nestjs/swagger';
+import {
+  IsString,
+  IsNotEmpty,
+  IsEnum,
+  IsOptional,
+  IsBoolean,
+} from 'class-validator';
+import { Platform } from '@prisma/client';
+
+export class CreatePlatformUserDto {
+  @ApiProperty({
+    description: '平台类型',
+    enum: Platform,
+  })
+  @IsEnum(Platform)
+  @IsNotEmpty()
+  platform: Platform;
+
+  @ApiProperty({
+    description: '平台联合ID',
+    example: 'union_id_123456',
+  })
+  @IsString()
+  @IsNotEmpty()
+  ptUnionId: string;
+
+  @ApiProperty({
+    description: '平台用户ID',
+    example: 'user_123456',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  ptUserId?: string;
+
+  @ApiProperty({
+    description: '显示名称',
+    example: '张三',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  displayName?: string;
+
+  @ApiProperty({
+    description: '国家代码',
+    example: '+86',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  countryCode?: string;
+
+  @ApiProperty({
+    description: '手机号',
+    example: '13800138000',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  phone?: string;
+
+  @ApiProperty({
+    description: '手机号哈希',
+    example: 'hashed_phone_value',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  phoneHash?: string;
+
+  @ApiProperty({
+    description: '本地用户ID',
+    example: 'local_user_id',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  localUserId?: string;
+
+  @ApiProperty({
+    description: '是否激活',
+    example: true,
+    required: false,
+  })
+  @IsBoolean()
+  @IsOptional()
+  active?: boolean;
+}
