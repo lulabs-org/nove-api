@@ -43,9 +43,7 @@ export class MeetAiController {
 
   @Post('analyze')
   @HttpCode(HttpStatus.OK)
-  analyzeMeeting(
-    @Body(new ValidationPipe()) body: { meetingId: string },
-  ) {
+  analyzeMeeting(@Body(new ValidationPipe()) body: { meetingId: string }) {
     this.logger.log('分析会议', { meetingId: body.meetingId });
     return this.meetAiService.analyzeMeeting(body.meetingId);
   }
