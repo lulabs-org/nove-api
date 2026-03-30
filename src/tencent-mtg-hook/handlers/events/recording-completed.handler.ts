@@ -12,6 +12,7 @@
 import { Injectable } from '@nestjs/common';
 import { BaseEventHandler } from '../base/base-event.handler';
 import { RecordingCompletedPayload, RecordingData } from '../../types';
+import { MeetingParticipantService } from '@/meeting/service/meeting-participant.service';
 import {
   MeetingBitableService,
   SpeakerService,
@@ -34,6 +35,7 @@ export class RecordingCompletedHandler extends BaseEventHandler {
     private readonly dataFetcher: RecordingDataFetcherService,
     private readonly databaseSvc: MeetingDatabaseService,
     private readonly summarySvc: SummaryService,
+    private readonly participantSvc: MeetingParticipantService,
   ) {
     super();
   }
@@ -71,6 +73,7 @@ export class RecordingCompletedHandler extends BaseEventHandler {
     }
 
     await this.speakerSvc.syncPtUsers(r.deduplicated);
+    await this.participantSvc.syncParticipants(r);
     await this.bitableService.safeUpsertMeetingUserRecords(r.deduplicated);
     await this.bitableService.upsertRecording(r);
     await this.databaseSvc.upsert(payload, this.SUPPORTED_EVENT);
