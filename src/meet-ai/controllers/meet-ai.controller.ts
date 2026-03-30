@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-03-29 20:00:00
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-29 20:06:09
+ * @LastEditTime: 2026-03-30 14:12:36
  * @FilePath: /nove_api/src/meet-ai/controllers/meet-ai.controller.ts
  * @Description:
  *
@@ -43,7 +43,7 @@ export class MeetAiController {
 
   @Post('analyze')
   @HttpCode(HttpStatus.OK)
-  async analyzeMeeting(
+  analyzeMeeting(
     @Body(new ValidationPipe()) body: { meetingId: string },
   ) {
     this.logger.log('分析会议', { meetingId: body.meetingId });
@@ -52,7 +52,7 @@ export class MeetAiController {
 
   @Get(':meetingId/summary')
   @HttpCode(HttpStatus.OK)
-  async getMeetingSummary(@Param('meetingId') meetingId: string) {
+  getMeetingSummary(@Param('meetingId') meetingId: string) {
     this.logger.log('获取会议摘要', { meetingId });
     return this.meetAiService.getMeetingSummary(meetingId);
   }

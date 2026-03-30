@@ -2,12 +2,13 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-03-29 20:01:15
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-29 20:01:17
+ * @LastEditTime: 2026-03-30 14:09:29
  * @FilePath: /nove_api/src/meet-ai/repositories/meet-ai.repository.ts
  * @Description:
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
+
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
@@ -15,7 +16,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class MeetAiRepository {
   constructor(private prisma: PrismaService) {}
 
-  async analyzeMeeting(meetingId: string) {
+  analyzeMeeting(meetingId: string) {
     return {
       meetingId,
       status: 'analyzing',
@@ -23,7 +24,7 @@ export class MeetAiRepository {
     };
   }
 
-  async getMeetingSummary(meetingId: string) {
+  getMeetingSummary(meetingId: string) {
     return {
       meetingId,
       summary: '会议摘要',

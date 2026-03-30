@@ -360,7 +360,7 @@ export class MeetingBitableService {
       return recordingRecordIds;
     } catch (error: unknown) {
       this.logger.error(
-        `创建录制文件记录失败: ${r.files || ''}`,
+        `创建录制文件记录失败: ${r.files ? JSON.stringify(r.files) : ''}`,
         error instanceof Error ? error.stack : undefined,
       );
       return [];

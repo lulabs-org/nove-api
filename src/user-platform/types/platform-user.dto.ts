@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { PlatformUser, Platform } from '@prisma/client';
+import { Platform } from '@prisma/client';
 
 export class PlatformUserDto {
   @ApiProperty({ description: '平台用户ID' })

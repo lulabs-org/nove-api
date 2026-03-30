@@ -6,7 +6,6 @@ import {
   Delete,
   Body,
   Param,
-  Query,
 } from '@nestjs/common';
 import { PlatformUserService } from '../services/platform-user.service';
 import type { Platform } from '@prisma/client';

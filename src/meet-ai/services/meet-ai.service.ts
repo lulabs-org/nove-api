@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-03-29 20:00:11
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-30 14:01:35
+ * @LastEditTime: 2026-03-30 14:11:28
  * @FilePath: /nove_api/src/meet-ai/services/meet-ai.service.ts
  * @Description:
  *
@@ -22,12 +22,12 @@ export class MeetAiService {
     private readonly participantSummaryService: ParticipantSummaryService,
   ) {}
 
-  async analyzeMeeting(meetingId: string) {
+  analyzeMeeting(meetingId: string) {
     this.logger.log(`分析会议: ${meetingId}`);
     return this.meetAiRepository.analyzeMeeting(meetingId);
   }
 
-  async getMeetingSummary(meetingId: string) {
+  getMeetingSummary(meetingId: string) {
     this.logger.log(`获取会议摘要: ${meetingId}`);
     return this.meetAiRepository.getMeetingSummary(meetingId);
   }

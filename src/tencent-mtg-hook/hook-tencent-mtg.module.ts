@@ -15,7 +15,6 @@ import { TencentModule } from '@/integrations';
 import { tencentMeetingConfig } from '@/configs/tencent-mtg.config';
 import { PrismaModule } from '../prisma/prisma.module';
 import { LarkModule } from '@/integrations/lark/lark.module';
-import { OpenaiModule } from '@/integrations/openai/openai.module';
 import { UserModule } from '@/user/user.module';
 import { UserPlatformModule } from '@/user-platform/user-platform.module';
 import { MeetAiModule } from '@/meet-ai/meet-ai.module';

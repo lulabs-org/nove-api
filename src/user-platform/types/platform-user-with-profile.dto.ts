@@ -2,14 +2,15 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-03-29 19:52:24
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-29 19:52:26
+ * @LastEditTime: 2026-03-30 14:09:38
  * @FilePath: /nove_api/src/user-platform/types/platform-user-with-profile.dto.ts
  * @Description:
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
+
 import { ApiProperty } from '@nestjs/swagger';
-import { PlatformUser, Platform } from '@prisma/client';
+import { Platform } from '@prisma/client';
 
 export class PlatformUserWithProfileDto {
   @ApiProperty({ description: '平台用户ID' })

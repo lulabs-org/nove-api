@@ -1,6 +1,16 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsEnum, IsOptional, IsBoolean } from 'class-validator';
-import type { Platform } from '@prisma/client';
+/*
+ * @Author: 杨仕明 shiming.y@qq.com
+ * @Date: 2026-03-29 19:50:12
+ * @LastEditors: 杨仕明 shiming.y@qq.com
+ * @LastEditTime: 2026-03-30 14:07:54
+ * @FilePath: /nove_api/src/user-platform/dto/update-platform-user.dto.ts
+ * @Description:
+ *
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
+ */
+
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsString, IsOptional, IsBoolean } from 'class-validator';
 
 export class UpdatePlatformUserDto {
   @ApiPropertyOptional({
