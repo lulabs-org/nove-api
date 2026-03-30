@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-09-13 02:54:40
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-29 17:56:32
+ * @LastEditTime: 2026-03-30 03:54:22
  * @FilePath: /nove_api/src/tencent-mtg-hook/handlers/events/recording-completed.handler.ts
  * @Description: 录制完成事件处理器
  *
@@ -16,7 +16,7 @@ import {
   MeetingBitableService,
   SpeakerService,
   RecordingDataFetcherService,
-  TencentParticipantSummaryService,
+  SummaryService,
 } from '../../services';
 import { MeetingDatabaseService } from '../../services/meeting-database.service';
 
@@ -32,8 +32,8 @@ export class RecordingCompletedHandler extends BaseEventHandler {
     private readonly bitableService: MeetingBitableService,
     private readonly speakerSvc: SpeakerService,
     private readonly dataFetcher: RecordingDataFetcherService,
-    private readonly meetingDatabaseSvc: MeetingDatabaseService,
-    private readonly participantSummarySvc: TencentParticipantSummaryService,
+    private readonly databaseSvc: MeetingDatabaseService,
+    private readonly summarySvc: SummaryService,
   ) {
     super();
   }
@@ -72,17 +72,11 @@ export class RecordingCompletedHandler extends BaseEventHandler {
 
     await this.speakerSvc.syncPtUsers(r.deduplicated);
     await this.bitableService.safeUpsertMeetingUserRecords(r.deduplicated);
-
     await this.bitableService.upsertRecording(r);
-
-    await this.meetingDatabaseSvc.upsert(payload, this.SUPPORTED_EVENT);
-
-    await this.meetingDatabaseSvc.upsertRecording(r);
-
-    await this.meetingDatabaseSvc.upsertMeetingSummary(r);
-
-    await this.meetingDatabaseSvc.upsertTranscript(r);
-
-    await this.participantSummarySvc.processRecordingFiles(r);
+    await this.databaseSvc.upsert(payload, this.SUPPORTED_EVENT);
+    await this.databaseSvc.upsertRecording(r);
+    await this.databaseSvc.upsertMeetingSummary(r);
+    await this.databaseSvc.upsertTranscript(r);
+    await this.summarySvc.processSummary(r);
   }
 }

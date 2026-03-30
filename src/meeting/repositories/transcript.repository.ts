@@ -2,8 +2,8 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-03 08:11:41
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-04 03:14:32
- * @FilePath: /lulab_backend/src/hook-tencent-mtg/repositories/transcript.repository.ts
+ * @LastEditTime: 2026-03-30 01:32:37
+ * @FilePath: /nove_api/src/meeting/repositories/transcript.repository.ts
  * @Description:
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
@@ -67,6 +67,24 @@ export class TranscriptRepository {
   async findByRecordingId(recordingId: string) {
     return this.prisma.transcript.findFirst({
       where: { recordingId },
+    });
+  }
+
+  async findDetails(recordingId: string) {
+    return this.prisma.transcript.findFirst({
+      where: { recordingId },
+      include: {
+        paragraphs: {
+          include: {
+            speaker: true,
+            sentences: {
+              include: {
+                words: true,
+              },
+            },
+          },
+        },
+      },
     });
   }
 

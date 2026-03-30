@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-24
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-29 21:06:53
+ * @LastEditTime: 2026-03-30 04:57:27
  * @FilePath: /nove_api/src/tencent-mtg-hook/services/meeting-database.service.ts
  * @Description: 会议数据库服务，处理会议记录的创建和更新
  *
@@ -23,16 +23,16 @@ import {
 } from '@prisma/client';
 import {
   MeetingRecordingRepository,
+  MeetingSummaryRepository,
   TranscriptRepository,
 } from '@/meeting/repositories';
-import { MeetingSummaryRepository } from '@/meeting/repositories';
 import {
   RecordingSource,
   RecordingStatus,
   GenerationMethod,
   ProcessingStatus,
 } from '@prisma/client';
-import { TranscriptBatchProcessor } from '../services';
+import { TranscriptBatchProcessor } from './transcript-batch-processor.service';
 
 /**
  * 会议数据库服务

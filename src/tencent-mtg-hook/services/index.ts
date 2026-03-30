@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-24
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-22 01:40:02
+ * @LastEditTime: 2026-03-30 03:52:15
  * @FilePath: /nove_api/src/tencent-mtg-hook/services/index.ts
  * @Description: Services index file for hook-tencent-mtg module
  *
@@ -15,4 +15,4 @@ export { MeetingDatabaseService } from './meeting-database.service';
 export { SpeakerService } from './speaker.service';
 export { TranscriptBatchProcessor } from './transcript-batch-processor.service';
 export { RecordingDataFetcherService } from './recording-data-fetcher.service';
-export { TencentParticipantSummaryService } from './participant-summary.service';
+export { SummaryService } from './summary.service';

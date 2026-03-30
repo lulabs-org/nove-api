@@ -11,7 +11,7 @@ export class ParticipantSummaryRepository {
     periodType: PeriodType;
     platformUserId?: string;
     meetingId?: string;
-    meetingRecordingId?: string;
+    recordingId?: string;
     userName: string;
     partSummary: string;
     keywords?: string[];
@@ -20,13 +20,15 @@ export class ParticipantSummaryRepository {
     confidence?: number;
     version?: number;
     isLatest?: boolean;
+    period_start?: Date;
+    period_end?: Date;
   }) {
     return this.prisma.participantSummary.create({
       data: {
         periodType: data.periodType,
         platformUserId: data.platformUserId,
         meetingId: data.meetingId,
-        meetingRecordingId: data.meetingRecordingId,
+        meetingRecordingId: data.recordingId,
         userName: data.userName,
         partSummary: data.partSummary,
         keywords: data.keywords || [],
@@ -35,6 +37,8 @@ export class ParticipantSummaryRepository {
         confidence: data.confidence,
         version: data.version || 1,
         isLatest: data.isLatest !== undefined ? data.isLatest : true,
+        periodStart: data.period_start,
+        periodEnd: data.period_end,
       },
     });
   }
@@ -52,6 +56,8 @@ export class ParticipantSummaryRepository {
     confidence?: number;
     version?: number;
     isLatest?: boolean;
+    period_start?: Date;
+    period_end?: Date;
   }) {
     const existingSummary = await this.prisma.participantSummary.findFirst({
       where: {
@@ -73,6 +79,8 @@ export class ParticipantSummaryRepository {
           aiModel: data.aiModel,
           confidence: data.confidence,
           updatedAt: new Date(),
+          periodStart: data.period_start,
+          periodEnd: data.period_end,
         },
       });
     } else {
@@ -90,6 +98,8 @@ export class ParticipantSummaryRepository {
           confidence: data.confidence,
           version: data.version || 1,
           isLatest: data.isLatest !== undefined ? data.isLatest : true,
+          periodStart: data.period_start,
+          periodEnd: data.period_end,
         },
       });
     }
@@ -165,6 +175,52 @@ export class ParticipantSummaryRepository {
             durationSeconds: true,
           },
         },
+      },
+    });
+  }
+
+  async findByPeriodAndMeeting(params: {
+    periodType: PeriodType;
+    platformUserId: string;
+    meetingId: string;
+    recordingId: string;
+    isLatest: boolean;
+  }) {
+    return this.prisma.participantSummary.findFirst({
+      where: {
+        periodType: params.periodType,
+        platformUserId: params.platformUserId,
+        meetingId: params.meetingId,
+        meetingRecordingId: params.recordingId,
+        isLatest: params.isLatest,
+        deletedAt: null,
+      },
+    });
+  }
+
+  async update(
+    id: string,
+    data: {
+      partSummary?: string;
+      keywords?: string[];
+      generatedBy?: GenerationMethod;
+      aiModel?: string;
+      confidence?: number;
+      version?: number;
+      isLatest?: boolean;
+    },
+  ) {
+    return this.prisma.participantSummary.update({
+      where: { id },
+      data: {
+        partSummary: data.partSummary,
+        keywords: data.keywords,
+        generatedBy: data.generatedBy,
+        aiModel: data.aiModel,
+        confidence: data.confidence,
+        version: data.version,
+        isLatest: data.isLatest,
+        updatedAt: new Date(),
       },
     });
   }

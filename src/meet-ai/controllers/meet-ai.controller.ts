@@ -56,4 +56,20 @@ export class MeetAiController {
     this.logger.log('获取会议摘要', { meetingId });
     return this.meetAiService.getMeetingSummary(meetingId);
   }
+
+  @Post('participant-summary')
+  @HttpCode(HttpStatus.OK)
+  async generateParticipantSummary(
+    @Body(new ValidationPipe())
+    body: { recordId: string; platformUserId: string },
+  ) {
+    this.logger.log('生成参会者总结', {
+      recordId: body.recordId,
+      platformUserId: body.platformUserId,
+    });
+    return this.meetAiService.generateParticipantSummary(
+      body.recordId,
+      body.platformUserId,
+    );
+  }
 }

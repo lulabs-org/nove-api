@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-01-03 10:00:00
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-29 21:05:09
+ * @LastEditTime: 2026-03-30 04:59:00
  * @FilePath: /nove_api/src/tencent-mtg-hook/hook-tencent-mtg.module.ts
  * @Description: 腾讯会议模块，处理腾讯会议相关的Webhook事件
  *
@@ -17,17 +17,19 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { LarkModule } from '@/integrations/lark/lark.module';
 import { OpenaiModule } from '@/integrations/openai/openai.module';
 import { UserModule } from '@/user/user.module';
+import { UserPlatformModule } from '@/user-platform/user-platform.module';
 import { MeetAiModule } from '@/meet-ai/meet-ai.module';
 import { MeetingModule } from '@/meeting/meeting.module';
 import { TencentWebhookController } from './controllers/tencent-webhook.controller';
-import { TencentEventHandlerService } from './services/event-handler.service';
-import { MeetingBitableService } from './services/meeting-bitable.service';
-import { MeetingDatabaseService } from './services/meeting-database.service';
-import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
-import { SpeakerService } from './services/speaker.service';
-import { TranscriptBatchProcessor } from './services/transcript-batch-processor.service';
-import { RecordingDataFetcherService } from './services/recording-data-fetcher.service';
-import { TencentParticipantSummaryService } from './services/participant-summary.service';
+import {
+  RecordingDataFetcherService,
+  TencentEventHandlerService,
+  TranscriptBatchProcessor,
+  MeetingDatabaseService,
+  MeetingBitableService,
+  SummaryService,
+  SpeakerService,
+} from './services';
 
 import {
   TencentUrlVerificationPipe,
@@ -49,9 +51,9 @@ import {
     ConfigModule.forFeature(tencentMeetingConfig),
     LarkModule,
     TencentModule,
-    OpenaiModule,
     PrismaModule,
     UserModule,
+    UserPlatformModule,
     MeetAiModule,
     MeetingModule,
   ],
@@ -64,7 +66,7 @@ import {
     SpeakerService,
     TranscriptBatchProcessor,
     RecordingDataFetcherService,
-    TencentParticipantSummaryService,
+    SummaryService,
     MeetingStartedHandler,
     MeetingEndedHandler,
     RecordingCompletedHandler,
@@ -72,7 +74,6 @@ import {
     SmartFullsummaryHandler,
     SmartTranscriptsHandler,
     SmartMinutesHandler,
-    PlatformUserRepository,
     TencentUrlVerificationPipe,
     TencentWebhookDecryptionPipe,
     // 提供 BaseEventHandler 数组的依赖注入配置

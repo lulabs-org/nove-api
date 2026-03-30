@@ -4,11 +4,13 @@ import { BitableService } from '../services/bitable.service';
 import {
   CreateRecordResponse,
   UpdateRecordResponse,
+    SearchRecordResponse,
   BitableField,
   SearchFilter,
 } from '../types/lark-bitable.types';
 import { larkConfig } from '@/configs';
 import { RecordingFileData } from '../types';
+
 
 /**
  * Repository for recording file-related Bitable operations
@@ -147,7 +149,7 @@ export class RecordingFileBitableRepository {
   /**
    * Search recording file records by record_file_id
    */
-  async searchRecordingFileById(recordFileId: string): Promise<any> {
+  async searchRecordingFileById(recordFileId: string): Promise<SearchRecordResponse> {
     const searchConditions: Array<{
       field_name: string;
       operator: 'is';

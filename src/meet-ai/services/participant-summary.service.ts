@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-03-29 20:34:53
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-29 21:03:59
+ * @LastEditTime: 2026-03-30 04:05:33
  * @FilePath: /nove_api/src/meet-ai/services/participant-summary.service.ts
  * @Description:
  *
@@ -10,13 +10,16 @@
  */
 
 import { Injectable, Logger } from '@nestjs/common';
-import { GenerationMethod } from '@prisma/client';
+import { GenerationMethod, PeriodType } from '@prisma/client';
 import { OpenaiService } from '@/integrations/openai/openai.service';
 import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
 import { MeetingRepository } from '@/meeting/repositories/meeting.repository';
 import { ParticipantSummaryRepository } from '../repositories';
-import { MeetingRecordingRepository } from '@/meeting/repositories';
-import { MeetingSummaryRepository } from '@/meeting/repositories';
+import {
+  MeetingRecordingRepository,
+  MeetingSummaryRepository,
+  TranscriptRepository,
+} from '@/meeting/repositories';
 
 @Injectable()
 export class ParticipantSummaryService {
@@ -29,28 +32,29 @@ export class ParticipantSummaryService {
     private readonly recordingRepo: MeetingRecordingRepository,
     private readonly meetingRepo: MeetingRepository,
     private readonly meetingSummaryRepo: MeetingSummaryRepository,
+    private readonly transcriptRepo: TranscriptRepository,
   ) {}
 
-  async generateAndSaveSummary(
+  async generateSummary(
     recordid: string,
     ptByUnionId: string,
-  ): Promise<void> {
+  ): Promise<string | null> {
     const recording = await this.recordingRepo.findById(recordid);
     if (!recording) {
       this.logger.warn(`录制记录不存在: ${recordid}`);
-      return;
+      return null;
     }
 
     const meeting = await this.meetingRepo.findById(recording.meetingId);
     if (!meeting) {
       this.logger.warn(`会议记录不存在: ${recording.meetingId}`);
-      return;
+      return null;
     }
 
     const platformUser = await this.ptUserRepo.findById(ptByUnionId);
     if (!platformUser) {
       this.logger.warn(`平台用户不存在: ${ptByUnionId}`);
-      return;
+      return null;
     }
 
     const meetingSummary = await this.meetingSummaryRepo.findByMeetingId(
@@ -58,49 +62,122 @@ export class ParticipantSummaryService {
     );
     if (!meetingSummary) {
       this.logger.warn(`会议总结不存在: ${meeting.id}`);
-      return;
+      return null;
     }
+
+    const transcript = await this.transcriptRepo.findDetails(recordid);
+    if (!transcript) {
+      this.logger.warn(`转录记录不存在: ${recordid}`);
+      return null;
+    }
+
+    const paragraphs = transcript.paragraphs.map((paragraph) => {
+      const timeMs = Number(paragraph.startTimeMs);
+      const hours = Math.floor(timeMs / 3600000);
+      const minutes = Math.floor((timeMs % 3600000) / 60000);
+      const seconds = Math.floor((timeMs % 60000) / 1000);
+
+      const timeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+      const speakerName = paragraph.speaker?.displayName || '未知发言人';
+
+      const content = paragraph.sentences
+        .map((sentence) => sentence.text || '')
+        .filter((text) => text)
+        .join('');
+
+      return [timeStr, speakerName, content];
+    });
+
+    const formatToBeijingTime = (date: Date | null | undefined): string => {
+      if (!date) return '未知';
+      const beijingTime = new Date(date.getTime() + 8 * 60 * 60 * 1000);
+      const year = beijingTime.getUTCFullYear();
+      const month = String(beijingTime.getUTCMonth() + 1).padStart(2, '0');
+      const day = String(beijingTime.getUTCDate()).padStart(2, '0');
+      const hours = String(beijingTime.getUTCHours()).padStart(2, '0');
+      const minutes = String(beijingTime.getUTCMinutes()).padStart(2, '0');
+      const seconds = String(beijingTime.getUTCSeconds()).padStart(2, '0');
+      return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    };
 
     const user = platformUser.user;
     const profile = user?.profile;
     const userName =
-      profile?.displayName ||
-      profile?.firstName ||
       platformUser.displayName ||
+      profile?.displayName ||
+      user?.username ||
+      (profile?.lastName || '') + (profile?.firstName || '') ||
       '未知用户';
 
     const systemPrompt =
       '你是专业的会议总结助手，擅长为参会者提供个性化、实用的会议总结。';
 
     const prompt = `请为参会者 ${userName} 生成会议总结。
-会议主题: ${meeting.title}
-会议时间: ${meeting.startAt?.toISOString() || '未知'} 至 ${meeting.endAt?.toISOString() || '未知'}
-会议纪要: ${meetingSummary.aiMinutes ? JSON.stringify(meetingSummary.aiMinutes) : '暂无会议纪要'}
-关键要点: ${meetingSummary.keyPoints ? JSON.stringify(meetingSummary.keyPoints) : '暂无关键要点'}
-行动项: ${meetingSummary.actionItems ? JSON.stringify(meetingSummary.actionItems) : '暂无行动项'}
-决策记录: ${meetingSummary.decisions ? JSON.stringify(meetingSummary.decisions) : '暂无决策记录'}
-会议金句: ${meetingSummary.goldenQuotes ? JSON.stringify(meetingSummary.goldenQuotes) : '暂无会议金句'}
-关键词: ${meetingSummary.keywords?.join(', ') || '暂无关键词'}
-
-
-
+需要总结的参会者姓名: ${userName}\n
+会议ID: ${meeting.id}\n
+会议主题: ${meeting.title}\n
+会议时间（北京时间）: ${formatToBeijingTime(meeting.startAt)} 至 ${formatToBeijingTime(meeting.endAt)}\n
+会议纪要: ${meetingSummary.aiMinutes ? JSON.stringify(meetingSummary.aiMinutes) : '暂无会议纪要'}\n
+关键要点: ${meetingSummary.keyPoints ? JSON.stringify(meetingSummary.keyPoints) : '暂无关键要点'}\n
+行动项: ${meetingSummary.actionItems ? JSON.stringify(meetingSummary.actionItems) : '暂无行动项'}\n
+决策记录: ${meetingSummary.decisions ? JSON.stringify(meetingSummary.decisions) : '暂无决策记录'}\n
+会议金句: ${meetingSummary.goldenQuotes ? JSON.stringify(meetingSummary.goldenQuotes) : '暂无会议金句'}\n
+关键词: ${meetingSummary.keywords?.join(', ') || '暂无关键词'}\n
+会议转录格式：[时间戳, 说话人姓名, 内容]\n
+会议转录内容: ${JSON.stringify(paragraphs)}\n
 请根据以上信息，为参会者 ${userName} 生成一份个性化的会议总结，重点关注与该参会者相关的内容。`;
 
     const summary = await this.openaiService.ask(prompt, systemPrompt);
 
+    const res = await this.partSummaryRepo.findByPeriodAndMeeting({
+      periodType: PeriodType.SINGLE,
+      platformUserId: ptByUnionId,
+      meetingId: meeting.id,
+      recordingId: recordid,
+      isLatest: true,
+    });
+
+    if (res) {
+      this.logger.warn(`参会者: ${userName} 已存在总结`);
+
+      await this.partSummaryRepo.update(res.id, {
+        isLatest: false,
+      });
+
+      await this.partSummaryRepo.create({
+        periodType: PeriodType.SINGLE,
+        platformUserId: ptByUnionId,
+        meetingId: meeting.id,
+        recordingId: recordid,
+        userName: userName,
+        partSummary: summary,
+        generatedBy: GenerationMethod.AI,
+        aiModel: 'deepseek-v3-1-terminus',
+        version: res.version + 1,
+        isLatest: true,
+        period_start: recording.startAt || meeting.startAt || undefined,
+        period_end: recording.endAt || meeting.endAt || undefined,
+      });
+      return summary;
+    }
+
     await this.partSummaryRepo.upsert({
-      periodType: 'SINGLE',
+      periodType: PeriodType.SINGLE,
       platformUserId: ptByUnionId,
       meetingId: meeting.id,
       recordingId: recordid,
       userName: userName,
       partSummary: summary,
       generatedBy: GenerationMethod.AI,
-      aiModel: 'tencent-meeting-ai',
+      aiModel: 'deepseek-v3-1-terminus',
       version: 1,
       isLatest: true,
+      period_start: recording.startAt || meeting.startAt || undefined,
+      period_end: recording.endAt || meeting.endAt || undefined,
     });
 
     this.logger.log(`成功生成参会者: ${userName}总结`);
+    return summary;
   }
 }
