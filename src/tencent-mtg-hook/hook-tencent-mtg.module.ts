@@ -28,6 +28,7 @@ import {
   MeetingBitableService,
   SummaryService,
   SpeakerService,
+  MeetingParticipantService,
 } from './services';
 
 import {
@@ -66,6 +67,7 @@ import {
     TranscriptBatchProcessor,
     RecordingDataFetcherService,
     SummaryService,
+    MeetingParticipantService,
     MeetingStartedHandler,
     MeetingEndedHandler,
     RecordingCompletedHandler,

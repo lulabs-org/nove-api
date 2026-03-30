@@ -1,19 +1,22 @@
 /*
  * @Author: 杨仕明 shiming.y@qq.com
- * @Date: 2026-03-30 14:30:59
+ * @Date: 2026-03-30 19:12:18
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-30 18:56:39
- * @FilePath: /nove_api/src/meeting/service/meeting-participant.service.ts
+ * @LastEditTime: 2026-03-30 19:17:58
+ * @FilePath: /nove_api/src/tencent-mtg-hook/services/meeting-participant.service.ts
  * @Description:
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
+
 import { Injectable, Logger } from '@nestjs/common';
-import { MeetingParticipantRepository } from '../repositories/meeting-participant.repository';
-import { MeetingRepository } from '../repositories/meeting.repository';
+import {
+  MeetingParticipantRepository,
+  MeetingRepository,
+} from '@/meeting/repositories';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Platform, Prisma } from '@prisma/client';
-import type { RecordingData } from '../../tencent-mtg-hook/types';
+import type { RecordingData } from '../types';
 
 @Injectable()
 export class MeetingParticipantService {
@@ -26,7 +29,7 @@ export class MeetingParticipantService {
   ) {}
 
   async syncParticipants(r: RecordingData): Promise<void> {
-    if (!r.deduplicated || r.deduplicated.length === 0) {
+    if (!r.participants || r.participants.length === 0) {
       return;
     }
 
@@ -43,7 +46,7 @@ export class MeetingParticipantService {
       return;
     }
 
-    for (const p of r.deduplicated) {
+    for (const p of r.participants) {
       if (!p.uuid) continue;
 
       const ptUser = await this.prisma.platformUser.findFirst({
@@ -75,8 +78,6 @@ export class MeetingParticipantService {
         joinTime,
         leftTime,
         durationSeconds,
-        instanceId: p.instanceid,
-        userRole: p.user_role,
         sessionData,
       });
     }

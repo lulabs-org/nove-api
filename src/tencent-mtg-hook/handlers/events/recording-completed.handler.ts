@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-09-13 02:54:40
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-30 03:54:22
+ * @LastEditTime: 2026-03-30 19:16:03
  * @FilePath: /nove_api/src/tencent-mtg-hook/handlers/events/recording-completed.handler.ts
  * @Description: 录制完成事件处理器
  *
@@ -12,14 +12,14 @@
 import { Injectable } from '@nestjs/common';
 import { BaseEventHandler } from '../base/base-event.handler';
 import { RecordingCompletedPayload, RecordingData } from '../../types';
-import { MeetingParticipantService } from '@/meeting/service/meeting-participant.service';
 import {
+  MeetingParticipantService,
   MeetingBitableService,
   SpeakerService,
   RecordingDataFetcherService,
   SummaryService,
+  MeetingDatabaseService,
 } from '../../services';
-import { MeetingDatabaseService } from '../../services/meeting-database.service';
 
 /**
  * 录制完成事件处理器

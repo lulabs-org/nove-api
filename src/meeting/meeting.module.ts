@@ -21,7 +21,6 @@ import { ParagraphRepository } from './repositories/paragraph.repository';
 import { SentenceRepository } from './repositories/sentence.repository';
 import { WordRepository } from './repositories/word.repository';
 import { MeetingParticipantRepository } from './repositories/meeting-participant.repository';
-import { MeetingParticipantService } from './service/meeting-participant.service';
 import { HttpModule } from '@nestjs/axios';
 import { PrismaModule } from '../prisma/prisma.module';
 
@@ -39,7 +38,6 @@ import { PrismaModule } from '../prisma/prisma.module';
     SentenceRepository,
     WordRepository,
     MeetingParticipantRepository,
-    MeetingParticipantService,
   ],
   exports: [
     MeetingService,
@@ -52,7 +50,6 @@ import { PrismaModule } from '../prisma/prisma.module';
     SentenceRepository,
     WordRepository,
     MeetingParticipantRepository,
-    MeetingParticipantService,
   ],
 })
 export class MeetingModule {}
