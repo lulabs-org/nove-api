@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-10-01 01:08:34
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-21 21:15:37
+ * @LastEditTime: 2026-03-31 01:29:37
  * @FilePath: /nove_api/src/tencent-mtg-hook/controllers/tencent-webhook.controller.ts
  * @Description: 腾讯会议Webhook控制器
  *
@@ -30,10 +30,7 @@ import { Public } from '@/auth/decorators/public.decorator';
 import { TencentEventHandlerService } from '../services/event-handler.service';
 import { WebhookLoggingInterceptor } from '../interceptors/webhook-logging.interceptor';
 import { MeetingEvent } from '../types';
-import {
-  TencentUrlVerificationPipe,
-  TencentWebhookDecryptionPipe,
-} from '../pipes';
+import { UrlVerificationPipe, BodyDecryptionPipe } from '../pipes';
 
 /**
  * Tencent Meeting Webhook Controller
@@ -64,7 +61,7 @@ export class TencentWebhookController {
   @HttpCode(HttpStatus.OK)
   @ApiTencentUrlVerificationDocs()
   async verifyTencentWebhook(
-    @Query('check_str', TencentUrlVerificationPipe) decryptedStr: string,
+    @Query('check_str', UrlVerificationPipe) decryptedStr: string,
   ): Promise<string> {
     this.logger.log(
       'Received Tencent Meeting Webhook URL verification request',
@@ -90,7 +87,7 @@ export class TencentWebhookController {
   async handleTencentWebhook(
     @Body(
       new ValidationPipe({ transform: true, whitelist: true }),
-      TencentWebhookDecryptionPipe,
+      BodyDecryptionPipe,
     )
     eventData: MeetingEvent,
   ): Promise<string> {

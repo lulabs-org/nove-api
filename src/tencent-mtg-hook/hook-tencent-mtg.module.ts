@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-01-03 10:00:00
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-30 04:59:00
+ * @LastEditTime: 2026-03-31 01:29:54
  * @FilePath: /nove_api/src/tencent-mtg-hook/hook-tencent-mtg.module.ts
  * @Description: 腾讯会议模块，处理腾讯会议相关的Webhook事件
  *
@@ -31,10 +31,7 @@ import {
   MeetingParticipantService,
 } from './services';
 
-import {
-  TencentUrlVerificationPipe,
-  TencentWebhookDecryptionPipe,
-} from './pipes';
+import { UrlVerificationPipe, BodyDecryptionPipe } from './pipes';
 import {
   MeetingStartedHandler,
   EventHandlerFactory,
@@ -75,8 +72,8 @@ import {
     SmartFullsummaryHandler,
     SmartTranscriptsHandler,
     SmartMinutesHandler,
-    TencentUrlVerificationPipe,
-    TencentWebhookDecryptionPipe,
+    UrlVerificationPipe,
+    BodyDecryptionPipe,
     // 提供 BaseEventHandler 数组的依赖注入配置
     {
       provide: 'BaseEventHandler[]',

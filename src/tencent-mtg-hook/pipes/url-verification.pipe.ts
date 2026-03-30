@@ -2,8 +2,8 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-11-23 23:34:15
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2025-12-09 18:11:05
- * @FilePath: /lulab_backend/src/hook-tencent-mtg/pipes/tencent-webhook-url-verification.pipe.ts
+ * @LastEditTime: 2026-03-31 01:28:09
+ * @FilePath: /nove_api/src/tencent-mtg-hook/pipes/url-verification.pipe.ts
  * @Description: 腾讯会议WebhookURL验证管道
  *
  * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
@@ -17,7 +17,7 @@ import { tencentMeetingConfig } from '@/configs/tencent-mtg.config';
 import { verifyWebhookUrl } from '@/integrations/tencent-meeting';
 
 @Injectable({ scope: Scope.REQUEST })
-export class TencentUrlVerificationPipe
+export class UrlVerificationPipe
   implements PipeTransform<string, Promise<string>>
 {
   constructor(

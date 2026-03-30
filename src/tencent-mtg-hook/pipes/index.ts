@@ -9,5 +9,5 @@
  * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
  */
 
-export * from './tencent-webhook-url-verification.pipe';
-export * from './tencent-webhook-body-decryption.pipe';
+export * from './url-verification.pipe';
+export * from './body-decryption.pipe';

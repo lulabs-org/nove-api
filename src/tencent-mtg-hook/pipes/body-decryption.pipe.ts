@@ -2,8 +2,8 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-11-23 23:53:29
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-21 21:15:31
- * @FilePath: /nove_api/src/tencent-mtg-hook/pipes/tencent-webhook-body-decryption.pipe.ts
+ * @LastEditTime: 2026-03-31 01:29:12
+ * @FilePath: /nove_api/src/tencent-mtg-hook/pipes/body-decryption.pipe.ts
  * @Description: 腾讯会议Webhook解密管道
  *
  * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
@@ -30,7 +30,7 @@ import { TencentWebhookEventBodyDto } from '../dto/tencent-webhook-body.dto';
 import { MeetingEvent } from '../types';
 
 @Injectable({ scope: Scope.REQUEST }) // 需要获取 Request Headers，所以必须是 Request Scope
-export class TencentWebhookDecryptionPipe implements PipeTransform {
+export class BodyDecryptionPipe implements PipeTransform {
   constructor(
     @Inject(REQUEST) private readonly request: Request,
     @Inject(tencentMeetingConfig.KEY)
