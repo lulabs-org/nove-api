@@ -1,17 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { ProcessingStatus, Prisma } from '@prisma/client';
-import { MeetingRepository } from './repositories/meeting.repository';
-import { GetMeetingRecordsParams } from './types';
+import { MeetingRepository } from '../repositories/meeting.repository';
+import { GetMeetingRecordsParams } from '../types';
 import {
   MeetingRecordResponseDto,
   MeetingStatsResponseDto,
   CreateMeetingRecordDto,
   UpdateMeetingRecordDto,
-} from './dto';
+} from '../dto';
 import {
   MeetingRecordNotFoundException,
   MeetingRecordAlreadyExistsException,
-} from './exceptions/meeting.exceptions';
+} from '../exceptions/meeting.exceptions';
 
 /**
  * 核心会议服务
@@ -52,7 +52,7 @@ export class MeetingService {
     params: CreateMeetingRecordDto,
   ): Promise<MeetingRecordResponseDto> {
     // 检查是否已存在
-    const existing = await this.meetingRepository.findByPtId(
+    const existing = await this.meetingRepository.findByPt(
       params.platform,
       params.platformMeetingId,
       '', // Default empty subMeetingId

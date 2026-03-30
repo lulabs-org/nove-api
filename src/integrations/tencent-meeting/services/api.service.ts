@@ -138,7 +138,7 @@ export class TencentApiService {
     const code = new_error_code ?? error_code ?? 0;
 
     if (code === 500125) {
-      throw new Error('IP白名单错误');
+      throw new Error(`IP白名单错误: ${message}`);
     }
 
     throw new Error(message || `API error at ${requestUri} (${timestamp})`);

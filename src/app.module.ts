@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-07-06 05:06:37
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-17 20:58:15
+ * @LastEditTime: 2026-03-29 20:04:35
  * @FilePath: /nove_api/src/app.module.ts
  * @Description: Application module that defines the application's entry point and dependency injection
  *
@@ -38,6 +38,7 @@ import { RoleModule } from './role/role.module';
 import { OrganizationModule } from './org/organization.module';
 import { DepartmentModule } from './dept/department.module';
 import { OrgMemberModule } from './org-member/org-member.module';
+import { MeetAiModule } from './meet-ai/meet-ai.module';
 
 @Module({
   imports: [
@@ -76,6 +77,7 @@ import { OrgMemberModule } from './org-member/org-member.module';
     OrganizationModule,
     DepartmentModule,
     OrgMemberModule,
+    MeetAiModule,
   ],
   controllers: [AppController],
   providers: [

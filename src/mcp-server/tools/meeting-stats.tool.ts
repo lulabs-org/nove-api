@@ -3,9 +3,9 @@ import { Tool, Context, ToolScopes } from '@rekog/mcp-nest';
 import { z } from 'zod';
 import {
   MeetingStatsRepository,
-  ParticipantSummaryRepository,
   PlatformUserRepository,
 } from '../repositories';
+import { ParticipantSummaryRepository } from '@/meet-ai/repositories';
 import { PeriodType } from '@prisma/client';
 
 @Injectable()

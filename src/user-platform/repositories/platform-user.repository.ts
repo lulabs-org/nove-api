@@ -5,6 +5,16 @@ import type { PlatformUser, Platform, Prisma } from '@prisma/client';
 type PlatformUserCreateInput = Prisma.PlatformUserUncheckedCreateInput;
 type PlatformUserUpdateInput = Prisma.PlatformUserUncheckedUpdateInput;
 
+type PlatformUserWithProfile = Prisma.PlatformUserGetPayload<{
+  include: {
+    user: {
+      include: {
+        profile: true;
+      };
+    };
+  };
+}>;
+
 @Injectable()
 export class PlatformUserRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -96,9 +106,16 @@ export class PlatformUserRepository {
     });
   }
 
-  async findById(id: string): Promise<PlatformUser | null> {
+  async findById(id: string): Promise<PlatformUserWithProfile | null> {
     return this.prisma.platformUser.findUnique({
       where: { id },
+      include: {
+        user: {
+          include: {
+            profile: true,
+          },
+        },
+      },
     });
   }
 

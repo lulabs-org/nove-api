@@ -23,7 +23,7 @@ import {
   ApiReprocessMeetingRecordDocs,
   ApiHealthCheckDocs,
 } from './decorators/meeting-record.decorators';
-import { MeetingService } from './meeting.service';
+import { MeetingService } from './service/meeting.service';
 import {
   QueryMeetingRecordsDto,
   MeetingRecordResponseDto,

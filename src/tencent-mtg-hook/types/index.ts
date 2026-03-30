@@ -27,5 +27,8 @@ export * from './transcript.types';
 // Speaker 相关类型定义
 export * from './recording-transcript.types';
 
+// 录制数据类型定义
+export * from './recording-data.types';
+
 // 用户相关类型定义
 export * from './user.types';
