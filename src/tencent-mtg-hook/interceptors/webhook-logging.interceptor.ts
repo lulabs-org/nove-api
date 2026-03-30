@@ -14,257 +14,141 @@ import {
   CallHandler,
   Logger,
 } from '@nestjs/common';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 
 /**
- * Webhook logging interceptor
- * Records detailed information for all Webhook requests, including headers, body, response time, etc.
+ * Tencent Meeting webhook logging interceptor
+ * Keeps request logs focused on Tencent-specific debugging information.
  */
 @Injectable()
 export class WebhookLoggingInterceptor implements NestInterceptor {
   private readonly logger = new Logger(WebhookLoggingInterceptor.name);
 
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-    const request = context
-      .switchToHttp()
-      .getRequest<Request<any, any, unknown, any>>();
+  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+    const request = context.switchToHttp().getRequest<Request>();
     const response = context.switchToHttp().getResponse<Response>();
     const startTime = Date.now();
-
-    // Extract key information (avoid unsafe destructuring of potential any types)
     const method = request.method;
     const url = request.url;
-    const headers = request.headers as Record<string, unknown>;
-    const body = request.body;
-    const query = request.query as Record<string, unknown>;
-    const ip = request.ip;
 
-    // Log request start
-    this.logger.log(`Webhook request started: ${method} ${url}`, {
-      ip,
-      userAgent: headers['user-agent'],
-      contentType: headers['content-type'],
-      contentLength: headers['content-length'],
-      query: Object.keys(query).length > 0 ? query : undefined,
-      timestamp: new Date().toISOString(),
+    this.logger.log(`Tencent webhook request started: ${method} ${url}`, {
+      ip: request.ip,
+      userAgent: this.getHeaderValue(request.headers, 'user-agent'),
+      contentLength: this.getHeaderValue(request.headers, 'content-length'),
+      timestamp: this.getHeaderValue(request.headers, 'timestamp'),
+      nonce: this.getHeaderValue(request.headers, 'nonce'),
+      signature: this.maskSignature(
+        this.getHeaderValue(request.headers, 'signature'),
+      ),
+      encryptedDataLength: this.getEncryptedDataLength(request.body),
+      checkStrPresent: this.hasCheckStr(request.query),
     });
 
-    // Log important headers (filter sensitive information)
-    const importantHeaders = this.filterHeaders(headers);
-    if (Object.keys(importantHeaders).length > 0) {
-      this.logger.debug('Important headers:', importantHeaders);
-    }
-
-    // Log request body (if not too large)
-    if (body && this.shouldLogBody(body, headers)) {
-      this.logger.debug('Request body:', {
-        bodyType: typeof body,
-        bodySize: JSON.stringify(body).length,
-        body: this.sanitizeBody(body),
-      });
-    }
-
     return next.handle().pipe(
-      tap((data) => {
+      tap(() => {
         const duration = Date.now() - startTime;
 
         this.logger.log(
-          `Webhook request succeeded: ${method} ${url} - ${response.statusCode} - ${duration}ms`,
+          `Tencent webhook request completed: ${method} ${url} - ${response.statusCode} - ${duration}ms`,
           {
             statusCode: response.statusCode,
             duration,
-            responseType: typeof data,
-            responseSize: data ? JSON.stringify(data).length : 0,
-            timestamp: new Date().toISOString(),
+            timestamp: this.getHeaderValue(request.headers, 'timestamp'),
+            nonce: this.getHeaderValue(request.headers, 'nonce'),
+            signature: this.maskSignature(
+              this.getHeaderValue(request.headers, 'signature'),
+            ),
           },
         );
-
-        // Log response data (if exists and not too large)
-        if (data && this.shouldLogResponse(data)) {
-          this.logger.debug('Response data:', {
-            data: this.sanitizeResponse(data),
-          });
-        }
       }),
       catchError((error: unknown) => {
         const duration = Date.now() - startTime;
-
-        const err = error as {
-          message?: string;
-          stack?: string;
-          status?: number;
-        };
+        const err = this.normalizeError(error);
         this.logger.error(
-          `Webhook request failed: ${method} ${url} - ${duration}ms`,
+          `Tencent webhook request failed: ${method} ${url} - ${duration}ms`,
           {
-            error: err?.message,
-            stack: err?.stack,
-            statusCode: err?.status ?? 500,
+            error: err.message,
+            stack: err.stack,
+            statusCode: err.statusCode,
             duration,
-            timestamp: new Date().toISOString(),
+            timestamp: this.getHeaderValue(request.headers, 'timestamp'),
+            nonce: this.getHeaderValue(request.headers, 'nonce'),
+            signature: this.maskSignature(
+              this.getHeaderValue(request.headers, 'signature'),
+            ),
           },
         );
 
-        throw error;
+        return throwError(() => error);
       }),
     );
   }
 
-  /**
-   * Filter request headers, keeping only important non-sensitive information
-   */
-  private filterHeaders(
-    headers: Record<string, unknown>,
-  ): Record<string, unknown> {
-    const importantHeaders: Record<string, unknown> = {};
-
-    // Important headers to log
-    const headersToLog = [
-      'wechatwork-signature',
-      'wechatwork-timestamp',
-      'wechatwork-nonce',
-      'x-zoom-webhook-signature',
-      'x-zoom-webhook-timestamp',
-      'x-teams-signature',
-      'x-feishu-signature',
-      'content-type',
-      'content-length',
-      'user-agent',
-      'x-forwarded-for',
-      'x-real-ip',
-    ];
-
-    for (const key of headersToLog) {
-      const lowerKey = key.toLowerCase();
-      const value = headers[key] || headers[lowerKey];
-      if (value) {
-        // Partially mask signatures
-        if (key.includes('signature')) {
-          if (typeof value === 'string') {
-            importantHeaders[key] = this.maskSignature(value);
-          }
-        } else {
-          importantHeaders[key] = value;
-        }
-      }
+  private getHeaderValue(
+    headers: Request['headers'],
+    key: string,
+  ): string | undefined {
+    const value = headers[key];
+    if (Array.isArray(value)) {
+      return value[0];
     }
 
-    return importantHeaders;
+    return typeof value === 'string' && value.length > 0 ? value : undefined;
   }
 
-  /**
-   * Determine whether to log request body
-   */
-  private shouldLogBody(
-    body: unknown,
-    headers: Record<string, unknown>,
-  ): boolean {
-    // Don't log too large request body
-    const bodySize = JSON.stringify(body).length;
-    if (bodySize > 10000) {
-      // 10KB limit
-      return false;
-    }
-
-    // Don't log binary content
-    const ctRaw = headers['content-type'];
-    const contentType = typeof ctRaw === 'string' ? ctRaw : '';
-    if (
-      contentType.includes('multipart/form-data') ||
-      contentType.includes('application/octet-stream')
-    ) {
-      return false;
-    }
-
-    return true;
-  }
-
-  /**
-   * Determine whether to log response data
-   */
-  private shouldLogResponse(data: unknown): boolean {
-    if (!data) return false;
-
-    const dataSize = JSON.stringify(data).length;
-    return dataSize <= 5000; // 5KB limit
-  }
-
-  /**
-   * Clean sensitive information from request body
-   */
-  private sanitizeBody(body: unknown): unknown {
+  private getEncryptedDataLength(body: unknown): number | undefined {
     if (typeof body !== 'object' || body === null) {
-      return body;
+      return undefined;
     }
 
-    const sanitized: Record<string, unknown> = {
-      ...(body as Record<string, unknown>),
-    };
-
-    // Remove or mask sensitive fields
-    const sensitiveFields = [
-      'password',
-      'token',
-      'secret',
-      'key',
-      'authorization',
-      'credential',
-    ];
-
-    for (const field of sensitiveFields) {
-      if (field in sanitized) {
-        sanitized[field] = '***MASKED***';
-      }
-    }
-
-    // Recursively process nested objects
-    for (const key in sanitized) {
-      const val = sanitized[key];
-      if (typeof val === 'object' && val !== null) {
-        sanitized[key] = this.sanitizeBody(val);
-      }
-    }
-
-    return sanitized;
+    const data = (body as Record<string, unknown>).data;
+    return typeof data === 'string' ? data.length : undefined;
   }
 
-  /**
-   * Clean sensitive information from response data
-   */
-  private sanitizeResponse(data: unknown): unknown {
-    if (typeof data !== 'object' || data === null) {
-      return data;
+  private hasCheckStr(query: unknown): boolean | undefined {
+    if (typeof query !== 'object' || query === null) {
+      return undefined;
     }
 
-    const sanitized: Record<string, unknown> = {
-      ...(data as Record<string, unknown>),
+    const checkStr = (query as Record<string, unknown>).check_str;
+    if (Array.isArray(checkStr)) {
+      return checkStr.length > 0;
+    }
+
+    return typeof checkStr === 'string' ? checkStr.length > 0 : undefined;
+  }
+
+  private normalizeError(error: unknown): {
+    message: string;
+    stack?: string;
+    statusCode: number;
+  } {
+    if (error instanceof Error) {
+      const status = (error as Error & { status?: number }).status;
+      return {
+        message: error.message,
+        stack: error.stack,
+        statusCode: typeof status === 'number' ? status : 500,
+      };
+    }
+
+    return {
+      message: typeof error === 'string' ? error : 'Unknown error',
+      statusCode: 500,
     };
-
-    // Remove or mask sensitive fields
-    const sensitiveFields = [
-      'token',
-      'secret',
-      'key',
-      'credential',
-      'internalId',
-    ];
-
-    for (const field of sensitiveFields) {
-      if (field in sanitized) {
-        sanitized[field] = '***MASKED***';
-      }
-    }
-
-    return sanitized;
   }
 
   /**
    * Mask signature information (only show first and last few characters)
    */
-  private maskSignature(signature: string): string {
-    if (!signature || signature.length < 10) {
+  private maskSignature(signature?: string): string | undefined {
+    if (!signature) {
+      return undefined;
+    }
+
+    if (signature.length < 10) {
       return '***MASKED***';
     }
 
