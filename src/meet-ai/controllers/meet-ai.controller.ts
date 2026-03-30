@@ -61,7 +61,10 @@ export class MeetAiController {
   @HttpCode(HttpStatus.OK)
   async generateParticipantSummary(
     @Body(new ValidationPipe())
-    body: { recordId: string; platformUserId: string },
+    body: {
+      recordId: string;
+      platformUserId: string;
+    },
   ) {
     this.logger.log('生成参会者总结', {
       recordId: body.recordId,

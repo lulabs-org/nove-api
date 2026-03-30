@@ -2,8 +2,8 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-09 00:52:33
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-09 01:04:27
- * @FilePath: /lulab_backend/src/common/utils/time.util.ts
+ * @LastEditTime: 2026-03-30 14:00:37
+ * @FilePath: /nove_api/src/common/utils/time.util.ts
  * @Description:
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
@@ -44,4 +44,48 @@ export function parseDurationToMs(duration: string): number {
     w: 604_800_000,
   };
   return val * (unitMap[unit] ?? 1000);
+}
+
+/**
+ * Formats a date to a specified timezone string.
+ *
+ * @param date - The date to format, can be null or undefined
+ * @param timezoneOffsetHours - The timezone offset in hours from UTC (default: 8 for Beijing time)
+ * @returns Formatted time string in YYYY-MM-DD HH:MM:SS format, or '未知' if date is null/undefined
+ *
+ * @example
+ * formatToTimezone(new Date()) // "2026-03-30 12:34:56" (Beijing time, UTC+8)
+ * formatToTimezone(new Date(), 0) // "2026-03-30 04:34:56" (UTC time)
+ * formatToTimezone(new Date(), -5) // "2026-03-29 23:34:56" (EST time, UTC-5)
+ * formatToTimezone(null) // "未知"
+ */
+export function formatToTimezone(
+  date: Date | null | undefined,
+  timezoneOffsetHours: number = 8,
+): string {
+  if (!date) return '未知';
+  const timezoneTime = new Date(
+    date.getTime() + timezoneOffsetHours * 60 * 60 * 1000,
+  );
+  const year = timezoneTime.getUTCFullYear();
+  const month = String(timezoneTime.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(timezoneTime.getUTCDate()).padStart(2, '0');
+  const hours = String(timezoneTime.getUTCHours()).padStart(2, '0');
+  const minutes = String(timezoneTime.getUTCMinutes()).padStart(2, '0');
+  const seconds = String(timezoneTime.getUTCSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
+/**
+ * Formats a date to Beijing time (UTC+8) string.
+ *
+ * @param date - The date to format, can be null or undefined
+ * @returns Formatted Beijing time string in YYYY-MM-DD HH:MM:SS format, or '未知' if date is null/undefined
+ *
+ * @example
+ * formatToBeijingTime(new Date()) // "2026-03-30 12:34:56"
+ * formatToBeijingTime(null) // "未知"
+ */
+export function formatToBeijingTime(date: Date | null | undefined): string {
+  return formatToTimezone(date, 8);
 }
