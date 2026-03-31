@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, OmitType, PickType } from '@nestjs/swagger';
 import { IsEnum, IsString, IsNotEmpty, IsOptional } from 'class-validator';
 import { Platform } from '@prisma/client';
 
@@ -82,4 +82,28 @@ export class UpsertPlatformUserDto {
   @IsString()
   @IsOptional()
   localUserId?: string;
+}
+
+export class UpsertPlatformUserWhereDto extends PickType(
+  UpsertPlatformUserDto,
+  ['platform', 'ptUnionId'] as const,
+) {}
+
+export class UpsertPlatformUserDataDto extends OmitType(UpsertPlatformUserDto, [
+  'platform',
+  'ptUnionId',
+] as const) {}
+
+export class UpsertPlatformUserRequestDto {
+  @ApiProperty({
+    description: '用于唯一定位平台用户的条件',
+    type: UpsertPlatformUserWhereDto,
+  })
+  where: UpsertPlatformUserWhereDto;
+
+  @ApiProperty({
+    description: '需要写入或更新的平台用户信息',
+    type: UpsertPlatformUserDataDto,
+  })
+  data: UpsertPlatformUserDataDto;
 }
