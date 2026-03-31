@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-09-23 06:15:34
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2025-10-01 18:35:49
+ * @LastEditTime: 2026-01-09 01:24:24
  * @FilePath: /lulab_backend/src/common/utils/index.ts
  * @Description:
  *
@@ -14,3 +14,4 @@ export * from './validators';
 export * from './http-file';
 export * from './user-mapper';
 export * from './password.util';
+export * from './time.util';

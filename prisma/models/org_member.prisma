@@ -1,0 +1,48 @@
+model OrgMember {
+  id     String       @id @default(cuid())
+  orgId  String       @map("org_id")
+  userId String       @map("user_id")
+  type   MemberType   @default(INTERNAL)
+  status MemberStatus @default(ACTIVE)
+
+  // 组织内信息（可与 User 全局信息不同）
+  orgDisplayName String? @map("org_display_name") // 组织显示名称（可选）
+  employeeNo     String? @map("employee_no") // 内部员工工号（外部用户可为空）
+  primaryDeptId  String? @map("primary_dept_id") // 主要部门（可选）
+
+  // 外部用户常用字段（可选）
+  externalCompany String? @map("external_company")
+  title           String?
+
+  joinedAt  DateTime  @default(now()) @map("joined_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6) // 软删除时间戳
+
+  org         Org   @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user        User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  primaryDept Dept? @relation(fields: [primaryDeptId], references: [id], onDelete: SetNull)
+
+  memberRoles           MemberRole[]
+  memberDepartments     MemberDepartment[]
+  memberPermissions     MemberPermission[]
+  memberDataPermissions MemberDataPermission[]
+
+  @@unique([orgId, userId]) // 一个用户在一个组织只有一个 Membership
+  @@index([orgId])
+  @@index([userId])
+  @@index([orgId, type, status])
+  @@map("org_members")
+}
+
+enum MemberType {
+  INTERNAL // 组织内部员工
+  EXTERNAL // 外部用户（供应商/客户/合作方）
+}
+
+enum MemberStatus {
+  INVITED
+  ACTIVE
+  SUSPENDED
+  LEFT
+}

@@ -13,7 +13,7 @@ import * as bcrypt from 'bcryptjs';
 import { TokenService } from './token.service';
 import { AuthPolicyService } from './auth-policy.service';
 import { UserRepository } from '@/user/repositories/user.repository';
-import { formatUserResponse } from '@/common/utils';
+import { formatAuthUserResponse } from '@/auth/utils/auth-user-mapper';
 
 @Injectable()
 export class LoginService {
@@ -69,18 +69,21 @@ export class LoginService {
           throw new UnauthorizedException(verifyResult.message);
         }
       } else {
-        if (!user.password) {
+        if (!user.passwordHash) {
           failureReason = '该账户未设置密码，请使用验证码登录';
           throw new UnauthorizedException(failureReason);
         }
-        const isPasswordValid = await bcrypt.compare(password!, user.password);
+        const isPasswordValid = await bcrypt.compare(
+          password!,
+          user.passwordHash,
+        );
         if (!isPasswordValid) {
           failureReason = '密码错误';
           throw new UnauthorizedException('用户名或密码错误');
         }
       }
 
-      await this.userRepo.updateUserLastLoginAt(user.id, new Date());
+      await this.userRepo.updateLastLogin(user.id, new Date());
 
       await this.authPolicy.createLoginLog({
         userId: user.id,
@@ -99,7 +102,7 @@ export class LoginService {
       });
 
       return {
-        user: formatUserResponse(user),
+        user: formatAuthUserResponse(user),
         ...tokens,
       };
     } catch (error) {
@@ -130,6 +133,6 @@ export class LoginService {
     } else {
       conditions.push({ phone: target });
     }
-    return await this.userRepo.findUserByTarget(target, countryCode);
+    return await this.userRepo.findByTarget(target, countryCode);
   }
 }

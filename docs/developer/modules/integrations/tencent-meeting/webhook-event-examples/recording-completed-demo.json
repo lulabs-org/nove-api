@@ -1,0 +1,34 @@
+{
+  "event": "recording.completed",
+  "trace_id": "1ad0d9802cb8669e58f712154d770f57",
+  "payload": [
+    {
+      "operate_time": 1757276765518,
+      "operator": {
+        "instance_id": "2"
+      },
+      "meeting_info": {
+        "meeting_id": "1739626437650178888",
+        "meeting_code": "118280844",
+        "subject": "用户快速会议",
+        "creator": {
+          "userid": "mock-user-id-001",
+          "user_name": "示例用户",
+          "uuid": "mock-uuid-001",
+          "instance_id": "2",
+          "ms_open_id": "encrypted_ms_open_id_example"
+        },
+        "meeting_type": 0,
+        "start_time": 1757270336,
+        "end_time": 1757276748,
+        "media_set_type": 1,
+        "meeting_id_type": 0
+      },
+      "recording_files": [
+        {
+          "record_file_id": "1964787070499246081"
+        }
+      ]
+    }
+  ]
+}

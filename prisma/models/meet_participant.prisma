@@ -1,0 +1,40 @@
+model MeetingParticipant {
+    id String @id @default(cuid())
+
+    // 关联会议和用户
+    meetingId String  @map("meeting_id")
+    meeting   Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+    // 参会人员
+    ptUserId String?       @map("pt_user_id")
+    ptUser   PlatformUser? @relation("ParticipantUser", fields: [ptUserId], references: [id], onDelete: SetNull)
+
+    // 参会行为数据
+    joinTime        DateTime? @map("join_time") @db.Timestamptz(6) // 加入时间
+    leftTime        DateTime? @map("left_time") @db.Timestamptz(6) // 离开时间
+    durationSeconds Int?      @map("duration_seconds") // 参与时长（秒）
+
+    // 平台特定的参会数据
+    instanceId  Int?  @map("instance_id") // 腾讯会议实例ID
+    userRole    Int?  @map("user_role") // 平台用户角色
+    sessionData Json? @map("session_data") @db.JsonB // 本次参会的特定数据
+
+    // 元数据
+    metadata Json @default("{}") @map("metadata") @db.JsonB // 扩展元数据
+
+    // 系统字段及时间
+    createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+    updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+    deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6) // 软删除时间戳
+
+    @@index([meetingId])
+    @@index([ptUserId])
+    @@index([joinTime]) // 按加入时间查询
+    @@index([leftTime]) // 按离开时间查询
+    @@index([deletedAt]) // 软删除查询索引
+    @@index([meetingId, ptUserId]) // 查询会议的特定参与者
+    @@index([meetingId, joinTime]) // 查询会议参与者加入时间
+    @@index([meetingId, deletedAt]) // 查询会议的有效参与者
+    @@index([ptUserId, joinTime]) // 查询用户的参会历史
+    @@map("meet_participants")
+}

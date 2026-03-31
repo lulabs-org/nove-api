@@ -3,37 +3,38 @@ model PlatformUser {
   id String @id @default(cuid()) @map("id")
 
   // 平台信息
-  platform       Platform // 平台枚举
-  platformUserId String?  @map("platform_user_id") // 平台用户ID
-  platformUuid   String?  @map("platform_uuid") // 平台用户唯一标识符 (如腾讯会议的uuid)
-  externalId     String?  @map("external_id") @db.VarChar(100) // 外部系统ID
+  platform     Platform // 平台枚举
+  ptOrgId      String?  @map("pt_org_id") // 第三方平台组织 / 企业 ID
+  ptUserId     String?  @map("pt_user_id") // 第三方平台组织下的用户 ID
+  ptUnionId    String?  @map("pt_union_id") // 第三方平台级唯一 ID（如果有）
   // 平台特定数据
-  platformData   Json?    @default("{}") @map("platform_data") @db.JsonB // 存储各平台特有的数据
+  platformData Json?    @default("{}") @map("platform_data") @db.JsonB // 存储各平台特有的数据
 
   // 用户基本信息
-  userName    String? @map("user_name") // 用户显示名称
+  displayName String? @map("display_name") // 用户显示名称
+  avatarUrl   String? @map("avatar_url") // 用户头像URL
   email       String? // 用户邮箱
-  avatar      String? // 用户头像URL
   countryCode String? @map("country_code") // 国家代码 如 +86
   phone       String? // 电话号码
   phoneHash   String? @map("phone_hash") // 加密手机号 
 
   // 本地用户关联
-  userId String? @map("user_id") // 关联到本地用户表
-  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  localUserId String? @map("local_user_id") // 关联到本地用户表
+  user        User?   @relation(fields: [localUserId], references: [id], onDelete: SetNull)
 
   // 用户状态
-  isActive Boolean @default(true) @map("is_active")
+  active Boolean @default(true) // 是否活跃
 
   // 关联关系
-  createdMeetings     Meeting[]            @relation("MeetingCreator") // 创建的会议
-  hostedMeetings      Meeting[]            @relation("HostedMeetings") // 主持的会议
-  paragraphs          Paragraph[]          @relation("Speaker") // 关联的段落
-  createdSummaries    MeetingSummary[]     @relation("SummaryCreator") // 创建的总结
-  approvedSummaries   MeetingSummary[]     @relation("ApprovedSummaries") // 审核的总结
-  actions             MeetingUserAction[]  @relation("UserActions")
-  meetingRecordings   MeetingRecording[]   @relation("RecordingUser")
-  meetingParticipants MeetingParticipant[] @relation("ParticipantUser")
+  createdMeetings      Meeting[]            @relation("MeetingCreator") // 创建的会议
+  hostedMeetings       Meeting[]            @relation("HostedMeetings") // 主持的会议
+  paragraphs           Paragraph[]          @relation("Speaker") // 关联的段落
+  createdSummaries     MeetingSummary[]     @relation("SummaryCreator") // 创建的总结
+  approvedSummaries    MeetingSummary[]     @relation("ApprovedSummaries") // 审核的总结
+  actions              MeetingUserAction[]  @relation("UserActions")
+  meetingRecordings    MeetingRecording[]   @relation("RecordingUser")
+  meetingParticipants  MeetingParticipant[] @relation("ParticipantUser")
+  participantSummaries ParticipantSummary[] @relation("ParticipantSummaries") // 参与者总结
 
   // 系统字段及时间
   createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -41,14 +42,11 @@ model PlatformUser {
   lastSeenAt DateTime? @map("last_seen_at") @db.Timestamptz(6) // 最后出现时间
   deletedAt  DateTime? @map("deleted_at") @db.Timestamptz(6)
 
-  @@index([email], map: "idx_user_platforms_email")
-  @@index([userId], map: "idx_user_platforms_user_id")
-  @@index([phoneHash], map: "idx_user_platforms_phone_hash")
-  @@index([platform], map: "idx_user_platforms_platform")
-  @@index([userName], map: "idx_user_platforms_user_name") // 用户名查询优化
-  @@index([isActive], map: "idx_user_platforms_is_active") // 活跃用户查询优化
-  @@index([lastSeenAt], map: "idx_user_platforms_last_seen_at") // 最后出现时间查询优化
-  @@index([platformUuid], map: "idx_user_platforms_platform_uuid") // UUID查询优化
+  @@unique([platform, ptUnionId], name: "unique_platform_union_user")
+  @@index([email, platform], map: "idx_email_platform")
+  @@index([localUserId, active], map: "idx_local_user_active")
+  @@index([phoneHash, platform], map: "idx_phone_platform")
+  @@index([platform, active], map: "idx_platform_active")
   @@map("user_platforms")
 }
 

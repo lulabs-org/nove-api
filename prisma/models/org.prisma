@@ -1,0 +1,33 @@
+// 组织机构表
+model Org {
+  id          String  @id @default(cuid())
+  name        String // 组织名称
+  code        String  @unique // 组织编码
+  description String? // 组织描述
+  logo        String? // 组织logo
+  parentId    String? @map("parent_id") // 父组织ID
+  level       Int     @default(1) // 组织层级
+  sortOrder   Int     @default(0) @map("sort_order") // 排序
+  active      Boolean @default(true) // 是否启用
+
+  // 自关联
+  parent   Org?  @relation("OrgHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  children Org[] @relation("OrgHierarchy")
+
+  // 关联关系
+  depts             Dept[]
+  members           OrgMember[]
+  apiKeys           ApiKey[] // API Keys
+  apiKeyUsageLogs   ApiKeyUsageLog[] // API Key 使用日志
+  memberDepartments MemberDepartment[]
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6) // 软删除时间戳
+
+  @@index([parentId])
+  @@index([code])
+  @@index([active]) // 活跃组织查询
+  @@index([parentId, sortOrder]) // 子组织排序查询
+  @@map("orgs")
+}

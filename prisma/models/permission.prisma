@@ -18,7 +18,7 @@ model Permission {
 
   // 关联关系
   roles RolePermission[]
-  users UserPermission[]
+  members MemberPermission[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -53,7 +53,7 @@ model DataPermissionRule {
 
   // 关联关系
   roles RoleDataPermission[]
-  users UserDataPermission[]
+  members MemberDataPermission[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -23,6 +23,10 @@ export class UpdateTaskDto {
   cron?: string;
 
   @IsOptional()
+  @IsString()
+  timezone?: string; // 时区，例如 "Asia/Shanghai"
+
+  @IsOptional()
   @IsObject()
   payload?: Record<string, unknown>;
 

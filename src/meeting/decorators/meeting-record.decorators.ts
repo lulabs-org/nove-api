@@ -7,7 +7,11 @@ import {
   ApiBody,
 } from '@nestjs/swagger';
 import { MeetingPlatform, MeetingType, ProcessingStatus } from '@prisma/client';
-import { MeetingRecordListResponseDto } from '../dto/meeting-record.dto';
+import {
+  MeetingRecordListResponseDto,
+  MeetingStatsResponseDto,
+  DeleteMeetingRecordResponseDto,
+} from '../dto';
 
 /**
  * 获取会议记录列表装饰器
@@ -156,7 +160,7 @@ export const ApiDeleteMeetingRecordDocs = () =>
   applyDecorators(
     ApiOperation({
       summary: '删除会议记录',
-      description: '删除指定的会议记录及其关联的文件',
+      description: '删除指定的会议记录及其关联的文件，返回被删除的记录信息',
     }),
     ApiParam({
       name: 'id',
@@ -165,8 +169,9 @@ export const ApiDeleteMeetingRecordDocs = () =>
       format: 'uuid',
     }),
     ApiResponse({
-      status: 204,
+      status: 200,
       description: '删除成功',
+      type: DeleteMeetingRecordResponseDto,
     }),
     ApiResponse({
       status: 404,
@@ -196,28 +201,7 @@ export const ApiGetMeetingStatsDocs = () =>
     ApiResponse({
       status: 200,
       description: '获取成功',
-      schema: {
-        type: 'object',
-        properties: {
-          total: { type: 'number', description: '总会议数' },
-          platformStats: {
-            type: 'object',
-            description: '各平台会议数统计',
-          },
-          statusStats: {
-            type: 'object',
-            description: '各状态会议数统计',
-          },
-          typeStats: {
-            type: 'object',
-            description: '各类型会议数统计',
-          },
-          recentMeetings: {
-            type: 'array',
-            description: '最近的会议记录',
-          },
-        },
-      },
+      type: MeetingStatsResponseDto,
     }),
     ApiResponse({ status: 500, description: '服务器内部错误' }),
   );

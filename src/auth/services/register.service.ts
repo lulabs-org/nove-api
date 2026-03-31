@@ -8,7 +8,7 @@ import { CodeType } from '@/verification/enums';
 import { UserRepository } from '@/user/repositories/user.repository';
 import { TokenService } from './token.service';
 import { AuthPolicyService } from './auth-policy.service';
-import { formatUserResponse } from '@/common/utils';
+import { formatAuthUserResponse } from '@/auth/utils/auth-user-mapper';
 import { hashPassword, validatePassword } from '@/common/utils/password.util';
 
 @Injectable()
@@ -52,7 +52,7 @@ export class RegisterService {
     const hashedPassword = password ? await hashPassword(password) : null;
     const now = new Date();
 
-    const user = await this.userRepo.createUserWithProfile({
+    const user = await this.userRepo.createWithProfile({
       username,
       email: email || null,
       phone,
@@ -90,7 +90,7 @@ export class RegisterService {
     });
 
     return {
-      user: formatUserResponse(user),
+      user: formatAuthUserResponse(user),
       ...tokens,
     };
   }
@@ -148,7 +148,7 @@ export class RegisterService {
 
     if (conditions.length === 0) return;
 
-    const existingUser = await this.userRepo.findFirstByConditions(conditions);
+    const existingUser = await this.userRepo.findFirst(conditions);
 
     if (existingUser) {
       if (username && existingUser.username === username) {

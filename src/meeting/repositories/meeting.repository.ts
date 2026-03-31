@@ -1,11 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import type {
-  CreateMeetingRecordData,
-  UpdateMeetingRecordData,
-  GetMeetingRecordsParams,
-} from '@/meeting/types';
-import { MeetingPlatform } from '@prisma/client';
+import type { GetMeetingRecordsParams } from '@/meeting/types';
+
+import { MeetingPlatform, Prisma } from '@prisma/client';
+
+type UpdateMeetingRecordData = Prisma.MeetingUncheckedUpdateInput;
+type CreateMeetingRecordData = Omit<
+  Prisma.MeetingUncheckedCreateInput,
+  'id' | 'createdAt' | 'updatedAt' | 'deletedAt'
+>;
 
 @Injectable()
 export class MeetingRepository {
@@ -14,7 +17,7 @@ export class MeetingRepository {
   /**
    * Find meeting record by platform and meeting ID
    */
-  async findMeetingByPlatformId(
+  async findByPtId(
     platform: MeetingPlatform,
     meetingId: string,
     subMeetingId: string,
@@ -26,6 +29,7 @@ export class MeetingRepository {
           meetingId,
           subMeetingId,
         },
+        deletedAt: null,
       },
     });
   }
@@ -33,9 +37,9 @@ export class MeetingRepository {
   /**
    * Find meeting record by ID
    */
-  async findMeetingById(id: string) {
+  async findById(id: string) {
     return this.prisma.meeting.findUnique({
-      where: { id },
+      where: { id, deletedAt: null },
       include: {
         recordings: true,
       },
@@ -45,7 +49,7 @@ export class MeetingRepository {
   /**
    * Create meeting record
    */
-  async createMeetingRecord(data: CreateMeetingRecordData) {
+  async create(data: CreateMeetingRecordData) {
     return this.prisma.meeting.create({
       data,
     });
@@ -54,9 +58,9 @@ export class MeetingRepository {
   /**
    * Update meeting record
    */
-  async updateMeetingRecord(id: string, data: UpdateMeetingRecordData) {
+  async update(id: string, data: UpdateMeetingRecordData) {
     return this.prisma.meeting.update({
-      where: { id },
+      where: { id, deletedAt: null },
       data,
     });
   }
@@ -64,7 +68,7 @@ export class MeetingRepository {
   /**
    * Upsert meeting record - create if not exists, update if exists
    */
-  async upsertMeetingRecord(
+  async upsert(
     platform: MeetingPlatform,
     meetingId: string,
     subMeetingId: string,
@@ -80,6 +84,7 @@ export class MeetingRepository {
           meetingId,
           subMeetingId,
         },
+        deletedAt: null,
       },
       update: data,
       create: {
@@ -92,42 +97,95 @@ export class MeetingRepository {
   }
 
   /**
-   * Delete meeting record
+   * Delete meeting record (hard delete)
    */
-  async deleteMeetingRecord(id: string) {
+  async delete(id: string) {
     return this.prisma.meeting.delete({
       where: { id },
     });
   }
 
   /**
+   * Soft delete meeting record
+   */
+  async softDelete(id: string) {
+    return this.prisma.meeting.update({
+      where: { id, deletedAt: null },
+      data: {
+        deletedAt: new Date(),
+      },
+    });
+  }
+
+  /**
+   * Restore soft deleted meeting record
+   */
+  async restore(id: string) {
+    return this.prisma.meeting.update({
+      where: { id },
+      data: {
+        deletedAt: null,
+      },
+    });
+  }
+
+  /**
    * Get meeting records list
    */
-  async getMeetingRecords(params: GetMeetingRecordsParams): Promise<{
+  async get(params: GetMeetingRecordsParams): Promise<{
     records: any[];
     total: number;
     page: number;
     limit: number;
     totalPages: number;
   }> {
-    const { platform, startDate, endDate, page = 1, limit = 10 } = params;
+    const {
+      platform,
+      status,
+      type,
+      startDate,
+      endDate,
+      page = 1,
+      limit = 10,
+      search,
+    } = params;
     const skip = (page - 1) * limit;
 
     const where: {
       platform?: typeof platform;
-      startTime?: { gte?: Date; lte?: Date };
-    } = {};
+      processingStatus?: typeof status;
+      type?: typeof type;
+      startAt?: { gte?: Date; lte?: Date };
+      OR?: Array<{ title?: { contains?: string; mode?: 'insensitive' } }>;
+      deletedAt?: null;
+    } = {
+      deletedAt: null,
+    };
+
     if (platform) {
       where.platform = platform;
     }
+
+    if (status) {
+      where.processingStatus = status;
+    }
+
+    if (type) {
+      where.type = type;
+    }
+
     if (startDate || endDate) {
-      where.startTime = {};
+      where.startAt = {};
       if (startDate) {
-        where.startTime.gte = startDate;
+        where.startAt.gte = startDate;
       }
       if (endDate) {
-        where.startTime.lte = endDate;
+        where.startAt.lte = endDate;
       }
+    }
+
+    if (search) {
+      where.OR = [{ title: { contains: search, mode: 'insensitive' } }];
     }
 
     const [records, total] = await Promise.all([

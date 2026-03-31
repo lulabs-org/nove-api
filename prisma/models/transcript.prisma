@@ -1,18 +1,22 @@
 model Transcript {
-  id         String    @id @default(cuid())
-  source     String? // 文件名/来源
-  rawJson    Json? // 可选：整份原始 JSON 备份
-  language   String    @default("zh-CN")
-  status     Int       @default(0) @db.SmallInt
-  startedAt  DateTime? @map("started_at") @db.Timestamptz(6)
-  finishedAt DateTime? @map("finished_at") @db.Timestamptz(6)
-  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  id       String  @id @default(cuid())
+  source   String? // 文件名/来源
+  rawJson  Json? // 可选：整份原始 JSON 备份
+  language String  @default("zh-CN")
+  status   Int     @default(0) @db.SmallInt
 
   recordingId String?           @map("recording_id")
   recording   MeetingRecording? @relation(fields: [recordingId], references: [id], onDelete: Cascade)
   summaries   MeetingSummary[]
+  paragraphs  Paragraph[]
 
-  paragraphs Paragraph[]
+  // 时间及系统字段
+  startedAt  DateTime? @map("started_at") @db.Timestamptz(6)
+  finishedAt DateTime? @map("finished_at") @db.Timestamptz(6)
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
 
   @@index([createdAt])
   @@index([recordingId])
@@ -20,18 +24,24 @@ model Transcript {
 }
 
 model Paragraph {
-  id           String @id @default(cuid())
-  transcriptId String
-  pid          String
-  startTimeMs  BigInt
-  endTimeMs    BigInt
+  id String @id @default(cuid())
 
-  speakerId String?
+  pid         Int
+  startTimeMs BigInt @map("start_time_ms")
+  endTimeMs   BigInt @map("end_time_ms")
+
+  speakerId String?       @map("speaker_id")
   speaker   PlatformUser? @relation("Speaker", fields: [speakerId], references: [id], onDelete: SetNull)
 
-  transcript Transcript @relation(fields: [transcriptId], references: [id], onDelete: Cascade)
+  transcriptId String     @map("transcript_id")
+  transcript   Transcript @relation(fields: [transcriptId], references: [id], onDelete: Cascade)
 
   sentences Sentence[]
+
+  // 系统字段及时间
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
 
   @@unique([transcriptId, pid])
   @@index([transcriptId, startTimeMs])
@@ -40,17 +50,23 @@ model Paragraph {
 }
 
 model Sentence {
-  id          String @id @default(cuid())
-  paragraphId String
-  sid         String
-  startTimeMs BigInt
-  endTimeMs   BigInt
+  id String @id @default(cuid())
 
-  paragraph Paragraph @relation(fields: [paragraphId], references: [id], onDelete: Cascade)
-  words     Word[]
+  sid         Int
+  startTimeMs BigInt @map("start_time_ms")
+  endTimeMs   BigInt @map("end_time_ms")
+
+  paragraphId String    @map("paragraph_id")
+  paragraph   Paragraph @relation(fields: [paragraphId], references: [id], onDelete: Cascade)
+  words       Word[]
 
   // 可选：冗余一份整句文本，方便全文检索/展示（导入时拼出来）
   text String?
+
+  // 系统字段及时间
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
 
   @@unique([paragraphId, sid])
   @@index([startTimeMs])
@@ -58,18 +74,22 @@ model Sentence {
 }
 
 model Word {
-  id          String @id @default(cuid())
-  sentenceId  String
-  wid         String
-  order       Int // 导入时按数组顺序写入
-  startTimeMs BigInt
-  endTimeMs   BigInt
+  id String @id @default(cuid())
+
+  wid         Int
+  startTimeMs BigInt @map("start_time_ms")
+  endTimeMs   BigInt @map("end_time_ms")
   text        String
 
-  sentence Sentence @relation(fields: [sentenceId], references: [id], onDelete: Cascade)
+  sentenceId String   @map("sentence_id")
+  sentence   Sentence @relation(fields: [sentenceId], references: [id], onDelete: Cascade)
+
+  // 系统字段及时间
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
 
   @@unique([sentenceId, wid])
-  @@unique([sentenceId, order])
   @@index([text])
   @@map("transcript_words")
 }

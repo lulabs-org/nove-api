@@ -1,54 +1,25 @@
-// 用户相关
-export { createUsers } from './users';
-export type { CreatedUsers } from './users';
+/*
+ * @Author: 杨仕明 shiming.y@qq.com
+ * @Date: 2026-01-11 05:21:40
+ * @LastEditors: 杨仕明 shiming.y@qq.com
+ * @LastEditTime: 2026-01-13 14:57:51
+ * @FilePath: /lulab_backend/prisma/seeds/index.ts
+ * @Description:
+ *
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
+ */
 
-// 组织相关
-export { createOrganization } from './organization';
-
-// 部门相关
-export {
-  createDepartments,
-  createUserDepartmentRelations,
-} from './departments';
-export type { CreatedDepartments } from './departments';
-
-// 权限相关
-export { createPermissions } from './permissions';
-export type { CreatedPermissions } from './permissions';
-
-// 产品相关
-export { createProducts } from './products';
-export type { CreatedProducts } from './products';
-
-// 项目相关
-export { createProjects } from './projects';
-export type { CreatedProjects } from './projects';
-
-// 课程相关
-export { createCurriculums } from './curriculums';
-export type {
-  CreatedCurriculums,
-  CreateCurriculumsParams,
-} from './curriculums';
-
-// 渠道相关
-export { createChannels } from './channels';
-export type { CreatedChannels } from './channels';
-
-// 订单相关
-export { createOrders } from './orders';
-
-// 退款相关
-export { createRefunds } from './refunds';
-
-// 会议相关
-export { createMeetings } from './meetings';
-export type { CreatedMeetings } from './meetings';
-
-// 关联关系相关
-export {
-  createUserOrganizationRelations,
-  createRolePermissionRelations,
-  createUserPermissionRelations,
-  createAllRelations,
-} from './relations';
+export * from './core';
+export * from './users';
+export * from './departments';
+export * from './permissions';
+export * from './products';
+export * from './projects';
+export * from './curriculums';
+export * from './channels';
+export * from './platform-users';
+export * from './meetings';
+export * from './transcripts';
+export * from './orders';
+export * from './refunds';
+export * from './relations';

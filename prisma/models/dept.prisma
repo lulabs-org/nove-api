@@ -1,0 +1,30 @@
+// 部门表
+model Dept {
+  id          String  @id @default(cuid())
+  name        String // 部门名称
+  code        String  @unique // 部门编码
+  description String? // 部门描述
+  orgId       String  @map("org_id") // 所属组织ID
+  parentId    String? @map("parent_id") // 父部门ID
+  level       Int     @default(1) // 部门层级
+  sortOrder   Int     @default(0) @map("sort_order") // 排序
+  active      Boolean @default(true) // 是否启用
+
+  // 关联关系
+  org      Org                @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  parent   Dept?              @relation("DepartmentHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  children Dept[]             @relation("DepartmentHierarchy")
+  members  MemberDepartment[]
+
+  createdAt  DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt  DateTime?   @map("deleted_at") @db.Timestamptz(6) // 软删除时间戳
+  orgMembers OrgMember[]
+
+  @@unique([orgId, code])
+  @@index([parentId])
+  @@index([code])
+  @@index([orgId, active]) // 活跃部门查询
+  @@index([parentId, sortOrder]) // 子部门排序查询
+  @@map("depts")
+}

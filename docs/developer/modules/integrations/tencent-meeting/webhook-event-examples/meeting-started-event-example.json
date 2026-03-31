@@ -1,0 +1,36 @@
+{
+  "event": "meeting.started",
+  "trace_id": "141b9579-ffd1-4197-a628-ce8c22bb9c8f",
+  "payload": [
+    {
+      "operate_time": 1767051029171,
+      "operator": {
+        "userid": "mock-user-id-001",
+        "user_name": "示例用户",
+        "uuid": "mock-uuid-001",
+        "instance_id": "2",
+        "ms_open_id": "encrypted_ms_open_id_example"
+      },
+      "meeting_info": {
+        "meeting_id": "15799355397363795495",
+        "meeting_code": "36159939963",
+        "subject": "准备/直播/复盘（营销俱乐部）",
+        "creator": {
+          "userid": "mock-user-id-001",
+          "user_name": "示例用户",
+          "uuid": "mock-uuid-001",
+          "instance_id": "1",
+          "ms_open_id": "encrypted_ms_open_id_example"
+        },
+        "meeting_type": 1,
+        "sub_meeting_id": "1767051000",
+        "start_time": 1767051000,
+        "end_time": 1780626600,
+        "sub_meeting_start_time": 1767051000,
+        "sub_meeting_end_time": 1767061800,
+        "meeting_create_mode": 0,
+        "meeting_create_from": 3
+      }
+    }
+  ]
+}

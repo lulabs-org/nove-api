@@ -1,0 +1,37 @@
+{
+  "event": "recording.completed",
+  "trace_id": "7f59c1ed13343b0c24ed24f65d6b681a",
+  "payload": [
+    {
+      "operate_time": 1767101273615,
+      "operator": {
+        "instance_id": "2"
+      },
+      "meeting_info": {
+        "meeting_id": "627554325233808742",
+        "meeting_code": "88429543002",
+        "subject": "项目讨论会议",
+        "creator": {
+          "userid": "mock-user-id-001",
+          "user_name": "示例用户",
+          "uuid": "mock-uuid-001",
+          "instance_id": "1",
+          "ms_open_id": "encrypted_ms_open_id_example"
+        },
+        "meeting_type": 1,
+        "sub_meeting_id": "1767097800",
+        "start_time": 1767097813,
+        "end_time": 1767101229,
+        "sub_meeting_start_time": 1767097800,
+        "sub_meeting_end_time": 1767101400,
+        "media_set_type": 1,
+        "meeting_id_type": 0
+      },
+      "recording_files": [
+        {
+          "record_file_id": "2005979751095140353"
+        }
+      ]
+    }
+  ]
+}

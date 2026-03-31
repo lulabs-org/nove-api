@@ -1,0 +1,29 @@
+model UserSettings {
+  id String @id @default(cuid())
+
+  /// 界面语言设置
+  language String @default("zh-CN") @db.VarChar(50)
+  /// 时区设置
+  timezone String @default("Asia/Shanghai") @db.VarChar(50)
+  /// 主题设置：light=浅色，dark=深色
+  theme    String @default("light") @db.VarChar(20)
+
+  /// 是否接收邮件通知
+  emailNotification Boolean @default(true) @map("email_notification")
+  /// 是否接收短信通知
+  smsNotification   Boolean @default(false) @map("sms_notification")
+
+  /// 关联的用户ID
+  userId String @unique @map("user_id")
+  /// 关联的用户
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// 创建时间
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  /// 更新时间
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([userId], map: "idx_user_settings_user_id")
+  @@index([language], map: "idx_user_settings_language")
+  @@map("user_settings")
+}

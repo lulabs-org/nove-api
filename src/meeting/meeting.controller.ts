@@ -10,7 +10,6 @@ import {
   HttpCode,
   HttpStatus,
   Logger,
-  ParseUUIDPipe,
   ValidationPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
@@ -29,9 +28,12 @@ import {
   QueryMeetingRecordsDto,
   MeetingRecordResponseDto,
   MeetingRecordListResponseDto,
-} from './dto/meeting-record.dto';
-import { CreateMeetingRecordDto } from './dto/create-meeting-record.dto';
-import { UpdateMeetingRecordDto } from './dto/update-meeting-record.dto';
+  MeetingStatsResponseDto,
+  DeleteMeetingRecordResponseDto,
+  CreateMeetingRecordDto,
+  UpdateMeetingRecordDto,
+} from './dto';
+import { CuidPipe } from '@/common/pipes/cuid.pipe';
 
 /**
  * 会议记录控制器
@@ -80,13 +82,27 @@ export class MeetingController {
   }
 
   /**
+   * 健康检查端点
+   */
+  @Get('health')
+  @HttpCode(HttpStatus.OK)
+  @ApiHealthCheckDocs()
+  healthCheck() {
+    return {
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      service: 'meeting-service',
+    };
+  }
+
+  /**
    * 根据ID获取会议记录详情
    */
   @Get(':id')
   @HttpCode(HttpStatus.OK)
   @ApiGetMeetingRecordByIdDocs()
   async getMeetingRecordById(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', CuidPipe) id: string,
   ): Promise<MeetingRecordResponseDto> {
     this.logger.log(`获取会议记录详情: ${id}`);
 
@@ -133,7 +149,7 @@ export class MeetingController {
   @HttpCode(HttpStatus.OK)
   @ApiUpdateMeetingRecordDocs()
   async updateMeetingRecord(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', CuidPipe) id: string,
     @Body(new ValidationPipe()) updateParams: UpdateMeetingRecordDto,
   ): Promise<MeetingRecordResponseDto> {
     this.logger.log(`更新会议记录: ${id}`, updateParams);
@@ -156,17 +172,23 @@ export class MeetingController {
    * 删除会议记录
    */
   @Delete(':id')
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   @ApiDeleteMeetingRecordDocs()
   async deleteMeetingRecord(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<void> {
+    @Param('id', CuidPipe) id: string,
+  ): Promise<DeleteMeetingRecordResponseDto> {
     this.logger.log(`删除会议记录: ${id}`);
 
     try {
-      await this.meetingService.deleteMeetingRecord(id);
+      const record = await this.meetingService.deleteMeetingRecord(id);
 
-      this.logger.log(`删除会议记录成功: ${id}`);
+      this.logger.log(`删除会议记录成功: ${record.id}`);
+
+      return {
+        success: true,
+        data: record,
+        deletedAt: new Date(),
+      };
     } catch (error: unknown) {
       this.logger.error(`删除会议记录失败: ${id}`, (error as Error).stack);
       throw error;
@@ -182,7 +204,7 @@ export class MeetingController {
   getMeetingStats(
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
-  ): any {
+  ): MeetingStatsResponseDto {
     this.logger.log('获取会议统计信息', { startDate, endDate });
 
     try {
@@ -206,7 +228,7 @@ export class MeetingController {
   @HttpCode(HttpStatus.OK)
   @ApiReprocessMeetingRecordDocs()
   async reprocessMeetingRecord(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('id', CuidPipe) id: string,
   ): Promise<MeetingRecordResponseDto> {
     this.logger.log(`重新处理会议录制文件: ${id}`);
 
@@ -222,19 +244,5 @@ export class MeetingController {
       );
       throw error;
     }
-  }
-
-  /**
-   * 健康检查端点
-   */
-  @Get('health')
-  @HttpCode(HttpStatus.OK)
-  @ApiHealthCheckDocs()
-  healthCheck() {
-    return {
-      status: 'ok',
-      timestamp: new Date().toISOString(),
-      service: 'meeting-service',
-    };
   }
 }

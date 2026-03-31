@@ -1,3 +1,14 @@
+/*
+ * @Author: 杨仕明 shiming.y@qq.com
+ * @Date: 2026-01-01 20:55:12
+ * @LastEditors: 杨仕明 shiming.y@qq.com
+ * @LastEditTime: 2026-01-04 01:46:53
+ * @FilePath: /lulab_backend/src/meeting/types/meeting-record.types.ts
+ * @Description:
+ *
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
+ */
+
 import { MeetingPlatform, MeetingType, ProcessingStatus } from '@prisma/client';
 
 /**
@@ -38,32 +49,11 @@ export interface UpdateMeetingRecordParams {
  */
 export interface GetMeetingRecordsParams {
   platform?: MeetingPlatform;
+  status?: ProcessingStatus;
+  type?: MeetingType;
   startDate?: Date;
   endDate?: Date;
   page?: number;
   limit?: number;
+  search?: string;
 }
-
-/**
- * 仓储层：会议记录创建数据（与数据库字段一致）
- */
-export interface CreateMeetingRecordData {
-  platform: MeetingPlatform;
-  meetingId: string; // 改为 meetingId 以匹配模型
-  title: string;
-  meetingCode?: string;
-  type: MeetingType;
-  hostPlatformUserId?: string; // 改为 hostPlatformUserId 以匹配模型
-  startTime?: Date;
-  endTime?: Date;
-  durationSeconds?: number;
-  hasRecording?: boolean;
-  recordingStatus?: ProcessingStatus;
-  processingStatus?: ProcessingStatus;
-  metadata?: any;
-}
-
-/**
- * 仓储层：会议记录更新数据（与服务层参数等价）
- */
-export type UpdateMeetingRecordData = UpdateMeetingRecordParams;

@@ -2,8 +2,8 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-07-06 05:06:37
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2025-12-23 02:01:59
- * @FilePath: /lulab_backend/src/app.module.ts
+ * @LastEditTime: 2026-01-17 20:58:15
+ * @FilePath: /nove_api/src/app.module.ts
  * @Description: Application module that defines the application's entry point and dependency injection
  *
  * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
@@ -20,7 +20,7 @@ import { UserModule } from './user/user.module';
 import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
 import { PrismaModule } from './prisma/prisma.module';
 import { MeetingModule } from './meeting/meeting.module';
-import { HookTencentMtgModule } from './hook-tencent-mtg/hook-tencent-mtg.module';
+import { HookTencentMtgModule } from './tencent-mtg-hook/hook-tencent-mtg.module';
 import { LarkMeetingModule } from './lark-meeting/lark-meeting.module';
 import { VerificationModule } from '@/verification/verification.module';
 import { GraphQLModule } from '@nestjs/graphql';
@@ -30,7 +30,14 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { OpenaiModule } from './integrations/openai/openai.module';
 import { BullModule } from '@nestjs/bullmq';
 import { redisConfig } from './configs';
+import { ApiKeyModule } from './api-key/api-key.module';
+import { McpServerModule } from './mcp-server/mcp-server.module';
+import { PermissionModule } from './permission/permission.module';
 import { TasksModule } from './task/tasks.module';
+import { RoleModule } from './role/role.module';
+import { OrganizationModule } from './org/organization.module';
+import { DepartmentModule } from './dept/department.module';
+import { OrgMemberModule } from './org-member/org-member.module';
 
 @Module({
   imports: [
@@ -62,6 +69,13 @@ import { TasksModule } from './task/tasks.module';
     LarkMeetingModule,
     VerificationModule,
     OpenaiModule,
+    ApiKeyModule,
+    PermissionModule,
+    McpServerModule,
+    RoleModule,
+    OrganizationModule,
+    DepartmentModule,
+    OrgMemberModule,
   ],
   controllers: [AppController],
   providers: [

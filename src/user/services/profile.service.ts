@@ -27,7 +27,7 @@ export class ProfileService {
   constructor(private readonly userRepo: UserRepository) {}
 
   async getProfile(userId: string): Promise<UserProfileResponseDto> {
-    const user = await this.userRepo.getUserByIdWithProfile(userId);
+    const user = await this.userRepo.findWithProfile(userId);
     if (!user) {
       throw new BadRequestException('用户不存在');
     }
@@ -41,23 +41,23 @@ export class ProfileService {
     userAgent?: string,
   ): Promise<UserProfileResponseDto> {
     this.logger.log(`用户 ${userId} 正在更新资料，IP: ${ip}, UA: ${userAgent}`);
-    const { username, email, phone, countryCode, name, avatar, bio } =
+    const { username, email, phone, countryCode, displayName, avatar, bio } =
       updateProfileDto;
 
-    const existingUser = await this.userRepo.getUserByIdWithProfile(userId);
+    const existingUser = await this.userRepo.findWithProfile(userId);
     if (!existingUser) {
       throw new BadRequestException('用户不存在');
     }
 
     if (username && username !== existingUser.username) {
-      const usernameExists = await this.userRepo.findUserByUsername(username);
+      const usernameExists = await this.userRepo.findByUsername(username);
       if (usernameExists) {
         throw new ConflictException('用户名已被使用');
       }
     }
 
     if (email && email !== existingUser.email) {
-      const emailExists = await this.userRepo.findUserByEmail(email);
+      const emailExists = await this.userRepo.findByEmail(email);
       if (emailExists) {
         throw new ConflictException('邮箱已被使用');
       }
@@ -68,7 +68,7 @@ export class ProfileService {
       (phone !== existingUser.phone ||
         updateProfileDto.countryCode !== existingUser.countryCode)
     ) {
-      const phoneExists = await this.userRepo.findUserByPhoneCombination(
+      const phoneExists = await this.userRepo.findByPhone(
         updateProfileDto.countryCode || existingUser.countryCode || '',
         phone,
       );
@@ -77,20 +77,17 @@ export class ProfileService {
       }
     }
 
-    const updatedUser = await this.userRepo.updateUserWithProfileUpsert(
-      userId,
-      {
-        ...(username ? { username } : {}),
-        email,
-        phone,
-        countryCode,
-        profile: {
-          name: name || username || email?.split('@')[0] || phone,
-          avatar,
-          bio,
-        },
+    const updatedUser = await this.userRepo.updateProfile(userId, {
+      ...(username ? { username } : {}),
+      email,
+      phone,
+      countryCode,
+      profile: {
+        displayName: displayName || username || email?.split('@')[0] || phone,
+        avatar,
+        bio,
       },
-    );
+    });
 
     return formatUserResponse(updatedUser);
   }

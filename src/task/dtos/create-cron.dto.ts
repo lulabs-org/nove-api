@@ -10,7 +10,7 @@
  */
 
 // src/tasks/dtos/create-cron.dto.ts
-import { IsNotEmpty, IsObject, IsString } from 'class-validator';
+import { IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator';
 
 export class CreateCronDto {
   @IsString()
@@ -20,6 +20,10 @@ export class CreateCronDto {
   @IsString()
   @IsNotEmpty()
   cron!: string; // CRON 表达式
+
+  @IsOptional()
+  @IsString()
+  timezone?: string; // 时区，例如 "Asia/Shanghai"，默认使用 'Asia/Shanghai'
 
   @IsObject()
   payload!: Record<string, unknown>;

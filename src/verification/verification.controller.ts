@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-09-23 06:15:34
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2025-10-02 02:54:18
+ * @LastEditTime: 2026-01-15 12:06:59
  * @FilePath: /lulab_backend/src/verification/verification.controller.ts
  * @Description: 验证服务控制器
  *
@@ -22,15 +22,13 @@ import { VerificationService } from './verification.service';
 import { SendCodeDto } from './dto/send-code.dto';
 import { VerifyCodeDto } from './dto/verify-code.dto';
 import { Public } from '@/auth/decorators/public.decorator';
-import {
-  ApiSendCodeDocs,
-  ApiVerifyCodeDocs,
-} from '@/verification/decorators/api-docs.decorator';
+import { ApiSendCodeDocs, ApiVerifyCodeDocs } from '@/verification/decorators';
 import { Request } from 'express';
 import { Req } from '@nestjs/common';
+import { HttpUtil } from '@/common/utils/http.util';
 
-@ApiTags('Verification')
-@Controller({ path: 'api/verification', version: '1' })
+@ApiTags('Auth')
+@Controller({ path: 'api/auth/otp', version: '1' })
 export class VerificationController {
   constructor(private readonly verificationService: VerificationService) {}
 
@@ -39,7 +37,7 @@ export class VerificationController {
   @HttpCode(HttpStatus.OK)
   @ApiSendCodeDocs()
   async send(@Body(ValidationPipe) dto: SendCodeDto, @Req() req: Request) {
-    const ip = this.getClientIp(req);
+    const ip = HttpUtil.getClientIp(req);
     const userAgent = req.get('User-Agent');
     return this.verificationService.sendCode(
       dto.target,
@@ -56,15 +54,5 @@ export class VerificationController {
   @ApiVerifyCodeDocs()
   async verify(@Body(ValidationPipe) dto: VerifyCodeDto) {
     return this.verificationService.verifyCode(dto.target, dto.code, dto.type);
-  }
-
-  private getClientIp(req: Request): string {
-    return (
-      (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
-      (req.headers['x-real-ip'] as string) ||
-      req.connection?.remoteAddress ||
-      req.socket?.remoteAddress ||
-      '127.0.0.1'
-    );
   }
 }

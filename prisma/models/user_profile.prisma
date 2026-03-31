@@ -1,30 +1,48 @@
 model UserProfile {
-  id     String @id @default(cuid())
-  userId String @unique
+  id String @id @default(cuid())
 
-  // 个人展示信息
-  name   String?
-  avatar String?
-  bio    String?
+  /// 个人展示信息
+  /// 显示名称，用于展示和识别用户
+  displayName String? @map("display_name") @db.VarChar(100)
+  /// 头像 URL
+  avatar      String? @db.VarChar(500)
+  /// 个人简介
+  bio         String? @db.VarChar(500)
 
-  // 详细个人信息
-  firstName   String?
-  lastName    String?
-  dateOfBirth DateTime?
+  /// 详细个人信息
+  /// 名
+  firstName   String?   @db.VarChar(100)
+  /// 姓
+  lastName    String?   @db.VarChar(100)
+  /// 出生日期
+  dateOfBirth DateTime? @map("date_of_birth") @db.Date
+  /// 性别
   gender      Gender?
-  address     String?
-  city        String?
-  country     String?
-  zipCode     String?
-  website     String?
+  /// 详细地址
+  address     String?   @db.VarChar(500)
+  /// 城市
+  city        String?   @db.VarChar(100)
+  /// 国家
+  country     String?   @db.VarChar(100)
+  /// 邮政编码
+  zipCode     String?   @map("zip_code") @db.VarChar(20)
+  /// 个人网站 URL
+  website     String?   @db.VarChar(255)
 
-  // 关联到用户
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// 关联的用户ID
+  userId String @unique @map("user_id")
+  /// 关联的用户
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  /// 创建时间
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  /// 更新时间
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  @@index([userId]) // 用户关联查询优化
+  @@index([userId], map: "idx_user_profile_user_id")
+  @@index([dateOfBirth], map: "idx_user_profile_date_of_birth")
+  @@index([gender], map: "idx_user_profile_gender")
+  @@index([country], map: "idx_user_profile_country")
   @@map("user_profiles")
 }
 

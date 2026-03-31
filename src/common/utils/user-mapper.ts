@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-10-01 16:16:47
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2025-10-01 18:30:03
+ * @LastEditTime: 2026-01-06 03:55:31
  * @FilePath: /lulab_backend/src/common/utils/user-mapper.ts
  * @Description: 用户响应格式化工具函数
  *
@@ -27,7 +27,7 @@ export function formatUserResponse(
     createdAt: user.createdAt,
     profile: user.profile
       ? {
-          name: user.profile.name || undefined,
+          name: user.profile.displayName || undefined,
           avatar: user.profile.avatar || undefined,
           bio: user.profile.bio || undefined,
           firstName: user.profile.firstName || undefined,

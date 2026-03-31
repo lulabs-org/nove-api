@@ -1,3 +1,13 @@
+/*
+ * @Author: 杨仕明 shiming.y@qq.com
+ * @Date: 2025-12-28 11:37:14
+ * @LastEditors: 杨仕明 shiming.y@qq.com
+ * @LastEditTime: 2026-01-09 01:33:47
+ * @FilePath: /lulab_backend/src/auth/types/jwt.types.ts
+ * @Description:
+ *
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
+ */
 export interface AuthenticatedUser {
   id: string;
   username?: string | null;
@@ -5,6 +15,12 @@ export interface AuthenticatedUser {
   phone?: string | null;
   countryCode?: string | null;
   profile?: Record<string, unknown> | null;
+  roles?: string[];
+  active: boolean;
+  emailVerified: boolean;
+  phoneVerified: boolean;
+  createdAt: Date;
+  lastLoginAt?: Date | null;
 }
 
 export interface JwtPayload {
@@ -19,6 +35,11 @@ export interface JwtPayload {
 export enum TokenBlacklistScope {
   AccessToken = 'access',
   RefreshToken = 'refresh',
+}
+
+export enum ClientType {
+  Web = 'web',
+  App = 'app',
 }
 
 // Abstraction for JWT strategy to fetch and validate users without DB coupling

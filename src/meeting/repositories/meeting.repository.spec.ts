@@ -62,9 +62,9 @@ describe('MeetingRepository', () => {
       title: 'Test Meeting',
       meetingCode: 'TEST123',
       type: MeetingType.SCHEDULED,
-      hostPlatformUserId: 'host123',
-      startTime: new Date('2023-01-01T10:00:00Z'),
-      endTime: new Date('2023-01-01T11:00:00Z'),
+      hostId: 'host123',
+      startAt: new Date('2023-01-01T10:00:00Z'),
+      endAt: new Date('2023-01-01T11:00:00Z'),
       durationSeconds: 3600,
       hasRecording: true,
       recordingStatus: ProcessingStatus.COMPLETED,
@@ -86,7 +86,7 @@ describe('MeetingRepository', () => {
         mockCreatedMeeting,
       );
 
-      const result = await repository.upsertMeetingRecord(
+      const result = await repository.upsert(
         platform,
         platformMeetingId,
         '', // Default empty subMeetingId
@@ -100,6 +100,7 @@ describe('MeetingRepository', () => {
             meetingId: platformMeetingId,
             subMeetingId: '',
           },
+          deletedAt: null,
         },
         update: meetingData,
         create: {
@@ -120,9 +121,9 @@ describe('MeetingRepository', () => {
         title: 'Updated Meeting Title',
         meetingCode: 'UPDATED123',
         type: MeetingType.SCHEDULED,
-        hostPlatformUserId: 'host456',
-        startTime: new Date('2023-01-01T10:00:00Z'),
-        endTime: new Date('2023-01-01T12:00:00Z'),
+        hostId: 'host456',
+        startAt: new Date('2023-01-01T10:00:00Z'),
+        endAt: new Date('2023-01-01T12:00:00Z'),
         durationSeconds: 7200,
         hasRecording: true,
         recordingStatus: ProcessingStatus.COMPLETED,
@@ -135,7 +136,7 @@ describe('MeetingRepository', () => {
       const updateData = {
         title: 'Updated Meeting Title',
         type: MeetingType.SCHEDULED,
-        endTime: new Date('2023-01-01T12:00:00Z'),
+        endAt: new Date('2023-01-01T12:00:00Z'),
         durationSeconds: 7200,
         processingStatus: ProcessingStatus.COMPLETED,
         metadata: { updated: 'data' },
@@ -145,7 +146,7 @@ describe('MeetingRepository', () => {
         mockUpdatedMeeting,
       );
 
-      const result = await repository.upsertMeetingRecord(
+      const result = await repository.upsert(
         platform,
         platformMeetingId,
         '', // Default empty subMeetingId
@@ -159,6 +160,7 @@ describe('MeetingRepository', () => {
             meetingId: platformMeetingId,
             subMeetingId: '',
           },
+          deletedAt: null,
         },
         update: updateData,
         create: {
@@ -177,8 +179,8 @@ describe('MeetingRepository', () => {
       const feishuMeetingData = {
         title: 'Feishu Meeting',
         type: MeetingType.WEBINAR,
-        startTime: new Date('2023-02-01T14:00:00Z'),
-        endTime: new Date('2023-02-01T15:30:00Z'),
+        startAt: new Date('2023-02-01T14:00:00Z'),
+        endAt: new Date('2023-02-01T15:30:00Z'),
       };
 
       const mockFeishuMeeting = {
@@ -194,7 +196,7 @@ describe('MeetingRepository', () => {
         mockFeishuMeeting,
       );
 
-      const result = await repository.upsertMeetingRecord(
+      const result = await repository.upsert(
         feishuPlatform,
         feishuMeetingId,
         '', // Default empty subMeetingId
@@ -208,6 +210,7 @@ describe('MeetingRepository', () => {
             meetingId: feishuMeetingId,
             subMeetingId: '',
           },
+          deletedAt: null,
         },
         update: feishuMeetingData,
         create: {
@@ -225,7 +228,7 @@ describe('MeetingRepository', () => {
       (prismaService.meeting.upsert as jest.Mock).mockRejectedValue(error);
 
       await expect(
-        repository.upsertMeetingRecord(
+        repository.upsert(
           platform,
           platformMeetingId,
           '', // Default empty subMeetingId
@@ -240,6 +243,7 @@ describe('MeetingRepository', () => {
             meetingId: platformMeetingId,
             subMeetingId: '',
           },
+          deletedAt: null,
         },
         update: meetingData,
         create: {
@@ -270,7 +274,7 @@ describe('MeetingRepository', () => {
         mockMinimalMeeting,
       );
 
-      const result = await repository.upsertMeetingRecord(
+      const result = await repository.upsert(
         platform,
         platformMeetingId,
         '', // Default empty subMeetingId
@@ -284,6 +288,7 @@ describe('MeetingRepository', () => {
             meetingId: platformMeetingId,
             subMeetingId: '',
           },
+          deletedAt: null,
         },
         update: minimalData,
         create: {

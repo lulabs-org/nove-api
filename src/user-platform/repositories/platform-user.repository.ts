@@ -9,7 +9,7 @@ type PlatformUserUpdateInput = Prisma.PlatformUserUncheckedUpdateInput;
 export class PlatformUserRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async createPlatformUser(
+  async create(
     data: Omit<
       PlatformUserCreateInput,
       'id' | 'createdAt' | 'updatedAt' | 'deletedAt'
@@ -18,12 +18,12 @@ export class PlatformUserRepository {
     return this.prisma.platformUser.create({
       data: {
         ...data,
-        isActive: data.isActive ?? true,
+        active: data.active ?? true,
       },
     });
   }
 
-  async updatePlatformUser(
+  async update(
     id: string,
     data: Partial<
       Omit<
@@ -38,102 +38,178 @@ export class PlatformUserRepository {
     });
   }
 
-  async upsertPlatformUser(
-    where: { platform: Platform; platformUuid: string },
-    create: Omit<
+  async upsert(
+    where: { platform: Platform; ptUnionId: string },
+    data: Omit<
       PlatformUserCreateInput,
-      'id' | 'createdAt' | 'updatedAt' | 'deletedAt'
-    >,
-    update: Partial<
-      Omit<
-        PlatformUserUpdateInput,
-        'id' | 'createdAt' | 'updatedAt' | 'deletedAt'
-      >
+      'id' | 'createdAt' | 'updatedAt' | 'deletedAt' | 'platform' | 'ptUnionId'
     >,
   ): Promise<PlatformUser> {
-    // 首先查找是否存在相同 platformUuid 的记录
-    const existingUser = await this.prisma.platformUser.findFirst({
-      where: {
-        platform: where.platform,
-        platformUuid: where.platformUuid,
-      },
+    const now = new Date();
+    const { platform, ptUnionId } = where;
+    return this.prisma.platformUser.upsert({
+      where: { unique_platform_union_user: { platform, ptUnionId } },
+      create: { ...data, platform, ptUnionId, lastSeenAt: now },
+      update: { ...data, lastSeenAt: now },
     });
-
-    if (existingUser) {
-      // 如果存在，则更新
-      return this.prisma.platformUser.update({
-        where: { id: existingUser.id },
-        data: {
-          ...update,
-          lastSeenAt: new Date(),
-        },
-      });
-    } else {
-      // 如果不存在，则创建
-      return this.prisma.platformUser.create({
-        data: {
-          ...create,
-          platform: where.platform,
-          platformUuid: where.platformUuid,
-          lastSeenAt: new Date(),
-        },
-      });
-    }
   }
 
-  async findPlatformUserByPlatformAndId(
+  async upsertMany(
+    items: Array<{
+      where: { platform: Platform; ptUnionId: string };
+      data: Omit<
+        PlatformUserCreateInput,
+        | 'id'
+        | 'createdAt'
+        | 'updatedAt'
+        | 'deletedAt'
+        | 'platform'
+        | 'ptUnionId'
+      >;
+    }>,
+  ): Promise<PlatformUser[]> {
+    const now = new Date();
+
+    return this.prisma.$transaction(
+      items.map(({ where, data }) => {
+        const { platform, ptUnionId } = where;
+        return this.prisma.platformUser.upsert({
+          where: { unique_platform_union_user: { platform, ptUnionId } },
+          create: { ...data, platform, ptUnionId, lastSeenAt: now },
+          update: { ...data, lastSeenAt: now },
+        });
+      }),
+    );
+  }
+
+  async findByUnionId(
     platform: Platform,
-    platformUserId: string,
+    ptUnionId: string,
   ): Promise<PlatformUser | null> {
-    return this.prisma.platformUser.findFirst({
+    return this.prisma.platformUser.findUnique({
       where: {
-        platform,
-        platformUserId,
+        unique_platform_union_user: {
+          platform,
+          ptUnionId,
+        },
       },
     });
   }
 
-  async findPlatformUserById(id: string): Promise<PlatformUser | null> {
+  async findById(id: string): Promise<PlatformUser | null> {
     return this.prisma.platformUser.findUnique({
       where: { id },
     });
   }
 
-  async findPlatformUserByUserId(userId: string): Promise<PlatformUser[]> {
+  async findByUserId(userId: string): Promise<PlatformUser[]> {
     return this.prisma.platformUser.findMany({
-      where: { userId },
+      where: { user: { id: userId } },
     });
   }
 
-  async findActivePlatformUsersByPlatform(
-    platform: Platform,
-  ): Promise<PlatformUser[]> {
+  async findActiveByPlatform(platform: Platform): Promise<PlatformUser[]> {
     return this.prisma.platformUser.findMany({
       where: {
         platform,
-        isActive: true,
+        active: true,
       },
     });
   }
 
-  async updateLastSeenAt(id: string): Promise<PlatformUser> {
+  async findByPtUserId(
+    platform: Platform,
+    ptUserId: string,
+  ): Promise<PlatformUser | null> {
+    return this.prisma.platformUser.findFirst({
+      where: {
+        platform,
+        ptUserId,
+        active: true,
+      },
+    });
+  }
+
+  async findByPtName(
+    platform: Platform,
+    displayName: string,
+  ): Promise<PlatformUser | null> {
+    return this.prisma.platformUser.findFirst({
+      where: {
+        platform,
+        displayName,
+        active: true,
+      },
+    });
+  }
+
+  async findByPhoneHashWithoutLocalUser(
+    platform: Platform,
+    countryCode: string,
+    phoneHash: string,
+  ): Promise<PlatformUser | null> {
+    return this.prisma.platformUser.findFirst({
+      where: {
+        platform,
+        countryCode,
+        phoneHash,
+        localUserId: null,
+        active: true,
+      },
+    });
+  }
+
+  async findByPhoneHash(
+    platform: Platform,
+    countryCode: string,
+    phoneHash: string,
+  ): Promise<PlatformUser | null> {
+    return this.prisma.platformUser.findFirst({
+      where: {
+        platform,
+        countryCode,
+        phoneHash,
+        active: true,
+      },
+    });
+  }
+
+  async updateLastSeen(id: string): Promise<PlatformUser> {
     return this.prisma.platformUser.update({
       where: { id },
       data: { lastSeenAt: new Date() },
     });
   }
 
-  async deactivatePlatformUser(id: string): Promise<PlatformUser> {
+  async deactivate(id: string): Promise<PlatformUser> {
     return this.prisma.platformUser.update({
       where: { id },
-      data: { isActive: false },
+      data: { active: false },
     });
   }
 
-  async activatePlatformUser(id: string): Promise<PlatformUser> {
+  async activate(id: string): Promise<PlatformUser> {
     return this.prisma.platformUser.update({
       where: { id },
-      data: { isActive: true },
+      data: { active: true },
+    });
+  }
+
+  async deleteByPhone(
+    countryCode: string,
+    phone: string,
+  ): Promise<{ count: number }> {
+    return this.prisma.platformUser.deleteMany({
+      where: {
+        countryCode,
+        phone,
+      },
+    });
+  }
+
+  async deleteById(id: string): Promise<PlatformUser> {
+    return this.prisma.platformUser.delete({
+      where: { id },
     });
   }
 }

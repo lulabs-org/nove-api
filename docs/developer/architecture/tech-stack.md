@@ -7,20 +7,26 @@
 | 技术 | 版本 | 用途 | 说明 |
 |------|------|------|------|
 | **Node.js** | 18.x+ | 运行时环境 | 提供高性能的 JavaScript/TypeScript 运行环境 |
-| **NestJS** | 10.x | 应用框架 | 基于 TypeScript 的企业级 Node.js 框架，提供模块化架构 |
+| **NestJS** | 11.x | 应用框架 | 基于 TypeScript 的企业级 Node.js 框架，提供模块化架构 |
 | **TypeScript** | 5.x | 编程语言 | 提供静态类型检查，增强代码可维护性 |
-| **Prisma** | 5.x | ORM 工具 | 类型安全的数据库访问层，提供自动生成的客户端 |
+| **Prisma** | 6.x | ORM 工具 | 类型安全的数据库访问层，提供自动生成的客户端 |
 | **PostgreSQL** | 14+ | 关系型数据库 | 主数据库，存储所有业务数据 |
 | **Redis** | 7.x | 内存数据库 | 缓存、会话存储和任务队列支持 |
-| **Swagger** | 7.x | API 文档 | 自动生成和展示 RESTful API 文档 |
+| **ioredis** | 5.x | Redis 客户端 | 高性能的 Redis 客户端，支持连接池和集群 |
+| **Swagger** | 11.x | API 文档 | 自动生成和展示 RESTful API 文档 |
 | **Jest** | 29.x | 测试框架 | 单元测试和集成测试框架 |
-| **Supertest** | 6.x | API 测试 | HTTP 断言库，用于测试 API 端点 |
+| **Supertest** | 7.x | API 测试 | HTTP 断言库，用于测试 API 端点 |
 | **pnpm** | 8.x | 包管理器 | 高效的磁盘空间利用和依赖管理 |
-| **BullMQ** | 4.x | 任务队列 | 基于 Redis 的任务队列系统 |
-| **@nestjs/schedule** | 4.x | 任务调度 | 定时任务和 cron 作业支持 |
+| **BullMQ** | 5.x | 任务队列 | 基于 Redis 的任务队列系统 |
+| **@nestjs/bullmq** | 11.x | 任务队列集成 | NestJS 与 BullMQ 的集成模块 |
+| **@nestjs/schedule** | 6.x | 任务调度 | 定时任务和 cron 作业支持 |
+| **@nestjs/axios** | 4.x | HTTP 客户端 | 基于 Axios 的 HTTP 客户端，用于外部 API 调用 |
 | **Apollo Server** | 4.x | GraphQL 服务器 | 提供 GraphQL API 能力 |
-| **Passport** | 0.6.x | 认证中间件 | 认证策略框架，支持多种认证方式 |
-| **bcryptjs** | 2.4.x | 密码加密 | 安全的密码哈希算法 |
+| **Passport** | 0.7.x | 认证中间件 | 认证策略框架，支持多种认证方式 |
+| **passport-jwt** | 4.x | JWT 认证 | JWT 认证策略，用于基于 Token 的身份验证 |
+| **passport-local** | 1.x | 本地认证 | 用户名密码认证策略 |
+| **bcryptjs** | 3.x | 密码加密 | 安全的密码哈希算法 |
+| **nodemailer** | 7.x | 邮件发送 | 基于 SMTP 的邮件发送库 |
 | **class-validator** | 0.14.x | 数据验证 | 基于装饰器的数据验证 |
 | **class-transformer** | 0.5.x | 数据转换 | 对象转换和序列化工具 |
 
@@ -46,5 +52,7 @@
 | **缓存策略** | Redis 集成 | 减少数据库查询，提高系统性能 |
 | **API 文档自动化** | Swagger 装饰器 | 实时更新的 API 文档，便于前后端协作 |
 | **环境配置管理** | @nestjs/config | 多环境配置支持，提高部署灵活性 |
-| **日志系统** | NestJS Logger + Winston | 结构化日志，便于问题排查 |
-| **健康检查** | @nestjs/terminus | 系统健康监控，提高系统可靠性 |
+| **日志系统** | NestJS Logger | 内置日志系统，支持不同日志级别和上下文信息 |
+| **HTTP 客户端** | @nestjs/axios | 统一的 HTTP 请求处理，支持拦截器和错误处理 |
+| **认证授权** | JWT + Passport | 无状态认证，支持多种认证策略 |
+| **数据验证** | class-validator | 基于装饰器的数据验证，确保数据完整性 |

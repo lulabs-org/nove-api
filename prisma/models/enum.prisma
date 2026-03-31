@@ -1,0 +1,6 @@
+// 生成方式枚举
+enum GenerationMethod {
+  AI // AI生成
+  MANUAL // 手动创建
+  HYBRID // 混合方式
+}

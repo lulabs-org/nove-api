@@ -6,12 +6,11 @@ import type { User, UserProfile } from '@prisma/client';
 export class UserRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  // User queries
-  getUserById(id: string): Promise<User | null> {
+  findById(id: string): Promise<User | null> {
     return this.prisma.user.findUnique({ where: { id } });
   }
 
-  getUserByIdWithProfile(
+  findWithProfile(
     id: string,
   ): Promise<(User & { profile: UserProfile | null }) | null> {
     return this.prisma.user.findUnique({
@@ -20,34 +19,93 @@ export class UserRepository {
     });
   }
 
-  findUserByUsername(username: string): Promise<User | null> {
+  findWithRoles(id: string): Promise<
+    | (User & {
+        profile: UserProfile | null;
+        orgMembers: Array<{
+          memberRoles: Array<{
+            role: { code: string };
+          }>;
+        }>;
+      })
+    | null
+  > {
+    return this.prisma.user.findUnique({
+      where: { id },
+      include: {
+        profile: true,
+        orgMembers: {
+          include: {
+            memberRoles: {
+              include: {
+                role: {
+                  select: {
+                    code: true,
+                  },
+                },
+              },
+              orderBy: {
+                role: {
+                  level: 'asc',
+                },
+              },
+            },
+          },
+        },
+      },
+    }) as Promise<
+      | (User & {
+          profile: UserProfile | null;
+          orgMembers: Array<{
+            memberRoles: Array<{
+              role: { code: string };
+            }>;
+          }>;
+        })
+      | null
+    >;
+  }
+
+  findByUsername(username: string): Promise<User | null> {
     return this.prisma.user.findUnique({ where: { username } });
   }
 
-  findUserByEmail(email: string): Promise<User | null> {
+  findByEmail(email: string): Promise<User | null> {
     return this.prisma.user.findUnique({ where: { email } });
   }
 
-  findUserByPhoneCombination(
-    countryCode: string,
-    phone: string,
-  ): Promise<User | null> {
+  findByPhone(countryCode: string, phone: string): Promise<User | null> {
     return this.prisma.user.findUnique({
-      where: { unique_phone_combination: { countryCode, phone } },
+      where: {
+        uq_users_country_code_phone: {
+          countryCode,
+          phone,
+        },
+      },
     });
   }
 
-  findUserByTarget(
+  findByTarget(
     target: string,
     countryCode?: string,
-  ): Promise<(User & { profile: UserProfile | null }) | null> {
+  ): Promise<
+    | (User & {
+        profile: UserProfile | null;
+        orgMembers: Array<{
+          memberRoles: Array<{
+            role: { code: string };
+          }>;
+        }>;
+      })
+    | null
+  > {
     const conditions: Array<Record<string, unknown>> = [
       { username: target },
       { email: target },
     ];
     if (countryCode) {
       conditions.push({
-        unique_phone_combination: { countryCode, phone: target },
+        uq_users_country_code_phone: { countryCode, phone: target },
       });
     } else {
       conditions.push({ phone: target });
@@ -55,15 +113,46 @@ export class UserRepository {
 
     return this.prisma.user.findFirst({
       where: { OR: conditions },
-      include: { profile: true },
-    });
+      include: {
+        profile: true,
+        orgMembers: {
+          include: {
+            memberRoles: {
+              include: {
+                role: {
+                  select: {
+                    code: true,
+                  },
+                },
+              },
+              orderBy: {
+                role: {
+                  level: 'asc',
+                },
+              },
+              take: 1,
+            },
+          },
+        },
+      },
+    }) as Promise<
+      | (User & {
+          profile: UserProfile | null;
+          orgMembers: Array<{
+            memberRoles: Array<{
+              role: { code: string };
+            }>;
+          }>;
+        })
+      | null
+    >;
   }
 
-  findFirstByConditions(conditions: Array<Record<string, unknown>>) {
+  findFirst(conditions: Array<Record<string, unknown>>) {
     return this.prisma.user.findFirst({ where: { OR: conditions } });
   }
 
-  createUserWithProfile(data: {
+  createWithProfile(data: {
     username?: string | null;
     email?: string | null;
     phone?: string | null;
@@ -72,45 +161,87 @@ export class UserRepository {
     emailVerifiedAt?: Date | null;
     phoneVerifiedAt?: Date | null;
     profileName: string;
-  }): Promise<User & { profile: UserProfile | null }> {
+  }): Promise<
+    User & {
+      profile: UserProfile | null;
+      orgMembers: Array<{
+        memberRoles: Array<{
+          role: { code: string };
+        }>;
+      }>;
+    }
+  > {
     return this.prisma.user.create({
       data: {
         username: data.username ?? null,
         email: data.email ?? null,
         phone: data.phone ?? null,
         countryCode: data.countryCode ?? null,
-        password: data.password,
+        passwordHash: data.password,
         emailVerifiedAt: data.emailVerifiedAt ?? null,
         phoneVerifiedAt: data.phoneVerifiedAt ?? null,
         profile: {
           create: {
-            name: data.profileName,
+            displayName: data.profileName,
           },
         },
       },
-      include: { profile: true },
-    });
+      include: {
+        profile: true,
+        orgMembers: {
+          include: {
+            memberRoles: {
+              include: {
+                role: {
+                  select: {
+                    code: true,
+                  },
+                },
+              },
+              orderBy: {
+                role: {
+                  level: 'asc',
+                },
+              },
+              take: 1,
+            },
+          },
+        },
+      },
+    }) as Promise<
+      User & {
+        profile: UserProfile | null;
+        orgMembers: Array<{
+          memberRoles: Array<{
+            role: { code: string };
+          }>;
+        }>;
+      }
+    >;
   }
 
-  updateUserLastLoginAt(id: string, date: Date): Promise<User> {
+  updateLastLogin(id: string, date: Date): Promise<User> {
     return this.prisma.user.update({
       where: { id },
       data: { lastLoginAt: date },
     });
   }
 
-  updateUserPassword(id: string, password: string): Promise<User> {
-    return this.prisma.user.update({ where: { id }, data: { password } });
+  updatePassword(id: string, password: string): Promise<User> {
+    return this.prisma.user.update({
+      where: { id },
+      data: { passwordHash: password },
+    });
   }
 
-  updateUserWithProfileUpsert(
+  updateProfile(
     id: string,
     data: {
       username?: string;
       email?: string;
       phone?: string;
       countryCode?: string;
-      profile?: { name?: string; avatar?: string; bio?: string };
+      profile?: { displayName?: string; avatar?: string; bio?: string };
     },
   ): Promise<User & { profile: UserProfile | null }> {
     const { profile, ...userData } = data;
@@ -128,12 +259,12 @@ export class UserRepository {
               profile: {
                 upsert: {
                   create: {
-                    name: profile.name,
+                    displayName: profile.displayName,
                     avatar: profile.avatar,
                     bio: profile.bio,
                   },
                   update: {
-                    name: profile.name,
+                    displayName: profile.displayName,
                     avatar: profile.avatar,
                     bio: profile.bio,
                   },

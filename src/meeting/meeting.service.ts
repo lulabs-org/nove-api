@@ -1,10 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { ProcessingStatus } from '@prisma/client';
+import { ProcessingStatus, Prisma } from '@prisma/client';
 import { MeetingRepository } from './repositories/meeting.repository';
 import { GetMeetingRecordsParams } from './types';
-import { MeetingRecordResponseDto } from './dto/meeting-record.dto';
-import { CreateMeetingRecordDto } from './dto/create-meeting-record.dto';
-import { UpdateMeetingRecordDto } from './dto/update-meeting-record.dto';
+import {
+  MeetingRecordResponseDto,
+  MeetingStatsResponseDto,
+  CreateMeetingRecordDto,
+  UpdateMeetingRecordDto,
+} from './dto';
 import {
   MeetingRecordNotFoundException,
   MeetingRecordAlreadyExistsException,
@@ -28,14 +31,14 @@ export class MeetingService {
     limit: number;
     totalPages: number;
   }> {
-    return this.meetingRepository.getMeetingRecords(params);
+    return this.meetingRepository.get(params);
   }
 
   /**
    * 获取会议记录详情
    */
   async getMeetingRecordById(id: string): Promise<MeetingRecordResponseDto> {
-    const record = await this.meetingRepository.findMeetingById(id);
+    const record = await this.meetingRepository.findById(id);
     if (!record) {
       throw new MeetingRecordNotFoundException(id);
     }
@@ -49,7 +52,7 @@ export class MeetingService {
     params: CreateMeetingRecordDto,
   ): Promise<MeetingRecordResponseDto> {
     // 检查是否已存在
-    const existing = await this.meetingRepository.findMeetingByPlatformId(
+    const existing = await this.meetingRepository.findByPtId(
       params.platform,
       params.platformMeetingId,
       '', // Default empty subMeetingId
@@ -65,23 +68,26 @@ export class MeetingService {
     // 转换DTO到repository数据格式
     const createData = {
       platform: params.platform,
-      meetingId: params.platformMeetingId, // 改为 meetingId
+      meetingId: params.platformMeetingId,
       title: params.title,
       meetingCode: params.meetingCode || '',
       type: params.type,
-      hostPlatformUserId: params.hostUserId || '', // 改为 hostPlatformUserId
-      startTime: params.actualStartAt
+      hostId:
+        params.hostUserId && params.hostUserId.trim() !== ''
+          ? params.hostUserId
+          : null,
+      startAt: params.actualStartAt
         ? new Date(params.actualStartAt)
         : new Date(),
-      endTime: params.endedAt ? new Date(params.endedAt) : new Date(),
+      endAt: params.endedAt ? new Date(params.endedAt) : new Date(),
       durationSeconds: params.duration || 0,
       hasRecording: params.hasRecording || false,
       recordingStatus: params.recordingStatus || ProcessingStatus.PENDING,
       processingStatus: params.processingStatus || ProcessingStatus.PENDING,
-      metadata: params.metadata as unknown,
+      metadata: params.metadata as Prisma.InputJsonValue,
     };
 
-    return this.meetingRepository.createMeetingRecord(createData);
+    return this.meetingRepository.create(createData);
   }
 
   /**
@@ -91,7 +97,7 @@ export class MeetingService {
     id: string,
     params: UpdateMeetingRecordDto,
   ): Promise<MeetingRecordResponseDto> {
-    const record = await this.meetingRepository.findMeetingById(id);
+    const record = await this.meetingRepository.findById(id);
     if (!record) {
       throw new MeetingRecordNotFoundException(id);
     }
@@ -104,9 +110,6 @@ export class MeetingService {
       updateData.processingStatus = params.processingStatus;
     if (params.participantCount !== undefined)
       updateData.participantCount = params.participantCount;
-    if (params.transcript !== undefined)
-      updateData.transcript = params.transcript;
-    if (params.summary !== undefined) updateData.summary = params.summary;
 
     // 处理其他字段
     if (params.title !== undefined) {
@@ -119,33 +122,34 @@ export class MeetingService {
       updateData.type = params.type;
     }
     if (params.hostUserId !== undefined) {
-      updateData.hostPlatformUserId = params.hostUserId; // 改为 hostPlatformUserId
+      updateData.hostId = params.hostUserId;
     }
     if (params.actualStartAt !== undefined) {
-      updateData.startAt = new Date(params.actualStartAt); // 改为 startAt
+      updateData.startAt = new Date(params.actualStartAt);
     }
     if (params.endedAt !== undefined) {
-      updateData.endAt = new Date(params.endedAt); // 改为 endAt
+      updateData.endAt = new Date(params.endedAt);
     }
     if (params.duration !== undefined) {
-      updateData.durationSeconds = params.duration; // 改为 durationSeconds
+      updateData.durationSeconds = params.duration;
     }
     if (params.metadata !== undefined) {
-      updateData.metadata = params.metadata as unknown;
+      updateData.metadata = params.metadata as Prisma.InputJsonValue;
     }
 
-    return this.meetingRepository.updateMeetingRecord(id, updateData);
+    return this.meetingRepository.update(id, updateData);
   }
 
   /**
-   * 删除会议记录
+   * 删除会议记录（软删除）
    */
-  async deleteMeetingRecord(id: string): Promise<void> {
-    const record = await this.meetingRepository.findMeetingById(id);
+  async deleteMeetingRecord(id: string): Promise<MeetingRecordResponseDto> {
+    const record = await this.meetingRepository.findById(id);
     if (!record) {
       throw new MeetingRecordNotFoundException(id);
     }
-    await this.meetingRepository.deleteMeetingRecord(id);
+    await this.meetingRepository.softDelete(id);
+    return record;
   }
 
   /**
@@ -155,14 +159,20 @@ export class MeetingService {
     startDate?: Date;
     endDate?: Date;
     platform?: string;
-  }) {
+  }): MeetingStatsResponseDto {
     void params;
-    // 实现统计逻辑
+    // TODO: 实现统计逻辑 - 根据日期范围、平台等条件统计会议数据
+    // - 统计会议总数
+    // - 按平台分组统计
+    // - 按状态分组统计
+    // - 按类型分组统计
+    // - 获取最近会议记录
     return {
-      totalMeetings: 0,
-      totalDuration: 0,
-      platformStats: {},
-      monthlyStats: [],
+      total: 0,
+      platformStats: [],
+      statusStats: [],
+      typeStats: [],
+      recentMeetings: [],
     };
   }
 
@@ -170,13 +180,13 @@ export class MeetingService {
    * 重新处理会议记录
    */
   async reprocessMeetingRecord(id: string): Promise<MeetingRecordResponseDto> {
-    const record = await this.meetingRepository.findMeetingById(id);
+    const record = await this.meetingRepository.findById(id);
     if (!record) {
       throw new MeetingRecordNotFoundException(id);
     }
 
     // 重置处理状态
-    await this.meetingRepository.updateMeetingRecord(id, {
+    await this.meetingRepository.update(id, {
       processingStatus: ProcessingStatus.PROCESSING,
     });
 
