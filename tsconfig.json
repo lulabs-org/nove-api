@@ -21,5 +21,16 @@
       "@/*": ["src/*"],
       "@common/*": ["src/common/*"]
     }
-  }
+  },
+  "include": ["src/**/*.ts", "prisma/**/*.ts", "scripts/**/*.ts"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "coverage",
+    "test",
+    "docs",
+    "documentation",
+    "**/*.spec.ts",
+    "jest.config.ts"
+  ]
 }
