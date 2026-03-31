@@ -6,6 +6,14 @@ import type { PlatformUser, Platform } from '@prisma/client';
 export class PlatformUserService {
   constructor(private readonly platformUserRepo: PlatformUserRepository) {}
 
+  private async ensureExists(id: string) {
+    const platformUser = await this.platformUserRepo.findById(id);
+    if (!platformUser) {
+      throw new NotFoundException('Platform user not found');
+    }
+    return platformUser;
+  }
+
   async create(data: {
     platform: Platform;
     ptUnionId: string;
@@ -21,11 +29,7 @@ export class PlatformUserService {
   }
 
   async findById(id: string) {
-    const platformUser = await this.platformUserRepo.findById(id);
-    if (!platformUser) {
-      throw new NotFoundException('Platform user not found');
-    }
-    return platformUser;
+    return this.ensureExists(id);
   }
 
   async findByUnionId(platform: Platform, ptUnionId: string) {
@@ -120,22 +124,27 @@ export class PlatformUserService {
       active?: boolean;
     },
   ): Promise<PlatformUser> {
+    await this.ensureExists(id);
     return this.platformUserRepo.update(id, data);
   }
 
   async updateLastSeen(id: string): Promise<PlatformUser> {
+    await this.ensureExists(id);
     return this.platformUserRepo.updateLastSeen(id);
   }
 
   async activate(id: string): Promise<PlatformUser> {
+    await this.ensureExists(id);
     return this.platformUserRepo.activate(id);
   }
 
   async deactivate(id: string): Promise<PlatformUser> {
+    await this.ensureExists(id);
     return this.platformUserRepo.deactivate(id);
   }
 
   async deleteById(id: string): Promise<PlatformUser> {
+    await this.ensureExists(id);
     return this.platformUserRepo.deleteById(id);
   }
 
