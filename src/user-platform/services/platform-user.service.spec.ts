@@ -65,22 +65,35 @@ describe('PlatformUserService', () => {
     ['activate', (id: string) => service.activate(id)],
     ['deactivate', (id: string) => service.deactivate(id)],
     ['deleteById', (id: string) => service.deleteById(id)],
-  ])('throws NotFoundException when %s targets a missing record', async (_, fn) => {
-    repository.findById.mockResolvedValue(null);
+  ])(
+    'throws NotFoundException when %s targets a missing record',
+    async (_, fn) => {
+      repository.findById.mockResolvedValue(null);
 
-    await expect(fn('missing-id')).rejects.toBeInstanceOf(NotFoundException);
-    expect(repository.findById).toHaveBeenCalledWith('missing-id');
-  });
+      await expect(fn('missing-id')).rejects.toBeInstanceOf(NotFoundException);
+      expect(repository.findById).toHaveBeenCalledWith('missing-id');
+    },
+  );
 
   it.each([
-    ['update', 'update', (id: string) => service.update(id, { displayName: 'next' })],
-    ['updateLastSeen', 'updateLastSeen', (id: string) => service.updateLastSeen(id)],
+    [
+      'update',
+      'update',
+      (id: string) => service.update(id, { displayName: 'next' }),
+    ],
+    [
+      'updateLastSeen',
+      'updateLastSeen',
+      (id: string) => service.updateLastSeen(id),
+    ],
     ['activate', 'activate', (id: string) => service.activate(id)],
     ['deactivate', 'deactivate', (id: string) => service.deactivate(id)],
     ['deleteById', 'deleteById', (id: string) => service.deleteById(id)],
   ])('calls repository.%s after existence check', async (_, method, fn) => {
     repository.findById.mockResolvedValue(platformUser);
-    repository[method as keyof typeof repository].mockResolvedValue(platformUser);
+    repository[method as keyof typeof repository].mockResolvedValue(
+      platformUser,
+    );
 
     await expect(fn(platformUser.id)).resolves.toEqual(platformUser);
     expect(repository.findById).toHaveBeenCalledWith(platformUser.id);
