@@ -3,12 +3,17 @@ import { Currency, OrderStatus, PaymentProvider, Prisma } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { WechatOrderWebhookDto } from './dto/wechat-order-webhook.dto';
 
+const ORDER_NUMBER_MASK = 0x5a17c3e5b79fn;
+const DATABASE_RETRY_ATTEMPTS = 3;
+const DATABASE_RETRY_DELAY_MS = 300;
+
 type NormalizedOrderPayload = {
   externalId: string;
   status?: OrderStatus;
   createdAt?: Date;
   updatedAt?: Date;
   paidAt?: Date;
+  amount?: number;
   paymentProvider?: PaymentProvider;
   providerTradeNo?: string;
   productId?: string;
@@ -22,48 +27,55 @@ export class OrderService {
   constructor(private readonly prisma: PrismaService) {}
 
   async upsertWechatOrder(payload: WechatOrderWebhookDto) {
-    const normalized = await this.normalizePayload(payload);
-    const existingOrder = await this.prisma.order.findFirst({
-      where: {
-        externalId: normalized.externalId,
-        deletedAt: null,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    return this.withDatabaseRetry(async () => {
+      const normalized = await this.normalizePayload(payload);
+      const existingOrder = await this.prisma.order.findFirst({
+        where: {
+          externalId: normalized.externalId,
+          deletedAt: null,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
 
-    if (existingOrder) {
-      const order = await this.prisma.order.update({
-        where: { id: existingOrder.id },
-        data: this.buildUpdateData(normalized),
+      if (existingOrder) {
+        const order = await this.prisma.order.update({
+          where: { id: existingOrder.id },
+          data: this.buildUpdateData(normalized),
+        });
+
+        return {
+          action: 'updated' as const,
+          order,
+        };
+      }
+
+      const orderCode = await this.generateOrderCode();
+      const orderNumber = this.encodeOrderNumber(orderCode);
+      const order = await this.prisma.order.create({
+        data: this.buildCreateData(normalized, orderCode, orderNumber),
       });
 
       return {
-        action: 'updated' as const,
+        action: 'created' as const,
         order,
       };
-    }
-
-    const orderCode = await this.generateUniqueOrderCode();
-    const orderNumber = await this.generateUniqueOrderNumber();
-    const order = await this.prisma.order.create({
-      data: this.buildCreateData(normalized, orderCode, orderNumber),
     });
-
-    return {
-      action: 'created' as const,
-      order,
-    };
   }
 
   private async normalizePayload(
     payload: WechatOrderWebhookDto,
   ): Promise<NormalizedOrderPayload> {
-    const firstProduct = payload.product_infos?.[0];
+    const orderDetail = payload.order_detail;
+    const productInfos = orderDetail?.product_infos ?? payload.product_infos;
+    const payInfo = orderDetail?.pay_info ?? payload.pay_info;
+    const priceInfo = orderDetail?.price_info ?? payload.price_info;
+    const deliveryInfo = orderDetail?.delivery_info ?? payload.delivery_info;
+    const firstProduct = productInfos?.[0];
     const telNumber =
-      payload.delivery_info?.address_info?.tel_number ??
-      payload.delivery_info?.address_info?.use_tel_number;
+      deliveryInfo?.address_info?.tel_number ??
+      deliveryInfo?.address_info?.use_tel_number;
     const productId = await this.resolveProductId(firstProduct?.product_id);
 
     return {
@@ -71,9 +83,10 @@ export class OrderService {
       status: this.mapOrderStatus(payload.status),
       createdAt: this.parseDate(payload.create_time),
       updatedAt: this.parseDate(payload.update_time),
-      paidAt: this.parseDate(payload.pay_info?.pay_time),
-      paymentProvider: this.mapPaymentProvider(payload.pay_info?.payment_method),
-      providerTradeNo: payload.pay_info?.transaction_id,
+      paidAt: this.parseDate(payInfo?.pay_time),
+      amount: this.parseInteger(priceInfo?.order_price),
+      paymentProvider: this.mapPaymentProvider(payInfo?.payment_method),
+      providerTradeNo: payInfo?.transaction_id,
       productId,
       productName: firstProduct?.title,
       phone: telNumber,
@@ -103,6 +116,10 @@ export class OrderService {
 
     if (payload.paidAt) {
       data.paidAt = payload.paidAt;
+    }
+
+    if (payload.amount !== undefined) {
+      data.amount = payload.amount;
     }
 
     if (payload.paymentProvider) {
@@ -136,7 +153,7 @@ export class OrderService {
     const data: Prisma.OrderUncheckedCreateInput = {
       orderCode,
       orderNumber,
-      amount: 0,
+      amount: payload.amount ?? 0,
       currency: Currency.CNY,
       externalId: payload.externalId,
       metadata: payload.metadata,
@@ -220,14 +237,26 @@ export class OrderService {
       COMPLETED: OrderStatus.COMPLETED,
       FINISHED: OrderStatus.COMPLETED,
       CONFIRMED: OrderStatus.COMPLETED,
-      '未支付': OrderStatus.UNPAID,
-      '待支付': OrderStatus.UNPAID,
-      '已支付': OrderStatus.PAID,
-      '待发货': OrderStatus.PAID,
-      '待收货': OrderStatus.PAID,
-      '已取消': OrderStatus.CANCELLED,
-      '已退款': OrderStatus.REFUNDED,
-      '已完成': OrderStatus.COMPLETED,
+      未支付: OrderStatus.UNPAID,
+      待支付: OrderStatus.UNPAID,
+      已支付: OrderStatus.PAID,
+      礼物待收下: OrderStatus.PAID,
+      一起买待成团: OrderStatus.PAID,
+      待发货: OrderStatus.PAID,
+      部分发货: OrderStatus.PAID,
+      待收货: OrderStatus.PAID,
+      已取消: OrderStatus.CANCELLED,
+      已退款: OrderStatus.REFUNDED,
+      已完成: OrderStatus.COMPLETED,
+      '10': OrderStatus.UNPAID,
+      '12': OrderStatus.PAID,
+      '13': OrderStatus.PAID,
+      '20': OrderStatus.PAID,
+      '21': OrderStatus.PAID,
+      '30': OrderStatus.PAID,
+      '100': OrderStatus.COMPLETED,
+      '200': OrderStatus.REFUNDED,
+      '250': OrderStatus.CANCELLED,
     };
 
     return statusMap[normalized] ?? statusMap[value.trim()];
@@ -241,12 +270,16 @@ export class OrderService {
     const normalized = value.trim().toUpperCase();
 
     const providerMap: Record<string, PaymentProvider> = {
+      '1': PaymentProvider.WECHAT,
+      '2': PaymentProvider.OTHER,
+      '3': PaymentProvider.OTHER,
+      '4': PaymentProvider.OTHER,
       WECHAT: PaymentProvider.WECHAT,
       WECHAT_PAY: PaymentProvider.WECHAT,
       WX: PaymentProvider.WECHAT,
-      '微信支付': PaymentProvider.WECHAT,
+      微信支付: PaymentProvider.WECHAT,
       ALIPAY: PaymentProvider.ALIPAY,
-      '支付宝': PaymentProvider.ALIPAY,
+      支付宝: PaymentProvider.ALIPAY,
       PAYPAL: PaymentProvider.PAYPAL,
       STRIPE: PaymentProvider.STRIPE,
       APPLE_PAY: PaymentProvider.APPLE_PAY,
@@ -254,7 +287,24 @@ export class OrderService {
       OTHER: PaymentProvider.OTHER,
     };
 
-    return providerMap[normalized] ?? providerMap[value.trim()] ?? PaymentProvider.OTHER;
+    return (
+      providerMap[normalized] ??
+      providerMap[value.trim()] ??
+      PaymentProvider.OTHER
+    );
+  }
+
+  private parseInteger(value?: string): number | undefined {
+    if (!value) {
+      return undefined;
+    }
+
+    const numericValue = Number(value);
+    if (!Number.isInteger(numericValue) || numericValue < 0) {
+      return undefined;
+    }
+
+    return numericValue;
   }
 
   private async resolveProductId(
@@ -264,60 +314,78 @@ export class OrderService {
       return undefined;
     }
 
-    const existingProduct = await this.prisma.product.findUnique({
-      where: { id: productId },
-      select: { id: true },
-    });
+    try {
+      const existingProduct = await this.withDatabaseRetry(() =>
+        this.prisma.product.findUnique({
+          where: { id: productId },
+          select: { id: true },
+        }),
+      );
 
-    return existingProduct?.id;
+      return existingProduct?.id;
+    } catch (error) {
+      if (this.isRetryableDatabaseError(error)) {
+        return undefined;
+      }
+
+      throw error;
+    }
   }
 
-  private async generateUniqueOrderCode(): Promise<string> {
-    for (let i = 0; i < 5; i += 1) {
-      const candidate = `ORD${this.formatNow()}${this.randomDigits(4)}`;
-      const existing = await this.prisma.order.findUnique({
-        where: { orderCode: candidate },
-        select: { id: true },
-      });
+  private async generateOrderCode(): Promise<string> {
+    const rows = await this.prisma.$queryRaw<Array<{ nextval: bigint }>>`
+      SELECT nextval('orders_order_code_seq') AS nextval
+    `;
+    const nextValue = rows[0]?.nextval;
 
-      if (!existing) {
-        return candidate;
+    if (typeof nextValue !== 'bigint') {
+      throw new Error('Failed to allocate internal order code');
+    }
+
+    return nextValue.toString();
+  }
+
+  private encodeOrderNumber(orderCode: string): string {
+    const internalId = BigInt(orderCode);
+    const encoded = internalId ^ ORDER_NUMBER_MASK;
+
+    return encoded.toString(36).toUpperCase();
+  }
+
+  private async withDatabaseRetry<T>(
+    operation: () => Promise<T>,
+    attempts = DATABASE_RETRY_ATTEMPTS,
+    delayMs = DATABASE_RETRY_DELAY_MS,
+  ): Promise<T> {
+    let lastError: unknown;
+
+    for (let attempt = 1; attempt <= attempts; attempt += 1) {
+      try {
+        return await operation();
+      } catch (error) {
+        lastError = error;
+
+        if (!this.isRetryableDatabaseError(error) || attempt === attempts) {
+          throw error;
+        }
+
+        await this.delay(delayMs * attempt);
       }
     }
 
-    throw new Error('Failed to generate unique order code');
+    throw lastError;
   }
 
-  private async generateUniqueOrderNumber(): Promise<string> {
-    for (let i = 0; i < 5; i += 1) {
-      const candidate = `${this.formatNow()}${this.randomDigits(4)}`;
-      const existing = await this.prisma.order.findUnique({
-        where: { orderNumber: candidate },
-        select: { id: true },
-      });
-
-      if (!existing) {
-        return candidate;
-      }
-    }
-
-    throw new Error('Failed to generate unique order number');
+  private isRetryableDatabaseError(error: unknown): boolean {
+    return (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      (error as { code?: string }).code === 'P1001'
+    );
   }
 
-  private formatNow() {
-    const now = new Date();
-    const yyyy = now.getFullYear();
-    const mm = String(now.getMonth() + 1).padStart(2, '0');
-    const dd = String(now.getDate()).padStart(2, '0');
-    const hh = String(now.getHours()).padStart(2, '0');
-    const mi = String(now.getMinutes()).padStart(2, '0');
-    const ss = String(now.getSeconds()).padStart(2, '0');
-    const ms = String(now.getMilliseconds()).padStart(3, '0');
-
-    return `${yyyy}${mm}${dd}${hh}${mi}${ss}${ms}`;
-  }
-
-  private randomDigits(length: number) {
-    return Array.from({ length }, () => Math.floor(Math.random() * 10)).join('');
+  private async delay(ms: number): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve, ms));
   }
 }
