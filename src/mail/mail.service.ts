@@ -122,12 +122,15 @@ export class MailService {
     await this.sendSimpleEmail({ to: email, subject, html });
   }
 
-  async sendMailLater(email: string, delayMs: number) {
+  async sendMailLater(dto: SendEmailDto | string, delayMs: number) {
+    const payload: Partial<SendEmailDto> =
+      typeof dto === 'string' ? { to: dto, subject: '', text: '' } : dto;
     await this.mailQueue.add(
       'sendMail',
-      { email },
+      payload,
       { delay: delayMs }, // 设置延迟
     );
-    return `已将发送 ${email} 的任务加入队列，延迟 ${delayMs / 1000} 秒执行`;
+    const to = typeof dto === 'string' ? dto : dto.to;
+    return `已将发送 ${to} 的任务加入队列，延迟 ${delayMs / 1000} 秒执行`;
   }
 }
