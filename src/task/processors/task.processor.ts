@@ -142,9 +142,6 @@ export class TaskProcessor extends WorkerHost {
         this.logger.warn(`Unknown job type: ${JSON.stringify(taskName)}`);
     }
 
-    // 模拟：sleep 500ms
-    await new Promise((r) => setTimeout(r, 500));
-
     return { ok: true, at: new Date().toISOString() };
   }
 
