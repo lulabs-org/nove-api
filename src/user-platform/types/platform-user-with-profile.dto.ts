@@ -9,56 +9,44 @@
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
-import { ApiProperty } from '@nestjs/swagger';
-import { Platform } from '@prisma/client';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { PlatformUserDto } from './platform-user.dto';
 
-export class PlatformUserWithProfileDto {
-  @ApiProperty({ description: '平台用户ID' })
-  id: string;
+export class PlatformUserProfileDto {
+  @ApiPropertyOptional({ description: '用户资料 ID' })
+  id?: string;
 
-  @ApiProperty({ description: '平台类型', enum: Platform })
-  platform: string;
-
-  @ApiProperty({ description: '平台联合ID' })
-  ptUnionId: string;
-
-  @ApiProperty({ description: '平台用户ID', required: false })
-  ptUserId?: string;
-
-  @ApiProperty({ description: '显示名称', required: false })
+  @ApiPropertyOptional({ description: '资料显示名称' })
   displayName?: string;
 
-  @ApiProperty({ description: '国家代码', required: false })
-  countryCode?: string;
+  @ApiPropertyOptional({ description: '头像地址' })
+  avatar?: string;
 
-  @ApiProperty({ description: '手机号', required: false })
-  phone?: string;
+  @ApiPropertyOptional({ description: '个人简介' })
+  bio?: string;
+}
 
-  @ApiProperty({ description: '手机号哈希', required: false })
-  phoneHash?: string;
+export class PlatformUserLinkedUserDto {
+  @ApiPropertyOptional({ description: '本地用户 ID' })
+  id?: string;
 
-  @ApiProperty({ description: '是否激活' })
-  active: boolean;
+  @ApiPropertyOptional({ description: '登录用户名' })
+  username?: string;
 
-  @ApiProperty({ description: '最后活跃时间' })
-  lastSeenAt: Date;
+  @ApiPropertyOptional({ description: '邮箱地址' })
+  email?: string;
 
-  @ApiProperty({ description: '创建时间' })
-  createdAt: Date;
+  @ApiPropertyOptional({
+    description: '关联的用户资料',
+    type: PlatformUserProfileDto,
+  })
+  profile?: PlatformUserProfileDto | null;
+}
 
-  @ApiProperty({ description: '更新时间' })
-  updatedAt: Date;
-
-  @ApiProperty({ description: '关联的用户信息', required: false })
-  user?: {
-    id: string;
-    email?: string;
-    username?: string;
-    profile?: {
-      id: string;
-      displayName?: string;
-      avatar?: string;
-      bio?: string;
-    };
-  };
+export class PlatformUserWithProfileDto extends PlatformUserDto {
+  @ApiPropertyOptional({
+    description: '关联的本地用户信息',
+    type: PlatformUserLinkedUserDto,
+  })
+  user?: PlatformUserLinkedUserDto | null;
 }

@@ -11,16 +11,16 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsArray, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
-import { UpsertPlatformUserDto } from './upsert-platform-user.dto';
+import { UpsertPlatformUserRequestDto } from './upsert-platform-user.dto';
 
 export class UpsertManyPlatformUsersDto {
   @ApiProperty({
-    description: '批量更新数据',
-    type: [UpsertPlatformUserDto],
+    description: '批量 upsert 请求列表',
+    type: [UpsertPlatformUserRequestDto],
     isArray: true,
   })
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => UpsertPlatformUserDto)
-  items: UpsertPlatformUserDto[];
+  @Type(() => UpsertPlatformUserRequestDto)
+  items: UpsertPlatformUserRequestDto[];
 }
