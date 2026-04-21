@@ -69,7 +69,7 @@ export class MeetingRecordResponseDto {
   processingStatus: ProcessingStatus;
 
   @ApiPropertyOptional({ description: '元数据' })
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 
   @ApiProperty({ description: '创建时间' })
   createdAt: Date;

@@ -113,12 +113,12 @@ export class UpdateMeetingRecordDto {
     example: [{ name: '张三', userId: 'user_123' }],
   })
   @IsOptional()
-  participantList?: any;
+  participantList?: Record<string, unknown>[];
 
   @ApiPropertyOptional({
     description: '元数据',
     example: { updatedBy: 'admin' },
   })
   @IsOptional()
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }

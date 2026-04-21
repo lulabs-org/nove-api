@@ -144,5 +144,5 @@ export class CreateMeetingRecordDto {
     example: { source: 'api' },
   })
   @IsOptional()
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }
