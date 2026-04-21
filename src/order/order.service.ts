@@ -1,9 +1,12 @@
+import { randomInt } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { Currency, OrderStatus, PaymentProvider, Prisma } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { WechatOrderWebhookDto } from './dto/wechat-order-webhook.dto';
 
 const ORDER_NUMBER_MASK = 0x5a17c3e5b79fn;
+const ORDER_CODE_RETRY_ATTEMPTS = 5;
+const ORDER_CODE_RANDOM_SUFFIX_MAX = 1_000_000;
 const DATABASE_RETRY_ATTEMPTS = 3;
 const DATABASE_RETRY_DELAY_MS = 300;
 
@@ -51,11 +54,7 @@ export class OrderService {
         };
       }
 
-      const orderCode = await this.generateOrderCode();
-      const orderNumber = this.encodeOrderNumber(orderCode);
-      const order = await this.prisma.order.create({
-        data: this.buildCreateData(normalized, orderCode, orderNumber),
-      });
+      const order = await this.createOrder(normalized);
 
       return {
         action: 'created' as const,
@@ -332,17 +331,35 @@ export class OrderService {
     }
   }
 
-  private async generateOrderCode(): Promise<string> {
-    const rows = await this.prisma.$queryRaw<Array<{ nextval: bigint }>>`
-      SELECT nextval('orders_order_code_seq') AS nextval
-    `;
-    const nextValue = rows[0]?.nextval;
+  private async createOrder(payload: NormalizedOrderPayload) {
+    for (let attempt = 1; attempt <= ORDER_CODE_RETRY_ATTEMPTS; attempt += 1) {
+      const orderCode = this.generateOrderCode();
+      const orderNumber = this.encodeOrderNumber(orderCode);
 
-    if (typeof nextValue !== 'bigint') {
-      throw new Error('Failed to allocate internal order code');
+      try {
+        return await this.prisma.order.create({
+          data: this.buildCreateData(payload, orderCode, orderNumber),
+        });
+      } catch (error) {
+        if (
+          !this.isOrderIdentityConflict(error) ||
+          attempt === ORDER_CODE_RETRY_ATTEMPTS
+        ) {
+          throw error;
+        }
+      }
     }
 
-    return nextValue.toString();
+    throw new Error('Failed to allocate internal order code');
+  }
+
+  private generateOrderCode(): string {
+    const timestamp = Date.now().toString();
+    const randomSuffix = randomInt(ORDER_CODE_RANDOM_SUFFIX_MAX)
+      .toString()
+      .padStart(6, '0');
+
+    return `${timestamp}${randomSuffix}`;
   }
 
   private encodeOrderNumber(orderCode: string): string {
@@ -374,6 +391,30 @@ export class OrderService {
     }
 
     throw lastError;
+  }
+
+  private isOrderIdentityConflict(error: unknown): boolean {
+    if (!(error instanceof Prisma.PrismaClientKnownRequestError)) {
+      return false;
+    }
+
+    if (error.code !== 'P2002') {
+      return false;
+    }
+
+    const target = Array.isArray(error.meta?.target)
+      ? error.meta.target.map((value) => String(value).toLowerCase())
+      : [];
+
+    return target.some(
+      (value) =>
+        value.includes('order_code') ||
+        value.includes('order_number') ||
+        value.includes('ordercode') ||
+        value.includes('ordernumber') ||
+        value.includes('uk_orders_order_code') ||
+        value.includes('uk_orders_order_number'),
+    );
   }
 
   private isRetryableDatabaseError(error: unknown): boolean {
