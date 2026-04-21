@@ -30,6 +30,9 @@ import { openaiConfig } from '../configs/openai.config';
     BullModule.registerQueue({
       name: 'tasks', // 队列名
     }),
+    BullModule.registerQueue({
+      name: 'mail', // 邮件队列
+    }),
     OpenaiModule,
     ConfigModule.forFeature(openaiConfig),
   ],
