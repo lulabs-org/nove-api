@@ -1,42 +1,38 @@
 import { randomInt } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { Currency, Prisma } from '@prisma/client';
-import { PrismaService } from '@/prisma/prisma.service';
 import { WechatOrderWebhookDto } from '../dto/wechat-order-webhook.dto';
+import { OrderRepository } from '../repositories';
 
 const ORDER_NUMBER_MASK = 0x5a17c3e5b79fn;
 const ORDER_CODE_RANDOM_SUFFIX_MAX = 1_000_000;
 
 @Injectable()
 export class OrderService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly orderRepository: OrderRepository) {}
 
   /**
    * 飞书集成平台已经把微信小店原始字段转换成内部字段。
    * 这里仅按外部订单号做幂等写入：存在则更新，不存在则创建。
    */
   async upsertWechatOrder(payload: WechatOrderWebhookDto) {
-    const existingOrder = await this.prisma.order.findFirst({
-      where: {
-        externalId: payload.orderId,
-        deletedAt: null,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    const existingOrder = await this.orderRepository.findLatestByExternalId(
+      payload.orderId,
+    );
 
     if (existingOrder) {
-      const order = await this.prisma.order.update({
-        where: { id: existingOrder.id },
-        data: this.buildUpdateData(payload),
-      });
+      const order = await this.orderRepository.update(
+        existingOrder.id,
+        this.buildUpdateData(payload),
+      );
 
       return { action: 'updated' as const, order };
     }
 
     const orderCode = this.generateOrderCode();
-    const order = await this.prisma.order.create({
-      data: this.buildCreateData(payload, orderCode),
-    });
+    const order = await this.orderRepository.create(
+      this.buildCreateData(payload, orderCode),
+    );
 
     return { action: 'created' as const, order };
   }
