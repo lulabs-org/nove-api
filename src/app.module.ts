@@ -39,6 +39,7 @@ import { OrganizationModule } from './org/organization.module';
 import { DepartmentModule } from './dept/department.module';
 import { OrgMemberModule } from './org-member/org-member.module';
 import { MeetAiModule } from './meet-ai/meet-ai.module';
+import { OrderModule } from './order/order.module';
 
 @Module({
   imports: [
@@ -78,6 +79,7 @@ import { MeetAiModule } from './meet-ai/meet-ai.module';
     DepartmentModule,
     OrgMemberModule,
     MeetAiModule,
+    OrderModule,
   ],
   controllers: [AppController],
   providers: [

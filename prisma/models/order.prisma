@@ -3,8 +3,8 @@ model Order {
   id String @id @default(cuid()) // 内部主键
 
   // 编码体系：内部号 + 对外展示号
-  orderCode   String @map("order_code") // 内部订单号（系统生成）
-  orderNumber String @map("order_number") // 对外订单号（展示/客服）
+  orderCode   String @map("order_code") // 内部订单号（系统生成的数字字符串）
+  orderNumber String @map("order_number") // 对外订单号（由 orderCode 编码生成）
 
   // 外部平台订单号（建议按渠道维度做唯一）
   externalId String? @map("external_order_id")
