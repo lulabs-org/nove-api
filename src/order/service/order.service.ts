@@ -1,4 +1,4 @@
-import { randomInt } from 'node:crypto';
+import { randomInt, createHash } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { Currency, Prisma } from '@prisma/client';
 import { WechatOrderWebhookDto } from '../dto/wechat-order-webhook.dto';
@@ -109,8 +109,18 @@ export class OrderService {
    * 对外展示订单号由内部订单号编码得到，避免直接暴露连续数字。
    */
   private encodeOrderNumber(orderCode: string): string {
-    const encoded = BigInt(orderCode) ^ ORDER_NUMBER_MASK;
+    try {
+      const encoded = BigInt(orderCode) ^ ORDER_NUMBER_MASK;
 
-    return encoded.toString(36).toUpperCase();
+      return encoded.toString(36).toUpperCase();
+    } catch (err) {
+      // Fallback: stable hash-based encoding when orderCode is not a valid integer
+      const hash = createHash('sha256').update(String(orderCode)).digest('hex');
+      // take a prefix of the hex hash and convert to BigInt for base36 encoding
+      const prefix = hash.slice(0, 12); // 12 hex chars -> up to 48 bits
+      const safeBigInt = BigInt('0x' + prefix);
+
+      return safeBigInt.toString(36).toUpperCase();
+    }
   }
 }
