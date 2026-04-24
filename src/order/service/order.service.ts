@@ -113,7 +113,7 @@ export class OrderService {
       const encoded = BigInt(orderCode) ^ ORDER_NUMBER_MASK;
 
       return encoded.toString(36).toUpperCase();
-    } catch (err) {
+    } catch {
       // Fallback: stable hash-based encoding when orderCode is not a valid integer
       const hash = createHash('sha256').update(String(orderCode)).digest('hex');
       // take a prefix of the hex hash and convert to BigInt for base36 encoding
