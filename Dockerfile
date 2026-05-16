@@ -8,7 +8,7 @@
 # ==========================================
 # Build Stage
 # ==========================================
-FROM node:20-alpine AS build
+FROM node:22-alpine AS build
 
 # Enable Corepack for modern package manager support (pnpm/yarn)
 # This allows using pnpm as the package manager in the container
@@ -39,7 +39,7 @@ RUN pnpm run db:generate && \
 # ==========================================
 # Production Stage
 # ==========================================
-FROM node:20-alpine AS production
+FROM node:22-alpine AS production
 
 # Set working directory for the production application
 WORKDIR /usr/src/app
