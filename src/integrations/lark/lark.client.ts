@@ -1,11 +1,11 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { ConfigType } from '@nestjs/config';
 import * as lark from '@larksuiteoapi/node-sdk';
 import { LarkClientConfig } from './types/lark-bitable.types';
 import { larkConfig } from '../../configs/lark.config';
 
 @Injectable()
-export class LarkClient {
+export class LarkClient implements OnModuleDestroy {
   private readonly logger = new Logger(LarkClient.name);
   private client: lark.Client;
 
@@ -89,6 +89,13 @@ export class LarkClient {
     });
 
     this.logger.log('Lark client initialized successfully');
+  }
+
+  async onModuleDestroy() {
+    if (this.wsClient) {
+      this.wsClient.close();
+      this.logger.log('Lark WSClient connection closed');
+    }
   }
 
   /**
