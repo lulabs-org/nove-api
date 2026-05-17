@@ -1,11 +1,18 @@
 import { randomInt, createHash } from 'node:crypto';
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Currency, Prisma } from '@prisma/client';
 import { WechatOrderWebhookDto } from '../dto/wechat-order-webhook.dto';
 import { OrderRepository } from '../repositories';
 
 const ORDER_NUMBER_MASK = 0x5a17c3e5b79fn;
 const ORDER_CODE_RANDOM_SUFFIX_MAX = 1_000_000;
+const FIXED_PRODUCT_NAME = '实验室训练营';
+const FIXED_PRODUCT_PRICE = 7880;
+
+interface ResolvedProduct {
+  id: string;
+  name: string;
+}
 
 @Injectable()
 export class OrderService {
@@ -21,18 +28,15 @@ export class OrderService {
     );
 
     if (existingOrder) {
-      const order = await this.orderRepository.update(
-        existingOrder.id,
-        this.buildUpdateData(payload),
-      );
+      const data = await this.buildUpdateData(payload);
+      const order = await this.orderRepository.update(existingOrder.id, data);
 
       return { action: 'updated' as const, order };
     }
 
     const orderCode = this.generateOrderCode();
-    const order = await this.orderRepository.create(
-      this.buildCreateData(payload, orderCode),
-    );
+    const data = await this.buildCreateData(payload, orderCode);
+    const order = await this.orderRepository.create(data);
 
     return { action: 'created' as const, order };
   }
@@ -40,10 +44,10 @@ export class OrderService {
   /**
    * 创建订单时补齐系统生成的订单号、默认币种和必填金额。
    */
-  private buildCreateData(
+  private async buildCreateData(
     payload: WechatOrderWebhookDto,
     orderCode: string,
-  ): Prisma.OrderUncheckedCreateInput {
+  ): Promise<Prisma.OrderUncheckedCreateInput> {
     return this.assignOptionalFields(
       {
         orderCode,
@@ -54,21 +58,23 @@ export class OrderService {
         metadata: (payload.metadata ?? payload) as Prisma.InputJsonValue,
       },
       payload,
+      await this.resolveProduct(),
     );
   }
 
   /**
    * 更新订单时只同步外部平台字段，不重新生成订单号。
    */
-  private buildUpdateData(
+  private async buildUpdateData(
     payload: WechatOrderWebhookDto,
-  ): Prisma.OrderUncheckedUpdateInput {
+  ): Promise<Prisma.OrderUncheckedUpdateInput> {
     return this.assignOptionalFields(
       {
         externalId: payload.orderId,
         metadata: (payload.metadata ?? payload) as Prisma.InputJsonValue,
       },
       payload,
+      await this.resolveProduct(),
     );
   }
 
@@ -80,17 +86,36 @@ export class OrderService {
     T extends
       | Prisma.OrderUncheckedCreateInput
       | Prisma.OrderUncheckedUpdateInput,
-  >(data: T, payload: WechatOrderWebhookDto): T {
+  >(data: T, payload: WechatOrderWebhookDto, product: ResolvedProduct): T {
     if (payload.status) data.status = payload.status;
     if (payload.paidAt) data.paidAt = new Date(payload.paidAt);
     if (payload.amount !== undefined) data.amount = payload.amount;
     if (payload.paymentProvider) data.paymentProvider = payload.paymentProvider;
     if (payload.providerTradeNo) data.providerTradeNo = payload.providerTradeNo;
-    if (payload.productId) data.productId = payload.productId;
+    data.productId = product.id;
     if (payload.productName) data.productName = payload.productName;
+    if (!payload.productName) data.productName = product.name;
     if (payload.phone) data.phone = payload.phone;
 
     return data;
+  }
+
+  /**
+   * 飞书集成平台每次触发时固定写入实验室训练营产品 ID。
+   */
+  private async resolveProduct(): Promise<ResolvedProduct> {
+    const product = await this.orderRepository.findProductByNameAndPrice(
+      FIXED_PRODUCT_NAME,
+      FIXED_PRODUCT_PRICE,
+    );
+
+    if (!product) {
+      throw new NotFoundException(
+        `Product not found: name=${FIXED_PRODUCT_NAME}, price=${FIXED_PRODUCT_PRICE}`,
+      );
+    }
+
+    return product;
   }
 
   /**
