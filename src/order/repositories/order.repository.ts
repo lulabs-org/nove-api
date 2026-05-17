@@ -40,4 +40,14 @@ export class OrderRepository {
       data,
     });
   }
+
+  /**
+   * 按固定商品信息查找产品。
+   */
+  async findProductByNameAndPrice(name: string, price: number) {
+    return this.prisma.product.findFirst({
+      where: { name, price },
+      select: { id: true, name: true },
+    });
+  }
 }
