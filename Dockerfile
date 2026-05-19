@@ -22,9 +22,8 @@ WORKDIR /usr/src/app
 # when only source code changes
 COPY package*.json pnpm-lock.yaml ./
 
-# Install all dependencies (including dev dependencies)
-# --no-frozen-lockfile allows minor lockfile updates if needed
-RUN pnpm install --no-frozen-lockfile
+# pnpm 11 requires explicit permission for dependency build scripts
+RUN pnpm install --no-frozen-lockfile --config.dangerouslyAllowAllBuilds=true
 
 # Copy source code after dependencies are installed
 COPY . .
