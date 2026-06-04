@@ -5,12 +5,35 @@ import { WechatOrderHistorySyncDto } from '../dto/wechat-order-history-sync.dto'
 import { WechatOrderWebhookDto } from '../dto/wechat-order-webhook.dto';
 import { OrderRepository } from '../repositories';
 import { WechatShopOrder } from '../types/wechat-shop.types';
+import {
+  DEFAULT_WECHAT_ORDER_PAGE_SIZE,
+  splitWechatOrderRanges,
+  toUnixSeconds,
+  unixSecondsToISOString,
+} from '../utils/wechat-order-sync.util';
 import { WechatShopOrderClientService } from './wechat-shop-order-client.service';
 
 const ORDER_NUMBER_MASK = 0x5a17c3e5b79fn;
 const ORDER_CODE_RANDOM_SUFFIX_MAX = 1_000_000;
-const WECHAT_ORDER_MAX_RANGE_SECONDS = 7 * 24 * 60 * 60;
-const DEFAULT_WECHAT_ORDER_PAGE_SIZE = 100;
+
+export interface SyncWechatOrderPageParams {
+  startTime: number;
+  endTime: number;
+  timeType: 'create' | 'update';
+  pageSize: number;
+  nextKey?: string | null;
+  status?: number | null;
+  dryRun?: boolean;
+}
+
+export interface SyncWechatOrderPageResult {
+  fetched: number;
+  created: number;
+  updated: number;
+  failed: Array<{ orderId: string; reason: string }>;
+  nextKey: string;
+  hasMore: boolean;
+}
 
 @Injectable()
 export class OrderService {
@@ -50,8 +73,8 @@ export class OrderService {
    * 微信接口单次时间范围不超过 7 天，这里会自动切片完整覆盖请求区间。
    */
   async syncWechatOrderHistory(payload: WechatOrderHistorySyncDto) {
-    const startTime = this.toUnixSeconds(payload.startTime, 'startTime');
-    const endTime = this.toUnixSeconds(payload.endTime, 'endTime');
+    const startTime = toUnixSeconds(payload.startTime, 'startTime');
+    const endTime = toUnixSeconds(payload.endTime, 'endTime');
 
     if (startTime >= endTime) {
       throw new BadRequestException('startTime must be earlier than endTime');
@@ -64,50 +87,27 @@ export class OrderService {
     let updated = 0;
     const failed: Array<{ orderId: string; reason: string }> = [];
 
-    for (const range of this.splitWechatOrderRanges(startTime, endTime)) {
+    for (const range of splitWechatOrderRanges(startTime, endTime)) {
       let nextKey = '';
       let hasMore = true;
 
       while (hasMore) {
-        const listResult = await this.wechatShopOrderClient.getOrderIds({
+        const result = await this.syncWechatOrderPage({
           startTime: range.startTime,
           endTime: range.endTime,
           timeType,
           pageSize,
           nextKey,
           status: payload.status,
+          dryRun: payload.dryRun,
         });
-        const orderIds = listResult.order_id_list ?? listResult.orders ?? [];
 
-        for (const orderId of orderIds.map(String)) {
-          fetched += 1;
-
-          try {
-            const wechatOrder =
-              await this.wechatShopOrderClient.getOrder(orderId);
-            const mappedPayload = this.mapWechatShopOrderToWebhookPayload(
-              wechatOrder,
-              orderId,
-            );
-
-            if (payload.dryRun) {
-              continue;
-            }
-
-            const result = await this.upsertWechatOrder(mappedPayload);
-            if (result.action === 'created') created += 1;
-            if (result.action === 'updated') updated += 1;
-          } catch (error) {
-            failed.push({
-              orderId,
-              reason:
-                error instanceof Error ? error.message : 'Unknown sync error',
-            });
-          }
-        }
-
-        nextKey = listResult.next_key ?? '';
-        hasMore = Boolean(listResult.has_more && nextKey);
+        fetched += result.fetched;
+        created += result.created;
+        updated += result.updated;
+        failed.push(...result.failed);
+        nextKey = result.nextKey;
+        hasMore = result.hasMore;
       }
     }
 
@@ -118,6 +118,57 @@ export class OrderService {
       failedCount: failed.length,
       failed,
       dryRun: payload.dryRun ?? false,
+    };
+  }
+
+  async syncWechatOrderPage(
+    params: SyncWechatOrderPageParams,
+  ): Promise<SyncWechatOrderPageResult> {
+    const listResult = await this.wechatShopOrderClient.getOrderIds({
+      startTime: params.startTime,
+      endTime: params.endTime,
+      timeType: params.timeType,
+      pageSize: params.pageSize,
+      nextKey: params.nextKey ?? '',
+      status: params.status ?? undefined,
+    });
+    const orderIds = listResult.order_id_list ?? listResult.orders ?? [];
+    let created = 0;
+    let updated = 0;
+    const failed: Array<{ orderId: string; reason: string }> = [];
+
+    for (const orderId of orderIds.map(String)) {
+      try {
+        const wechatOrder = await this.wechatShopOrderClient.getOrder(orderId);
+        const mappedPayload = this.mapWechatShopOrderToWebhookPayload(
+          wechatOrder,
+          orderId,
+        );
+
+        if (params.dryRun) {
+          continue;
+        }
+
+        const result = await this.upsertWechatOrder(mappedPayload);
+        if (result.action === 'created') created += 1;
+        if (result.action === 'updated') updated += 1;
+      } catch (error) {
+        failed.push({
+          orderId,
+          reason: error instanceof Error ? error.message : 'Unknown sync error',
+        });
+      }
+    }
+
+    const nextKey = listResult.next_key ?? '';
+
+    return {
+      fetched: orderIds.length,
+      created,
+      updated,
+      failed,
+      nextKey,
+      hasMore: Boolean(listResult.has_more && nextKey),
     };
   }
 
@@ -190,9 +241,9 @@ export class OrderService {
     return {
       orderId,
       status: this.mapWechatShopStatus(order.status, order),
-      externalCreatedAt: this.unixSecondsToISOString(order.create_time),
-      externalUpdatedAt: this.unixSecondsToISOString(order.update_time),
-      paidAt: this.unixSecondsToISOString(payInfo?.pay_time),
+      externalCreatedAt: unixSecondsToISOString(order.create_time),
+      externalUpdatedAt: unixSecondsToISOString(order.update_time),
+      paidAt: unixSecondsToISOString(payInfo?.pay_time),
       amount: this.resolveWechatOrderAmount(order),
       paymentProvider: payInfo?.transaction_id
         ? PaymentProvider.WECHAT
@@ -260,39 +311,6 @@ export class OrderService {
 
       return total + price * count;
     }, 0);
-  }
-
-  private splitWechatOrderRanges(startTime: number, endTime: number) {
-    const ranges: Array<{ startTime: number; endTime: number }> = [];
-    let cursor = startTime;
-
-    while (cursor < endTime) {
-      const rangeEnd = Math.min(
-        cursor + WECHAT_ORDER_MAX_RANGE_SECONDS,
-        endTime,
-      );
-      ranges.push({ startTime: cursor, endTime: rangeEnd });
-      cursor = rangeEnd + 1;
-    }
-
-    return ranges;
-  }
-
-  private toUnixSeconds(value: string, fieldName: string): number {
-    const timestamp = Date.parse(value);
-    if (Number.isNaN(timestamp)) {
-      throw new BadRequestException(
-        `${fieldName} must be a valid ISO 8601 date`,
-      );
-    }
-
-    return Math.floor(timestamp / 1000);
-  }
-
-  private unixSecondsToISOString(value?: number): string | undefined {
-    if (!value) return undefined;
-
-    return new Date(value * 1000).toISOString();
   }
 
   /**
