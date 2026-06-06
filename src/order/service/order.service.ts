@@ -2,6 +2,7 @@ import { randomInt, createHash } from 'node:crypto';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Currency, OrderStatus, PaymentProvider, Prisma } from '@prisma/client';
 import { WechatOrderHistorySyncDto } from '../dto/wechat-order-history-sync.dto';
+import { WechatOrderIncrementalSyncDto } from '../dto/wechat-order-incremental-sync.dto';
 import { WechatOrderWebhookDto } from '../dto/wechat-order-webhook.dto';
 import { OrderRepository } from '../repositories';
 import { WechatShopOrder } from '../types/wechat-shop.types';
@@ -119,6 +120,20 @@ export class OrderService {
       failed,
       dryRun: payload.dryRun ?? false,
     };
+  }
+
+  async syncWechatOrderIncremental(payload: WechatOrderIncrementalSyncDto) {
+    const lookbackHours = payload.lookbackHours ?? 2;
+    const endTime = new Date();
+    const startTime = new Date(endTime.getTime() - lookbackHours * 3600_000);
+
+    return this.syncWechatOrderHistory({
+      startTime: startTime.toISOString(),
+      endTime: endTime.toISOString(),
+      timeType: 'update',
+      pageSize: payload.pageSize,
+      dryRun: payload.dryRun,
+    });
   }
 
   async syncWechatOrderPage(

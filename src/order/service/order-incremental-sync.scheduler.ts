@@ -1,12 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { OrderSyncService } from './order-sync.service';
+import { OrderService } from './order.service';
 
 @Injectable()
 export class OrderIncrementalSyncScheduler {
   private readonly logger = new Logger(OrderIncrementalSyncScheduler.name);
 
-  constructor(private readonly orderSyncService: OrderSyncService) {}
+  constructor(private readonly orderService: OrderService) {}
 
   @Cron('0 5 * * * *', { timeZone: 'Asia/Shanghai' })
   async enqueueHourlyIncrementalSync(): Promise<void> {
@@ -18,10 +18,12 @@ export class OrderIncrementalSyncScheduler {
       process.env.WECHAT_ORDER_INCREMENTAL_LOOKBACK_HOURS ?? 2,
     );
 
-    const job = await this.orderSyncService.enqueueWechatIncrementalSync({
+    const result = await this.orderService.syncWechatOrderIncremental({
       lookbackHours: Number.isFinite(lookbackHours) ? lookbackHours : 2,
     });
 
-    this.logger.log(`Enqueued WeChat order incremental sync job ${job.id}`);
+    this.logger.log(
+      `Synced WeChat order increments: fetched=${result.fetched}, created=${result.created}, updated=${result.updated}, failed=${result.failedCount}`,
+    );
   }
 }
