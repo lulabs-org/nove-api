@@ -2,7 +2,6 @@ import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Public } from '@/auth/decorators/public.decorator';
 import { WechatOrderHistorySyncDto } from './dto/wechat-order-history-sync.dto';
-import { WechatOrderIncrementalSyncDto } from './dto/wechat-order-incremental-sync.dto';
 import { WechatOrderWebhookDto } from './dto/wechat-order-webhook.dto';
 import { OrderService } from './service/order.service';
 
@@ -56,26 +55,4 @@ export class OrderController {
     };
   }
 
-  @Public()
-  @Post('incremental-sync')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: 'Sync incremental WeChat shop orders',
-    description:
-      '按 update_time_range 拉取最近一段时间的变化，并直接写入或覆盖 orders 表。',
-  })
-  @ApiBody({
-    type: WechatOrderIncrementalSyncDto,
-  })
-  @ApiResponse({ status: 200, description: '增量订单同步完成' })
-  async syncWechatOrderIncremental(
-    @Body() payload: WechatOrderIncrementalSyncDto,
-  ) {
-    const result = await this.orderService.syncWechatOrderIncremental(payload);
-
-    return {
-      success: true,
-      result,
-    };
-  }
 }
