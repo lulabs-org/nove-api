@@ -94,11 +94,6 @@ export class WechatShopOrderClientService {
   }
 
   private async getAccessToken(): Promise<string> {
-    const staticAccessToken = process.env.WECHAT_SHOP_ACCESS_TOKEN;
-    if (staticAccessToken) {
-      return staticAccessToken;
-    }
-
     if (
       this.cachedAccessToken &&
       Date.now() < this.cachedAccessTokenExpiresAt - TOKEN_REFRESH_SKEW_MS
@@ -110,7 +105,7 @@ export class WechatShopOrderClientService {
     const appSecret = process.env.WECHAT_SHOP_APP_SECRET;
     if (!appId || !appSecret) {
       throw new ServiceUnavailableException(
-        'Wechat shop credentials are missing: set WECHAT_SHOP_ACCESS_TOKEN or WECHAT_SHOP_APP_ID/WECHAT_SHOP_APP_SECRET',
+        'Wechat shop credentials are missing: set WECHAT_SHOP_APP_ID and WECHAT_SHOP_APP_SECRET',
       );
     }
 
