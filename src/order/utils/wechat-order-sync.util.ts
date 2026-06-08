@@ -30,9 +30,8 @@ export function unixSecondsToISOString(value?: number): string | undefined {
 /**
  * 微信订单列表接口限制单次时间范围不超过 7 天。
  *
- * 内部按秒切片，并让相邻片段在边界秒重叠。这样无论外部接口把
- * end_time 解释为闭区间还是半开区间，都不会漏掉边界订单；重复
- * 数据由订单 externalId 幂等 upsert 吃掉。
+ * 内部按秒切片，并让相邻片段首尾相接，完整覆盖请求区间。
+ * 如果外部接口在边界返回重复订单，订单 externalId 幂等 upsert 会消化重复数据。
  */
 export function splitWechatOrderRanges(
   startTime: number,

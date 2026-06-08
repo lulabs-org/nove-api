@@ -33,7 +33,7 @@ export class WechatOrderHistorySyncDto {
   })
   @IsOptional()
   @IsInt()
-  @Min(1)
+  @Min(10)
   status?: number;
 
   @ApiPropertyOptional({

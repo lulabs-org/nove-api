@@ -5,7 +5,7 @@ import {
 
 describe('wechat-order-sync.util', () => {
   describe('splitWechatOrderRanges', () => {
-    it('splits long ranges into 7-day windows with boundary overlap', () => {
+    it('splits long ranges into contiguous 7-day windows', () => {
       const startTime = 1000;
       const endTime = startTime + WECHAT_ORDER_MAX_RANGE_SECONDS * 2 + 12;
 
