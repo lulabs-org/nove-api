@@ -1,6 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  IsBoolean,
   IsDateString,
   IsIn,
   IsInt,
@@ -28,15 +27,6 @@ export class WechatOrderHistorySyncDto {
   timeType?: 'create' | 'update';
 
   @ApiPropertyOptional({
-    description: '微信小店订单状态，不传则同步全部状态',
-    minimum: 10,
-  })
-  @IsOptional()
-  @IsInt()
-  @Min(10)
-  status?: number;
-
-  @ApiPropertyOptional({
     description: '每页数量，微信小店限制不超过 100',
     default: 100,
     minimum: 1,
@@ -47,12 +37,4 @@ export class WechatOrderHistorySyncDto {
   @Min(1)
   @Max(100)
   pageSize?: number;
-
-  @ApiPropertyOptional({
-    description: '仅拉取并解析，不写入数据库',
-    default: false,
-  })
-  @IsOptional()
-  @IsBoolean()
-  dryRun?: boolean;
 }

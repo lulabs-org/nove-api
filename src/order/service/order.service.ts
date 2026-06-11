@@ -22,8 +22,6 @@ export interface SyncWechatOrderPageParams {
   timeType: 'create' | 'update';
   pageSize: number;
   nextKey?: string | null;
-  status?: number | null;
-  dryRun?: boolean;
 }
 
 export interface SyncWechatOrderPageResult {
@@ -98,8 +96,6 @@ export class OrderService {
           timeType,
           pageSize,
           nextKey,
-          status: payload.status,
-          dryRun: payload.dryRun,
         });
 
         fetched += result.fetched;
@@ -117,7 +113,6 @@ export class OrderService {
       updated,
       failedCount: failed.length,
       failed,
-      dryRun: payload.dryRun ?? false,
     };
   }
 
@@ -130,7 +125,6 @@ export class OrderService {
       timeType: params.timeType,
       pageSize: params.pageSize,
       nextKey: params.nextKey ?? '',
-      status: params.status ?? undefined,
     });
     const orderIds = listResult.order_id_list ?? listResult.orders ?? [];
     let created = 0;
@@ -144,10 +138,6 @@ export class OrderService {
           wechatOrder,
           orderId,
         );
-
-        if (params.dryRun) {
-          continue;
-        }
 
         const result = await this.upsertWechatOrder(mappedPayload);
         if (result.action === 'created') created += 1;
