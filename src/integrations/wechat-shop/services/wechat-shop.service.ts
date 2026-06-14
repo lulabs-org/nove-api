@@ -1,4 +1,6 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { RedisService } from '@/redis/redis.service';
 import {
   WechatShopOrder,
   WechatShopOrderDetailResponse,
@@ -13,6 +15,11 @@ const TOKEN_REFRESH_SKEW_MS = 5 * 60 * 1000;
 export class WechatShopService {
   private cachedAccessToken?: string;
   private cachedAccessTokenExpiresAt = 0;
+
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly redisService: RedisService,
+  ) {}
 
   async getOrderIds(params: {
     startTime: number;
@@ -94,15 +101,59 @@ export class WechatShopService {
   }
 
   private async getAccessToken(): Promise<string> {
-    if (
-      this.cachedAccessToken &&
-      Date.now() < this.cachedAccessTokenExpiresAt - TOKEN_REFRESH_SKEW_MS
-    ) {
-      return this.cachedAccessToken;
+    const redis = this.redisService.getClient();
+
+    if (!redis) {
+      if (
+        this.cachedAccessToken &&
+        Date.now() < this.cachedAccessTokenExpiresAt - TOKEN_REFRESH_SKEW_MS
+      ) {
+        return this.cachedAccessToken;
+      }
+      const data = await this.fetchNewTokenFromWechat();
+      this.cachedAccessToken = data.access_token;
+      this.cachedAccessTokenExpiresAt = Date.now() + data.expires_in * 1000;
+      return data.access_token;
     }
 
-    const appId = process.env.WECHAT_SHOP_APP_ID;
-    const appSecret = process.env.WECHAT_SHOP_APP_SECRET;
+    const tokenKey = 'wechat_shop:access_token';
+    const lockKey = 'wechat_shop:access_token_lock';
+
+    let token = await redis.get(tokenKey);
+    if (token) return token;
+
+    const lockValue = Date.now().toString() + Math.random().toString();
+    const acquired = await redis.set(lockKey, lockValue, 'EX', 10, 'NX');
+
+    if (acquired === 'OK') {
+      try {
+        token = await redis.get(tokenKey);
+        if (token) return token;
+
+        const data = await this.fetchNewTokenFromWechat();
+        const ttl = Math.max(0, data.expires_in - 300);
+        await redis.set(tokenKey, data.access_token, 'EX', ttl);
+        
+        return data.access_token;
+      } finally {
+        const script = `
+          if redis.call("get", KEYS[1]) == ARGV[1] then
+            return redis.call("del", KEYS[1])
+          else
+            return 0
+          end
+        `;
+        await redis.eval(script, 1, lockKey, lockValue);
+      }
+    } else {
+      await new Promise(resolve => setTimeout(resolve, 200));
+      return this.getAccessToken();
+    }
+  }
+
+  private async fetchNewTokenFromWechat(): Promise<{ access_token: string; expires_in: number }> {
+    const appId = this.configService.get<string>('WECHAT_SHOP_APP_ID');
+    const appSecret = this.configService.get<string>('WECHAT_SHOP_APP_SECRET');
     if (!appId || !appSecret) {
       throw new ServiceUnavailableException(
         'Wechat shop credentials are missing: set WECHAT_SHOP_APP_ID and WECHAT_SHOP_APP_SECRET',
@@ -136,14 +187,13 @@ export class WechatShopService {
       throw new ServiceUnavailableException('Wechat access token missing');
     }
 
-    this.cachedAccessToken = data.access_token;
-    this.cachedAccessTokenExpiresAt =
-      Date.now() + (data.expires_in ?? 7200) * 1000;
-
-    return data.access_token;
+    return {
+      access_token: data.access_token,
+      expires_in: data.expires_in ?? 7200,
+    };
   }
 
   private getBaseUrl(): string {
-    return process.env.WECHAT_SHOP_API_BASE_URL ?? DEFAULT_WECHAT_API_BASE_URL;
+    return this.configService.get<string>('WECHAT_SHOP_API_BASE_URL') ?? DEFAULT_WECHAT_API_BASE_URL;
   }
 }
