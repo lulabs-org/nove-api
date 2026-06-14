@@ -18,9 +18,14 @@ export class DepartmentRepository {
     });
   }
 
-  async findByCode(code: string): Promise<Dept | null> {
+  async findByOrgIdAndCode(orgId: string, code: string): Promise<Dept | null> {
     return this.prisma.dept.findUnique({
-      where: { code },
+      where: {
+        orgId_code: {
+          orgId,
+          code,
+        },
+      },
     });
   }
 
@@ -65,19 +70,7 @@ export class DepartmentRepository {
       orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
     });
 
-    return this.buildTree(departments);
-  }
-
-  private buildTree(
-    departments: Dept[],
-    parentId: string | null = null,
-  ): Dept[] {
-    return departments
-      .filter((dept) => dept.parentId === parentId)
-      .map((dept) => ({
-        ...dept,
-        children: this.buildTree(departments, dept.id),
-      }));
+    return departments;
   }
 
   async findChildren(parentId: string): Promise<Dept[]> {
