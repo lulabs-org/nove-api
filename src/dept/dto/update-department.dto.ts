@@ -27,12 +27,13 @@ export class UpdateDepartmentDto {
   description?: string;
 
   @ApiPropertyOptional({
-    description: '父部门 ID',
-    example: 'clx0987654321fedcba',
+    description: '父部门 ID（null 表示移动到根部门）',
+    example: null,
+    nullable: true,
   })
   @IsOptional()
   @IsString()
-  parentId?: string;
+  parentId?: string | null;
 
   @ApiPropertyOptional({
     description: '部门层级',
