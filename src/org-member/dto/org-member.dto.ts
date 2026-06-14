@@ -1,6 +1,60 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { MemberType, MemberStatus } from '@prisma/client';
 
+export class OrgMemberUserInfo {
+  @ApiProperty({
+    description: '用户 ID',
+    example: 'clx1111111111111111',
+  })
+  id: string;
+
+  @ApiPropertyOptional({
+    description: '用户名',
+    example: 'john_doe',
+    nullable: true,
+  })
+  username: string | null;
+
+  @ApiPropertyOptional({
+    description: '邮箱',
+    example: 'john@example.com',
+    nullable: true,
+  })
+  email: string | null;
+
+  @ApiPropertyOptional({
+    description: '用户资料',
+    nullable: true,
+  })
+  profile?:
+    | {
+        displayName: string | null;
+        avatar: string | null;
+      }
+    | null
+    | undefined;
+}
+
+export class OrgMemberPrimaryDeptInfo {
+  @ApiProperty({
+    description: '部门 ID',
+    example: 'clx2222222222222222',
+  })
+  id: string;
+
+  @ApiProperty({
+    description: '部门名称',
+    example: '技术部',
+  })
+  name: string;
+
+  @ApiProperty({
+    description: '部门编码',
+    example: 'TECH',
+  })
+  code: string;
+}
+
 export class OrgMemberDto {
   @ApiProperty({
     description: '成员 ID',
@@ -93,40 +147,20 @@ export class OrgMemberDto {
     nullable: true,
   })
   deletedAt: Date | null;
-}
-
-export class OrgMemberUserInfo {
-  @ApiProperty({
-    description: '用户 ID',
-    example: 'clx1111111111111111',
-  })
-  id: string;
 
   @ApiPropertyOptional({
-    description: '用户名',
-    example: 'john_doe',
+    description: '用户信息',
+    type: OrgMemberUserInfo,
     nullable: true,
   })
-  username: string | null;
+  user?: OrgMemberUserInfo | null;
 
   @ApiPropertyOptional({
-    description: '邮箱',
-    example: 'john@example.com',
+    description: '主要部门信息',
+    type: OrgMemberPrimaryDeptInfo,
     nullable: true,
   })
-  email: string | null;
-
-  @ApiPropertyOptional({
-    description: '用户资料',
-    nullable: true,
-  })
-  profile?:
-    | {
-        displayName: string | null;
-        avatar: string | null;
-      }
-    | null
-    | undefined;
+  primaryDept?: OrgMemberPrimaryDeptInfo | null;
 }
 
 export class OrgMemberDepartmentInfo {
@@ -176,22 +210,6 @@ export class OrgMemberRoleInfo {
 }
 
 export class OrgMemberDetailDto extends OrgMemberDto {
-  @ApiProperty({
-    description: '用户信息',
-    type: OrgMemberUserInfo,
-  })
-  user: OrgMemberUserInfo;
-
-  @ApiPropertyOptional({
-    description: '主要部门信息',
-    nullable: true,
-  })
-  primaryDept?: {
-    id: string;
-    name: string;
-    code: string;
-  };
-
   @ApiProperty({
     description: '部门列表',
     type: [OrgMemberDepartmentInfo],

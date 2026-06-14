@@ -29,7 +29,9 @@ export class DepartmentRepository {
     options?: {
       skip?: number;
       take?: number;
-      orderBy?: Prisma.DeptOrderByWithRelationInput;
+      orderBy?:
+        | Prisma.DeptOrderByWithRelationInput
+        | Prisma.DeptOrderByWithRelationInput[];
       where?: Prisma.DeptWhereInput;
     },
   ): Promise<{ items: Dept[]; total: number }> {
@@ -46,7 +48,7 @@ export class DepartmentRepository {
         where: baseWhere,
         skip,
         take,
-        orderBy: orderBy || { sortOrder: 'asc', createdAt: 'desc' },
+        orderBy: orderBy || [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
       }),
       this.prisma.dept.count({ where: baseWhere }),
     ]);
@@ -60,7 +62,7 @@ export class DepartmentRepository {
         orgId: organizationId,
         deletedAt: null,
       },
-      orderBy: { sortOrder: 'asc', createdAt: 'desc' },
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
     });
 
     return this.buildTree(departments);
@@ -84,7 +86,7 @@ export class DepartmentRepository {
         parentId,
         deletedAt: null,
       },
-      orderBy: { sortOrder: 'asc', createdAt: 'desc' },
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
     });
   }
 
