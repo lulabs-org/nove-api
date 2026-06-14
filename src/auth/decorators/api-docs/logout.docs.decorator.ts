@@ -39,11 +39,18 @@ export function ApiLogoutDocs() {
             description: '是否撤销所有设备的令牌（可选）',
             example: false,
           },
+          clientType: {
+            type: 'string',
+            enum: ['web', 'app'],
+            description: '客户端类型：web-网页端，app-移动端',
+            example: 'web',
+          },
         },
         example: {
           refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.refresh...',
           deviceId: 'mobile-app-ios',
           revokeAllDevices: false,
+          clientType: 'web',
         },
       },
     }),
