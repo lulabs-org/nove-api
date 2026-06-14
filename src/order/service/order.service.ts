@@ -4,14 +4,14 @@ import { Currency, OrderStatus, PaymentProvider, Prisma } from '@prisma/client';
 import { WechatOrderHistorySyncDto } from '../dto/wechat-order-history-sync.dto';
 import { WechatOrderWebhookDto } from '../dto/wechat-order-webhook.dto';
 import { OrderRepository } from '../repositories';
-import { WechatShopOrder } from '../types/wechat-shop.types';
+import { WechatShopOrder } from '@/integrations/wechat-shop/types/wechat-shop.types';
 import {
   DEFAULT_WECHAT_ORDER_PAGE_SIZE,
   splitWechatOrderRanges,
   toUnixSeconds,
   unixSecondsToISOString,
 } from '../utils/wechat-order-sync.util';
-import { WechatShopOrderClientService } from './wechat-shop-order-client.service';
+import { WechatShopService } from '@/integrations/wechat-shop/services/wechat-shop.service';
 
 const ORDER_NUMBER_MASK = 0x5a17c3e5b79fn;
 const ORDER_CODE_RANDOM_SUFFIX_MAX = 1_000_000;
@@ -37,7 +37,7 @@ export interface SyncWechatOrderPageResult {
 export class OrderService {
   constructor(
     private readonly orderRepository: OrderRepository,
-    private readonly wechatShopOrderClient: WechatShopOrderClientService,
+    private readonly wechatShopOrderClient: WechatShopService,
   ) {}
 
   /**

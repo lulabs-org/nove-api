@@ -10,7 +10,7 @@ const DEFAULT_WECHAT_API_BASE_URL = 'https://api.weixin.qq.com';
 const TOKEN_REFRESH_SKEW_MS = 5 * 60 * 1000;
 
 @Injectable()
-export class WechatShopOrderClientService {
+export class WechatShopService {
   private cachedAccessToken?: string;
   private cachedAccessTokenExpiresAt = 0;
 
