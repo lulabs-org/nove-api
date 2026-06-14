@@ -4,6 +4,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { Prisma, OrgMember } from '@prisma/client';
+import { PrismaService } from '@/prisma/prisma.service';
 import { OrgMemberRepository } from '../repositories/org-member.repository';
 import {
   CreateOrgMemberDto,
@@ -20,7 +21,10 @@ import {
 
 @Injectable()
 export class OrgMemberService {
-  constructor(private readonly orgMemberRepository: OrgMemberRepository) {}
+  constructor(
+    private readonly orgMemberRepository: OrgMemberRepository,
+    private readonly prisma: PrismaService,
+  ) {}
 
   async createMember(
     orgId: string,
@@ -70,6 +74,16 @@ export class OrgMemberService {
       await this.updateMemberDepartments(member.id, {
         departmentIds: dto.departmentIds,
         primaryDeptId: dto.primaryDeptId,
+      });
+    }
+
+    if (dto.roleIds && dto.roleIds.length > 0) {
+      await this.prisma.memberRole.createMany({
+        data: [...new Set(dto.roleIds)].map((roleId) => ({
+          memberId: member.id,
+          roleId,
+        })),
+        skipDuplicates: true,
       });
     }
 
@@ -217,7 +231,7 @@ export class OrgMemberService {
 
     const { departmentIds, primaryDeptId, append } = dto;
 
-    if (departmentIds && departmentIds.length > 0) {
+    if (departmentIds !== undefined) {
       const currentDepts = await this.prisma.memberDepartment.findMany({
         where: { memberId, deletedAt: null },
         select: { deptId: true },
@@ -235,6 +249,10 @@ export class OrgMemberService {
 
       const finalPrimaryDeptId = primaryDeptId || member.primaryDeptId;
 
+      if (finalPrimaryDeptId && !deptIdsToProcess.includes(finalPrimaryDeptId)) {
+        throw new BadRequestException('Primary department must be included in departmentIds');
+      }
+
       await this.prisma.$transaction(async (tx) => {
         await tx.memberDepartment.deleteMany({
           where: { memberId },
@@ -251,12 +269,10 @@ export class OrgMemberService {
           });
         }
 
-        if (finalPrimaryDeptId) {
-          await tx.orgMember.update({
-            where: { id: memberId },
-            data: { primaryDeptId: finalPrimaryDeptId },
-          });
-        }
+        await tx.orgMember.update({
+          where: { id: memberId },
+          data: { primaryDeptId: finalPrimaryDeptId || null },
+        });
       });
     }
 
@@ -336,7 +352,24 @@ export class OrgMemberService {
     };
   }
 
-  private toDto(member: OrgMember): OrgMemberDto {
+  private toDto(
+    member: OrgMember & {
+      user?: {
+        id: string;
+        username: string | null;
+        email: string | null;
+        profile?: {
+          displayName: string | null;
+          avatar: string | null;
+        } | null;
+      };
+      primaryDept?: {
+        id: string;
+        name: string;
+        code: string;
+      } | null;
+    },
+  ): OrgMemberDto {
     return {
       id: member.id,
       orgId: member.orgId,
@@ -352,6 +385,8 @@ export class OrgMemberService {
       createdAt: member.createdAt,
       updatedAt: member.updatedAt,
       deletedAt: member.deletedAt,
+      user: member.user,
+      primaryDept: member.primaryDept,
     };
   }
 
@@ -411,9 +446,5 @@ export class OrgMemberService {
           code: mr.role.code,
         })) || [],
     };
-  }
-
-  private get prisma() {
-    return this.orgMemberRepository['prisma'];
   }
 }

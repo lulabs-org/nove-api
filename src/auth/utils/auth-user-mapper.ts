@@ -16,6 +16,7 @@ export function formatAuthUserResponse(
     profile: UserProfile | null;
     roles?: Array<{ role: { code: string } }> | null;
   },
+  currentOrgId?: string,
 ): AuthUserMinimalDto {
   const name =
     user.profile?.displayName ||
@@ -32,5 +33,6 @@ export function formatAuthUserResponse(
     id: user.id,
     name,
     roles,
+    currentOrgId,
   };
 }

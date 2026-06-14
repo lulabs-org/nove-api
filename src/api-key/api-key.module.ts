@@ -72,6 +72,7 @@ import { UsageLoggingInterceptor } from './interceptors/usage-logging.intercepto
     // 导出服务供其他模块使用
     ApiKeyService,
     UsageLogService,
+    UserOrgService,
 
     // 导出守卫供其他模块使用
     ApiKeyGuard,

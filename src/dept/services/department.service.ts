@@ -118,7 +118,7 @@ export class DepartmentService {
       await this.departmentRepository.findByOrganizationId(organizationId, {
         skip,
         take: pageSize,
-        orderBy: { sortOrder: 'asc', createdAt: 'desc' },
+        orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
         where,
       });
 
