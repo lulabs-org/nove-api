@@ -25,7 +25,12 @@ export async function createDepartments(
 
       if (config.parentCode) {
         const parentDepartment = await prisma.dept.findUnique({
-          where: { code: config.parentCode },
+          where: {
+            orgId_code: {
+              orgId: organizationId,
+              code: config.parentCode,
+            },
+          },
         });
         if (!parentDepartment) {
           throw new Error(`Parent department not found: ${config.parentCode}`);
@@ -34,7 +39,12 @@ export async function createDepartments(
       }
 
       const department = await prisma.dept.upsert({
-        where: { code: config.code },
+        where: {
+          orgId_code: {
+            orgId: organizationId,
+            code: config.code,
+          },
+        },
         update: {
           name: config.name,
           description: config.description,

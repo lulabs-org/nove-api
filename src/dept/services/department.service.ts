@@ -27,7 +27,10 @@ export class DepartmentService {
     organizationId: string,
     dto: CreateDepartmentDto,
   ): Promise<DepartmentDto> {
-    const existingDept = await this.departmentRepository.findByCode(dto.code);
+    const existingDept = await this.departmentRepository.findByOrgIdAndCode(
+      organizationId,
+      dto.code,
+    );
     if (existingDept) {
       throw new BadRequestException('Department code already exists');
     }
@@ -118,7 +121,7 @@ export class DepartmentService {
       await this.departmentRepository.findByOrganizationId(organizationId, {
         skip,
         take: pageSize,
-        orderBy: { sortOrder: 'asc', createdAt: 'desc' },
+        orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
         where,
       });
 
@@ -150,7 +153,10 @@ export class DepartmentService {
     }
 
     if (dto.code && dto.code !== existingDept.code) {
-      const codeExists = await this.departmentRepository.findByCode(dto.code);
+      const codeExists = await this.departmentRepository.findByOrgIdAndCode(
+        existingDept.orgId,
+        dto.code,
+      );
       if (codeExists) {
         throw new BadRequestException('Department code already exists');
       }

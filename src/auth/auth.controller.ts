@@ -52,6 +52,7 @@ import { ClientType } from '@/auth/types/jwt.types';
 import { PermService } from '@/permission/services/permission.service';
 import { HttpUtil } from '@/common/utils/http.util';
 import { DesensitizationUtil } from '@/common/utils/desensitization.util';
+import { UserOrgService } from '@/api-key/services/user-organization.service';
 
 @ApiTags('Auth')
 @Controller({
@@ -68,6 +69,7 @@ export class AuthController {
     private readonly tokenService: TokenService,
     private readonly tokenBlacklist: TokenBlacklistService,
     private readonly permService: PermService,
+    private readonly userOrgService: UserOrgService,
   ) {}
 
   @Public()
@@ -86,6 +88,10 @@ export class AuthController {
       ip,
       userAgent,
     );
+    const user = {
+      ...result.user,
+      currentOrgId: await this.resolveCurrentOrgId(result.user.id),
+    };
 
     const isWebClient = registerDto.clientType === ClientType.Web;
     if (isWebClient) {
@@ -100,11 +106,11 @@ export class AuthController {
       return {
         accessToken: result.accessToken,
         expiresIn: result.expiresIn,
-        user: result.user, // 如果有
+        user,
       } as AuthResponseDto;
     }
 
-    return result;
+    return { ...result, user };
   }
 
   @Public()
@@ -119,6 +125,10 @@ export class AuthController {
     const ip = HttpUtil.getClientIp(req);
     const userAgent = req.get('User-Agent');
     const result = await this.loginService.login(loginDto, ip, userAgent);
+    const user = {
+      ...result.user,
+      currentOrgId: await this.resolveCurrentOrgId(result.user.id),
+    };
 
     const isWebClient = loginDto.clientType === ClientType.Web;
     if (isWebClient) {
@@ -133,11 +143,11 @@ export class AuthController {
       return {
         accessToken: result.accessToken,
         expiresIn: result.expiresIn,
-        user: result.user, // 如果有
+        user,
       } as AuthResponseDto;
     }
 
-    return result;
+    return { ...result, user };
   }
 
   @Public()
@@ -333,6 +343,7 @@ export class AuthController {
   async getMe(@User() user: CurrentUser): Promise<AuthUserWithPermissionsDto> {
     const roles = user.roles || ['USER'];
     const perm = await this.permService.getPermByRoleCodes(roles);
+    const currentOrgId = await this.resolveCurrentOrgId(user.id);
 
     return {
       id: user.id,
@@ -348,6 +359,7 @@ export class AuthController {
         'Unknown',
       avatar: (user.profile?.avatar as string) || undefined,
       roles,
+      currentOrgId,
       perm,
       active: user.active,
       emailVerified: user.emailVerified,
@@ -378,5 +390,13 @@ export class AuthController {
       roles,
       perm,
     };
+  }
+
+  private async resolveCurrentOrgId(userId: string): Promise<string | undefined> {
+    try {
+      return await this.userOrgService.getPrimaryOrgId(userId);
+    } catch {
+      return undefined;
+    }
   }
 }

@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class AuthUserMinimalDto {
   @ApiProperty({ description: '用户ID' })
@@ -19,4 +19,7 @@ export class AuthUserMinimalDto {
 
   @ApiProperty({ description: '用户角色代码列表', type: [String] })
   roles: string[];
+
+  @ApiPropertyOptional({ description: '当前组织 ID' })
+  currentOrgId?: string;
 }

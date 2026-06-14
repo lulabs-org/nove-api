@@ -2,7 +2,7 @@
 model Dept {
   id          String  @id @default(cuid())
   name        String // 部门名称
-  code        String  @unique // 部门编码
+  code        String // 部门编码
   description String? // 部门描述
   orgId       String  @map("org_id") // 所属组织ID
   parentId    String? @map("parent_id") // 父部门ID
