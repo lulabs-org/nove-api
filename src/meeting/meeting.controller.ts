@@ -260,7 +260,8 @@ export class MeetingController {
     this.logger.log(`获取录制的转写文本: ${recordingId}`);
 
     try {
-      const text = await this.meetingService.getTranscriptByRecordingId(recordingId);
+      const text =
+        await this.meetingService.getTranscriptByRecordingId(recordingId);
 
       this.logger.log(`获取录制的转写文本成功: ${recordingId}`);
       return { text };

@@ -249,8 +249,13 @@ export class OrgMemberService {
 
       const finalPrimaryDeptId = primaryDeptId || member.primaryDeptId;
 
-      if (finalPrimaryDeptId && !deptIdsToProcess.includes(finalPrimaryDeptId)) {
-        throw new BadRequestException('Primary department must be included in departmentIds');
+      if (
+        finalPrimaryDeptId &&
+        !deptIdsToProcess.includes(finalPrimaryDeptId)
+      ) {
+        throw new BadRequestException(
+          'Primary department must be included in departmentIds',
+        );
       }
 
       await this.prisma.$transaction(async (tx) => {

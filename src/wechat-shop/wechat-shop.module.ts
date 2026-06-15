@@ -8,7 +8,11 @@ import { WechatShopOrderClientService } from './service/wechat-shop-order-client
 @Module({
   imports: [PrismaModule],
   controllers: [WechatShopController],
-  providers: [WechatShopService, WechatShopRepository, WechatShopOrderClientService],
+  providers: [
+    WechatShopService,
+    WechatShopRepository,
+    WechatShopOrderClientService,
+  ],
   exports: [WechatShopService, WechatShopRepository],
 })
 export class WechatShopModule {}
