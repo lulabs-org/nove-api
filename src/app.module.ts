@@ -40,6 +40,7 @@ import { DepartmentModule } from './dept/department.module';
 import { OrgMemberModule } from './org-member/org-member.module';
 import { MeetAiModule } from './meet-ai/meet-ai.module';
 import { WechatShopModule } from './wechat-shop/wechat-shop.module';
+import { OrderModule } from './order/order.module';
 
 @Module({
   imports: [
@@ -80,6 +81,7 @@ import { WechatShopModule } from './wechat-shop/wechat-shop.module';
     OrgMemberModule,
     MeetAiModule,
     WechatShopModule,
+    OrderModule,
   ],
   controllers: [AppController],
   providers: [
