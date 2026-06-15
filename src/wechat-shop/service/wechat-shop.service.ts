@@ -45,9 +45,8 @@ export class WechatShopService {
    * 这里仅按外部订单号做幂等写入：存在则更新，不存在则创建。
    */
   async upsertWechatOrder(payload: WechatOrderWebhookDto) {
-    const existingOrder = await this.wechatShopRepository.findLatestByExternalId(
-      payload.orderId,
-    );
+    const existingOrder =
+      await this.wechatShopRepository.findLatestByExternalId(payload.orderId);
 
     if (existingOrder) {
       const order = await this.wechatShopRepository.update(

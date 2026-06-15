@@ -22,6 +22,7 @@ import {
   ApiGetMeetingStatsDocs,
   ApiReprocessMeetingRecordDocs,
   ApiHealthCheckDocs,
+  ApiGetTranscriptByRecordingIdDocs,
 } from './decorators/meeting-record.decorators';
 import { MeetingService } from './service/meeting.service';
 import {
@@ -241,6 +242,32 @@ export class MeetingController {
     } catch (error: unknown) {
       this.logger.error(
         `重新处理会议录制文件失败: ${id}`,
+        (error as Error).stack,
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * 获取录制的转写文本
+   */
+  @Get('recordings/:recordingId/transcript')
+  @HttpCode(HttpStatus.OK)
+  @ApiGetTranscriptByRecordingIdDocs()
+  async getTranscriptByRecordingId(
+    @Param('recordingId', CuidPipe) recordingId: string,
+  ): Promise<{ text: string }> {
+    this.logger.log(`获取录制的转写文本: ${recordingId}`);
+
+    try {
+      const text =
+        await this.meetingService.getTranscriptByRecordingId(recordingId);
+
+      this.logger.log(`获取录制的转写文本成功: ${recordingId}`);
+      return { text };
+    } catch (error: unknown) {
+      this.logger.error(
+        `获取录制的转写文本失败: ${recordingId}`,
         (error as Error).stack,
       );
       throw error;

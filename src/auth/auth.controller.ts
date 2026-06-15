@@ -392,7 +392,9 @@ export class AuthController {
     };
   }
 
-  private async resolveCurrentOrgId(userId: string): Promise<string | undefined> {
+  private async resolveCurrentOrgId(
+    userId: string,
+  ): Promise<string | undefined> {
     try {
       return await this.userOrgService.getPrimaryOrgId(userId);
     } catch {

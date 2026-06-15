@@ -19,13 +19,15 @@ export function ApiRefreshTokenDocs() {
     ApiConsumes('application/json'),
     ApiProduces('application/json'),
     ApiBody({
-      description: '刷新令牌请求体。Web 客户端可通过 HttpOnly Cookie 携带 refreshToken。',
+      description:
+        '刷新令牌请求体。Web 客户端可通过 HttpOnly Cookie 携带 refreshToken。',
       schema: {
         type: 'object',
         properties: {
           refreshToken: {
             type: 'string',
-            description: '用于换取新访问令牌的刷新令牌；Web 客户端可省略并从 Cookie 读取',
+            description:
+              '用于换取新访问令牌的刷新令牌；Web 客户端可省略并从 Cookie 读取',
             example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.refresh...',
           },
           clientType: {
