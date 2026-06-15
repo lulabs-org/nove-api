@@ -77,16 +77,37 @@ export class ProfileService {
       }
     }
 
+    const profileUpdates: {
+      displayName?: string;
+      avatar?: string;
+      bio?: string;
+    } = {};
+
+    if (displayName !== undefined) {
+      profileUpdates.displayName =
+        displayName ||
+        existingUser.profile?.displayName ||
+        username ||
+        email?.split('@')[0] ||
+        phone;
+    }
+
+    if (avatar !== undefined) {
+      profileUpdates.avatar = avatar;
+    }
+
+    if (bio !== undefined) {
+      profileUpdates.bio = bio;
+    }
+
     const updatedUser = await this.userRepo.updateProfile(userId, {
-      ...(username ? { username } : {}),
-      email,
-      phone,
-      countryCode,
-      profile: {
-        displayName: displayName || username || email?.split('@')[0] || phone,
-        avatar,
-        bio,
-      },
+      ...(username !== undefined ? { username } : {}),
+      ...(email !== undefined ? { email } : {}),
+      ...(phone !== undefined ? { phone } : {}),
+      ...(countryCode !== undefined ? { countryCode } : {}),
+      ...(Object.keys(profileUpdates).length
+        ? { profile: profileUpdates }
+        : {}),
     });
 
     return formatUserResponse(updatedUser);

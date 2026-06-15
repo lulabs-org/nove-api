@@ -241,7 +241,11 @@ export class UserRepository {
       email?: string;
       phone?: string;
       countryCode?: string;
-      profile?: { displayName?: string; avatar?: string; bio?: string };
+      profile?: Partial<{
+        displayName: string;
+        avatar: string;
+        bio: string;
+      }>;
     },
   ): Promise<User & { profile: UserProfile | null }> {
     const { profile, ...userData } = data;
