@@ -3,12 +3,12 @@ import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Public } from '@/auth/decorators/public.decorator';
 import { WechatOrderHistorySyncDto } from './dto/wechat-order-history-sync.dto';
 import { WechatOrderWebhookDto } from './dto/wechat-order-webhook.dto';
-import { OrderService } from './service/order.service';
+import { WechatShopService } from './service/wechat-shop.service';
 
 @ApiTags('Orders')
 @Controller('webhooks/wechat/orders')
-export class OrderController {
-  constructor(private readonly orderService: OrderService) {}
+export class WechatShopController {
+  constructor(private readonly wechatShopService: WechatShopService) {}
 
   @Public()
   @Post()
@@ -22,7 +22,7 @@ export class OrderController {
   })
   @ApiResponse({ status: 200, description: '订单写入成功' })
   async receiveWechatOrder(@Body() payload: WechatOrderWebhookDto) {
-    const result = await this.orderService.upsertWechatOrder(payload);
+    const result = await this.wechatShopService.upsertWechatOrder(payload);
 
     return {
       success: true,
@@ -47,7 +47,7 @@ export class OrderController {
   })
   @ApiResponse({ status: 200, description: '历史订单同步完成' })
   async syncWechatOrderHistory(@Body() payload: WechatOrderHistorySyncDto) {
-    const result = await this.orderService.syncWechatOrderHistory(payload);
+    const result = await this.wechatShopService.syncWechatOrderHistory(payload);
 
     return {
       success: true,
