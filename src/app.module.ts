@@ -39,7 +39,7 @@ import { OrganizationModule } from './org/organization.module';
 import { DepartmentModule } from './dept/department.module';
 import { OrgMemberModule } from './org-member/org-member.module';
 import { MeetAiModule } from './meet-ai/meet-ai.module';
-import { OrderModule } from './order/order.module';
+import { WechatShopModule } from './wechat-shop/wechat-shop.module';
 
 @Module({
   imports: [
@@ -79,7 +79,7 @@ import { OrderModule } from './order/order.module';
     DepartmentModule,
     OrgMemberModule,
     MeetAiModule,
-    OrderModule,
+    WechatShopModule,
   ],
   controllers: [AppController],
   providers: [

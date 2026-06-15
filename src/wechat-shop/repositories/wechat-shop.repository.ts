@@ -6,7 +6,7 @@ type CreateOrderData = Prisma.OrderUncheckedCreateInput;
 type UpdateOrderData = Prisma.OrderUncheckedUpdateInput;
 
 @Injectable()
-export class OrderRepository {
+export class WechatShopRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   /**

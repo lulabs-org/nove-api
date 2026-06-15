@@ -3,7 +3,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { Currency, OrderStatus, PaymentProvider, Prisma } from '@prisma/client';
 import { WechatOrderHistorySyncDto } from '../dto/wechat-order-history-sync.dto';
 import { WechatOrderWebhookDto } from '../dto/wechat-order-webhook.dto';
-import { OrderRepository } from '../repositories';
+import { WechatShopRepository } from '../repositories';
 import { WechatShopOrder } from '../types/wechat-shop.types';
 import {
   DEFAULT_WECHAT_ORDER_PAGE_SIZE,
@@ -34,9 +34,9 @@ export interface SyncWechatOrderPageResult {
 }
 
 @Injectable()
-export class OrderService {
+export class WechatShopService {
   constructor(
-    private readonly orderRepository: OrderRepository,
+    private readonly wechatShopRepository: WechatShopRepository,
     private readonly wechatShopOrderClient: WechatShopOrderClientService,
   ) {}
 
@@ -45,12 +45,12 @@ export class OrderService {
    * 这里仅按外部订单号做幂等写入：存在则更新，不存在则创建。
    */
   async upsertWechatOrder(payload: WechatOrderWebhookDto) {
-    const existingOrder = await this.orderRepository.findLatestByExternalId(
+    const existingOrder = await this.wechatShopRepository.findLatestByExternalId(
       payload.orderId,
     );
 
     if (existingOrder) {
-      const order = await this.orderRepository.update(
+      const order = await this.wechatShopRepository.update(
         existingOrder.id,
         this.buildUpdateData(payload),
       );
@@ -59,7 +59,7 @@ export class OrderService {
     }
 
     const orderCode = this.generateOrderCode();
-    const order = await this.orderRepository.create(
+    const order = await this.wechatShopRepository.create(
       this.buildCreateData(payload, orderCode),
     );
 
