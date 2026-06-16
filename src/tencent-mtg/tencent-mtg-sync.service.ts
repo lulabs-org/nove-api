@@ -37,8 +37,11 @@ export class TencentMtgSyncService {
 
     let currentStart = effectiveStartTime;
     while (currentStart < effectiveEndTime) {
-      const currentEnd = Math.min(currentStart + CHUNK_SIZE_SEC, effectiveEndTime);
-      
+      const currentEnd = Math.min(
+        currentStart + CHUNK_SIZE_SEC,
+        effectiveEndTime,
+      );
+
       const job = await this.syncQueue.add('sync-chunk', {
         startTime: currentStart,
         endTime: currentEnd,

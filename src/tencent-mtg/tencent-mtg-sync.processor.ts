@@ -48,8 +48,10 @@ export class TencentMtgSyncProcessor extends WorkerHost {
 
   async process(job: Job<SyncJobData>) {
     const { startTime, endTime } = job.data;
-    
-    this.logger.log(`Processing job ${job.id}: Syncing ${new Date(startTime * 1000).toISOString()} ~ ${new Date(endTime * 1000).toISOString()}`);
+
+    this.logger.log(
+      `Processing job ${job.id}: Syncing ${new Date(startTime * 1000).toISOString()} ~ ${new Date(endTime * 1000).toISOString()}`,
+    );
 
     const operatorId = this.config.api.userId;
     const recordMeetings = await this.tencentApi.getAllCorpRecords(
@@ -59,7 +61,9 @@ export class TencentMtgSyncProcessor extends WorkerHost {
       1,
     );
 
-    this.logger.log(`Job ${job.id}: Fetched ${recordMeetings.length} meeting records`);
+    this.logger.log(
+      `Job ${job.id}: Fetched ${recordMeetings.length} meeting records`,
+    );
 
     let meetingsUpserted = 0;
     let recordingsUpserted = 0;
@@ -75,7 +79,11 @@ export class TencentMtgSyncProcessor extends WorkerHost {
         if (record.record_files?.length) {
           for (const file of record.record_files) {
             try {
-              await this.upsertRecordingFromFile(meeting.id, file, record.state);
+              await this.upsertRecordingFromFile(
+                meeting.id,
+                file,
+                record.state,
+              );
               recordingsUpserted++;
             } catch (fileError) {
               const msg = `Failed to upsert recording file ${file.record_file_id}: ${(fileError as Error).message}`;
@@ -91,11 +99,15 @@ export class TencentMtgSyncProcessor extends WorkerHost {
       }
 
       processedCount++;
-      const progress = Math.floor((processedCount / recordMeetings.length) * 100);
+      const progress = Math.floor(
+        (processedCount / recordMeetings.length) * 100,
+      );
       await job.updateProgress(progress);
     }
 
-    this.logger.log(`Job ${job.id} completed: ${meetingsUpserted} meetings, ${recordingsUpserted} recordings upserted, ${errors.length} errors`);
+    this.logger.log(
+      `Job ${job.id} completed: ${meetingsUpserted} meetings, ${recordingsUpserted} recordings upserted, ${errors.length} errors`,
+    );
 
     return {
       meetingsUpserted,
@@ -122,10 +134,14 @@ export class TencentMtgSyncProcessor extends WorkerHost {
     const isRecurring = meetingType === TENCENT_MEETING_TYPE_RECURRING;
     const subMeetingId =
       isRecurring && meetingInfo
-        ? this.computeSubMeetingId(record.media_start_time, meetingInfo.start_time)
+        ? this.computeSubMeetingId(
+            record.media_start_time,
+            meetingInfo.start_time,
+          )
         : '__ROOT__';
 
-    const hasRecording = record.state === 3 && (record.record_files?.length ?? 0) > 0;
+    const hasRecording =
+      record.state === 3 && (record.record_files?.length ?? 0) > 0;
     const recordingStatus = this.mapRecordingState(record.state);
     const systemMeetingType = this.convertMeetingType(meetingType);
 
@@ -183,7 +199,9 @@ export class TencentMtgSyncProcessor extends WorkerHost {
     const minutes = meetingDate.getUTCMinutes();
     const seconds = meetingDate.getUTCSeconds();
 
-    const combined = new Date(Date.UTC(year, month, day, hours, minutes, seconds));
+    const combined = new Date(
+      Date.UTC(year, month, day, hours, minutes, seconds),
+    );
     return String(Math.floor(combined.getTime() / 1000));
   }
 
@@ -223,30 +241,42 @@ export class TencentMtgSyncProcessor extends WorkerHost {
 
   private convertMeetingType(meetingType?: number): MeetingType {
     switch (meetingType) {
-      case 0: return MeetingType.ONE_TIME;
-      case 1: return MeetingType.RECURRING;
+      case 0:
+        return MeetingType.ONE_TIME;
+      case 1:
+        return MeetingType.RECURRING;
       case 2:
-      case 4: return MeetingType.INSTANT;
-      case 5: return MeetingType.SCHEDULED;
-      default: return MeetingType.SCHEDULED;
+      case 4:
+        return MeetingType.INSTANT;
+      case 5:
+        return MeetingType.SCHEDULED;
+      default:
+        return MeetingType.SCHEDULED;
     }
   }
 
   private mapRecordingState(state: number): ProcessingStatus {
     switch (state) {
       case 1:
-      case 2: return ProcessingStatus.PROCESSING;
-      case 3: return ProcessingStatus.COMPLETED;
-      default: return ProcessingStatus.PENDING;
+      case 2:
+        return ProcessingStatus.PROCESSING;
+      case 3:
+        return ProcessingStatus.COMPLETED;
+      default:
+        return ProcessingStatus.PENDING;
     }
   }
 
   private mapRecordingFileStatus(state: number): RecordingStatus {
     switch (state) {
-      case 1: return RecordingStatus.RECORDING;
-      case 2: return RecordingStatus.PROCESSING;
-      case 3: return RecordingStatus.COMPLETED;
-      default: return RecordingStatus.RECORDING;
+      case 1:
+        return RecordingStatus.RECORDING;
+      case 2:
+        return RecordingStatus.PROCESSING;
+      case 3:
+        return RecordingStatus.COMPLETED;
+      default:
+        return RecordingStatus.RECORDING;
     }
   }
 }

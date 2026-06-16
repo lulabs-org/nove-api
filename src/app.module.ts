@@ -32,7 +32,7 @@ import { OpenaiModule } from './integrations/openai/openai.module';
 import { BullModule } from '@nestjs/bullmq';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { ExpressAdapter } from '@bull-board/express';
-import basicAuth = require('express-basic-auth');
+import * as basicAuth from 'express-basic-auth';
 import { redisConfig } from './configs';
 import { ApiKeyModule } from './api-key/api-key.module';
 import { McpServerModule } from './mcp-server/mcp-server.module';

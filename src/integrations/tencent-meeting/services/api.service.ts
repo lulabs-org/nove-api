@@ -480,9 +480,7 @@ export class TencentApiService {
       chunkStart = chunkEnd;
     }
 
-    this.logger.log(
-      `Fetched ${allRecords.length} recording records in total`,
-    );
+    this.logger.log(`Fetched ${allRecords.length} recording records in total`);
 
     return allRecords;
   }
