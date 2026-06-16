@@ -12,6 +12,8 @@
 // src/tasks/tasks.module.ts
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
+import { BullBoardModule } from '@bull-board/nestjs';
+import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { TasksController } from './tasks.controller';
 import { TasksService } from './service/tasks.service';
 import { TaskProcessor } from './processors/task.processor';
@@ -29,6 +31,10 @@ import { openaiConfig } from '../configs/openai.config';
   imports: [
     BullModule.registerQueue({
       name: 'tasks', // 队列名
+    }),
+    BullBoardModule.forFeature({
+      name: 'tasks',
+      adapter: BullMQAdapter,
     }),
     OpenaiModule,
     ConfigModule.forFeature(openaiConfig),

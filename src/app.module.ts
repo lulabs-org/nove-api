@@ -21,6 +21,7 @@ import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
 import { PrismaModule } from './prisma/prisma.module';
 import { MeetingModule } from './meeting/meeting.module';
 import { HookTencentMtgModule } from './tencent-mtg-hook/hook-tencent-mtg.module';
+import { TencentMtgModule } from './tencent-mtg/tencent-mtg.module';
 import { LarkMeetingModule } from './lark-meeting/lark-meeting.module';
 import { VerificationModule } from '@/verification/verification.module';
 import { GraphQLModule } from '@nestjs/graphql';
@@ -29,6 +30,9 @@ import { AppResolver } from './app.resolver';
 import { ScheduleModule } from '@nestjs/schedule';
 import { OpenaiModule } from './integrations/openai/openai.module';
 import { BullModule } from '@nestjs/bullmq';
+import { BullBoardModule } from '@bull-board/nestjs';
+import { ExpressAdapter } from '@bull-board/express';
+import * as basicAuth from 'express-basic-auth';
 import { redisConfig } from './configs';
 import { ApiKeyModule } from './api-key/api-key.module';
 import { McpServerModule } from './mcp-server/mcp-server.module';
@@ -61,6 +65,17 @@ import { OrderModule } from './order/order.module';
         db: redisConfig().db,
       },
     }),
+    BullBoardModule.forRoot({
+      route: '/queues',
+      adapter: ExpressAdapter,
+      middleware: basicAuth({
+        challenge: true,
+        users: {
+          [process.env.BULL_BOARD_USER || 'admin']:
+            process.env.BULL_BOARD_PASSWORD || 'changeme',
+        },
+      }),
+    }),
     TasksModule,
     ScheduleModule.forRoot(),
     PrismaModule,
@@ -69,6 +84,7 @@ import { OrderModule } from './order/order.module';
     UserModule,
     MeetingModule,
     HookTencentMtgModule,
+    TencentMtgModule,
     LarkMeetingModule,
     VerificationModule,
     OpenaiModule,

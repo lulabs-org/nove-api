@@ -4,6 +4,7 @@ import { tencentMeetingConfig } from '@/configs/tencent-mtg.config';
 import { generateSignature } from '../utils/crypto.util';
 import {
   RecordingDetail,
+  RecordMeeting,
   RecordMeetingsResponse,
   MeetingParticipantsResponse,
   MeetingDetailResponse,
@@ -444,5 +445,75 @@ export class TencentApiService {
       `/v1/records/transcripts/details`,
       queryParams,
     );
+  }
+
+  /**
+   * Retrieves all corporate meeting records within a specified time range
+   * Automatically paginates through all pages to collect complete data
+   * @param startTime - Start timestamp (Unix timestamp in seconds)
+   * @param endTime - End timestamp (Unix timestamp in seconds)
+   * @param operatorId - Optional operator ID for filtering
+   * @param operatorIdType - Operator ID type (default 1)
+   * @returns Promise resolving to all meeting records across all pages
+   */
+  async getAllCorpRecords(
+    startTime: number,
+    endTime: number,
+    operatorId?: string,
+    operatorIdType: number = 1,
+  ): Promise<RecordMeeting[]> {
+    const maxRange = 31 * 24 * 60 * 60;
+    const allRecords: RecordMeeting[] = [];
+
+    let chunkStart = startTime;
+    while (chunkStart < endTime) {
+      const chunkEnd = Math.min(chunkStart + maxRange, endTime);
+
+      const chunkRecords = await this.fetchCorpRecordsPage(
+        chunkStart,
+        chunkEnd,
+        operatorId,
+        operatorIdType,
+      );
+      allRecords.push(...chunkRecords);
+
+      chunkStart = chunkEnd;
+    }
+
+    this.logger.log(`Fetched ${allRecords.length} recording records in total`);
+
+    return allRecords;
+  }
+
+  private async fetchCorpRecordsPage(
+    startTime: number,
+    endTime: number,
+    operatorId?: string,
+    operatorIdType: number = 1,
+  ): Promise<RecordMeeting[]> {
+    const records: RecordMeeting[] = [];
+    const pageSize = 20;
+    let page = 1;
+    let totalPage = 1;
+
+    do {
+      const response = await this.getCorpRecords(
+        startTime,
+        endTime,
+        pageSize,
+        page,
+        operatorId,
+        operatorIdType,
+      );
+
+      if (response.record_meetings) {
+        records.push(...response.record_meetings);
+      }
+
+      totalPage = response.total_page;
+      page++;
+    } while (page <= totalPage);
+
+    return records;
   }
 }

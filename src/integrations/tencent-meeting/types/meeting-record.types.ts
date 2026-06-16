@@ -22,6 +22,7 @@ export interface RecordMeeting {
   media_start_time: number;
   subject: string;
   state: number;
+  record_type?: number;
   record_files?: RecordFile[];
 }
 
