@@ -7,6 +7,7 @@ import { MeetingRecordingRepository } from '@/meeting/repositories/meeting-recor
 import {
   MeetingPlatform,
   MeetingType,
+  Meeting,
   RecordingSource,
   RecordingStatus,
   ProcessingStatus,
@@ -75,33 +76,22 @@ export class TencentMtgSyncService {
 
     for (const record of recordMeetings) {
       try {
-        const { subMeetingId } = await this.upsertMeetingFromRecord(
-          record,
-          operatorId,
-        );
+        const meeting = await this.upsertMeetingFromRecord(record, operatorId);
         meetingsUpserted++;
 
         if (record.record_files?.length) {
-          const meeting = await this.meetingRepo.findByPt(
-            MeetingPlatform.TENCENT_MEETING,
-            record.meeting_id,
-            subMeetingId,
-          );
-
-          if (meeting) {
-            for (const file of record.record_files) {
-              try {
-                await this.upsertRecordingFromFile(
-                  meeting.id,
-                  file,
-                  record.state,
-                );
-                recordingsUpserted++;
-              } catch (fileError) {
-                const msg = `Failed to upsert recording file ${file.record_file_id}: ${(fileError as Error).message}`;
-                this.logger.warn(msg);
-                errors.push(msg);
-              }
+          for (const file of record.record_files) {
+            try {
+              await this.upsertRecordingFromFile(
+                meeting.id,
+                file,
+                record.state,
+              );
+              recordingsUpserted++;
+            } catch (fileError) {
+              const msg = `Failed to upsert recording file ${file.record_file_id}: ${(fileError as Error).message}`;
+              this.logger.warn(msg);
+              errors.push(msg);
             }
           }
         }
@@ -126,7 +116,7 @@ export class TencentMtgSyncService {
   private async upsertMeetingFromRecord(
     record: RecordMeeting,
     operatorId: string,
-  ): Promise<{ subMeetingId: string }> {
+  ): Promise<Meeting> {
     // 1. 通过 getMeetingDetail 查询会议详情
     const detail = await this.tencentApi.getMeetingDetail(
       record.meeting_id,
@@ -166,7 +156,7 @@ export class TencentMtgSyncService {
       `Upserting meeting ${record.meeting_id} (subMeetingId=${subMeetingId}, type=${meetingType}, isRecurring=${isRecurring})`,
     );
 
-    await this.meetingRepo.upsert(
+    return this.meetingRepo.upsert(
       MeetingPlatform.TENCENT_MEETING,
       record.meeting_id,
       subMeetingId,
@@ -188,8 +178,6 @@ export class TencentMtgSyncService {
         },
       },
     );
-
-    return { subMeetingId };
   }
 
   /**
