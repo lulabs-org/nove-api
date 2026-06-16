@@ -1,3 +1,5 @@
+packages: []
+
 allowBuilds:
   '@alicloud/openapi-core': true
   '@apollo/protobufjs': true
