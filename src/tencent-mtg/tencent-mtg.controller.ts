@@ -27,15 +27,15 @@ export class TencentMtgController {
    * 从腾讯会议 API 拉取账户级录制列表，并通过 upsert 补充 Meeting 和 MeetingRecording 数据
    */
   @Post('sync-recordings')
-  @HttpCode(HttpStatus.OK)
+  @HttpCode(HttpStatus.ACCEPTED)
   @ApiOperation({
     summary: '同步腾讯会议录制列表',
     description:
-      '从腾讯会议 API 获取账户级录制列表，通过 upsert 补充本地 Meeting 和 MeetingRecording 数据。默认同步最近 7 天。',
+      '将时间范围切片并发送到异步队列进行处理，不阻塞返回。默认同步最近 7 天。',
   })
   @ApiResponse({
-    status: 200,
-    description: '同步完成，返回统计结果',
+    status: 202,
+    description: '异步同步任务已加入队列，返回任务 IDs',
   })
   async syncRecordings(
     @Body(new ValidationPipe({ transform: true, whitelist: true }))

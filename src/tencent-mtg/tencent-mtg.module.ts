@@ -6,6 +6,8 @@ import { MeetingModule } from '@/meeting/meeting.module';
 import { PrismaModule } from '@/prisma/prisma.module';
 import { TencentMtgController } from './tencent-mtg.controller';
 import { TencentMtgSyncService } from './tencent-mtg-sync.service';
+import { BullModule } from '@nestjs/bullmq';
+import { TencentMtgSyncProcessor } from './tencent-mtg-sync.processor';
 
 @Module({
   imports: [
@@ -13,9 +15,12 @@ import { TencentMtgSyncService } from './tencent-mtg-sync.service';
     TencentModule,
     MeetingModule,
     PrismaModule,
+    BullModule.registerQueue({
+      name: 'tencent-mtg-sync',
+    }),
   ],
   controllers: [TencentMtgController],
-  providers: [TencentMtgSyncService],
+  providers: [TencentMtgSyncService, TencentMtgSyncProcessor],
   exports: [TencentMtgSyncService],
 })
 export class TencentMtgModule {}
