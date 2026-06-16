@@ -14,6 +14,8 @@ import { MailerModule } from '../integrations/email';
 import { MailService } from './mail.service';
 import { MailController } from './mail.controller';
 import { BullModule } from '@nestjs/bullmq';
+import { BullBoardModule } from '@bull-board/nestjs';
+import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { MailProcessor } from './mail.processor';
 
 @Module({
@@ -21,6 +23,10 @@ import { MailProcessor } from './mail.processor';
     MailerModule,
     BullModule.registerQueue({
       name: 'mail', // 队列名称
+    }),
+    BullBoardModule.forFeature({
+      name: 'mail',
+      adapter: BullMQAdapter,
     }),
   ],
   controllers: [MailController],

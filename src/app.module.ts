@@ -30,6 +30,8 @@ import { AppResolver } from './app.resolver';
 import { ScheduleModule } from '@nestjs/schedule';
 import { OpenaiModule } from './integrations/openai/openai.module';
 import { BullModule } from '@nestjs/bullmq';
+import { BullBoardModule } from '@bull-board/nestjs';
+import { ExpressAdapter } from '@bull-board/express';
 import { redisConfig } from './configs';
 import { ApiKeyModule } from './api-key/api-key.module';
 import { McpServerModule } from './mcp-server/mcp-server.module';
@@ -61,6 +63,10 @@ import { OrderModule } from './order/order.module';
         password: redisConfig().password,
         db: redisConfig().db,
       },
+    }),
+    BullBoardModule.forRoot({
+      route: '/queues',
+      adapter: ExpressAdapter,
     }),
     TasksModule,
     ScheduleModule.forRoot(),

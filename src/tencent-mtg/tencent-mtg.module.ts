@@ -7,6 +7,8 @@ import { PrismaModule } from '@/prisma/prisma.module';
 import { TencentMtgController } from './tencent-mtg.controller';
 import { TencentMtgSyncService } from './tencent-mtg-sync.service';
 import { BullModule } from '@nestjs/bullmq';
+import { BullBoardModule } from '@bull-board/nestjs';
+import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { TencentMtgSyncProcessor } from './tencent-mtg-sync.processor';
 
 @Module({
@@ -17,6 +19,10 @@ import { TencentMtgSyncProcessor } from './tencent-mtg-sync.processor';
     PrismaModule,
     BullModule.registerQueue({
       name: 'tencent-mtg-sync',
+    }),
+    BullBoardModule.forFeature({
+      name: 'tencent-mtg-sync',
+      adapter: BullMQAdapter,
     }),
   ],
   controllers: [TencentMtgController],

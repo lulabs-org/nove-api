@@ -60,6 +60,8 @@
     "@alicloud/tea-util": "^1.4.10",
     "@apollo/server": "^4.12.2",
     "@as-integrations/express5": "^1.1.2",
+    "@bull-board/api": "^8.0.0",
+    "@bull-board/express": "^8.0.0",
     "@bull-board/nestjs": "^8.0.0",
     "@larksuiteoapi/node-sdk": "^1.55.0",
     "@modelcontextprotocol/sdk": "^1.25.1",

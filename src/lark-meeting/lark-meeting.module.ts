@@ -16,6 +16,8 @@ import { LarkEventWsService, LarkMeetingService } from './service';
 import { LarkModule } from '../integrations/lark/lark.module';
 import { LarkEventProcessor } from './queue/lark-event.processor';
 import { BullModule } from '@nestjs/bullmq';
+import { BullBoardModule } from '@bull-board/nestjs';
+import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { larkConfig } from '@/configs/lark.config';
 
 @Module({
@@ -23,6 +25,10 @@ import { larkConfig } from '@/configs/lark.config';
     LarkModule,
     ConfigModule.forFeature(larkConfig),
     BullModule.registerQueue({ name: 'lark-events' }),
+    BullBoardModule.forFeature({
+      name: 'lark-events',
+      adapter: BullMQAdapter,
+    }),
   ],
   controllers: [LarkWebhookController],
   providers: [LarkEventWsService, LarkMeetingService, LarkEventProcessor],
