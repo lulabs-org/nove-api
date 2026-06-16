@@ -462,7 +462,38 @@ export class TencentApiService {
     operatorId?: string,
     operatorIdType: number = 1,
   ): Promise<RecordMeeting[]> {
+    const maxRange = 31 * 24 * 60 * 60;
     const allRecords: RecordMeeting[] = [];
+
+    let chunkStart = startTime;
+    while (chunkStart < endTime) {
+      const chunkEnd = Math.min(chunkStart + maxRange, endTime);
+
+      const chunkRecords = await this.fetchCorpRecordsPage(
+        chunkStart,
+        chunkEnd,
+        operatorId,
+        operatorIdType,
+      );
+      allRecords.push(...chunkRecords);
+
+      chunkStart = chunkEnd;
+    }
+
+    this.logger.log(
+      `Fetched ${allRecords.length} recording records in total`,
+    );
+
+    return allRecords;
+  }
+
+  private async fetchCorpRecordsPage(
+    startTime: number,
+    endTime: number,
+    operatorId?: string,
+    operatorIdType: number = 1,
+  ): Promise<RecordMeeting[]> {
+    const records: RecordMeeting[] = [];
     const pageSize = 20;
     let page = 1;
     let totalPage = 1;
@@ -478,17 +509,13 @@ export class TencentApiService {
       );
 
       if (response.record_meetings) {
-        allRecords.push(...response.record_meetings);
+        records.push(...response.record_meetings);
       }
 
       totalPage = response.total_page;
       page++;
     } while (page <= totalPage);
 
-    this.logger.log(
-      `Fetched ${allRecords.length} recording records across ${totalPage} page(s)`,
-    );
-
-    return allRecords;
+    return records;
   }
 }
