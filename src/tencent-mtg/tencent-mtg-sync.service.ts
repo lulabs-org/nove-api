@@ -145,12 +145,22 @@ export class TencentMtgSyncService {
     const recordingStatus = this.mapRecordingState(record.state);
     const systemMeetingType = this.convertMeetingType(meetingType);
 
-    const scheduledStartAt = meetingInfo?.start_time
-      ? new Date(Number(meetingInfo.start_time) * 1000)
-      : undefined;
-    const scheduledEndAt = meetingInfo?.end_time
-      ? new Date(Number(meetingInfo.end_time) * 1000)
-      : undefined;
+    const scheduledStartAt = isRecurring
+      ? this.combineMediaDateWithMeetingTime(
+          record.media_start_time,
+          meetingInfo?.start_time,
+        )
+      : meetingInfo?.start_time
+        ? new Date(Number(meetingInfo.start_time) * 1000)
+        : undefined;
+    const scheduledEndAt = isRecurring
+      ? this.combineMediaDateWithMeetingTime(
+          record.media_start_time,
+          meetingInfo?.end_time,
+        )
+      : meetingInfo?.end_time
+        ? new Date(Number(meetingInfo.end_time) * 1000)
+        : undefined;
 
     this.logger.debug(
       `Upserting meeting ${record.meeting_id} (subMeetingId=${subMeetingId}, type=${meetingType}, isRecurring=${isRecurring})`,
@@ -164,7 +174,6 @@ export class TencentMtgSyncService {
         title: meetingInfo?.subject ?? record.subject,
         meetingCode: meetingInfo?.meeting_code ?? record.meeting_code,
         type: systemMeetingType,
-        startAt: new Date(record.media_start_time),
         scheduledStartAt,
         scheduledEndAt,
         hasRecording,
@@ -215,6 +224,29 @@ export class TencentMtgSyncService {
     const combinedTimestampSec = Math.floor(combined.getTime() / 1000);
 
     return String(combinedTimestampSec);
+  }
+
+  /**
+   * 将 media_start_time 的日期部分与 meeting detail 的时间部分组合（UTC）
+   * 用于周期会议中，用实际录制日期修正预约时间
+   */
+  private combineMediaDateWithMeetingTime(
+    mediaStartTimeMs: number,
+    meetingTimeSec: string | undefined,
+  ): Date | undefined {
+    if (!meetingTimeSec) return undefined;
+
+    const mediaDate = new Date(mediaStartTimeMs);
+    const year = mediaDate.getUTCFullYear();
+    const month = mediaDate.getUTCMonth();
+    const day = mediaDate.getUTCDate();
+
+    const meetingDate = new Date(Number(meetingTimeSec) * 1000);
+    const hours = meetingDate.getUTCHours();
+    const minutes = meetingDate.getUTCMinutes();
+    const seconds = meetingDate.getUTCSeconds();
+
+    return new Date(Date.UTC(year, month, day, hours, minutes, seconds));
   }
 
   /**
