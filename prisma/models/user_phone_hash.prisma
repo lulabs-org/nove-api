@@ -1,0 +1,15 @@
+model UserPhoneHash {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id") // 本地用户 ID
+  hashValue String   @unique @map("hash_value") @db.VarChar(255) // 加密的手机号 Hash 值
+  platform  Platform @default(TENCENT_MEETING) // 平台标识
+
+  // 关联关系
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([userId])
+  @@map("user_phone_hashes")
+}
