@@ -17,6 +17,8 @@ import {
 import { Observable, throwError } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
 import type { Request, Response } from 'express';
+import { WebhookLogService } from '@/webhook-log/webhook-log.service';
+import { WebhookStatus } from '@prisma/client';
 
 /**
  * Tencent Meeting webhook logging interceptor
@@ -25,6 +27,8 @@ import type { Request, Response } from 'express';
 @Injectable()
 export class WebhookLoggingInterceptor implements NestInterceptor {
   private readonly logger = new Logger(WebhookLoggingInterceptor.name);
+
+  constructor(private readonly webhookLogService: WebhookLogService) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const request = context.switchToHttp().getRequest<Request>();
@@ -62,6 +66,19 @@ export class WebhookLoggingInterceptor implements NestInterceptor {
             ),
           },
         );
+
+        // Async save to database
+        const decryptedData = request['decryptedData'];
+        const eventName = decryptedData?.event || (method === 'GET' ? 'url_verification' : 'unknown');
+        
+        this.webhookLogService.createLog({
+          provider: 'tencent-meeting',
+          event: eventName,
+          payload: request.body || request.query,
+          data: decryptedData,
+          headers: request.headers,
+          status: WebhookStatus.SUCCESS,
+        }).catch(err => this.logger.error('Failed to save webhook log in tap', err));
       }),
       catchError((error: unknown) => {
         const duration = Date.now() - startTime;
@@ -80,6 +97,20 @@ export class WebhookLoggingInterceptor implements NestInterceptor {
             ),
           },
         );
+
+        // Async save to database
+        const decryptedData = request['decryptedData'];
+        const eventName = decryptedData?.event || (method === 'GET' ? 'url_verification' : 'unknown');
+
+        this.webhookLogService.createLog({
+          provider: 'tencent-meeting',
+          event: eventName,
+          payload: request.body || request.query,
+          data: decryptedData,
+          headers: request.headers,
+          status: WebhookStatus.FAILED,
+          errorMessage: err.message,
+        }).catch(e => this.logger.error('Failed to save webhook log in catchError', e));
 
         return throwError(() => error);
       }),

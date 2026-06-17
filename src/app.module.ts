@@ -45,6 +45,7 @@ import { OrgMemberModule } from './org-member/org-member.module';
 import { MeetAiModule } from './meet-ai/meet-ai.module';
 import { WechatShopModule } from './wechat-shop/wechat-shop.module';
 import { OrderModule } from './order/order.module';
+import { WebhookLogModule } from './webhook-log/webhook-log.module';
 
 @Module({
   imports: [
@@ -98,6 +99,7 @@ import { OrderModule } from './order/order.module';
     MeetAiModule,
     WechatShopModule,
     OrderModule,
+    WebhookLogModule,
   ],
   controllers: [AppController],
   providers: [
