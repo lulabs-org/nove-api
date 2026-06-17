@@ -50,6 +50,8 @@ export class RecordingCompletedHandler extends BaseEventHandler {
   ): Promise<void> {
     this.logEventProcessing(this.SUPPORTED_EVENT, payload, index);
 
+    await new Promise((resolve) => setTimeout(resolve, 120000));
+
     const { meeting_info, recording_files = [] } = payload;
     const { meeting_id, sub_meeting_id, creator } = meeting_info;
 
