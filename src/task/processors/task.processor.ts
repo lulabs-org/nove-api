@@ -21,7 +21,8 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { TaskStatus, PeriodType } from '@prisma/client';
 
-import { PeriodSummary } from '../../meet-ai/services/period-summary.service';
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs';
 
 // 任务队列中 Job 的 payload 接口定义
 interface JobPayload {
@@ -36,7 +37,7 @@ export class TaskProcessor extends WorkerHost {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly periodSummary: PeriodSummary,
+    private readonly httpService: HttpService,
   ) {
     super();
   }
@@ -85,44 +86,40 @@ export class TaskProcessor extends WorkerHost {
         // await this.cleanupService.removeExpiredData(job.data.retentionDays);
         break;
 
-      case 'personalMeetingSummary': {
-        // 周期性使用方法(默认时区是Asia/Shanghai)：
-        // {
-        //   "name": "personalMeetingSummary",
-        //   "cron": "0 * * * * *",
-        //   "payload": {
-        //     "originalName": "personalMeetingSummary",
-        //     "periodType": "DAILY"
-        //   }
-        // }
+      case 'invoke_http': {
+        const jobData = job.data as any;
+        const url = jobData.url;
+        const method = jobData.method || 'POST';
+        const payload = jobData.payload || {};
 
-        // 使用方法二，添加指定时区
-        // {
-        //   "name": "personalMeetingSummary",
-        //   "cron": "0 0 3 * * *",
-        //   "timezone": "Asia/Shanghai",
-        //   "payload": {
-        //     "originalName": "personalMeetingSummary",
-        //     "periodType": "DAILY"
-        //   }
-        // }
-
-        // SINGLE // 单次会议
-        // DAILY // 每日
-        // WEEKLY // 每周
-        // MONTHLY // 每月
-        // QUARTERLY // 每季度
-        // YEARLY // 每年
-
-        const jobData = job.data as JobPayload;
-        const periodType = jobData.periodType;
-
-        if (!periodType) {
-          this.logger.warn('periodType 未提供，任务跳过执行');
-          return { ok: false, message: 'periodType is required' };
+        if (!url) {
+          this.logger.warn('invoke_http: url 未提供，任务跳过执行');
+          return { ok: false, message: 'url is required' };
         }
 
-        return await this.periodSummary.processSummary(periodType);
+        // 如果是相对路径，则使用本地服务的地址
+        let targetUrl = url;
+        if (url.startsWith('/')) {
+          const port = process.env.PORT || 3000;
+          targetUrl = `http://127.0.0.1:${port}${url}`;
+        }
+
+        this.logger.log(`发起 HTTP 调用 [${method}] ${targetUrl}`);
+        
+        try {
+          const response = await firstValueFrom(
+            this.httpService.request({
+              url: targetUrl,
+              method,
+              data: payload,
+            }),
+          );
+          this.logger.log(`HTTP 调用成功: ${JSON.stringify(response.data).slice(0, 500)}`);
+          return { ok: true, data: response.data };
+        } catch (error: any) {
+          this.logger.error(`HTTP 调用失败 [${targetUrl}]: ${error.message}`);
+          throw error;
+        }
       }
 
       // case 'openaiChat': {

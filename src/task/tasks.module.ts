@@ -19,7 +19,7 @@ import { TasksService } from './service/tasks.service';
 import { TaskProcessor } from './processors/task.processor';
 import { PrismaService } from '../prisma/prisma.service';
 import { OpenaiModule } from '../integrations/openai/openai.module';
-import { MeetAiModule } from '../meet-ai/meet-ai.module';
+import { HttpModule } from '@nestjs/axios';
 
 import { ConfigModule } from '@nestjs/config';
 import { openaiConfig } from '../configs/openai.config';
@@ -35,7 +35,7 @@ import { openaiConfig } from '../configs/openai.config';
     }),
     OpenaiModule,
     ConfigModule.forFeature(openaiConfig),
-    MeetAiModule,
+    HttpModule,
   ],
   controllers: [TasksController],
   providers: [
