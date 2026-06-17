@@ -71,7 +71,9 @@ export class BodyDecryptionPipe implements PipeTransform {
     // 4. 解密数据
     try {
       const decryptedData = await aesDecrypt(value.data, encodingAesKey);
-      return JSON.parse(decryptedData) as MeetingEvent;
+      const parsedData = JSON.parse(decryptedData) as MeetingEvent;
+      this.request['decryptedData'] = parsedData;
+      return parsedData;
     } catch (error) {
       throw new WebhookDecryptionException(
         'TENCENT_MEETING',
