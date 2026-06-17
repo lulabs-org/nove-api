@@ -48,6 +48,7 @@ export class TencentMtgController {
     const result = await this.syncService.syncRecordings(
       dto.startTime,
       dto.endTime,
+      dto.operatorId,
     );
 
     return {
