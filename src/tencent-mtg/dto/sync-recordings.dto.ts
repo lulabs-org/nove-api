@@ -1,4 +1,4 @@
-import { IsNumber, IsOptional } from 'class-validator';
+import { IsNumber, IsOptional, IsString } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
@@ -20,4 +20,12 @@ export class SyncRecordingsDto {
   @IsNumber()
   @Type(() => Number)
   endTime?: number;
+
+  @ApiPropertyOptional({
+    description: '操作者ID，默认为配置文件中的 userId',
+    example: 'user_123',
+  })
+  @IsOptional()
+  @IsString()
+  operatorId?: string;
 }

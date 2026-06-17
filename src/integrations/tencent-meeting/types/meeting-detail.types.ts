@@ -75,6 +75,7 @@ export interface MeetingDetailResponse {
     guest_modify_permission?: boolean;
     allow_anonymous_user?: boolean;
     allow_anonymous_start_meeting?: boolean;
+    time_zone?: string;
   }>;
   meeting_id?: string;
   meeting_code?: string;
