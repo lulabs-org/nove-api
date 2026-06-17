@@ -10,6 +10,7 @@ export interface CreateWebhookLogParams {
   headers?: any;
   status?: WebhookStatus;
   errorMessage?: string;
+  externalId?: string;
 }
 
 @Injectable()
@@ -29,6 +30,7 @@ export class WebhookLogService {
           headers: params.headers,
           status: params.status ?? WebhookStatus.PENDING,
           errorMessage: params.errorMessage,
+          externalId: params.externalId,
         },
       });
     } catch (error) {

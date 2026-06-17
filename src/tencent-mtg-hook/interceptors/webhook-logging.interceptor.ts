@@ -70,6 +70,7 @@ export class WebhookLoggingInterceptor implements NestInterceptor {
         // Async save to database
         const decryptedData = request['decryptedData'];
         const eventName = decryptedData?.event || (method === 'GET' ? 'url_verification' : 'unknown');
+        const traceId = decryptedData?.trace_id;
         
         this.webhookLogService.createLog({
           provider: 'tencent-meeting',
@@ -78,6 +79,7 @@ export class WebhookLoggingInterceptor implements NestInterceptor {
           data: decryptedData,
           headers: request.headers,
           status: WebhookStatus.SUCCESS,
+          externalId: traceId,
         }).catch(err => this.logger.error('Failed to save webhook log in tap', err));
       }),
       catchError((error: unknown) => {
@@ -101,6 +103,7 @@ export class WebhookLoggingInterceptor implements NestInterceptor {
         // Async save to database
         const decryptedData = request['decryptedData'];
         const eventName = decryptedData?.event || (method === 'GET' ? 'url_verification' : 'unknown');
+        const traceId = decryptedData?.trace_id;
 
         this.webhookLogService.createLog({
           provider: 'tencent-meeting',
@@ -110,6 +113,7 @@ export class WebhookLoggingInterceptor implements NestInterceptor {
           headers: request.headers,
           status: WebhookStatus.FAILED,
           errorMessage: err.message,
+          externalId: traceId,
         }).catch(e => this.logger.error('Failed to save webhook log in catchError', e));
 
         return throwError(() => error);
