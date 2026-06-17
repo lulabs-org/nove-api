@@ -11,6 +11,7 @@
 
 import { Module } from '@nestjs/common';
 import { MeetAiController } from './controllers/meet-ai.controller';
+import { PeriodSummaryController } from './controllers/period-summary.controller';
 import { MeetAiService, ParticipantSummaryService } from './services';
 import { MeetAiRepository, ParticipantSummaryRepository } from './repositories';
 import { PrismaModule } from '../prisma/prisma.module';
@@ -18,6 +19,12 @@ import { OpenaiModule } from '@/integrations/openai/openai.module';
 import { UserModule } from '@/user/user.module';
 import { MeetingModule } from '@/meeting/meeting.module';
 import { UserPlatformModule } from '@/user-platform/user-platform.module';
+import { PeriodSummary } from './services/period-summary.service';
+import { PeriodSummaryTool } from './services/period-summary-tool';
+import { PeriodSummaryRepository } from './repositories/period-summary.repository';
+import { PeriodTimeRange } from './utils/period-time-range';
+import { ConfigModule } from '@nestjs/config';
+import { openaiConfig } from '@/configs/openai.config';
 
 @Module({
   imports: [
@@ -26,18 +33,27 @@ import { UserPlatformModule } from '@/user-platform/user-platform.module';
     UserModule,
     MeetingModule,
     UserPlatformModule,
+    ConfigModule.forFeature(openaiConfig),
   ],
-  controllers: [MeetAiController],
+  controllers: [MeetAiController, PeriodSummaryController],
   providers: [
     MeetAiService,
     MeetAiRepository,
     ParticipantSummaryRepository,
     ParticipantSummaryService,
+    PeriodSummary,
+    PeriodSummaryTool,
+    PeriodSummaryRepository,
+    PeriodTimeRange,
   ],
   exports: [
     MeetAiService,
     ParticipantSummaryRepository,
     ParticipantSummaryService,
+    PeriodSummary,
+    PeriodSummaryTool,
+    PeriodSummaryRepository,
+    PeriodTimeRange,
   ],
 })
 export class MeetAiModule {}

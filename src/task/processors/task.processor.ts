@@ -21,7 +21,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { TaskStatus, PeriodType } from '@prisma/client';
 
-import { PeriodSummary } from '../service/period-summary.service';
+import { PeriodSummary } from '../../meet-ai/services/period-summary.service';
 
 // 任务队列中 Job 的 payload 接口定义
 interface JobPayload {
