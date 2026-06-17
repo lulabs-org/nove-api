@@ -18,7 +18,8 @@ import { Observable, throwError } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
 import type { Request, Response } from 'express';
 import { WebhookLogService } from '@/webhook-log/webhook-log.service';
-import { WebhookStatus } from '@prisma/client';
+import { WebhookStatus, Prisma } from '@prisma/client';
+import { MeetingEvent } from '../types';
 
 /**
  * Tencent Meeting webhook logging interceptor
@@ -68,19 +69,30 @@ export class WebhookLoggingInterceptor implements NestInterceptor {
         );
 
         // Async save to database
-        const decryptedData = request['decryptedData'];
-        const eventName = decryptedData?.event || (method === 'GET' ? 'url_verification' : 'unknown');
+        const decryptedData = (
+          request as Request & { decryptedData?: MeetingEvent }
+        ).decryptedData;
+        const eventName =
+          decryptedData?.event ||
+          (method === 'GET' ? 'url_verification' : 'unknown');
         const traceId = decryptedData?.trace_id;
-        
-        this.webhookLogService.createLog({
-          provider: 'tencent-meeting',
-          event: eventName,
-          payload: request.body || request.query,
-          data: decryptedData,
-          headers: request.headers,
-          status: WebhookStatus.SUCCESS,
-          externalId: traceId,
-        }).catch(err => this.logger.error('Failed to save webhook log in tap', err));
+
+        this.webhookLogService
+          .createLog({
+            provider: 'tencent-meeting',
+            event: eventName,
+            payload: (request.body || request.query) as Prisma.InputJsonValue,
+            data: decryptedData as Prisma.InputJsonValue | undefined,
+            headers: request.headers as Prisma.InputJsonValue,
+            status: WebhookStatus.SUCCESS,
+            externalId: traceId,
+          })
+          .catch((err) =>
+            this.logger.error(
+              'Failed to save webhook log in tap',
+              err instanceof Error ? err.stack : String(err),
+            ),
+          );
       }),
       catchError((error: unknown) => {
         const duration = Date.now() - startTime;
@@ -101,20 +113,31 @@ export class WebhookLoggingInterceptor implements NestInterceptor {
         );
 
         // Async save to database
-        const decryptedData = request['decryptedData'];
-        const eventName = decryptedData?.event || (method === 'GET' ? 'url_verification' : 'unknown');
+        const decryptedData = (
+          request as Request & { decryptedData?: MeetingEvent }
+        ).decryptedData;
+        const eventName =
+          decryptedData?.event ||
+          (method === 'GET' ? 'url_verification' : 'unknown');
         const traceId = decryptedData?.trace_id;
 
-        this.webhookLogService.createLog({
-          provider: 'tencent-meeting',
-          event: eventName,
-          payload: request.body || request.query,
-          data: decryptedData,
-          headers: request.headers,
-          status: WebhookStatus.FAILED,
-          errorMessage: err.message,
-          externalId: traceId,
-        }).catch(e => this.logger.error('Failed to save webhook log in catchError', e));
+        this.webhookLogService
+          .createLog({
+            provider: 'tencent-meeting',
+            event: eventName,
+            payload: (request.body || request.query) as Prisma.InputJsonValue,
+            data: decryptedData as Prisma.InputJsonValue | undefined,
+            headers: request.headers as Prisma.InputJsonValue,
+            status: WebhookStatus.FAILED,
+            errorMessage: err.message,
+            externalId: traceId,
+          })
+          .catch((e) =>
+            this.logger.error(
+              'Failed to save webhook log in catchError',
+              e instanceof Error ? e.stack : String(e),
+            ),
+          );
 
         return throwError(() => error);
       }),
