@@ -1,8 +1,4 @@
-import {
-  MeetingType,
-  RecordingStatus,
-  ProcessingStatus,
-} from '@prisma/client';
+import { MeetingType, RecordingStatus, ProcessingStatus } from '@prisma/client';
 
 const TENCENT_MEETING_TYPE_RECURRING = 1;
 
@@ -10,10 +6,7 @@ export function computeSubMeetingId(
   mediaStartTimeMs: number,
   meetingStartTimeSec: string,
 ): string {
-  const combined = mergeDateTime(
-    mediaStartTimeMs,
-    meetingStartTimeSec,
-  )!;
+  const combined = mergeDateTime(mediaStartTimeMs, meetingStartTimeSec)!;
   return String(Math.floor(combined.getTime() / 1000));
 }
 

@@ -31,7 +31,7 @@ export class TencentMtgSyncService {
     private readonly recordingRepo: MeetingRecordingRepository,
     @Inject(tencentMeetingConfig.KEY)
     private config: ConfigType<typeof tencentMeetingConfig>,
-  ) { }
+  ) {}
 
   /**
    * 触发同步，切分时间区间并投递到队列
@@ -165,18 +165,12 @@ export class TencentMtgSyncService {
     const systemMeetingType = convertMeetingType(meetingType);
 
     const scheduledStartAt = isRecurring
-      ? mergeDateTime(
-        record.media_start_time,
-        meetingInfo?.start_time,
-      )
+      ? mergeDateTime(record.media_start_time, meetingInfo?.start_time)
       : meetingInfo?.start_time
         ? new Date(Number(meetingInfo.start_time) * 1000)
         : undefined;
     const scheduledEndAt = isRecurring
-      ? mergeDateTime(
-        record.media_start_time,
-        meetingInfo?.end_time,
-      )
+      ? mergeDateTime(record.media_start_time, meetingInfo?.end_time)
       : meetingInfo?.end_time
         ? new Date(Number(meetingInfo.end_time) * 1000)
         : undefined;
@@ -184,7 +178,6 @@ export class TencentMtgSyncService {
     const timezone = meetingInfo?.time_zone
       ? Buffer.from(meetingInfo.time_zone, 'base64').toString('utf-8')
       : undefined;
-
 
     return this.meetingRepo.upsert(
       MeetingPlatform.TENCENT_MEETING,

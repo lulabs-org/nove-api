@@ -60,6 +60,7 @@ model User {
   // 平台与存储相关关联
   platformUsers          PlatformUser[] // 平台用户关联
   uploadedStorageObjects StorageObject[]
+  phoneHashMappings      UserPhoneHash[] // 手机号哈希映射
 
   @@unique([countryCode, phone], name: "uq_users_country_code_phone")
   @@index([username]) // 用户名登录优化
