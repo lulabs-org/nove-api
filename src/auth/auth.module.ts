@@ -66,6 +66,7 @@ import { UnifiedAuthGuard } from './guards/unified-auth.guard';
     { provide: JWT_USER_LOOKUP, useClass: JwtUserLookupService },
     TokenBlacklistService,
     { provide: JWT_TOKEN_BLACKLIST, useExisting: TokenBlacklistService },
+    UnifiedAuthGuard,
   ],
   exports: [
     RegisterService,
