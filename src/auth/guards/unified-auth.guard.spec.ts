@@ -9,7 +9,7 @@ import { UnifiedAuthGuard } from './unified-auth.guard';
 import { ApiKeyService } from '@/api-key/services/api-key.service';
 import { UserOrgService } from '@/api-key/services/user-organization.service';
 import { PermService } from '@/permission/services/permission.service';
-import { REQUIRE_AUTH_KEY } from './require-auth.decorator';
+import { REQUIRE_AUTH_KEY } from '../decorators/require-auth.decorator';
 
 /* eslint-disable @typescript-eslint/unbound-method */
 

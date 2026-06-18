@@ -18,7 +18,7 @@
  */
 
 import { SetMetadata } from '@nestjs/common';
-import { AuthMethod } from './auth-context.interface';
+import { AuthMethod } from '../types/auth-context.interface';
 
 export const REQUIRE_AUTH_KEY = 'requireAuth';
 

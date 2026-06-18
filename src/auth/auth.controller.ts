@@ -48,7 +48,7 @@ import { Public } from '@/auth/decorators/public.decorator';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { TokenBlacklistService } from './services/token-blacklist.service';
 import { User, CurrentUser } from '@/auth/decorators/user.decorator';
-import { RequireAuth } from '@/auth/unified/require-auth.decorator';
+import { RequireAuth } from '@/auth/decorators/require-auth.decorator';
 import { ClientType } from '@/auth/types/jwt.types';
 import { PermService } from '@/permission/services/permission.service';
 import { HttpUtil } from '@/common/utils/http.util';

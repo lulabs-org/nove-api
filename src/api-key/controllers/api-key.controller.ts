@@ -18,7 +18,7 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
-import { RequireAuth } from '@/auth/unified/require-auth.decorator';
+import { RequireAuth } from '@/auth/decorators/require-auth.decorator';
 import { User, CurrentUser } from '@/auth/decorators/user.decorator';
 import { ApiKeyService } from '../services/api-key.service';
 import { UserOrgService } from '../services/user-organization.service';

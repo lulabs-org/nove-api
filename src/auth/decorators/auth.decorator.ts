@@ -19,7 +19,7 @@
  */
 
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { AuthContext } from './auth-context.interface';
+import { AuthContext } from '../types/auth-context.interface';
 
 interface RequestWithAuthContext {
   authContext?: AuthContext;

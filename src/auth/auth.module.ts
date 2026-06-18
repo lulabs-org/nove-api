@@ -31,7 +31,7 @@ import { JwtUserLookupService } from './services/jwt-user-lookup.service';
 import { TokenBlacklistService } from './services/token-blacklist.service';
 import { jwtConfig } from '@/configs/jwt.config';
 import { PermissionModule } from '@/permission/permission.module';
-import { UnifiedAuthGuard } from './unified/unified-auth.guard';
+import { UnifiedAuthGuard } from './guards/unified-auth.guard';
 
 @Module({
   imports: [

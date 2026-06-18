@@ -25,8 +25,8 @@ import {
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
-import { AuthContext, AuthMethod } from './auth-context.interface';
-import { REQUIRE_AUTH_KEY } from './require-auth.decorator';
+import { AuthContext, AuthMethod } from '../types/auth-context.interface';
+import { REQUIRE_AUTH_KEY } from '../decorators/require-auth.decorator';
 import { ApiKeyService } from '@/api-key/services/api-key.service';
 import { UserOrgService } from '@/api-key/services/user-organization.service';
 import { PermService } from '@/permission/services/permission.service';
