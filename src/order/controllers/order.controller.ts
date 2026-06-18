@@ -20,8 +20,8 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
-import { PermissionGuard } from '@/common/guards';
-import { RequirePermissions } from '@/common/decorators';
+import { PermissionGuard } from '@/permission/guards/permission.guard';
+import { RequirePermissions } from '@/permission/decorators/permissions.decorator';
 import {
   CreateOrderDto,
   OrderDto,

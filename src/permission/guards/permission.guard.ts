@@ -10,7 +10,7 @@ import {
   PERMISSION_MODE_KEY,
   PermissionMode,
 } from '../decorators/permissions.decorator';
-import { PermService } from '../../permission/services/permission.service';
+import { PermService } from '../services/permission.service';
 
 interface RequestWithAuthContext {
   authContext?: {
