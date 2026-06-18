@@ -16,9 +16,7 @@ import { apiKeyConfig } from '@/configs/api-key.config';
 import { RoleModule } from '@/role/role.module';
 import { PermissionModule } from '@/permission/permission.module';
 
-// Controllers
 import { ApiKeyController } from './controllers/api-key.controller';
-import { V1Controller } from './controllers/v1.controller';
 
 // Services
 import { ApiKeyService } from './services/api-key.service';
@@ -49,7 +47,7 @@ import { UsageLoggingInterceptor } from './interceptors/usage-logging.intercepto
     RoleModule,
     PermissionModule,
   ],
-  controllers: [ApiKeyController, V1Controller],
+  controllers: [ApiKeyController],
   providers: [
     // Services
     ApiKeyService,
