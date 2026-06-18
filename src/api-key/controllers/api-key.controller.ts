@@ -18,6 +18,7 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
+import { RequireAuth } from '@/auth/unified/require-auth.decorator';
 import { User, CurrentUser } from '@/auth/decorators/user.decorator';
 import { ApiKeyService } from '../services/api-key.service';
 import { UserOrgService } from '../services/user-organization.service';
@@ -38,6 +39,7 @@ import {
 @ApiTags('Admin - API Keys')
 @Controller('admin/api-keys')
 @UseGuards(JwtAuthGuard)
+@RequireAuth('jwt')
 @ApiBearerAuth()
 export class ApiKeyController {
   constructor(

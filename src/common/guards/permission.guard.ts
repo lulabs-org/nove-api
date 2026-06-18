@@ -12,7 +12,11 @@ import {
 } from '../decorators/permissions.decorator';
 import { PermService } from '../../permission/services/permission.service';
 
-interface RequestWithUser {
+interface RequestWithAuthContext {
+  authContext?: {
+    userId: string | null;
+    permissions: string[];
+  };
   user?: {
     id: string;
   };
@@ -43,10 +47,12 @@ export class PermissionGuard implements CanActivate {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest<RequestWithUser>();
-    const user = request.user;
+    const request = context.switchToHttp().getRequest<RequestWithAuthContext>();
 
-    if (!user?.id) {
+    // 优先从统一认证上下文获取 userId
+    const userId = request.authContext?.userId ?? request.user?.id;
+
+    if (!userId) {
       this.logger.warn('User not found in request');
       return false;
     }
@@ -57,14 +63,14 @@ export class PermissionGuard implements CanActivate {
       switch (mode) {
         case PermissionMode.ALL:
           hasPermission = await this.permissionService.hasAllPermissions(
-            user.id,
+            userId,
             requiredPermissions,
           );
           break;
         case PermissionMode.ANY:
         default:
           hasPermission = await this.permissionService.hasAnyPermission(
-            user.id,
+            userId,
             requiredPermissions,
           );
           break;
@@ -72,7 +78,7 @@ export class PermissionGuard implements CanActivate {
 
       if (!hasPermission) {
         this.logger.warn(
-          `User ${user.id} does not have required permissions: ${requiredPermissions.join(', ')}`,
+          `User ${userId} does not have required permissions: ${requiredPermissions.join(', ')}`,
         );
       }
 

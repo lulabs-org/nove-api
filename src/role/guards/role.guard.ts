@@ -12,7 +12,10 @@ import {
 } from '../decorators/roles.decorator';
 import { RoleService } from '../services/role.service';
 
-interface RequestWithUser {
+interface RequestWithAuthContext {
+  authContext?: {
+    userId: string | null;
+  };
   user?: {
     id: string;
   };
@@ -43,10 +46,12 @@ export class RoleGuard implements CanActivate {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest<RequestWithUser>();
-    const user = request.user;
+    const request = context.switchToHttp().getRequest<RequestWithAuthContext>();
 
-    if (!user?.id) {
+    // 优先从统一认证上下文获取 userId
+    const userId = request.authContext?.userId ?? request.user?.id;
+
+    if (!userId) {
       this.logger.warn('User not found in request');
       return false;
     }
@@ -56,17 +61,17 @@ export class RoleGuard implements CanActivate {
 
       switch (mode) {
         case RoleMode.ALL:
-          hasRole = await this.roleService.hasAllRoles(user.id, requiredRoles);
+          hasRole = await this.roleService.hasAllRoles(userId, requiredRoles);
           break;
         case RoleMode.ANY:
         default:
-          hasRole = await this.roleService.hasAnyRole(user.id, requiredRoles);
+          hasRole = await this.roleService.hasAnyRole(userId, requiredRoles);
           break;
       }
 
       if (!hasRole) {
         this.logger.warn(
-          `User ${user.id} does not have required roles: ${requiredRoles.join(', ')}`,
+          `User ${userId} does not have required roles: ${requiredRoles.join(', ')}`,
         );
       }
 

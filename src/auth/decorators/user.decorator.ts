@@ -29,6 +29,10 @@ interface RequestWithUser {
   user?: CurrentUser;
 }
 
+/**
+ * @deprecated 请使用 @Auth() 装饰器代替。
+ * @see {@link file:///Users/yangshiming/code/nove_project/nove_api/src/auth/unified/auth.decorator.ts}
+ */
 export const User = createParamDecorator(
   (data: keyof CurrentUser | undefined, ctx: ExecutionContext) => {
     const request = ctx.switchToHttp().getRequest<RequestWithUser>();

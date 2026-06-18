@@ -2,39 +2,32 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-05 10:55:08
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-19 02:50:32
+ * @LastEditTime: 2026-06-18 20:18:00
  * @FilePath: /nove_api/src/api-key/controllers/v1.controller.ts
  * @Description:
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
-import {
-  Controller,
-  Get,
-  UseGuards,
-  UseInterceptors,
-  Req,
-} from '@nestjs/common';
+import { Controller, Get, UseInterceptors } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiSecurity,
 } from '@nestjs/swagger';
-import { Request } from 'express';
-import { ApiKeyGuard } from '../guards/api-key.guard';
-import { ApiScopesGuard } from '../guards/api-scopes.guard';
-import { Public } from '@/auth/decorators/public.decorator';
+import { Auth } from '@/auth/unified/auth.decorator';
+import { AuthContext } from '@/auth/unified/auth-context.interface';
+import { RequireAuth } from '@/auth/unified/require-auth.decorator';
 import { UsageLoggingInterceptor } from '../interceptors/usage-logging.interceptor';
 
 /**
  * V1 外部 API 控制器
- * 使用 API Key 认证
+ * 使用 API Key 认证（通过统一认证层自动识别）
  */
 @ApiTags('External API - V1')
 @Controller('v1')
-@UseGuards(ApiKeyGuard, ApiScopesGuard)
+@RequireAuth('api_key')
 @UseInterceptors(UsageLoggingInterceptor)
 @ApiSecurity('api-key')
 export class V1Controller {
@@ -42,7 +35,6 @@ export class V1Controller {
    * 获取当前 API Key 信息（演示端点）
    */
   @Get('me')
-  @Public()
   @ApiOperation({
     summary: '获取当前 API Key 信息',
     description: '返回当前 API Key 的组织 ID、Key ID 和权限范围',
@@ -76,13 +68,11 @@ export class V1Controller {
     status: 401,
     description: 'API Key 无效或已过期',
   })
-  getMe(@Req() request: Request) {
-    const apiAuth = request.apiAuth!; // Guard 确保 apiAuth 存在
-
+  getMe(@Auth() auth: AuthContext) {
     return {
-      orgId: apiAuth.orgId,
-      apiKeyId: apiAuth.apiKeyId,
-      scopes: apiAuth.scopes,
+      orgId: auth.orgId,
+      apiKeyId: auth.apiKeyId,
+      scopes: auth.permissions,
     };
   }
 }

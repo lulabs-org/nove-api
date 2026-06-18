@@ -17,7 +17,7 @@ import { AppService } from './app.service';
 import { MailModule } from './mail/mail.module';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
-import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
+import { UnifiedAuthGuard } from '@/auth/unified/unified-auth.guard';
 import { PrismaModule } from './prisma/prisma.module';
 import { MeetingModule } from './meeting/meeting.module';
 import { HookTencentMtgModule } from './tencent-mtg-hook/hook-tencent-mtg.module';
@@ -107,7 +107,7 @@ import { WebhookLogModule } from './webhook-log/webhook-log.module';
     AppResolver,
     {
       provide: APP_GUARD,
-      useClass: JwtAuthGuard,
+      useClass: UnifiedAuthGuard,
     },
   ],
 })
