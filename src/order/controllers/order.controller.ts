@@ -19,7 +19,6 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
-import { PermissionGuard } from '@/permission/guards/permission.guard';
 import { RequirePermissions } from '@/permission/decorators/permissions.decorator';
 import {
   CreateOrderDto,
