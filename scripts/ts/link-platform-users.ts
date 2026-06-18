@@ -18,12 +18,13 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🚀 开始关联 PlatformUser 和本地 User...');
 
-  // 1. 查找所有腾讯会议平台且存在 phoneHash 但尚未关联本地用户的记录
+  // 1. 查找所有腾讯会议平台且存在 phoneHash 但尚未关联本地用户的记录，且排除已有 ptUserId 的数据
   const platformUsers = await prisma.platformUser.findMany({
     where: {
       platform: Platform.TENCENT_MEETING,
       phoneHash: { not: null },
       localUserId: null,
+      ptUserId: null,
     },
     select: {
       id: true,
