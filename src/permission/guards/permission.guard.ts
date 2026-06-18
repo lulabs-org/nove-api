@@ -3,13 +3,16 @@ import {
   CanActivate,
   ExecutionContext,
   Logger,
+  ForbiddenException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import {
   PERMISSIONS_KEY,
   PERMISSION_MODE_KEY,
   PermissionMode,
+  NO_PERMISSION_REQUIRED_KEY,
 } from '../decorators/permissions.decorator';
+import { IS_PUBLIC_KEY } from '@/auth/decorators/public.decorator';
 import { PermService } from '../services/permission.service';
 
 interface RequestWithAuthContext {
@@ -32,6 +35,24 @@ export class PermissionGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    // 1. 检查是否为公共接口
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (isPublic) {
+      return true;
+    }
+
+    // 2. 检查是否显式声明了无需权限
+    const noPermissionRequired = this.reflector.getAllAndOverride<boolean>(
+      NO_PERMISSION_REQUIRED_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+    if (noPermissionRequired) {
+      return true;
+    }
+
     const requiredPermissions = this.reflector.getAllAndOverride<string[]>(
       PERMISSIONS_KEY,
       [context.getHandler(), context.getClass()],
@@ -43,8 +64,12 @@ export class PermissionGuard implements CanActivate {
         context.getClass(),
       ]) || PermissionMode.ANY;
 
+    // 3. 严格模式：如果没有声明具体权限点，则拒绝访问（防止接口裸奔）
     if (!requiredPermissions || requiredPermissions.length === 0) {
-      return true;
+      this.logger.error(
+        `Route ${context.getClass().name}.${context.getHandler().name} is missing permission configuration! Please add @RequirePermissions or @NoPermissionRequired.`,
+      );
+      throw new ForbiddenException('权限配置缺失，禁止访问');
     }
 
     const request = context.switchToHttp().getRequest<RequestWithAuthContext>();

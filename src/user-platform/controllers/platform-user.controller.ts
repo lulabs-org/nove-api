@@ -16,6 +16,7 @@ import {
   ApiTags,
   getSchemaPath,
 } from '@nestjs/swagger';
+import { NoPermissionRequired } from '@/permission/decorators/permissions.decorator';
 import { PlatformUserService } from '../services/platform-user.service';
 import { Platform } from '@prisma/client';
 import {
@@ -37,6 +38,7 @@ const nullablePlatformUserSchema = {
   UpsertPlatformUserRequestDto,
 )
 @Controller('platform-users')
+@NoPermissionRequired()
 export class PlatformUserController {
   constructor(private readonly platformUserService: PlatformUserService) {}
 

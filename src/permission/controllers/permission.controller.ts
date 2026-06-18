@@ -18,6 +18,8 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 
+import { RequirePermissions } from '../decorators/permissions.decorator';
+
 import { PermService } from '../services/permission.service';
 import {
   CreatePermissionDto,
@@ -51,6 +53,7 @@ export class PermController {
     status: 401,
     description: '未授权',
   })
+  @RequirePermissions('permission:create')
   async create(@Body() dto: CreatePermissionDto): Promise<PermissionTreeDto> {
     return this.permService.createPerm(dto);
   }
@@ -69,6 +72,7 @@ export class PermController {
     status: 401,
     description: '未授权',
   })
+  @RequirePermissions('permission:read')
   async findAll(
     @Query() query: QueryPermissionDto,
   ): Promise<PermissionListResponse> {
@@ -89,6 +93,7 @@ export class PermController {
     status: 401,
     description: '未授权',
   })
+  @RequirePermissions('permission:read')
   async getTree(): Promise<PermissionTreeDto[]> {
     return this.permService.getTree();
   }
@@ -116,6 +121,7 @@ export class PermController {
     status: 404,
     description: '权限不存在',
   })
+  @RequirePermissions('permission:read')
   async findById(@Param('id') id: string): Promise<PermissionTreeDto> {
     return this.permService.findById(id);
   }
@@ -143,6 +149,7 @@ export class PermController {
     status: 404,
     description: '权限不存在',
   })
+  @RequirePermissions('permission:read')
   async findByCode(@Param('code') code: string): Promise<PermissionTreeDto> {
     return this.permService.findByCode(code);
   }
@@ -174,6 +181,7 @@ export class PermController {
     status: 404,
     description: '权限不存在',
   })
+  @RequirePermissions('permission:update')
   async update(
     @Param('id') id: string,
     @Body() dto: UpdatePermissionDto,
@@ -204,6 +212,7 @@ export class PermController {
     status: 404,
     description: '权限不存在',
   })
+  @RequirePermissions('permission:delete')
   async delete(@Param('id') id: string): Promise<void> {
     return this.permService.delete(id);
   }

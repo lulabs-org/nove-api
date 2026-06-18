@@ -17,6 +17,7 @@ import {
   ApiBearerAuth,
   ApiParam,
 } from '@nestjs/swagger';
+import { RequirePermissions } from '@/permission/decorators/permissions.decorator';
 
 import { RoleService } from '../services/role.service';
 import {
@@ -55,6 +56,7 @@ export class RoleController {
     status: 401,
     description: '未授权',
   })
+  @RequirePermissions('role:create')
   async create(@Body() dto: CreateRoleDto): Promise<RoleDto> {
     return this.roleService.create(dto);
   }
@@ -73,6 +75,7 @@ export class RoleController {
     status: 401,
     description: '未授权',
   })
+  @RequirePermissions('role:read')
   async findAll(@Query() query: QueryRoleDto): Promise<RoleListResponse> {
     return this.roleService.findAll(query);
   }
@@ -100,6 +103,7 @@ export class RoleController {
     status: 404,
     description: '角色不存在',
   })
+  @RequirePermissions('role:read')
   async findByCode(@Param('code') code: string): Promise<RoleDto> {
     return this.roleService.findByCode(code);
   }
@@ -127,6 +131,7 @@ export class RoleController {
     status: 404,
     description: '角色不存在',
   })
+  @RequirePermissions('role:read')
   async findById(@Param('id') id: string): Promise<RoleDto> {
     return this.roleService.findById(id);
   }
@@ -158,6 +163,7 @@ export class RoleController {
     status: 404,
     description: '角色不存在',
   })
+  @RequirePermissions('role:update')
   async update(
     @Param('id') id: string,
     @Body() dto: UpdateRoleDto,
@@ -188,6 +194,7 @@ export class RoleController {
     status: 404,
     description: '角色不存在',
   })
+  @RequirePermissions('role:delete')
   async delete(@Param('id') id: string): Promise<void> {
     return this.roleService.delete(id);
   }
@@ -224,6 +231,7 @@ export class RoleController {
     status: 404,
     description: '角色不存在',
   })
+  @RequirePermissions('role:update')
   async setRolePermissions(
     @Param('roleId') roleId: string,
     @Body() dto: SetRolePermissionsDto,
@@ -258,6 +266,7 @@ export class RoleController {
     status: 404,
     description: '角色或成员不存在',
   })
+  @RequirePermissions('role:update')
   async createRoleBinding(
     @Param('orgId') orgId: string,
     @Body() dto: CreateRoleBindingDto,
@@ -293,6 +302,7 @@ export class RoleController {
     status: 404,
     description: '角色绑定不存在',
   })
+  @RequirePermissions('role:update')
   async deleteRoleBinding(
     @Param('bindingId') bindingId: string,
   ): Promise<void> {

@@ -21,11 +21,13 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { NoPermissionRequired } from '@/permission/decorators/permissions.decorator';
 import { MeetAiService } from '../services/meet-ai.service';
 
 @ApiTags('Meet AI')
 @Controller('meet-ai')
 @ApiBearerAuth()
+@NoPermissionRequired()
 export class MeetAiController {
   private readonly logger = new Logger(MeetAiController.name);
 

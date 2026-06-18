@@ -17,6 +17,7 @@ import {
   ApiBearerAuth,
   ApiParam,
 } from '@nestjs/swagger';
+import { RequirePermissions } from '../decorators/permissions.decorator';
 
 import { DataPermService } from '../services/data-permission.service';
 import {
@@ -51,6 +52,7 @@ export class DataPermRuleController {
     status: 401,
     description: '未授权',
   })
+  @RequirePermissions('data-permission:create')
   async create(
     @Body() dto: CreateDataPermissionRuleDto,
   ): Promise<DataPermissionRuleDto> {
@@ -71,6 +73,7 @@ export class DataPermRuleController {
     status: 401,
     description: '未授权',
   })
+  @RequirePermissions('data-permission:read')
   async findAll(
     @Query() query: QueryDataPermissionRuleDto,
   ): Promise<DataPermissionRuleListResponse> {
@@ -100,6 +103,7 @@ export class DataPermRuleController {
     status: 404,
     description: '数据权限规则不存在',
   })
+  @RequirePermissions('data-permission:read')
   async findById(@Param('id') id: string): Promise<DataPermissionRuleDto> {
     return this.dataPermService.findDataPermissionRuleById(id);
   }
@@ -127,6 +131,7 @@ export class DataPermRuleController {
     status: 404,
     description: '数据权限规则不存在',
   })
+  @RequirePermissions('data-permission:read')
   async findByCode(
     @Param('code') code: string,
   ): Promise<DataPermissionRuleDto> {
@@ -160,6 +165,7 @@ export class DataPermRuleController {
     status: 404,
     description: '数据权限规则不存在',
   })
+  @RequirePermissions('data-permission:update')
   async update(
     @Param('id') id: string,
     @Body() dto: UpdateDataPermissionRuleDto,
@@ -190,6 +196,7 @@ export class DataPermRuleController {
     status: 404,
     description: '数据权限规则不存在',
   })
+  @RequirePermissions('data-permission:delete')
   async delete(@Param('id') id: string): Promise<void> {
     return this.dataPermService.deleteDataPermissionRule(id);
   }

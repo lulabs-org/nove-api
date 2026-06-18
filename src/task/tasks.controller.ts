@@ -21,6 +21,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiTags, ApiExtraModels } from '@nestjs/swagger';
+import { NoPermissionRequired } from '@/permission/decorators/permissions.decorator';
 import { TasksService } from './service/tasks.service';
 import { CreateOnceDto } from './dtos/create-once.dto';
 import { CreateCronDto } from './dtos/create-cron.dto';
@@ -75,6 +76,7 @@ class PaginatedTasksResponse {
 @ApiTags('Tasks')
 @ApiExtraModels(TaskEntity, PaginatedTasksResponse, OkResponse, RunNowResponse)
 @Controller('tasks')
+@NoPermissionRequired()
 export class TasksController {
   constructor(private readonly service: TasksService) {}
 

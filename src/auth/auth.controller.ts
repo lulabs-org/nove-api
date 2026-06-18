@@ -54,12 +54,14 @@ import { PermService } from '@/permission/services/permission.service';
 import { HttpUtil } from '@/common/utils/http.util';
 import { DesensitizationUtil } from '@/common/utils/desensitization.util';
 import { UserOrgService } from '@/api-key/services/user-organization.service';
+import { NoPermissionRequired } from '@/permission/decorators/permissions.decorator';
 
 @ApiTags('Auth')
 @Controller({
   path: 'api/auth',
   version: '1',
 })
+@NoPermissionRequired()
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
 

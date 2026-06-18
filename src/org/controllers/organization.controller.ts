@@ -18,6 +18,7 @@ import {
   ApiBearerAuth,
   ApiParam,
 } from '@nestjs/swagger';
+import { RequirePermissions } from '@/permission/decorators/permissions.decorator';
 
 import { OrganizationService } from '../services/organization.service';
 import {
@@ -54,6 +55,7 @@ export class OrganizationController {
     status: 401,
     description: '未授权',
   })
+  @RequirePermissions('org:create')
   async createOrganization(
     @Body() dto: CreateOrganizationDto,
   ): Promise<OrganizationDto> {
@@ -74,6 +76,7 @@ export class OrganizationController {
     status: 401,
     description: '未授权',
   })
+  @RequirePermissions('org:read')
   async listOrganizations(
     @Query() pagination: PaginationDto,
   ): Promise<OrganizationListResponse> {
@@ -103,6 +106,7 @@ export class OrganizationController {
     status: 404,
     description: '组织不存在',
   })
+  @RequirePermissions('org:read')
   async getOrganization(
     @Param('orgId') orgId: string,
   ): Promise<OrganizationDto> {
@@ -136,6 +140,7 @@ export class OrganizationController {
     status: 404,
     description: '组织不存在',
   })
+  @RequirePermissions('org:update')
   async updateOrganization(
     @Param('orgId') orgId: string,
     @Body() dto: UpdateOrganizationDto,
@@ -170,6 +175,7 @@ export class OrganizationController {
     status: 404,
     description: '组织不存在',
   })
+  @RequirePermissions('org:update')
   async updateStatus(
     @Param('orgId') orgId: string,
     @Body() dto: UpdateStatusDto,
@@ -200,6 +206,7 @@ export class OrganizationController {
     status: 404,
     description: '组织不存在',
   })
+  @RequirePermissions('org:delete')
   async deleteOrganization(@Param('orgId') orgId: string): Promise<void> {
     await this.organizationService.deleteOrganization(orgId);
   }
@@ -227,6 +234,7 @@ export class OrganizationController {
     status: 404,
     description: '组织不存在',
   })
+  @RequirePermissions('org:read')
   async getOrganizationStats(
     @Param('orgId') orgId: string,
   ): Promise<OrganizationStatsDto> {

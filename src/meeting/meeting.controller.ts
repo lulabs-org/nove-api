@@ -13,6 +13,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { NoPermissionRequired } from '@/permission/decorators/permissions.decorator';
 import {
   ApiGetMeetingRecordsDocs,
   ApiGetMeetingRecordByIdDocs,
@@ -43,6 +44,7 @@ import { CuidPipe } from '@/common/pipes/cuid.pipe';
 @ApiTags('Meet')
 @Controller('meetings')
 @ApiBearerAuth()
+@NoPermissionRequired()
 export class MeetingController {
   private readonly logger = new Logger(MeetingController.name);
 
