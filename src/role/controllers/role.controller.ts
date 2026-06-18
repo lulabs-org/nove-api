@@ -7,7 +7,6 @@ import {
   Param,
   Body,
   Query,
-  UseGuards,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
@@ -18,7 +17,7 @@ import {
   ApiBearerAuth,
   ApiParam,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
+
 import { RoleService } from '../services/role.service';
 import {
   CreateRoleDto,
@@ -34,7 +33,6 @@ import { PermissionDto } from '@/permission/dto';
 
 @ApiTags('Admin - Roles')
 @Controller('admin/roles')
-@UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class RoleController {
   constructor(private readonly roleService: RoleService) {}

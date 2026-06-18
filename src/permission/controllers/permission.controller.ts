@@ -7,7 +7,6 @@ import {
   Param,
   Body,
   Query,
-  UseGuards,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
@@ -18,7 +17,7 @@ import {
   ApiBearerAuth,
   ApiParam,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
+
 import { PermService } from '../services/permission.service';
 import {
   CreatePermissionDto,
@@ -30,7 +29,6 @@ import {
 
 @ApiTags('Admin - Permissions')
 @Controller('admin/permissions')
-@UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class PermController {
   constructor(private readonly permService: PermService) {}

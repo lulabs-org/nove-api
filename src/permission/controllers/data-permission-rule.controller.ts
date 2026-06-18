@@ -7,7 +7,6 @@ import {
   Param,
   Body,
   Query,
-  UseGuards,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
@@ -18,7 +17,7 @@ import {
   ApiBearerAuth,
   ApiParam,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
+
 import { DataPermService } from '../services/data-permission.service';
 import {
   CreateDataPermissionRuleDto,
@@ -30,7 +29,6 @@ import {
 
 @ApiTags('Admin - Data Permission Rules')
 @Controller('admin/data-permission-rules')
-@UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class DataPermRuleController {
   constructor(private readonly dataPermService: DataPermService) {}

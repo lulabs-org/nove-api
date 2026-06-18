@@ -19,7 +19,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
+
 import { PermissionGuard } from '@/common/guards';
 import { RequirePermissions } from '@/common/decorators';
 import {
@@ -34,7 +34,7 @@ import { OrderService } from '../services/order.service';
 
 @ApiTags('Admin - Orders')
 @Controller('admin/orders')
-@UseGuards(JwtAuthGuard, PermissionGuard)
+@UseGuards(PermissionGuard)
 @ApiBearerAuth()
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}

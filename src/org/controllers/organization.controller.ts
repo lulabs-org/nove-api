@@ -8,7 +8,6 @@ import {
   Param,
   Body,
   Query,
-  UseGuards,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
@@ -19,7 +18,7 @@ import {
   ApiBearerAuth,
   ApiParam,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
+
 import { OrganizationService } from '../services/organization.service';
 import {
   CreateOrganizationDto,
@@ -33,7 +32,6 @@ import {
 
 @ApiTags('Admin - Organizations')
 @Controller('admin/orgs')
-@UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class OrganizationController {
   constructor(private readonly organizationService: OrganizationService) {}
