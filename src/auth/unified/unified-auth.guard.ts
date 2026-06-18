@@ -109,7 +109,7 @@ export class UnifiedAuthGuard extends AuthGuard('jwt') implements CanActivate {
       // 同时设置 request.user 以兼容现有代码
       // API Key 以创建者身份操作
       if (apiKeyAuth.userId) {
-        (request as any).user = {
+        (request as Request & { user?: unknown }).user = {
           id: apiKeyAuth.userId,
           authType: 'api_key',
         };
@@ -136,7 +136,8 @@ export class UnifiedAuthGuard extends AuthGuard('jwt') implements CanActivate {
     const result = await (super.canActivate(context) as Promise<boolean>);
     if (!result) return false;
 
-    const user = (request as any).user as AuthenticatedUser;
+    const requestWithUser = request as Request & { user?: AuthenticatedUser };
+    const user = requestWithUser.user;
     if (!user) return false;
 
     // 解析用户的组织和权限

@@ -29,10 +29,15 @@ describe('UnifiedAuthGuard', () => {
     getPermByRoleCodes: jest.fn(),
   };
 
+  interface ReflectorOverrides {
+    isPublic?: boolean;
+    requireAuth?: string[] | null;
+  }
+
   /**
    * 创建 reflector mock，根据 metadata key 返回对应值
    */
-  const createReflector = (overrides: Record<string, any> = {}) => ({
+  const createReflector = (overrides: ReflectorOverrides = {}) => ({
     getAllAndOverride: jest.fn().mockImplementation((key: string) => {
       if (key === 'isPublic') return overrides.isPublic ?? false;
       if (key === REQUIRE_AUTH_KEY) return overrides.requireAuth ?? null;
@@ -40,13 +45,20 @@ describe('UnifiedAuthGuard', () => {
     }),
   });
 
+  interface MockRequest {
+    headers: Record<string, string>;
+    authContext?: Record<string, unknown>;
+    apiAuth?: Record<string, unknown>;
+    user?: Record<string, unknown>;
+  }
+
   const createMockContext = (
     headers: Record<string, string> = {},
   ): {
     context: ExecutionContext;
-    request: any;
+    request: MockRequest;
   } => {
-    const request: any = {
+    const request: MockRequest = {
       headers: {
         ...headers,
       },
@@ -63,7 +75,7 @@ describe('UnifiedAuthGuard', () => {
     return { context, request };
   };
 
-  const buildGuard = async (reflectorOverrides: Record<string, any> = {}) => {
+  const buildGuard = async (reflectorOverrides: ReflectorOverrides = {}) => {
     const mockReflector = createReflector(reflectorOverrides);
     const module: TestingModule = await Test.createTestingModule({
       providers: [
