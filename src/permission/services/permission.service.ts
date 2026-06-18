@@ -19,6 +19,8 @@ interface PermissionWithChildren extends Permission {
   children?: Permission[];
 }
 
+export const SUPER_ADMIN_ROLE_CODE = 'SUPER_ADMIN';
+
 @Injectable()
 export class PermService {
   private readonly logger = new Logger(PermService.name);
@@ -51,14 +53,16 @@ export class PermService {
     }
   }
 
+  private async getUserRoleCodes(userId: string): Promise<string[]> {
+    const userRoles = await this.permRepo.findUserRoles(userId);
+    return userRoles
+      .map((userRole) => userRole.role?.code)
+      .filter((code): code is string => !!code);
+  }
+
   async getPermByUserId(userId: string): Promise<string[]> {
     try {
-      const userRoles = await this.permRepo.findUserRoles(userId);
-
-      const roleCodes = userRoles
-        .map((userRole) => userRole.role?.code)
-        .filter((code): code is string => !!code);
-
+      const roleCodes = await this.getUserRoleCodes(userId);
       return this.getPermByRoleCodes(roleCodes);
     } catch (error) {
       this.logger.error(`Failed to get permissions for user: ${userId}`, error);
@@ -111,7 +115,12 @@ export class PermService {
     permissionCode: string,
   ): Promise<boolean> {
     try {
-      const perm = await this.getPermByUserId(userId);
+      const roleCodes = await this.getUserRoleCodes(userId);
+      if (roleCodes.includes(SUPER_ADMIN_ROLE_CODE)) {
+        return true;
+      }
+
+      const perm = await this.getPermByRoleCodes(roleCodes);
       return perm.includes(permissionCode);
     } catch (error) {
       this.logger.error(
@@ -127,7 +136,12 @@ export class PermService {
     permissionCodes: string[],
   ): Promise<boolean> {
     try {
-      const perm = await this.getPermByUserId(userId);
+      const roleCodes = await this.getUserRoleCodes(userId);
+      if (roleCodes.includes(SUPER_ADMIN_ROLE_CODE)) {
+        return true;
+      }
+
+      const perm = await this.getPermByRoleCodes(roleCodes);
       return permissionCodes.some((code) => perm.includes(code));
     } catch (error) {
       this.logger.error(
@@ -143,7 +157,12 @@ export class PermService {
     permissionCodes: string[],
   ): Promise<boolean> {
     try {
-      const perm = await this.getPermByUserId(userId);
+      const roleCodes = await this.getUserRoleCodes(userId);
+      if (roleCodes.includes(SUPER_ADMIN_ROLE_CODE)) {
+        return true;
+      }
+
+      const perm = await this.getPermByRoleCodes(roleCodes);
       return permissionCodes.every((code) => perm.includes(code));
     } catch (error) {
       this.logger.error(
