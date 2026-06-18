@@ -10,6 +10,7 @@ model UserPhoneHash {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
+  @@unique([userId, platform])
   @@index([userId])
   @@map("user_phone_hashes")
 }

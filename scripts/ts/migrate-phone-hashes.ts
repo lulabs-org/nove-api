@@ -30,15 +30,15 @@ const prisma = new PrismaClient();
  */
 function encryptPhone(phone: string): string {
   // 1. 获取你在环境变量中存的密钥
-  const secretKey = process.env.PHONE_ENCRYPTION_KEY || 'YOUR_SECRET_KEY';
+  const secretId = process.env.TENCENT_MEETING_SECRET_ID || '';
 
   // 2. 如果你的业务逻辑里包含区号（如 +86138...），请根据实际情况拼接
   const phoneString = phone;
 
   // 3. 执行不可逆加密
   return crypto
-    .createHmac('sha256', secretKey)
-    .update(phoneString)
+    .createHash('sha256')
+    .update(`${phoneString}/${secretId}`)
     .digest('hex'); // 腾讯会议一般是 hex 格式，如果是 base64 请修改
 }
 
@@ -68,10 +68,13 @@ async function main() {
     try {
       const hashValue = encryptPhone(user.phone);
 
-      // 使用 upsert 防止重复运行脚本时报错
+      // 使用 upsert 防止重复运行脚本时报错，根据用户id和平台来做唯一标识
       await prisma.userPhoneHash.upsert({
         where: {
-          hashValue: hashValue,
+          userId_platform: {
+            userId: user.id,
+            platform: Platform.TENCENT_MEETING,
+          },
         },
         create: {
           userId: user.id,
@@ -79,7 +82,7 @@ async function main() {
           platform: Platform.TENCENT_MEETING, // 默认关联到腾讯会议
         },
         update: {
-          userId: user.id, // 如果哈希已存在，确保它绑定的是正确的用户
+          hashValue: hashValue, // 如果已存在该平台记录，则更新 hashValue
         },
       });
 
