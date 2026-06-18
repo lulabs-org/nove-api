@@ -25,9 +25,11 @@ import {
   ApiSendEmailDocs,
   ApiVerifyConnectionDocs,
 } from './decorators/mail.decorators';
+import { NoPermissionRequired } from '@/permission/decorators/permissions.decorator';
 
 @ApiTags('Mail')
 @Controller('mail')
+@NoPermissionRequired()
 export class MailController {
   constructor(private readonly mailService: MailService) {}
 

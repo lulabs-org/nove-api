@@ -8,7 +8,6 @@ import {
   Param,
   Body,
   Query,
-  UseGuards,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
@@ -19,7 +18,8 @@ import {
   ApiBearerAuth,
   ApiParam,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
+import { RequirePermissions } from '@/permission/decorators/permissions.decorator';
+
 import { OrgMemberService } from '../services/org-member.service';
 import {
   CreateOrgMemberDto,
@@ -35,7 +35,6 @@ import {
 
 @ApiTags('Admin - OrgMembers')
 @Controller('admin')
-@UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class OrgMemberController {
   constructor(private readonly orgMemberService: OrgMemberService) {}
@@ -63,6 +62,7 @@ export class OrgMemberController {
     status: 401,
     description: '未授权',
   })
+  @RequirePermissions('org-member:create')
   async createMember(
     @Param('orgId') orgId: string,
     @Body() dto: CreateOrgMemberDto,
@@ -89,6 +89,7 @@ export class OrgMemberController {
     status: 401,
     description: '未授权',
   })
+  @RequirePermissions('org-member:read')
   async listMembers(
     @Param('orgId') orgId: string,
     @Query() pagination: PaginationDto,
@@ -119,6 +120,7 @@ export class OrgMemberController {
     status: 401,
     description: '未授权',
   })
+  @RequirePermissions('org-member:create')
   async batchImportMembers(
     @Param('orgId') orgId: string,
     @Body() dto: BatchImportMemberDto,
@@ -149,6 +151,7 @@ export class OrgMemberController {
     status: 404,
     description: '成员不存在',
   })
+  @RequirePermissions('org-member:read')
   async getMember(
     @Param('memberId') memberId: string,
   ): Promise<OrgMemberDetailDto> {
@@ -182,6 +185,7 @@ export class OrgMemberController {
     status: 404,
     description: '成员不存在',
   })
+  @RequirePermissions('org-member:update')
   async updateMember(
     @Param('memberId') memberId: string,
     @Body() dto: UpdateOrgMemberDto,
@@ -216,6 +220,7 @@ export class OrgMemberController {
     status: 404,
     description: '成员不存在',
   })
+  @RequirePermissions('org-member:update')
   async updateMemberStatus(
     @Param('memberId') memberId: string,
     @Body() dto: UpdateMemberStatusDto,
@@ -246,6 +251,7 @@ export class OrgMemberController {
     status: 404,
     description: '成员不存在',
   })
+  @RequirePermissions('org-member:delete')
   async deleteMember(@Param('memberId') memberId: string): Promise<void> {
     await this.orgMemberService.deleteMember(memberId);
   }
@@ -277,6 +283,7 @@ export class OrgMemberController {
     status: 404,
     description: '成员不存在',
   })
+  @RequirePermissions('org-member:update')
   async updateMemberDepartments(
     @Param('memberId') memberId: string,
     @Body() dto: UpdateMemberDepartmentsDto,

@@ -3,16 +3,23 @@ import {
   CanActivate,
   ExecutionContext,
   Logger,
+  ForbiddenException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import {
   PERMISSIONS_KEY,
   PERMISSION_MODE_KEY,
   PermissionMode,
+  NO_PERMISSION_REQUIRED_KEY,
 } from '../decorators/permissions.decorator';
-import { PermService } from '../../permission/services/permission.service';
+import { IS_PUBLIC_KEY } from '@/auth/decorators/public.decorator';
+import { PermService } from '../services/permission.service';
 
-interface RequestWithUser {
+interface RequestWithAuthContext {
+  authContext?: {
+    userId: string | null;
+    permissions: string[];
+  };
   user?: {
     id: string;
   };
@@ -28,6 +35,24 @@ export class PermissionGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    // 1. 检查是否为公共接口
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (isPublic) {
+      return true;
+    }
+
+    // 2. 检查是否显式声明了无需权限
+    const noPermissionRequired = this.reflector.getAllAndOverride<boolean>(
+      NO_PERMISSION_REQUIRED_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+    if (noPermissionRequired) {
+      return true;
+    }
+
     const requiredPermissions = this.reflector.getAllAndOverride<string[]>(
       PERMISSIONS_KEY,
       [context.getHandler(), context.getClass()],
@@ -39,14 +64,20 @@ export class PermissionGuard implements CanActivate {
         context.getClass(),
       ]) || PermissionMode.ANY;
 
+    // 3. 严格模式：如果没有声明具体权限点，则拒绝访问（防止接口裸奔）
     if (!requiredPermissions || requiredPermissions.length === 0) {
-      return true;
+      this.logger.error(
+        `Route ${context.getClass().name}.${context.getHandler().name} is missing permission configuration! Please add @RequirePermissions or @NoPermissionRequired.`,
+      );
+      throw new ForbiddenException('权限配置缺失，禁止访问');
     }
 
-    const request = context.switchToHttp().getRequest<RequestWithUser>();
-    const user = request.user;
+    const request = context.switchToHttp().getRequest<RequestWithAuthContext>();
 
-    if (!user?.id) {
+    // 优先从统一认证上下文获取 userId
+    const userId = request.authContext?.userId ?? request.user?.id;
+
+    if (!userId) {
       this.logger.warn('User not found in request');
       return false;
     }
@@ -57,14 +88,14 @@ export class PermissionGuard implements CanActivate {
       switch (mode) {
         case PermissionMode.ALL:
           hasPermission = await this.permissionService.hasAllPermissions(
-            user.id,
+            userId,
             requiredPermissions,
           );
           break;
         case PermissionMode.ANY:
         default:
           hasPermission = await this.permissionService.hasAnyPermission(
-            user.id,
+            userId,
             requiredPermissions,
           );
           break;
@@ -72,7 +103,7 @@ export class PermissionGuard implements CanActivate {
 
       if (!hasPermission) {
         this.logger.warn(
-          `User ${user.id} does not have required permissions: ${requiredPermissions.join(', ')}`,
+          `User ${userId} does not have required permissions: ${requiredPermissions.join(', ')}`,
         );
       }
 

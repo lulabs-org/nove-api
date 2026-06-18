@@ -34,20 +34,27 @@ export class UsageLoggingInterceptor implements NestInterceptor {
     // 记录请求开始时间
     const startTime = Date.now();
 
-    // 获取 API Key 认证上下文
-    const apiAuth = request.apiAuth;
+    // 获取统一认证上下文
+    const authContext = request.authContext;
 
-    // 如果没有 API Key 认证上下文，跳过日志记录
-    if (!apiAuth) {
+    // 如果不是 API Key 认证，跳过日志记录
+    if (
+      !authContext ||
+      authContext.authMethod !== 'api_key' ||
+      !authContext.apiKeyId
+    ) {
       return next.handle();
     }
+
+    const apiKeyId = authContext.apiKeyId;
+    const orgId = authContext.orgId || '';
 
     return next.handle().pipe(
       tap(() => {
         const latencyMs = Date.now() - startTime;
         void this.usageLogService.logRequest(
-          apiAuth.apiKeyId,
-          apiAuth.orgId,
+          apiKeyId,
+          orgId,
           request,
           response,
           latencyMs,
@@ -56,8 +63,8 @@ export class UsageLoggingInterceptor implements NestInterceptor {
       catchError((error: Error) => {
         const latencyMs = Date.now() - startTime;
         void this.usageLogService.logRequest(
-          apiAuth.apiKeyId,
-          apiAuth.orgId,
+          apiKeyId,
+          orgId,
           request,
           response,
           latencyMs,

@@ -8,6 +8,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { NoPermissionRequired } from '@/permission/decorators/permissions.decorator';
 import { TencentMtgSyncService } from './tencent-mtg-sync.service';
 import { SyncRecordingsDto } from './dto/sync-recordings.dto';
 
@@ -17,6 +18,7 @@ import { SyncRecordingsDto } from './dto/sync-recordings.dto';
  */
 @ApiTags('Tencent Meeting')
 @Controller('tencent-mtg')
+@NoPermissionRequired()
 export class TencentMtgController {
   private readonly logger = new Logger(TencentMtgController.name);
 

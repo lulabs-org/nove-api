@@ -10,7 +10,6 @@ import {
   Put,
   Patch,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -19,9 +18,8 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
-import { PermissionGuard } from '@/common/guards';
-import { RequirePermissions } from '@/common/decorators';
+
+import { RequirePermissions } from '@/permission/decorators/permissions.decorator';
 import {
   CreateOrderDto,
   OrderDto,
@@ -34,7 +32,6 @@ import { OrderService } from '../services/order.service';
 
 @ApiTags('Admin - Orders')
 @Controller('admin/orders')
-@UseGuards(JwtAuthGuard, PermissionGuard)
 @ApiBearerAuth()
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}

@@ -58,3 +58,12 @@ export const RequireAllPermissions = (...permissions: string[]) => {
     );
   };
 };
+
+export const NO_PERMISSION_REQUIRED_KEY = 'no_permission_required';
+
+/**
+ * 标记该接口不需要任何权限控制（只需登录即可访问）。
+ * 优先级高于全局的强管控策略。
+ */
+export const NoPermissionRequired = () =>
+  SetMetadata(NO_PERMISSION_REQUIRED_KEY, true);

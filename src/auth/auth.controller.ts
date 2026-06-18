@@ -48,17 +48,20 @@ import { Public } from '@/auth/decorators/public.decorator';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { TokenBlacklistService } from './services/token-blacklist.service';
 import { User, CurrentUser } from '@/auth/decorators/user.decorator';
+import { RequireAuth } from '@/auth/decorators/require-auth.decorator';
 import { ClientType } from '@/auth/types/jwt.types';
 import { PermService } from '@/permission/services/permission.service';
 import { HttpUtil } from '@/common/utils/http.util';
 import { DesensitizationUtil } from '@/common/utils/desensitization.util';
 import { UserOrgService } from '@/api-key/services/user-organization.service';
+import { NoPermissionRequired } from '@/permission/decorators/permissions.decorator';
 
 @ApiTags('Auth')
 @Controller({
   path: 'api/auth',
   version: '1',
 })
+@NoPermissionRequired()
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
 
@@ -222,6 +225,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiLogoutDocs()
   @ApiBearerAuth()
+  @RequireAuth('jwt')
   async logout(
     @User() user: CurrentUser,
     @Req() req: Request,
@@ -340,6 +344,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiGetMeDocs()
   @ApiBearerAuth()
+  @RequireAuth('jwt')
   async getMe(@User() user: CurrentUser): Promise<AuthUserWithPermissionsDto> {
     const roles = user.roles || ['USER'];
     const perm = await this.permService.getPermByRoleCodes(roles);
@@ -373,6 +378,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiGetPermissionsDocs()
   @ApiBearerAuth()
+  @RequireAuth('jwt')
   async getPermissions(
     @User() user: CurrentUser,
   ): Promise<PermissionsResponseDto> {

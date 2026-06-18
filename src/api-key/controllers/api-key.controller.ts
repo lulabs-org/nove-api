@@ -6,7 +6,6 @@ import {
   Param,
   Body,
   Query,
-  UseGuards,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
@@ -17,7 +16,9 @@ import {
   ApiBearerAuth,
   ApiParam,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
+import { RequirePermissions } from '@/permission/decorators/permissions.decorator';
+
+import { RequireAuth } from '@/auth/decorators/require-auth.decorator';
 import { User, CurrentUser } from '@/auth/decorators/user.decorator';
 import { ApiKeyService } from '../services/api-key.service';
 import { UserOrgService } from '../services/user-organization.service';
@@ -37,7 +38,7 @@ import {
  */
 @ApiTags('Admin - API Keys')
 @Controller('admin/api-keys')
-@UseGuards(JwtAuthGuard)
+@RequireAuth('jwt')
 @ApiBearerAuth()
 export class ApiKeyController {
   constructor(
@@ -66,6 +67,7 @@ export class ApiKeyController {
     status: 401,
     description: '未授权',
   })
+  @RequirePermissions('api-key:create')
   async createKey(
     @User() user: CurrentUser,
     @Body() dto: CreateApiKeyDto,
@@ -92,6 +94,7 @@ export class ApiKeyController {
     status: 401,
     description: '未授权',
   })
+  @RequirePermissions('api-key:read')
   async listKeys(
     @User() user: CurrentUser,
     @Query() pagination: PaginationDto,
@@ -131,6 +134,7 @@ export class ApiKeyController {
     status: 404,
     description: 'API Key 不存在',
   })
+  @RequirePermissions('api-key:update')
   async updateKey(
     @User() user: CurrentUser,
     @Param('id') id: string,
@@ -167,6 +171,7 @@ export class ApiKeyController {
     status: 404,
     description: 'API Key 不存在',
   })
+  @RequirePermissions('api-key:update')
   async revokeKey(
     @User() user: CurrentUser,
     @Param('id') id: string,
@@ -203,6 +208,7 @@ export class ApiKeyController {
     status: 404,
     description: 'API Key 不存在',
   })
+  @RequirePermissions('api-key:update')
   async rotateKey(
     @User() user: CurrentUser,
     @Param('id') id: string,

@@ -8,7 +8,6 @@ import {
   Param,
   Body,
   Query,
-  UseGuards,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
@@ -20,7 +19,8 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
-import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
+import { RequirePermissions } from '@/permission/decorators/permissions.decorator';
+
 import { DepartmentService } from '../services/department.service';
 import {
   CreateDepartmentDto,
@@ -37,7 +37,6 @@ import {
 
 @ApiTags('Admin - Departments')
 @Controller('admin')
-@UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class DepartmentController {
   constructor(private readonly departmentService: DepartmentService) {}
@@ -65,6 +64,7 @@ export class DepartmentController {
     status: 401,
     description: '未授权',
   })
+  @RequirePermissions('dept:create')
   async createDepartment(
     @Param('orgId') orgId: string,
     @Body() dto: CreateDepartmentDto,
@@ -91,6 +91,7 @@ export class DepartmentController {
     status: 401,
     description: '未授权',
   })
+  @RequirePermissions('dept:read')
   async getDepartmentTree(
     @Param('orgId') orgId: string,
   ): Promise<DepartmentTreeDto[]> {
@@ -116,6 +117,7 @@ export class DepartmentController {
     status: 401,
     description: '未授权',
   })
+  @RequirePermissions('dept:read')
   async listDepartments(
     @Param('orgId') orgId: string,
     @Query() pagination: PaginationDto,
@@ -146,6 +148,7 @@ export class DepartmentController {
     status: 404,
     description: '部门不存在',
   })
+  @RequirePermissions('dept:read')
   async getDepartment(@Param('deptId') deptId: string): Promise<DepartmentDto> {
     return this.departmentService.getDepartment(deptId);
   }
@@ -177,6 +180,7 @@ export class DepartmentController {
     status: 404,
     description: '部门不存在',
   })
+  @RequirePermissions('dept:update')
   async updateDepartment(
     @Param('deptId') deptId: string,
     @Body() dto: UpdateDepartmentDto,
@@ -211,6 +215,7 @@ export class DepartmentController {
     status: 404,
     description: '部门不存在',
   })
+  @RequirePermissions('dept:update')
   async moveDepartment(
     @Param('deptId') deptId: string,
     @Body() dto: MoveDepartmentDto,
@@ -245,6 +250,7 @@ export class DepartmentController {
     status: 404,
     description: '部门不存在',
   })
+  @RequirePermissions('dept:update')
   async updateStatus(
     @Param('deptId') deptId: string,
     @Body() dto: UpdateStatusDto,
@@ -279,6 +285,7 @@ export class DepartmentController {
     status: 404,
     description: '部门不存在',
   })
+  @RequirePermissions('dept:delete')
   async deleteDepartment(@Param('deptId') deptId: string): Promise<void> {
     await this.departmentService.deleteDepartment(deptId);
   }
@@ -324,6 +331,7 @@ export class DepartmentController {
     status: 404,
     description: '部门不存在',
   })
+  @RequirePermissions('dept:read')
   async getDepartmentMembers(
     @Param('deptId') deptId: string,
     @Query('includeChildren') includeChildren: boolean = false,
@@ -361,6 +369,7 @@ export class DepartmentController {
     status: 404,
     description: '部门不存在',
   })
+  @RequirePermissions('dept:read')
   async getDepartmentAncestors(
     @Param('deptId') deptId: string,
   ): Promise<DepartmentAncestorsResponse> {
@@ -390,6 +399,7 @@ export class DepartmentController {
     status: 404,
     description: '部门不存在',
   })
+  @RequirePermissions('dept:read')
   async getDepartmentChildren(
     @Param('deptId') deptId: string,
   ): Promise<DepartmentDto[]> {
