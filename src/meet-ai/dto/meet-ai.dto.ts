@@ -35,7 +35,10 @@ export class MeetingSummaryDto {
 }
 
 export class TriggerSummaryDto {
-  @ApiProperty({ description: '总结周期类型 (例如 DAILY, WEEKLY)', enum: PeriodType })
+  @ApiProperty({
+    description: '总结周期类型 (例如 DAILY, WEEKLY)',
+    enum: PeriodType,
+  })
   @IsEnum(PeriodType, { message: '无效的周期类型' })
   @IsNotEmpty({ message: 'periodType 不能为空' })
   periodType!: PeriodType;

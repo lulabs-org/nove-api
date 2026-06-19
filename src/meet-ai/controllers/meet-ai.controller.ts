@@ -20,7 +20,11 @@ import {
   Logger,
   ValidationPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+} from '@nestjs/swagger';
 import { NoPermissionRequired } from '@/permission/decorators/permissions.decorator';
 import { MeetAiService } from '../services/meet-ai.service';
 import { PeriodSummaryService } from '../services/period-summary.service';
@@ -36,7 +40,7 @@ export class MeetAiController {
   constructor(
     private readonly meetAiService: MeetAiService,
     private readonly periodSummaryService: PeriodSummaryService,
-  ) {}
+  ) { }
 
   @Get('health')
   @HttpCode(HttpStatus.OK)

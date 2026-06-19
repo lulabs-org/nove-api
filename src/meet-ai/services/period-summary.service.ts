@@ -23,7 +23,9 @@ export class PeriodSummaryService {
    * 获取周期配置上下文
    */
   private getPeriodContext(periodType: PeriodType) {
-    const periodMap: Partial<Record<PeriodType, { parent: PeriodType; label: string }>> = {
+    const periodMap: Partial<
+      Record<PeriodType, { parent: PeriodType; label: string }>
+    > = {
       [PeriodType.YEARLY]: { parent: PeriodType.MONTHLY, label: '本年' },
       [PeriodType.QUARTERLY]: { parent: PeriodType.MONTHLY, label: '本季度' },
       [PeriodType.MONTHLY]: { parent: PeriodType.DAILY, label: '本月' },
@@ -36,8 +38,13 @@ export class PeriodSummaryService {
   /**
    * 处理总结任务
    */
-  async processSummary(periodType: PeriodType): Promise<{ ok: boolean; at: string }> {
-    this.logger.log(`开始执行任务: personal${periodType}MeetingSummary`, new Date().toISOString());
+  async processSummary(
+    periodType: PeriodType,
+  ): Promise<{ ok: boolean; at: string }> {
+    this.logger.log(
+      `开始执行任务: personal${periodType}MeetingSummary`,
+      new Date().toISOString(),
+    );
 
     const ctx = this.getPeriodContext(periodType);
     if (!ctx) {
@@ -45,7 +52,8 @@ export class PeriodSummaryService {
       return { ok: false, at: new Date().toISOString() };
     }
 
-    const { periodStart, periodEnd } = this.periodTimeRange.getdayRange(periodType);
+    const { periodStart, periodEnd } =
+      this.periodTimeRange.getdayRange(periodType);
 
     if (!periodStart || !periodEnd) {
       this.logger.warn(`无法解析时间区间, 周期类型: ${periodType}`);
@@ -53,17 +61,22 @@ export class PeriodSummaryService {
     }
 
     // 1. 获取所有符合条件的参与总结记录
-    const summaries = await this.periodSummaryRepository.findAllMeetingSummaries({
-      periodStart,
-      periodEnd,
-      parentPeriodType: ctx.parent,
-    });
+    const summaries =
+      await this.periodSummaryRepository.findAllMeetingSummaries({
+        periodStart,
+        periodEnd,
+        parentPeriodType: ctx.parent,
+      });
 
     // 2. 提取唯一的平台用户 ID 列表
-    const platformUserIds = [...new Set(summaries.map((s) => s.platformUserId).filter(Boolean))] as string[];
+    const platformUserIds = [
+      ...new Set(summaries.map((s) => s.platformUserId).filter(Boolean)),
+    ] as string[];
 
     if (platformUserIds.length === 0) {
-      this.logger.warn('没有找到符合条件的记录, participantSummary的新增记录为空');
+      this.logger.warn(
+        '没有找到符合条件的记录, participantSummary的新增记录为空',
+      );
       return { ok: true, at: new Date().toISOString() };
     }
 
@@ -71,7 +84,13 @@ export class PeriodSummaryService {
 
     // 3. 遍历并处理每个用户的总结
     for (const platformUserId of platformUserIds) {
-      await this.processOneUserSummary(platformUserId, periodType, ctx, periodStart, periodEnd);
+      await this.processOneUserSummary(
+        platformUserId,
+        periodType,
+        ctx,
+        periodStart,
+        periodEnd,
+      );
     }
 
     return { ok: true, at: new Date().toISOString() };
@@ -87,17 +106,20 @@ export class PeriodSummaryService {
     periodStart: Date,
     periodEnd: Date,
   ) {
-    const userSummaries = await this.periodSummaryRepository.findSummaryByPlatformUserId({
-      platformUserId,
-      parentPeriodType: ctx.parent,
-      periodStart,
-      periodEnd,
-    });
+    const userSummaries =
+      await this.periodSummaryRepository.findSummaryByPlatformUserId({
+        platformUserId,
+        parentPeriodType: ctx.parent,
+        periodStart,
+        periodEnd,
+      });
 
     if (userSummaries.length === 0) return;
 
     const userName = userSummaries[0]?.userName ?? '未知用户';
-    this.logger.log(`获取到用户(${platformUserId})的参会议记录: ${userSummaries.length} 条`);
+    this.logger.log(
+      `获取到用户(${platformUserId})的参会议记录: ${userSummaries.length} 条`,
+    );
 
     // AI 总结
     const systemPrompt = `
@@ -120,15 +142,16 @@ export class PeriodSummaryService {
     this.logger.log(`OpenAI聊天完成: ${reply?.slice(0, 200)}`);
 
     // 保存主总结
-    const parentSummary = await this.periodSummaryRepository.createPeriodSummary({
-      periodType,
-      periodStart,
-      periodEnd,
-      userName,
-      partSummary: reply || '',
-      platformUserId,
-      aiModel: this.config.model,
-    });
+    const parentSummary =
+      await this.periodSummaryRepository.createPeriodSummary({
+        periodType,
+        periodStart,
+        periodEnd,
+        userName,
+        partSummary: reply || '',
+        platformUserId,
+        aiModel: this.config.model,
+      });
 
     // 关联子总结
     for (const child of userSummaries) {
@@ -140,6 +163,8 @@ export class PeriodSummaryService {
       });
     }
 
-    this.logger.log(`创建了 ${userSummaries.length} 条关联记录, 父总结 ID: ${parentSummary.id}`);
+    this.logger.log(
+      `创建了 ${userSummaries.length} 条关联记录, 父总结 ID: ${parentSummary.id}`,
+    );
   }
 }
