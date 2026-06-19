@@ -3,17 +3,18 @@ model ScheduledTask {
   name      String
   handler   String     @default("invoke_http")
   type      TaskType
-  queueName String
-  jobId     String? // BullMQ job id (once 任务可能有，cron 的每次实例化也会生成临时 id)
-  repeatKey String? // BullMQ repeatable job 的唯一键 (removeRepeatable 用)
+  queueName String     @map("queue_name")
+  jobId     String?    @map("job_id") // BullMQ job id (once 任务可能有，cron 的每次实例化也会生成临时 id)
+  repeatKey String?    @map("repeat_key") // BullMQ repeatable job 的唯一键 (removeRepeatable 用)
   cron      String? // CRON 表达式（type=CRON 时必填）
   timezone  String? // 时区（type=CRON 时使用，例如 "Asia/Shanghai"）
-  runAt     DateTime? // 一次性任务的执行时间（精确到毫秒）
+  runAt     DateTime?  @map("run_at") @db.Timestamptz(6) // 一次性任务的执行时间（精确到毫秒）
   payload   Json // 任意业务数据
   status    TaskStatus @default(PENDING)
-  lastError String?
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  lastError String?    @map("last_error")
+  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime?  @map("deleted_at") @db.Timestamptz(6)
 
   executionLogs TaskExecutionLog[]
 
@@ -24,16 +25,16 @@ model ScheduledTask {
 }
 
 model TaskExecutionLog {
-  id              String        @id @default(cuid())
-  scheduledTaskId String
-  jobId           String        // BullMQ 中实际执行的 Job ID
+  id              String     @id @default(cuid())
+  scheduledTaskId String     @map("scheduled_task_id")
+  jobId           String     @map("job_id") // BullMQ 中实际执行的 Job ID
   status          TaskStatus
-  error           String?       // 执行失败时的错误信息
-  result          Json?         // 执行成功时的返回结果
-  startedAt       DateTime      @default(now())
-  completedAt     DateTime?
+  error           String?    @db.Text
+  result          Json?
+  startedAt       DateTime   @default(now()) @map("started_at") @db.Timestamptz(6)
+  completedAt     DateTime?  @map("completed_at") @db.Timestamptz(6)
 
-  scheduledTask   ScheduledTask @relation(fields: [scheduledTaskId], references: [id], onDelete: Cascade)
+  scheduledTask ScheduledTask @relation(fields: [scheduledTaskId], references: [id], onDelete: Cascade)
 
   @@index([scheduledTaskId])
   @@index([jobId])

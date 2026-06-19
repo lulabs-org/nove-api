@@ -15,7 +15,7 @@ export class TasksService {
   constructor(
     private readonly tasksRepository: TasksRepository,
     @InjectQueue(TASK_QUEUE_NAME) private readonly queue: Queue,
-  ) {}
+  ) { }
 
   // v5: 不需要 QueueScheduler，删除 onModuleInit
 
@@ -137,11 +137,6 @@ export class TasksService {
         await this.queue
           .removeJobScheduler(existing.jobId)
           .catch(() => undefined);
-        if (existing.cron) {
-          await this.queue
-            .removeRepeatable(existing.handler, { pattern: existing.cron, tz: existing.timezone ?? 'Asia/Shanghai' })
-            .catch(() => undefined);
-        }
       }
 
       await this.queue.upsertJobScheduler(
@@ -186,17 +181,12 @@ export class TasksService {
         await this.queue
           .removeJobScheduler(existing.jobId)
           .catch(() => undefined);
-        if (existing.cron) {
-          await this.queue
-            .removeRepeatable(existing.handler, { pattern: existing.cron, tz: existing.timezone ?? 'Asia/Shanghai' })
-            .catch(() => undefined);
-        }
       }
     } else if (existing.jobId) {
       await this.queue.remove(existing.jobId).catch(() => undefined);
     }
 
-    await this.tasksRepository.delete(id);
+    await this.tasksRepository.softDelete(id);
     return { ok: true };
   }
 
@@ -232,11 +222,6 @@ export class TasksService {
         await this.queue
           .removeJobScheduler(existing.jobId)
           .catch(() => undefined);
-        if (existing.cron) {
-          await this.queue
-            .removeRepeatable(existing.handler, { pattern: existing.cron, tz: existing.timezone ?? 'Asia/Shanghai' })
-            .catch(() => undefined);
-        }
       }
     } else if (existing.jobId) {
       await this.queue.remove(existing.jobId).catch(() => undefined);

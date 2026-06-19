@@ -4,7 +4,7 @@ import { ScheduledTask, TaskStatus, Prisma } from '@prisma/client';
 
 @Injectable()
 export class TasksRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async create(data: Prisma.ScheduledTaskCreateInput): Promise<ScheduledTask> {
     return this.prisma.scheduledTask.create({ data });
@@ -13,14 +13,18 @@ export class TasksRepository {
   async findManyAndCount(
     args: Prisma.ScheduledTaskFindManyArgs,
   ): Promise<[ScheduledTask[], number]> {
+    // Inject deletedAt filter
+    const where = { ...args.where, deletedAt: null };
     return this.prisma.$transaction([
-      this.prisma.scheduledTask.findMany(args),
-      this.prisma.scheduledTask.count({ where: args.where }),
+      this.prisma.scheduledTask.findMany({ ...args, where }),
+      this.prisma.scheduledTask.count({ where }),
     ]);
   }
 
   async findById(id: string): Promise<ScheduledTask | null> {
-    return this.prisma.scheduledTask.findUnique({ where: { id } });
+    return this.prisma.scheduledTask.findFirst({
+      where: { id, deletedAt: null },
+    });
   }
 
   async findByIdOrThrow(id: string): Promise<ScheduledTask> {
@@ -41,6 +45,13 @@ export class TasksRepository {
 
   async delete(id: string): Promise<ScheduledTask> {
     return this.prisma.scheduledTask.delete({ where: { id } });
+  }
+
+  async softDelete(id: string): Promise<ScheduledTask> {
+    return this.prisma.scheduledTask.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
   }
 
   async updateMany(
