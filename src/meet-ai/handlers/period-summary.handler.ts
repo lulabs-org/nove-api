@@ -20,8 +20,11 @@ export class PeriodSummaryHandler implements ITaskHandler, OnModuleInit {
   }
 
   async handle(job: Job): Promise<unknown> {
-    const jobData = job.data;
-    const periodType: PeriodType =
+    const jobData = job.data as {
+      periodType?: PeriodType;
+      payload?: { periodType?: PeriodType };
+    };
+    const periodType: PeriodType | undefined =
       jobData?.periodType || jobData?.payload?.periodType;
 
     if (!periodType) {
