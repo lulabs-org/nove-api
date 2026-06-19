@@ -24,14 +24,17 @@ import { TasksRepository } from './repositories/tasks.repository';
 
 import { ConfigModule } from '@nestjs/config';
 import { openaiConfig } from '../configs/openai.config';
+import { TASK_QUEUE_NAME } from './task.constants';
+import { TaskHandlerRegistry } from './handlers/task-handler.registry';
+import { HttpTaskHandler } from './handlers/http.handler';
 
 @Module({
   imports: [
     BullModule.registerQueue({
-      name: 'tasks', // 队列名
+      name: TASK_QUEUE_NAME, // 队列名
     }),
     BullBoardModule.forFeature({
-      name: 'tasks',
+      name: TASK_QUEUE_NAME,
       adapter: BullMQAdapter,
     }),
     OpenaiModule,
@@ -44,6 +47,8 @@ import { openaiConfig } from '../configs/openai.config';
     TaskProcessor,
     TasksRepository,
     PrismaService,
+    TaskHandlerRegistry,
+    HttpTaskHandler,
   ],
 })
 export class TasksModule {}

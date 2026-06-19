@@ -14,10 +14,29 @@ model ScheduledTask {
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
+  executionLogs TaskExecutionLog[]
+
   @@index([queueName])
   @@index([type])
   @@index([status])
   @@map("scheduled_tasks")
+}
+
+model TaskExecutionLog {
+  id              String        @id @default(cuid())
+  scheduledTaskId String
+  jobId           String        // BullMQ 中实际执行的 Job ID
+  status          TaskStatus
+  error           String?       // 执行失败时的错误信息
+  result          Json?         // 执行成功时的返回结果
+  startedAt       DateTime      @default(now())
+  completedAt     DateTime?
+
+  scheduledTask   ScheduledTask @relation(fields: [scheduledTaskId], references: [id], onDelete: Cascade)
+
+  @@index([scheduledTaskId])
+  @@index([jobId])
+  @@map("task_execution_logs")
 }
 
 enum TaskType {

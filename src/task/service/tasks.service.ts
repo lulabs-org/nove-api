@@ -8,12 +8,13 @@ import { UpdateTaskDto } from '../dtos/update-task.dto';
 import { QueryDto } from '../dtos/query.dto';
 import { ScheduledTask, TaskStatus, TaskType } from '@prisma/client';
 import { TasksRepository } from '../repositories/tasks.repository';
+import { TASK_QUEUE_NAME, DEFAULT_JOB_OPTIONS } from '../task.constants';
 
 @Injectable()
 export class TasksService {
   constructor(
     private readonly tasksRepository: TasksRepository,
-    @InjectQueue('tasks') private readonly queue: Queue,
+    @InjectQueue(TASK_QUEUE_NAME) private readonly queue: Queue,
   ) {}
 
   // v5: 不需要 QueueScheduler，删除 onModuleInit
@@ -23,8 +24,7 @@ export class TasksService {
     const opts: JobsOptions = {
       delay: Math.max(0, runAt.getTime() - Date.now()),
       jobId: dto.jobIdHint ?? undefined,
-      removeOnComplete: { age: 3600, count: 1000 },
-      removeOnFail: { age: 24 * 3600, count: 1000 },
+      ...DEFAULT_JOB_OPTIONS,
     };
 
     const job = await this.queue.add('once', dto.payload, opts);
@@ -59,8 +59,7 @@ export class TasksService {
       },
       {
         repeat,
-        removeOnComplete: { age: 3600, count: 1000 },
-        removeOnFail: { age: 24 * 3600, count: 1000 },
+        ...DEFAULT_JOB_OPTIONS,
       } as JobsOptions,
     );
 
@@ -122,16 +121,17 @@ export class TasksService {
     ) {
       const timezone = dto.timezone ?? existing.timezone ?? 'Asia/Shanghai'; // 优先使用新时区
 
-      if (existing.repeatKey) {
+      if (existing.jobId) {
+        await this.queue.removeJobScheduler(existing.jobId);
+      } else if (existing.repeatKey) {
         await this.queue.removeRepeatableByKey(existing.repeatKey);
       }
       const job = await this.queue.add(
         'cron',
         dto.payload ?? (existing.payload as Record<string, unknown>),
         {
-          repeat: { cron: dto.cron, tz: timezone }, // 使用动态时区
-          removeOnComplete: { age: 3600, count: 1000 },
-          removeOnFail: { age: 24 * 3600, count: 1000 },
+          repeat: { pattern: dto.cron, tz: timezone }, // 使用动态时区
+          ...DEFAULT_JOB_OPTIONS,
         } as JobsOptions,
       );
 
@@ -160,7 +160,9 @@ export class TasksService {
     const existing = await this.detail(id);
 
     if (existing.type === TaskType.CRON) {
-      if (existing.repeatKey) {
+      if (existing.jobId) {
+        await this.queue.removeJobScheduler(existing.jobId);
+      } else if (existing.repeatKey) {
         await this.queue.removeRepeatableByKey(existing.repeatKey);
       }
     } else if (existing.jobId) {
@@ -198,8 +200,7 @@ export class TasksService {
       'manual',
       existing.payload as Record<string, unknown>,
       {
-        removeOnComplete: { age: 3600, count: 1000 },
-        removeOnFail: { age: 24 * 3600, count: 1000 },
+        ...DEFAULT_JOB_OPTIONS,
       } as JobsOptions,
     );
 
