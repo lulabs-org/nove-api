@@ -11,7 +11,6 @@
 
 import { Module } from '@nestjs/common';
 import { MeetAiController } from './controllers/meet-ai.controller';
-import { PeriodSummaryController } from './controllers/period-summary.controller';
 import { MeetAiService, ParticipantSummaryService } from './services';
 import { MeetAiRepository, ParticipantSummaryRepository } from './repositories';
 import { PrismaModule } from '../prisma/prisma.module';
@@ -35,7 +34,7 @@ import { openaiConfig } from '@/configs/openai.config';
     UserPlatformModule,
     ConfigModule.forFeature(openaiConfig),
   ],
-  controllers: [MeetAiController, PeriodSummaryController],
+  controllers: [MeetAiController],
   providers: [
     MeetAiService,
     MeetAiRepository,
