@@ -21,6 +21,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { OpenaiModule } from '../integrations/openai/openai.module';
 import { HttpModule } from '@nestjs/axios';
 import { TasksRepository } from './repositories/tasks.repository';
+import { TaskExecutionLogsRepository } from './repositories/task-execution-logs.repository';
 
 import { ConfigModule } from '@nestjs/config';
 import { openaiConfig } from '../configs/openai.config';
@@ -46,6 +47,7 @@ import { HttpTaskHandler } from './handlers/http.handler';
     TasksService,
     TaskProcessor,
     TasksRepository,
+    TaskExecutionLogsRepository,
     PrismaService,
     TaskHandlerRegistry,
     HttpTaskHandler,

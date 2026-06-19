@@ -8,6 +8,7 @@ import type { Job } from 'bullmq';
 import { Injectable, Logger } from '@nestjs/common';
 import { TaskStatus, TaskType, ScheduledTask, Prisma } from '@prisma/client';
 import { TasksRepository } from '../repositories/tasks.repository';
+import { TaskExecutionLogsRepository } from '../repositories/task-execution-logs.repository';
 import { TaskHandlerRegistry } from '../handlers/task-handler.registry';
 import { TASK_QUEUE_NAME } from '../task.constants';
 
@@ -18,6 +19,7 @@ export class TaskProcessor extends WorkerHost {
 
   constructor(
     private readonly tasksRepository: TasksRepository,
+    private readonly taskExecutionLogsRepository: TaskExecutionLogsRepository,
     private readonly registry: TaskHandlerRegistry,
   ) {
     super();
@@ -70,7 +72,7 @@ export class TaskProcessor extends WorkerHost {
       await this.tasksRepository.updateTaskStatus(task.id, TaskStatus.RUNNING);
 
       // Create execution log
-      await this.tasksRepository
+      await this.taskExecutionLogsRepository
         .createExecutionLog({
           scheduledTaskId: task.id,
           jobId: String(job.id),
@@ -102,7 +104,7 @@ export class TaskProcessor extends WorkerHost {
         );
       }
 
-      await this.tasksRepository
+      await this.taskExecutionLogsRepository
         .updateExecutionLog(String(job.id), {
           status: TaskStatus.COMPLETED,
           result: result as Prisma.InputJsonValue,
@@ -134,7 +136,7 @@ export class TaskProcessor extends WorkerHost {
         );
       }
 
-      await this.tasksRepository
+      await this.taskExecutionLogsRepository
         .updateExecutionLog(String(job.id), {
           status: TaskStatus.FAILED,
           error: err.message,

@@ -17,7 +17,7 @@ export class PeriodSummaryService {
     private readonly openaiService: OpenaiService,
     @Inject(openaiConfig.KEY)
     private readonly config: ConfigType<typeof openaiConfig>,
-  ) { }
+  ) {}
 
   /**
    * 获取周期配置上下文
@@ -103,13 +103,12 @@ export class PeriodSummaryService {
     periodStart: Date,
     periodEnd: Date,
   ) {
-    const userSummaries =
-      await this.summaryRepo.findByPlatformUserId({
-        platformUserId,
-        parentPeriodType: ctx.parent,
-        periodStart,
-        periodEnd,
-      });
+    const userSummaries = await this.summaryRepo.findByPlatformUserId({
+      platformUserId,
+      parentPeriodType: ctx.parent,
+      periodStart,
+      periodEnd,
+    });
 
     if (userSummaries.length === 0) return;
 
