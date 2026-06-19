@@ -52,5 +52,6 @@ import { HttpTaskHandler } from './handlers/http.handler';
     TaskHandlerRegistry,
     HttpTaskHandler,
   ],
+  exports: [TaskHandlerRegistry],
 })
 export class TasksModule {}

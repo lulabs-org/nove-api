@@ -23,6 +23,8 @@ import { PeriodSummaryRepository } from './repositories/period-summary.repositor
 import { PeriodTimeRange } from './utils/period-time-range';
 import { ConfigModule } from '@nestjs/config';
 import { openaiConfig } from '@/configs/openai.config';
+import { TasksModule } from '@/task/tasks.module';
+import { PeriodSummaryHandler } from './handlers/period-summary.handler';
 
 @Module({
   imports: [
@@ -32,6 +34,7 @@ import { openaiConfig } from '@/configs/openai.config';
     MeetingModule,
     UserPlatformModule,
     ConfigModule.forFeature(openaiConfig),
+    TasksModule,
   ],
   controllers: [MeetAiController],
   providers: [
@@ -42,6 +45,7 @@ import { openaiConfig } from '@/configs/openai.config';
     PeriodSummaryService,
     PeriodSummaryRepository,
     PeriodTimeRange,
+    PeriodSummaryHandler,
   ],
   exports: [
     MeetAiService,
