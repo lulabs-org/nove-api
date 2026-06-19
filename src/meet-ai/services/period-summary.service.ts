@@ -1,71 +1,145 @@
-/*
- * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @Date: 2025-12-25 20:04:17
- * @LastEditors: Mingxuan songmingxuan936@gmail.com
- * @LastEditTime: 2026-02-16 16:57:57
- * @FilePath: /nove-api/src/task/service/period-summary.service.ts
- * @Description:
- *
- * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
- */
-// import type { Job } from 'bullmq';
-import { PeriodSummaryTool } from './period-summary-tool';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject } from '@nestjs/common';
 import { PeriodType } from '@prisma/client';
+import { ConfigType } from '@nestjs/config';
+
+import { OpenaiService } from '../../integrations/openai/openai.service';
+import { PeriodSummaryRepository } from '../repositories/period-summary.repository';
+import { PeriodTimeRange } from '../utils/period-time-range';
+import { openaiConfig } from '../../configs/openai.config';
 
 @Injectable()
-export class PeriodSummary {
-  private readonly logger = new Logger(PeriodSummary.name);
+export class PeriodSummaryService {
+  private readonly logger = new Logger(PeriodSummaryService.name);
 
-  // 让构造器导入summaryTool
-  constructor(private readonly summaryTool: PeriodSummaryTool) {}
+  constructor(
+    private readonly periodSummaryRepository: PeriodSummaryRepository,
+    private readonly periodTimeRange: PeriodTimeRange,
+    private readonly openaiService: OpenaiService,
+    @Inject(openaiConfig.KEY)
+    private readonly config: ConfigType<typeof openaiConfig>,
+  ) {}
 
   /**
-   * 处理每日会议总结任务（批量处理所有用户）
-   * - 调用 getGroupedPlatformUsers 获取所有分组
-   * - 遍历每个分组，调用 processOneUserDailySummary 处理
-   * - 每处理完一个用户，等待 5 秒以防压力过大
-   * @param job BullMQ Job 对象（可用于任务追踪），暂时用不到删除了
-   * @returns 处理完成状态及时间戳
+   * 获取周期配置上下文
    */
-  async processSummary(
-    periodType: PeriodType,
-  ): Promise<{ ok: boolean; at: string }> {
-    this.logger.log(
-      `开始执行任务: personal${periodType}MeetingSummary`,
-      new Date().toISOString(),
-    );
+  private getPeriodContext(periodType: PeriodType) {
+    const periodMap: Partial<Record<PeriodType, { parent: PeriodType; label: string }>> = {
+      [PeriodType.YEARLY]: { parent: PeriodType.MONTHLY, label: '本年' },
+      [PeriodType.QUARTERLY]: { parent: PeriodType.MONTHLY, label: '本季度' },
+      [PeriodType.MONTHLY]: { parent: PeriodType.DAILY, label: '本月' },
+      [PeriodType.WEEKLY]: { parent: PeriodType.DAILY, label: '本周' },
+      [PeriodType.DAILY]: { parent: PeriodType.SINGLE, label: '本日' },
+    };
+    return periodMap[periodType];
+  }
 
-    // 调用 getGroupedPlatformUsers 方法获取分组结果
-    const data = await this.summaryTool.getGroupedPlatformUsers(periodType);
+  /**
+   * 处理总结任务
+   */
+  async processSummary(periodType: PeriodType): Promise<{ ok: boolean; at: string }> {
+    this.logger.log(`开始执行任务: personal${periodType}MeetingSummary`, new Date().toISOString());
 
-    // 如果没有值，直接返回
-    if (!data) {
-      this.logger.warn(
-        '没有找到符合条件的记录, participantSummary的新增记录为空',
-      );
-      return { ok: true, at: new Date().toISOString() }; // 或者 return null / throw Error，根据你的需求
+    const ctx = this.getPeriodContext(periodType);
+    if (!ctx) {
+      this.logger.warn(`不支持或未知的周期类型: ${periodType}`);
+      return { ok: false, at: new Date().toISOString() };
     }
 
-    // 打印分组结果
-    this.logger.log(
-      '在participantSummary表检索到以下用户:\n' + JSON.stringify(data, null, 2),
-    ); // 第二个参数 null 表示不格式化，第三个参数 2 表示缩进 2 个空格
+    const { periodStart, periodEnd } = this.periodTimeRange.getdayRange(periodType);
 
-    this.logger.log('开始依次总结每个用户的会议记录');
+    if (!periodStart || !periodEnd) {
+      this.logger.warn(`无法解析时间区间, 周期类型: ${periodType}`);
+      return { ok: false, at: new Date().toISOString() };
+    }
 
-    // 遍历每个分组，处理一个用户的会议记录
-    for (const platformUserId of data) {
-      await this.summaryTool.processOneUserSummary(platformUserId, periodType);
+    // 1. 获取所有符合条件的参与总结记录
+    const summaries = await this.periodSummaryRepository.findAllMeetingSummaries({
+      periodStart,
+      periodEnd,
+      parentPeriodType: ctx.parent,
+    });
 
-      // // 等待 5 秒
-      // await new Promise((resolve) => setTimeout(resolve, 5000));
+    // 2. 提取唯一的平台用户 ID 列表
+    const platformUserIds = [...new Set(summaries.map((s) => s.platformUserId).filter(Boolean))] as string[];
+
+    if (platformUserIds.length === 0) {
+      this.logger.warn('没有找到符合条件的记录, participantSummary的新增记录为空');
+      return { ok: true, at: new Date().toISOString() };
+    }
+
+    this.logger.log(`需处理的用户数: ${platformUserIds.length}`);
+
+    // 3. 遍历并处理每个用户的总结
+    for (const platformUserId of platformUserIds) {
+      await this.processOneUserSummary(platformUserId, periodType, ctx, periodStart, periodEnd);
     }
 
     return { ok: true, at: new Date().toISOString() };
   }
 
-  // 未来可以添加其他方法
-  // async processWeeklySummary(job: Job) { ... }
-  // async processMonthlySummary(job: Job) { ... }
+  /**
+   * 处理单个用户的会议总结
+   */
+  private async processOneUserSummary(
+    platformUserId: string,
+    periodType: PeriodType,
+    ctx: { parent: PeriodType; label: string },
+    periodStart: Date,
+    periodEnd: Date,
+  ) {
+    const userSummaries = await this.periodSummaryRepository.findSummaryByPlatformUserId({
+      platformUserId,
+      parentPeriodType: ctx.parent,
+      periodStart,
+      periodEnd,
+    });
+
+    if (userSummaries.length === 0) return;
+
+    const userName = userSummaries[0]?.userName ?? '未知用户';
+    this.logger.log(`获取到用户(${platformUserId})的参会议记录: ${userSummaries.length} 条`);
+
+    // AI 总结
+    const systemPrompt = `
+      你是人工智能助手，需要总结用户"${userName}"${ctx.label} 的会议记录。
+      字段说明：
+      - userName: 参会人在 onstage会议的昵称
+      - partSummary: 参会人 onstage会议的总结
+      - periodStart: 会议总结的开始区间
+      - periodEnd: 会议总结的结束区间
+
+      切记以上只是字段解释，不是输出内容。
+      你只需要根据用户输入，总结用户在会议中的活动，输出 markdown 格式的总结。
+    `.trim();
+
+    const reply = await this.openaiService.createChatCompletion([
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: JSON.stringify(userSummaries) },
+    ]);
+
+    this.logger.log(`OpenAI聊天完成: ${reply?.slice(0, 200)}`);
+
+    // 保存主总结
+    const parentSummary = await this.periodSummaryRepository.createPeriodSummary({
+      periodType,
+      periodStart,
+      periodEnd,
+      userName,
+      partSummary: reply || '',
+      platformUserId,
+      aiModel: this.config.model,
+    });
+
+    // 关联子总结
+    for (const child of userSummaries) {
+      await this.periodSummaryRepository.createSummaryRelation({
+        parentSummaryId: parentSummary.id,
+        childSummaryId: child.id,
+        parentPeriodType: ctx.parent,
+        childPeriodType: periodType,
+      });
+    }
+
+    this.logger.log(`创建了 ${userSummaries.length} 条关联记录, 父总结 ID: ${parentSummary.id}`);
+  }
 }

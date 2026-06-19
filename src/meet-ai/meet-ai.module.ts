@@ -18,8 +18,7 @@ import { OpenaiModule } from '@/integrations/openai/openai.module';
 import { UserModule } from '@/user/user.module';
 import { MeetingModule } from '@/meeting/meeting.module';
 import { UserPlatformModule } from '@/user-platform/user-platform.module';
-import { PeriodSummary } from './services/period-summary.service';
-import { PeriodSummaryTool } from './services/period-summary-tool';
+import { PeriodSummaryService } from './services/period-summary.service';
 import { PeriodSummaryRepository } from './repositories/period-summary.repository';
 import { PeriodTimeRange } from './utils/period-time-range';
 import { ConfigModule } from '@nestjs/config';
@@ -40,8 +39,7 @@ import { openaiConfig } from '@/configs/openai.config';
     MeetAiRepository,
     ParticipantSummaryRepository,
     ParticipantSummaryService,
-    PeriodSummary,
-    PeriodSummaryTool,
+    PeriodSummaryService,
     PeriodSummaryRepository,
     PeriodTimeRange,
   ],
@@ -49,8 +47,7 @@ import { openaiConfig } from '@/configs/openai.config';
     MeetAiService,
     ParticipantSummaryRepository,
     ParticipantSummaryService,
-    PeriodSummary,
-    PeriodSummaryTool,
+    PeriodSummaryService,
     PeriodSummaryRepository,
     PeriodTimeRange,
   ],
