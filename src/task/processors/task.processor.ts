@@ -87,10 +87,15 @@ export class TaskProcessor extends WorkerHost {
         break;
 
       case 'invoke_http': {
-        const jobData = job.data as any;
+        const jobData = job.data as Record<string, any>;
         const url = jobData.url;
-        const method = jobData.method || 'POST';
-        const payload = jobData.payload || {};
+        const method = (jobData.method || 'POST').toUpperCase();
+        
+        // 支持 axios 的原生 data 字段，并向后兼容 payload 字段
+        const data = jobData.data !== undefined ? jobData.data : jobData.payload;
+        
+        // 提取更多常用的 HTTP 请求配置参数
+        const { headers, params, timeout, auth, responseType } = jobData;
 
         if (!url) {
           this.logger.warn('invoke_http: url 未提供，任务跳过执行');
@@ -104,17 +109,32 @@ export class TaskProcessor extends WorkerHost {
           targetUrl = `http://127.0.0.1:${port}${url}`;
         }
 
-        this.logger.log(`发起 HTTP 调用 [${method}] ${targetUrl}`);
+        // 在日志中打印可能带查询参数的 URL 以便于调试
+        const queryStr = params ? `?${new URLSearchParams(params as any).toString()}` : '';
+        this.logger.log(`发起 HTTP 调用 [${method}] ${targetUrl}${queryStr}`);
         
         try {
+          // 动态组装 axios 请求配置
+          const requestConfig: any = {
+            url: targetUrl,
+            method,
+            ...(data !== undefined && { data }),
+            ...(headers && { headers }),
+            ...(params && { params }),
+            ...(timeout && { timeout }),
+            ...(auth && { auth }),
+            ...(responseType && { responseType }),
+          };
+
           const response = await firstValueFrom(
-            this.httpService.request({
-              url: targetUrl,
-              method,
-              data: payload,
-            }),
+            this.httpService.request(requestConfig),
           );
-          this.logger.log(`HTTP 调用成功: ${JSON.stringify(response.data).slice(0, 500)}`);
+          
+          const responseDataSummary = typeof response.data === 'object' 
+            ? JSON.stringify(response.data)?.slice(0, 500) 
+            : String(response.data)?.slice(0, 500);
+
+          this.logger.log(`HTTP 调用成功: ${responseDataSummary}`);
           return { ok: true, data: response.data };
         } catch (error: any) {
           this.logger.error(`HTTP 调用失败 [${targetUrl}]: ${error.message}`);

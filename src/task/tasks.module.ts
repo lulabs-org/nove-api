@@ -20,6 +20,7 @@ import { TaskProcessor } from './processors/task.processor';
 import { PrismaService } from '../prisma/prisma.service';
 import { OpenaiModule } from '../integrations/openai/openai.module';
 import { HttpModule } from '@nestjs/axios';
+import { TasksRepository } from './repositories/tasks.repository';
 
 import { ConfigModule } from '@nestjs/config';
 import { openaiConfig } from '../configs/openai.config';
@@ -41,6 +42,7 @@ import { openaiConfig } from '../configs/openai.config';
   providers: [
     TasksService,
     TaskProcessor,
+    TasksRepository,
     PrismaService,
   ],
 })
