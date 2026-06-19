@@ -15,7 +15,7 @@ export class TasksService {
   constructor(
     private readonly tasksRepository: TasksRepository,
     @InjectQueue(TASK_QUEUE_NAME) private readonly queue: Queue,
-  ) { }
+  ) {}
 
   // v5: 不需要 QueueScheduler，删除 onModuleInit
 
@@ -74,15 +74,11 @@ export class TasksService {
         tz: timezone, // 使用动态时区
       };
 
-      await this.queue.upsertJobScheduler(
-        task.id,
-        repeat,
-        {
-          name: dto.handler,
-          data: { ...(dto.payload as Record<string, unknown>), _taskId: task.id },
-          opts: DEFAULT_JOB_OPTIONS,
-        }
-      );
+      await this.queue.upsertJobScheduler(task.id, repeat, {
+        name: dto.handler,
+        data: { ...dto.payload, _taskId: task.id },
+        opts: DEFAULT_JOB_OPTIONS,
+      });
 
       return await this.tasksRepository.update(task.id, {
         jobId: task.id, // The scheduler ID is the task id
@@ -149,7 +145,7 @@ export class TasksService {
             _taskId: existing.id,
           },
           opts: DEFAULT_JOB_OPTIONS,
-        }
+        },
       );
 
       return this.tasksRepository.update(id, {
@@ -251,7 +247,7 @@ export class TasksService {
             _taskId: existing.id,
           },
           opts: DEFAULT_JOB_OPTIONS,
-        }
+        },
       );
       newJobId = existing.id;
     } else if (existing.type === TaskType.ONCE && existing.runAt) {

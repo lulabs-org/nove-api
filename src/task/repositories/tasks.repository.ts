@@ -4,7 +4,7 @@ import { ScheduledTask, TaskStatus, Prisma } from '@prisma/client';
 
 @Injectable()
 export class TasksRepository {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async create(data: Prisma.ScheduledTaskCreateInput): Promise<ScheduledTask> {
     return this.prisma.scheduledTask.create({ data });
