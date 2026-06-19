@@ -8,6 +8,7 @@
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
+
 import { OpenaiService } from '../../integrations/openai/openai.service';
 import { PeriodSummaryRepository } from '../repositories/period-summary.repository';
 import { Injectable, Logger, Inject } from '@nestjs/common';
@@ -28,7 +29,7 @@ export class PeriodSummaryTool {
 
     @Inject(openaiConfig.KEY)
     private readonly config: ConfigType<typeof openaiConfig>,
-  ) {}
+  ) { }
 
   /**
    * 获取所有符合条件的 participantSummary 记录，并按 userId 分组
@@ -96,7 +97,7 @@ export class PeriodSummaryTool {
 
     this.logger.log(
       `获取到用户(${platformUserId})的参会议记录` +
-        JSON.stringify(summaries, null, 2),
+      JSON.stringify(summaries, null, 2),
     );
 
     // 总结会议记录
@@ -110,7 +111,7 @@ export class PeriodSummaryTool {
 
     this.logger.log(
       `当前用户(${platformUserId})的会议记录已完成:` +
-        JSON.stringify(summaries, null, 2),
+      JSON.stringify(summaries, null, 2),
     );
 
     // 保存总结内容和关系至ParticipantSummary

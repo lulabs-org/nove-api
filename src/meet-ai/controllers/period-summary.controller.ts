@@ -10,10 +10,10 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { PeriodSummary } from '../services/period-summary.service';
 import { TriggerSummaryDto } from '../dto/meet-ai.dto';
 
-@ApiTags('Meet AI - Period Summary')
+@ApiTags('Meet AI')
 @Controller('meet-ai/period-summary')
 export class PeriodSummaryController {
-  constructor(private readonly periodSummaryService: PeriodSummary) {}
+  constructor(private readonly periodSummaryService: PeriodSummary) { }
 
   @Post('process')
   @HttpCode(HttpStatus.OK)
