@@ -115,6 +115,20 @@ export const ApiCreateOnceDocs = () =>
             jobIdHint: 'email-job-001',
           },
         },
+        http_request: {
+          summary: 'HTTP 请求任务',
+          description: '在指定时间发起一个自定义的 HTTP 请求',
+          value: {
+            name: 'invoke_http',
+            runAt: '2025-10-16T10:00:00.000Z',
+            payload: {
+              url: 'https://api.example.com/webhook',
+              method: 'POST',
+              data: { event: 'task_started' },
+              headers: { Authorization: 'Bearer token' },
+            },
+          },
+        },
       },
     }),
   );
@@ -192,6 +206,19 @@ export const ApiCreateCronDocs = () =>
             name: '小时数据同步',
             cron: '0 0 * * * *',
             payload: { syncType: 'incremental', source: 'api' },
+          },
+        },
+        http_polling: {
+          summary: 'HTTP 轮询任务',
+          description: '每5分钟调用一次指定的 API',
+          value: {
+            name: 'invoke_http',
+            cron: '*/5 * * * *',
+            payload: {
+              url: '/api/internal/health-check',
+              method: 'GET',
+              timeout: 5000,
+            },
           },
         },
       },
