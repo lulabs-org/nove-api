@@ -6,13 +6,9 @@
  */
 
 import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { PeriodType } from '@prisma/client';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { PeriodSummary } from '../services/period-summary.service';
-
-class TriggerSummaryDto {
-  periodType!: PeriodType;
-}
+import { TriggerSummaryDto } from '../dto/meet-ai.dto';
 
 @ApiTags('Meet AI - Period Summary')
 @Controller('meet-ai/period-summary')
@@ -22,10 +18,8 @@ export class PeriodSummaryController {
   @Post('process')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Trigger a period summary manually or by task' })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Summary processing initiated' })
   async processSummary(@Body() body: TriggerSummaryDto) {
-    if (!body.periodType) {
-      return { ok: false, message: 'periodType is required' };
-    }
     return await this.periodSummaryService.processSummary(body.periodType);
   }
 }
