@@ -27,7 +27,6 @@ import { CreateOnceDto } from './dtos/create-once.dto';
 import { CreateCronDto } from './dtos/create-cron.dto';
 import { UpdateTaskDto } from './dtos/update-task.dto';
 import { QueryDto } from './dtos/query.dto';
-import { TaskStatus, TaskType } from '@prisma/client';
 import {
   ApiHealthCheckDocs,
   ApiCreateOnceDocs,
@@ -39,39 +38,15 @@ import {
   ApiPauseQueueDocs,
   ApiResumeQueueDocs,
   ApiRunNowDocs,
+  ApiPauseTaskDocs,
+  ApiResumeTaskDocs,
 } from './decorators/tasks.decorators';
-
-// ---- Swagger View Models（仅用于文档展示，不影响业务类型）----
-class OkResponse {
-  ok!: true;
-}
-
-class RunNowResponse {
-  jobId!: string | number | null;
-}
-
-class TaskEntity {
-  id!: string;
-  name!: string;
-  type!: TaskType;
-  queueName!: string;
-  jobId!: string | null;
-  repeatKey!: string | null;
-  cron!: string | null;
-  runAt!: Date | null;
-  payload!: Record<string, unknown>;
-  status!: TaskStatus;
-  lastError!: string | null;
-  createdAt!: Date;
-  updatedAt!: Date;
-}
-
-class PaginatedTasksResponse {
-  items!: TaskEntity[];
-  total!: number;
-  page!: number;
-  pageSize!: number;
-}
+import {
+  OkResponse,
+  RunNowResponse,
+  TaskEntity,
+  PaginatedTasksResponse,
+} from './dtos/responses.dto';
 
 @ApiTags('Tasks')
 @ApiExtraModels(TaskEntity, PaginatedTasksResponse, OkResponse, RunNowResponse)
@@ -141,5 +116,17 @@ export class TasksController {
   @Post(':id/run')
   runNow(@Param('id') id: string) {
     return this.service.runNow(id);
+  }
+
+  @ApiPauseTaskDocs()
+  @Post(':id/pause')
+  pauseTask(@Param('id') id: string) {
+    return this.service.pauseTask(id);
+  }
+
+  @ApiResumeTaskDocs()
+  @Post(':id/resume')
+  resumeTask(@Param('id') id: string) {
+    return this.service.resumeTask(id);
   }
 }

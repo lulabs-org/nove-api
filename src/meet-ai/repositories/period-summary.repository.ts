@@ -19,7 +19,7 @@ export class PeriodSummaryRepository {
   /**
    * 查所有participantSummary的记录，但只拿平台用户的 id 和 userId
    */
-  async findAllMeetingSummaries({
+  async findMany({
     periodStart,
     periodEnd,
     parentPeriodType,
@@ -62,7 +62,7 @@ export class PeriodSummaryRepository {
   /**
    * 查找当前分组下所有 platformUserId 对应的 participantSummary
    */
-  async findSummaryByPlatformUserId({
+  async findByPlatformUserId({
     parentPeriodType,
     platformUserId,
     periodStart,
@@ -110,7 +110,7 @@ export class PeriodSummaryRepository {
   /**
    * 创建周期性总结
    */
-  async createPeriodSummary(data: {
+  async create(data: {
     periodType: PeriodType;
     periodStart: Date;
     periodEnd: Date;
@@ -135,7 +135,7 @@ export class PeriodSummaryRepository {
   /**
    * 创建总结关联关系
    */
-  async createSummaryRelation(data: {
+  async createRelation(data: {
     parentSummaryId: string;
     childSummaryId: string;
     parentPeriodType: PeriodType;

@@ -1,15 +1,3 @@
-/*
- * @Author: 杨仕明 shiming.y@qq.com
- * @Date: 2025-10-03 06:03:56
- * @LastEditors: Mingxuan songmingxuan936@gmail.com
- * @LastEditTime: 2026-02-16 16:47:30
- * @FilePath: /nove-api/src/task/processors/task.processor.ts
- * @Description:
- *
- * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
- */
-
-// src/tasks/task.processor.ts
 import {
   Processor,
   WorkerHost,
@@ -17,164 +5,149 @@ import {
   OnQueueEvent,
 } from '@nestjs/bullmq';
 import type { Job } from 'bullmq';
-import { PrismaService } from '../../prisma/prisma.service';
 import { Injectable, Logger } from '@nestjs/common';
-import { TaskStatus, PeriodType } from '@prisma/client';
-
-import { PeriodSummary } from '../service/period-summary.service';
-
-// 任务队列中 Job 的 payload 接口定义
-interface JobPayload {
-  originalName?: string;
-  periodType?: PeriodType;
-}
+import { TaskStatus, TaskType, ScheduledTask, Prisma } from '@prisma/client';
+import { TasksRepository } from '../repositories/tasks.repository';
+import { TaskExecutionLogsRepository } from '../repositories/task-execution-logs.repository';
+import { TaskHandlerRegistry } from '../handlers/task-handler.registry';
+import { TASK_QUEUE_NAME } from '../task.constants';
 
 @Injectable()
-@Processor('tasks')
+@Processor(TASK_QUEUE_NAME)
 export class TaskProcessor extends WorkerHost {
   private readonly logger = new Logger(TaskProcessor.name);
 
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly periodSummary: PeriodSummary,
+    private readonly tasksRepository: TasksRepository,
+    private readonly taskExecutionLogsRepository: TaskExecutionLogsRepository,
+    private readonly registry: TaskHandlerRegistry,
   ) {
     super();
   }
 
-  // 所有任务共用的处理器（可根据 name 分流到不同业务逻辑）
+  private async findTaskFromJob(job: Job): Promise<ScheduledTask | null> {
+    const jobData = job.data as Record<string, unknown> | undefined;
+    const taskId =
+      typeof jobData?._taskId === 'string' ? jobData._taskId : undefined;
+    if (taskId) {
+      return this.tasksRepository.findById(taskId);
+    }
+    const repeatOptions = job.opts.repeat as { key?: string } | undefined;
+    const repeatKey =
+      repeatOptions?.key ??
+      (job as unknown as { repeatJobKey?: string }).repeatJobKey;
+    return this.tasksRepository.findByJobIdOrRepeatKey(
+      String(job.id),
+      repeatKey,
+    );
+  }
+
   override async process(
     job: Job<Record<string, unknown>, unknown, string>,
   ): Promise<unknown> {
-    // 🔹 修改日志，显示 originalName
-    const taskName = job.data.originalName ?? job.name; // 如果没有 originalName 就 fallback
+    const taskName = job.name;
     this.logger.log(
       `Processing job name=${JSON.stringify(taskName)} id=${job.id}`,
     );
 
-    // —— 在这里编写你真实的业务逻辑 ——
-    // 举例：调用第三方 API、发送邮件、生成报表等
-
-    // TODO: 示例任务实现
-    // 根据 job.name 或 payload.type 分流到不同的业务逻辑
-    switch (
-      taskName //  job.data.originalName 匹配，而不是 job.name
-    ) {
-      case 'sendEmail':
-        // TODO: 调用邮件服务发送邮件
-        // await this.emailService.sendEmail(job.data.to, job.data.subject, job.data.body);
-        break;
-
-      case 'syncData':
-        // TODO: 同步数据到第三方系统
-        // await this.dataSyncService.sync(job.data.table, job.data.filters);
-        break;
-
-      case 'generateReport':
-        // TODO: 生成报表并上传到云存储
-        // const report = await this.reportService.generate(job.data.reportType, job.data.dateRange);
-        // await this.fileService.upload(report, job.data.destination);
-        break;
-
-      case 'processMeetingRecording':
-        // TODO: 处理会议录制文件
-        // await this.meetingService.processRecording(job.data.meetingId, job.data.recordingUrl);
-        break;
-
-      case 'cleanupExpiredData':
-        // TODO: 清理过期数据
-        // await this.cleanupService.removeExpiredData(job.data.retentionDays);
-        break;
-
-      case 'personalMeetingSummary': {
-        // 周期性使用方法(默认时区是Asia/Shanghai)：
-        // {
-        //   "name": "personalMeetingSummary",
-        //   "cron": "0 * * * * *",
-        //   "payload": {
-        //     "originalName": "personalMeetingSummary",
-        //     "periodType": "DAILY"
-        //   }
-        // }
-
-        // 使用方法二，添加指定时区
-        // {
-        //   "name": "personalMeetingSummary",
-        //   "cron": "0 0 3 * * *",
-        //   "timezone": "Asia/Shanghai",
-        //   "payload": {
-        //     "originalName": "personalMeetingSummary",
-        //     "periodType": "DAILY"
-        //   }
-        // }
-
-        // SINGLE // 单次会议
-        // DAILY // 每日
-        // WEEKLY // 每周
-        // MONTHLY // 每月
-        // QUARTERLY // 每季度
-        // YEARLY // 每年
-
-        const jobData = job.data as JobPayload;
-        const periodType = jobData.periodType;
-
-        if (!periodType) {
-          this.logger.warn('periodType 未提供，任务跳过执行');
-          return { ok: false, message: 'periodType is required' };
-        }
-
-        return await this.periodSummary.processSummary(periodType);
-      }
-
-      // case 'openaiChat': {
-      //   const payload = (job.data as any).payload ?? {};
-      //   const question: string = payload.question ?? '你好';
-      //   const systemPrompt: string = payload.systemPrompt ?? '你是人工智能助手';
-      //   const messages = [
-      //     { role: 'system' as const, content: systemPrompt },
-      //     { role: 'user' as const, content: question },
-      //   ];
-      //   const reply = await this.openaiService.createChatCompletion(messages);
-      //   this.logger.log(`OpenAI聊天完成: ${reply?.slice(0, 200)}`);
-      //   return { reply };
-      // }
-
-      default:
-        this.logger.warn(`Unknown job type: ${JSON.stringify(taskName)}`);
+    const handler = this.registry.getHandler(taskName);
+    if (!handler) {
+      this.logger.warn(
+        `Unknown job type or no handler registered: ${JSON.stringify(taskName)}`,
+      );
+      // Throwing an error will automatically mark the job as failed in BullMQ
+      throw new Error(`No handler registered for task: ${taskName}`);
     }
 
-    return { ok: true, at: new Date().toISOString() };
+    // Hand over the execution to the registered handler
+    const result = await handler.handle(job);
+    return result;
   }
 
   @OnWorkerEvent('active')
   async onActive(job: Job): Promise<void> {
-    await this.prisma.scheduledTask
-      .updateMany({
-        where: { jobId: String(job.id) },
-        data: { status: TaskStatus.RUNNING },
-      })
-      .catch(() => undefined);
+    const task = await this.findTaskFromJob(job);
+
+    if (task) {
+      await this.tasksRepository.updateTaskStatus(task.id, TaskStatus.RUNNING);
+
+      // Create execution log
+      await this.taskExecutionLogsRepository
+        .createExecutionLog({
+          scheduledTaskId: task.id,
+          jobId: String(job.id),
+          status: TaskStatus.RUNNING,
+        })
+        .catch((err: Error) =>
+          this.logger.error(`Failed to create execution log: ${err.message}`),
+        );
+    }
   }
 
   @OnWorkerEvent('completed')
   async onCompleted(job: Job, result: unknown): Promise<void> {
     this.logger.log(`Job ${job.id} completed: ${JSON.stringify(result)}`);
-    await this.prisma.scheduledTask
-      .updateMany({
-        where: { jobId: String(job.id) },
-        data: { status: TaskStatus.COMPLETED, lastError: null },
-      })
-      .catch(() => undefined);
+    const task = await this.findTaskFromJob(job);
+
+    if (task) {
+      if (task.type === TaskType.CRON) {
+        if (task.status !== TaskStatus.PAUSED) {
+          await this.tasksRepository.updateTaskStatus(
+            task.id,
+            TaskStatus.SCHEDULED,
+            null,
+          );
+        }
+      } else {
+        await this.tasksRepository.updateTaskStatus(
+          task.id,
+          TaskStatus.COMPLETED,
+          null,
+        );
+      }
+
+      await this.taskExecutionLogsRepository
+        .updateExecutionLog(String(job.id), {
+          status: TaskStatus.COMPLETED,
+          result: result as Prisma.InputJsonValue,
+          completedAt: new Date(),
+        })
+        .catch((err: Error) =>
+          this.logger.error(`Failed to update execution log: ${err.message}`),
+        );
+    }
   }
 
   @OnWorkerEvent('failed')
   async onFailed(job: Job, err: Error): Promise<void> {
     this.logger.error(`Job ${job.id} failed: ${err.message}`);
-    await this.prisma.scheduledTask
-      .updateMany({
-        where: { jobId: String(job.id) },
-        data: { status: TaskStatus.FAILED, lastError: err.message },
-      })
-      .catch(() => undefined);
+    const task = await this.findTaskFromJob(job);
+
+    if (task) {
+      if (task.type === TaskType.CRON) {
+        await this.tasksRepository.updateTaskStatus(
+          task.id,
+          TaskStatus.SCHEDULED,
+          err.message,
+        );
+      } else {
+        await this.tasksRepository.updateTaskStatus(
+          task.id,
+          TaskStatus.FAILED,
+          err.message,
+        );
+      }
+
+      await this.taskExecutionLogsRepository
+        .updateExecutionLog(String(job.id), {
+          status: TaskStatus.FAILED,
+          error: err.message,
+          completedAt: new Date(),
+        })
+        .catch((err: Error) =>
+          this.logger.error(`Failed to update execution log: ${err.message}`),
+        );
+    }
   }
 
   @OnQueueEvent('error')

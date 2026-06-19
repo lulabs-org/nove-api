@@ -20,9 +20,11 @@ import {
   Logger,
   ValidationPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { NoPermissionRequired } from '@/permission/decorators/permissions.decorator';
 import { MeetAiService } from '../services/meet-ai.service';
+import { PeriodSummaryService } from '../services/period-summary.service';
+import { TriggerSummaryDto } from '../dto/meet-ai.dto';
 
 @ApiTags('Meet AI')
 @Controller('meet-ai')
@@ -31,7 +33,10 @@ import { MeetAiService } from '../services/meet-ai.service';
 export class MeetAiController {
   private readonly logger = new Logger(MeetAiController.name);
 
-  constructor(private readonly meetAiService: MeetAiService) {}
+  constructor(
+    private readonly meetAiService: MeetAiService,
+    private readonly periodSummaryService: PeriodSummaryService,
+  ) {}
 
   @Get('health')
   @HttpCode(HttpStatus.OK)
@@ -74,5 +79,13 @@ export class MeetAiController {
       body.recordId,
       body.platformUserId,
     );
+  }
+
+  @Post('period-summary')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '手动或由定时任务触发周期性总结' })
+  process(@Body() { periodType }: TriggerSummaryDto) {
+    this.logger.log('触发周期性总结任务', { periodType });
+    return this.periodSummaryService.process(periodType);
   }
 }

@@ -20,6 +20,10 @@ export class UpdateTaskDto {
 
   @IsOptional()
   @IsString()
+  handler?: string;
+
+  @IsOptional()
+  @IsString()
   cron?: string;
 
   @IsOptional()

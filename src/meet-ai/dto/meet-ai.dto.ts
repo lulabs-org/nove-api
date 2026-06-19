@@ -9,8 +9,9 @@
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsString, IsNotEmpty, IsEnum } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { PeriodType } from '@prisma/client';
 
 export class AnalyzeMeetingDto {
   @ApiProperty({ description: '会议ID' })
@@ -31,4 +32,14 @@ export class MeetingSummaryDto {
 
   @ApiProperty({ description: '行动项', type: [String] })
   actionItems: string[];
+}
+
+export class TriggerSummaryDto {
+  @ApiProperty({
+    description: '总结周期类型 (例如 DAILY, WEEKLY)',
+    enum: PeriodType,
+  })
+  @IsEnum(PeriodType, { message: '无效的周期类型' })
+  @IsNotEmpty({ message: 'periodType 不能为空' })
+  periodType!: PeriodType;
 }

@@ -19,35 +19,39 @@ import { TasksService } from './service/tasks.service';
 import { TaskProcessor } from './processors/task.processor';
 import { PrismaService } from '../prisma/prisma.service';
 import { OpenaiModule } from '../integrations/openai/openai.module';
-import { PeriodSummary } from './service/period-summary.service';
-import { PeriodSummaryTool } from './service/period-summary-tool';
-import { PeriodSummaryRepository } from './repositories/period-summary.repository';
-import { PeriodTimeRange } from './utils/period-time-range';
+import { HttpModule } from '@nestjs/axios';
+import { TasksRepository } from './repositories/tasks.repository';
+import { TaskExecutionLogsRepository } from './repositories/task-execution-logs.repository';
 
 import { ConfigModule } from '@nestjs/config';
 import { openaiConfig } from '../configs/openai.config';
+import { TASK_QUEUE_NAME } from './task.constants';
+import { TaskHandlerRegistry } from './handlers/task-handler.registry';
+import { HttpTaskHandler } from './handlers/http.handler';
 
 @Module({
   imports: [
     BullModule.registerQueue({
-      name: 'tasks', // 队列名
+      name: TASK_QUEUE_NAME, // 队列名
     }),
     BullBoardModule.forFeature({
-      name: 'tasks',
+      name: TASK_QUEUE_NAME,
       adapter: BullMQAdapter,
     }),
     OpenaiModule,
     ConfigModule.forFeature(openaiConfig),
+    HttpModule,
   ],
   controllers: [TasksController],
   providers: [
     TasksService,
     TaskProcessor,
+    TasksRepository,
+    TaskExecutionLogsRepository,
     PrismaService,
-    PeriodSummary,
-    PeriodSummaryTool,
-    PeriodSummaryRepository,
-    PeriodTimeRange,
+    TaskHandlerRegistry,
+    HttpTaskHandler,
   ],
+  exports: [TaskHandlerRegistry],
 })
 export class TasksModule {}
