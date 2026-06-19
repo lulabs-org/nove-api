@@ -1,6 +1,7 @@
 model ScheduledTask {
   id        String     @id @default(cuid())
   name      String
+  handler   String     @default("invoke_http")
   type      TaskType
   queueName String
   jobId     String? // BullMQ job id (once 任务可能有，cron 的每次实例化也会生成临时 id)

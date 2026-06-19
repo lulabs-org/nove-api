@@ -19,6 +19,10 @@ export class CreateCronDto {
 
   @IsString()
   @IsNotEmpty()
+  handler!: string; // 任务处理器的名称 (例如 'invoke_http')
+
+  @IsString()
+  @IsNotEmpty()
   cron!: string; // CRON 表达式
 
   @IsOptional()

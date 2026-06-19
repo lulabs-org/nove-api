@@ -1,5 +1,5 @@
 // src/tasks/tasks.service.ts
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import type { Queue, JobsOptions, RepeatOptions } from 'bullmq';
 import { CreateOnceDto } from '../dtos/create-once.dto';
@@ -21,66 +21,73 @@ export class TasksService {
 
   async createOnce(dto: CreateOnceDto): Promise<ScheduledTask> {
     const runAt = new Date(dto.runAt);
-    const opts: JobsOptions = {
-      delay: Math.max(0, runAt.getTime() - Date.now()),
-      jobId: dto.jobIdHint ?? undefined,
-      ...DEFAULT_JOB_OPTIONS,
-    };
 
-    const job = await this.queue.add('once', dto.payload, opts);
-
-    const jobIdVal = job.id ?? null; // 👈 兜底
-
-    return this.tasksRepository.create({
+    // Create DB record first to generate the ID
+    const task = await this.tasksRepository.create({
       name: dto.name,
+      handler: dto.handler,
       type: TaskType.ONCE,
       queueName: this.queue.name,
-      jobId: jobIdVal === null ? null : String(jobIdVal), // 👈 避免 'undefined'
       payload: dto.payload as unknown as object,
       status: TaskStatus.SCHEDULED,
       runAt,
     });
+
+    const opts: JobsOptions = {
+      delay: Math.max(0, runAt.getTime() - Date.now()),
+      jobId: dto.jobIdHint ?? task.id,
+      ...DEFAULT_JOB_OPTIONS,
+    };
+
+    try {
+      const job = await this.queue.add(
+        dto.handler,
+        { ...dto.payload, _taskId: task.id },
+        opts,
+      );
+      return await this.tasksRepository.update(task.id, {
+        jobId: String(job.id ?? opts.jobId),
+      });
+    } catch (err) {
+      await this.tasksRepository.delete(task.id);
+      throw err;
+    }
   }
 
   async createCron(dto: CreateCronDto): Promise<ScheduledTask> {
     const timezone = dto.timezone ?? 'Asia/Shanghai'; // 使用传入的时区或默认值
 
-    const repeat: RepeatOptions = {
-      pattern: dto.cron,
-      tz: timezone, // 使用动态时区
-    };
-
-    // 🔹 修改：把原始任务名放到 job.data 里，而不是改 job.name
-    const job = await this.queue.add(
-      'cron',
-      {
-        originalName: dto.name, // 🔹 保存任务标识，用于 Processor 匹配
-        ...dto.payload, // 🔹 保留原 payload
-      },
-      {
-        repeat,
-        ...DEFAULT_JOB_OPTIONS,
-      } as JobsOptions,
-    );
-
-    const jobIdVal = job.id ?? null; // 👈 兜底
-
-    const repeatKey =
-      job.opts.repeat?.key ??
-      (job as { repeatJobKey?: string }).repeatJobKey ??
-      null;
-
-    return this.tasksRepository.create({
+    const task = await this.tasksRepository.create({
       name: dto.name,
+      handler: dto.handler,
       type: TaskType.CRON,
       queueName: this.queue.name,
-      jobId: jobIdVal === null ? null : String(jobIdVal), // 👈
-      repeatKey,
       payload: dto.payload as unknown as object,
       status: TaskStatus.SCHEDULED,
       cron: dto.cron,
       timezone, // 保存时区到数据库
     });
+
+    try {
+      const repeat: RepeatOptions = {
+        pattern: dto.cron,
+        tz: timezone, // 使用动态时区
+      };
+
+      await this.queue.add(dto.handler, { ...dto.payload, _taskId: task.id }, {
+        repeat,
+        jobId: task.id, // Explicit jobId so BullMQ v5 doesn't overwrite schedulers
+        ...DEFAULT_JOB_OPTIONS,
+      } as JobsOptions);
+
+      return await this.tasksRepository.update(task.id, {
+        jobId: task.id, // The scheduler ID is the task id
+        repeatKey: null,
+      });
+    } catch (err) {
+      await this.tasksRepository.delete(task.id);
+      throw err;
+    }
   }
 
   async list(q: QueryDto) {
@@ -113,6 +120,7 @@ export class TasksService {
 
   async update(id: string, dto: UpdateTaskDto): Promise<ScheduledTask> {
     const existing = await this.detail(id);
+    const newHandler = dto.handler ?? existing.handler;
 
     if (
       existing.type === TaskType.CRON &&
@@ -122,27 +130,36 @@ export class TasksService {
       const timezone = dto.timezone ?? existing.timezone ?? 'Asia/Shanghai'; // 优先使用新时区
 
       if (existing.jobId) {
-        await this.queue.removeJobScheduler(existing.jobId);
-      } else if (existing.repeatKey) {
-        await this.queue.removeRepeatableByKey(existing.repeatKey);
+        await this.queue
+          .removeJobScheduler(existing.jobId)
+          .catch(() => undefined);
       }
-      const job = await this.queue.add(
-        'cron',
-        dto.payload ?? (existing.payload as Record<string, unknown>),
+      if (existing.repeatKey) {
+        await this.queue
+          .removeRepeatableByKey(existing.repeatKey)
+          .catch(() => undefined);
+      }
+
+      await this.queue.add(
+        newHandler,
+        {
+          ...(dto.payload ?? (existing.payload as Record<string, unknown>)),
+          _taskId: existing.id,
+        },
         {
           repeat: { pattern: dto.cron, tz: timezone }, // 使用动态时区
+          jobId: existing.id,
           ...DEFAULT_JOB_OPTIONS,
         } as JobsOptions,
       );
 
-      const repeatKey =
-        job.opts.repeat?.key ?? (job as { repeatJobKey?: string }).repeatJobKey;
-
       return this.tasksRepository.update(id, {
         name: dto.name ?? existing.name,
+        handler: newHandler,
         cron: dto.cron,
         timezone, // 更新时区
-        repeatKey: repeatKey ?? null,
+        repeatKey: null,
+        jobId: existing.id,
         payload: (dto.payload ?? existing.payload) as unknown as object,
         status: dto.status ?? existing.status,
       });
@@ -150,6 +167,7 @@ export class TasksService {
 
     return this.tasksRepository.update(id, {
       name: dto.name ?? existing.name,
+      handler: newHandler,
       timezone: dto.timezone ?? existing.timezone, // 更新时区
       payload: (dto.payload ?? existing.payload) as unknown as object,
       status: dto.status ?? existing.status,
@@ -161,9 +179,14 @@ export class TasksService {
 
     if (existing.type === TaskType.CRON) {
       if (existing.jobId) {
-        await this.queue.removeJobScheduler(existing.jobId);
-      } else if (existing.repeatKey) {
-        await this.queue.removeRepeatableByKey(existing.repeatKey);
+        await this.queue
+          .removeJobScheduler(existing.jobId)
+          .catch(() => undefined);
+      }
+      if (existing.repeatKey) {
+        await this.queue
+          .removeRepeatableByKey(existing.repeatKey)
+          .catch(() => undefined);
       }
     } else if (existing.jobId) {
       await this.queue.remove(existing.jobId).catch(() => undefined);
@@ -197,8 +220,11 @@ export class TasksService {
   async runNow(id: string): Promise<{ jobId: string | number | null }> {
     const existing = await this.detail(id);
     const job = await this.queue.add(
-      'manual',
-      existing.payload as Record<string, unknown>,
+      existing.handler,
+      {
+        ...(existing.payload as Record<string, unknown>),
+        _taskId: existing.id,
+      },
       {
         ...DEFAULT_JOB_OPTIONS,
       } as JobsOptions,

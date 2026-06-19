@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ITaskHandler } from './task-handler.interface';
 
 @Injectable()
@@ -11,7 +11,9 @@ export class TaskHandlerRegistry {
    */
   register(handler: ITaskHandler): void {
     if (this.handlers.has(handler.name)) {
-      this.logger.warn(`Task handler [${handler.name}] is already registered. Overwriting.`);
+      this.logger.warn(
+        `Task handler [${handler.name}] is already registered. Overwriting.`,
+      );
     }
     this.handlers.set(handler.name, handler);
     this.logger.debug(`Task handler [${handler.name}] registered.`);

@@ -55,6 +55,7 @@ export const ApiCreateOnceDocs = () =>
         example: {
           id: 'clx9abc123def456',
           name: '数据同步任务',
+          handler: 'sync_data_handler',
           type: 'ONCE',
           queueName: 'tasks',
           jobId: 'job_123456',
@@ -101,6 +102,7 @@ export const ApiCreateOnceDocs = () =>
           description: '创建简单的一次性任务',
           value: {
             name: '数据同步任务',
+            handler: 'sync_data_handler',
             runAt: '2025-10-15T14:30:00.000Z',
             payload: { userId: 123, action: 'sync_data' },
           },
@@ -110,6 +112,7 @@ export const ApiCreateOnceDocs = () =>
           description: '创建时指定自定义任务ID',
           value: {
             name: '邮件发送任务',
+            handler: 'send_email_handler',
             runAt: '2025-10-16T09:00:00.000Z',
             payload: { email: 'user@example.com', template: 'welcome' },
             jobIdHint: 'email-job-001',
@@ -119,7 +122,8 @@ export const ApiCreateOnceDocs = () =>
           summary: 'HTTP 请求任务',
           description: '在指定时间发起一个自定义的 HTTP 请求',
           value: {
-            name: 'invoke_http',
+            name: '发起外部Webhook',
+            handler: 'invoke_http',
             runAt: '2025-10-16T10:00:00.000Z',
             payload: {
               url: 'https://api.example.com/webhook',
@@ -149,6 +153,7 @@ export const ApiCreateCronDocs = () =>
         example: {
           id: 'clx9abc123def457',
           name: '每日数据备份',
+          handler: 'backup_handler',
           type: 'CRON',
           queueName: 'tasks',
           jobId: 'job_789012',
@@ -195,6 +200,7 @@ export const ApiCreateCronDocs = () =>
           description: '每天凌晨2点执行数据备份',
           value: {
             name: '每日数据备份',
+            handler: 'backup_handler',
             cron: '0 0 2 * * *',
             payload: { backupType: 'full', retentionDays: 30 },
           },
@@ -204,6 +210,7 @@ export const ApiCreateCronDocs = () =>
           description: '每小时执行一次数据同步',
           value: {
             name: '小时数据同步',
+            handler: 'sync_data_handler',
             cron: '0 0 * * * *',
             payload: { syncType: 'incremental', source: 'api' },
           },
@@ -212,7 +219,8 @@ export const ApiCreateCronDocs = () =>
           summary: 'HTTP 轮询任务',
           description: '每5分钟调用一次指定的 API',
           value: {
-            name: 'invoke_http',
+            name: '健康检查轮询',
+            handler: 'invoke_http',
             cron: '*/5 * * * *',
             payload: {
               url: '/api/internal/health-check',
@@ -241,6 +249,7 @@ export const ApiListTasksDocs = () =>
             {
               id: 'clx9abc123def456',
               name: '数据同步任务',
+              handler: 'sync_data_handler',
               type: 'ONCE',
               queueName: 'tasks',
               jobId: 'job_123456',
@@ -336,6 +345,7 @@ export const ApiTaskDetailDocs = () =>
         example: {
           id: 'clx9abc123def456',
           name: '数据同步任务',
+          handler: 'sync_data_handler',
           type: 'ONCE',
           queueName: 'tasks',
           jobId: 'job_123456',
@@ -397,6 +407,7 @@ export const ApiUpdateTaskDocs = () =>
         example: {
           id: 'clx9abc123def456',
           name: '更新的任务名称',
+          handler: 'invoke_http',
           type: 'CRON',
           queueName: 'tasks',
           jobId: 'job_123456',

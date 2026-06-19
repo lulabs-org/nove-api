@@ -23,6 +23,10 @@ export class CreateOnceDto {
   @IsNotEmpty()
   name!: string;
 
+  @IsString()
+  @IsNotEmpty()
+  handler!: string; // 任务处理器的名称 (例如 'invoke_http')
+
   @IsISO8601()
   runAt!: string; // ISO 时间字符串
 

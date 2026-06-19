@@ -12,6 +12,7 @@ export class RunNowResponse {
 export class TaskEntity {
   id!: string;
   name!: string;
+  handler!: string;
   type!: TaskType;
   queueName!: string;
   jobId!: string | null;

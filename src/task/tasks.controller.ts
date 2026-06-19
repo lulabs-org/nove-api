@@ -51,7 +51,7 @@ import {
 @Controller('tasks')
 @NoPermissionRequired()
 export class TasksController {
-  constructor(private readonly service: TasksService) { }
+  constructor(private readonly service: TasksService) {}
 
   @ApiHealthCheckDocs()
   @Get('health')
