@@ -19,6 +19,37 @@ import { TaskStatus, TaskType } from '@prisma/client';
 import { CreateOnceDto } from '../dtos/create-once.dto';
 import { CreateCronDto } from '../dtos/create-cron.dto';
 import { UpdateTaskDto } from '../dtos/update-task.dto';
+import {
+  OkResponse,
+  RunNowResponse,
+  TaskEntity,
+  PaginatedTasksResponse,
+} from '../dtos/responses.dto';
+
+// --- Shared Api Responses ---
+const ApiUnauthorizedResponse = ApiResponse({
+  status: 401,
+  description: '未授权，访问令牌无效或已过期',
+  schema: {
+    example: {
+      statusCode: 401,
+      message: 'Unauthorized',
+      error: 'Unauthorized',
+    },
+  },
+});
+
+const ApiNotFoundResponse = ApiResponse({
+  status: 404,
+  description: '任务不存在',
+  schema: {
+    example: {
+      statusCode: 404,
+      message: '任务不存在',
+      error: 'Not Found',
+    },
+  },
+});
 
 export const ApiHealthCheckDocs = () =>
   applyDecorators(
@@ -51,24 +82,7 @@ export const ApiCreateOnceDocs = () =>
     ApiResponse({
       status: 201,
       description: '已创建的一次性任务',
-      schema: {
-        example: {
-          id: 'clx9abc123def456',
-          name: '数据同步任务',
-          handler: 'sync_data_handler',
-          type: 'ONCE',
-          queueName: 'tasks',
-          jobId: 'job_123456',
-          repeatKey: null,
-          cron: null,
-          runAt: '2025-10-15T14:30:00.000Z',
-          payload: { userId: 123, action: 'sync_data' },
-          status: 'SCHEDULED',
-          lastError: null,
-          createdAt: '2025-10-01T08:00:00.000Z',
-          updatedAt: '2025-10-01T08:00:00.000Z',
-        },
-      },
+      type: TaskEntity,
     }),
     ApiResponse({
       status: 400,
@@ -81,17 +95,7 @@ export const ApiCreateOnceDocs = () =>
         },
       },
     }),
-    ApiResponse({
-      status: 401,
-      description: '未授权，访问令牌无效或已过期',
-      schema: {
-        example: {
-          statusCode: 401,
-          message: 'Unauthorized',
-          error: 'Unauthorized',
-        },
-      },
-    }),
+    ApiUnauthorizedResponse,
     ApiBearerAuth(),
     ApiBody({
       type: CreateOnceDto,
@@ -149,24 +153,7 @@ export const ApiCreateCronDocs = () =>
     ApiResponse({
       status: 201,
       description: '已创建的周期任务',
-      schema: {
-        example: {
-          id: 'clx9abc123def457',
-          name: '每日数据备份',
-          handler: 'backup_handler',
-          type: 'CRON',
-          queueName: 'tasks',
-          jobId: 'job_789012',
-          repeatKey: '__default__::cron::daily-backup::0 0 2 * * *',
-          cron: '0 0 2 * * *',
-          runAt: null,
-          payload: { backupType: 'full', retentionDays: 30 },
-          status: 'SCHEDULED',
-          lastError: null,
-          createdAt: '2025-10-01T08:00:00.000Z',
-          updatedAt: '2025-10-01T08:00:00.000Z',
-        },
-      },
+      type: TaskEntity,
     }),
     ApiResponse({
       status: 400,
@@ -179,17 +166,7 @@ export const ApiCreateCronDocs = () =>
         },
       },
     }),
-    ApiResponse({
-      status: 401,
-      description: '未授权，访问令牌无效或已过期',
-      schema: {
-        example: {
-          statusCode: 401,
-          message: 'Unauthorized',
-          error: 'Unauthorized',
-        },
-      },
-    }),
+    ApiUnauthorizedResponse,
     ApiBearerAuth(),
     ApiBody({
       type: CreateCronDto,
@@ -202,6 +179,7 @@ export const ApiCreateCronDocs = () =>
             name: '每日数据备份',
             handler: 'backup_handler',
             cron: '0 0 2 * * *',
+            timezone: 'Asia/Shanghai',
             payload: { backupType: 'full', retentionDays: 30 },
           },
         },
@@ -212,6 +190,7 @@ export const ApiCreateCronDocs = () =>
             name: '小时数据同步',
             handler: 'sync_data_handler',
             cron: '0 0 * * * *',
+            timezone: 'Asia/Shanghai',
             payload: { syncType: 'incremental', source: 'api' },
           },
         },
@@ -222,6 +201,7 @@ export const ApiCreateCronDocs = () =>
             name: '健康检查轮询',
             handler: 'invoke_http',
             cron: '*/5 * * * *',
+            timezone: 'Asia/Shanghai',
             payload: {
               url: '/api/internal/health-check',
               method: 'GET',
@@ -243,43 +223,9 @@ export const ApiListTasksDocs = () =>
     ApiResponse({
       status: 200,
       description: '任务列表分页数据',
-      schema: {
-        example: {
-          items: [
-            {
-              id: 'clx9abc123def456',
-              name: '数据同步任务',
-              handler: 'sync_data_handler',
-              type: 'ONCE',
-              queueName: 'tasks',
-              jobId: 'job_123456',
-              repeatKey: null,
-              cron: null,
-              runAt: '2025-10-15T14:30:00.000Z',
-              payload: { userId: 123, action: 'sync_data' },
-              status: 'SCHEDULED',
-              lastError: null,
-              createdAt: '2025-10-01T08:00:00.000Z',
-              updatedAt: '2025-10-01T08:00:00.000Z',
-            },
-          ],
-          total: 25,
-          page: 1,
-          pageSize: 20,
-        },
-      },
+      type: PaginatedTasksResponse,
     }),
-    ApiResponse({
-      status: 401,
-      description: '未授权，访问令牌无效或已过期',
-      schema: {
-        example: {
-          statusCode: 401,
-          message: 'Unauthorized',
-          error: 'Unauthorized',
-        },
-      },
-    }),
+    ApiUnauthorizedResponse,
     ApiBearerAuth(),
     ApiQuery({
       name: 'search',
@@ -341,47 +287,10 @@ export const ApiTaskDetailDocs = () =>
     ApiResponse({
       status: 200,
       description: '任务详细信息',
-      schema: {
-        example: {
-          id: 'clx9abc123def456',
-          name: '数据同步任务',
-          handler: 'sync_data_handler',
-          type: 'ONCE',
-          queueName: 'tasks',
-          jobId: 'job_123456',
-          repeatKey: null,
-          cron: null,
-          runAt: '2025-10-15T14:30:00.000Z',
-          payload: { userId: 123, action: 'sync_data' },
-          status: 'SCHEDULED',
-          lastError: null,
-          createdAt: '2025-10-01T08:00:00.000Z',
-          updatedAt: '2025-10-01T08:00:00.000Z',
-        },
-      },
+      type: TaskEntity,
     }),
-    ApiResponse({
-      status: 401,
-      description: '未授权，访问令牌无效或已过期',
-      schema: {
-        example: {
-          statusCode: 401,
-          message: 'Unauthorized',
-          error: 'Unauthorized',
-        },
-      },
-    }),
-    ApiResponse({
-      status: 404,
-      description: '任务不存在',
-      schema: {
-        example: {
-          statusCode: 404,
-          message: '任务不存在',
-          error: 'Not Found',
-        },
-      },
-    }),
+    ApiUnauthorizedResponse,
+    ApiNotFoundResponse,
     ApiBearerAuth(),
     ApiParam({
       name: 'id',
@@ -403,24 +312,7 @@ export const ApiUpdateTaskDocs = () =>
     ApiResponse({
       status: 200,
       description: '更新后的任务信息',
-      schema: {
-        example: {
-          id: 'clx9abc123def456',
-          name: '更新的任务名称',
-          handler: 'invoke_http',
-          type: 'CRON',
-          queueName: 'tasks',
-          jobId: 'job_123456',
-          repeatKey: '__default__::cron::updated-task::0 0 3 * * *',
-          cron: '0 0 3 * * *',
-          runAt: null,
-          payload: { userId: 456, action: 'updated_action' },
-          status: 'SCHEDULED',
-          lastError: null,
-          createdAt: '2025-10-01T08:00:00.000Z',
-          updatedAt: '2025-10-01T09:30:00.000Z',
-        },
-      },
+      type: TaskEntity,
     }),
     ApiResponse({
       status: 400,
@@ -433,28 +325,8 @@ export const ApiUpdateTaskDocs = () =>
         },
       },
     }),
-    ApiResponse({
-      status: 401,
-      description: '未授权，访问令牌无效或已过期',
-      schema: {
-        example: {
-          statusCode: 401,
-          message: 'Unauthorized',
-          error: 'Unauthorized',
-        },
-      },
-    }),
-    ApiResponse({
-      status: 404,
-      description: '任务不存在',
-      schema: {
-        example: {
-          statusCode: 404,
-          message: '任务不存在',
-          error: 'Not Found',
-        },
-      },
-    }),
+    ApiUnauthorizedResponse,
+    ApiNotFoundResponse,
     ApiBearerAuth(),
     ApiParam({
       name: 'id',
@@ -509,32 +381,10 @@ export const ApiRemoveTaskDocs = () =>
     ApiResponse({
       status: 200,
       description: '删除成功响应',
-      schema: {
-        example: { ok: true },
-      },
+      type: OkResponse,
     }),
-    ApiResponse({
-      status: 401,
-      description: '未授权，访问令牌无效或已过期',
-      schema: {
-        example: {
-          statusCode: 401,
-          message: 'Unauthorized',
-          error: 'Unauthorized',
-        },
-      },
-    }),
-    ApiResponse({
-      status: 404,
-      description: '任务不存在',
-      schema: {
-        example: {
-          statusCode: 404,
-          message: '任务不存在',
-          error: 'Not Found',
-        },
-      },
-    }),
+    ApiUnauthorizedResponse,
+    ApiNotFoundResponse,
     ApiBearerAuth(),
     ApiParam({
       name: 'id',
@@ -555,21 +405,9 @@ export const ApiPauseQueueDocs = () =>
     ApiResponse({
       status: 200,
       description: '暂停成功响应',
-      schema: {
-        example: { ok: true },
-      },
+      type: OkResponse,
     }),
-    ApiResponse({
-      status: 401,
-      description: '未授权，访问令牌无效或已过期',
-      schema: {
-        example: {
-          statusCode: 401,
-          message: 'Unauthorized',
-          error: 'Unauthorized',
-        },
-      },
-    }),
+    ApiUnauthorizedResponse,
     ApiBearerAuth(),
   );
 
@@ -584,21 +422,9 @@ export const ApiResumeQueueDocs = () =>
     ApiResponse({
       status: 200,
       description: '恢复成功响应',
-      schema: {
-        example: { ok: true },
-      },
+      type: OkResponse,
     }),
-    ApiResponse({
-      status: 401,
-      description: '未授权，访问令牌无效或已过期',
-      schema: {
-        example: {
-          statusCode: 401,
-          message: 'Unauthorized',
-          error: 'Unauthorized',
-        },
-      },
-    }),
+    ApiUnauthorizedResponse,
     ApiBearerAuth(),
   );
 
@@ -613,32 +439,10 @@ export const ApiRunNowDocs = () =>
     ApiResponse({
       status: 200,
       description: '立即执行任务的响应，包含新创建的任务ID',
-      schema: {
-        example: { jobId: 'job_987654' },
-      },
+      type: RunNowResponse,
     }),
-    ApiResponse({
-      status: 401,
-      description: '未授权，访问令牌无效或已过期',
-      schema: {
-        example: {
-          statusCode: 401,
-          message: 'Unauthorized',
-          error: 'Unauthorized',
-        },
-      },
-    }),
-    ApiResponse({
-      status: 404,
-      description: '任务不存在',
-      schema: {
-        example: {
-          statusCode: 404,
-          message: '任务不存在',
-          error: 'Not Found',
-        },
-      },
-    }),
+    ApiUnauthorizedResponse,
+    ApiNotFoundResponse,
     ApiBearerAuth(),
     ApiParam({
       name: 'id',
@@ -659,32 +463,10 @@ export const ApiPauseTaskDocs = () =>
     ApiResponse({
       status: 200,
       description: '暂停成功响应',
-      schema: {
-        example: { ok: true },
-      },
+      type: OkResponse,
     }),
-    ApiResponse({
-      status: 401,
-      description: '未授权，访问令牌无效或已过期',
-      schema: {
-        example: {
-          statusCode: 401,
-          message: 'Unauthorized',
-          error: 'Unauthorized',
-        },
-      },
-    }),
-    ApiResponse({
-      status: 404,
-      description: '任务不存在',
-      schema: {
-        example: {
-          statusCode: 404,
-          message: '任务不存在',
-          error: 'Not Found',
-        },
-      },
-    }),
+    ApiUnauthorizedResponse,
+    ApiNotFoundResponse,
     ApiBearerAuth(),
     ApiParam({
       name: 'id',
@@ -704,32 +486,10 @@ export const ApiResumeTaskDocs = () =>
     ApiResponse({
       status: 200,
       description: '恢复成功响应',
-      schema: {
-        example: { ok: true },
-      },
+      type: OkResponse,
     }),
-    ApiResponse({
-      status: 401,
-      description: '未授权，访问令牌无效或已过期',
-      schema: {
-        example: {
-          statusCode: 401,
-          message: 'Unauthorized',
-          error: 'Unauthorized',
-        },
-      },
-    }),
-    ApiResponse({
-      status: 404,
-      description: '任务不存在',
-      schema: {
-        example: {
-          statusCode: 404,
-          message: '任务不存在',
-          error: 'Not Found',
-        },
-      },
-    }),
+    ApiUnauthorizedResponse,
+    ApiNotFoundResponse,
     ApiBearerAuth(),
     ApiParam({
       name: 'id',
