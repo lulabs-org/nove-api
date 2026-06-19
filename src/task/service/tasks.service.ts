@@ -134,11 +134,6 @@ export class TasksService {
           .removeJobScheduler(existing.jobId)
           .catch(() => undefined);
       }
-      if (existing.repeatKey) {
-        await this.queue
-          .removeRepeatableByKey(existing.repeatKey)
-          .catch(() => undefined);
-      }
 
       await this.queue.add(
         newHandler,
@@ -183,11 +178,6 @@ export class TasksService {
           .removeJobScheduler(existing.jobId)
           .catch(() => undefined);
       }
-      if (existing.repeatKey) {
-        await this.queue
-          .removeRepeatableByKey(existing.repeatKey)
-          .catch(() => undefined);
-      }
     } else if (existing.jobId) {
       await this.queue.remove(existing.jobId).catch(() => undefined);
     }
@@ -227,11 +217,6 @@ export class TasksService {
       if (existing.jobId) {
         await this.queue
           .removeJobScheduler(existing.jobId)
-          .catch(() => undefined);
-      }
-      if (existing.repeatKey) {
-        await this.queue
-          .removeRepeatableByKey(existing.repeatKey)
           .catch(() => undefined);
       }
     } else if (existing.jobId) {
