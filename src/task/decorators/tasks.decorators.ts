@@ -647,3 +647,94 @@ export const ApiRunNowDocs = () =>
       example: 'clx9abc123def456',
     }),
   );
+
+export const ApiPauseTaskDocs = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: '暂停单个任务（从队列中移除并在数据库标记为 PAUSED）',
+      description:
+        '暂停指定的任务，对于定时任务会从调度器中移除，直到调用恢复接口为止。',
+    }),
+    ApiProduces('application/json'),
+    ApiResponse({
+      status: 200,
+      description: '暂停成功响应',
+      schema: {
+        example: { ok: true },
+      },
+    }),
+    ApiResponse({
+      status: 401,
+      description: '未授权，访问令牌无效或已过期',
+      schema: {
+        example: {
+          statusCode: 401,
+          message: 'Unauthorized',
+          error: 'Unauthorized',
+        },
+      },
+    }),
+    ApiResponse({
+      status: 404,
+      description: '任务不存在',
+      schema: {
+        example: {
+          statusCode: 404,
+          message: '任务不存在',
+          error: 'Not Found',
+        },
+      },
+    }),
+    ApiBearerAuth(),
+    ApiParam({
+      name: 'id',
+      description: '任务 ID',
+      type: 'string',
+      example: 'clx9abc123def456',
+    }),
+  );
+
+export const ApiResumeTaskDocs = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: '恢复单个任务（重新加入队列调度并在数据库标记为 SCHEDULED）',
+      description: '恢复被暂停的任务，会将其重新加入到任务队列调度中。',
+    }),
+    ApiProduces('application/json'),
+    ApiResponse({
+      status: 200,
+      description: '恢复成功响应',
+      schema: {
+        example: { ok: true },
+      },
+    }),
+    ApiResponse({
+      status: 401,
+      description: '未授权，访问令牌无效或已过期',
+      schema: {
+        example: {
+          statusCode: 401,
+          message: 'Unauthorized',
+          error: 'Unauthorized',
+        },
+      },
+    }),
+    ApiResponse({
+      status: 404,
+      description: '任务不存在',
+      schema: {
+        example: {
+          statusCode: 404,
+          message: '任务不存在',
+          error: 'Not Found',
+        },
+      },
+    }),
+    ApiBearerAuth(),
+    ApiParam({
+      name: 'id',
+      description: '任务 ID',
+      type: 'string',
+      example: 'clx9abc123def456',
+    }),
+  );

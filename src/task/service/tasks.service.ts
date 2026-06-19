@@ -217,6 +217,80 @@ export class TasksService {
     return { ok: true };
   }
 
+  async pauseTask(id: string): Promise<{ ok: true }> {
+    const existing = await this.detail(id);
+    if (existing.status === TaskStatus.PAUSED) {
+      return { ok: true };
+    }
+
+    if (existing.type === TaskType.CRON) {
+      if (existing.jobId) {
+        await this.queue
+          .removeJobScheduler(existing.jobId)
+          .catch(() => undefined);
+      }
+      if (existing.repeatKey) {
+        await this.queue
+          .removeRepeatableByKey(existing.repeatKey)
+          .catch(() => undefined);
+      }
+    } else if (existing.jobId) {
+      await this.queue.remove(existing.jobId).catch(() => undefined);
+    }
+
+    await this.tasksRepository.update(id, { status: TaskStatus.PAUSED });
+    return { ok: true };
+  }
+
+  async resumeTask(id: string): Promise<{ ok: true }> {
+    const existing = await this.detail(id);
+    if (existing.status !== TaskStatus.PAUSED) {
+      return { ok: true };
+    }
+
+    let newJobId = existing.jobId;
+
+    if (existing.type === TaskType.CRON && existing.cron) {
+      const timezone = existing.timezone ?? 'Asia/Shanghai';
+      await this.queue.add(
+        existing.handler,
+        {
+          ...(existing.payload as Record<string, unknown>),
+          _taskId: existing.id,
+        },
+        {
+          repeat: { pattern: existing.cron, tz: timezone },
+          jobId: existing.id,
+          ...DEFAULT_JOB_OPTIONS,
+        } as JobsOptions,
+      );
+      newJobId = existing.id;
+    } else if (existing.type === TaskType.ONCE && existing.runAt) {
+      const runAt = new Date(existing.runAt);
+      const opts: JobsOptions = {
+        delay: Math.max(0, runAt.getTime() - Date.now()),
+        jobId: existing.jobId ?? existing.id,
+        ...DEFAULT_JOB_OPTIONS,
+      };
+      const job = await this.queue.add(
+        existing.handler,
+        {
+          ...(existing.payload as Record<string, unknown>),
+          _taskId: existing.id,
+        },
+        opts,
+      );
+      newJobId = String(job.id ?? opts.jobId);
+    }
+
+    await this.tasksRepository.update(id, {
+      status: TaskStatus.SCHEDULED,
+      jobId: newJobId,
+      ...(existing.type === TaskType.CRON ? { repeatKey: null } : {}),
+    });
+    return { ok: true };
+  }
+
   async runNow(id: string): Promise<{ jobId: string | number | null }> {
     const existing = await this.detail(id);
     const job = await this.queue.add(

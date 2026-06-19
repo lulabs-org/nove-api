@@ -38,6 +38,8 @@ import {
   ApiPauseQueueDocs,
   ApiResumeQueueDocs,
   ApiRunNowDocs,
+  ApiPauseTaskDocs,
+  ApiResumeTaskDocs,
 } from './decorators/tasks.decorators';
 import {
   OkResponse,
@@ -114,5 +116,17 @@ export class TasksController {
   @Post(':id/run')
   runNow(@Param('id') id: string) {
     return this.service.runNow(id);
+  }
+
+  @ApiPauseTaskDocs()
+  @Post(':id/pause')
+  pauseTask(@Param('id') id: string) {
+    return this.service.pauseTask(id);
+  }
+
+  @ApiResumeTaskDocs()
+  @Post(':id/resume')
+  resumeTask(@Param('id') id: string) {
+    return this.service.resumeTask(id);
   }
 }

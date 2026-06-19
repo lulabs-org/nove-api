@@ -20,19 +20,24 @@ export class PeriodSummaryHandler implements ITaskHandler, OnModuleInit {
   }
 
   async handle(job: Job): Promise<unknown> {
-    const jobData = job.data as any;
-    const periodType: PeriodType = jobData?.periodType || jobData?.payload?.periodType;
+    const jobData = job.data;
+    const periodType: PeriodType =
+      jobData?.periodType || jobData?.payload?.periodType;
 
     if (!periodType) {
-      this.logger.warn('generate_period_summary: periodType is missing in job data');
+      this.logger.warn(
+        'generate_period_summary: periodType is missing in job data',
+      );
       throw new Error('periodType is required for generating period summary');
     }
 
-    this.logger.log(`Executing period summary task for periodType: ${periodType}`);
-    
+    this.logger.log(
+      `Executing period summary task for periodType: ${periodType}`,
+    );
+
     // Call the service directly
     const result = await this.summaryService.process(periodType);
-    
+
     return { ok: true, data: result };
   }
 }
