@@ -74,11 +74,15 @@ export class TasksService {
         tz: timezone, // 使用动态时区
       };
 
-      await this.queue.add(dto.handler, { ...dto.payload, _taskId: task.id }, {
+      await this.queue.upsertJobScheduler(
+        task.id,
         repeat,
-        jobId: task.id, // Explicit jobId so BullMQ v5 doesn't overwrite schedulers
-        ...DEFAULT_JOB_OPTIONS,
-      } as JobsOptions);
+        {
+          name: dto.handler,
+          data: { ...(dto.payload as Record<string, unknown>), _taskId: task.id },
+          opts: DEFAULT_JOB_OPTIONS,
+        }
+      );
 
       return await this.tasksRepository.update(task.id, {
         jobId: task.id, // The scheduler ID is the task id
@@ -133,19 +137,24 @@ export class TasksService {
         await this.queue
           .removeJobScheduler(existing.jobId)
           .catch(() => undefined);
+        if (existing.cron) {
+          await this.queue
+            .removeRepeatable(existing.handler, { pattern: existing.cron, tz: existing.timezone ?? 'Asia/Shanghai' })
+            .catch(() => undefined);
+        }
       }
 
-      await this.queue.add(
-        newHandler,
+      await this.queue.upsertJobScheduler(
+        existing.id,
+        { pattern: dto.cron, tz: timezone },
         {
-          ...(dto.payload ?? (existing.payload as Record<string, unknown>)),
-          _taskId: existing.id,
-        },
-        {
-          repeat: { pattern: dto.cron, tz: timezone }, // 使用动态时区
-          jobId: existing.id,
-          ...DEFAULT_JOB_OPTIONS,
-        } as JobsOptions,
+          name: newHandler,
+          data: {
+            ...(dto.payload ?? (existing.payload as Record<string, unknown>)),
+            _taskId: existing.id,
+          },
+          opts: DEFAULT_JOB_OPTIONS,
+        }
       );
 
       return this.tasksRepository.update(id, {
@@ -177,6 +186,11 @@ export class TasksService {
         await this.queue
           .removeJobScheduler(existing.jobId)
           .catch(() => undefined);
+        if (existing.cron) {
+          await this.queue
+            .removeRepeatable(existing.handler, { pattern: existing.cron, tz: existing.timezone ?? 'Asia/Shanghai' })
+            .catch(() => undefined);
+        }
       }
     } else if (existing.jobId) {
       await this.queue.remove(existing.jobId).catch(() => undefined);
@@ -218,6 +232,11 @@ export class TasksService {
         await this.queue
           .removeJobScheduler(existing.jobId)
           .catch(() => undefined);
+        if (existing.cron) {
+          await this.queue
+            .removeRepeatable(existing.handler, { pattern: existing.cron, tz: existing.timezone ?? 'Asia/Shanghai' })
+            .catch(() => undefined);
+        }
       }
     } else if (existing.jobId) {
       await this.queue.remove(existing.jobId).catch(() => undefined);
@@ -237,17 +256,17 @@ export class TasksService {
 
     if (existing.type === TaskType.CRON && existing.cron) {
       const timezone = existing.timezone ?? 'Asia/Shanghai';
-      await this.queue.add(
-        existing.handler,
+      await this.queue.upsertJobScheduler(
+        existing.id,
+        { pattern: existing.cron, tz: timezone },
         {
-          ...(existing.payload as Record<string, unknown>),
-          _taskId: existing.id,
-        },
-        {
-          repeat: { pattern: existing.cron, tz: timezone },
-          jobId: existing.id,
-          ...DEFAULT_JOB_OPTIONS,
-        } as JobsOptions,
+          name: existing.handler,
+          data: {
+            ...(existing.payload as Record<string, unknown>),
+            _taskId: existing.id,
+          },
+          opts: DEFAULT_JOB_OPTIONS,
+        }
       );
       newJobId = existing.id;
     } else if (existing.type === TaskType.ONCE && existing.runAt) {

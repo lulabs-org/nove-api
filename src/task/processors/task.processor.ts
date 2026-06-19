@@ -91,11 +91,13 @@ export class TaskProcessor extends WorkerHost {
 
     if (task) {
       if (task.type === TaskType.CRON) {
-        await this.tasksRepository.updateTaskStatus(
-          task.id,
-          TaskStatus.SCHEDULED,
-          null,
-        );
+        if (task.status !== TaskStatus.PAUSED) {
+          await this.tasksRepository.updateTaskStatus(
+            task.id,
+            TaskStatus.SCHEDULED,
+            null,
+          );
+        }
       } else {
         await this.tasksRepository.updateTaskStatus(
           task.id,
