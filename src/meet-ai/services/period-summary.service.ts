@@ -12,17 +12,17 @@ export class PeriodSummaryService {
   private readonly logger = new Logger(PeriodSummaryService.name);
 
   constructor(
-    private readonly periodSummaryRepository: PeriodSummaryRepository,
+    private readonly summaryRepo: PeriodSummaryRepository,
     private readonly periodTimeRange: PeriodTimeRange,
     private readonly openaiService: OpenaiService,
     @Inject(openaiConfig.KEY)
     private readonly config: ConfigType<typeof openaiConfig>,
-  ) {}
+  ) { }
 
   /**
    * 获取周期配置上下文
    */
-  private getPeriodContext(periodType: PeriodType) {
+  private getContext(periodType: PeriodType) {
     const periodMap: Partial<
       Record<PeriodType, { parent: PeriodType; label: string }>
     > = {
@@ -38,15 +38,13 @@ export class PeriodSummaryService {
   /**
    * 处理总结任务
    */
-  async processSummary(
-    periodType: PeriodType,
-  ): Promise<{ ok: boolean; at: string }> {
+  async process(periodType: PeriodType): Promise<{ ok: boolean; at: string }> {
     this.logger.log(
       `开始执行任务: personal${periodType}MeetingSummary`,
       new Date().toISOString(),
     );
 
-    const ctx = this.getPeriodContext(periodType);
+    const ctx = this.getContext(periodType);
     if (!ctx) {
       this.logger.warn(`不支持或未知的周期类型: ${periodType}`);
       return { ok: false, at: new Date().toISOString() };
@@ -61,12 +59,11 @@ export class PeriodSummaryService {
     }
 
     // 1. 获取所有符合条件的参与总结记录
-    const summaries =
-      await this.periodSummaryRepository.findAllMeetingSummaries({
-        periodStart,
-        periodEnd,
-        parentPeriodType: ctx.parent,
-      });
+    const summaries = await this.summaryRepo.findMany({
+      periodStart,
+      periodEnd,
+      parentPeriodType: ctx.parent,
+    });
 
     // 2. 提取唯一的平台用户 ID 列表
     const platformUserIds = [
@@ -84,7 +81,7 @@ export class PeriodSummaryService {
 
     // 3. 遍历并处理每个用户的总结
     for (const platformUserId of platformUserIds) {
-      await this.processOneUserSummary(
+      await this.processUser(
         platformUserId,
         periodType,
         ctx,
@@ -99,7 +96,7 @@ export class PeriodSummaryService {
   /**
    * 处理单个用户的会议总结
    */
-  private async processOneUserSummary(
+  private async processUser(
     platformUserId: string,
     periodType: PeriodType,
     ctx: { parent: PeriodType; label: string },
@@ -107,7 +104,7 @@ export class PeriodSummaryService {
     periodEnd: Date,
   ) {
     const userSummaries =
-      await this.periodSummaryRepository.findSummaryByPlatformUserId({
+      await this.summaryRepo.findByPlatformUserId({
         platformUserId,
         parentPeriodType: ctx.parent,
         periodStart,
@@ -142,20 +139,19 @@ export class PeriodSummaryService {
     this.logger.log(`OpenAI聊天完成: ${reply?.slice(0, 200)}`);
 
     // 保存主总结
-    const parentSummary =
-      await this.periodSummaryRepository.createPeriodSummary({
-        periodType,
-        periodStart,
-        periodEnd,
-        userName,
-        partSummary: reply || '',
-        platformUserId,
-        aiModel: this.config.model,
-      });
+    const parentSummary = await this.summaryRepo.create({
+      periodType,
+      periodStart,
+      periodEnd,
+      userName,
+      partSummary: reply || '',
+      platformUserId,
+      aiModel: this.config.model,
+    });
 
     // 关联子总结
     for (const child of userSummaries) {
-      await this.periodSummaryRepository.createSummaryRelation({
+      await this.summaryRepo.createRelation({
         parentSummaryId: parentSummary.id,
         childSummaryId: child.id,
         parentPeriodType: ctx.parent,
