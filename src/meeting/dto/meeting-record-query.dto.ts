@@ -50,8 +50,8 @@ export class QueryMeetingRecordsDto {
   type?: MeetingType;
 
   @ApiPropertyOptional({
-    description: '开始日期',
-    example: '2024-01-01',
+    description: '开始日期（务必传入包含时区信息的 ISO 8601 格式，例如前端通过 date.toISOString() 生成）',
+    example: '2023-12-31T16:00:00.000Z',
   })
   @IsOptional()
   @Type(() => Date)
@@ -59,8 +59,8 @@ export class QueryMeetingRecordsDto {
   startDate?: Date;
 
   @ApiPropertyOptional({
-    description: '结束日期',
-    example: '2024-12-31',
+    description: '结束日期（务必传入包含时区信息的 ISO 8601 格式，例如前端通过 date.toISOString() 生成）',
+    example: '2024-12-31T15:59:59.999Z',
   })
   @IsOptional()
   @Type(() => Date)
