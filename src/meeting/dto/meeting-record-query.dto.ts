@@ -12,14 +12,14 @@ import {
   IsString,
   IsOptional,
   IsEnum,
-  IsDateString,
+  IsDate,
   IsNumber,
   Min,
   Max,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { MeetingPlatform, MeetingType, ProcessingStatus } from '@prisma/client';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 
 export class QueryMeetingRecordsDto {
   @ApiPropertyOptional({
@@ -54,16 +54,18 @@ export class QueryMeetingRecordsDto {
     example: '2024-01-01',
   })
   @IsOptional()
-  @IsDateString()
-  startDate?: string;
+  @Type(() => Date)
+  @IsDate()
+  startDate?: Date;
 
   @ApiPropertyOptional({
     description: '结束日期',
     example: '2024-12-31',
   })
   @IsOptional()
-  @IsDateString()
-  endDate?: string;
+  @Type(() => Date)
+  @IsDate()
+  endDate?: Date;
 
   @ApiPropertyOptional({
     description: '页码',
