@@ -2,13 +2,13 @@ import {
   IsString,
   IsOptional,
   IsEnum,
-  IsDateString,
+  IsDate,
   IsNumber,
   Min,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { MeetingType, ProcessingStatus } from '@prisma/client';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 
 export class UpdateMeetingRecordDto {
   @ApiPropertyOptional({
@@ -53,20 +53,22 @@ export class UpdateMeetingRecordDto {
   hostUserName?: string;
 
   @ApiPropertyOptional({
-    description: '实际开始时间',
+    description: '实际开始时间（务必传入包含时区信息的 ISO 8601 格式，例如前端通过 date.toISOString() 生成）',
     example: '2024-01-01T10:00:00.000Z',
   })
   @IsOptional()
-  @IsDateString({}, { message: '实际开始时间格式不正确' })
-  actualStartAt?: string;
+  @Type(() => Date)
+  @IsDate({ message: '实际开始时间格式不正确' })
+  actualStartAt?: Date;
 
   @ApiPropertyOptional({
-    description: '结束时间',
+    description: '结束时间（务必传入包含时区信息的 ISO 8601 格式，例如前端通过 date.toISOString() 生成）',
     example: '2024-01-01T11:00:00.000Z',
   })
   @IsOptional()
-  @IsDateString({}, { message: '结束时间格式不正确' })
-  endedAt?: string;
+  @Type(() => Date)
+  @IsDate({ message: '结束时间格式不正确' })
+  endedAt?: Date;
 
   @ApiPropertyOptional({
     description: '持续时间（分钟）',
