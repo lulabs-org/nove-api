@@ -81,9 +81,9 @@ export class MeetingService {
           ? params.hostUserId
           : null,
       startAt: params.actualStartAt
-        ? new Date(params.actualStartAt)
+        ? params.actualStartAt
         : new Date(),
-      endAt: params.endedAt ? new Date(params.endedAt) : new Date(),
+      endAt: params.endedAt ? params.endedAt : new Date(),
       durationSeconds: params.duration || 0,
       hasRecording: params.hasRecording || false,
       recordingStatus: params.recordingStatus || ProcessingStatus.PENDING,
@@ -129,10 +129,10 @@ export class MeetingService {
       updateData.hostId = params.hostUserId;
     }
     if (params.actualStartAt !== undefined) {
-      updateData.startAt = new Date(params.actualStartAt);
+      updateData.startAt = params.actualStartAt;
     }
     if (params.endedAt !== undefined) {
-      updateData.endAt = new Date(params.endedAt);
+      updateData.endAt = params.endedAt;
     }
     if (params.duration !== undefined) {
       updateData.durationSeconds = params.duration;

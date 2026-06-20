@@ -13,7 +13,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
-import { NoPermissionRequired } from '@/permission/decorators/permissions.decorator';
+import { RequirePermissions } from '@/permission/decorators/permissions.decorator';
 import {
   ApiGetMeetingRecordsDocs,
   ApiGetMeetingRecordByIdDocs,
@@ -22,7 +22,6 @@ import {
   ApiDeleteMeetingRecordDocs,
   ApiGetMeetingStatsDocs,
   ApiReprocessMeetingRecordDocs,
-  ApiHealthCheckDocs,
   ApiGetTranscriptByRecordingIdDocs,
 } from './decorators/meeting-record.decorators';
 import { MeetingService } from './service/meeting.service';
@@ -44,31 +43,16 @@ import { CuidPipe } from '@/common/pipes/cuid.pipe';
 @ApiTags('Meet')
 @Controller('meetings')
 @ApiBearerAuth()
-@NoPermissionRequired()
 export class MeetingController {
   private readonly logger = new Logger(MeetingController.name);
 
   constructor(private readonly meetingService: MeetingService) {}
 
   /**
-   * 健康检查端点
-   * 注意：此路由必须放在 @Get(':id') 之前，否则会被捕获
-   */
-  @Get('health')
-  @HttpCode(HttpStatus.OK)
-  @ApiHealthCheckDocs()
-  healthCheck() {
-    return {
-      status: 'ok',
-      timestamp: new Date().toISOString(),
-      service: 'meeting-service',
-    };
-  }
-
-  /**
    * 获取会议记录列表
    */
   @Get()
+  @RequirePermissions('meeting:read')
   @HttpCode(HttpStatus.OK)
   @ApiGetMeetingRecordsDocs()
   async getMeetingRecords(
@@ -78,12 +62,7 @@ export class MeetingController {
     this.logger.log('获取会议记录列表', { query });
 
     try {
-      const queryParams = {
-        ...query,
-        startDate: query.startDate ? new Date(query.startDate) : undefined,
-        endDate: query.endDate ? new Date(query.endDate) : undefined,
-      };
-      const result = await this.meetingService.getMeetingRecords(queryParams);
+      const result = await this.meetingService.getMeetingRecords(query);
 
       this.logger.log(`获取会议记录成功，共 ${result.total} 条记录`);
       return {
@@ -103,6 +82,7 @@ export class MeetingController {
    * 根据ID获取会议记录详情
    */
   @Get(':id')
+  @RequirePermissions('meeting:read')
   @HttpCode(HttpStatus.OK)
   @ApiGetMeetingRecordByIdDocs()
   async getMeetingRecordById(
@@ -125,6 +105,7 @@ export class MeetingController {
    * 创建会议记录
    */
   @Post()
+  @RequirePermissions('meeting:create')
   @HttpCode(HttpStatus.CREATED)
   @ApiCreateMeetingRecordDocs()
   async createMeetingRecord(
@@ -150,6 +131,7 @@ export class MeetingController {
    * 更新会议记录
    */
   @Put(':id')
+  @RequirePermissions('meeting:update')
   @HttpCode(HttpStatus.OK)
   @ApiUpdateMeetingRecordDocs()
   async updateMeetingRecord(
@@ -176,6 +158,7 @@ export class MeetingController {
    * 删除会议记录
    */
   @Delete(':id')
+  @RequirePermissions('meeting:delete')
   @HttpCode(HttpStatus.OK)
   @ApiDeleteMeetingRecordDocs()
   async deleteMeetingRecord(
@@ -203,6 +186,7 @@ export class MeetingController {
    * 获取会议统计信息
    */
   @Get('stats/summary')
+  @RequirePermissions('meeting:stats_view')
   @HttpCode(HttpStatus.OK)
   @ApiGetMeetingStatsDocs()
   getMeetingStats(
@@ -229,6 +213,7 @@ export class MeetingController {
    * 重新处理会议录制文件
    */
   @Post(':id/reprocess')
+  @RequirePermissions('meeting:reprocess')
   @HttpCode(HttpStatus.OK)
   @ApiReprocessMeetingRecordDocs()
   async reprocessMeetingRecord(
@@ -254,6 +239,7 @@ export class MeetingController {
    * 获取录制的转写文本
    */
   @Get('recordings/:recordingId/transcript')
+  @RequirePermissions('meeting:read')
   @HttpCode(HttpStatus.OK)
   @ApiGetTranscriptByRecordingIdDocs()
   async getTranscriptByRecordingId(
