@@ -5,10 +5,11 @@ model Transcript {
   language String  @default("zh-CN")
   status   Int     @default(0) @db.SmallInt
 
-  recordingId String?           @map("recording_id")
-  recording   MeetingRecording? @relation(fields: [recordingId], references: [id], onDelete: Cascade)
+  recordingId String?             @map("recording_id")
+  recording   MeetingRecording?   @relation(fields: [recordingId], references: [id], onDelete: Cascade)
   summaries   MeetingSummary[]
   paragraphs  Paragraph[]
+  segments    TranscriptSegment[]
 
   // 时间及系统字段
   startedAt  DateTime? @map("started_at") @db.Timestamptz(6)
@@ -92,4 +93,38 @@ model Word {
   @@unique([sentenceId, wid])
   @@index([text])
   @@map("transcript_words")
+}
+
+// 核心数据表，以“一句话”为基础粒度（新表，双写迁移期使用）
+model TranscriptSegment {
+  id String @id @default(cuid())
+
+  transcriptId String     @map("transcript_id")
+  transcript   Transcript @relation(fields: [transcriptId], references: [id], onDelete: Cascade)
+
+  // 说话人关联
+  speakerId   String?       @map("speaker_id")
+  speaker     PlatformUser? @relation("Speaker", fields: [speakerId], references: [id], onDelete: SetNull)
+  speakerName String?       @map("speaker_name")
+
+  // 时间戳
+  startTimeMs BigInt @map("start_time_ms")
+  endTimeMs   BigInt @map("end_time_ms")
+
+  text       String // 识别出来的完整句子文本
+  confidence Float? // AI 对这句话的整体识别置信度 (0.0 ~ 1.0)
+
+  // JSONB 存储词级别的详细对齐数据
+  // 核心：利用 PostgreSQL 的 JSONB 存储词级别的详细对齐数据
+  // 格式如：[{"word": "大", "start": 123.5, "end": 123.8}, {"word": "家", ...}]
+  wordsDetail Json? @map("words_detail")
+
+  // 系统字段及时间
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@index([transcriptId, startTimeMs])
+  @@index([speakerId])
+  @@map("transcript_segments")
 }
