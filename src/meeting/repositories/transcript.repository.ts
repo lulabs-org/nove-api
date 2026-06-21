@@ -11,11 +11,10 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { PrismaTransaction } from '@/tencent-mtg-hook/types';
-import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class TranscriptRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async create_tx(
     tx: PrismaTransaction,
