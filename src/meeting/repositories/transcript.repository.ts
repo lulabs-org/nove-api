@@ -11,7 +11,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { PrismaTransaction } from '@/tencent-mtg-hook/types';
-import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class TranscriptRepository {
@@ -21,7 +20,7 @@ export class TranscriptRepository {
     tx: PrismaTransaction,
     data: {
       source: string;
-      rawJson: Prisma.InputJsonValue;
+      rawFileUrl?: string;
       status: number;
       startedAt?: Date;
       finishedAt?: Date;
@@ -35,7 +34,7 @@ export class TranscriptRepository {
 
   async create(data: {
     source: string;
-    rawJson: Prisma.InputJsonValue;
+    rawFileUrl?: string;
     status: number;
     startedAt?: Date;
     finishedAt?: Date;
@@ -96,7 +95,7 @@ export class TranscriptRepository {
 
   async upsert(data: {
     source: string;
-    rawJson: Prisma.InputJsonValue;
+    rawFileUrl?: string;
     status: number;
     startedAt?: Date;
     finishedAt?: Date;
@@ -109,7 +108,7 @@ export class TranscriptRepository {
         where: { id: existingTranscript.id },
         data: {
           source: data.source,
-          rawJson: data.rawJson,
+          rawFileUrl: data.rawFileUrl,
           status: data.status,
           startedAt: data.startedAt,
           finishedAt: data.finishedAt,
@@ -119,7 +118,7 @@ export class TranscriptRepository {
       return this.prisma.transcript.create({
         data: {
           source: data.source,
-          rawJson: data.rawJson,
+          rawFileUrl: data.rawFileUrl,
           status: data.status,
           startedAt: data.startedAt,
           finishedAt: data.finishedAt,

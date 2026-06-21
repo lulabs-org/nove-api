@@ -251,7 +251,8 @@ export class MeetingDatabaseService {
       if (!transcript) {
         const res = await this.transcriptRepo.create({
           source: `tencent-meeting:${file.id}`,
-          rawJson: file.paragraphs as unknown as Prisma.InputJsonValue,
+          // TODO: 如果后续接入了 OSS，可以在此处生成并传入 rawFileUrl
+          // rawFileUrl: uploadedUrl,
           status: 2,
           recordingId: recording.id,
         });
