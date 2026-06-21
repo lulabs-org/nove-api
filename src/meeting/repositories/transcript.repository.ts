@@ -14,7 +14,7 @@ import { PrismaTransaction } from '@/tencent-mtg-hook/types';
 
 @Injectable()
 export class TranscriptRepository {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async create_tx(
     tx: PrismaTransaction,

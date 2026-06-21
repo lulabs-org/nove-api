@@ -80,9 +80,7 @@ export class MeetingService {
         params.hostUserId && params.hostUserId.trim() !== ''
           ? params.hostUserId
           : null,
-      startAt: params.actualStartAt
-        ? params.actualStartAt
-        : new Date(),
+      startAt: params.actualStartAt ? params.actualStartAt : new Date(),
       endAt: params.endedAt ? params.endedAt : new Date(),
       durationSeconds: params.duration || 0,
       hasRecording: params.hasRecording || false,

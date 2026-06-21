@@ -53,7 +53,8 @@ export class UpdateMeetingRecordDto {
   hostUserName?: string;
 
   @ApiPropertyOptional({
-    description: '实际开始时间（务必传入包含时区信息的 ISO 8601 格式，例如前端通过 date.toISOString() 生成）',
+    description:
+      '实际开始时间（务必传入包含时区信息的 ISO 8601 格式，例如前端通过 date.toISOString() 生成）',
     example: '2024-01-01T10:00:00.000Z',
   })
   @IsOptional()
@@ -62,7 +63,8 @@ export class UpdateMeetingRecordDto {
   actualStartAt?: Date;
 
   @ApiPropertyOptional({
-    description: '结束时间（务必传入包含时区信息的 ISO 8601 格式，例如前端通过 date.toISOString() 生成）',
+    description:
+      '结束时间（务必传入包含时区信息的 ISO 8601 格式，例如前端通过 date.toISOString() 生成）',
     example: '2024-01-01T11:00:00.000Z',
   })
   @IsOptional()
