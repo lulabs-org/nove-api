@@ -136,12 +136,17 @@ export class TencentMtgSyncService {
 
               if (record.state === 3) {
                 try {
+                  const startTime = meeting.scheduledStartAt ? Math.floor(meeting.scheduledStartAt.getTime() / 1000) : undefined;
+                  const endTime = meeting.scheduledEndAt ? Math.floor(meeting.scheduledEndAt.getTime() / 1000) : undefined;
+                  
                   await this.upsertTranscriptFromFile(
                     record.meeting_id,
                     meeting.subMeetingId || '__ROOT__',
                     recording.id,
                     file.record_file_id,
                     effectiveOperatorId,
+                    startTime,
+                    endTime,
                   );
                 } catch (transcriptError) {
                   const msg = `Failed to upsert transcript for file ${file.record_file_id}: ${(transcriptError as Error).message}`;
@@ -251,6 +256,8 @@ export class TencentMtgSyncService {
     recordingId: string,
     recordFileId: string,
     operatorId: string,
+    startTime?: number,
+    endTime?: number,
   ) {
     const existingTranscript =
       await this.transcriptRepo.findByRecordingId(recordingId);
@@ -272,6 +279,8 @@ export class TencentMtgSyncService {
         meetid,
         operatorId,
         subid,
+        startTime,
+        endTime,
       );
       deduplicated = participantResult.deduplicated || [];
       if (deduplicated.length > 0) {
@@ -283,42 +292,32 @@ export class TencentMtgSyncService {
       );
     }
 
-    let page = 1;
-    const pageSize = 200;
-    let hasMore = true;
     const allParagraphs: NewTranscriptParagraph[] = [];
 
-    while (hasMore) {
-      const res = await this.tencentApi.getTranscript(
-        recordFileId,
-        operatorId,
-        1,
-        page,
-        pageSize,
+    const res = await this.tencentApi.getTranscript(
+      recordFileId,
+      operatorId,
+      1,
+    );
+
+    if (res.minutes?.paragraphs) {
+      // 使用 SpeakerService 匹配并丰富说话人信息
+      const mappedParagraphs = await Promise.all(
+        res.minutes.paragraphs.map(async (p) => ({
+          ...p,
+          speaker_info:
+            deduplicated.length > 0
+              ? await this.speakerSvc.enrichSpeakerInfo(
+                  p.speaker_info,
+                  deduplicated,
+                )
+              : {
+                  ...p.speaker_info,
+                  uuid: p.speaker_info.openId || p.speaker_info.userid,
+                },
+        })),
       );
-
-      if (res.minutes?.paragraphs) {
-        // 使用 SpeakerService 匹配并丰富说话人信息
-        const mappedParagraphs = await Promise.all(
-          res.minutes.paragraphs.map(async (p) => ({
-            ...p,
-            speaker_info:
-              deduplicated.length > 0
-                ? await this.speakerSvc.enrichSpeakerInfo(
-                    p.speaker_info,
-                    deduplicated,
-                  )
-                : {
-                    ...p.speaker_info,
-                    uuid: p.speaker_info.openId || p.speaker_info.userid,
-                  },
-          })),
-        );
-        allParagraphs.push(...mappedParagraphs);
-      }
-
-      hasMore = res.more;
-      page++;
+      allParagraphs.push(...mappedParagraphs);
     }
 
     if (allParagraphs.length > 0) {
