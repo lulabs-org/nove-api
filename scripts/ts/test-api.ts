@@ -32,8 +32,8 @@ async function bootstrap() {
   const operatorId = 'woaJARCQAA65b_BO6kq2pTSG-yvvjc_g';
 
   try {
-    console.log("=== Testing getTranscript with page=1, pageSize=200 ===");
-    const res = await tencentApi.getTranscript(recordFileId, operatorId, 1, 1, 200);
+    console.log("=== Testing getTranscript with limit=200 ===");
+    const res = await tencentApi.getTranscript(recordFileId, operatorId, 1, undefined, 200);
     console.log("Transcript paragraphs count:", res.minutes?.paragraphs?.length || 0);
   } catch (e) {
     console.error("Error:", e.message);
