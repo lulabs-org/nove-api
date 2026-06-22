@@ -23,8 +23,8 @@ async function bootstrap() {
     take: 1
   });
 
-  if (recordings.length === 0) {
-    console.log("No recordings found");
+  if (recordings.length === 0 || !recordings[0].externalId) {
+    console.log("No recordings found or missing externalId");
     return;
   }
 
