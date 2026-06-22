@@ -35,10 +35,12 @@ export class RecordingDataFetcherService {
       return r;
     }
 
+    const cid = r.cid;
+
     try {
       const { unique, raw } = await this.participantSvc.list(
         r.meetid,
-        r.cid,
+        cid,
         r.subid,
       );
 
@@ -57,52 +59,52 @@ export class RecordingDataFetcherService {
       return r;
     }
 
-    for (const file of r.files) {
-      const [content, transcript] = await Promise.allSettled([
-        this.summarySvc.getContent(file.id, r.cid),
-        this.transcriptSvc.fetch(file.id, r.cid),
-      ]);
+    await Promise.all(
+      r.files.map(async (file) => {
+        if (!file.id) return;
 
-      if (content.status === 'fulfilled') {
-        file.fullsummary = content.value.summary;
-        file.aiminutes = content.value.minutes;
-      } else {
-        this.logger.warn(`获取会议内容失败: ${file.id}, ${content.reason}`);
-      }
+        const [content, transcript] = await Promise.allSettled([
+          this.summarySvc.getContent(file.id, cid),
+          this.transcriptSvc.fetch(file.id, cid),
+        ]);
 
-      if (transcript.status === 'fulfilled') {
-        // 设置转写文本、说话人列表和段落信息
-        file.formattedtext = transcript.value.text;
-        file.speakerlist = transcript.value.speakers;
-        file.paragraphs = transcript.value.paragraphs;
-
-        // 如果存在去重参会者数据和说话人列表，则丰富说话人信息
-        if (r.deduplicated && file.speakerlist) {
-          const deduplicated = r.deduplicated;
-          file.speakerlist = await Promise.all(
-            file.speakerlist.map((speakerInfo) =>
-              this.speakerSvc.enrichSpeakerInfo(speakerInfo, deduplicated),
-            ),
-          );
+        if (content.status === 'fulfilled') {
+          file.fullsummary = content.value.summary;
+          file.aiminutes = content.value.minutes;
+        } else {
+          this.logger.warn(`获取会议内容失败: ${file.id}, ${content.reason}`);
         }
 
-        // 如果存在去重参会者数据和段落信息，则丰富段落中的说话人信息
-        if (r.deduplicated && file.paragraphs) {
-          const deduplicated = r.deduplicated;
-          file.paragraphs = await Promise.all(
-            file.paragraphs.map(async (paragraph) => ({
-              ...paragraph,
-              speaker_info: await this.speakerSvc.enrichSpeakerInfo(
-                paragraph.speaker_info,
-                deduplicated,
-              ),
-            })),
-          );
+        if (transcript.status === 'fulfilled') {
+          file.formattedtext = transcript.value.text;
+          let speakers: any = transcript.value.speakers;
+          let paragraphs: any = transcript.value.paragraphs;
+
+          if (r.deduplicated) {
+            const dedup = r.deduplicated;
+            const enrich = (info: any) =>
+              this.speakerSvc.enrichSpeakerInfo(info, dedup);
+
+            [speakers, paragraphs] = await Promise.all([
+              speakers ? Promise.all(speakers.map(enrich)) : undefined,
+              paragraphs
+                ? Promise.all(
+                    paragraphs.map(async (p: any) => ({
+                      ...p,
+                      speaker_info: await enrich(p.speaker_info),
+                    })),
+                  )
+                : undefined,
+            ]);
+          }
+
+          file.speakerlist = speakers;
+          file.paragraphs = paragraphs;
+        } else {
+          this.logger.warn(`获取录音转写失败: ${file.id}, ${transcript.reason}`);
         }
-      } else {
-        this.logger.warn(`获取录音转写失败: ${file.id}, ${transcript.reason}`);
-      }
-    }
+      }),
+    );
 
     return r;
   }
