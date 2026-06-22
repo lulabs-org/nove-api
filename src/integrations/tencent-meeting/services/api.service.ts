@@ -61,7 +61,7 @@ export class TencentApiService {
       const filteredParams: Record<string, string> = {};
       for (const [key, value] of Object.entries(queryParams)) {
         if (value !== undefined) {
-          filteredParams[key] = String(value);
+          filteredParams[key] = String(value as string | number | boolean);
         }
       }
       const queryString = new URLSearchParams(filteredParams).toString();
