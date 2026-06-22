@@ -10,6 +10,7 @@ import { MeetingPlatform, RecordingSource } from '@prisma/client';
 import type {
   RecordMeeting,
   RecordFile,
+  ParticipantDetail,
 } from '@/integrations/tencent-meeting/types';
 import {
   TENCENT_MEETING_TYPE_RECURRING,
@@ -23,6 +24,7 @@ import { TranscriptRepository } from '@/meeting/repositories/transcript.reposito
 import { TranscriptBatchProcessor } from '@/tencent-mtg-hook/services/transcript-batch-processor.service';
 import { ParticipantService } from '@/integrations/tencent-meeting/services';
 import { SpeakerService } from '@/tencent-mtg-hook/services/speaker.service';
+import { NewTranscriptParagraph } from '@/tencent-mtg-hook/types/recording-transcript.types';
 
 @Injectable()
 export class TencentMtgSyncService {
@@ -264,7 +266,7 @@ export class TencentMtgSyncService {
     });
 
     // 获取参会者列表，用于后续丰富说话人信息
-    let deduplicated: any[] = [];
+    let deduplicated: ParticipantDetail[] = [];
     try {
       const participantResult = await this.participantSvc.list(
         meetid,
@@ -284,7 +286,7 @@ export class TencentMtgSyncService {
     let page = 1;
     const pageSize = 200;
     let hasMore = true;
-    const allParagraphs: any[] = [];
+    const allParagraphs: NewTranscriptParagraph[] = [];
 
     while (hasMore) {
       const res = await this.tencentApi.getTranscript(

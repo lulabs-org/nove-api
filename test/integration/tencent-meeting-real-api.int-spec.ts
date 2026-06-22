@@ -10,7 +10,7 @@ import {
   SmartTopicsResponse,
   SmartFullSummaryResponse,
   SmartMeetingMinutesResponse,
-  RecordingTranscriptResponse,
+  TranscriptResponse,
   MeetingParticipantsResponse,
 } from '@/integrations/tencent-meeting/types';
 
@@ -355,7 +355,7 @@ describe('Tencent Meeting Real API Integration Tests', () => {
 
       if (testFileId && testFileId !== 'test-recording-file-id') {
         try {
-          const transcriptDetail: RecordingTranscriptResponse =
+          const transcriptDetail: TranscriptResponse =
             await apiService.getTranscript(
               testFileId,
               userId || '',
