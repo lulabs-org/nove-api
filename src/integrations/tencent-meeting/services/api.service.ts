@@ -58,9 +58,13 @@ export class TencentApiService {
     queryParams: Record<string, unknown> = {},
   ): Promise<T> {
     try {
-      const queryString = new URLSearchParams(
-        queryParams as Record<string, string>,
-      ).toString();
+      const filteredParams: Record<string, string> = {};
+      for (const [key, value] of Object.entries(queryParams)) {
+        if (value !== undefined) {
+          filteredParams[key] = String(value as string | number | boolean);
+        }
+      }
+      const queryString = new URLSearchParams(filteredParams).toString();
       const fullRequestUri = queryString
         ? `${requestUri}?${queryString}`
         : requestUri;
