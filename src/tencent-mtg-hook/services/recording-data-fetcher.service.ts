@@ -30,22 +30,22 @@ export class RecordingDataFetcherService {
   ) {}
 
   async fetch(r: RecordingData): Promise<RecordingData> {
-    if (!r.meetid || !r.cid) {
-      this.logger.warn('缺少必要参数: meetid 或 cid');
+    if (!r.meetingId || !r.creatorId) {
+      this.logger.warn('缺少必要参数: meetingId 或 creatorId');
       return r;
     }
 
-    const cid = r.cid;
+    const cid = r.creatorId;
 
     try {
       const { unique, raw } = await this.participantSvc.list(
-        r.meetid,
+        r.meetingId,
         cid,
-        r.subid,
+        r.subMeetingId,
       );
 
-      r.deduplicated = unique;
-      r.participants = raw;
+      r.uniqueParticipants = unique;
+      r.rawParticipants = raw;
       this.logger.log(`获取去重参会者成功: ${unique.length} 人`);
     } catch (error) {
       this.logger.error(
@@ -69,19 +69,19 @@ export class RecordingDataFetcherService {
         ]);
 
         if (content.status === 'fulfilled') {
-          file.fullsummary = content.value.summary;
-          file.aiminutes = content.value.minutes;
+          file.fullSummary = content.value.summary;
+          file.aiMinutes = content.value.minutes;
         } else {
           this.logger.warn(`获取会议内容失败: ${file.id}, ${content.reason}`);
         }
 
         if (transcript.status === 'fulfilled') {
-          file.formattedtext = transcript.value.text;
+          file.formattedText = transcript.value.text;
           let speakers: any = transcript.value.speakers;
           let paragraphs: any = transcript.value.paragraphs;
 
-          if (r.deduplicated) {
-            const dedup = r.deduplicated;
+          if (r.uniqueParticipants) {
+            const dedup = r.uniqueParticipants;
             const enrich = (info: any) =>
               this.speakerSvc.enrichSpeakerInfo(info, dedup);
 
@@ -98,7 +98,7 @@ export class RecordingDataFetcherService {
             ]);
           }
 
-          file.speakerlist = speakers;
+          file.speakers = speakers;
           file.paragraphs = paragraphs;
         } else {
           this.logger.warn(`获取录音转写失败: ${file.id}, ${transcript.reason}`);

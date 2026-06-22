@@ -39,19 +39,20 @@ export class SummaryService {
   async processSummary(r: RecordingData): Promise<void> {
     const meeting = await this.meetingRepo.findByPt(
       Platform.TENCENT_MEETING,
-      r.meetid || '',
-      r.subid || '__ROOT__',
+      r.meetingId || '',
+      r.subMeetingId || '__ROOT__',
     );
 
     if (!meeting) {
-      throw new Error('Meeting not found');
+      this.logger.warn(`Meeting not found for summary`);
+      return;
     }
 
     for (let index = 0; index < (r.files?.length || 0); index++) {
       const file = r.files![index];
 
-      for (const u of r.deduplicated || []) {
-        if (file.speakerlist?.find((uInfo) => uInfo.username === u.user_name)) {
+      for (const u of r.uniqueParticipants || []) {
+        if (file.speakers?.find((uInfo) => uInfo.username === u.user_name)) {
           const ptByUnionId = await this.ptUserRepo.findByUnionId(
             Platform.TENCENT_MEETING,
             u.uuid,

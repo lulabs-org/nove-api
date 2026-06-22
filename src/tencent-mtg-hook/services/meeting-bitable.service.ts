@@ -319,9 +319,9 @@ export class MeetingBitableService {
 
       const meetingResult = await this.meetingBitable.upsertMeetingRecord({
         platform: '腾讯会议',
-        subject: r.subject,
-        meeting_id: r.meetid || '',
-        sub_meeting_id: r.subid,
+        subject: r.subject || '',
+        meeting_id: r.meetingId || '',
+        sub_meeting_id: r.subMeetingId,
       });
 
       let recordId: string | undefined;
@@ -338,14 +338,14 @@ export class MeetingBitableService {
         const res = await this.recordingFileBitable.upsertRecordingFileRecord({
           record_file_id: file.id || '',
           meet: meetIds,
-          start_time: r.start_time! * 1000,
-          end_time: r.end_time! * 1000,
-          fullsummary: file.fullsummary || '',
+          start_time: r.startTime! * 1000,
+          end_time: r.endTime! * 1000,
+          fullsummary: file.fullSummary || '',
           todo: file.todo || '',
-          ai_minutes: file.aiminutes || '',
+          ai_minutes: file.aiMinutes || '',
           participants:
-            file.speakerlist?.map((u) => u.username).join(',') || '',
-          ai_meeting_transcripts: file.formattedtext || '',
+            file.speakers?.map((u) => u.username).join(',') || '',
+          ai_meeting_transcripts: file.formattedText || '',
         });
 
         if (res.data?.record) {

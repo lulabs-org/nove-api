@@ -29,24 +29,25 @@ export class MeetingParticipantService {
   ) {}
 
   async syncParticipants(r: RecordingData): Promise<void> {
-    if (!r.participants || r.participants.length === 0) {
+    if (!r.rawParticipants || r.rawParticipants.length === 0) {
+      this.logger.warn('No participants found to sync');
       return;
     }
 
     const meeting = await this.meetingRepo.findByPt(
       Platform.TENCENT_MEETING,
-      r.meetid || '',
-      r.subid || '__ROOT__',
+      r.meetingId || '',
+      r.subMeetingId || '__ROOT__',
     );
 
     if (!meeting) {
       this.logger.warn(
-        `Meeting not found for meetid: ${r.meetid}, subid: ${r.subid}`,
+        `Meeting not found for meetingId: ${r.meetingId}, subMeetingId: ${r.subMeetingId}`,
       );
       return;
     }
 
-    for (const p of r.participants) {
+    for (const p of r.rawParticipants) {
       if (!p.uuid) continue;
 
       const ptUser = await this.prisma.platformUser.findFirst({

@@ -55,26 +55,26 @@ export class RecordingCompletedHandler extends BaseEventHandler {
 
     let r: RecordingData = {};
 
-    r.meetid = meeting_id;
+    r.meetingId = meeting_id;
     r.subject = meeting_info.subject || '';
-    r.start_time = meeting_info.start_time || 0;
-    r.end_time = meeting_info.end_time || 0;
-    r.subid = sub_meeting_id;
-    r.cid = creator.userid || '';
+    r.startTime = meeting_info.start_time || 0;
+    r.endTime = meeting_info.end_time || 0;
+    r.subMeetingId = sub_meeting_id;
+    r.creatorId = creator.userid || '';
     r.files = recording_files.map((file) => ({
       id: file.record_file_id,
     }));
 
     r = await this.dataFetcher.fetch(r);
 
-    if (!r.deduplicated) {
+    if (!r.uniqueParticipants) {
       this.logger.warn('获取参会者列表失败');
       return;
     }
 
-    await this.speakerSvc.syncPtUsers(r.deduplicated);
+    await this.speakerSvc.syncPtUsers(r.uniqueParticipants);
     await this.participantSvc.syncParticipants(r);
-    await this.bitableService.safeUpsertMeetingUserRecords(r.deduplicated);
+    await this.bitableService.safeUpsertMeetingUserRecords(r.uniqueParticipants);
     await this.bitableService.upsertRecording(r);
     await this.databaseSvc.upsert(payload, this.SUPPORTED_EVENT);
     await this.databaseSvc.upsertRecording(r);

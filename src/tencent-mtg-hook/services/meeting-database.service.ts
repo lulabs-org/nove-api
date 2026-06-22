@@ -153,8 +153,8 @@ export class MeetingDatabaseService {
 
     const meeting = await this.meetingRepo.findByPt(
       Platform.TENCENT_MEETING,
-      r.meetid || '',
-      r.subid || '__ROOT__',
+      r.meetingId || '',
+      r.subMeetingId || '__ROOT__',
     );
 
     if (!meeting) {
@@ -187,8 +187,8 @@ export class MeetingDatabaseService {
   async upsertMeetingSummary(r: RecordingData) {
     const meeting = await this.meetingRepo.findByPt(
       Platform.TENCENT_MEETING,
-      r.meetid || '',
-      r.subid || '__ROOT__',
+      r.meetingId || '',
+      r.subMeetingId || '__ROOT__',
     );
 
     if (!meeting) {
@@ -207,8 +207,8 @@ export class MeetingDatabaseService {
       return await this.meetingSummaryRepo.upsert({
         meetingId: meeting.id,
         recordingId: recording.id,
-        content: file.fullsummary || '',
-        aiMinutes: file.aiminutes ? { content: file.aiminutes } : undefined,
+        content: file.fullSummary || '',
+        aiMinutes: file.aiMinutes ? { content: file.aiMinutes } : undefined,
         actionItems: file.todo ? { items: file.todo } : undefined,
         generatedBy: GenerationMethod.AI,
         aiModel: 'tencent-meeting-ai',
@@ -227,8 +227,8 @@ export class MeetingDatabaseService {
   async upsertTranscript(r: RecordingData) {
     const meeting = await this.meetingRepo.findByPt(
       Platform.TENCENT_MEETING,
-      r.meetid || '',
-      r.subid || '__ROOT__',
+      r.meetingId || '',
+      r.subMeetingId || '__ROOT__',
     );
 
     if (!meeting) {
