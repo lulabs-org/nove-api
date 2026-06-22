@@ -250,9 +250,8 @@ export class TencentMtgSyncService {
     recordFileId: string,
     operatorId: string,
   ) {
-    const existingTranscript = await this.transcriptRepo.findByRecordingId(
-      recordingId,
-    );
+    const existingTranscript =
+      await this.transcriptRepo.findByRecordingId(recordingId);
 
     if (existingTranscript) {
       return; // Already processed
@@ -277,7 +276,9 @@ export class TencentMtgSyncService {
         await this.speakerSvc.syncPtUsers(deduplicated);
       }
     } catch (e) {
-      this.logger.warn(`Failed to fetch participants for meeting ${meetid}: ${e}`);
+      this.logger.warn(
+        `Failed to fetch participants for meeting ${meetid}: ${e}`,
+      );
     }
 
     let page = 1;

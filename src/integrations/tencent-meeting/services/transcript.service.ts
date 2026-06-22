@@ -56,22 +56,22 @@ export class TranscriptService {
       const { minutes } = res;
       const { paragraphs } = minutes;
       const keywords = minutes.keywords || [];
-      const { speakerInfos, formattedText } = this.formatter.format(paragraphs);
+      const { speakers, text } = this.formatter.format(paragraphs);
 
       const duration = Date.now() - startTime;
 
       this.logger.log('获取录音转写成功', {
         ...context,
         duration,
-        uniqueSpeakerInfosCount: speakerInfos.length,
+        uniqueSpeakerInfosCount: speakers.length,
         keywordsCount: keywords.length,
-        formattedLinesCount: formattedText.split('\n\n').length,
+        formattedLinesCount: text.split('\n\n').length,
       });
 
       return {
         paragraphs,
-        uniqueSpeakerInfos: speakerInfos,
-        formattedText,
+        uniqueSpeakerInfos: speakers,
+        formattedText: text,
         keywords,
       };
     } catch (error: unknown) {

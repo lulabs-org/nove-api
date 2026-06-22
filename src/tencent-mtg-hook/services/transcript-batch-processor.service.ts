@@ -9,7 +9,7 @@ import {
 } from '@/meeting/repositories';
 import {
   PrismaTransaction,
-  NewRecordingTranscriptParagraph,
+  NewTranscriptParagraph,
   ParagraphData,
   SentenceData,
 } from '@/tencent-mtg-hook/types';
@@ -28,7 +28,7 @@ export class TranscriptBatchProcessor {
   ) {}
 
   async processParagraphsInBatches(
-    paragraphs: NewRecordingTranscriptParagraph[],
+    paragraphs: NewTranscriptParagraph[],
     transcriptId: string,
   ): Promise<void> {
     for (let i = 0; i < paragraphs.length; i += this.PARAGRAPH_BATCH_SIZE) {
@@ -38,7 +38,7 @@ export class TranscriptBatchProcessor {
   }
 
   private async processParagraphBatch(
-    batch: NewRecordingTranscriptParagraph[],
+    batch: NewTranscriptParagraph[],
     transcriptId: string,
   ): Promise<void> {
     return this.prisma.$transaction(async (tx) => {
