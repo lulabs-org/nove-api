@@ -105,6 +105,6 @@ import {
       ],
     },
   ],
-  exports: [TranscriptBatchProcessor],
+  exports: [TranscriptBatchProcessor, SpeakerService],
 })
 export class HookTencentMtgModule {}

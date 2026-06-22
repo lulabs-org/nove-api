@@ -21,6 +21,8 @@ import {
 } from './tencent-mtg-record.mapper';
 import { TranscriptRepository } from '@/meeting/repositories/transcript.repository';
 import { TranscriptBatchProcessor } from '@/tencent-mtg-hook/services/transcript-batch-processor.service';
+import { ParticipantService } from '@/integrations/tencent-meeting/services';
+import { SpeakerService } from '@/tencent-mtg-hook/services/speaker.service';
 
 @Injectable()
 export class TencentMtgSyncService {
@@ -33,6 +35,8 @@ export class TencentMtgSyncService {
     private readonly recordingRepo: MeetingRecordingRepository,
     private readonly transcriptRepo: TranscriptRepository,
     private readonly transcriptBatchProcessor: TranscriptBatchProcessor,
+    private readonly participantSvc: ParticipantService,
+    private readonly speakerSvc: SpeakerService,
     @Inject(tencentMeetingConfig.KEY)
     private config: ConfigType<typeof tencentMeetingConfig>,
   ) {}
@@ -131,6 +135,8 @@ export class TencentMtgSyncService {
               if (record.state === 3) {
                 try {
                   await this.upsertTranscriptFromFile(
+                    record.meeting_id,
+                    meeting.subMeetingId || '__ROOT__',
                     recording.id,
                     file.record_file_id,
                     effectiveOperatorId,
@@ -238,6 +244,8 @@ export class TencentMtgSyncService {
   }
 
   async upsertTranscriptFromFile(
+    meetid: string,
+    subid: string,
     recordingId: string,
     recordFileId: string,
     operatorId: string,
@@ -256,6 +264,22 @@ export class TencentMtgSyncService {
       recordingId,
     });
 
+    // 获取参会者列表，用于后续丰富说话人信息
+    let deduplicated: any[] = [];
+    try {
+      const participantResult = await this.participantSvc.list(
+        meetid,
+        operatorId,
+        subid,
+      );
+      deduplicated = participantResult.deduplicated || [];
+      if (deduplicated.length > 0) {
+        await this.speakerSvc.syncPtUsers(deduplicated);
+      }
+    } catch (e) {
+      this.logger.warn(`Failed to fetch participants for meeting ${meetid}: ${e}`);
+    }
+
     let page = 1;
     const pageSize = 200;
     let hasMore = true;
@@ -271,14 +295,22 @@ export class TencentMtgSyncService {
       );
 
       if (res.minutes?.paragraphs) {
-        // Map API response to hook processor expectations
-        const mappedParagraphs = res.minutes.paragraphs.map((p) => ({
-          ...p,
-          speaker_info: {
-            ...p.speaker_info,
-            uuid: p.speaker_info.openId || p.speaker_info.userid,
-          },
-        }));
+        // 使用 SpeakerService 匹配并丰富说话人信息
+        const mappedParagraphs = await Promise.all(
+          res.minutes.paragraphs.map(async (p) => ({
+            ...p,
+            speaker_info:
+              deduplicated.length > 0
+                ? await this.speakerSvc.enrichSpeakerInfo(
+                    p.speaker_info,
+                    deduplicated,
+                  )
+                : {
+                    ...p.speaker_info,
+                    uuid: p.speaker_info.openId || p.speaker_info.userid,
+                  },
+          })),
+        );
         allParagraphs.push(...mappedParagraphs);
       }
 
