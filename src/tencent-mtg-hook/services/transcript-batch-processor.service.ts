@@ -43,6 +43,7 @@ export class TranscriptBatchProcessor {
   ): Promise<void> {
     return this.prisma.$transaction(async (tx) => {
       const paragraphDataList: Array<ParagraphData> = [];
+      const segmentsToCreate: any[] = [];
 
       for (const paragraph of batch) {
         const speakerInfo = paragraph.speaker_info;
@@ -74,9 +75,38 @@ export class TranscriptBatchProcessor {
           paragraph,
           index: createdParagraph.id,
         });
+
+        // --------------------------------------------------
+        // 新表双写逻辑：在同一个事务中组装并插入 TranscriptSegment
+        // --------------------------------------------------
+        for (const sentence of paragraph.sentences) {
+          const text = sentence.words.map((w) => w.text).join('');
+          const wordsDetail = sentence.words.map((w) => ({
+            word: w.text,
+            start: Number(w.start_time),
+            end: Number(w.end_time),
+          }));
+
+          segmentsToCreate.push({
+            transcriptId,
+            speakerId,
+            speakerName: speakerInfo.username || null,
+            startTimeMs: BigInt(sentence.start_time),
+            endTimeMs: BigInt(sentence.end_time),
+            text,
+            confidence: null,
+            wordsDetail,
+          });
+        }
       }
 
       await this.processSentencesInBatches(paragraphDataList, tx);
+
+      if (segmentsToCreate.length > 0) {
+        await tx.transcriptSegment.createMany({
+          data: segmentsToCreate,
+        });
+      }
     });
   }
 
