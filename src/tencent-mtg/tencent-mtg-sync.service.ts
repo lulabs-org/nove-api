@@ -279,10 +279,11 @@ export class TencentMtgSyncService {
     // 获取参会者列表，用于后续丰富说话人信息
     let deduplicated: ParticipantDetail[] = [];
     try {
+      const actualSubid = subid === '__ROOT__' ? undefined : subid;
       const participantResult = await this.participantSvc.list(
         meetid,
         operatorId,
-        subid,
+        actualSubid,
         startTime,
         endTime,
       );
