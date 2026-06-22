@@ -19,6 +19,8 @@ import {
   mapRecordingState,
   mapRecordingFileStatus,
 } from './tencent-mtg-record.mapper';
+import { TranscriptRepository } from '@/meeting/repositories/transcript.repository';
+import { TranscriptBatchProcessor } from '@/tencent-mtg-hook/services/transcript-batch-processor.service';
 
 @Injectable()
 export class TencentMtgSyncService {
@@ -29,6 +31,8 @@ export class TencentMtgSyncService {
     private readonly tencentApi: TencentApiService,
     private readonly meetingRepo: MeetingRepository,
     private readonly recordingRepo: MeetingRecordingRepository,
+    private readonly transcriptRepo: TranscriptRepository,
+    private readonly transcriptBatchProcessor: TranscriptBatchProcessor,
     @Inject(tencentMeetingConfig.KEY)
     private config: ConfigType<typeof tencentMeetingConfig>,
   ) {}
@@ -118,11 +122,26 @@ export class TencentMtgSyncService {
         if (record.record_files?.length) {
           for (const file of record.record_files) {
             try {
-              await this.upsertRecordingFromFile(
+              const recording = await this.upsertRecordingFromFile(
                 meeting.id,
                 file,
                 record.state,
               );
+
+              if (record.state === 3) {
+                try {
+                  await this.upsertTranscriptFromFile(
+                    recording.id,
+                    file.record_file_id,
+                    effectiveOperatorId,
+                  );
+                } catch (transcriptError) {
+                  const msg = `Failed to upsert transcript for file ${file.record_file_id}: ${(transcriptError as Error).message}`;
+                  this.logger.warn(msg);
+                  errors.push(msg);
+                }
+              }
+
               recordingsUpserted++;
             } catch (fileError) {
               const msg = `Failed to upsert recording file ${file.record_file_id}: ${(fileError as Error).message}`;
@@ -216,5 +235,62 @@ export class TencentMtgSyncService {
       startAt: new Date(file.record_start_time),
       endAt: new Date(file.record_end_time),
     });
+  }
+
+  async upsertTranscriptFromFile(
+    recordingId: string,
+    recordFileId: string,
+    operatorId: string,
+  ) {
+    const existingTranscript = await this.transcriptRepo.findByRecordingId(
+      recordingId,
+    );
+
+    if (existingTranscript) {
+      return; // Already processed
+    }
+
+    const transcript = await this.transcriptRepo.create({
+      source: `tencent-meeting:${recordFileId}`,
+      status: 2,
+      recordingId,
+    });
+
+    let page = 1;
+    const pageSize = 200;
+    let hasMore = true;
+    const allParagraphs: any[] = [];
+
+    while (hasMore) {
+      const res = await this.tencentApi.getTranscript(
+        recordFileId,
+        operatorId,
+        1,
+        page,
+        pageSize,
+      );
+
+      if (res.minutes?.paragraphs) {
+        // Map API response to hook processor expectations
+        const mappedParagraphs = res.minutes.paragraphs.map((p) => ({
+          ...p,
+          speaker_info: {
+            ...p.speaker_info,
+            uuid: p.speaker_info.openId || p.speaker_info.userid,
+          },
+        }));
+        allParagraphs.push(...mappedParagraphs);
+      }
+
+      hasMore = res.more;
+      page++;
+    }
+
+    if (allParagraphs.length > 0) {
+      await this.transcriptBatchProcessor.processParagraphsInBatches(
+        allParagraphs,
+        transcript.id,
+      );
+    }
   }
 }
