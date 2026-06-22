@@ -287,7 +287,7 @@ export class TencentMtgSyncService {
         startTime,
         endTime,
       );
-      deduplicated = participantResult.deduplicated || [];
+      deduplicated = participantResult.unique || [];
       if (deduplicated.length > 0) {
         await this.speakerSvc.syncPtUsers(deduplicated);
       }

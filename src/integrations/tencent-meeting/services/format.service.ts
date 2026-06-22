@@ -45,8 +45,8 @@ export interface FormattedTranscript {
  * 负责格式化录音转写内容
  */
 @Injectable()
-export class TranscriptFormatterService {
-  private readonly logger = new Logger(TranscriptFormatterService.name);
+export class FormatService {
+  private readonly logger = new Logger(FormatService.name);
 
   /**
    * 格式化转写内容

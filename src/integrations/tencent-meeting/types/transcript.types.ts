@@ -57,7 +57,7 @@ export interface TranscriptResponse {
 
 export interface TranscriptResult {
   paragraphs: TranscriptParagraph[];
-  uniqueSpeakerInfos: SpeakerInfo[];
-  formattedText: string;
+  speakers: SpeakerInfo[];
+  text: string;
   keywords: string[];
 }

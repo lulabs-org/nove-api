@@ -36,15 +36,15 @@ export class RecordingDataFetcherService {
     }
 
     try {
-      const { deduplicated, original } = await this.participantSvc.list(
+      const { unique, raw } = await this.participantSvc.list(
         r.meetid,
         r.cid,
         r.subid,
       );
 
-      r.deduplicated = deduplicated;
-      r.participants = original;
-      this.logger.log(`获取去重参会者成功: ${deduplicated.length} 人`);
+      r.deduplicated = unique;
+      r.participants = raw;
+      this.logger.log(`获取去重参会者成功: ${unique.length} 人`);
     } catch (error) {
       this.logger.error(
         `获取去重参会者失败: ${error instanceof Error ? error.message : String(error)}`,
@@ -64,16 +64,16 @@ export class RecordingDataFetcherService {
       ]);
 
       if (content.status === 'fulfilled') {
-        file.fullsummary = content.value.fullSummary;
-        file.aiminutes = content.value.aiMinutes;
+        file.fullsummary = content.value.summary;
+        file.aiminutes = content.value.minutes;
       } else {
         this.logger.warn(`获取会议内容失败: ${file.id}, ${content.reason}`);
       }
 
       if (transcript.status === 'fulfilled') {
         // 设置转写文本、说话人列表和段落信息
-        file.formattedtext = transcript.value.formattedText;
-        file.speakerlist = transcript.value.uniqueSpeakerInfos;
+        file.formattedtext = transcript.value.text;
+        file.speakerlist = transcript.value.speakers;
         file.paragraphs = transcript.value.paragraphs;
 
         // 如果存在去重参会者数据和说话人列表，则丰富说话人信息

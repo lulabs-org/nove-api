@@ -10,7 +10,7 @@
  */
 
 export { TencentApiService } from './api.service';
-export { TranscriptFormatterService } from './transcript-formatter.service';
+export { FormatService } from './format.service';
 export { TranscriptService } from './transcript.service';
 export { SummaryService } from './meeting-summary.service';
 export { ParticipantService } from './meeting-participant.service';

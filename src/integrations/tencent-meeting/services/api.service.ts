@@ -60,8 +60,9 @@ export class TencentApiService {
     try {
       const filteredParams: Record<string, string> = {};
       for (const [key, value] of Object.entries(queryParams)) {
-        if (value !== undefined) {
-          filteredParams[key] = String(value);
+        if (value !== undefined && value !== null) {
+          filteredParams[key] =
+            typeof value === 'object' ? JSON.stringify(value) : String(value);
         }
       }
       const queryString = new URLSearchParams(filteredParams).toString();

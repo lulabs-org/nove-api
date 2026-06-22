@@ -9,13 +9,13 @@
  * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
  */
 
-import { TranscriptFormatterService } from './transcript-formatter.service';
+import { FormatService } from './format.service';
 
-describe('TranscriptFormatterService', () => {
-  let service: TranscriptFormatterService;
+describe('FormatService', () => {
+  let service: FormatService;
 
   beforeEach(() => {
-    service = new TranscriptFormatterService();
+    service = new FormatService();
   });
 
   describe('format', () => {

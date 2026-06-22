@@ -17,21 +17,21 @@ import {
   TencentApiService,
   TranscriptService,
   SummaryService,
-  TranscriptFormatterService,
+  FormatService,
 } from './services';
 
 @Module({
   imports: [ConfigModule.forFeature(tencentMeetingConfig)],
   providers: [
     TencentApiService,
-    TranscriptFormatterService,
+    FormatService,
     TranscriptService,
     SummaryService,
     ParticipantService,
   ],
   exports: [
     TencentApiService,
-    TranscriptFormatterService,
+    FormatService,
     TranscriptService,
     SummaryService,
     ParticipantService,
