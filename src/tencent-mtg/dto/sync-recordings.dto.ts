@@ -1,25 +1,27 @@
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString, IsDate } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
 export class SyncRecordingsDto {
   @ApiPropertyOptional({
-    description: '查询起始时间戳（Unix 秒），默认为7天前',
-    example: 1611072000,
+    description:
+      '开始日期（务必传入包含时区信息的 ISO 8601 格式，例如前端通过 date.toISOString() 生成）',
+    example: '2023-12-31T16:00:00.000Z',
   })
   @IsOptional()
-  @IsNumber()
-  @Type(() => Number)
-  startTime?: number;
+  @Type(() => Date)
+  @IsDate()
+  startDate?: Date;
 
   @ApiPropertyOptional({
-    description: '查询结束时间戳（Unix 秒），默认为当前时间',
-    example: 1613750400,
+    description:
+      '结束日期（务必传入包含时区信息的 ISO 8601 格式，例如前端通过 date.toISOString() 生成）',
+    example: '2024-12-31T15:59:59.999Z',
   })
   @IsOptional()
-  @IsNumber()
-  @Type(() => Number)
-  endTime?: number;
+  @Type(() => Date)
+  @IsDate()
+  endDate?: Date;
 
   @ApiPropertyOptional({
     description: '操作者ID，默认为配置文件中的 userId',

@@ -12,7 +12,7 @@
 import { ParticipantDetail } from '@/integrations/tencent-meeting/types';
 import {
   NewSpeakerInfo,
-  NewRecordingTranscriptParagraph,
+  NewTranscriptParagraph,
 } from './recording-transcript.types';
 
 export interface RecordingData {
@@ -52,6 +52,6 @@ export interface RecordingData {
     /** 说话人列表 */
     speakerlist?: NewSpeakerInfo[];
     /** 会议纪要段落 */
-    paragraphs?: NewRecordingTranscriptParagraph[];
+    paragraphs?: NewTranscriptParagraph[];
   }>;
 }

@@ -10,6 +10,7 @@ import { MeetingPlatform, RecordingSource } from '@prisma/client';
 import type {
   RecordMeeting,
   RecordFile,
+  ParticipantDetail,
 } from '@/integrations/tencent-meeting/types';
 import {
   TENCENT_MEETING_TYPE_RECURRING,
@@ -19,6 +20,11 @@ import {
   mapRecordingState,
   mapRecordingFileStatus,
 } from './tencent-mtg-record.mapper';
+import { TranscriptRepository } from '@/meeting/repositories/transcript.repository';
+import { TranscriptBatchProcessor } from '@/tencent-mtg-hook/services/transcript-batch-processor.service';
+import { ParticipantService } from '@/integrations/tencent-meeting/services';
+import { SpeakerService } from '@/tencent-mtg-hook/services/speaker.service';
+import { NewTranscriptParagraph } from '@/tencent-mtg-hook/types/recording-transcript.types';
 
 @Injectable()
 export class TencentMtgSyncService {
@@ -29,6 +35,10 @@ export class TencentMtgSyncService {
     private readonly tencentApi: TencentApiService,
     private readonly meetingRepo: MeetingRepository,
     private readonly recordingRepo: MeetingRecordingRepository,
+    private readonly transcriptRepo: TranscriptRepository,
+    private readonly transcriptBatchProcessor: TranscriptBatchProcessor,
+    private readonly participantSvc: ParticipantService,
+    private readonly speakerSvc: SpeakerService,
     @Inject(tencentMeetingConfig.KEY)
     private config: ConfigType<typeof tencentMeetingConfig>,
   ) {}
@@ -118,11 +128,37 @@ export class TencentMtgSyncService {
         if (record.record_files?.length) {
           for (const file of record.record_files) {
             try {
-              await this.upsertRecordingFromFile(
+              const recording = await this.upsertRecordingFromFile(
                 meeting.id,
                 file,
                 record.state,
               );
+
+              if (record.state === 3) {
+                try {
+                  const startTime = meeting.scheduledStartAt
+                    ? Math.floor(meeting.scheduledStartAt.getTime() / 1000)
+                    : undefined;
+                  const endTime = meeting.scheduledEndAt
+                    ? Math.floor(meeting.scheduledEndAt.getTime() / 1000)
+                    : undefined;
+
+                  await this.upsertTranscriptFromFile(
+                    record.meeting_id,
+                    meeting.subMeetingId || '__ROOT__',
+                    recording.id,
+                    file.record_file_id,
+                    effectiveOperatorId,
+                    startTime,
+                    endTime,
+                  );
+                } catch (transcriptError) {
+                  const msg = `Failed to upsert transcript for file ${file.record_file_id}: ${(transcriptError as Error).message}`;
+                  this.logger.warn(msg);
+                  errors.push(msg);
+                }
+              }
+
               recordingsUpserted++;
             } catch (fileError) {
               const msg = `Failed to upsert recording file ${file.record_file_id}: ${(fileError as Error).message}`;
@@ -216,5 +252,83 @@ export class TencentMtgSyncService {
       startAt: new Date(file.record_start_time),
       endAt: new Date(file.record_end_time),
     });
+  }
+
+  async upsertTranscriptFromFile(
+    meetid: string,
+    subid: string,
+    recordingId: string,
+    recordFileId: string,
+    operatorId: string,
+    startTime?: number,
+    endTime?: number,
+  ) {
+    const existingTranscript =
+      await this.transcriptRepo.findByRecordingId(recordingId);
+
+    if (existingTranscript) {
+      return; // Already processed
+    }
+
+    const transcript = await this.transcriptRepo.create({
+      source: `tencent-meeting:${recordFileId}`,
+      status: 2,
+      recordingId,
+    });
+
+    // 获取参会者列表，用于后续丰富说话人信息
+    let deduplicated: ParticipantDetail[] = [];
+    try {
+      const participantResult = await this.participantSvc.list(
+        meetid,
+        operatorId,
+        subid,
+        startTime,
+        endTime,
+      );
+      deduplicated = participantResult.deduplicated || [];
+      if (deduplicated.length > 0) {
+        await this.speakerSvc.syncPtUsers(deduplicated);
+      }
+    } catch (e) {
+      this.logger.warn(
+        `Failed to fetch participants for meeting ${meetid}: ${e}`,
+      );
+    }
+
+    const allParagraphs: NewTranscriptParagraph[] = [];
+
+    const res = await this.tencentApi.getTranscript(
+      recordFileId,
+      operatorId,
+      1,
+    );
+
+    if (res.minutes?.paragraphs) {
+      // 使用 SpeakerService 匹配并丰富说话人信息
+      const mappedParagraphs = await Promise.all(
+        res.minutes.paragraphs.map(async (p) => ({
+          ...p,
+          speaker_info:
+            deduplicated.length > 0
+              ? await this.speakerSvc.enrichSpeakerInfo(
+                  p.speaker_info,
+                  deduplicated,
+                )
+              : {
+                  ...p.speaker_info,
+                  uuid: p.speaker_info.openId || p.speaker_info.userid,
+                },
+        })),
+      );
+      allParagraphs.push(...mappedParagraphs);
+    }
+
+    if (allParagraphs.length > 0) {
+      await this.transcriptBatchProcessor.processParagraphsInBatches(
+        allParagraphs,
+        transcript.id,
+      );
+    }
   }
 }

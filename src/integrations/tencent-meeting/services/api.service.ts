@@ -11,7 +11,7 @@ import {
   SmartTopicsResponse,
   SmartFullSummaryResponse,
   SmartMeetingMinutesResponse,
-  RecordingTranscriptResponse,
+  TranscriptResponse,
 } from '../types';
 
 /**
@@ -419,10 +419,10 @@ export class TencentApiService {
     recordFileId: string,
     operatorId: string,
     operatorIdType: number = 1,
-    page?: number,
-    pageSize?: number,
+    pid?: string,
+    limit?: number,
     pwd?: string,
-  ): Promise<RecordingTranscriptResponse> {
+  ): Promise<TranscriptResponse> {
     const queryParams: Record<string, unknown> = {
       record_file_id: recordFileId,
       operator_id: operatorId,
@@ -430,17 +430,17 @@ export class TencentApiService {
     };
 
     // Add optional parameters if provided
-    if (page !== undefined) {
-      queryParams.page = page;
+    if (pid !== undefined) {
+      queryParams.pid = pid;
     }
-    if (pageSize !== undefined) {
-      queryParams.page_size = pageSize;
+    if (limit !== undefined) {
+      queryParams.limit = limit;
     }
     if (pwd) {
       queryParams.pwd = pwd;
     }
 
-    return this.sendRequest<RecordingTranscriptResponse>(
+    return this.sendRequest<TranscriptResponse>(
       'GET',
       `/v1/records/transcripts/details`,
       queryParams,

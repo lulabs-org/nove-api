@@ -10,9 +10,9 @@
  */
 import { PrismaClient } from '@prisma/client';
 import {
-  RecordingTranscriptResponse,
-  RecordingTranscriptParagraph,
-  RecordingTranscriptSentence,
+  TranscriptResponse,
+  TranscriptParagraph,
+  TranscriptSentence,
 } from '@/integrations/tencent-meeting/types';
 
 export type PrismaTransaction = Omit<
@@ -29,18 +29,18 @@ export interface CreateTranscriptResult {
 }
 
 export interface ParagraphData {
-  paragraph: RecordingTranscriptParagraph;
+  paragraph: TranscriptParagraph;
   index: string;
 }
 
 export interface SentenceData {
-  sentence: RecordingTranscriptSentence;
+  sentence: TranscriptSentence;
   paragraphId: string;
 }
 
 export interface CreateTranscriptInput {
   recordFileId: string;
-  transcriptResponse: RecordingTranscriptResponse;
+  transcriptResponse: TranscriptResponse;
   participants: Array<{ uuid: string; user_name: string }>;
   meetingId?: string;
   subMeetingId?: string;

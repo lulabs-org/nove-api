@@ -34,12 +34,18 @@ export class ParticipantService {
     meetingId: string,
     userId: string,
     subMeetingId?: string,
+    startTime?: number,
+    endTime?: number,
   ): Promise<ParticipantsList> {
     try {
       const response = await this.api.getParticipants(
         meetingId,
         userId,
         subMeetingId,
+        undefined,
+        undefined,
+        startTime,
+        endTime,
       );
 
       const decodeBase64Name = (participant: ParticipantDetail) => ({

@@ -10,6 +10,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { TencentMtgSyncProcessor } from './tencent-mtg-sync.processor';
+import { HookTencentMtgModule } from '@/tencent-mtg-hook/hook-tencent-mtg.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { TencentMtgSyncProcessor } from './tencent-mtg-sync.processor';
       name: 'tencent-mtg-sync',
       adapter: BullMQAdapter,
     }),
+    HookTencentMtgModule,
   ],
   controllers: [TencentMtgController],
   providers: [TencentMtgSyncService, TencentMtgSyncProcessor],

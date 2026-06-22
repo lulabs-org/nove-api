@@ -9,7 +9,7 @@
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
-import { RecordingTranscriptSentence } from '@/integrations/tencent-meeting/types';
+import { TranscriptSentence } from '@/integrations/tencent-meeting/types';
 export interface NewSpeakerInfo {
   userid: string;
   openId: string;
@@ -35,10 +35,10 @@ export interface NewSpeakerInfo {
   avatar_url?: string;
 }
 
-export interface NewRecordingTranscriptParagraph {
+export interface NewTranscriptParagraph {
   pid: string;
   start_time: number;
   end_time: number;
-  sentences: RecordingTranscriptSentence[];
+  sentences: TranscriptSentence[];
   speaker_info: NewSpeakerInfo;
 }
