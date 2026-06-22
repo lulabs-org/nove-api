@@ -143,6 +143,13 @@ export class SpeakerService {
     };
   }
 
+  /**
+   * Synchronizes Tencent Meeting participants to the local platform user database.
+   * Handles various scenarios of merging and linking platform users (Tencent Meeting users)
+   * with local registered users based on phone numbers and platform union IDs.
+   *
+   * @param uniqueParticipants Array of unique participant details from the meeting
+   */
   async syncPtUsers(uniqueParticipants: ParticipantDetail[]): Promise<void> {
     const excludedPhoneHash =
       'df363d826259f591c0f02ce0be670eee8785eaa0477cf152944af46e008a3086';
@@ -151,6 +158,7 @@ export class SpeakerService {
     try {
       for (const participant of uniqueParticipants) {
         if (participant.phone && participant.phone !== excludedPhoneHash) {
+          // 1. Check for an existing unlinked platform user by phone hash
           const ptByPhone =
             await this.ptUserRepo.findByPhoneHashWithoutLocalUser(
               Platform.TENCENT_MEETING,
@@ -160,6 +168,7 @@ export class SpeakerService {
 
           let userByPhone: User | null = null;
 
+          // 2. If we found an unlinked platform user with a decrypted phone, find the corresponding local user
           if (ptByPhone?.phone) {
             userByPhone = await this.userRepo.findByPhone(
               countryCode,
@@ -167,11 +176,14 @@ export class SpeakerService {
             );
           }
 
+          // 3. Find platform user by their unique Tencent Meeting union ID (uuid)
           const ptByUnionId = await this.ptUserRepo.findByUnionId(
             Platform.TENCENT_MEETING,
             participant.uuid,
           );
 
+          // Scenario A: Found an unlinked phone record and a local user, but no union ID record exists yet.
+          // Action: Update the phone record with the new union ID (ptUserId) and link it to the local user.
           if (ptByPhone && !ptByUnionId && userByPhone) {
             await this.ptUserRepo.update(ptByPhone.id, {
               ptUserId: participant.userid,
@@ -182,6 +194,8 @@ export class SpeakerService {
             });
           }
 
+          // Scenario B: Found both an unlinked phone record and a union ID record, plus a local user.
+          // Action: Merge them by updating the union ID record with the phone/user info, and delete the redundant phone record.
           if (ptByPhone && ptByUnionId && userByPhone) {
             const updatedPtByUnionId = await this.ptUserRepo.update(
               ptByUnionId.id,
@@ -200,6 +214,8 @@ export class SpeakerService {
             }
           }
 
+          // Scenario C: No existing records found for this phone or union ID.
+          // Action: Create a new platform user record with the available info.
           if (!ptByPhone && !ptByUnionId) {
             await this.ptUserRepo.upsert(
               {
@@ -214,6 +230,9 @@ export class SpeakerService {
             );
           }
 
+          // Scenario D: Found a union ID record, but the unlinked phone check didn't yield results (ptByPhone is null).
+          // Action: Check if there's a platform record for this phone that is *already linked* to a user.
+          // If found, and it belongs to a local user, update our union ID record to link to that same local user.
           if (!ptByPhone && ptByUnionId && !userByPhone) {
             const ptByPhoneHasUser = await this.ptUserRepo.findByPhoneHash(
               Platform.TENCENT_MEETING,
@@ -221,6 +240,7 @@ export class SpeakerService {
               participant.phone,
             );
 
+            // If the record we found is already the one we are processing, do nothing
             if (ptByPhoneHasUser?.ptUnionId === participant.uuid) {
               continue;
             }
@@ -245,6 +265,8 @@ export class SpeakerService {
           }
         }
 
+        // Scenario E: Participant has no valid phone number (or it's the excluded dummy hash).
+        // Action: Upsert their platform user record using only their union ID and basic info.
         if (!participant.phone || participant.phone == excludedPhoneHash) {
           await this.ptUserRepo.upsert(
             {
