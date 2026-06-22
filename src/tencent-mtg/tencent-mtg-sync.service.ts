@@ -136,9 +136,13 @@ export class TencentMtgSyncService {
 
               if (record.state === 3) {
                 try {
-                  const startTime = meeting.scheduledStartAt ? Math.floor(meeting.scheduledStartAt.getTime() / 1000) : undefined;
-                  const endTime = meeting.scheduledEndAt ? Math.floor(meeting.scheduledEndAt.getTime() / 1000) : undefined;
-                  
+                  const startTime = meeting.scheduledStartAt
+                    ? Math.floor(meeting.scheduledStartAt.getTime() / 1000)
+                    : undefined;
+                  const endTime = meeting.scheduledEndAt
+                    ? Math.floor(meeting.scheduledEndAt.getTime() / 1000)
+                    : undefined;
+
                   await this.upsertTranscriptFromFile(
                     record.meeting_id,
                     meeting.subMeetingId || '__ROOT__',
