@@ -13,9 +13,7 @@
 
 ### API 使用指南
 
-- [认证 API](api/authentication.md) - 用户认证和授权接口
-- [会议 API](api/meetings.md) - 会议管理接口
-- [用户 API](api/users.md) - 用户管理接口
+- [API 接口文档总览](api/index.md) - 包含了系统所有接口的 Swagger/Redoc 在线文档访问指引
 
 ### 常见问题
 

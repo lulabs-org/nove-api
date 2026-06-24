@@ -182,9 +182,7 @@ export default withMermaid(
           text: '📖 API 使用指南',
           collapsed: false,
           items: [
-            { text: '认证 API', link: '/user/api/authentication' },
-            { text: '会议 API', link: '/user/api/meetings' },
-            { text: '用户 API', link: '/user/api/users' },
+            { text: 'API 接口文档总览', link: '/user/api/' },
           ],
         },
         {
