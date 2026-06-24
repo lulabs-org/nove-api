@@ -9,7 +9,6 @@
  * - npx tsx prisma/seed.ts                  # 初始化种子数据（mock 模式）
  * - npx tsx prisma/seed.ts --real          # 初始化种子数据（real 模式）
  * - npx tsx prisma/seed.ts clean           # 清理数据库数据
- * - npx tsx prisma/seed.ts drop            # 删除所有表结构
  * - npx tsx prisma/seed.ts reset           # 重置数据库（清理+初始化）
  * - npx tsx prisma/seed.ts reset --real    # 重置数据库（real 模式）
  * - npx tsx prisma/seed.ts analyze         # 分析数据库结构

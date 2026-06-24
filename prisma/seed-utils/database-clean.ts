@@ -1,6 +1,5 @@
 import { PrismaClient } from '@prisma/client';
 import * as readline from 'readline';
-import type { DatabaseOperationOptions } from './types';
 import {
   getAllTables,
   analyzeTableDependencies,
@@ -63,25 +62,6 @@ async function cleanupTableData(
   }
 }
 
-async function confirmDropOperation(
-  tables: string[],
-  force: boolean,
-): Promise<void> {
-  console.log('\n⚠️  ⚠️  ⚠️  警告 ⚠️  ⚠️  ⚠️');
-  console.log('即将删除上述所有表，此操作不可恢复！');
-  console.log(`将删除 ${tables.length} 个表: ${tables.join(', ')}`);
-
-  if (!force) {
-    const confirmation = await readUserInput(
-      '\n请输入 "DELETE" 确认删除操作，或直接回车取消: ',
-    );
-
-    if (confirmation !== 'DELETE') {
-      console.log('❌ 用户取消删除操作');
-      throw new Error('用户取消删除操作');
-    }
-  }
-}
 
 export async function cleanDatabase(prisma: PrismaClient): Promise<void> {
   console.log('🧹 开始自动清理数据库...');
@@ -119,44 +99,3 @@ export async function cleanDatabase(prisma: PrismaClient): Promise<void> {
   }
 }
 
-export async function dropAllTables(
-  prisma: PrismaClient,
-  options: DatabaseOperationOptions = {},
-): Promise<void> {
-  const { force = false } = options;
-
-  if (!force && process.env.NODE_ENV === 'production') {
-    throw new Error('生产环境下删除表需要显式确认，请使用 force: true 参数');
-  }
-
-  try {
-    const allTables = await getAllTables(prisma);
-
-    if (allTables.length === 0) {
-      console.log('ℹ️ 数据库中没有表需要删除');
-      return;
-    }
-
-    const dependencies = await analyzeTableDependencies(prisma);
-    const sortedTables = topologicalSort(allTables, dependencies);
-
-    await confirmDropOperation(sortedTables, force);
-
-    console.log('\n🗑️ 开始动态删除表结构...');
-    for (const table of sortedTables) {
-      try {
-        await prisma.$executeRawUnsafe(
-          `DROP TABLE IF EXISTS "${table}" CASCADE;`,
-        );
-        console.log(`✅ 已删除表: ${table}`);
-      } catch (error) {
-        console.warn(`⚠️ 删除表 ${table} 时出现警告:`, error);
-      }
-    }
-
-    console.log('🎉 表结构删除完成！');
-  } catch (error) {
-    console.error('❌ 删除表结构失败:', error);
-    throw error;
-  }
-}

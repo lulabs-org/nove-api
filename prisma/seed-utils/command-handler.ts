@@ -9,7 +9,7 @@
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 import type { ParsedCommandLineArgs, DatabaseCommand, SeedMode } from './types';
-import { cleanDatabase, dropAllTables } from './database-clean';
+import { cleanDatabase } from './database-clean';
 import { seedDatabase } from './database-seed';
 import { analyzeDatabaseStructure } from './table-dependencies';
 import { PrismaClient } from '@prisma/client';
@@ -52,12 +52,6 @@ export async function executeDatabaseOperation(
   switch (command) {
     case 'clean':
       await cleanDatabase(prisma as Parameters<typeof cleanDatabase>[0]);
-      break;
-
-    case 'drop':
-      await dropAllTables(prisma as Parameters<typeof dropAllTables>[0], {
-        force,
-      });
       break;
 
     case 'analyze':

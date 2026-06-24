@@ -15,7 +15,7 @@ export interface DatabaseOperationOptions {
   force?: boolean;
 }
 
-export type DatabaseCommand = 'seed' | 'clean' | 'drop' | 'reset' | 'analyze';
+export type DatabaseCommand = 'seed' | 'clean' | 'reset' | 'analyze';
 
 export interface ParsedCommandLineArgs {
   command: DatabaseCommand;
