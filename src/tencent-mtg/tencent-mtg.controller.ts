@@ -7,7 +7,7 @@ import {
   HttpStatus,
   ValidationPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { NoPermissionRequired } from '@/permission/decorators/permissions.decorator';
 import { TencentMtgSyncService } from './tencent-mtg-sync.service';
 import { SyncRecordingsDto } from './dto/sync-recordings.dto';
@@ -17,6 +17,7 @@ import { SyncRecordingsDto } from './dto/sync-recordings.dto';
  * 提供主动拉取腾讯会议数据的接口
  */
 @ApiTags('Tencent Meeting')
+@ApiBearerAuth()
 @Controller('tencent-mtg')
 @NoPermissionRequired()
 export class TencentMtgController {
