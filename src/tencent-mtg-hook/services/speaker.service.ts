@@ -28,6 +28,19 @@ export class SpeakerService {
     private readonly userRepo: UserRepository,
   ) {}
 
+  /**
+   * Enriches speaker information by matching it against meeting participants or platform users.
+   * It attempts to find a match in the following order:
+   * 1. Exact match with a participant (by userid, openId, or ms_open_id).
+   * 2. Match with a platform user by userid.
+   * 3. Match with a participant by username.
+   * 4. Match with a platform user by username.
+   * If a match is found, it merges the additional details into the speaker info.
+   *
+   * @param speakerInfo The original speaker information to enrich
+   * @param participants Array of participants in the meeting to match against
+   * @returns The enriched speaker information, or the original if no match is found
+   */
   async enrichSpeakerInfo(
     speakerInfo: SpeakerInfo,
     participants: ParticipantDetail[],
@@ -68,6 +81,9 @@ export class SpeakerService {
     return speakerInfo;
   }
 
+  /**
+   * Attempts to find an exact match for a speaker among participants using unique identifiers.
+   */
   private matchExact(
     speakerInfo: SpeakerInfo,
     participants: ParticipantDetail[],
@@ -80,6 +96,9 @@ export class SpeakerService {
     );
   }
 
+  /**
+   * Attempts to find a match for a speaker among participants using their username.
+   */
   private matchName(
     username: string | undefined,
     participants: ParticipantDetail[],
@@ -90,6 +109,9 @@ export class SpeakerService {
     return participants.find((p) => p.user_name === username);
   }
 
+  /**
+   * Finds a platform user by their Tencent Meeting userid.
+   */
   private async findUserById(
     userid: string | undefined,
   ): Promise<PlatformUser | null> {
@@ -99,6 +121,9 @@ export class SpeakerService {
     return this.ptUserRepo.findByPtUserId(Platform.TENCENT_MEETING, userid);
   }
 
+  /**
+   * Finds a platform user by their username.
+   */
   private async findUserByName(
     username: string | undefined,
   ): Promise<PlatformUser | null> {
@@ -108,6 +133,9 @@ export class SpeakerService {
     return this.ptUserRepo.findByPtName(Platform.TENCENT_MEETING, username);
   }
 
+  /**
+   * Merges participant details into the speaker info, excluding certain keys to avoid overwriting or redundant data.
+   */
   private enrichParticipant(
     speakerInfo: SpeakerInfo,
     participant: ParticipantDetail,
@@ -132,6 +160,9 @@ export class SpeakerService {
     };
   }
 
+  /**
+   * Merges platform user details (like union ID and phone hash) into the speaker info.
+   */
   private enrichUser(
     speakerInfo: SpeakerInfo,
     platformUser: PlatformUser,

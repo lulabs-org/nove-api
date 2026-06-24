@@ -24,7 +24,7 @@ import { TranscriptRepository } from '@/meeting/repositories/transcript.reposito
 import { TranscriptBatchProcessor } from '@/tencent-mtg-hook/services/transcript-batch-processor.service';
 import { ParticipantService } from '@/integrations/tencent-meeting/services';
 import { SpeakerService } from '@/tencent-mtg-hook/services/speaker.service';
-import { NewTranscriptParagraph } from '@/tencent-mtg-hook/types/recording-transcript.types';
+import { NewTranscriptParagraph } from '@/tencent-mtg-hook/types/transcript.types';
 
 @Injectable()
 export class TencentMtgSyncService {
@@ -94,7 +94,13 @@ export class TencentMtgSyncService {
   }
 
   /**
-   * 获取录制记录列表并逐条 upsert
+   * 获取企业录制列表并逐条同步到本地数据库。
+   * 这个方法通常由队列 Worker 在后台执行，处理特定时间块的数据同步。
+   * 包含：会议信息同步、录制文件信息同步、转写记录同步。
+   * @param startTime - 起始时间戳（Unix 秒）
+   * @param endTime - 结束时间戳（Unix 秒）
+   * @param operatorId - 操作者ID，如果未指定则使用配置的默认 userId
+   * @returns 同步结果统计，包括 upsert 的会议数、录制文件数以及过程中发生的错误
    */
   async syncRecords(
     startTime: number,
@@ -106,6 +112,8 @@ export class TencentMtgSyncService {
     errors: string[];
   }> {
     const effectiveOperatorId = operatorId || this.config.api.userId;
+    
+    // 1. 获取指定时间段内的所有企业录制记录
     const recordMeetings = await this.tencentApi.getAllCorpRecords(
       startTime,
       endTime,
@@ -119,6 +127,7 @@ export class TencentMtgSyncService {
 
     for (const record of recordMeetings) {
       try {
+        // Step 2.1: 同步会议基本信息
         const meeting = await this.upsertMeetingFromRecord(
           record,
           effectiveOperatorId,
@@ -126,14 +135,17 @@ export class TencentMtgSyncService {
         meetingsUpserted++;
 
         if (record.record_files?.length) {
+          // 遍历并同步该会议的所有录制文件
           for (const file of record.record_files) {
             try {
+              // Step 2.2: 同步录制文件信息
               const recording = await this.upsertRecordingFromFile(
                 meeting.id,
                 file,
                 record.state,
               );
 
+              // 状态 3 表示录制已完成，只有录制完成才有转写记录可以拉取
               if (record.state === 3) {
                 try {
                   const startTime = meeting.scheduledStartAt
@@ -143,6 +155,7 @@ export class TencentMtgSyncService {
                     ? Math.floor(meeting.scheduledEndAt.getTime() / 1000)
                     : undefined;
 
+                  // Step 2.3: 同步转写文本及其相关参会人信息
                   await this.upsertTranscriptFromFile(
                     record.meeting_id,
                     meeting.subMeetingId || '__ROOT__',
@@ -177,6 +190,10 @@ export class TencentMtgSyncService {
     return { meetingsUpserted, recordingsUpserted, errors };
   }
 
+  /**
+   * 从腾讯会议 API 获取更详细的会议信息，并 upsert 到本地数据库。
+   * 会处理周期性会议的子会议逻辑，以及时间、状态的映射。
+   */
   async upsertMeetingFromRecord(record: RecordMeeting, operatorId: string) {
     const detail = await this.tencentApi.getMeetingDetail(
       record.meeting_id,
@@ -239,6 +256,9 @@ export class TencentMtgSyncService {
     );
   }
 
+  /**
+   * 将录制文件元数据（开始时间、结束时间、状态等）保存到本地数据库。
+   */
   async upsertRecordingFromFile(
     meetingId: string,
     file: RecordFile,
@@ -254,6 +274,14 @@ export class TencentMtgSyncService {
     });
   }
 
+  /**
+   * 获取并同步录制文件的转写记录（包含发言人识别）。
+   * 流程：
+   * 1. 检查是否已处理过该转写记录。
+   * 2. 拉取会议参会者列表并同步，用于后续关联匹配说话人身份。
+   * 3. 拉取转写段落数据，使用参会者信息丰富各个段落里的 speaker_info。
+   * 4. 批量插入处理好的转写段落到数据库中。
+   */
   async upsertTranscriptFromFile(
     meetid: string,
     subid: string,

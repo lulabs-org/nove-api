@@ -14,6 +14,7 @@ import {
   TranscriptParagraph,
   TranscriptSentence,
 } from '@/integrations/tencent-meeting/types';
+import { NewSpeakerInfo } from './speaker.types';
 
 export type PrismaTransaction = Omit<
   PrismaClient,
@@ -44,4 +45,12 @@ export interface CreateTranscriptInput {
   participants: Array<{ uuid: string; user_name: string }>;
   meetingId?: string;
   subMeetingId?: string;
+}
+
+export interface NewTranscriptParagraph {
+  pid: string;
+  start_time: number;
+  end_time: number;
+  sentences: TranscriptSentence[];
+  speaker_info: NewSpeakerInfo;
 }
