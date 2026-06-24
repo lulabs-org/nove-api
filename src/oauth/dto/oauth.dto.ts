@@ -1,4 +1,10 @@
-import { IsString, IsNotEmpty, IsOptional, IsArray, IsUrl, IsEnum } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsArray,
+  IsUrl,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class AuthorizeDto {
@@ -34,12 +40,16 @@ export class TokenDto {
   @IsNotEmpty()
   grant_type: 'authorization_code' | 'refresh_token';
 
-  @ApiPropertyOptional({ description: '授权码 (grant_type=authorization_code 时必填)' })
+  @ApiPropertyOptional({
+    description: '授权码 (grant_type=authorization_code 时必填)',
+  })
   @IsString()
   @IsOptional()
   code?: string;
 
-  @ApiPropertyOptional({ description: '刷新令牌 (grant_type=refresh_token 时必填)' })
+  @ApiPropertyOptional({
+    description: '刷新令牌 (grant_type=refresh_token 时必填)',
+  })
   @IsString()
   @IsOptional()
   refresh_token?: string;

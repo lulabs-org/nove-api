@@ -1,4 +1,10 @@
-import { Injectable, Inject, UnauthorizedException, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  Inject,
+  UnauthorizedException,
+  BadRequestException,
+  Logger,
+} from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { jwtConfig } from '@/configs/jwt.config';
@@ -111,11 +117,15 @@ export class OAuthGrantService {
     );
   }
 
-  private async generateTokens(userId: string, clientId: string, scopes: string[]) {
+  private async generateTokens(
+    userId: string,
+    clientId: string,
+    scopes: string[],
+  ) {
     // 1. 生成 Access Token (JWT)
     const payload = { sub: userId, scopes }; // 包含 scopes
     const accessJti = randomUUID();
-    
+
     const accessToken = this.jwtService.sign(payload, {
       secret: this.config.accessSecret,
       expiresIn: this.config.accessExpiresIn,
@@ -124,7 +134,7 @@ export class OAuthGrantService {
 
     // 2. 生成 Refresh Token 并存入数据库
     const refreshToken = crypto.randomBytes(64).toString('hex');
-    
+
     // 解析 refreshExpiresIn 字符串为毫秒（为了简单起见，这里假设它以 "d", "h" 等结尾）
     // 或者可以直接使用一个固定时间，比如 30 天
     const refreshExpiresInSeconds = 30 * 24 * 60 * 60; // 30 days

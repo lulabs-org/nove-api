@@ -7,6 +7,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { REQUIRE_SCOPE_KEY } from '../decorators/require-scope.decorator';
 import { Request } from 'express';
+import { AuthenticatedUser } from '../types/jwt.types';
 
 @Injectable()
 export class ScopeGuard implements CanActivate {
@@ -23,11 +24,11 @@ export class ScopeGuard implements CanActivate {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest<Request>();
-    // 我们假设 JWT payload 会被提取并在 request.user 中带上 scope，或者我们在 AuthContext 中存一份
-    // 这里的实现依赖于我们如何在 JwtStrategy 中把 scopes 解析并绑定到 user 对象上
-    const user = (request as any).user;
-    
+    const request = context
+      .switchToHttp()
+      .getRequest<Request & { user?: AuthenticatedUser }>();
+    const user = request.user;
+
     if (!user) {
       return false; // 用户未认证
     }
