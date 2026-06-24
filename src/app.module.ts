@@ -19,6 +19,7 @@ import { MailModule } from './mail/mail.module';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { UnifiedAuthGuard } from '@/auth/guards/unified-auth.guard';
+import { ScopeGuard } from '@/auth/guards/scope.guard';
 import { PermissionGuard } from '@/permission/guards/permission.guard';
 import { PrismaModule } from './prisma/prisma.module';
 import { MeetingModule } from './meeting/meeting.module';
@@ -48,6 +49,7 @@ import { MeetAiModule } from './meet-ai/meet-ai.module';
 import { WechatShopModule } from './wechat-shop/wechat-shop.module';
 import { OrderModule } from './order/order.module';
 import { WebhookLogModule } from './webhook-log/webhook-log.module';
+import { OAuthModule } from './oauth/oauth.module';
 
 @Module({
   imports: [
@@ -113,6 +115,7 @@ import { WebhookLogModule } from './webhook-log/webhook-log.module';
     WechatShopModule,
     OrderModule,
     WebhookLogModule,
+    OAuthModule,
   ],
   controllers: [AppController],
   providers: [
@@ -121,6 +124,10 @@ import { WebhookLogModule } from './webhook-log/webhook-log.module';
     {
       provide: APP_GUARD,
       useClass: UnifiedAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ScopeGuard,
     },
     {
       provide: APP_GUARD,

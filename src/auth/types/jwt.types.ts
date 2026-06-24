@@ -21,6 +21,7 @@ export interface AuthenticatedUser {
   phoneVerified: boolean;
   createdAt: Date;
   lastLoginAt?: Date | null;
+  scopes?: string[];
 }
 
 export interface JwtPayload {
@@ -30,6 +31,7 @@ export interface JwtPayload {
   jti?: string;
   iat?: number;
   exp?: number;
+  scopes?: string[];
 }
 
 export enum TokenBlacklistScope {
