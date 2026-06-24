@@ -6,7 +6,8 @@
   "private": true,
   "license": "MIT",
   "prisma": {
-    "schema": "./prisma"
+    "schema": "./prisma",
+    "seed": "tsx prisma/seed.ts"
   },
   "scripts": {
     "build": "nest build",
@@ -40,10 +41,6 @@
     "db:reset": "prisma migrate reset",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed:real": "tsx prisma/seed.ts --real",
-    "db:cleandata": "tsx prisma/seed.ts clean",
-    "db:drop": "tsx prisma/seed.ts drop",
-    "db:seed:reset": "tsx prisma/seed.ts reset",
-    "db:seed:reset:real": "tsx prisma/seed.ts reset --real",
     "db:backup": "chmod +x scripts/shell/backup.sh && ./scripts/shell/backup.sh",
     "mcp:inspect": "npx @modelcontextprotocol/inspector node dist/main.js",
     "mcp:inspect:dev": "npx @modelcontextprotocol/inspector npx nest start",
