@@ -4,22 +4,26 @@
 
 ## 📚 文档列表
 
-- [注册流程](REGISTRATION_FLOW.md) - 用户注册流程实现
-- [登录与JWT](LOGIN_AND_JWT.md) - 登录流程和JWT实现
-- [登出实现](LOGOUT_IMPLEMENTATION_SUMMARY.md) - 登出功能实现总结
-- [权限控制](AUTHORIZATION.md) - 权限控制机制
+- [注册流程](registration-flow.md) - 用户注册流程实现
+- [登出实现](logout-implementation.md) - 登出功能实现总结
 
 ## 🏗️ 模块结构
 
+本系统不仅支持基础的 JWT 认证，还通过独立的 `role` 和 `permission` 模块实现了基于组织成员的 RBAC（基于角色的访问控制）。
+
 ```
 src/auth/
-├── controllers/          # HTTP请求处理器
-├── services/            # 业务逻辑服务
-├── repositories/        # 数据访问层
+├── controllers/         # HTTP请求处理器 (如 AuthController)
+├── services/            # 业务逻辑服务 (Login, Register, Token)
+├── repositories/        # 数据库交互
+├── guards/              # JWT 与权限拦截器
 ├── dto/                 # 数据传输对象
 ├── types/               # TypeScript类型定义
 ├── enums/               # 枚举定义
 └── exceptions/          # 自定义异常
+
+src/permission/          # 细粒度权限点管理
+src/role/                # 角色定义与权限绑定
 ```
 
 ## 🔐 安全考虑

@@ -157,6 +157,7 @@ export default withMermaid(
         {
           text: '🗺️ 路线图',
           items: [
+            { text: '项目愿景与目标', link: '/developer/roadmap/project-goals' },
             { text: '多租户架构', link: '/developer/roadmap/multi-tenant-architecture' },
           ],
         },

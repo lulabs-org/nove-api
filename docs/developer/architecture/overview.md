@@ -14,6 +14,7 @@ graph TB
         WebUI[Web UI]
         Mobile[移动应用]
         ThirdPartyAPI[第三方API集成]
+        MCPClient[MCP 客户端]
     end
 
     subgraph APIGateway["API网关"]
@@ -28,37 +29,30 @@ graph TB
 
     subgraph AppInstances["应用实例"]
         subgraph App1["应用实例1 (NestJS)"]
-            Auth1[认证模块]
-            Meeting1[会议模块]
-            Integration1[集成模块]
-            Business1[业务模块]
+            Auth1[认证/权限模块]
+            Meeting1[会议与AI模块]
+            Integration1[集成/Webhook模块]
+            Business1[订单与业务模块]
         end
 
         subgraph App2["应用实例2 (NestJS)"]
-            Auth2[认证模块]
-            Meeting2[会议模块]
-            Integration2[集成模块]
-            Business2[业务模块]
-        end
-
-        subgraph AppN["应用实例N (NestJS)"]
-            AuthN[认证模块]
-            MeetingN[会议模块]
-            IntegrationN[集成模块]
-            BusinessN[业务模块]
+            Auth2[认证/权限模块]
+            Meeting2[会议与AI模块]
+            Integration2[集成/Webhook模块]
+            Business2[订单与业务模块]
         end
     end
 
     subgraph DataStorage["数据存储"]
         subgraph PostgreSQL["PostgreSQL<br/>主数据库"]
-            UserData[用户数据]
-            MeetingData[会议数据]
-            BusinessData[业务数据]
+            UserData[用户与组织数据]
+            MeetingData[会议与录制数据]
+            BusinessData[业务与日志数据]
         end
 
         subgraph Redis["Redis<br/>缓存/队列"]
             Session[会话存储]
-            Queue[任务队列]
+            Queue[Task/BullMQ 任务队列]
             Cache[临时缓存]
         end
 
@@ -82,10 +76,14 @@ graph TB
             AppIntegration[应用集成]
         end
 
-        subgraph OtherServices["第三方服务"]
+        subgraph WechatShop["微信小店API"]
+            WechatOrders[订单同步]
+        end
+
+        subgraph OtherServices["其他第三方服务"]
             SMS[阿里云短信]
             Email[邮件服务]
-            OpenAI[OpenAI API]
+            OpenAI[OpenAI / LLM API]
         end
     end
 

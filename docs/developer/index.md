@@ -67,6 +67,7 @@
 
 ### 🗺️ 路线图
 了解项目未来的架构演进计划：
+- [项目愿景与目标](roadmap/project-goals.md)
 - [多租户架构](roadmap/multi-tenant-architecture.md)
 
 ---
