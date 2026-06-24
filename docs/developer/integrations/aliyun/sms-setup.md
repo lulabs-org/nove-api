@@ -94,7 +94,7 @@ ALIYUN_SMS_TEMPLATE_RESET=SMS_271525576
 发送注册验证码：
 
 ```bash
-POST /auth/send-code
+POST /api/auth/otp/send-phone-code
 Content-Type: application/json
 
 {
@@ -106,7 +106,7 @@ Content-Type: application/json
 发送登录验证码：
 
 ```bash
-POST /auth/send-code
+POST /api/auth/otp/send-phone-code
 Content-Type: application/json
 
 {
@@ -118,7 +118,7 @@ Content-Type: application/json
 ### 验证码验证
 
 ```bash
-POST /auth/verify-code
+POST /api/auth/otp/verify-code
 Content-Type: application/json
 
 {
@@ -167,7 +167,7 @@ Content-Type: application/json
 
 ```bash
 # 查看应用日志
-npm run start:dev
+pnpm start:dev
 
 # 成功日志示例
 [AliyunSmsService] 短信发送成功: 13800138000, 验证码: 123456

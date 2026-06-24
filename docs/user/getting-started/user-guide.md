@@ -8,7 +8,9 @@
 2. [认证与授权](#认证与授权)
 3. [会议管理](#会议管理)
 4. [用户资料](#用户资料)
-5. [常见问题](#常见问题)
+5. [API Key 认证](#api-key-认证)
+6. [错误处理](#错误处理)
+7. [最佳实践](#最佳实践)
 
 ---
 
@@ -19,14 +21,13 @@
 系统支持邮箱注册，注册流程如下：
 
 ```bash
-# 发送注册验证码
-POST /api/v1/verification/send-email-code
-Content-Type: application/json
-
-{
-  "email": "your-email@example.com",
-  "purpose": "REGISTER"
-}
+# 1. 发送注册验证码
+curl -X POST http://localhost:3000/verification/send-email-code \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "your-email@example.com",
+    "purpose": "REGISTER"
+  }'
 ```
 
 响应示例：
@@ -43,16 +44,15 @@ Content-Type: application/json
 使用收到的验证码完成注册：
 
 ```bash
-# 注册用户
-POST /api/v1/auth/register
-Content-Type: application/json
-
-{
-  "email": "your-email@example.com",
-  "password": "YourSecurePassword123!",
-  "name": "Your Name",
-  "verificationCode": "123456"
-}
+# 2. 注册用户
+curl -X POST http://localhost:3000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "your-email@example.com",
+    "password": "YourSecurePassword123!",
+    "name": "Your Name",
+    "verificationCode": "123456"
+  }'
 ```
 
 响应示例：
@@ -60,12 +60,14 @@ Content-Type: application/json
 ```json
 {
   "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "expiresIn": 900,
+  "refreshToken": "a1b2c3d4e5...",
+  "refreshExpiresIn": 604800,
   "user": {
-    "id": "user-123",
+    "id": "clxxx...",
     "email": "your-email@example.com",
     "name": "Your Name",
-    "createdAt": "2024-01-01T00:00:00.000Z"
+    "createdAt": "2026-01-01T00:00:00.000Z"
   }
 }
 ```
@@ -75,24 +77,22 @@ Content-Type: application/json
 忘记密码时，可以通过邮箱重置：
 
 ```bash
-# 发送密码重置验证码
-POST /api/v1/verification/send-email-code
-Content-Type: application/json
+# 1. 发送密码重置验证码
+curl -X POST http://localhost:3000/verification/send-email-code \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "your-email@example.com",
+    "purpose": "RESET_PASSWORD"
+  }'
 
-{
-  "email": "your-email@example.com",
-  "purpose": "RESET_PASSWORD"
-}
-
-# 重置密码
-POST /api/v1/auth/reset-password
-Content-Type: application/json
-
-{
-  "email": "your-email@example.com",
-  "newPassword": "NewSecurePassword123!",
-  "verificationCode": "123456"
-}
+# 2. 重置密码
+curl -X POST http://localhost:3000/api/auth/reset-password \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "your-email@example.com",
+    "newPassword": "NewSecurePassword123!",
+    "verificationCode": "123456"
+  }'
 ```
 
 ---
@@ -104,13 +104,12 @@ Content-Type: application/json
 使用邮箱和密码登录：
 
 ```bash
-POST /api/v1/auth/login
-Content-Type: application/json
-
-{
-  "email": "your-email@example.com",
-  "password": "YourSecurePassword123!"
-}
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "your-email@example.com",
+    "password": "YourSecurePassword123!"
+  }'
 ```
 
 响应示例：
@@ -118,42 +117,60 @@ Content-Type: application/json
 ```json
 {
   "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "expiresIn": 900,
+  "refreshToken": "a1b2c3d4e5...",
+  "refreshExpiresIn": 604800,
   "user": {
-    "id": "user-123",
+    "id": "clxxx...",
     "email": "your-email@example.com",
     "name": "Your Name"
   }
 }
 ```
 
+> [!NOTE]
+> `expiresIn` 和 `refreshExpiresIn` 的单位均为**秒**。
+> - 访问令牌默认有效期：**15 分钟**（900 秒）
+> - 刷新令牌默认有效期：**7 天**（604800 秒）
+
 ### Token 刷新
 
 访问令牌过期后，使用刷新令牌获取新的访问令牌：
 
 ```bash
-POST /api/v1/auth/refresh
-Content-Type: application/json
-
-{
-  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-}
+curl -X POST http://localhost:3000/api/auth/refresh-token \
+  -H "Content-Type: application/json" \
+  -d '{
+    "refreshToken": "a1b2c3d4e5..."
+  }'
 ```
+
+> [!TIP]
+> 系统实现了**刷新令牌轮换**（Refresh Token Rotation）：每次刷新后，旧的 refreshToken 会被立即撤销，响应中返回新的 refreshToken。请务必更新本地存储的 refreshToken。
 
 ### 登出
 
 ```bash
-POST /api/v1/auth/logout
-Authorization: Bearer <access_token>
+curl -X POST http://localhost:3000/api/auth/logout \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "refreshToken": "a1b2c3d4e5..."
+  }'
 ```
+
+支持的登出选项：
+- `refreshToken`: 撤销指定的刷新令牌
+- `deviceId`: 撤销指定设备的所有令牌
+- `revokeAllDevices`: 设为 `true` 可撤销所有设备的令牌
 
 ### 使用 Token 访问 API
 
 在后续请求中，使用 `Authorization` 头携带访问令牌：
 
 ```bash
-GET /api/v1/users/profile
-Authorization: Bearer <access_token>
+curl http://localhost:3000/api/auth/me \
+  -H "Authorization: Bearer <access_token>"
 ```
 
 ---
@@ -165,45 +182,23 @@ Authorization: Bearer <access_token>
 创建新会议：
 
 ```bash
-POST /api/v1/meetings
-Authorization: Bearer <access_token>
-Content-Type: application/json
-
-{
-  "title": "项目讨论会",
-  "description": "讨论项目进度和下一步计划",
-  "startTime": "2024-01-15T10:00:00.000Z",
-  "endTime": "2024-01-15T11:00:00.000Z",
-  "meetingType": "REGULAR"
-}
-```
-
-响应示例：
-
-```json
-{
-  "id": "meeting-123",
-  "title": "项目讨论会",
-  "description": "讨论项目进度和下一步计划",
-  "startTime": "2024-01-15T10:00:00.000Z",
-  "endTime": "2024-01-15T11:00:00.000Z",
-  "meetingType": "REGULAR",
-  "status": "SCHEDULED",
-  "createdAt": "2024-01-10T00:00:00.000Z",
-  "host": {
-    "id": "user-123",
-    "name": "Your Name"
-  }
-}
+curl -X POST http://localhost:3000/meetings \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "项目讨论会",
+    "description": "讨论项目进度和下一步计划",
+    "startTime": "2026-07-15T10:00:00.000Z",
+    "endTime": "2026-07-15T11:00:00.000Z",
+    "meetingType": "REGULAR"
+  }'
 ```
 
 ### 获取会议列表
 
-获取所有会议：
-
 ```bash
-GET /api/v1/meetings
-Authorization: Bearer <access_token>
+curl "http://localhost:3000/meetings?page=1&limit=20" \
+  -H "Authorization: Bearer <access_token>"
 ```
 
 响应示例：
@@ -215,7 +210,7 @@ Authorization: Bearer <access_token>
       "id": "meeting-123",
       "title": "项目讨论会",
       "status": "SCHEDULED",
-      "startTime": "2024-01-15T10:00:00.000Z"
+      "startTime": "2026-07-15T10:00:00.000Z"
     }
   ],
   "total": 1,
@@ -227,28 +222,27 @@ Authorization: Bearer <access_token>
 ### 获取会议详情
 
 ```bash
-GET /api/v1/meetings/{meetingId}
-Authorization: Bearer <access_token>
+curl http://localhost:3000/meetings/{meetingId} \
+  -H "Authorization: Bearer <access_token>"
 ```
 
 ### 更新会议
 
 ```bash
-PUT /api/v1/meetings/{meetingId}
-Authorization: Bearer <access_token>
-Content-Type: application/json
-
-{
-  "title": "更新后的会议标题",
-  "description": "更新后的描述"
-}
+curl -X PUT http://localhost:3000/meetings/{meetingId} \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "更新后的会议标题",
+    "description": "更新后的描述"
+  }'
 ```
 
 ### 删除会议
 
 ```bash
-DELETE /api/v1/meetings/{meetingId}
-Authorization: Bearer <access_token>
+curl -X DELETE http://localhost:3000/meetings/{meetingId} \
+  -H "Authorization: Bearer <access_token>"
 ```
 
 ### 会议状态
@@ -267,76 +261,39 @@ Authorization: Bearer <access_token>
 ### 获取个人信息
 
 ```bash
-GET /api/v1/users/profile
-Authorization: Bearer <access_token>
-```
-
-响应示例：
-
-```json
-{
-  "id": "user-123",
-  "email": "your-email@example.com",
-  "name": "Your Name",
-  "avatar": "https://example.com/avatar.jpg",
-  "createdAt": "2024-01-01T00:00:00.000Z",
-  "updatedAt": "2024-01-10T00:00:00.000Z"
-}
+curl http://localhost:3000/api/user/profile \
+  -H "Authorization: Bearer <access_token>"
 ```
 
 ### 更新个人信息
 
 ```bash
-PUT /api/v1/users/profile
-Authorization: Bearer <access_token>
-Content-Type: application/json
-
-{
-  "name": "Updated Name",
-  "avatar": "https://example.com/new-avatar.jpg"
-}
-```
-
-### 修改密码
-
-```bash
-PUT /api/v1/users/password
-Authorization: Bearer <access_token>
-Content-Type: application/json
-
-{
-  "oldPassword": "OldPassword123!",
-  "newPassword": "NewPassword123!"
-}
+curl -X PUT http://localhost:3000/api/user/profile \
+  -H "Authorization: Bearer <access_token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Updated Name",
+    "avatar": "https://example.com/new-avatar.jpg"
+  }'
 ```
 
 ---
 
-## 常见问题
+## API Key 认证
 
-### Q: 访问令牌多久过期？
+除了 JWT Token 认证外，系统还支持通过 API Key 进行认证，适用于程序化访问场景（如脚本、CI/CD、第三方集成等）。
 
-A: 访问令牌的有效期为 1 小时。过期后，请使用刷新令牌获取新的访问令牌。
+### 使用 API Key
 
-### Q: 如何获取验证码？
+在请求头中通过 `Authorization` 头携带 API Key：
 
-A: 通过 `/api/v1/verification/send-email-code` 接口发送验证码到您的邮箱。
+```bash
+curl http://localhost:3000/meetings \
+  -H "Authorization: Bearer <your-api-key>"
+```
 
-### Q: 验证码多久过期？
-
-A: 验证码的有效期为 5 分钟（300 秒）。
-
-### Q: 可以创建多少个会议？
-
-A: 目前没有限制，但请合理使用系统资源。
-
-### Q: 会议录制和转写功能如何使用？
-
-A: 会议录制和转写功能由腾讯会议提供。创建会议后，系统会自动处理录制和转写，您可以通过会议详情查看相关内容。
-
-### Q: 如何联系技术支持？
-
-A: 如遇到问题，请联系系统管理员或发送邮件至 support@example.com。
+> [!NOTE]
+> API Key 的创建和管理需要通过系统管理界面或对应的管理 API 完成。详见 Swagger 文档中的 API Key 相关端点。
 
 ---
 
@@ -354,13 +311,15 @@ A: 如遇到问题，请联系系统管理员或发送邮件至 support@example.
 
 常见错误码：
 
-- `400` - 请求参数错误
-- `401` - 未授权（令牌无效或过期）
-- `403` - 禁止访问（权限不足）
-- `404` - 资源不存在
-- `409` - 资源冲突（如邮箱已注册）
-- `429` - 请求过于频繁
-- `500` - 服务器内部错误
+| 错误码 | 含义 | 常见原因 |
+|--------|------|----------|
+| `400` | 请求参数错误 | 缺少必填字段、格式不正确 |
+| `401` | 未授权 | 令牌无效、过期或未提供 |
+| `403` | 禁止访问 | 权限不足 |
+| `404` | 资源不存在 | ID 错误或资源已删除 |
+| `409` | 资源冲突 | 邮箱已注册等 |
+| `429` | 请求过于频繁 | 触发速率限制 |
+| `500` | 服务器内部错误 | 系统异常，请联系管理员 |
 
 ---
 
@@ -377,8 +336,9 @@ A: 如遇到问题，请联系系统管理员或发送邮件至 support@example.
 
 - 妥善保管访问令牌和刷新令牌
 - 不要在客户端代码中硬编码令牌
-- 令牌过期后及时刷新
+- 令牌过期后及时使用 refresh-token 接口刷新
 - 登出后清除本地存储的令牌
+- 刷新后务必更新本地存储的 refreshToken（令牌轮换机制）
 
 ### API 使用
 
@@ -394,9 +354,9 @@ A: 如遇到问题，请联系系统管理员或发送邮件至 support@example.
 如果您在使用过程中遇到任何问题，请：
 
 1. 查阅本文档的相关章节
-2. 查看错误消息和状态码
-3. 联系系统管理员
-4. 发送邮件至 support@example.com
+2. 查看 [常见问题](../faq/common-questions.md)
+3. 访问 [Swagger 文档](http://localhost:3000/api) 查看完整 API 细节
+4. 联系系统管理员
 
 ---
 

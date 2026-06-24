@@ -172,10 +172,10 @@ GET /meetings/health
    pnpm install
 
    # 生成Prisma客户端
-   npx prisma generate
+   pnpm db:generate
 
    # 运行数据库迁移
-   npx prisma db push
+   pnpm db:push
 
    # 启动应用
    pnpm run start:dev

@@ -80,10 +80,13 @@ Content-Type: application/json
 
 | 事件类型 | 描述 | 处理逻辑 |
 |---------|------|----------|
-| `meeting.created` | 会议创建 | 记录会议信息到飞书多维表格 |
-| `meeting.started` | 会议开始 | 更新会议状态 |
-| `meeting.ended` | 会议结束 | 更新会议状态 |
-| `recording.completed` | 录制完成 | 处理录制文件 |
+| `meeting.started` | 会议开始 | 更新会议状态，初始化部分数据 |
+| `meeting.ended` | 会议结束 | 更新会议状态为已结束 |
+| `meeting.participant-joined` | 参会者加入 | 记录参会人行为 (MeetingUserAction) 等信息 |
+| `recording.completed` | 录制完成 | 处理录制文件下载与转存 |
+| `smart.fullsummary` | 智能摘要完成 | 接收并处理大模型生成的智能摘要 |
+| `smart.minutes` | 智能会议纪要完成 | 接收并处理会议纪要 |
+| `smart.transcripts` | 智能转写完成 | 接收转写文本数据并入库 |
 
 ### 事件数据结构
 

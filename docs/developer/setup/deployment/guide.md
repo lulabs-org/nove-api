@@ -216,7 +216,7 @@ curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt-get install -y nodejs
 
 # 安装pnpm
-sudo npm install -g pnpm
+npm install -g pnpm
 ```
 
 ### 2. 应用部署
@@ -270,7 +270,7 @@ sudo nano /etc/nove_api/.env
 pnpm db:migrate
 
 # 或者使用 Prisma CLI
-npx prisma migrate deploy
+pnpm exec prisma migrate deploy
 
 # 初始化生产数据（可选）
 pnpm db:seed
@@ -282,7 +282,7 @@ pnpm db:seed
 
 ```bash
 # 安装PM2
-sudo npm install -g pm2
+pnpm install -g pm2
 
 # 启动应用
 pm2 start dist/main.js --name "lulab-backend" --env production
@@ -605,7 +605,7 @@ pnpm install --prod
 pnpm run build
 
 # 运行数据库迁移
-npx prisma migrate deploy
+pnpm db:migrate:prod
 
 # 启动应用
 pm2 start lulab-backend

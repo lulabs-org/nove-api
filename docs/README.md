@@ -16,6 +16,43 @@
 
 [📖 进入用户文档](user/index.md)
 
+## 🏗️ 文档结构
+
+```
+docs/
+├── .vitepress/          # VitePress 站点配置与主题
+├── developer/           # 开发者文档
+│   ├── architecture/    #   架构设计（整体架构、技术栈、数据流、模块设计）
+│   ├── setup/           #   环境搭建（数据库、部署）
+│   ├── development/     #   开发指南（Git 协作、脚本、安全、测试）
+│   ├── modules/         #   核心模块（认证、API Key、MCP）
+│   ├── integrations/    #   第三方集成（飞书、腾讯会议、阿里云、邮件）
+│   └── roadmap/         #   路线图（项目目标、多租户架构）
+├── user/                # 用户文档
+│   ├── getting-started/ #   快速开始与用户指南
+│   ├── api/             #   API 使用指南
+│   └── faq/             #   常见问题
+├── public/              # 静态资源（Logo 等）
+└── index.md             # 站点首页
+```
+
+## 🚀 本地启动文档站点
+
+```bash
+# 在项目根目录下
+pnpm docs:dev
+
+# 或进入 docs 目录
+cd docs
+pnpm run docs:dev
+```
+
+构建静态站点：
+
+```bash
+pnpm docs:build
+```
+
 ## 📝 文档贡献
 
 如果您想为文档做出贡献，请遵循以下原则：
@@ -23,3 +60,4 @@
 - 使用清晰简洁的语言
 - 为新功能添加相应的文档
 - 遵循现有的文档结构和格式规范
+- 当修改系统逻辑时，同步更新对应的文档

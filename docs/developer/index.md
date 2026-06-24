@@ -6,6 +6,21 @@
 
 根据您的职责和当前需求，请参考以下分类内容：
 
+### 🔍 快速定位
+
+| 我想要... | 去看 |
+|-----------|------|
+| 了解项目整体架构和技术选型 | [整体架构](architecture/overview.md) / [技术栈](architecture/tech-stack.md) |
+| 搭建本地开发环境 | [项目结构](architecture/project-structure.md) → [Prisma 配置](setup/database/prisma-setup.md) |
+| 了解 Git 工作流和提交规范 | [Git 协作](development/git-collaboration.md) |
+| 查找 package.json 脚本用途 | [脚本说明](development/package-scripts.md) |
+| 编写或阅读测试 | [NestJS 测试规范](development/nestjs-testing-standards.md) |
+| 对接认证模块 | [认证概述](modules/authentication/overview.md) |
+| 使用或管理 API Key | [API Key 概述](modules/api-key/overview.md) |
+| 连接 MCP / AI 智能体 | [MCP 连接指南](modules/mcp/connection-guide.md) |
+| 集成飞书/腾讯会议 | [飞书集成](integrations/lark/overview.md) / [腾讯会议](integrations/tencent-meeting/overview.md) |
+| 了解项目未来规划 | [项目愿景与目标](roadmap/project-goals.md) |
+
 ### 🏗️ 架构设计
 快速了解项目的宏观系统设计和技术结构：
 - [整体架构](architecture/overview.md) - 系统架构概览与进程通信
@@ -67,6 +82,7 @@
 
 ### 🗺️ 路线图
 了解项目未来的架构演进计划：
+- [项目愿景与目标](roadmap/project-goals.md)
 - [多租户架构](roadmap/multi-tenant-architecture.md)
 
 ---

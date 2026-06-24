@@ -2,7 +2,7 @@
 
 ## 概述
 
-本文档提供了 Nove API 系统的架构概览和详细文档索引。Nove API 是一个基于 NestJS 的企业级会议和用户服务系统，提供用户认证、会议管理、第三方服务集成等功能。
+本文档提供了 Nove API 系统的架构概览和详细文档索引。Nove API 是一个基于 NestJS 的企业级智能数据仓库与 AI Agent 基础设施，提供实时数据处理、用户认证、会议管理、AI 智能体集成和第三方服务协同等功能。
 
 ## 整体架构概览
 
@@ -14,6 +14,7 @@ graph TB
         WebUI[Web UI]
         Mobile[移动应用]
         ThirdPartyAPI[第三方API集成]
+        MCPClient[MCP 客户端]
     end
 
     subgraph APIGateway["API网关"]
@@ -28,37 +29,30 @@ graph TB
 
     subgraph AppInstances["应用实例"]
         subgraph App1["应用实例1 (NestJS)"]
-            Auth1[认证模块]
-            Meeting1[会议模块]
-            Integration1[集成模块]
-            Business1[业务模块]
+            Auth1[认证/权限模块]
+            Meeting1[会议与AI模块]
+            Integration1[集成/Webhook模块]
+            Business1[订单与业务模块]
         end
 
         subgraph App2["应用实例2 (NestJS)"]
-            Auth2[认证模块]
-            Meeting2[会议模块]
-            Integration2[集成模块]
-            Business2[业务模块]
-        end
-
-        subgraph AppN["应用实例N (NestJS)"]
-            AuthN[认证模块]
-            MeetingN[会议模块]
-            IntegrationN[集成模块]
-            BusinessN[业务模块]
+            Auth2[认证/权限模块]
+            Meeting2[会议与AI模块]
+            Integration2[集成/Webhook模块]
+            Business2[订单与业务模块]
         end
     end
 
     subgraph DataStorage["数据存储"]
         subgraph PostgreSQL["PostgreSQL<br/>主数据库"]
-            UserData[用户数据]
-            MeetingData[会议数据]
-            BusinessData[业务数据]
+            UserData[用户与组织数据]
+            MeetingData[会议与录制数据]
+            BusinessData[业务与日志数据]
         end
 
         subgraph Redis["Redis<br/>缓存/队列"]
             Session[会话存储]
-            Queue[任务队列]
+            Queue[Task/BullMQ 任务队列]
             Cache[临时缓存]
         end
 
@@ -82,10 +76,14 @@ graph TB
             AppIntegration[应用集成]
         end
 
-        subgraph OtherServices["第三方服务"]
+        subgraph WechatShop["微信小店API"]
+            WechatOrders[订单同步]
+        end
+
+        subgraph OtherServices["其他第三方服务"]
             SMS[阿里云短信]
             Email[邮件服务]
-            OpenAI[OpenAI API]
+            OpenAI[OpenAI / LLM API]
         end
     end
 
@@ -126,7 +124,7 @@ graph TB
    ```bash
    # 克隆项目
    git clone <repository-url>
-   cd nove_api
+   cd nove-api
    
    # 安装依赖
    pnpm install
@@ -164,13 +162,13 @@ graph TB
    ```bash
    # 运行单元测试
    pnpm test:unit
-   
+    
    # 运行集成测试
    pnpm test:integration
-   
+    
    # 运行所有测试
    pnpm test:all
-   
+    
    # 生成测试覆盖率报告
    pnpm test:cov
    ```
@@ -199,8 +197,6 @@ graph TB
 - ELK Stack 进行日志聚合和分析
 - OpenTelemetry 进行分布式追踪
 
-## 总结
+## 延伸阅读
 
-Nove API 系统采用现代化的技术栈和架构设计，具有高性能、高可用、易扩展的特点。通过模块化设计和微服务架构，系统可以灵活应对业务需求的变化。详细的架构文档可以帮助开发团队更好地理解和维护系统。
-
-如需了解特定方面的详细信息，请参考相应的架构文档。
+Nove API 系统采用现代化的技术栈和模块化架构设计，具有高性能、高可用、易扩展的特点。如需深入了解特定方面，请参考上方的架构文档索引表格。

@@ -18,14 +18,14 @@
 
 ### 3. 数据模型
 
-所有的数据模型统一集中定义在项目根目录的 `prisma/schema.prisma` 文件中，包括但不限于：
+为了解决单一文件过大的问题，本项目采用了**多文件 Prisma Schema 管理方案**。数据模型分散定义在 `prisma/models/` 目录下的各个 `.prisma` 文件中，包括但不限于：
 
-- `User`, `Profile` - 用户与档案管理
-- `Organization`, `Department`, `OrgMember` - 多租户组织结构
-- `Role`, `Permission` - RBAC 角色与权限
-- `Meeting`, `MeetingParticipant`, `MeetingRecording` - 会议与转写相关
-- `VerificationLog`, `LoginLog` - 验证码与登录统计
-- `ApiKey` - API 密钥管理
+- `user.prisma`, `user_profile.prisma`, `user_platform.prisma` - 用户与多平台账号
+- `org.prisma`, `dept.prisma`, `org_member.prisma` - 多租户组织结构
+- `role.prisma`, `permission.prisma` - RBAC 角色与权限点定义
+- `meet.prisma`, `meet_participant.prisma`, `meet_summary.prisma` - 会议与AI记录相关
+- `order.prisma`, `order_refund.prisma` - 订单与退款
+- `webhook_log.prisma`, `task.prisma` - 系统异步与外部日志
 
 ### 4. NestJS 服务
 
@@ -73,27 +73,31 @@ pnpm db:reset
 
 ## 开发建议
 
-1. **修改数据模型**：编辑 `prisma/schema.prisma` 文件
-2. **应用更改**：开发环境运行 `pnpm db:push`，如果是协作/生产前置准备，运行 `pnpm db:migrate`
-3. **生成客户端**：运行 `pnpm db:generate`（大部分情况下 push/migrate 会自动生成）
-4. **类型安全**：使用生成的 Prisma 类型确保类型安全
+1. **修改数据模型**：请编辑 `prisma/models/` 目录下的相应 `.prisma` 文件。**切勿直接修改根目录下的 `schema.prisma` 文件**。
+2. **应用更改**：由于使用了拆分方案，请确保您运行的 `pnpm db:generate` 或相关的自定义合并脚本会将 `models/` 下的文件合并。如果是开发环境，可以运行 `pnpm db:push`，如果是协作/生产前置准备，运行 `pnpm db:migrate`。
+3. **生成客户端**：运行 `pnpm db:generate`（大部分情况下 push/migrate 会自动生成）。
+4. **类型安全**：使用生成的 Prisma 类型确保类型安全。
 
 ## 文件结构
 
 ```text
-
 src/
-├── prisma.service.ts     # Prisma 服务
-├── user.service.ts       # 用户业务逻辑
-├── user.controller.ts    # 用户控制器
-└── app.module.ts         # 主模块
+├── app.module.ts         # 主模块
+├── user/
+│   ├── user.module.ts
+│   ├── user.controller.ts
+│   ├── services/
+│   └── repositories/     # 数据访问层隔离
+└── prisma/
+    └── prisma.service.ts # Prisma 服务封装
 
 prisma/
-├── schema.prisma         # 数据库 schema
-└── migrations/           # 数据库迁移文件
-
-generated/
-└── prisma/              # 生成的 Prisma 客户端
+├── schema.prisma         # 自动合并生成的完整 schema（勿直接修改）
+├── models/               # 数据模型定义文件（实际修改处）
+│   ├── user.prisma
+│   └── ...
+├── migrations/           # 数据库迁移文件
+└── seed-utils/           # 种子数据工具
 ```
 
 ## PostgreSQL 设置
@@ -135,7 +139,7 @@ generated/
 4. **运行迁移**
 
    ```bash
-   npx prisma migrate dev --name init
+   pnpm db:migrate
    ```
 
 ## 注意事项

@@ -6,7 +6,7 @@ export default withMermaid(
   ignoreDeadLinks: true,
   lang: 'zh-CN',
   title: 'Nove API',
-  description: 'Nove API 项目文档 — 企业级会议与用户服务系统',
+  description: 'Nove API 项目文档 — 面向 AI 时代的企业级智能数据仓库与 Agent 基础设施',
 
   // 根目录是 docs/，所以不需要 srcDir
   // 根目录有 index.md 负责首页
@@ -15,6 +15,8 @@ export default withMermaid(
     ['link', { rel: 'icon', href: '/favicon.ico' }],
     ['meta', { name: 'theme-color', content: '#6366f1' }],
   ],
+
+  lastUpdated: true,
 
   themeConfig: {
     logo: { light: '/logo-light.svg', dark: '/logo-dark.svg', alt: 'Nove API' },
@@ -157,6 +159,7 @@ export default withMermaid(
         {
           text: '🗺️ 路线图',
           items: [
+            { text: '项目愿景与目标', link: '/developer/roadmap/project-goals' },
             { text: '多租户架构', link: '/developer/roadmap/multi-tenant-architecture' },
           ],
         },
@@ -181,9 +184,7 @@ export default withMermaid(
           text: '📖 API 使用指南',
           collapsed: false,
           items: [
-            { text: '认证 API', link: '/user/api/authentication' },
-            { text: '会议 API', link: '/user/api/meetings' },
-            { text: '用户 API', link: '/user/api/users' },
+            { text: 'API 接口文档总览', link: '/user/api/' },
           ],
         },
         {
@@ -200,9 +201,14 @@ export default withMermaid(
       { icon: 'github', link: 'https://github.com/lulabs-org' },
     ],
 
+    editLink: {
+      pattern: 'https://github.com/lulabs-org/nove-api/edit/develop/docs/:path',
+      text: '在 GitHub 上编辑此页',
+    },
+
     footer: {
       message: '基于 MIT 协议发布',
-      copyright: 'Copyright © 2024 LuLab',
+      copyright: 'Copyright © 2024-2026 LuLab',
     },
 
     search: {

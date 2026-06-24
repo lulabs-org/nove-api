@@ -9,21 +9,19 @@ src/integrations/lark/                  # 飞书集成库
 ├── lark.client.ts                  # 飞书SDK客户端
 ├── lark.module.ts                  # 模块配置
 ├── index.ts                        # 导出文件
-├── config/                         # 配置文件
-│   ├── lark.config.ts              # 飞书配置
-│   └── index.ts
 ├── exceptions/                     # 异常处理
 │   └── lark.exceptions.ts          # 飞书相关异常
 ├── services/                       # 服务层
-│   └── bitable.service.ts          # 多维表格核心服务
+│   ├── bitable.service.ts          # 多维表格核心服务
+│   └── meeting-recording.service.ts # 会议录制同步服务
 ├── repositories/                   # 数据访问层
 │   ├── index.ts                    # 导出文件
-│   ├── meeting-bitable.repository.ts # 会议记录仓库
-│   ├── meeting-user-bitable.repository.ts # 会议用户仓库
-│   └── recording-file-bitable.repository.ts # 录制文件仓库
+│   ├── meeting.repository.ts       # 会议记录仓库
+│   ├── meeting-user.repository.ts  # 会议用户仓库
+│   ├── meeting-recording-file.repository.ts # 录制文件仓库
+│   └── number-record.repository.ts # 记录仓库
 ├── types/                          # 类型定义
-│   ├── index.ts
-│   ├── lark.types.ts               # 飞书相关类型
+│   ├── lark-bitable.types.ts       # 飞书Bitable相关类型
 │   ├── meeting.types.ts            # 会议类型
 │   ├── meeting-user.types.ts       # 会议用户类型
 │   └── recording-file.types.ts     # 录制文件类型

@@ -86,10 +86,10 @@ LARK_TABLE_MEETING=会议记录表格ID
 
 ```bash
 # 运行集成测试
-npm run test:integration -- --testPathPattern=lark.integration.spec.ts
+pnpm test:integration -- --testPathPattern=lark.integration.spec.ts
 
 # 运行配置验证脚本
-npx ts-node scripts/test-lark-integration.ts
+pnpm exec ts-node scripts/test-lark-integration.ts
 ```
 
 ## 📊 数据流向
