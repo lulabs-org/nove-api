@@ -1,21 +1,33 @@
 model MeetingUserAction {
+    /// 唯一主键
     id String @id @default(cuid())
 
+    /// 执行的具体动作
     action     MeetingControlAction
+    /// 操作目标的类型（如：User, Screen, Room等）
     targetType String               @map("target_type")
+    /// 操作目标的具体ID
     targetId   String?              @map("target_id") @db.Uuid
+    /// 动作相关的附加元数据信息，以JSON格式存储
     metadata   Json                 @default("{}") @db.JsonB
+    /// 执行该动作的用户的IP地址
     ip         String?              @db.Inet
+    /// 执行该动作的用户的客户端设备信息 (User Agent)
     userAgent  String?              @map("user_agent")
 
+    /// 关联的会议ID
     meetingId String  @map("meeting_id")
     meeting   Meeting @relation("MeetingUserActions", fields: [meetingId], references: [id], onDelete: Cascade)
 
+    /// 执行该动作的平台用户ID
     ptUserId String?       @map("pt_user_id")
     ptUser   PlatformUser? @relation("UserActions", fields: [ptUserId], references: [id], onDelete: SetNull)
 
+    /// 动作实际发生的精确时间
     actionAt  DateTime @map("action_at") @db.Timestamptz(6)
+    /// 记录创建时间
     createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+    /// 记录更新时间
     updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
     @@index([ptUserId, createdAt], map: "idx_actions_user_time")

@@ -7,3 +7,4 @@ export { ParagraphRepository } from './paragraph.repository';
 export { SentenceRepository } from './sentence.repository';
 export { WordRepository } from './word.repository';
 export { MeetingParticipantRepository } from './meeting-participant.repository';
+export { MeetingUserActionRepository } from './meet-user-action.repository';
