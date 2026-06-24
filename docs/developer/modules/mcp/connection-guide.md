@@ -43,7 +43,7 @@ Claude Desktop 是最简单的 MCP 客户端，支持 STDIO 传输方式。
        "lulab-backend": {
          "command": "node",
          "args": [
-           "/Users/yangshiming/code/by-framework/backend/nodejs/nest/nove_api/dist/main.js"
+            "/path/to/nove-api/dist/main.js"
          ]
        }
      }
@@ -92,17 +92,14 @@ McpModule.forRoot({
 MCP Inspector 是一个用于测试 MCP Server 的工具：
 
 ```bash
-# 安装 MCP Inspector
-npm install -g @modelcontextprotocol/inspector
-
-# 启动你的应用
-pnpm start:dev
-
-# 在另一个终端运行 Inspector
-mcp-inspector
+# 使用项目内置的 MCP Inspector 脚本（推荐）
+pnpm mcp:inspect:sse     # 通过 SSE 传输连接
+pnpm mcp:inspect:http    # 通过 HTTP 传输连接
+pnpm mcp:inspect:dev     # 开发模式连接
+pnpm mcp:inspect         # 连接已编译的 dist/main.js
 ```
 
-然后在 Inspector 中配置连接到你的 MCP Server。
+在 Inspector 的 UI 中，你可以查看可用的 MCP 工具、调用工具并查看返回结果。
 
 #### 自定义 SSE 客户端示例
 
@@ -361,7 +358,7 @@ pnpm start:prod
 
 在开发环境中，MCP Server 端点默认使用 `Public` 装饰器绕过全局的 JWT 认证守卫。这允许你在不提供认证令牌的情况下测试 MCP 连接。
 
-在 [mcp-server.module.ts](file:///Users/yangshiming/code/by-framework/backend/nodejs/nest/nove_api/src/mcp-server/mcp-server.module.ts) 中配置：
+在 `src/mcp-server/mcp-server.module.ts` 中配置：
 
 ```typescript
 import { Public } from '@/auth/decorators/public.decorator';

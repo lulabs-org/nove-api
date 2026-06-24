@@ -2,7 +2,7 @@
 
 ## 概述
 
-本文档提供了 Nove API 系统的架构概览和详细文档索引。Nove API 是一个基于 NestJS 的企业级会议和用户服务系统，提供用户认证、会议管理、第三方服务集成等功能。
+本文档提供了 Nove API 系统的架构概览和详细文档索引。Nove API 是一个基于 NestJS 的企业级智能数据仓库与 AI Agent 基础设施，提供实时数据处理、用户认证、会议管理、AI 智能体集成和第三方服务协同等功能。
 
 ## 整体架构概览
 
@@ -124,7 +124,7 @@ graph TB
    ```bash
    # 克隆项目
    git clone <repository-url>
-   cd nove_api
+   cd nove-api
    
    # 安装依赖
    pnpm install
@@ -162,13 +162,13 @@ graph TB
    ```bash
    # 运行单元测试
    pnpm test:unit
-   
+    
    # 运行集成测试
    pnpm test:integration
-   
+    
    # 运行所有测试
    pnpm test:all
-   
+    
    # 生成测试覆盖率报告
    pnpm test:cov
    ```
@@ -197,8 +197,6 @@ graph TB
 - ELK Stack 进行日志聚合和分析
 - OpenTelemetry 进行分布式追踪
 
-## 总结
+## 延伸阅读
 
-Nove API 系统采用现代化的技术栈和架构设计，具有高性能、高可用、易扩展的特点。通过模块化设计和微服务架构，系统可以灵活应对业务需求的变化。详细的架构文档可以帮助开发团队更好地理解和维护系统。
-
-如需了解特定方面的详细信息，请参考相应的架构文档。
+Nove API 系统采用现代化的技术栈和模块化架构设计，具有高性能、高可用、易扩展的特点。如需深入了解特定方面，请参考上方的架构文档索引表格。

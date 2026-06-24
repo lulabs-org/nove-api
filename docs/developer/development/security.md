@@ -2,6 +2,9 @@
 
 本文档详细描述了 Nove API 系统的安全架构，包括认证与授权、数据安全、应用安全、网络安全和合规性要求。
 
+> [!IMPORTANT]
+> **文档范围说明**：本文档同时包含 **已实现功能** 和 **设计参考/计划中功能**。尚未实现的部分会以 ⚠️ 标记。已实现的核心安全特性包括：JWT 认证、RBAC 权限控制、令牌黑名单、刷新令牌轮换、输入验证、密码哈希。
+
 ## 安全架构概览
 
 ```text
@@ -128,6 +131,9 @@ export class TokenService {
 ```
 
 #### 多因素认证 (MFA)
+
+> [!WARNING]
+> ⚠️ **设计参考**：以下 MFA/TOTP 实现为未来计划功能，尚未在源码中实现。
 
 **TOTP 实现**:
 ```typescript
@@ -290,6 +296,9 @@ export class MeetingController {
 ```
 
 ## 数据安全
+
+> [!WARNING]
+> ⚠️ **设计参考**：以下数据加密、传输加密和审计日志的代码示例为设计参考，尚未在源码中完整实现。当前系统已实现密码哈希（bcryptjs）、HTTPS 传输和环境变量密钥管理。
 
 ### 数据加密
 
@@ -705,6 +714,9 @@ export class ContentSanitizationPipe implements PipeTransform {
 ```
 
 ### CSRF 防护
+
+> [!WARNING]
+> ⚠️ **设计参考**：以下 CSRF 防护实现为未来计划功能。当前系统主要采用 JWT Bearer Token 认证，对 CSRF 具有天然免疫性。
 
 #### CSRF 令牌实现
 

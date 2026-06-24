@@ -1,6 +1,6 @@
 # 技术栈文档
 
-本文档详细介绍了 Nove API 项目使用的技术栈，包括后端核心技术、第三方服务集成和现代化开发特性。
+本文档详细介绍了 Nove API 项目使用的技术栈，包括后端核心技术、第三方服务集成和现代化开发特性。版本号均基于 `package.json` 核实。
 
 ## 后端核心技术栈
 
@@ -16,7 +16,7 @@
 | **Swagger** | 11.x | API 文档 | 自动生成和展示 RESTful API 文档 |
 | **Jest** | 29.x | 测试框架 | 单元测试和集成测试框架 |
 | **Supertest** | 7.x | API 测试 | HTTP 断言库，用于测试 API 端点 |
-| **pnpm** | 8.x | 包管理器 | 高效的磁盘空间利用和依赖管理 |
+| **pnpm** | latest | 包管理器 | 高效的磁盘空间利用和依赖管理 |
 | **BullMQ** | 5.x | 任务队列 | 基于 Redis 的任务队列系统 |
 | **@nestjs/bullmq** | 11.x | 任务队列集成 | NestJS 与 BullMQ 的集成模块 |
 | **@nestjs/schedule** | 6.x | 任务调度 | 定时任务和 cron 作业支持 |
@@ -29,6 +29,10 @@
 | **nodemailer** | 7.x | 邮件发送 | 基于 SMTP 的邮件发送库 |
 | **class-validator** | 0.14.x | 数据验证 | 基于装饰器的数据验证 |
 | **class-transformer** | 0.5.x | 数据转换 | 对象转换和序列化工具 |
+| **zod** | 4.x | Schema 验证 | 类型安全的 Schema 定义与验证 |
+| **cookie-parser** | 1.x | Cookie 解析 | 解析 HTTP Cookie，支持 Web 端刷新令牌 |
+| **@bull-board/nestjs** | 8.x | 队列监控 | BullMQ 任务队列可视化监控面板 |
+| **@rekog/mcp-nest** | 1.x | MCP 集成 | NestJS MCP (Model Context Protocol) 服务端集成 |
 
 ## 第三方服务集成
 
