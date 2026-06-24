@@ -4,9 +4,7 @@
 
 ## 📚 文档列表
 
-- [部署指南](DEPLOYMENT.md) - 生产环境部署指南
-- [环境配置](ENVIRONMENT_CONFIG.md) - 环境变量和配置管理
-- [容器化部署](CONTAINER_DEPLOYMENT.md) - Docker容器化部署
+- [部署指南](guide.md) - 开发、测试与生产环境详细部署指南
 
 ## 🏗️ 部署架构
 
@@ -31,7 +29,7 @@ deployment/
 pnpm start:dev
 
 # 运行数据库迁移
-pnpm db:migrate:dev
+pnpm db:migrate
 
 # 生成Prisma客户端
 pnpm db:generate
@@ -46,7 +44,7 @@ pnpm build
 pnpm start:prod
 
 # 运行生产环境迁移
-pnpm db:migrate:deploy
+pnpm db:migrate:prod
 ```
 
 ## 🐳 容器化部署
@@ -54,13 +52,15 @@ pnpm db:migrate:deploy
 ### Dockerfile
 ```dockerfile
 FROM node:18-alpine
+# 安装 pnpm
+RUN npm install -g pnpm
 WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 COPY . .
-RUN npm run build
+RUN pnpm run build
 EXPOSE 3000
-CMD ["npm", "start:prod"]
+CMD ["pnpm", "run", "start:prod"]
 ```
 
 ### Docker Compose
@@ -126,17 +126,22 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
       - name: Setup Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: '18'
+          cache: 'pnpm'
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
       - name: Run tests
-        run: npm test
+        run: pnpm test
       - name: Build
-        run: npm run build
+        run: pnpm run build
       - name: Deploy
-        run: ./deploy.sh
+        run: ./scripts/deploy.sh
 ```

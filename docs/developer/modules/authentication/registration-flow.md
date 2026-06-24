@@ -17,14 +17,14 @@
 
 ```bash
 # 1. 发送验证码
-POST /auth/send-code
+POST /api/auth/otp/send-email-code
 {
   "target": "user@example.com",
   "type": "register"
 }
 
 # 2. 注册用户
-POST /auth/register
+POST /api/auth/register
 {
   "type": "email_code",
   "email": "user@example.com",
@@ -45,7 +45,7 @@ POST /auth/register
 
 ```bash
 # 1. 发送验证码
-POST /auth/send-code
+POST /api/auth/otp/send-phone-code
 {
   "target": "13800138000",
   "type": "register",
@@ -53,7 +53,7 @@ POST /auth/send-code
 }
 
 # 2. 注册用户
-POST /auth/register
+POST /api/auth/register
 {
   "type": "phone_code",
   "phone": "13800138000",

@@ -81,19 +81,23 @@ pnpm db:reset
 ## 文件结构
 
 ```text
-
 src/
-├── prisma.service.ts     # Prisma 服务
-├── user.service.ts       # 用户业务逻辑
-├── user.controller.ts    # 用户控制器
-└── app.module.ts         # 主模块
+├── app.module.ts         # 主模块
+├── user/
+│   ├── user.module.ts
+│   ├── user.controller.ts
+│   ├── services/
+│   └── repositories/     # 数据访问层隔离
+└── prisma/
+    └── prisma.service.ts # Prisma 服务封装
 
 prisma/
-├── schema.prisma         # 数据库 schema
-└── migrations/           # 数据库迁移文件
-
-generated/
-└── prisma/              # 生成的 Prisma 客户端
+├── schema.prisma         # 自动合并生成的完整 schema（勿直接修改）
+├── models/               # 数据模型定义文件（实际修改处）
+│   ├── user.prisma
+│   └── ...
+├── migrations/           # 数据库迁移文件
+└── seed-utils/           # 种子数据工具
 ```
 
 ## PostgreSQL 设置
@@ -135,7 +139,7 @@ generated/
 4. **运行迁移**
 
    ```bash
-   npx prisma migrate dev --name init
+   pnpm db:migrate
    ```
 
 ## 注意事项
