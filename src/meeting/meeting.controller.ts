@@ -50,7 +50,7 @@ export class MeetingController {
   constructor(
     private readonly meetingService: MeetingService,
     private readonly transcriptService: TranscriptService,
-  ) { }
+  ) {}
 
   /**
    * 获取会议记录列表

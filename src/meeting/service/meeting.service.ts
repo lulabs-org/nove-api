@@ -19,9 +19,7 @@ import {
  */
 @Injectable()
 export class MeetingService {
-  constructor(
-    private readonly meetingRepository: MeetingRepository,
-  ) { }
+  constructor(private readonly meetingRepository: MeetingRepository) {}
 
   /**
    * 获取会议记录列表

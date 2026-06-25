@@ -64,7 +64,8 @@ export class TranscriptService {
    * 基于段落（Segment）获取录制的转写文本
    */
   async getSegmentTranscript(recordingId: string): Promise<string> {
-    const transcript = await this.transcriptRepository.findSegmentsDetails(recordingId);
+    const transcript =
+      await this.transcriptRepository.findSegmentsDetails(recordingId);
     if (!transcript || !transcript.segments) {
       return '';
     }
@@ -73,17 +74,15 @@ export class TranscriptService {
     for (const segment of transcript.segments) {
       if (!segment.text) continue;
 
-      const speakerName = segment.speaker?.displayName || segment.speakerName || '未知发言人';
+      const speakerName =
+        segment.speaker?.displayName || segment.speakerName || '未知发言人';
       const startMs = Number(segment.startTimeMs);
       const hh = String(Math.floor(startMs / 3600000)).padStart(2, '0');
       const mm = String(Math.floor((startMs % 3600000) / 60000)).padStart(
         2,
         '0',
       );
-      const ss = String(Math.floor((startMs % 60000) / 1000)).padStart(
-        2,
-        '0',
-      );
+      const ss = String(Math.floor((startMs % 60000) / 1000)).padStart(2, '0');
       const timeStr = `${hh}:${mm}:${ss}`;
 
       fullText += `${speakerName}(${timeStr}): ${segment.text}\n\n`;
@@ -96,7 +95,8 @@ export class TranscriptService {
    * 基于段落（Segment）获取录制的转写 JSON
    */
   async getSegmentTranscriptJson(recordingId: string): Promise<any[]> {
-    const transcript = await this.transcriptRepository.findSegmentsDetails(recordingId);
+    const transcript =
+      await this.transcriptRepository.findSegmentsDetails(recordingId);
     if (!transcript || !transcript.segments) {
       return [];
     }
@@ -106,7 +106,10 @@ export class TranscriptService {
       .map((segment) => {
         const formatTime = (ms: number) => {
           const hh = String(Math.floor(ms / 3600000)).padStart(2, '0');
-          const mm = String(Math.floor((ms % 3600000) / 60000)).padStart(2, '0');
+          const mm = String(Math.floor((ms % 3600000) / 60000)).padStart(
+            2,
+            '0',
+          );
           const ss = String(Math.floor((ms % 60000) / 1000)).padStart(2, '0');
           return `${hh}:${mm}:${ss}`;
         };

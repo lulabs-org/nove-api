@@ -287,8 +287,14 @@ export const ApiGetTranscriptByRecordingIdDocs = () =>
                   type: 'object',
                   properties: {
                     speakerName: { type: 'string' },
-                    startTime: { type: 'string', description: '开始时间, 格式 hh:mm:ss' },
-                    endTime: { type: 'string', description: '结束时间, 格式 hh:mm:ss' },
+                    startTime: {
+                      type: 'string',
+                      description: '开始时间, 格式 hh:mm:ss',
+                    },
+                    endTime: {
+                      type: 'string',
+                      description: '结束时间, 格式 hh:mm:ss',
+                    },
                     text: { type: 'string' },
                   },
                 },

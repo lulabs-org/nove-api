@@ -54,10 +54,12 @@ import { WebhookLogModule } from './webhook-log/webhook-log.module';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    ThrottlerModule.forRoot([{
-      ttl: 60000,
-      limit: 10,
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 10,
+      },
+    ]),
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       autoSchemaFile: true,
@@ -126,4 +128,4 @@ import { WebhookLogModule } from './webhook-log/webhook-log.module';
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}
