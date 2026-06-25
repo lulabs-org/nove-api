@@ -3,6 +3,6 @@ import { Injectable } from '@nestjs/common';
 @Injectable()
 export class AppService {
   getHello(): string {
-    return 'Welcome to LULAB Backend API Service - Empowering Education Technology';
+    return 'Welcome to Nove Backend Service';
   }
 }
