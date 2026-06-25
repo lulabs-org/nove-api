@@ -18,6 +18,7 @@ import {
   SpeakerInfo,
   ParticipantDetail,
 } from '@/integrations/tencent-meeting/types';
+import { PrismaService } from '@/prisma/prisma.service';
 
 @Injectable()
 export class SpeakerService {
@@ -26,6 +27,7 @@ export class SpeakerService {
   constructor(
     private readonly ptUserRepo: PlatformUserRepository,
     private readonly userRepo: UserRepository,
+    private readonly prisma: PrismaService,
   ) {}
 
   /**
@@ -182,13 +184,11 @@ export class SpeakerService {
    * @param uniqueParticipants Array of unique participant details from the meeting
    */
   async syncPtUsers(uniqueParticipants: ParticipantDetail[]): Promise<void> {
-    const excludedPhoneHash =
-      'df363d826259f591c0f02ce0be670eee8785eaa0477cf152944af46e008a3086';
     const countryCode = '+86';
 
     try {
       for (const participant of uniqueParticipants) {
-        if (participant.phone && participant.phone !== excludedPhoneHash) {
+        if (participant.phone && participant.userid === '') {
           // 1. Check for an existing unlinked platform user by phone hash
           const ptByPhone =
             await this.ptUserRepo.findByPhoneHashWithoutLocalUser(
@@ -296,9 +296,9 @@ export class SpeakerService {
           }
         }
 
-        // Scenario E: Participant has no valid phone number (or it's the excluded dummy hash).
+        // Scenario E: Participant does not need complex phone mapping
         // Action: Upsert their platform user record using only their union ID and basic info.
-        if (!participant.phone || participant.phone == excludedPhoneHash) {
+        if (!(participant.phone && participant.userid === '')) {
           await this.ptUserRepo.upsert(
             {
               platform: Platform.TENCENT_MEETING,
@@ -314,6 +314,47 @@ export class SpeakerService {
       }
     } catch (error) {
       this.logger.error('Error processing unique participants:', error);
+    }
+  }
+
+  /**
+   * Synchronizes Tencent Meeting participants to the local platform user database (Simplified version).
+   * Uses the new UserPhoneHash table to directly link platform users to local users.
+   *
+   * @param uniqueParticipants Array of unique participant details from the meeting
+   */
+  async syncPtUsersV2(uniqueParticipants: ParticipantDetail[]): Promise<void> {
+    try {
+      for (const participant of uniqueParticipants) {
+        let localUserId: string | undefined;
+
+        if (participant.phone && participant.userid === '') {
+          const userPhoneHash = await this.prisma.userPhoneHash.findUnique({
+            where: {
+              hashValue: participant.phone,
+            },
+          });
+
+          if (userPhoneHash) {
+            localUserId = userPhoneHash.userId;
+          }
+        }
+
+        await this.ptUserRepo.upsert(
+          {
+            platform: Platform.TENCENT_MEETING,
+            ptUnionId: participant.uuid,
+          },
+          {
+            ptUserId: participant.userid,
+            displayName: participant.user_name,
+            phoneHash: participant.phone,
+            ...(localUserId ? { localUserId } : {}),
+          },
+        );
+      }
+    } catch (error) {
+      this.logger.error('Error processing unique participants in V2:', error);
     }
   }
 }

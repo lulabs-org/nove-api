@@ -116,7 +116,9 @@ export class TencentMtgSyncService {
   }> {
     const now = Math.floor(Date.now() / 1000);
     if (startTime >= now) {
-      this.logger.warn(`Skip syncRecords: startTime (${startTime}) is in the future.`);
+      this.logger.warn(
+        `Skip syncRecords: startTime (${startTime}) is in the future.`,
+      );
       return { meetingsUpserted: 0, recordingsUpserted: 0, errors: [] };
     }
 
