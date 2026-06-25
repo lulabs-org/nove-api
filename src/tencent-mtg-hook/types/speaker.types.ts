@@ -3,13 +3,12 @@
  * @Date: 2026-01-04 03:40:29
  * @LastEditors: 杨仕明 shiming.y@qq.com
  * @LastEditTime: 2026-01-04 04:01:36
- * @FilePath: /lulab_backend/src/hook-tencent-mtg/types/speaker.types.ts
+ * @FilePath: /nove_api/src/tencent-mtg-hook/types/speaker.types.ts
  * @Description:
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
-import { TranscriptSentence } from '@/integrations/tencent-meeting/types';
 export interface NewSpeakerInfo {
   userid: string;
   openId: string;
@@ -33,12 +32,4 @@ export interface NewSpeakerInfo {
   is_enterprise_user?: boolean;
   tm_corpid?: string;
   avatar_url?: string;
-}
-
-export interface NewTranscriptParagraph {
-  pid: string;
-  start_time: number;
-  end_time: number;
-  sentences: TranscriptSentence[];
-  speaker_info: NewSpeakerInfo;
 }

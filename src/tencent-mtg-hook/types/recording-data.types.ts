@@ -10,10 +10,8 @@
  */
 
 import { ParticipantDetail } from '@/integrations/tencent-meeting/types';
-import {
-  NewSpeakerInfo,
-  NewTranscriptParagraph,
-} from './recording-transcript.types';
+import { NewSpeakerInfo } from './speaker.types';
+import { NewTranscriptParagraph } from './transcript.types';
 
 export interface RecordingData {
   /** 会议ID (meeting_id) */

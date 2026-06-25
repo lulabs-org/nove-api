@@ -27,7 +27,7 @@ export interface Operator {
   instance_id: string;
 }
 
-export interface MeetingCreator {
+export interface Creator {
   userid: string;
   uuid: string;
   user_name: string;
