@@ -261,14 +261,42 @@ export const ApiGetTranscriptByRecordingIdDocs = () =>
       description: '录制记录ID',
       type: 'string',
     }),
+    ApiQuery({
+      name: 'format',
+      required: false,
+      description: '返回格式: text (默认) 或 json',
+      enum: ['text', 'json'],
+    }),
     ApiResponse({
       status: 200,
       description: '获取成功',
       schema: {
-        type: 'object',
-        properties: {
-          text: { type: 'string', description: '拼接后的转写文本' },
-        },
+        oneOf: [
+          {
+            type: 'object',
+            properties: {
+              text: { type: 'string', description: '拼接后的转写文本' },
+            },
+          },
+          {
+            type: 'object',
+            properties: {
+              data: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    speakerName: { type: 'string' },
+                    startTime: { type: 'string', description: '开始时间, 格式 hh:mm:ss' },
+                    endTime: { type: 'string', description: '结束时间, 格式 hh:mm:ss' },
+                    text: { type: 'string' },
+                  },
+                },
+                description: '转写段落 JSON 数组',
+              },
+            },
+          },
+        ],
       },
     }),
     ApiResponse({
