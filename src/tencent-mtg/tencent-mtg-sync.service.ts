@@ -112,7 +112,7 @@ export class TencentMtgSyncService {
     errors: string[];
   }> {
     const effectiveOperatorId = operatorId || this.config.api.userId;
-    
+
     // 1. 获取指定时间段内的所有企业录制记录
     const recordMeetings = await this.tencentApi.getAllCorpRecords(
       startTime,
@@ -344,10 +344,7 @@ export class TencentMtgSyncService {
                   p.speaker_info,
                   deduplicated,
                 )
-              : {
-                  ...p.speaker_info,
-                  uuid: p.speaker_info.openId || p.speaker_info.userid,
-                },
+              : p.speaker_info,
         })),
       );
       allParagraphs.push(...mappedParagraphs);
