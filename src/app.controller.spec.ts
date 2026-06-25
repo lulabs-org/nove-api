@@ -22,9 +22,9 @@ describe('AppController', () => {
   });
 
   describe('root', () => {
-    it('should return "Hello World!"', () => {
+    it('should return "Welcome to Nove Backend Service"', () => {
       expect(appController.getHello()).toBe(
-        'Welcome to LULAB Backend API Service - Empowering Education Technology',
+        'Welcome to Nove Backend Service',
       );
     });
   });
