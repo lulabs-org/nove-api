@@ -70,6 +70,11 @@ import { WebhookLogModule } from './webhook-log/webhook-log.module';
     BullBoardModule.forRoot({
       route: '/queues',
       adapter: ExpressAdapter,
+      boardOptions: {
+        uiConfig: {
+          boardTitle: 'Nove Queues',
+        },
+      },
       middleware: basicAuth({
         challenge: true,
         users: {
@@ -116,4 +121,4 @@ import { WebhookLogModule } from './webhook-log/webhook-log.module';
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }
