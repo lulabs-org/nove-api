@@ -12,6 +12,7 @@
 import { Module } from '@nestjs/common';
 import { MeetingController } from './meeting.controller';
 import { MeetingService } from './service/meeting.service';
+import { TranscriptService } from './service/transcript.service';
 import { MeetingRepository } from './repositories/meeting.repository';
 import { MeetingFileRepository } from './repositories/meeting-file.repository';
 import { MeetingSummaryRepository } from './repositories/meeting-summary.repository';
@@ -29,6 +30,7 @@ import { PrismaModule } from '../prisma/prisma.module';
   controllers: [MeetingController],
   providers: [
     MeetingService,
+    TranscriptService,
     MeetingRepository,
     MeetingFileRepository,
     MeetingSummaryRepository,
@@ -41,6 +43,7 @@ import { PrismaModule } from '../prisma/prisma.module';
   ],
   exports: [
     MeetingService,
+    TranscriptService,
     MeetingRepository,
     MeetingFileRepository,
     MeetingSummaryRepository,

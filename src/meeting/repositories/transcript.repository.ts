@@ -87,6 +87,22 @@ export class TranscriptRepository {
     });
   }
 
+  async findSegmentsDetails(recordingId: string) {
+    return this.prisma.transcript.findFirst({
+      where: { recordingId },
+      include: {
+        segments: {
+          orderBy: {
+            startTimeMs: 'asc',
+          },
+          include: {
+            speaker: true,
+          },
+        },
+      },
+    });
+  }
+
   async findBySource(source: string) {
     return this.prisma.transcript.findFirst({
       where: { source },

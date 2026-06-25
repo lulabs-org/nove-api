@@ -25,6 +25,7 @@ import {
   ApiGetTranscriptByRecordingIdDocs,
 } from './decorators/meeting-record.decorators';
 import { MeetingService } from './service/meeting.service';
+import { TranscriptService } from './service/transcript.service';
 import {
   QueryMeetingRecordsDto,
   MeetingRecordResponseDto,
@@ -46,7 +47,10 @@ import { CuidPipe } from '@/common/pipes/cuid.pipe';
 export class MeetingController {
   private readonly logger = new Logger(MeetingController.name);
 
-  constructor(private readonly meetingService: MeetingService) {}
+  constructor(
+    private readonly meetingService: MeetingService,
+    private readonly transcriptService: TranscriptService,
+  ) {}
 
   /**
    * 获取会议记录列表
@@ -244,12 +248,21 @@ export class MeetingController {
   @ApiGetTranscriptByRecordingIdDocs()
   async getTranscriptByRecordingId(
     @Param('recordingId', CuidPipe) recordingId: string,
-  ): Promise<{ text: string }> {
-    this.logger.log(`获取录制的转写文本: ${recordingId}`);
+    @Query('format') format?: 'text' | 'json',
+  ): Promise<any> {
+    this.logger.log(`获取录制的转写文本: ${recordingId}, format: ${format}`);
 
     try {
+      if (format === 'json') {
+        const data =
+          await this.transcriptService.getSegmentTranscriptJson(recordingId);
+
+        this.logger.log(`获取录制的转写 JSON 成功: ${recordingId}`);
+        return { data };
+      }
+
       const text =
-        await this.meetingService.getTranscriptByRecordingId(recordingId);
+        await this.transcriptService.getSegmentTranscript(recordingId);
 
       this.logger.log(`获取录制的转写文本成功: ${recordingId}`);
       return { text };

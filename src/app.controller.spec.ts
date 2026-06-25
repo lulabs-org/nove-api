@@ -9,10 +9,12 @@ describe('AppController', () => {
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
       imports: [
-        ThrottlerModule.forRoot([{
-          ttl: 60000,
-          limit: 10,
-        }]),
+        ThrottlerModule.forRoot([
+          {
+            ttl: 60000,
+            limit: 10,
+          },
+        ]),
       ],
       controllers: [AppController],
       providers: [AppService],
@@ -23,9 +25,7 @@ describe('AppController', () => {
 
   describe('root', () => {
     it('should return "Welcome to Nove Backend Service"', () => {
-      expect(appController.getHello()).toBe(
-        'Welcome to Nove Backend Service',
-      );
+      expect(appController.getHello()).toBe('Welcome to Nove Backend Service');
     });
   });
 });
