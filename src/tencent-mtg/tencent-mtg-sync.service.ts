@@ -351,7 +351,7 @@ export class TencentMtgSyncService {
     }
 
     if (allParagraphs.length > 0) {
-      await this.transcriptBatchProcessor.processParagraphsInBatches(
+      await this.transcriptBatchProcessor.processParagraphs(
         allParagraphs,
         transcript.id,
       );

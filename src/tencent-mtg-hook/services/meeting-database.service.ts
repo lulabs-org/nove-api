@@ -257,7 +257,7 @@ export class MeetingDatabaseService {
           recordingId: recording.id,
         });
 
-        await this.batchProcessor.processParagraphsInBatches(
+        await this.batchProcessor.processParagraphs(
           file.paragraphs || [],
           res.id,
         );

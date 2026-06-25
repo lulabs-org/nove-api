@@ -39,13 +39,13 @@ export class TranscriptBatchProcessor {
    * @param paragraphs 腾讯会议接口返回的原始段落数组
    * @param transcriptId 关联的转录文本(Transcript)记录ID
    */
-  async processParagraphsInBatches(
+  async processParagraphs(
     paragraphs: NewTranscriptParagraph[],
     transcriptId: string,
   ): Promise<void> {
     for (let i = 0; i < paragraphs.length; i += this.PARAGRAPH_BATCH_SIZE) {
       const batch = paragraphs.slice(i, i + this.PARAGRAPH_BATCH_SIZE);
-      await this.processParagraphBatch(batch, transcriptId);
+      await this.processBatch(batch, transcriptId);
     }
   }
 
@@ -59,7 +59,7 @@ export class TranscriptBatchProcessor {
    * @param batch 一批需要处理的段落数据
    * @param transcriptId 关联的转录文本记录ID
    */
-  private async processParagraphBatch(
+  private async processBatch(
     batch: NewTranscriptParagraph[],
     transcriptId: string,
   ): Promise<void> {
@@ -122,7 +122,7 @@ export class TranscriptBatchProcessor {
         }
       }
 
-      await this.processSentencesInBatches(paragraphDataList, tx);
+      await this.processSentences(paragraphDataList, tx);
 
       if (segmentsToCreate.length > 0) {
         await tx.transcriptSegment.createMany({
@@ -139,7 +139,7 @@ export class TranscriptBatchProcessor {
    * @param paragraphDataList 包含原始段落结构和已入库段落ID的映射列表
    * @param tx Prisma 事务客户端
    */
-  private async processSentencesInBatches(
+  private async processSentences(
     paragraphDataList: Array<ParagraphData>,
     tx: PrismaTransaction,
   ): Promise<void> {
@@ -156,7 +156,7 @@ export class TranscriptBatchProcessor {
 
     for (let i = 0; i < allSentences.length; i += this.SENTENCE_BATCH_SIZE) {
       const batch = allSentences.slice(i, i + this.SENTENCE_BATCH_SIZE);
-      await this.processSentenceAndWordBatch(batch, tx);
+      await this.processSentenceBatch(batch, tx);
     }
   }
 
@@ -166,7 +166,7 @@ export class TranscriptBatchProcessor {
    * @param batch 一批平铺开的句子数据（包含所属段落ID）
    * @param tx Prisma 事务客户端
    */
-  private async processSentenceAndWordBatch(
+  private async processSentenceBatch(
     batch: Array<SentenceData>,
     tx: PrismaTransaction,
   ): Promise<void> {
