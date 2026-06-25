@@ -303,18 +303,18 @@ export class TencentMtgSyncService {
     startTime?: number,
     endTime?: number,
   ) {
+    let transcriptId: string | undefined;
+
     const existingTranscript =
       await this.transcriptRepo.findByRecordingId(recordingId);
 
     if (existingTranscript) {
-      return; // Already processed
+      const segmentCount = await this.transcriptRepo.countSegments(existingTranscript.id);
+      if (segmentCount > 0) {
+        return; // Already processed and has segments
+      }
+      transcriptId = existingTranscript.id;
     }
-
-    const transcript = await this.transcriptRepo.create({
-      source: `tencent-meeting:${recordFileId}`,
-      status: 2,
-      recordingId,
-    });
 
     // 获取参会者列表，用于后续丰富说话人信息
     let deduplicated: ParticipantDetail[] = [];
@@ -338,34 +338,61 @@ export class TencentMtgSyncService {
     }
 
     const allParagraphs: NewTranscriptParagraph[] = [];
+    let hasMore = true;
+    let currentPid: string | undefined = undefined;
 
-    const res = await this.tencentApi.getTranscript(
-      recordFileId,
-      operatorId,
-      1,
-    );
+    while (hasMore) {
+      try {
+        const res = await this.tencentApi.getTranscript(
+          recordFileId,
+          operatorId,
+          1,
+          currentPid,
+        );
 
-    if (res.minutes?.paragraphs) {
-      // 使用 SpeakerService 匹配并丰富说话人信息
-      const mappedParagraphs = await Promise.all(
-        res.minutes.paragraphs.map(async (p) => ({
-          ...p,
-          speaker_info:
-            deduplicated.length > 0
-              ? await this.speakerSvc.enrichSpeakerInfo(
-                  p.speaker_info,
-                  deduplicated,
-                )
-              : p.speaker_info,
-        })),
-      );
-      allParagraphs.push(...mappedParagraphs);
+        if (res.minutes?.paragraphs && res.minutes.paragraphs.length > 0) {
+          // 使用 SpeakerService 匹配并丰富说话人信息
+          const mappedParagraphs = await Promise.all(
+            res.minutes.paragraphs.map(async (p) => ({
+              ...p,
+              speaker_info:
+                deduplicated.length > 0
+                  ? await this.speakerSvc.enrichSpeakerInfo(
+                      p.speaker_info,
+                      deduplicated,
+                    )
+                  : p.speaker_info,
+            })),
+          );
+          allParagraphs.push(...mappedParagraphs);
+          
+          // 获取下一页的 pid
+          const lastParagraph = res.minutes.paragraphs[res.minutes.paragraphs.length - 1];
+          currentPid = lastParagraph.pid;
+        }
+
+        hasMore = res.more === true;
+      } catch (err) {
+        this.logger.warn(
+          `Failed to fetch transcript page for recording ${recordFileId} (pid: ${currentPid}): ${(err as Error).message}`,
+        );
+        break; // Stop fetching on error
+      }
     }
 
     if (allParagraphs.length > 0) {
+      if (!transcriptId) {
+        const transcript = await this.transcriptRepo.create({
+          source: `tencent-meeting:${recordFileId}`,
+          status: 2,
+          recordingId,
+        });
+        transcriptId = transcript.id;
+      }
+
       await this.transcriptBatchProcessor.processParagraphs(
         allParagraphs,
-        transcript.id,
+        transcriptId,
       );
     }
   }

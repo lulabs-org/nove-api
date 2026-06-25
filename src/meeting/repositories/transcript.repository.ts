@@ -109,6 +109,12 @@ export class TranscriptRepository {
     });
   }
 
+  async countSegments(transcriptId: string) {
+    return this.prisma.transcriptSegment.count({
+      where: { transcriptId },
+    });
+  }
+
   async upsert(data: {
     source: string;
     rawFileUrl?: string;
