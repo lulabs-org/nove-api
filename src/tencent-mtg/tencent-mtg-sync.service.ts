@@ -55,8 +55,11 @@ export class TencentMtgSyncService {
     operatorId?: string,
   ): Promise<{ jobIds: string[]; message: string }> {
     const now = Math.floor(Date.now() / 1000);
-    const effectiveEndTime = endTime ?? now;
-    const effectiveStartTime = startTime ?? effectiveEndTime - 7 * 24 * 60 * 60;
+    const effectiveEndTime = Math.min(endTime ?? now, now);
+    const effectiveStartTime = Math.min(
+      startTime ?? effectiveEndTime - 7 * 24 * 60 * 60,
+      effectiveEndTime,
+    );
 
     const CHUNK_SIZE_SEC = 30 * 24 * 60 * 60; // 30 天的秒数
     const jobIds: string[] = [];
@@ -111,12 +114,19 @@ export class TencentMtgSyncService {
     recordingsUpserted: number;
     errors: string[];
   }> {
+    const now = Math.floor(Date.now() / 1000);
+    if (startTime >= now) {
+      this.logger.warn(`Skip syncRecords: startTime (${startTime}) is in the future.`);
+      return { meetingsUpserted: 0, recordingsUpserted: 0, errors: [] };
+    }
+
+    const actualEndTime = Math.min(endTime, now);
     const effectiveOperatorId = operatorId || this.config.api.userId;
 
     // 1. 获取指定时间段内的所有企业录制记录
     const recordMeetings = await this.tencentApi.getAllCorpRecords(
       startTime,
-      endTime,
+      actualEndTime,
       effectiveOperatorId,
       1,
     );
