@@ -28,6 +28,7 @@ import { openaiConfig } from '../configs/openai.config';
 import { TASK_QUEUE_NAME } from './task.constants';
 import { TaskHandlerRegistry } from './handlers/task-handler.registry';
 import { HttpTaskHandler } from './handlers/http.handler';
+import { MigratePhoneHashesHandler } from './handlers/migrate-phone-hashes.handler';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { HttpTaskHandler } from './handlers/http.handler';
     PrismaService,
     TaskHandlerRegistry,
     HttpTaskHandler,
+    MigratePhoneHashesHandler,
   ],
   exports: [TaskHandlerRegistry],
 })
