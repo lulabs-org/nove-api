@@ -5,7 +5,8 @@ import { RegisterDto } from '../dto/register.dto';
 import { AuthResponseDto } from '../dto/auth-response.dto';
 import { AuthType } from '@/auth/enums';
 import { CodeType } from '@/verification/enums';
-import { UserRepository } from '@/user/repositories/user.repository';
+import { UserQueryRepository } from '@/user/repositories/user-query.repository';
+import { UserCommandRepository } from '@/user/repositories/user-command.repository';
 import { TokenService } from './token.service';
 import { AuthPolicyService } from './auth-policy.service';
 import { formatAuthUserResponse } from '@/auth/utils/auth-user-mapper';
@@ -16,7 +17,8 @@ export class RegisterService {
   private readonly logger = new Logger(RegisterService.name);
 
   constructor(
-    private readonly userRepo: UserRepository,
+    private readonly userQueryRepo: UserQueryRepository,
+    private readonly userCommandRepo: UserCommandRepository,
     private readonly verificationService: VerificationService,
     private readonly mailService: MailService,
     private readonly tokenService: TokenService,
@@ -52,7 +54,7 @@ export class RegisterService {
     const hashedPassword = password ? await hashPassword(password) : null;
     const now = new Date();
 
-    const user = await this.userRepo.createWithProfile({
+    const user = await this.userCommandRepo.createWithProfile({
       username,
       email: email || null,
       phone,
@@ -148,7 +150,7 @@ export class RegisterService {
 
     if (conditions.length === 0) return;
 
-    const existingUser = await this.userRepo.findFirst(conditions);
+    const existingUser = await this.userQueryRepo.findFirst(conditions);
 
     if (existingUser) {
       if (username && existingUser.username === username) {

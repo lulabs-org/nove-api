@@ -12,7 +12,8 @@ import { CodeType } from '@/verification/enums';
 import * as bcrypt from 'bcryptjs';
 import { TokenService } from './token.service';
 import { AuthPolicyService } from './auth-policy.service';
-import { UserRepository } from '@/user/repositories/user.repository';
+import { UserQueryRepository } from '@/user/repositories/user-query.repository';
+import { UserCommandRepository } from '@/user/repositories/user-command.repository';
 import { formatAuthUserResponse } from '@/auth/utils/auth-user-mapper';
 
 @Injectable()
@@ -20,7 +21,8 @@ export class LoginService {
   private readonly logger = new Logger(LoginService.name);
 
   constructor(
-    private readonly userRepo: UserRepository,
+    private readonly userQueryRepo: UserQueryRepository,
+    private readonly userCommandRepo: UserCommandRepository,
     private readonly verificationService: VerificationService,
     private readonly tokenService: TokenService,
     private readonly authPolicy: AuthPolicyService,
@@ -83,7 +85,7 @@ export class LoginService {
         }
       }
 
-      await this.userRepo.updateLastLogin(user.id, new Date());
+      await this.userCommandRepo.updateLastLogin(user.id, new Date());
 
       await this.authPolicy.createLoginLog({
         userId: user.id,
@@ -133,6 +135,6 @@ export class LoginService {
     } else {
       conditions.push({ phone: target });
     }
-    return await this.userRepo.findByTarget(target, countryCode);
+    return await this.userQueryRepo.findByTarget(target, countryCode);
   }
 }

@@ -12,7 +12,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { NewSpeakerInfo } from '@/tencent-mtg-hook/types';
 import { Platform, PlatformUser, User } from '@prisma/client';
-import { UserRepository } from '@/user/repositories/user.repository';
+import { UserQueryRepository } from '@/user/repositories/user-query.repository';
 import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
 import {
   SpeakerInfo,
@@ -26,7 +26,7 @@ export class SpeakerService {
 
   constructor(
     private readonly ptUserRepo: PlatformUserRepository,
-    private readonly userRepo: UserRepository,
+    private readonly userRepo: UserQueryRepository,
     private readonly prisma: PrismaService,
   ) {}
 

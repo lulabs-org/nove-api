@@ -12,11 +12,11 @@
 import { Injectable } from '@nestjs/common';
 import { Tool, ToolScopes } from '@rekog/mcp-nest';
 import { z } from 'zod';
-import { UserRepository } from '@/user/repositories/user.repository';
+import { UserQueryRepository } from '@/user/repositories/user-query.repository';
 
 @Injectable()
 export class UserSearchTool {
-  constructor(private readonly userRepository: UserRepository) {}
+  constructor(private readonly userQueryRepository: UserQueryRepository) {}
 
   @Tool({
     name: 'find-userid-by-username',
@@ -27,7 +27,7 @@ export class UserSearchTool {
   })
   @ToolScopes(['mcp-tool:userid-search'])
   async findUserByUsername({ username }: { username: string }) {
-    const user = await this.userRepository.findByUsername(username);
+    const user = await this.userQueryRepository.findByUsername(username);
 
     if (!user) {
       return {
@@ -60,7 +60,7 @@ export class UserSearchTool {
     countryCode: string;
     phone: string;
   }) {
-    const user = await this.userRepository.findByPhone(countryCode, phone);
+    const user = await this.userQueryRepository.findByPhone(countryCode, phone);
 
     if (!user) {
       return {
@@ -86,7 +86,7 @@ export class UserSearchTool {
   })
   @ToolScopes(['mcp-tool:userid-search'])
   async findUserByEmail({ email }: { email: string }) {
-    const user = await this.userRepository.findByEmail(email);
+    const user = await this.userQueryRepository.findByEmail(email);
 
     if (!user) {
       return {

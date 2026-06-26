@@ -10,11 +10,11 @@
  */
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import type { AuthenticatedUser, JwtUserLookup } from '../types/jwt.types';
-import { UserRepository } from '@/user/repositories/user.repository';
+import { UserQueryRepository } from '@/user/repositories/user-query.repository';
 
 @Injectable()
 export class JwtUserLookupService implements JwtUserLookup {
-  constructor(private readonly userRepo: UserRepository) {}
+  constructor(private readonly userRepo: UserQueryRepository) {}
 
   async getAuthenticatedUserById(
     id: string,
