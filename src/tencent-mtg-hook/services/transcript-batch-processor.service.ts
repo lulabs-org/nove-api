@@ -70,9 +70,6 @@ export class TranscriptBatchProcessor {
 
         const speakerId = platformUser?.id;
 
-        // --------------------------------------------------
-        // 新表双写逻辑：在同一个事务中组装并插入 TranscriptSegment
-        // --------------------------------------------------
         for (const sentence of paragraph.sentences) {
           const text = sentence.words.map((w) => w.text).join('');
           const wordsDetail = sentence.words.map((w) => ({
