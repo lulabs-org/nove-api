@@ -15,7 +15,7 @@ import {
   MeetingRepository,
 } from '@/meeting/repositories';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Platform, Prisma } from '@prisma/client';
+import { Platform, Prisma, MeetingControlAction } from '@prisma/client';
 import type { RecordingData } from '../types';
 
 @Injectable()
@@ -46,38 +46,112 @@ export class MeetingParticipantService {
       return;
     }
 
+    // Group segments by uuid
+    const segmentsByUuid = new Map<string, typeof r.participants>();
     for (const p of r.participants) {
       if (!p.uuid) continue;
+      if (!segmentsByUuid.has(p.uuid)) {
+        segmentsByUuid.set(p.uuid, []);
+      }
+      segmentsByUuid.get(p.uuid)!.push(p);
+    }
 
+    // Process each participant's aggregated status and write action logs
+    for (const [uuid, segments] of segmentsByUuid.entries()) {
       const ptUser = await this.prisma.platformUser.findFirst({
         where: {
           platform: Platform.TENCENT_MEETING,
-          ptUnionId: p.uuid,
+          ptUnionId: uuid,
         },
       });
 
       if (!ptUser) {
-        this.logger.warn(`PlatformUser not found for uuid: ${p.uuid}`);
+        this.logger.warn(`PlatformUser not found for uuid: ${uuid}`);
         continue;
       }
 
-      const joinTimeNum = p.join_time ? parseInt(p.join_time, 10) : 0;
-      const leftTimeNum = p.left_time ? parseInt(p.left_time, 10) : 0;
+      let minJoinTimeNum = Infinity;
+      let maxLeftTimeNum = -Infinity;
+      let totalDurationSeconds = 0;
 
-      const joinTime = joinTimeNum > 0 ? new Date(joinTimeNum * 1000) : null;
-      const leftTime = leftTimeNum > 0 ? new Date(leftTimeNum * 1000) : null;
+      for (const segment of segments) {
+        const joinTimeNum = segment.join_time ? parseInt(segment.join_time, 10) : 0;
+        const leftTimeNum = segment.left_time ? parseInt(segment.left_time, 10) : 0;
 
-      let durationSeconds: number | null = null;
-      if (joinTimeNum > 0 && leftTimeNum > 0 && leftTimeNum >= joinTimeNum) {
-        durationSeconds = leftTimeNum - joinTimeNum;
+        if (joinTimeNum > 0) {
+          minJoinTimeNum = Math.min(minJoinTimeNum, joinTimeNum);
+        }
+        if (leftTimeNum > 0) {
+          maxLeftTimeNum = Math.max(maxLeftTimeNum, leftTimeNum);
+        }
+
+        if (joinTimeNum > 0 && leftTimeNum > 0 && leftTimeNum >= joinTimeNum) {
+          totalDurationSeconds += (leftTimeNum - joinTimeNum);
+        }
+
+        // Log join action event
+        if (joinTimeNum > 0) {
+          const actionAt = new Date(joinTimeNum * 1000);
+          const existing = await this.prisma.meetingUserAction.findFirst({
+            where: {
+              meetingId: meeting.id,
+              ptUserId: ptUser.id,
+              action: MeetingControlAction.JOIN_MEETING,
+              actionAt,
+            },
+          });
+          if (!existing) {
+            await this.prisma.meetingUserAction.create({
+              data: {
+                meetingId: meeting.id,
+                ptUserId: ptUser.id,
+                action: MeetingControlAction.JOIN_MEETING,
+                actionAt,
+                targetType: 'PARTICIPANT',
+                targetId: null,
+                metadata: segment as unknown as Prisma.InputJsonValue,
+              },
+            });
+          }
+        }
+
+        // Log leave action event
+        if (leftTimeNum > 0) {
+          const actionAt = new Date(leftTimeNum * 1000);
+          const existing = await this.prisma.meetingUserAction.findFirst({
+            where: {
+              meetingId: meeting.id,
+              ptUserId: ptUser.id,
+              action: MeetingControlAction.LEAVE_MEETING,
+              actionAt,
+            },
+          });
+          if (!existing) {
+            await this.prisma.meetingUserAction.create({
+              data: {
+                meetingId: meeting.id,
+                ptUserId: ptUser.id,
+                action: MeetingControlAction.LEAVE_MEETING,
+                actionAt,
+                targetType: 'PARTICIPANT',
+                targetId: null,
+                metadata: segment as unknown as Prisma.InputJsonValue,
+              },
+            });
+          }
+        }
       }
 
-      const sessionData = p as unknown as Prisma.InputJsonValue;
+      const firstJoinTime = minJoinTimeNum !== Infinity ? new Date(minJoinTimeNum * 1000) : null;
+      const lastLeaveTime = maxLeftTimeNum !== -Infinity ? new Date(maxLeftTimeNum * 1000) : null;
+
+      // Use the last segment in the array as the sessionData template
+      const sessionData = segments[segments.length - 1] as unknown as Prisma.InputJsonValue;
 
       await this.participantRepo.upsert(meeting.id, ptUser.id, {
-        joinTime,
-        leftTime,
-        durationSeconds,
+        firstJoinTime,
+        lastLeaveTime,
+        totalDurationSeconds,
         sessionData,
       });
     }

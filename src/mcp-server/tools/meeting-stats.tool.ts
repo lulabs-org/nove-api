@@ -164,9 +164,9 @@ export class MeetingStatsTool {
       userId: p.ptUser?.id,
       name: p.ptUser?.displayName || 'Unknown',
       email: p.ptUser?.email,
-      joinTime: p.joinTime?.toISOString(),
-      leaveTime: p.leftTime?.toISOString(),
-      duration: p.durationSeconds,
+      joinTime: p.firstJoinTime?.toISOString(),
+      leaveTime: p.lastLeaveTime?.toISOString(),
+      duration: p.totalDurationSeconds,
     }));
 
     const recording = meeting.recordings[0];
