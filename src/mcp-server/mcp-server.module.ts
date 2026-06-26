@@ -21,10 +21,7 @@ import {
   UserSearchTool,
   MeetingStatsTool,
 } from './tools';
-import {
-  MeetingStatsRepository,
-  PlatformUserRepository,
-} from './repositories';
+import { MeetingStatsRepository, PlatformUserRepository } from './repositories';
 import { UserModule } from '@/user/user.module';
 import { SseController, StreamableHttpController } from './controllers';
 
@@ -56,4 +53,4 @@ import { SseController, StreamableHttpController } from './controllers';
     ParticipantSummaryRepository,
   ],
 })
-export class McpServerModule { }
+export class McpServerModule {}

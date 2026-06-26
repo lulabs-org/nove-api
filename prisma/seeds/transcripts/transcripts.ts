@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { TRANSCRIPT_DIALOGUE } from './config';
 
 export async function createSimulatedTranscript(
@@ -16,41 +16,32 @@ export async function createSimulatedTranscript(
     },
   });
 
+  const segmentsData: Prisma.TranscriptSegmentCreateManyInput[] = [];
+
   for (const paragraph of dialogue) {
-    const paragraphRecord = await prisma.paragraph.create({
-      data: {
-        transcriptId: transcript.id,
-        pid: parseInt(paragraph.pid, 10),
-        startTimeMs: BigInt(paragraph.start_time),
-        endTimeMs: BigInt(paragraph.end_time),
-        speakerId: speakerId,
-      },
-    });
-
     for (const sentence of paragraph.sentences) {
-      const sentenceRecord = await prisma.sentence.create({
-        data: {
-          paragraphId: paragraphRecord.id,
-          sid: parseInt(sentence.sid, 10),
-          startTimeMs: BigInt(sentence.start_time),
-          endTimeMs: BigInt(sentence.end_time),
-          text: sentence.words.map((w) => w.text).join(''),
-        },
-      });
-
-      const wordsData = sentence.words.map((word) => ({
-        sentenceId: sentenceRecord.id,
-        wid: parseInt(word.wid, 10),
-        startTimeMs: BigInt(word.start_time),
-        endTimeMs: BigInt(word.end_time),
-        text: word.text,
+      const text = sentence.words.map((w) => w.text).join('');
+      const wordsDetail = sentence.words.map((w) => ({
+        word: w.text,
+        start: w.start_time,
+        end: w.end_time,
       }));
 
-      await prisma.word.createMany({
-        data: wordsData,
+      segmentsData.push({
+        transcriptId: transcript.id,
+        speakerId: speakerId,
+        speakerName: paragraph.speaker_info?.username || null,
+        startTimeMs: BigInt(sentence.start_time),
+        endTimeMs: BigInt(sentence.end_time),
+        text,
+        wordsDetail: wordsDetail as unknown as Prisma.InputJsonValue,
       });
     }
   }
+
+  await prisma.transcriptSegment.createMany({
+    data: segmentsData,
+  });
 
   return transcript;
 }

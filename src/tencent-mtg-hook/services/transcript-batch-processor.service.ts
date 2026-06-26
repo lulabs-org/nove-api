@@ -16,7 +16,7 @@ export class TranscriptBatchProcessor {
   constructor(
     private readonly prisma: PrismaService,
     private readonly ptUserRepo: PlatformUserRepository,
-  ) { }
+  ) {}
 
   /**
    * 分批次处理转录文本段落数据
