@@ -11,4 +11,3 @@
 
 export * from './meeting-stats.repository';
 export * from './platform-user.repository';
-export * from './userid-search.repository';

@@ -22,10 +22,10 @@ import {
   MeetingStatsTool,
 } from './tools';
 import {
-  UserSearchRepository,
   MeetingStatsRepository,
   PlatformUserRepository,
 } from './repositories';
+import { UserModule } from '@/user/user.module';
 import { SseController, StreamableHttpController } from './controllers';
 
 @Module({
@@ -43,6 +43,7 @@ import { SseController, StreamableHttpController } from './controllers';
     }),
     RoleModule,
     MeetAiModule,
+    UserModule,
   ],
   controllers: [SseController, StreamableHttpController],
   providers: [
@@ -50,7 +51,6 @@ import { SseController, StreamableHttpController } from './controllers';
     UserInfoTool,
     UserSearchTool,
     MeetingStatsTool,
-    UserSearchRepository,
     MeetingStatsRepository,
     PlatformUserRepository,
     ParticipantSummaryRepository,
