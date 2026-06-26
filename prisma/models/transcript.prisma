@@ -8,7 +8,6 @@ model Transcript {
   recordingId String?             @map("recording_id")
   recording   MeetingRecording?   @relation(fields: [recordingId], references: [id], onDelete: Cascade)
   summaries   MeetingSummary[]
-  paragraphs  Paragraph[]
   segments    TranscriptSegment[]
 
   // 时间及系统字段
@@ -22,77 +21,6 @@ model Transcript {
   @@index([createdAt])
   @@index([recordingId])
   @@map("transcripts")
-}
-
-model Paragraph {
-  id String @id @default(cuid())
-
-  pid         Int
-  startTimeMs BigInt @map("start_time_ms")
-  endTimeMs   BigInt @map("end_time_ms")
-
-  speakerId String?       @map("speaker_id")
-  speaker   PlatformUser? @relation("Speaker", fields: [speakerId], references: [id], onDelete: SetNull)
-
-  transcriptId String     @map("transcript_id")
-  transcript   Transcript @relation(fields: [transcriptId], references: [id], onDelete: Cascade)
-
-  sentences Sentence[]
-
-  // 系统字段及时间
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
-
-  @@unique([transcriptId, pid])
-  @@index([transcriptId, startTimeMs])
-  @@index([speakerId])
-  @@map("transcript_paragraphs")
-}
-
-model Sentence {
-  id String @id @default(cuid())
-
-  sid         Int
-  startTimeMs BigInt @map("start_time_ms")
-  endTimeMs   BigInt @map("end_time_ms")
-
-  paragraphId String    @map("paragraph_id")
-  paragraph   Paragraph @relation(fields: [paragraphId], references: [id], onDelete: Cascade)
-  words       Word[]
-
-  // 可选：冗余一份整句文本，方便全文检索/展示（导入时拼出来）
-  text String?
-
-  // 系统字段及时间
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
-
-  @@unique([paragraphId, sid])
-  @@index([startTimeMs])
-  @@map("transcript_sentences")
-}
-
-model Word {
-  id String @id @default(cuid())
-
-  wid         Int
-  startTimeMs BigInt @map("start_time_ms")
-  endTimeMs   BigInt @map("end_time_ms")
-  text        String
-
-  sentenceId String   @map("sentence_id")
-  sentence   Sentence @relation(fields: [sentenceId], references: [id], onDelete: Cascade)
-
-  // 系统字段及时间
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
-
-  @@unique([sentenceId, wid])
-  @@index([text])
-  @@map("transcript_words")
 }
 
 // 核心数据表，以“一句话”为基础粒度（新表，双写迁移期使用）

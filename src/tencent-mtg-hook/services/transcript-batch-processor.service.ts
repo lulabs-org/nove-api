@@ -2,17 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Platform, PlatformUser } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
-import {
-  ParagraphRepository,
-  SentenceRepository,
-  WordRepository,
-} from '@/meeting/repositories';
-import {
-  PrismaTransaction,
-  NewTranscriptParagraph,
-  ParagraphData,
-  SentenceData,
-} from '@/tencent-mtg-hook/types';
+import { NewTranscriptParagraph } from '@/tencent-mtg-hook/types';
 
 /**
  * 腾讯会议转录文本批量处理器
@@ -22,15 +12,11 @@ import {
 @Injectable()
 export class TranscriptBatchProcessor {
   private readonly PARAGRAPH_BATCH_SIZE = 15;
-  private readonly SENTENCE_BATCH_SIZE = 75;
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly paraRepo: ParagraphRepository,
-    private readonly sentRepo: SentenceRepository,
-    private readonly wordRepo: WordRepository,
     private readonly ptUserRepo: PlatformUserRepository,
-  ) {}
+  ) { }
 
   /**
    * 分批次处理转录文本段落数据
@@ -64,7 +50,6 @@ export class TranscriptBatchProcessor {
     transcriptId: string,
   ): Promise<void> {
     return this.prisma.$transaction(async (tx) => {
-      const paragraphDataList: Array<ParagraphData> = [];
       const segmentsToCreate: any[] = [];
 
       for (const paragraph of batch) {
@@ -84,19 +69,6 @@ export class TranscriptBatchProcessor {
         }
 
         const speakerId = platformUser?.id;
-
-        const createdParagraph = await this.paraRepo.create(tx, {
-          pid: parseInt(paragraph.pid, 10),
-          startTimeMs: BigInt(paragraph.start_time),
-          endTimeMs: BigInt(paragraph.end_time),
-          speakerId,
-          transcriptId,
-        });
-
-        paragraphDataList.push({
-          paragraph,
-          index: createdParagraph.id,
-        });
 
         // --------------------------------------------------
         // 新表双写逻辑：在同一个事务中组装并插入 TranscriptSegment
@@ -122,72 +94,11 @@ export class TranscriptBatchProcessor {
         }
       }
 
-      await this.processSentences(paragraphDataList, tx);
-
       if (segmentsToCreate.length > 0) {
         await tx.transcriptSegment.createMany({
           data: segmentsToCreate,
         });
       }
     });
-  }
-
-  /**
-   * 提取并分批次处理当前段落批次中的所有句子数据
-   * 将嵌套的句子数据展平，并按 `SENTENCE_BATCH_SIZE` 进行分批事务入库。
-   *
-   * @param paragraphDataList 包含原始段落结构和已入库段落ID的映射列表
-   * @param tx Prisma 事务客户端
-   */
-  private async processSentences(
-    paragraphDataList: Array<ParagraphData>,
-    tx: PrismaTransaction,
-  ): Promise<void> {
-    const allSentences: Array<SentenceData> = [];
-
-    for (const paragraphData of paragraphDataList) {
-      for (const sentence of paragraphData.paragraph.sentences) {
-        allSentences.push({
-          sentence,
-          paragraphId: paragraphData.index,
-        });
-      }
-    }
-
-    for (let i = 0; i < allSentences.length; i += this.SENTENCE_BATCH_SIZE) {
-      const batch = allSentences.slice(i, i + this.SENTENCE_BATCH_SIZE);
-      await this.processSentenceBatch(batch, tx);
-    }
-  }
-
-  /**
-   * 处理并插入单批次的句子（Sentence）及其关联的词汇（Word）数据
-   *
-   * @param batch 一批平铺开的句子数据（包含所属段落ID）
-   * @param tx Prisma 事务客户端
-   */
-  private async processSentenceBatch(
-    batch: Array<SentenceData>,
-    tx: PrismaTransaction,
-  ): Promise<void> {
-    for (const sentenceData of batch) {
-      const createdSentence = await this.sentRepo.create(tx, {
-        sid: parseInt(sentenceData.sentence.sid, 10),
-        startTimeMs: BigInt(sentenceData.sentence.start_time),
-        endTimeMs: BigInt(sentenceData.sentence.end_time),
-        paragraphId: sentenceData.paragraphId,
-        text: sentenceData.sentence.words.map((w) => w.text).join(''),
-      });
-
-      const words = sentenceData.sentence.words.map((word) => ({
-        wid: parseInt(word.wid, 10),
-        startTimeMs: BigInt(word.start_time),
-        endTimeMs: BigInt(word.end_time),
-        text: word.text,
-        sentenceId: createdSentence.id,
-      }));
-
-      await this.wordRepo.createMany(tx, words);
-    }
   }
 }

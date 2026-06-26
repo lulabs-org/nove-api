@@ -56,4 +56,4 @@ import { SseController, StreamableHttpController } from './controllers';
     ParticipantSummaryRepository,
   ],
 })
-export class McpServerModule {}
+export class McpServerModule { }

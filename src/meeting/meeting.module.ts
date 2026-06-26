@@ -18,9 +18,7 @@ import { MeetingFileRepository } from './repositories/meeting-file.repository';
 import { MeetingSummaryRepository } from './repositories/meeting-summary.repository';
 import { MeetingRecordingRepository } from './repositories/meeting-recording.repository';
 import { TranscriptRepository } from './repositories/transcript.repository';
-import { ParagraphRepository } from './repositories/paragraph.repository';
-import { SentenceRepository } from './repositories/sentence.repository';
-import { WordRepository } from './repositories/word.repository';
+
 import { MeetingParticipantRepository } from './repositories/meeting-participant.repository';
 import { HttpModule } from '@nestjs/axios';
 import { PrismaModule } from '../prisma/prisma.module';
@@ -36,9 +34,7 @@ import { PrismaModule } from '../prisma/prisma.module';
     MeetingSummaryRepository,
     MeetingRecordingRepository,
     TranscriptRepository,
-    ParagraphRepository,
-    SentenceRepository,
-    WordRepository,
+
     MeetingParticipantRepository,
   ],
   exports: [
@@ -49,9 +45,7 @@ import { PrismaModule } from '../prisma/prisma.module';
     MeetingSummaryRepository,
     MeetingRecordingRepository,
     TranscriptRepository,
-    ParagraphRepository,
-    SentenceRepository,
-    WordRepository,
+
     MeetingParticipantRepository,
   ],
 })

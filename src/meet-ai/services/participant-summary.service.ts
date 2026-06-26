@@ -72,20 +72,18 @@ export class ParticipantSummaryService {
       return null;
     }
 
-    const paragraphs = transcript.paragraphs.map((paragraph) => {
-      const timeMs = Number(paragraph.startTimeMs);
+    const segments = transcript.segments.map((segment) => {
+      const timeMs = Number(segment.startTimeMs);
       const hours = Math.floor(timeMs / 3600000);
       const minutes = Math.floor((timeMs % 3600000) / 60000);
       const seconds = Math.floor((timeMs % 60000) / 1000);
 
       const timeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 
-      const speakerName = paragraph.speaker?.displayName || '未知发言人';
+      const speakerName =
+        segment.speakerName || segment.speaker?.displayName || '未知发言人';
 
-      const content = paragraph.sentences
-        .map((sentence) => sentence.text || '')
-        .filter((text) => text)
-        .join('');
+      const content = segment.text || '';
 
       return [timeStr, speakerName, content];
     });
@@ -114,7 +112,7 @@ export class ParticipantSummaryService {
 会议金句: ${meetingSummary.goldenQuotes ? JSON.stringify(meetingSummary.goldenQuotes) : '暂无会议金句'}\n
 关键词: ${meetingSummary.keywords?.join(', ') || '暂无关键词'}\n
 会议转录格式：[时间戳, 说话人姓名, 内容]\n
-会议转录内容: ${JSON.stringify(paragraphs)}\n
+会议转录内容: ${JSON.stringify(segments)}\n
 请根据以上信息，为参会者 ${userName} 生成一份个性化的会议总结，重点关注与该参会者相关的内容。`;
 
     const summary = await this.openaiService.ask(prompt, systemPrompt);
