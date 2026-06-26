@@ -12,13 +12,14 @@
 import { Module } from '@nestjs/common';
 import { UserController } from './user.controller';
 import { ProfileService } from './services/profile.service';
-import { UserRepository } from './repositories/user.repository';
+import { UserQueryRepository } from './repositories/user-query.repository';
+import { UserCommandRepository } from './repositories/user-command.repository';
 import { PrismaModule } from '@/prisma/prisma.module';
 
 @Module({
   imports: [PrismaModule],
   controllers: [UserController],
-  providers: [ProfileService, UserRepository],
-  exports: [ProfileService, UserRepository],
+  providers: [ProfileService, UserQueryRepository, UserCommandRepository],
+  exports: [ProfileService, UserQueryRepository, UserCommandRepository],
 })
 export class UserModule {}

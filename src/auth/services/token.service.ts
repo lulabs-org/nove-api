@@ -19,7 +19,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { ConfigType } from '@nestjs/config';
 import { jwtConfig } from '@/configs/jwt.config';
-import { UserRepository } from '@/user/repositories/user.repository';
+import { UserQueryRepository } from '@/user/repositories/user-query.repository';
 import { RefreshTokenRepository } from '@/auth/repositories/refresh-token.repository';
 import { randomUUID } from 'node:crypto';
 import { TokenBlacklistService } from './token-blacklist.service';
@@ -40,7 +40,7 @@ export class TokenService {
 
   constructor(
     private readonly jwtService: JwtService,
-    private readonly userRepo: UserRepository,
+    private readonly userRepo: UserQueryRepository,
     private readonly refreshTokenRepo: RefreshTokenRepository,
     @Inject(jwtConfig.KEY)
     private readonly config: ConfigType<typeof jwtConfig>,
@@ -124,7 +124,7 @@ export class TokenService {
         throw new UnauthorizedException('刷新令牌无效或已过期');
       }
 
-      const user = await this.userRepo.findById(oldTokenRecord.userId);
+      const user = await this.userRepo.byId(oldTokenRecord.userId);
       if (!user) {
         throw new UnauthorizedException('用户不存在');
       }
