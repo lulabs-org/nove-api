@@ -11,7 +11,6 @@
 import { PrismaClient } from '@prisma/client';
 import {
   TranscriptResponse,
-  TranscriptParagraph,
   TranscriptSentence,
 } from '@/integrations/tencent-meeting/types';
 import { NewSpeakerInfo } from './speaker.types';
@@ -27,16 +26,6 @@ export interface CreateTranscriptResult {
   };
   paragraphsCount: number;
   duration: number;
-}
-
-export interface ParagraphData {
-  paragraph: TranscriptParagraph;
-  index: string;
-}
-
-export interface SentenceData {
-  sentence: TranscriptSentence;
-  paragraphId: string;
 }
 
 export interface CreateTranscriptInput {

@@ -29,7 +29,7 @@ async function main() {
   console.log('🚀 开始数据迁移：从 Paragraph/Sentence/Word 到 TranscriptSegment...');
 
   // 获取所有包含 Paragraph 的 Transcript
-  const transcripts = await prisma.transcript.findMany({
+  const transcripts = await (prisma as any).transcript.findMany({
     where: {
       paragraphs: {
         some: {},
@@ -46,7 +46,7 @@ async function main() {
     console.log(`⏳ 正在处理 transcript: ${transcriptId}`);
 
     // 获取当前 transcript 下的所有 paragraphs，关联 user (获取 speakerName), sentences 以及 words
-    const paragraphs = await prisma.paragraph.findMany({
+    const paragraphs = await (prisma as any).paragraph.findMany({
       where: { transcriptId },
       include: {
         speaker: {

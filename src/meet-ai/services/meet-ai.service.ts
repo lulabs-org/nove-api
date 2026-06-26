@@ -10,7 +10,6 @@
  */
 
 import { Injectable, Logger } from '@nestjs/common';
-import { MeetAiRepository } from '../repositories/meet-ai.repository';
 import { ParticipantSummaryService } from './participant-summary.service';
 
 @Injectable()
@@ -18,19 +17,8 @@ export class MeetAiService {
   private readonly logger = new Logger(MeetAiService.name);
 
   constructor(
-    private readonly meetAiRepository: MeetAiRepository,
     private readonly participantSummaryService: ParticipantSummaryService,
   ) {}
-
-  analyzeMeeting(meetingId: string) {
-    this.logger.log(`分析会议: ${meetingId}`);
-    return this.meetAiRepository.analyzeMeeting(meetingId);
-  }
-
-  getMeetingSummary(meetingId: string) {
-    this.logger.log(`获取会议摘要: ${meetingId}`);
-    return this.meetAiRepository.getMeetingSummary(meetingId);
-  }
 
   async generateParticipantSummary(recordId: string, platformUserId: string) {
     this.logger.log(`生成参会者总结: ${recordId}, ${platformUserId}`);

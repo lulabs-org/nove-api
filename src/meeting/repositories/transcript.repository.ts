@@ -49,14 +49,12 @@ export class TranscriptRepository {
     return this.prisma.transcript.findUnique({
       where: { id },
       include: {
-        paragraphs: {
+        segments: {
+          orderBy: {
+            startTimeMs: 'asc',
+          },
           include: {
             speaker: true,
-            sentences: {
-              include: {
-                words: true,
-              },
-            },
           },
         },
       },
@@ -70,21 +68,7 @@ export class TranscriptRepository {
   }
 
   async findDetails(recordingId: string) {
-    return this.prisma.transcript.findFirst({
-      where: { recordingId },
-      include: {
-        paragraphs: {
-          include: {
-            speaker: true,
-            sentences: {
-              include: {
-                words: true,
-              },
-            },
-          },
-        },
-      },
-    });
+    return this.findSegmentsDetails(recordingId);
   }
 
   async findSegmentsDetails(recordingId: string) {

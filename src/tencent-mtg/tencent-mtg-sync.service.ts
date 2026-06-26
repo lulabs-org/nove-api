@@ -309,7 +309,9 @@ export class TencentMtgSyncService {
       await this.transcriptRepo.findByRecordingId(recordingId);
 
     if (existingTranscript) {
-      const segmentCount = await this.transcriptRepo.countSegments(existingTranscript.id);
+      const segmentCount = await this.transcriptRepo.countSegments(
+        existingTranscript.id,
+      );
       if (segmentCount > 0) {
         return; // Already processed and has segments
       }
@@ -365,9 +367,10 @@ export class TencentMtgSyncService {
             })),
           );
           allParagraphs.push(...mappedParagraphs);
-          
+
           // 获取下一页的 pid
-          const lastParagraph = res.minutes.paragraphs[res.minutes.paragraphs.length - 1];
+          const lastParagraph =
+            res.minutes.paragraphs[res.minutes.paragraphs.length - 1];
           currentPid = lastParagraph.pid;
         }
 
