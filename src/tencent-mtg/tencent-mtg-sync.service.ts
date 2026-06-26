@@ -213,13 +213,6 @@ export class TencentMtgSyncService {
                       `${logPrefix} - Pulling and syncing transcripts...`,
                     );
                   }
-                  const startTime = meeting.scheduledStartAt
-                    ? Math.floor(meeting.scheduledStartAt.getTime() / 1000)
-                    : undefined;
-                  const endTime = meeting.scheduledEndAt
-                    ? Math.floor(meeting.scheduledEndAt.getTime() / 1000)
-                    : undefined;
-
                   // Step 2.3: 同步转写文本及其相关参会人信息
                   await this.upsertTranscriptFromFile(
                     record.meeting_id,
@@ -227,8 +220,6 @@ export class TencentMtgSyncService {
                     recording.id,
                     file.record_file_id,
                     effectiveOperatorId,
-                    startTime,
-                    endTime,
                   );
 
                   if (job) {
@@ -384,8 +375,6 @@ export class TencentMtgSyncService {
     recordingId: string,
     recordFileId: string,
     operatorId: string,
-    startTime?: number,
-    endTime?: number,
   ) {
     let transcriptId: string | undefined;
 
@@ -410,8 +399,6 @@ export class TencentMtgSyncService {
         meetid,
         operatorId,
         actualSubid,
-        startTime,
-        endTime,
       );
       deduplicated = participantResult.deduplicated || [];
       if (deduplicated.length > 0) {
