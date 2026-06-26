@@ -27,7 +27,7 @@ export class UserSearchTool {
   })
   @ToolScopes(['mcp-tool:userid-search'])
   async findUserByUsername({ username }: { username: string }) {
-    const user = await this.userQueryRepository.findByUsername(username);
+    const user = await this.userQueryRepository.byUsername(username);
 
     if (!user) {
       return {
@@ -60,7 +60,7 @@ export class UserSearchTool {
     countryCode: string;
     phone: string;
   }) {
-    const user = await this.userQueryRepository.findByPhone(countryCode, phone);
+    const user = await this.userQueryRepository.byPhone(countryCode, phone);
 
     if (!user) {
       return {
@@ -86,7 +86,7 @@ export class UserSearchTool {
   })
   @ToolScopes(['mcp-tool:userid-search'])
   async findUserByEmail({ email }: { email: string }) {
-    const user = await this.userQueryRepository.findByEmail(email);
+    const user = await this.userQueryRepository.byEmail(email);
 
     if (!user) {
       return {

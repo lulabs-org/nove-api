@@ -31,7 +31,7 @@ export class ProfileService {
   ) {}
 
   async getProfile(userId: string): Promise<UserProfileResponseDto> {
-    const user = await this.userQueryRepo.findWithProfile(userId);
+    const user = await this.userQueryRepo.withProfile(userId);
     if (!user) {
       throw new BadRequestException('用户不存在');
     }
@@ -48,20 +48,20 @@ export class ProfileService {
     const { username, email, phone, countryCode, displayName, avatar, bio } =
       updateProfileDto;
 
-    const existingUser = await this.userQueryRepo.findWithProfile(userId);
+    const existingUser = await this.userQueryRepo.withProfile(userId);
     if (!existingUser) {
       throw new BadRequestException('用户不存在');
     }
 
     if (username && username !== existingUser.username) {
-      const usernameExists = await this.userQueryRepo.findByUsername(username);
+      const usernameExists = await this.userQueryRepo.byUsername(username);
       if (usernameExists) {
         throw new ConflictException('用户名已被使用');
       }
     }
 
     if (email && email !== existingUser.email) {
-      const emailExists = await this.userQueryRepo.findByEmail(email);
+      const emailExists = await this.userQueryRepo.byEmail(email);
       if (emailExists) {
         throw new ConflictException('邮箱已被使用');
       }
@@ -72,7 +72,7 @@ export class ProfileService {
       (phone !== existingUser.phone ||
         updateProfileDto.countryCode !== existingUser.countryCode)
     ) {
-      const phoneExists = await this.userQueryRepo.findByPhone(
+      const phoneExists = await this.userQueryRepo.byPhone(
         updateProfileDto.countryCode || existingUser.countryCode || '',
         phone,
       );

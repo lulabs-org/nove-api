@@ -124,7 +124,7 @@ export class TokenService {
         throw new UnauthorizedException('刷新令牌无效或已过期');
       }
 
-      const user = await this.userRepo.findById(oldTokenRecord.userId);
+      const user = await this.userRepo.byId(oldTokenRecord.userId);
       if (!user) {
         throw new UnauthorizedException('用户不存在');
       }

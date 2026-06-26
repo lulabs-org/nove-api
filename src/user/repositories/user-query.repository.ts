@@ -6,11 +6,11 @@ import type { User, UserProfile } from '@prisma/client';
 export class UserQueryRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  findById(id: string): Promise<User | null> {
+  byId(id: string): Promise<User | null> {
     return this.prisma.user.findUnique({ where: { id } });
   }
 
-  findWithProfile(
+  withProfile(
     id: string,
   ): Promise<(User & { profile: UserProfile | null }) | null> {
     return this.prisma.user.findUnique({
@@ -19,7 +19,7 @@ export class UserQueryRepository {
     });
   }
 
-  findWithRoles(id: string): Promise<
+  withRoles(id: string): Promise<
     | (User & {
         profile: UserProfile | null;
         orgMembers: Array<{
@@ -66,15 +66,15 @@ export class UserQueryRepository {
     >;
   }
 
-  findByUsername(username: string): Promise<User | null> {
+  byUsername(username: string): Promise<User | null> {
     return this.prisma.user.findUnique({ where: { username } });
   }
 
-  findByEmail(email: string): Promise<User | null> {
+  byEmail(email: string): Promise<User | null> {
     return this.prisma.user.findUnique({ where: { email } });
   }
 
-  findByPhone(countryCode: string, phone: string): Promise<User | null> {
+  byPhone(countryCode: string, phone: string): Promise<User | null> {
     return this.prisma.user.findUnique({
       where: {
         uq_users_country_code_phone: {
@@ -85,7 +85,7 @@ export class UserQueryRepository {
     });
   }
 
-  findByTarget(
+  byTarget(
     target: string,
     countryCode?: string,
   ): Promise<
@@ -148,7 +148,7 @@ export class UserQueryRepository {
     >;
   }
 
-  findFirst(conditions: Array<Record<string, unknown>>) {
+  first(conditions: Array<Record<string, unknown>>) {
     return this.prisma.user.findFirst({ where: { OR: conditions } });
   }
 }

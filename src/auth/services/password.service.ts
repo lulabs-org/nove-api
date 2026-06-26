@@ -48,7 +48,7 @@ export class PasswordService {
       throw new BadRequestException(verifyResult.message);
     }
 
-    const user = await this.userQueryRepo.findByTarget(target);
+    const user = await this.userQueryRepo.byTarget(target);
     if (!user) {
       throw new BadRequestException('用户不存在');
     }

@@ -201,7 +201,7 @@ export class SpeakerService {
 
           // 2. If we found an unlinked platform user with a decrypted phone, find the corresponding local user
           if (ptByPhone?.phone) {
-            userByPhone = await this.userRepo.findByPhone(
+            userByPhone = await this.userRepo.byPhone(
               countryCode,
               ptByPhone.phone,
             );
@@ -277,7 +277,7 @@ export class SpeakerService {
             }
 
             if (ptByPhoneHasUser?.phone) {
-              const userByPhoneHasUser = await this.userRepo.findByPhone(
+              const userByPhoneHasUser = await this.userRepo.byPhone(
                 countryCode,
                 ptByPhoneHasUser.phone,
               );

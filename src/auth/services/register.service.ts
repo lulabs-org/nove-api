@@ -150,7 +150,7 @@ export class RegisterService {
 
     if (conditions.length === 0) return;
 
-    const existingUser = await this.userQueryRepo.findFirst(conditions);
+    const existingUser = await this.userQueryRepo.first(conditions);
 
     if (existingUser) {
       if (username && existingUser.username === username) {

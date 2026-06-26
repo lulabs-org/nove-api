@@ -135,6 +135,6 @@ export class LoginService {
     } else {
       conditions.push({ phone: target });
     }
-    return await this.userQueryRepo.findByTarget(target, countryCode);
+    return await this.userQueryRepo.byTarget(target, countryCode);
   }
 }
