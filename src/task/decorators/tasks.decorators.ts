@@ -101,6 +101,17 @@ export const ApiCreateOnceDocs = () =>
       type: CreateOnceDto,
       description: '一次性任务创建参数',
       examples: {
+        migrate_phone_hashes: {
+          summary: '手机号 Hash 迁移任务',
+          description:
+            '触发一次性手机号 Hash 迁移任务（不需要额外的 payload 参数）',
+          value: {
+            name: '手机号 Hash 迁移',
+            handler: 'migrate_phone_hashes',
+            runAt: '2026-06-27T12:00:00.000+08:00',
+            payload: {},
+          },
+        },
         basic_example: {
           summary: '基本一次性任务',
           description: '创建简单的一次性任务',
