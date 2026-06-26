@@ -7,7 +7,7 @@ import { NewTranscriptParagraph } from '@/tencent-mtg-hook/types';
 /**
  * 腾讯会议转录文本批量处理器
  * 负责将腾讯会议返回的原始转录数据（段落、句子、词汇）分批次高效地持久化到数据库中。
- * 同时处理发言人（PlatformUser）的同步，并兼容新表（TranscriptSegment）的双写逻辑。
+ * 同时处理发言人（PlatformUser）的同步，并保存至新表（TranscriptSegment）中。
  */
 @Injectable()
 export class TranscriptBatchProcessor {
@@ -39,8 +39,7 @@ export class TranscriptBatchProcessor {
    * 在单个数据库事务中处理一批转录文本段落
    * 包含：
    * 1. 发言人（PlatformUser）信息的按需创建/更新
-   * 2. 旧表结构（Paragraph, Sentence, Word）的级联插入
-   * 3. 新表结构（TranscriptSegment）的双写组装与批量插入
+   * 2. 组装转录文本片段（TranscriptSegment）并进行批量插入
    *
    * @param batch 一批需要处理的段落数据
    * @param transcriptId 关联的转录文本记录ID
