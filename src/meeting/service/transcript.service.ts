@@ -10,16 +10,9 @@ export class TranscriptService {
   constructor(private readonly transcriptRepository: TranscriptRepository) {}
 
   /**
-   * 获取录制的转写文本 (兼容旧版本段落/句子结构)
-   */
-  async getTranscriptByRecordingId(recordingId: string): Promise<string> {
-    return this.getSegmentTranscript(recordingId);
-  }
-
-  /**
    * 基于段落（Segment）获取录制的转写文本
    */
-  async getSegmentTranscript(recordingId: string): Promise<string> {
+  async getTranscript(recordingId: string): Promise<string> {
     const transcript =
       await this.transcriptRepository.findSegmentsDetails(recordingId);
     if (!transcript || !transcript.segments) {
@@ -50,7 +43,7 @@ export class TranscriptService {
   /**
    * 基于段落（Segment）获取录制的转写 JSON
    */
-  async getSegmentTranscriptJson(recordingId: string): Promise<any[]> {
+  async getTranscriptJson(recordingId: string): Promise<any[]> {
     const transcript =
       await this.transcriptRepository.findSegmentsDetails(recordingId);
     if (!transcript || !transcript.segments) {

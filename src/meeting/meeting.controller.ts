@@ -255,14 +255,13 @@ export class MeetingController {
     try {
       if (format === 'json') {
         const data =
-          await this.transcriptService.getSegmentTranscriptJson(recordingId);
+          await this.transcriptService.getTranscriptJson(recordingId);
 
         this.logger.log(`获取录制的转写 JSON 成功: ${recordingId}`);
         return { data };
       }
 
-      const text =
-        await this.transcriptService.getSegmentTranscript(recordingId);
+      const text = await this.transcriptService.getTranscript(recordingId);
 
       this.logger.log(`获取录制的转写文本成功: ${recordingId}`);
       return { text };
