@@ -12,7 +12,7 @@
 import { Module } from '@nestjs/common';
 import { MeetAiController } from './controllers/meet-ai.controller';
 import { MeetAiService, ParticipantSummaryService } from './services';
-import { MeetAiRepository, ParticipantSummaryRepository } from './repositories';
+import { ParticipantSummaryRepository } from './repositories';
 import { PrismaModule } from '../prisma/prisma.module';
 import { OpenaiModule } from '@/integrations/openai/openai.module';
 import { UserModule } from '@/user/user.module';
@@ -39,7 +39,6 @@ import { PeriodSummaryHandler } from './handlers/period-summary.handler';
   controllers: [MeetAiController],
   providers: [
     MeetAiService,
-    MeetAiRepository,
     ParticipantSummaryRepository,
     ParticipantSummaryService,
     PeriodSummaryService,

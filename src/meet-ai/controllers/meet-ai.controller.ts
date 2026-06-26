@@ -14,7 +14,6 @@ import {
   Get,
   Post,
   Body,
-  Param,
   HttpCode,
   HttpStatus,
   Logger,
@@ -46,20 +45,6 @@ export class MeetAiController {
       timestamp: new Date().toISOString(),
       service: 'meet-ai-service',
     };
-  }
-
-  @Post('analyze')
-  @HttpCode(HttpStatus.OK)
-  analyzeMeeting(@Body(new ValidationPipe()) body: { meetingId: string }) {
-    this.logger.log('分析会议', { meetingId: body.meetingId });
-    return this.meetAiService.analyzeMeeting(body.meetingId);
-  }
-
-  @Get(':meetingId/summary')
-  @HttpCode(HttpStatus.OK)
-  getMeetingSummary(@Param('meetingId') meetingId: string) {
-    this.logger.log('获取会议摘要', { meetingId });
-    return this.meetAiService.getMeetingSummary(meetingId);
   }
 
   @Post('participant-summary')
