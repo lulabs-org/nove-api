@@ -13,7 +13,7 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { NoPermissionRequired } from '@/permission/decorators/permissions.decorator';
+import { RequirePermissions } from '@/permission/decorators/permissions.decorator';
 import { TencentMtgSyncService } from './tencent-mtg-sync.service';
 import { SyncRecordingsDto } from './dto/sync-recordings.dto';
 
@@ -24,11 +24,11 @@ import { SyncRecordingsDto } from './dto/sync-recordings.dto';
 @ApiTags('Tencent Meeting')
 @ApiBearerAuth()
 @Controller('tencent-mtg')
-@NoPermissionRequired()
+@RequirePermissions('system:config')
 export class TencentMtgController {
   private readonly logger = new Logger(TencentMtgController.name);
 
-  constructor(private readonly syncService: TencentMtgSyncService) {}
+  constructor(private readonly syncService: TencentMtgSyncService) { }
 
   /**
    * 触发同步腾讯会议录制列表
