@@ -1,6 +1,6 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
+import { Queue, Job } from 'bullmq';
 import { ConfigType } from '@nestjs/config';
 import { tencentMeetingConfig } from '@/configs/tencent-mtg.config';
 import { TencentApiService } from '@/integrations/tencent-meeting/services/api.service';
@@ -103,12 +103,14 @@ export class TencentMtgSyncService {
    * @param startTime - 起始时间戳（Unix 秒）
    * @param endTime - 结束时间戳（Unix 秒）
    * @param operatorId - 操作者ID，如果未指定则使用配置的默认 userId
+   * @param job - 可选的 BullMQ Job 实例，用于记录进度和日志
    * @returns 同步结果统计，包括 upsert 的会议数、录制文件数以及过程中发生的错误
    */
   async syncRecords(
     startTime: number,
     endTime: number,
     operatorId?: string,
+    job?: Job,
   ): Promise<{
     meetingsUpserted: number;
     recordingsUpserted: number;
@@ -119,11 +121,24 @@ export class TencentMtgSyncService {
       this.logger.warn(
         `Skip syncRecords: startTime (${startTime}) is in the future.`,
       );
+      if (job) {
+        await job.log(
+          `[WARNING] Skip syncRecords: startTime (${startTime}) is in the future.`,
+        );
+      }
       return { meetingsUpserted: 0, recordingsUpserted: 0, errors: [] };
     }
 
     const actualEndTime = Math.min(endTime, now);
     const effectiveOperatorId = operatorId || this.config.api.userId;
+
+    if (job) {
+      await job.log(
+        `Fetching records from Tencent API for period: ${new Date(
+          startTime * 1000,
+        ).toISOString()} ~ ${new Date(actualEndTime * 1000).toISOString()}`,
+      );
+    }
 
     // 1. 获取指定时间段内的所有企业录制记录
     const recordMeetings = await this.tencentApi.getAllCorpRecords(
@@ -133,12 +148,28 @@ export class TencentMtgSyncService {
       1,
     );
 
+    if (job) {
+      await job.log(
+        `Found ${recordMeetings.length} meetings from Tencent API.`,
+      );
+    }
+
     let meetingsUpserted = 0;
     let recordingsUpserted = 0;
     const errors: string[] = [];
+    const totalMeetings = recordMeetings.length;
 
-    for (const record of recordMeetings) {
+    for (let i = 0; i < totalMeetings; i++) {
+      const record = recordMeetings[i];
+      const logPrefix = `[Meeting ${i + 1}/${totalMeetings}] ID: ${record.meeting_id}`;
+
       try {
+        if (job) {
+          await job.log(
+            `${logPrefix} Syncing info (Subject: ${record.subject})`,
+          );
+        }
+
         // Step 2.1: 同步会议基本信息
         const meeting = await this.upsertMeetingFromRecord(
           record,
@@ -147,9 +178,21 @@ export class TencentMtgSyncService {
         meetingsUpserted++;
 
         if (record.record_files?.length) {
+          if (job) {
+            await job.log(
+              `${logPrefix} Found ${record.record_files.length} recording files.`,
+            );
+          }
+
           // 遍历并同步该会议的所有录制文件
           for (const file of record.record_files) {
             try {
+              if (job) {
+                await job.log(
+                  `${logPrefix} - Syncing file ID: ${file.record_file_id}`,
+                );
+              }
+
               // Step 2.2: 同步录制文件信息
               const recording = await this.upsertRecordingFromFile(
                 meeting.id,
@@ -160,6 +203,11 @@ export class TencentMtgSyncService {
               // 状态 3 表示录制已完成，只有录制完成才有转写记录可以拉取
               if (record.state === 3) {
                 try {
+                  if (job) {
+                    await job.log(
+                      `${logPrefix} - Pulling and syncing transcripts...`,
+                    );
+                  }
                   const startTime = meeting.scheduledStartAt
                     ? Math.floor(meeting.scheduledStartAt.getTime() / 1000)
                     : undefined;
@@ -177,10 +225,19 @@ export class TencentMtgSyncService {
                     startTime,
                     endTime,
                   );
+
+                  if (job) {
+                    await job.log(
+                      `${logPrefix} - Successfully synced transcripts for file ID: ${file.record_file_id}`,
+                    );
+                  }
                 } catch (transcriptError) {
                   const msg = `Failed to upsert transcript for file ${file.record_file_id}: ${(transcriptError as Error).message}`;
                   this.logger.warn(msg);
                   errors.push(msg);
+                  if (job) {
+                    await job.log(`${logPrefix} - [WARNING] ${msg}`);
+                  }
                 }
               }
 
@@ -189,6 +246,9 @@ export class TencentMtgSyncService {
               const msg = `Failed to upsert recording file ${file.record_file_id}: ${(fileError as Error).message}`;
               this.logger.warn(msg);
               errors.push(msg);
+              if (job) {
+                await job.log(`${logPrefix} - [WARNING] ${msg}`);
+              }
             }
           }
         }
@@ -196,7 +256,20 @@ export class TencentMtgSyncService {
         const msg = `Failed to upsert meeting ${record.meeting_id}: ${(meetingError as Error).message}`;
         this.logger.warn(msg);
         errors.push(msg);
+        if (job) {
+          await job.log(`${logPrefix} - [ERROR] ${msg}`);
+        }
       }
+
+      // 更新进度
+      if (job) {
+        const progress = Math.round(((i + 1) / totalMeetings) * 100);
+        await job.updateProgress(progress);
+      }
+    }
+
+    if (totalMeetings === 0 && job) {
+      await job.updateProgress(100);
     }
 
     return { meetingsUpserted, recordingsUpserted, errors };

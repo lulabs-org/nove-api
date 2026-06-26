@@ -30,14 +30,23 @@ export class TencentMtgSyncProcessor extends WorkerHost {
       `Processing job ${job.id}: Syncing ${new Date(startTime * 1000).toISOString()} ~ ${new Date(endTime * 1000).toISOString()}`,
     );
 
+    await job.log(
+      `Starting sync process for period: ${new Date(startTime * 1000).toISOString()} ~ ${new Date(endTime * 1000).toISOString()}`,
+    );
+
     const result = await this.syncService.syncRecords(
       startTime,
       endTime,
       operatorId,
+      job,
     );
 
     this.logger.log(
       `Job ${job.id} completed: ${result.meetingsUpserted} meetings, ${result.recordingsUpserted} recordings upserted, ${result.errors.length} errors`,
+    );
+
+    await job.log(
+      `Job completed. Results: ${result.meetingsUpserted} meetings upserted, ${result.recordingsUpserted} recordings upserted, ${result.errors.length} errors.`,
     );
 
     return result;
