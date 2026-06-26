@@ -7,6 +7,7 @@ interface SyncJobData {
   startTime: number;
   endTime: number;
   operatorId?: string;
+  syncTranscripts?: boolean;
 }
 
 @Processor('tencent-mtg-sync', {
@@ -24,14 +25,14 @@ export class TencentMtgSyncProcessor extends WorkerHost {
   }
 
   async process(job: Job<SyncJobData>) {
-    const { startTime, endTime, operatorId } = job.data;
+    const { startTime, endTime, operatorId, syncTranscripts } = job.data;
 
     this.logger.log(
-      `Processing job ${job.id}: Syncing ${new Date(startTime * 1000).toISOString()} ~ ${new Date(endTime * 1000).toISOString()}`,
+      `Processing job ${job.id}: Syncing ${new Date(startTime * 1000).toISOString()} ~ ${new Date(endTime * 1000).toISOString()} (syncTranscripts=${syncTranscripts ?? true})`,
     );
 
     await job.log(
-      `Starting sync process for period: ${new Date(startTime * 1000).toISOString()} ~ ${new Date(endTime * 1000).toISOString()}`,
+      `Starting sync process for period: ${new Date(startTime * 1000).toISOString()} ~ ${new Date(endTime * 1000).toISOString()} (syncTranscripts=${syncTranscripts ?? true})`,
     );
 
     const result = await this.syncService.syncRecords(
@@ -39,6 +40,7 @@ export class TencentMtgSyncProcessor extends WorkerHost {
       endTime,
       operatorId,
       job,
+      syncTranscripts,
     );
 
     this.logger.log(

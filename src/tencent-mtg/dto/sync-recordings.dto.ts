@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsDate } from 'class-validator';
+import { IsOptional, IsString, IsDate, IsBoolean } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
@@ -30,4 +30,13 @@ export class SyncRecordingsDto {
   @IsOptional()
   @IsString()
   operatorId?: string;
+
+  @ApiPropertyOptional({
+    description: '是否同步会议的转写记录，默认为 true',
+    example: true,
+    default: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  syncTranscripts?: boolean;
 }

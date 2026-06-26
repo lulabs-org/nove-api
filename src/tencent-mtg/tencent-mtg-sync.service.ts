@@ -47,12 +47,15 @@ export class TencentMtgSyncService {
    * 触发同步，切分时间区间并投递到队列
    * @param startTime - 起始时间戳（Unix 秒），默认 7 天前
    * @param endTime - 结束时间戳（Unix 秒），默认当前时间
+   * @param operatorId - 操作者ID
+   * @param syncTranscripts - 是否同步转写记录，默认为 true
    * @returns 成功投递的 job IDs
    */
   async syncRecordings(
     startTime?: number,
     endTime?: number,
     operatorId?: string,
+    syncTranscripts: boolean = true,
   ): Promise<{ jobIds: string[]; message: string }> {
     const now = Math.floor(Date.now() / 1000);
     const effectiveEndTime = Math.min(endTime ?? now, now);
@@ -79,6 +82,7 @@ export class TencentMtgSyncService {
         startTime: currentStart,
         endTime: currentEnd,
         operatorId,
+        syncTranscripts,
       });
 
       if (job.id) {
@@ -111,6 +115,7 @@ export class TencentMtgSyncService {
     endTime: number,
     operatorId?: string,
     job?: Job,
+    syncTranscripts?: boolean,
   ): Promise<{
     meetingsUpserted: number;
     recordingsUpserted: number;
@@ -201,7 +206,7 @@ export class TencentMtgSyncService {
               );
 
               // 状态 3 表示录制已完成，只有录制完成才有转写记录可以拉取
-              if (record.state === 3) {
+              if (record.state === 3 && (syncTranscripts ?? true)) {
                 try {
                   if (job) {
                     await job.log(
@@ -238,6 +243,12 @@ export class TencentMtgSyncService {
                   if (job) {
                     await job.log(`${logPrefix} - [WARNING] ${msg}`);
                   }
+                }
+              } else if (record.state === 3 && !(syncTranscripts ?? true)) {
+                if (job) {
+                  await job.log(
+                    `${logPrefix} - Transcript sync is skipped as syncTranscripts is set to false`,
+                  );
                 }
               }
 
