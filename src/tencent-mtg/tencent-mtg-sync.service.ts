@@ -58,6 +58,7 @@ export class TencentMtgSyncService {
    * @param operatorId - 操作者ID
    * @param syncTranscripts - 是否同步转写记录，默认为 true
    * @param syncSummaries - 是否同步会议总结，默认为 true
+   * @param syncParticipants - 是否同步参会用户信息，默认为 true
    * @returns 成功投递的 job IDs
    */
   async syncRecordings(
@@ -66,6 +67,7 @@ export class TencentMtgSyncService {
     operatorId?: string,
     syncTranscripts: boolean = true,
     syncSummaries: boolean = true,
+    syncParticipants: boolean = true,
   ): Promise<{ jobIds: string[]; message: string }> {
     const now = Math.floor(Date.now() / 1000);
     const effectiveEndTime = Math.min(endTime ?? now, now);
@@ -94,6 +96,7 @@ export class TencentMtgSyncService {
         operatorId,
         syncTranscripts,
         syncSummaries,
+        syncParticipants,
       });
 
       if (job.id) {
@@ -121,6 +124,7 @@ export class TencentMtgSyncService {
    * @param job - 可选的 BullMQ Job 实例，用于记录进度和日志
    * @param syncTranscripts - 是否同步转写记录
    * @param syncSummaries - 是否同步会议总结
+   * @param syncParticipants - 是否同步参会用户信息
    * @returns 同步结果统计，包括 upsert 的会议数、录制文件数以及过程中发生的错误
    */
   async syncRecords(
@@ -130,6 +134,7 @@ export class TencentMtgSyncService {
     job?: Job,
     syncTranscripts?: boolean,
     syncSummaries?: boolean,
+    syncParticipants?: boolean,
   ): Promise<{
     meetingsUpserted: number;
     recordingsUpserted: number;
@@ -210,19 +215,24 @@ export class TencentMtgSyncService {
             actualSubid,
           );
           deduplicatedParticipants = participantResult.deduplicated || [];
-          if (deduplicatedParticipants.length > 0) {
-            await this.speakerSvc.syncPtUsers(deduplicatedParticipants);
-          }
+          
+          if (syncParticipants ?? true) {
+            if (deduplicatedParticipants.length > 0) {
+              await this.speakerSvc.syncPtUsers(deduplicatedParticipants);
+            }
 
-          if (
-            participantResult.original &&
-            participantResult.original.length > 0
-          ) {
-            await this.meetingParticipantSvc.syncParticipants({
-              meetid: record.meeting_id,
-              subid: meeting.subMeetingId,
-              participants: participantResult.original,
-            });
+            if (
+              participantResult.original &&
+              participantResult.original.length > 0
+            ) {
+              await this.meetingParticipantSvc.syncParticipants({
+                meetid: record.meeting_id,
+                subid: meeting.subMeetingId,
+                participants: participantResult.original,
+              });
+            }
+          } else {
+            if (job) await job.log(`${logPrefix} - Participant DB sync is skipped as syncParticipants is set to false`);
           }
         } catch (e) {
           const msg = `Failed to sync participants for meeting ${record.meeting_id}: ${(e as Error).message}`;

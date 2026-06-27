@@ -9,6 +9,7 @@ interface SyncJobData {
   operatorId?: string;
   syncTranscripts?: boolean;
   syncSummaries?: boolean;
+  syncParticipants?: boolean;
 }
 
 @Processor('tencent-mtg-sync', {
@@ -26,15 +27,21 @@ export class TencentMtgSyncProcessor extends WorkerHost {
   }
 
   async process(job: Job<SyncJobData>) {
-    const { startTime, endTime, operatorId, syncTranscripts, syncSummaries } =
-      job.data;
+    const {
+      startTime,
+      endTime,
+      operatorId,
+      syncTranscripts,
+      syncSummaries,
+      syncParticipants,
+    } = job.data;
 
     this.logger.log(
-      `Processing job ${job.id}: Syncing ${new Date(startTime * 1000).toISOString()} ~ ${new Date(endTime * 1000).toISOString()} (syncTranscripts=${syncTranscripts ?? true}, syncSummaries=${syncSummaries ?? true})`,
+      `Processing job ${job.id}: Syncing ${new Date(startTime * 1000).toISOString()} ~ ${new Date(endTime * 1000).toISOString()} (syncTranscripts=${syncTranscripts ?? true}, syncSummaries=${syncSummaries ?? true}, syncParticipants=${syncParticipants ?? true})`,
     );
 
     await job.log(
-      `Starting sync process for period: ${new Date(startTime * 1000).toISOString()} ~ ${new Date(endTime * 1000).toISOString()} (syncTranscripts=${syncTranscripts ?? true}, syncSummaries=${syncSummaries ?? true})`,
+      `Starting sync process for period: ${new Date(startTime * 1000).toISOString()} ~ ${new Date(endTime * 1000).toISOString()} (syncTranscripts=${syncTranscripts ?? true}, syncSummaries=${syncSummaries ?? true}, syncParticipants=${syncParticipants ?? true})`,
     );
 
     const result = await this.syncService.syncRecords(
@@ -44,6 +51,7 @@ export class TencentMtgSyncProcessor extends WorkerHost {
       job,
       syncTranscripts,
       syncSummaries,
+      syncParticipants,
     );
 
     this.logger.log(

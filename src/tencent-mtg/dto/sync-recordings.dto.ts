@@ -48,4 +48,13 @@ export class SyncRecordingsDto {
   @IsOptional()
   @IsBoolean()
   syncSummaries?: boolean;
+
+  @ApiPropertyOptional({
+    description: '是否同步参会用户信息，默认为 true',
+    example: true,
+    default: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  syncParticipants?: boolean;
 }
