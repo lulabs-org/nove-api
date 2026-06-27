@@ -22,7 +22,7 @@ import {
   mapRecordingFileStatus,
 } from './tencent-mtg-record.mapper';
 import { TranscriptRepository } from '@/meeting/repositories/transcript.repository';
-import { TranscriptBatchProcessor } from '@/tencent-mtg-hook/services/transcript-batch-processor.service';
+import { TranscriptSyncService } from '@/tencent-mtg-hook/services/transcript-sync.service';
 import {
   ParticipantService,
   SummaryService,
@@ -41,7 +41,7 @@ export class TencentMtgSyncService {
     private readonly meetingRepo: MeetingRepository,
     private readonly recordingRepo: MeetingRecordingRepository,
     private readonly transcriptRepo: TranscriptRepository,
-    private readonly transcriptBatchProcessor: TranscriptBatchProcessor,
+    private readonly transcriptSyncService: TranscriptSyncService,
     private readonly participantSvc: ParticipantService,
     private readonly summarySvc: SummaryService,
     private readonly summaryRepo: MeetingSummaryRepository,
@@ -511,7 +511,7 @@ export class TencentMtgSyncService {
         transcriptId = transcript.id;
       }
 
-      await this.transcriptBatchProcessor.processParagraphs(
+      await this.transcriptSyncService.sync(
         allParagraphs,
         transcriptId,
       );

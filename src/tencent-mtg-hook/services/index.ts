@@ -13,7 +13,7 @@ export { TencentEventHandlerService } from './event-handler.service';
 export { MeetingBitableService } from './meeting-bitable.service';
 export { MeetingDatabaseService } from './meeting-database.service';
 export { SpeakerService } from './speaker.service';
-export { TranscriptBatchProcessor } from './transcript-batch-processor.service';
+export { TranscriptSyncService } from './transcript-sync.service';
 export { RecordingDataFetcherService } from './recording-data-fetcher.service';
 export { SummaryService } from './summary.service';
 export { MeetingParticipantService } from './meeting-participant.service';
