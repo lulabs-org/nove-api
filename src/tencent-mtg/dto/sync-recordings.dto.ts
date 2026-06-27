@@ -39,4 +39,13 @@ export class SyncRecordingsDto {
   @IsOptional()
   @IsBoolean()
   syncTranscripts?: boolean;
+
+  @ApiPropertyOptional({
+    description: '是否同步会议总结（AI 摘要和纪要），默认为 true',
+    example: true,
+    default: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  syncSummaries?: boolean;
 }

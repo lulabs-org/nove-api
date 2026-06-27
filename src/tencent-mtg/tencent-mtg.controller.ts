@@ -50,7 +50,7 @@ export class TencentMtgController {
     dto: SyncRecordingsDto,
   ) {
     this.logger.log(
-      `Sync recordings requested: startDate=${dto.startDate?.toISOString() ?? 'undefined'}, endDate=${dto.endDate?.toISOString() ?? 'undefined'}, syncTranscripts=${dto.syncTranscripts ?? true}`,
+      `Sync recordings requested: startDate=${dto.startDate?.toISOString() ?? 'undefined'}, endDate=${dto.endDate?.toISOString() ?? 'undefined'}, syncTranscripts=${dto.syncTranscripts ?? true}, syncSummaries=${dto.syncSummaries ?? true}`,
     );
 
     const startTime = dto.startDate
@@ -65,6 +65,7 @@ export class TencentMtgController {
       endTime,
       dto.operatorId,
       dto.syncTranscripts,
+      dto.syncSummaries,
     );
 
     return {

@@ -6,6 +6,7 @@ import { tencentMeetingConfig } from '@/configs/tencent-mtg.config';
 import { TencentApiService } from '@/integrations/tencent-meeting/services/api.service';
 import { MeetingRepository } from '@/meeting/repositories/meeting.repository';
 import { MeetingRecordingRepository } from '@/meeting/repositories/meeting-recording.repository';
+import { MeetingSummaryRepository } from '@/meeting/repositories/meeting-summary.repository';
 import { MeetingPlatform, RecordingSource } from '@prisma/client';
 import type {
   RecordMeeting,
@@ -22,7 +23,10 @@ import {
 } from './tencent-mtg-record.mapper';
 import { TranscriptRepository } from '@/meeting/repositories/transcript.repository';
 import { TranscriptBatchProcessor } from '@/tencent-mtg-hook/services/transcript-batch-processor.service';
-import { ParticipantService } from '@/integrations/tencent-meeting/services';
+import {
+  ParticipantService,
+  SummaryService,
+} from '@/integrations/tencent-meeting/services';
 import { SpeakerService } from '@/tencent-mtg-hook/services/speaker.service';
 import { MeetingParticipantService } from '@/tencent-mtg-hook/services/meeting-participant.service';
 import { NewTranscriptParagraph } from '@/tencent-mtg-hook/types/transcript.types';
@@ -39,6 +43,8 @@ export class TencentMtgSyncService {
     private readonly transcriptRepo: TranscriptRepository,
     private readonly transcriptBatchProcessor: TranscriptBatchProcessor,
     private readonly participantSvc: ParticipantService,
+    private readonly summarySvc: SummaryService,
+    private readonly summaryRepo: MeetingSummaryRepository,
     private readonly speakerSvc: SpeakerService,
     private readonly meetingParticipantSvc: MeetingParticipantService,
     @Inject(tencentMeetingConfig.KEY)
@@ -51,6 +57,7 @@ export class TencentMtgSyncService {
    * @param endTime - 结束时间戳（Unix 秒），默认当前时间
    * @param operatorId - 操作者ID
    * @param syncTranscripts - 是否同步转写记录，默认为 true
+   * @param syncSummaries - 是否同步会议总结，默认为 true
    * @returns 成功投递的 job IDs
    */
   async syncRecordings(
@@ -58,6 +65,7 @@ export class TencentMtgSyncService {
     endTime?: number,
     operatorId?: string,
     syncTranscripts: boolean = true,
+    syncSummaries: boolean = true,
   ): Promise<{ jobIds: string[]; message: string }> {
     const now = Math.floor(Date.now() / 1000);
     const effectiveEndTime = Math.min(endTime ?? now, now);
@@ -85,6 +93,7 @@ export class TencentMtgSyncService {
         endTime: currentEnd,
         operatorId,
         syncTranscripts,
+        syncSummaries,
       });
 
       if (job.id) {
@@ -105,11 +114,13 @@ export class TencentMtgSyncService {
   /**
    * 获取企业录制列表并逐条同步到本地数据库。
    * 这个方法通常由队列 Worker 在后台执行，处理特定时间块的数据同步。
-   * 包含：会议信息同步、录制文件信息同步、转写记录同步。
+   * 包含：会议信息同步、录制文件信息同步、转写记录同步、会议总结同步。
    * @param startTime - 起始时间戳（Unix 秒）
    * @param endTime - 结束时间戳（Unix 秒）
    * @param operatorId - 操作者ID，如果未指定则使用配置的默认 userId
    * @param job - 可选的 BullMQ Job 实例，用于记录进度和日志
+   * @param syncTranscripts - 是否同步转写记录
+   * @param syncSummaries - 是否同步会议总结
    * @returns 同步结果统计，包括 upsert 的会议数、录制文件数以及过程中发生的错误
    */
   async syncRecords(
@@ -118,6 +129,7 @@ export class TencentMtgSyncService {
     operatorId?: string,
     job?: Job,
     syncTranscripts?: boolean,
+    syncSummaries?: boolean,
   ): Promise<{
     meetingsUpserted: number;
     recordingsUpserted: number;
@@ -276,6 +288,41 @@ export class TencentMtgSyncService {
                 if (job) {
                   await job.log(
                     `${logPrefix} - Transcript sync is skipped as syncTranscripts is set to false`,
+                  );
+                }
+              }
+
+              // Step 2.5: 同步会议总结（AI 摘要和纪要）
+              if (record.state === 3 && (syncSummaries ?? true)) {
+                try {
+                  if (job) {
+                    await job.log(
+                      `${logPrefix} - Pulling and syncing meeting summary...`,
+                    );
+                  }
+                  await this.upsertSummaryFromFile(
+                    meeting.id,
+                    recording.id,
+                    file.record_file_id,
+                    effectiveOperatorId,
+                  );
+                  if (job) {
+                    await job.log(
+                      `${logPrefix} - Successfully synced summary for file ID: ${file.record_file_id}`,
+                    );
+                  }
+                } catch (summaryError) {
+                  const msg = `Failed to upsert summary for file ${file.record_file_id}: ${(summaryError as Error).message}`;
+                  this.logger.warn(msg);
+                  errors.push(msg);
+                  if (job) {
+                    await job.log(`${logPrefix} - [WARNING] ${msg}`);
+                  }
+                }
+              } else if (record.state === 3 && !(syncSummaries ?? true)) {
+                if (job) {
+                  await job.log(
+                    `${logPrefix} - Summary sync is skipped as syncSummaries is set to false`,
                   );
                 }
               }
@@ -489,5 +536,61 @@ export class TencentMtgSyncService {
         transcriptId,
       );
     }
+  }
+
+  /**
+   * 获取并同步录制文件的会议总结（AI 摘要和纪要）。
+   * 流程：
+   * 1. 检查是否已存在该录制的总结记录，如果已有则跳过。
+   * 2. 调用 SummaryService 获取 AI 摘要和纪要内容。
+   * 3. 将获取到的内容通过 upsert 写入 MeetingSummary 表。
+   * @param meetingId - 本地会议 ID
+   * @param recordingId - 本地录制记录 ID
+   * @param recordFileId - 腾讯会议录制文件 ID
+   * @param operatorId - 操作者 ID
+   */
+  async upsertSummaryFromFile(
+    meetingId: string,
+    recordingId: string,
+    recordFileId: string,
+    operatorId: string,
+  ): Promise<void> {
+    // 1. 检查是否已存在该录制的总结记录
+    const existing = await this.summaryRepo.findByRecordingId(recordingId);
+    if (existing) {
+      this.logger.debug(
+        `Summary already exists for recording ${recordingId}, skipping.`,
+      );
+      return;
+    }
+
+    // 2. 调用 SummaryService 获取 AI 摘要和纪要
+    const startTime = Date.now();
+    const content = await this.summarySvc.getContent(recordFileId, operatorId);
+    const processingTime = Date.now() - startTime;
+
+    // 3. 如果获取到内容则写入数据库
+    if (!content.fullSummary && !content.aiMinutes && !content.todo) {
+      this.logger.warn(
+        `No summary content returned for recording ${recordFileId}, skipping persistence.`,
+      );
+      return;
+    }
+
+    // 解析 todo 为 actionItems JSON 格式
+    const actionItems = content.todo ? content.todo : undefined;
+
+    await this.summaryRepo.upsert({
+      meetingId,
+      recordingId,
+      content: content.fullSummary || '',
+      aiMinutes: content.aiMinutes || undefined,
+      actionItems: actionItems,
+      processingTime,
+    });
+
+    this.logger.log(
+      `Successfully synced summary for recording ${recordFileId} (meetingId: ${meetingId})`,
+    );
   }
 }
