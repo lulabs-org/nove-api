@@ -10,6 +10,7 @@ interface SyncJobData {
   syncTranscripts?: boolean;
   syncSummaries?: boolean;
   syncParticipants?: boolean;
+  forceReSyncTranscript?: boolean;
 }
 
 @Processor('tencent-mtg-sync', {
@@ -34,6 +35,7 @@ export class TencentMtgSyncProcessor extends WorkerHost {
       syncTranscripts,
       syncSummaries,
       syncParticipants,
+      forceReSyncTranscript,
     } = job.data;
 
     this.logger.log(
@@ -48,6 +50,7 @@ export class TencentMtgSyncProcessor extends WorkerHost {
       startTime,
       endTime,
       operatorId,
+      forceReSyncTranscript,
     );
 
     this.logger.log(

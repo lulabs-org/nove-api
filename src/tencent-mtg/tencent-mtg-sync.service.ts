@@ -53,6 +53,7 @@ export class TencentMtgSyncService {
     startTime?: number,
     endTime?: number,
     operatorId?: string,
+    forceReSyncTranscript?: boolean,
   ): Promise<{ jobIds: string[]; message: string }> {
     const now = Math.floor(Date.now() / 1000);
     const effectiveEndTime = Math.min(endTime ?? now, now);
@@ -79,6 +80,7 @@ export class TencentMtgSyncService {
         startTime: currentStart,
         endTime: currentEnd,
         operatorId,
+        forceReSyncTranscript,
       });
 
       if (job.id) {
@@ -114,6 +116,7 @@ export class TencentMtgSyncService {
     meeting: Meeting,
     operatorId: string,
     errors: string[],
+    forceReSyncTranscript: boolean = false,
   ): Promise<number> {
     try {
       // Step 2.2: 同步录制文件信息
@@ -142,6 +145,7 @@ export class TencentMtgSyncService {
             operatorId,
             startTime,
             endTime,
+            forceReSyncTranscript,
           );
         } catch (transcriptError) {
           this.handleSyncError(
@@ -169,6 +173,7 @@ export class TencentMtgSyncService {
     record: RecordMeeting,
     operatorId: string,
     errors: string[],
+    forceReSyncTranscript: boolean = false,
   ): Promise<{ meetingsUpserted: number; recordingsUpserted: number }> {
     try {
       // Step 2.1: 同步会议基本信息
@@ -184,6 +189,7 @@ export class TencentMtgSyncService {
             meeting,
             operatorId,
             errors,
+            forceReSyncTranscript,
           );
         }
       }
@@ -212,6 +218,7 @@ export class TencentMtgSyncService {
     startTime: number,
     endTime: number,
     operatorId?: string,
+    forceReSyncTranscript: boolean = false,
   ): Promise<{
     meetingsUpserted: number;
     recordingsUpserted: number;
@@ -242,7 +249,7 @@ export class TencentMtgSyncService {
 
     for (const record of recordMeetings) {
       const { meetingsUpserted, recordingsUpserted } =
-        await this.processMeetingRecord(record, effectiveOperatorId, errors);
+        await this.processMeetingRecord(record, effectiveOperatorId, errors, forceReSyncTranscript);
 
       totalMeetingsUpserted += meetingsUpserted;
       totalRecordingsUpserted += recordingsUpserted;
@@ -355,6 +362,7 @@ export class TencentMtgSyncService {
     operatorId: string,
     startTime?: number,
     endTime?: number,
+    forceReSyncTranscript: boolean = false,
   ) {
     let transcriptId: string | undefined;
 
@@ -362,11 +370,15 @@ export class TencentMtgSyncService {
       await this.transcriptRepo.findByRecordingId(recordingId);
 
     if (existingTranscript) {
-      const segmentCount = await this.transcriptRepo.countSegments(
-        existingTranscript.id,
-      );
-      if (segmentCount > 0) {
-        return; // Already processed and has segments
+      if (forceReSyncTranscript) {
+        await this.transcriptRepo.deleteSegments(existingTranscript.id);
+      } else {
+        const segmentCount = await this.transcriptRepo.countSegments(
+          existingTranscript.id,
+        );
+        if (segmentCount > 0) {
+          return; // Already processed and has segments
+        }
       }
       transcriptId = existingTranscript.id;
     }

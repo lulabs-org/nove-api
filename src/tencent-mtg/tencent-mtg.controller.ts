@@ -64,6 +64,7 @@ export class TencentMtgController {
       startTime,
       endTime,
       dto.operatorId,
+      dto.forceReSyncTranscript,
     );
 
     return {
