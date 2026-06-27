@@ -28,7 +28,7 @@ import { SyncRecordingsDto } from './dto/sync-recordings.dto';
 export class TencentMtgController {
   private readonly logger = new Logger(TencentMtgController.name);
 
-  constructor(private readonly syncService: TencentMtgSyncService) { }
+  constructor(private readonly syncService: TencentMtgSyncService) {}
 
   /**
    * 触发同步腾讯会议录制列表

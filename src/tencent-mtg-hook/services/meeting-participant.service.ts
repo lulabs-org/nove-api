@@ -17,6 +17,7 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { Platform, Prisma, MeetingControlAction } from '@prisma/client';
 import type { RecordingData } from '../types';
+import { ParticipantDetail } from '@/integrations/tencent-meeting/types';
 
 @Injectable()
 export class MeetingParticipantService {
@@ -47,13 +48,16 @@ export class MeetingParticipantService {
     }
 
     // Group segments by uuid
-    const segmentsByUuid = new Map<string, typeof r.participants>();
+    const segmentsByUuid = new Map<string, ParticipantDetail[]>();
     for (const p of r.participants) {
       if (!p.uuid) continue;
-      if (!segmentsByUuid.has(p.uuid)) {
-        segmentsByUuid.set(p.uuid, []);
+
+      let segments = segmentsByUuid.get(p.uuid);
+      if (!segments) {
+        segments = [];
+        segmentsByUuid.set(p.uuid, segments);
       }
-      segmentsByUuid.get(p.uuid)!.push(p);
+      segments.push(p);
     }
 
     // Process each participant's aggregated status and write action logs
@@ -75,8 +79,12 @@ export class MeetingParticipantService {
       let totalDurationSeconds = 0;
 
       for (const segment of segments) {
-        const joinTimeNum = segment.join_time ? parseInt(segment.join_time, 10) : 0;
-        const leftTimeNum = segment.left_time ? parseInt(segment.left_time, 10) : 0;
+        const joinTimeNum = segment.join_time
+          ? parseInt(segment.join_time, 10)
+          : 0;
+        const leftTimeNum = segment.left_time
+          ? parseInt(segment.left_time, 10)
+          : 0;
 
         if (joinTimeNum > 0) {
           minJoinTimeNum = Math.min(minJoinTimeNum, joinTimeNum);
@@ -86,7 +94,7 @@ export class MeetingParticipantService {
         }
 
         if (joinTimeNum > 0 && leftTimeNum > 0 && leftTimeNum >= joinTimeNum) {
-          totalDurationSeconds += (leftTimeNum - joinTimeNum);
+          totalDurationSeconds += leftTimeNum - joinTimeNum;
         }
 
         // Log join action event
@@ -142,11 +150,15 @@ export class MeetingParticipantService {
         }
       }
 
-      const firstJoinTime = minJoinTimeNum !== Infinity ? new Date(minJoinTimeNum * 1000) : null;
-      const lastLeaveTime = maxLeftTimeNum !== -Infinity ? new Date(maxLeftTimeNum * 1000) : null;
+      const firstJoinTime =
+        minJoinTimeNum !== Infinity ? new Date(minJoinTimeNum * 1000) : null;
+      const lastLeaveTime =
+        maxLeftTimeNum !== -Infinity ? new Date(maxLeftTimeNum * 1000) : null;
 
       // Use the last segment in the array as the sessionData template
-      const sessionData = segments[segments.length - 1] as unknown as Prisma.InputJsonValue;
+      const sessionData = segments[
+        segments.length - 1
+      ] as unknown as Prisma.InputJsonValue;
 
       await this.participantRepo.upsert(meeting.id, ptUser.id, {
         firstJoinTime,

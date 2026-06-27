@@ -24,6 +24,7 @@ import { TranscriptRepository } from '@/meeting/repositories/transcript.reposito
 import { TranscriptBatchProcessor } from '@/tencent-mtg-hook/services/transcript-batch-processor.service';
 import { ParticipantService } from '@/integrations/tencent-meeting/services';
 import { SpeakerService } from '@/tencent-mtg-hook/services/speaker.service';
+import { MeetingParticipantService } from '@/tencent-mtg-hook/services/meeting-participant.service';
 import { NewTranscriptParagraph } from '@/tencent-mtg-hook/types/transcript.types';
 
 @Injectable()
@@ -39,6 +40,7 @@ export class TencentMtgSyncService {
     private readonly transcriptBatchProcessor: TranscriptBatchProcessor,
     private readonly participantSvc: ParticipantService,
     private readonly speakerSvc: SpeakerService,
+    private readonly meetingParticipantSvc: MeetingParticipantService,
     @Inject(tencentMeetingConfig.KEY)
     private config: ConfigType<typeof tencentMeetingConfig>,
   ) {}
@@ -182,6 +184,34 @@ export class TencentMtgSyncService {
         );
         meetingsUpserted++;
 
+        // Step 2.2: 同步参会者信息 (独立于录制文件)
+        let deduplicatedParticipants: ParticipantDetail[] = [];
+        try {
+          if (job) await job.log(`${logPrefix} - Syncing participants...`);
+          const actualSubid = meeting.subMeetingId === '__ROOT__' ? undefined : meeting.subMeetingId;
+          const participantResult = await this.participantSvc.list(
+            record.meeting_id,
+            effectiveOperatorId,
+            actualSubid,
+          );
+          deduplicatedParticipants = participantResult.deduplicated || [];
+          if (deduplicatedParticipants.length > 0) {
+            await this.speakerSvc.syncPtUsers(deduplicatedParticipants);
+          }
+
+          if (participantResult.original && participantResult.original.length > 0) {
+            await this.meetingParticipantSvc.syncParticipants({
+              meetid: record.meeting_id,
+              subid: meeting.subMeetingId,
+              participants: participantResult.original,
+            });
+          }
+        } catch (e) {
+          const msg = `Failed to sync participants for meeting ${record.meeting_id}: ${(e as Error).message}`;
+          this.logger.warn(msg);
+          if (job) await job.log(`${logPrefix} - [WARNING] ${msg}`);
+        }
+
         if (record.record_files?.length) {
           if (job) {
             await job.log(
@@ -198,7 +228,7 @@ export class TencentMtgSyncService {
                 );
               }
 
-              // Step 2.2: 同步录制文件信息
+              // Step 2.3: 同步录制文件信息
               const recording = await this.upsertRecordingFromFile(
                 meeting.id,
                 file,
@@ -213,13 +243,14 @@ export class TencentMtgSyncService {
                       `${logPrefix} - Pulling and syncing transcripts...`,
                     );
                   }
-                  // Step 2.3: 同步转写文本及其相关参会人信息
+                  // Step 2.4: 同步转写文本及其相关参会人信息
                   await this.upsertTranscriptFromFile(
                     record.meeting_id,
                     meeting.subMeetingId || '__ROOT__',
                     recording.id,
                     file.record_file_id,
                     effectiveOperatorId,
+                    deduplicatedParticipants,
                   );
 
                   if (job) {
@@ -375,7 +406,9 @@ export class TencentMtgSyncService {
     recordingId: string,
     recordFileId: string,
     operatorId: string,
+    deduplicated: ParticipantDetail[],
   ) {
+    // 1. 检查是否已处理过该转写记录
     let transcriptId: string | undefined;
 
     const existingTranscript =
@@ -389,25 +422,6 @@ export class TencentMtgSyncService {
         return; // Already processed and has segments
       }
       transcriptId = existingTranscript.id;
-    }
-
-    // 获取参会者列表，用于后续丰富说话人信息
-    let deduplicated: ParticipantDetail[] = [];
-    try {
-      const actualSubid = subid === '__ROOT__' ? undefined : subid;
-      const participantResult = await this.participantSvc.list(
-        meetid,
-        operatorId,
-        actualSubid,
-      );
-      deduplicated = participantResult.deduplicated || [];
-      if (deduplicated.length > 0) {
-        await this.speakerSvc.syncPtUsers(deduplicated);
-      }
-    } catch (e) {
-      this.logger.warn(
-        `Failed to fetch participants for meeting ${meetid}: ${e}`,
-      );
     }
 
     const allParagraphs: NewTranscriptParagraph[] = [];
