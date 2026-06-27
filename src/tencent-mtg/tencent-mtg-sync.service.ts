@@ -215,7 +215,7 @@ export class TencentMtgSyncService {
             actualSubid,
           );
           deduplicatedParticipants = participantResult.deduplicated || [];
-          
+
           if (syncParticipants ?? true) {
             if (deduplicatedParticipants.length > 0) {
               await this.speakerSvc.syncPtUsers(deduplicatedParticipants);
@@ -232,7 +232,10 @@ export class TencentMtgSyncService {
               });
             }
           } else {
-            if (job) await job.log(`${logPrefix} - Participant DB sync is skipped as syncParticipants is set to false`);
+            if (job)
+              await job.log(
+                `${logPrefix} - Participant DB sync is skipped as syncParticipants is set to false`,
+              );
           }
         } catch (e) {
           const msg = `Failed to sync participants for meeting ${record.meeting_id}: ${(e as Error).message}`;
