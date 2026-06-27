@@ -1,93 +1,79 @@
-// 参与者会议总结表（包含单次会议和周期性总结）
-model ParticipantSummary {
-  id String @id @default(cuid())
+// 会议总结表
+model MeetingSummary {
+    id String @id @default(cuid())
 
-  // 周期类型
-  periodType PeriodType @map("period_type")
+    // 总结内容
+    title        String?  @db.VarChar(500) // 总结标题
+    content      String   @db.Text // 总结内容
+    // AI生成的结构化会议纪要，格式: { "sections": [{ "title": "string", "content": "string", "timestamp": "string" }] }
+    aiMinutes    Json?    @map("ai_minutes")
+    // 关键要点，格式: [{ "point": "string", "importance": "high|medium|low", "timestamp": "string" }]
+    keyPoints    Json?    @map("key_points")
+    // 行动项，格式: [{ "task": "string", "assignee": "string", "dueDate": "string", "status": "pending|in_progress|completed" }]
+    actionItems  Json?    @map("action_items")
+    // 决策记录，格式: [{ "decision": "string", "reason": "string", "votedBy": ["string"], "timestamp": "string" }]
+    decisions    Json?    @map("decisions")
+    // 参与者总结（AI提取的发言与贡献），格式: [{ "userId": "string", "name": "string", "role": "string", "contributions": ["string"] }]
+    speakerInsights Json?    @map("speaker_insights")
+    // 会议金句，格式：[{speaker: string, content: string, explanation: string, timestamp: string}]
+    goldenQuotes Json?    @map("golden_quotes")
+    keywords     String[] @map("keywords") // 关键词
 
-  // 平台用户ID
-  platformUserId String?       @map("platform_user_id")
-  platformUser   PlatformUser? @relation("ParticipantSummaries", fields: [platformUserId], references: [id], onDelete: Restrict)
+    // 元数据
+    metadata Json? @map("metadata") // 扩展元数据
 
-  meetingId String?  @map("meeting_id") // 对应 Meeting 的 ID
-  meeting   Meeting? @relation("MeetingParticipantSummaries", fields: [meetingId], references: [id], onDelete: SetNull)
+    // 生成信息
+    generatedBy GenerationMethod? @map("generated_by") // 生成方式
+    aiModel     String?           @map("ai_model") // AI模型版本
+    confidence  Float? // 置信度
+    language    String? // 总结语言
 
-  meetingRecordingId String?           @map("meeting_recording_id")
-  meetingRecording   MeetingRecording? @relation("RecordingParticipantSummaries", fields: [meetingRecordingId], references: [id], onDelete: SetNull)
+    // 版本控制
+    version  Int     @default(1) @map("version")
+    isLatest Boolean @default(true) @map("is_latest")
 
-  userName    String   @map("user_name") @db.VarChar(100) // 参会人信息 
-  partSummary String   @map("part_summary") @db.Text // 总结内容
-  keywords    String[] @map("keywords") // 关键词标签
+    // 状态管理
+    status         ProcessingStatus @default(PENDING) @map("status")
+    processingTime Int?             @map("processing_time") // 处理耗时（毫秒）
+    errorMessage   String?          @map("error_message") // 错误信息
 
-  // 生成信息
-  generatedBy GenerationMethod? @map("generated_by")
-  aiModel     String?           @map("ai_model")
-  confidence  Float? // 置信度
+    // 用户交互记录 
+    createdId  String?       @map("created_id") // 创建者
+    creator    PlatformUser? @relation("SummaryCreator", fields: [createdId], references: [id])
+    approvedId String?       @map("approved_id") // 审核者
+    approver   PlatformUser? @relation("ApprovedSummaries", fields: [approvedId], references: [id])
+    approvedAt DateTime?     @map("approved_at") @db.Timestamptz(6) // 审核时间
 
-  // 版本控制
-  version  Int     @default(1) @map("version")
-  isLatest Boolean @default(true) @map("is_latest")
+    // 版本链管理
+    parentSummaryId String?          @map("parent_summary_id") // 父总结ID（用于版本链）
+    parentSummary   MeetingSummary?  @relation("SummaryVersions", fields: [parentSummaryId], references: [id])
+    childSummaries  MeetingSummary[] @relation("SummaryVersions")
 
-  // 关系
-  asParent SummaryRelation[] @relation("ParentSummary") // 作为父级总结，包含哪些子级总结
-  asChild  SummaryRelation[] @relation("ChildSummary") // 作为子级总结，属于哪些父级总结
+    // 关联会议
+    meetingId    String      @map("meeting_id")
+    meeting      Meeting     @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+    // 关联转录
+    transcriptId String?     @map("transcript_id")
+    transcript   Transcript? @relation(fields: [transcriptId], references: [id], onDelete: SetNull)
 
-  // 时间戳 
-  periodStart DateTime? @db.Timestamptz(6)  @map("period_start") // 总结时间段开始（必填）
-  periodEnd   DateTime? @db.Timestamptz(6)  @map("period_end")   // 总结时间段结束（必填）
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
-  // 软删除
-  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+    // 关联录制
+    recordingId String?           @map("recording_id")
+    recording   MeetingRecording? @relation(fields: [recordingId], references: [id], onDelete: SetNull)
 
-  @@index([platformUserId, periodType]) // 查询某用户某类型的总结
-  @@index([meetingId, periodType]) // 查询某会议某类型的总结
-  @@index([periodType, createdAt]) // 按周期类型和时间范围查询
-  @@index([platformUserId, deletedAt]) // 查询用户的未删除记录
-  @@index([periodType, deletedAt]) // 按类型查询未删除记录
-  @@map("participant_summaries")
-}
+    // 系统字段及时间
+    createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+    updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+    deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
 
-// 周期类型枚举（包含单次）
-enum PeriodType {
-  SINGLE // 单次会议
-  DAILY // 每日
-  WEEKLY // 每周
-  MONTHLY // 每月
-  QUARTERLY // 每季度
-  YEARLY // 每年
-}
-
-// 总结关系表（记录总结之间的层级关系）
-// 支持：单次→每日、每日→每周、每周→每月、每月→每年等
-model SummaryRelation {
-  id String @id @default(cuid())
-
-  // 父级总结ID（更高层级的总结，如每日、每周、每月）
-  parentSummaryId String             @map("parent_summary_id")
-  parentSummary   ParticipantSummary @relation("ParentSummary", fields: [parentSummaryId], references: [id], onDelete: Cascade)
-
-  // 子级总结ID（更低层级的总结，如单次、每日、每周）
-  childSummaryId String             @map("child_summary_id")
-  childSummary   ParticipantSummary @relation("ChildSummary", fields: [childSummaryId], references: [id], onDelete: Cascade)
-
-  // 父级周期类型（方便查询，表示父级是什么类型的总结）
-  parentPeriodType PeriodType @map("parent_period_type")
-
-  childPeriodType PeriodType @map("child_period_type") // 添加子级周期类型
-
-  // 扩展字段
-  metadata Json? @map("metadata") // 扩展元数据
-
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
-  // 软删除
-  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
-
-  @@unique([parentSummaryId, childSummaryId])
-  @@index([parentSummaryId])
-  @@index([childSummaryId])
-  @@index([parentPeriodType, childPeriodType]) // 按周期类型组合查询
-  @@index([parentPeriodType, createdAt]) // 按父级类型和时间查询
-  @@map("summary_relations")
+    @@index([meetingId], map: "idx_meeting_summary_meeting")
+    @@index([isLatest], map: "idx_meeting_summary_is_latest")
+    @@index([status], map: "idx_meeting_summary_status")
+    @@index([createdId], map: "idx_meeting_summary_created_id")
+    @@index([version], map: "idx_meeting_summary_version")
+    @@index([parentSummaryId], map: "idx_meeting_summary_parent_summary")
+    @@index([language], map: "idx_meeting_summary_language") // 语言查询优化
+    @@index([approvedId], map: "idx_meeting_summary_approved_id") // 审核者查询优化
+    @@index([meetingId, isLatest], map: "idx_meeting_summary_meeting_latest") // 查询会议的最新总结
+    @@index([status, createdAt], map: "idx_meeting_summary_status_created") // 按状态查询总结列表
+    @@map("meet_summaries")
 }
