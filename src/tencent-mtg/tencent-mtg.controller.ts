@@ -64,9 +64,6 @@ export class TencentMtgController {
       startTime,
       endTime,
       dto.operatorId,
-      dto.syncTranscripts,
-      dto.syncSummaries,
-      dto.syncParticipants,
     );
 
     return {

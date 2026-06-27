@@ -48,10 +48,6 @@ export class TencentMtgSyncProcessor extends WorkerHost {
       startTime,
       endTime,
       operatorId,
-      job,
-      syncTranscripts,
-      syncSummaries,
-      syncParticipants,
     );
 
     this.logger.log(
