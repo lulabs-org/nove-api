@@ -35,10 +35,7 @@ export const MEETING_SUMMARY_CONFIGS: {
       },
     ],
     decisions: ['决定采用新的代码审查工具', '调整项目B的开发计划'],
-    participants: [
-      { name: '张三', role: '项目负责人', attendance: '全程参与' },
-      { name: '李四', role: '技术负责人', attendance: '全程参与' },
-    ],
+
     status: ProcessingStatus.COMPLETED,
   },
 } as const;

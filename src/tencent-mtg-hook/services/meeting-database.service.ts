@@ -32,7 +32,7 @@ import {
   GenerationMethod,
   ProcessingStatus,
 } from '@prisma/client';
-import { TranscriptBatchProcessor } from './transcript-batch-processor.service';
+import { TranscriptSyncService } from './transcript-sync.service';
 
 /**
  * 会议数据库服务
@@ -46,7 +46,7 @@ export class MeetingDatabaseService {
     private readonly recordingRepo: MeetingRecordingRepository,
     private readonly meetingSummaryRepo: MeetingSummaryRepository,
     private readonly transcriptRepo: TranscriptRepository,
-    private readonly batchProcessor: TranscriptBatchProcessor,
+    private readonly transcriptSyncService: TranscriptSyncService,
   ) {}
 
   /**
@@ -257,7 +257,7 @@ export class MeetingDatabaseService {
           recordingId: recording.id,
         });
 
-        await this.batchProcessor.processParagraphs(
+        await this.transcriptSyncService.sync(
           file.paragraphs || [],
           res.id,
         );

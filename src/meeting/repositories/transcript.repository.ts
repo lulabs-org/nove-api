@@ -99,6 +99,12 @@ export class TranscriptRepository {
     });
   }
 
+  async deleteSegments(transcriptId: string) {
+    return this.prisma.transcriptSegment.deleteMany({
+      where: { transcriptId },
+    });
+  }
+
   async upsert(data: {
     source: string;
     rawFileUrl?: string;

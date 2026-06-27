@@ -27,6 +27,8 @@ model MeetingUserAction {
 
 // 会中控制动作枚举
 enum MeetingControlAction {
+    JOIN_MEETING // 加入会议
+    LEAVE_MEETING // 离开会议
     MUTE_ALL // 全体静音
     UNMUTE_ALL // 解除全体静音
     START_SCREEN_SHARE // 开始共享屏幕

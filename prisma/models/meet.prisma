@@ -43,7 +43,7 @@ model Meeting {
   recordings           MeetingRecording[] // 关联的录制
   summaries            MeetingSummary[] // 关联的总结记录
   participantSummaries ParticipantSummary[] @relation("MeetingParticipantSummaries") // 参与者总结
-  userActions          MeetingUserAction[] @relation("MeetingUserActions") // 用户操作记录
+  userActions          MeetingUserAction[]  @relation("MeetingUserActions") // 用户操作记录
 
   // 系统字段及时间
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -118,86 +118,6 @@ model MeetingRecordingFile {
 
   @@index([recordingId], map: "idx_recording_files_recording")
   @@map("meet_recording_files")
-}
-
-// 会议总结表
-model MeetingSummary {
-  id String @id @default(cuid())
-
-  // 总结内容
-  title        String?  @db.VarChar(500) // 总结标题
-  content      String   @db.Text // 总结内容
-  // AI生成的结构化会议纪要，格式: { "sections": [{ "title": "string", "content": "string", "timestamp": "string" }] }
-  aiMinutes    Json?    @map("ai_minutes")
-  // 关键要点，格式: [{ "point": "string", "importance": "high|medium|low", "timestamp": "string" }]
-  keyPoints    Json?    @map("key_points")
-  // 行动项，格式: [{ "task": "string", "assignee": "string", "dueDate": "string", "status": "pending|in_progress|completed" }]
-  actionItems  Json?    @map("action_items")
-  // 决策记录，格式: [{ "decision": "string", "reason": "string", "votedBy": ["string"], "timestamp": "string" }]
-  decisions    Json?    @map("decisions")
-  // 参与者总结，格式: [{ "userId": "string", "name": "string", "role": "string", "contributions": ["string"] }]
-  participants Json?    @map("participants")
-  // 会议金句，格式：[{speaker: string, content: string, explanation: string, timestamp: string}]
-  goldenQuotes Json?    @map("golden_quotes")
-  keywords     String[] @map("keywords") // 关键词
-
-  // 元数据
-  metadata Json? @map("metadata") // 扩展元数据
-
-  // 生成信息
-  generatedBy GenerationMethod? @map("generated_by") // 生成方式
-  aiModel     String?           @map("ai_model") // AI模型版本
-  confidence  Float? // 置信度
-  language    String? // 总结语言
-
-  // 版本控制
-  version  Int     @default(1) @map("version")
-  isLatest Boolean @default(true) @map("is_latest")
-
-  // 状态管理
-  status         ProcessingStatus @default(PENDING) @map("status")
-  processingTime Int?             @map("processing_time") // 处理耗时（毫秒）
-  errorMessage   String?          @map("error_message") // 错误信息
-
-  // 用户交互记录 
-  createdId  String?       @map("created_id") // 创建者
-  creator    PlatformUser? @relation("SummaryCreator", fields: [createdId], references: [id])
-  approvedId String?       @map("approved_id") // 审核者
-  approver   PlatformUser? @relation("ApprovedSummaries", fields: [approvedId], references: [id])
-  approvedAt DateTime?     @map("approved_at") @db.Timestamptz(6) // 审核时间
-
-  // 版本链管理
-  parentSummaryId String?          @map("parent_summary_id") // 父总结ID（用于版本链）
-  parentSummary   MeetingSummary?  @relation("SummaryVersions", fields: [parentSummaryId], references: [id])
-  childSummaries  MeetingSummary[] @relation("SummaryVersions")
-
-  // 关联会议
-  meetingId    String      @map("meeting_id")
-  meeting      Meeting     @relation(fields: [meetingId], references: [id], onDelete: Cascade)
-  // 关联转录
-  transcriptId String?     @map("transcript_id")
-  transcript   Transcript? @relation(fields: [transcriptId], references: [id], onDelete: SetNull)
-
-  // 关联录制
-  recordingId String?           @map("recording_id")
-  recording   MeetingRecording? @relation(fields: [recordingId], references: [id], onDelete: SetNull)
-
-  // 系统字段及时间
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
-
-  @@index([meetingId], map: "idx_meeting_summary_meeting")
-  @@index([isLatest], map: "idx_meeting_summary_is_latest")
-  @@index([status], map: "idx_meeting_summary_status")
-  @@index([createdId], map: "idx_meeting_summary_created_id")
-  @@index([version], map: "idx_meeting_summary_version")
-  @@index([parentSummaryId], map: "idx_meeting_summary_parent_summary")
-  @@index([language], map: "idx_meeting_summary_language") // 语言查询优化
-  @@index([approvedId], map: "idx_meeting_summary_approved_id") // 审核者查询优化
-  @@index([meetingId, isLatest], map: "idx_meeting_summary_meeting_latest") // 查询会议的最新总结
-  @@index([status, createdAt], map: "idx_meeting_summary_status_created") // 按状态查询总结列表
-  @@map("meet_summaries")
 }
 
 // 录制来源枚举

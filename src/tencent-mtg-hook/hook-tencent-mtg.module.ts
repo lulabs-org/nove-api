@@ -23,7 +23,7 @@ import { TencentWebhookController } from './controllers/tencent-webhook.controll
 import {
   RecordingDataFetcherService,
   TencentEventHandlerService,
-  TranscriptBatchProcessor,
+  TranscriptSyncService,
   MeetingDatabaseService,
   MeetingBitableService,
   SummaryService,
@@ -61,7 +61,7 @@ import {
     MeetingBitableService,
     MeetingDatabaseService,
     SpeakerService,
-    TranscriptBatchProcessor,
+    TranscriptSyncService,
     RecordingDataFetcherService,
     SummaryService,
     MeetingParticipantService,
@@ -105,6 +105,10 @@ import {
       ],
     },
   ],
-  exports: [TranscriptBatchProcessor, SpeakerService],
+  exports: [
+    TranscriptSyncService,
+    SpeakerService,
+    MeetingParticipantService,
+  ],
 })
 export class HookTencentMtgModule {}

@@ -98,9 +98,13 @@ export class SpeakerService {
     );
   }
 
-  /**
-   * Attempts to find a match for a speaker among participants using their username.
-   */
+  private normalizeName(username: string): string {
+    return username
+      .replace(/(共享音频|共享屏幕)/g, '')
+      .trim()
+      .toLowerCase();
+  }
+
   private matchName(
     username: string | undefined,
     participants: ParticipantDetail[],
@@ -108,7 +112,10 @@ export class SpeakerService {
     if (!username) {
       return undefined;
     }
-    return participants.find((p) => p.user_name === username);
+    const cleanUsername = this.normalizeName(username);
+    return participants.find(
+      (p) => p.user_name && this.normalizeName(p.user_name) === cleanUsername,
+    );
   }
 
   /**
@@ -132,7 +139,8 @@ export class SpeakerService {
     if (!username) {
       return null;
     }
-    return this.ptUserRepo.findByPtName(Platform.TENCENT_MEETING, username);
+    const cleanName = username.replace(/(共享音频|共享屏幕)/g, '').trim();
+    return this.ptUserRepo.findByPtName(Platform.TENCENT_MEETING, cleanName);
   }
 
   /**

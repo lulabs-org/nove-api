@@ -1,0 +1,93 @@
+// 参与者会议总结表（包含单次会议和周期性总结）
+model ParticipantSummary {
+  id String @id @default(cuid())
+
+  // 周期类型
+  periodType PeriodType @map("period_type")
+
+  // 平台用户ID
+  platformUserId String?       @map("platform_user_id")
+  platformUser   PlatformUser? @relation("ParticipantSummaries", fields: [platformUserId], references: [id], onDelete: Restrict)
+
+  meetingId String?  @map("meeting_id") // 对应 Meeting 的 ID
+  meeting   Meeting? @relation("MeetingParticipantSummaries", fields: [meetingId], references: [id], onDelete: SetNull)
+
+  meetingRecordingId String?           @map("meeting_recording_id")
+  meetingRecording   MeetingRecording? @relation("RecordingParticipantSummaries", fields: [meetingRecordingId], references: [id], onDelete: SetNull)
+
+  userName    String   @map("user_name") @db.VarChar(100) // 参会人信息 
+  partSummary String   @map("part_summary") @db.Text // 总结内容
+  keywords    String[] @map("keywords") // 关键词标签
+
+  // 生成信息
+  generatedBy GenerationMethod? @map("generated_by")
+  aiModel     String?           @map("ai_model")
+  confidence  Float? // 置信度
+
+  // 版本控制
+  version  Int     @default(1) @map("version")
+  isLatest Boolean @default(true) @map("is_latest")
+
+  // 关系
+  asParent SummaryRelation[] @relation("ParentSummary") // 作为父级总结，包含哪些子级总结
+  asChild  SummaryRelation[] @relation("ChildSummary") // 作为子级总结，属于哪些父级总结
+
+  // 时间戳 
+  periodStart DateTime? @db.Timestamptz(6)  @map("period_start") // 总结时间段开始（必填）
+  periodEnd   DateTime? @db.Timestamptz(6)  @map("period_end")   // 总结时间段结束（必填）
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  // 软删除
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@index([platformUserId, periodType]) // 查询某用户某类型的总结
+  @@index([meetingId, periodType]) // 查询某会议某类型的总结
+  @@index([periodType, createdAt]) // 按周期类型和时间范围查询
+  @@index([platformUserId, deletedAt]) // 查询用户的未删除记录
+  @@index([periodType, deletedAt]) // 按类型查询未删除记录
+  @@map("participant_summaries")
+}
+
+// 周期类型枚举（包含单次）
+enum PeriodType {
+  SINGLE // 单次会议
+  DAILY // 每日
+  WEEKLY // 每周
+  MONTHLY // 每月
+  QUARTERLY // 每季度
+  YEARLY // 每年
+}
+
+// 总结关系表（记录总结之间的层级关系）
+// 支持：单次→每日、每日→每周、每周→每月、每月→每年等
+model SummaryRelation {
+  id String @id @default(cuid())
+
+  // 父级总结ID（更高层级的总结，如每日、每周、每月）
+  parentSummaryId String             @map("parent_summary_id")
+  parentSummary   ParticipantSummary @relation("ParentSummary", fields: [parentSummaryId], references: [id], onDelete: Cascade)
+
+  // 子级总结ID（更低层级的总结，如单次、每日、每周）
+  childSummaryId String             @map("child_summary_id")
+  childSummary   ParticipantSummary @relation("ChildSummary", fields: [childSummaryId], references: [id], onDelete: Cascade)
+
+  // 父级周期类型（方便查询，表示父级是什么类型的总结）
+  parentPeriodType PeriodType @map("parent_period_type")
+
+  childPeriodType PeriodType @map("child_period_type") // 添加子级周期类型
+
+  // 扩展字段
+  metadata Json? @map("metadata") // 扩展元数据
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  // 软删除
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@unique([parentSummaryId, childSummaryId])
+  @@index([parentSummaryId])
+  @@index([childSummaryId])
+  @@index([parentPeriodType, childPeriodType]) // 按周期类型组合查询
+  @@index([parentPeriodType, createdAt]) // 按父级类型和时间查询
+  @@map("summary_relations")
+}

@@ -6,7 +6,7 @@ import { tencentMeetingConfig } from '@/configs/tencent-mtg.config';
 import { TencentApiService } from '@/integrations/tencent-meeting/services/api.service';
 import { MeetingRepository } from '@/meeting/repositories/meeting.repository';
 import { MeetingRecordingRepository } from '@/meeting/repositories/meeting-recording.repository';
-import { MeetingPlatform, RecordingSource } from '@prisma/client';
+import { MeetingPlatform, RecordingSource, Meeting } from '@prisma/client';
 import type {
   RecordMeeting,
   RecordFile,
@@ -21,7 +21,7 @@ import {
   mapRecordingFileStatus,
 } from './tencent-mtg-record.mapper';
 import { TranscriptRepository } from '@/meeting/repositories/transcript.repository';
-import { TranscriptBatchProcessor } from '@/tencent-mtg-hook/services/transcript-batch-processor.service';
+import { TranscriptSyncService } from '@/tencent-mtg-hook/services/transcript-sync.service';
 import { ParticipantService } from '@/integrations/tencent-meeting/services';
 import { SpeakerService } from '@/tencent-mtg-hook/services/speaker.service';
 import { NewTranscriptParagraph } from '@/tencent-mtg-hook/types/transcript.types';
@@ -36,12 +36,12 @@ export class TencentMtgSyncService {
     private readonly meetingRepo: MeetingRepository,
     private readonly recordingRepo: MeetingRecordingRepository,
     private readonly transcriptRepo: TranscriptRepository,
-    private readonly transcriptBatchProcessor: TranscriptBatchProcessor,
+    private readonly transcriptSyncService: TranscriptSyncService,
     private readonly participantSvc: ParticipantService,
     private readonly speakerSvc: SpeakerService,
     @Inject(tencentMeetingConfig.KEY)
     private config: ConfigType<typeof tencentMeetingConfig>,
-  ) {}
+  ) { }
 
   /**
    * 触发同步，切分时间区间并投递到队列
@@ -53,6 +53,7 @@ export class TencentMtgSyncService {
     startTime?: number,
     endTime?: number,
     operatorId?: string,
+    forceReSyncTranscript?: boolean,
   ): Promise<{ jobIds: string[]; message: string }> {
     const now = Math.floor(Date.now() / 1000);
     const effectiveEndTime = Math.min(endTime ?? now, now);
@@ -79,6 +80,7 @@ export class TencentMtgSyncService {
         startTime: currentStart,
         endTime: currentEnd,
         operatorId,
+        forceReSyncTranscript,
       });
 
       if (job.id) {
@@ -97,6 +99,113 @@ export class TencentMtgSyncService {
   }
 
   /**
+   * 统一处理同步错误记录
+   */
+  private handleSyncError(errors: string[], context: string, error: unknown) {
+    const msg = `Failed to ${context}: ${error instanceof Error ? error.message : String(error)}`;
+    this.logger.warn(msg);
+    errors.push(msg);
+  }
+
+  /**
+   * 处理单个录制文件的同步
+   */
+  private async processRecordingFile(
+    file: RecordFile,
+    record: RecordMeeting,
+    meeting: Meeting,
+    operatorId: string,
+    errors: string[],
+    forceReSyncTranscript: boolean = false,
+  ): Promise<number> {
+    try {
+      // Step 2.2: 同步录制文件信息
+      const recording = await this.upsertRecordingFromFile(
+        meeting.id,
+        file,
+        record.state,
+      );
+
+      // 状态 3 表示录制已完成，只有录制完成才有转写记录可以拉取
+      if (record.state === 3) {
+        try {
+          const startTime = meeting.scheduledStartAt
+            ? Math.floor(meeting.scheduledStartAt.getTime() / 1000)
+            : undefined;
+          const endTime = meeting.scheduledEndAt
+            ? Math.floor(meeting.scheduledEndAt.getTime() / 1000)
+            : undefined;
+
+          // Step 2.3: 同步转写文本及其相关参会人信息
+          await this.upsertTranscriptFromFile(
+            record.meeting_id,
+            meeting.subMeetingId || '__ROOT__',
+            recording.id,
+            file.record_file_id,
+            operatorId,
+            startTime,
+            endTime,
+            forceReSyncTranscript,
+          );
+        } catch (transcriptError) {
+          this.handleSyncError(
+            errors,
+            `upsert transcript for file ${file.record_file_id}`,
+            transcriptError,
+          );
+        }
+      }
+      return 1;
+    } catch (fileError) {
+      this.handleSyncError(
+        errors,
+        `upsert recording file ${file.record_file_id}`,
+        fileError,
+      );
+      return 0;
+    }
+  }
+
+  /**
+   * 处理单条企业录制记录的同步
+   */
+  private async processMeetingRecord(
+    record: RecordMeeting,
+    operatorId: string,
+    errors: string[],
+    forceReSyncTranscript: boolean = false,
+  ): Promise<{ meetingsUpserted: number; recordingsUpserted: number }> {
+    try {
+      // Step 2.1: 同步会议基本信息
+      const meeting = await this.upsertMeetingFromRecord(record, operatorId);
+      let recordingsUpserted = 0;
+
+      if (record.record_files?.length) {
+        // 遍历并同步该会议的所有录制文件
+        for (const file of record.record_files) {
+          recordingsUpserted += await this.processRecordingFile(
+            file,
+            record,
+            meeting,
+            operatorId,
+            errors,
+            forceReSyncTranscript,
+          );
+        }
+      }
+
+      return { meetingsUpserted: 1, recordingsUpserted };
+    } catch (meetingError) {
+      this.handleSyncError(
+        errors,
+        `upsert meeting ${record.meeting_id}`,
+        meetingError,
+      );
+      return { meetingsUpserted: 0, recordingsUpserted: 0 };
+    }
+  }
+
+  /**
    * 获取企业录制列表并逐条同步到本地数据库。
    * 这个方法通常由队列 Worker 在后台执行，处理特定时间块的数据同步。
    * 包含：会议信息同步、录制文件信息同步、转写记录同步。
@@ -109,6 +218,7 @@ export class TencentMtgSyncService {
     startTime: number,
     endTime: number,
     operatorId?: string,
+    forceReSyncTranscript: boolean = false,
   ): Promise<{
     meetingsUpserted: number;
     recordingsUpserted: number;
@@ -133,73 +243,23 @@ export class TencentMtgSyncService {
       1,
     );
 
-    let meetingsUpserted = 0;
-    let recordingsUpserted = 0;
+    let totalMeetingsUpserted = 0;
+    let totalRecordingsUpserted = 0;
     const errors: string[] = [];
 
     for (const record of recordMeetings) {
-      try {
-        // Step 2.1: 同步会议基本信息
-        const meeting = await this.upsertMeetingFromRecord(
-          record,
-          effectiveOperatorId,
-        );
-        meetingsUpserted++;
+      const { meetingsUpserted, recordingsUpserted } =
+        await this.processMeetingRecord(record, effectiveOperatorId, errors, forceReSyncTranscript);
 
-        if (record.record_files?.length) {
-          // 遍历并同步该会议的所有录制文件
-          for (const file of record.record_files) {
-            try {
-              // Step 2.2: 同步录制文件信息
-              const recording = await this.upsertRecordingFromFile(
-                meeting.id,
-                file,
-                record.state,
-              );
-
-              // 状态 3 表示录制已完成，只有录制完成才有转写记录可以拉取
-              if (record.state === 3) {
-                try {
-                  const startTime = meeting.scheduledStartAt
-                    ? Math.floor(meeting.scheduledStartAt.getTime() / 1000)
-                    : undefined;
-                  const endTime = meeting.scheduledEndAt
-                    ? Math.floor(meeting.scheduledEndAt.getTime() / 1000)
-                    : undefined;
-
-                  // Step 2.3: 同步转写文本及其相关参会人信息
-                  await this.upsertTranscriptFromFile(
-                    record.meeting_id,
-                    meeting.subMeetingId || '__ROOT__',
-                    recording.id,
-                    file.record_file_id,
-                    effectiveOperatorId,
-                    startTime,
-                    endTime,
-                  );
-                } catch (transcriptError) {
-                  const msg = `Failed to upsert transcript for file ${file.record_file_id}: ${(transcriptError as Error).message}`;
-                  this.logger.warn(msg);
-                  errors.push(msg);
-                }
-              }
-
-              recordingsUpserted++;
-            } catch (fileError) {
-              const msg = `Failed to upsert recording file ${file.record_file_id}: ${(fileError as Error).message}`;
-              this.logger.warn(msg);
-              errors.push(msg);
-            }
-          }
-        }
-      } catch (meetingError) {
-        const msg = `Failed to upsert meeting ${record.meeting_id}: ${(meetingError as Error).message}`;
-        this.logger.warn(msg);
-        errors.push(msg);
-      }
+      totalMeetingsUpserted += meetingsUpserted;
+      totalRecordingsUpserted += recordingsUpserted;
     }
 
-    return { meetingsUpserted, recordingsUpserted, errors };
+    return {
+      meetingsUpserted: totalMeetingsUpserted,
+      recordingsUpserted: totalRecordingsUpserted,
+      errors,
+    };
   }
 
   /**
@@ -302,6 +362,7 @@ export class TencentMtgSyncService {
     operatorId: string,
     startTime?: number,
     endTime?: number,
+    forceReSyncTranscript: boolean = false,
   ) {
     let transcriptId: string | undefined;
 
@@ -309,17 +370,60 @@ export class TencentMtgSyncService {
       await this.transcriptRepo.findByRecordingId(recordingId);
 
     if (existingTranscript) {
-      const segmentCount = await this.transcriptRepo.countSegments(
-        existingTranscript.id,
-      );
-      if (segmentCount > 0) {
-        return; // Already processed and has segments
+      if (forceReSyncTranscript) {
+        await this.transcriptRepo.deleteSegments(existingTranscript.id);
+      } else {
+        const segmentCount = await this.transcriptRepo.countSegments(
+          existingTranscript.id,
+        );
+        if (segmentCount > 0) {
+          return; // Already processed and has segments
+        }
       }
       transcriptId = existingTranscript.id;
     }
 
     // 获取参会者列表，用于后续丰富说话人信息
-    let deduplicated: ParticipantDetail[] = [];
+    const deduplicated = await this.syncParticipantsForTranscript(
+      meetid,
+      subid,
+      operatorId,
+      startTime,
+      endTime,
+    );
+
+    // 拉取所有转写段落数据
+    const allParagraphs = await this.fetchTranscriptParagraphs(
+      recordFileId,
+      operatorId,
+      deduplicated,
+    );
+
+    // 如果有段落，则处理并存入数据库
+    if (allParagraphs.length > 0) {
+      if (!transcriptId) {
+        const transcript = await this.transcriptRepo.create({
+          source: `tencent-meeting:${recordFileId}`,
+          status: 2,
+          recordingId,
+        });
+        transcriptId = transcript.id;
+      }
+
+      await this.transcriptSyncService.sync(
+        allParagraphs,
+        transcriptId,
+      );
+    }
+  }
+
+  private async syncParticipantsForTranscript(
+    meetid: string,
+    subid: string,
+    operatorId: string,
+    startTime?: number,
+    endTime?: number,
+  ): Promise<ParticipantDetail[]> {
     try {
       const actualSubid = subid === '__ROOT__' ? undefined : subid;
       const participantResult = await this.participantSvc.list(
@@ -329,16 +433,24 @@ export class TencentMtgSyncService {
         startTime,
         endTime,
       );
-      deduplicated = participantResult.deduplicated || [];
+      const deduplicated = participantResult.deduplicated || [];
       if (deduplicated.length > 0) {
         await this.speakerSvc.syncPtUsers(deduplicated);
       }
+      return deduplicated;
     } catch (e) {
       this.logger.warn(
-        `Failed to fetch participants for meeting ${meetid}: ${e}`,
+        `Failed to fetch participants for meeting ${meetid}: ${e instanceof Error ? e.message : String(e)}`,
       );
+      return [];
     }
+  }
 
+  private async fetchTranscriptParagraphs(
+    recordFileId: string,
+    operatorId: string,
+    deduplicated: ParticipantDetail[],
+  ): Promise<NewTranscriptParagraph[]> {
     const allParagraphs: NewTranscriptParagraph[] = [];
     let hasMore = true;
     let currentPid: string | undefined = undefined;
@@ -360,9 +472,9 @@ export class TencentMtgSyncService {
               speaker_info:
                 deduplicated.length > 0
                   ? await this.speakerSvc.enrichSpeakerInfo(
-                      p.speaker_info,
-                      deduplicated,
-                    )
+                    p.speaker_info,
+                    deduplicated,
+                  )
                   : p.speaker_info,
             })),
           );
@@ -377,26 +489,12 @@ export class TencentMtgSyncService {
         hasMore = res.more === true;
       } catch (err) {
         this.logger.warn(
-          `Failed to fetch transcript page for recording ${recordFileId} (pid: ${currentPid}): ${(err as Error).message}`,
+          `Failed to fetch transcript page for recording ${recordFileId} (pid: ${currentPid}): ${err instanceof Error ? err.message : String(err)}`,
         );
         break; // Stop fetching on error
       }
     }
 
-    if (allParagraphs.length > 0) {
-      if (!transcriptId) {
-        const transcript = await this.transcriptRepo.create({
-          source: `tencent-meeting:${recordFileId}`,
-          status: 2,
-          recordingId,
-        });
-        transcriptId = transcript.id;
-      }
-
-      await this.transcriptBatchProcessor.processParagraphs(
-        allParagraphs,
-        transcriptId,
-      );
-    }
+    return allParagraphs;
   }
 }
