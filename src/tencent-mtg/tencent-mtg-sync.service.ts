@@ -140,29 +140,33 @@ export class TencentMtgSyncService {
     recordingsUpserted: number;
     errors: string[];
   }> {
+    const logToJob = async (msg: string) => {
+      if (job) await job.log(msg);
+    };
+
+    const updateJobProgress = async (progress: number) => {
+      if (job) await job.updateProgress(progress);
+    };
+
     const now = Math.floor(Date.now() / 1000);
     if (startTime >= now) {
       this.logger.warn(
         `Skip syncRecords: startTime (${startTime}) is in the future.`,
       );
-      if (job) {
-        await job.log(
-          `[WARNING] Skip syncRecords: startTime (${startTime}) is in the future.`,
-        );
-      }
+      await logToJob(
+        `[WARNING] Skip syncRecords: startTime (${startTime}) is in the future.`,
+      );
       return { meetingsUpserted: 0, recordingsUpserted: 0, errors: [] };
     }
 
     const actualEndTime = Math.min(endTime, now);
     const effectiveOperatorId = operatorId || this.config.api.userId;
 
-    if (job) {
-      await job.log(
-        `Fetching records from Tencent API for period: ${new Date(
-          startTime * 1000,
-        ).toISOString()} ~ ${new Date(actualEndTime * 1000).toISOString()}`,
-      );
-    }
+    await logToJob(
+      `Fetching records from Tencent API for period: ${new Date(
+        startTime * 1000,
+      ).toISOString()} ~ ${new Date(actualEndTime * 1000).toISOString()}`,
+    );
 
     // 1. 获取指定时间段内的所有企业录制记录
     const recordMeetings = await this.tencentApi.getAllCorpRecords(
@@ -172,11 +176,7 @@ export class TencentMtgSyncService {
       1,
     );
 
-    if (job) {
-      await job.log(
-        `Found ${recordMeetings.length} meetings from Tencent API.`,
-      );
-    }
+    await logToJob(`Found ${recordMeetings.length} meetings from Tencent API.`);
 
     let meetingsUpserted = 0;
     let recordingsUpserted = 0;
@@ -188,11 +188,9 @@ export class TencentMtgSyncService {
       const logPrefix = `[Meeting ${i + 1}/${totalMeetings}] ID: ${record.meeting_id}`;
 
       try {
-        if (job) {
-          await job.log(
-            `${logPrefix} Syncing info (Subject: ${record.subject})`,
-          );
-        }
+        await logToJob(
+          `${logPrefix} Syncing info (Subject: ${record.subject})`,
+        );
 
         // Step 2.1: 同步会议基本信息
         const meeting = await this.upsertMeetingFromRecord(
@@ -204,7 +202,7 @@ export class TencentMtgSyncService {
         // Step 2.2: 同步参会者信息 (独立于录制文件)
         let deduplicatedParticipants: ParticipantDetail[] = [];
         try {
-          if (job) await job.log(`${logPrefix} - Syncing participants...`);
+          await logToJob(`${logPrefix} - Syncing participants...`);
           const actualSubid =
             meeting.subMeetingId === '__ROOT__'
               ? undefined
@@ -232,32 +230,27 @@ export class TencentMtgSyncService {
               });
             }
           } else {
-            if (job)
-              await job.log(
-                `${logPrefix} - Participant DB sync is skipped as syncParticipants is set to false`,
-              );
+            await logToJob(
+              `${logPrefix} - Participant DB sync is skipped as syncParticipants is set to false`,
+            );
           }
         } catch (e) {
           const msg = `Failed to sync participants for meeting ${record.meeting_id}: ${(e as Error).message}`;
           this.logger.warn(msg);
-          if (job) await job.log(`${logPrefix} - [WARNING] ${msg}`);
+          await logToJob(`${logPrefix} - [WARNING] ${msg}`);
         }
 
         if (record.record_files?.length) {
-          if (job) {
-            await job.log(
-              `${logPrefix} Found ${record.record_files.length} recording files.`,
-            );
-          }
+          await logToJob(
+            `${logPrefix} Found ${record.record_files.length} recording files.`,
+          );
 
           // 遍历并同步该会议的所有录制文件
           for (const file of record.record_files) {
             try {
-              if (job) {
-                await job.log(
-                  `${logPrefix} - Syncing file ID: ${file.record_file_id}`,
-                );
-              }
+              await logToJob(
+                `${logPrefix} - Syncing file ID: ${file.record_file_id}`,
+              );
 
               // Step 2.3: 同步录制文件信息
               const recording = await this.upsertRecordingFromFile(
@@ -269,11 +262,9 @@ export class TencentMtgSyncService {
               // 状态 3 表示录制已完成，只有录制完成才有转写记录可以拉取
               if (record.state === 3 && (syncTranscripts ?? true)) {
                 try {
-                  if (job) {
-                    await job.log(
-                      `${logPrefix} - Pulling and syncing transcripts...`,
-                    );
-                  }
+                  await logToJob(
+                    `${logPrefix} - Pulling and syncing transcripts...`,
+                  );
                   // Step 2.4: 同步转写文本及其相关参会人信息
                   await this.upsertTranscriptFromFile(
                     recording.id,
@@ -282,60 +273,46 @@ export class TencentMtgSyncService {
                     deduplicatedParticipants,
                   );
 
-                  if (job) {
-                    await job.log(
-                      `${logPrefix} - Successfully synced transcripts for file ID: ${file.record_file_id}`,
-                    );
-                  }
+                  await logToJob(
+                    `${logPrefix} - Successfully synced transcripts for file ID: ${file.record_file_id}`,
+                  );
                 } catch (transcriptError) {
                   const msg = `Failed to upsert transcript for file ${file.record_file_id}: ${(transcriptError as Error).message}`;
                   this.logger.warn(msg);
                   errors.push(msg);
-                  if (job) {
-                    await job.log(`${logPrefix} - [WARNING] ${msg}`);
-                  }
+                  await logToJob(`${logPrefix} - [WARNING] ${msg}`);
                 }
               } else if (record.state === 3 && !(syncTranscripts ?? true)) {
-                if (job) {
-                  await job.log(
-                    `${logPrefix} - Transcript sync is skipped as syncTranscripts is set to false`,
-                  );
-                }
+                await logToJob(
+                  `${logPrefix} - Transcript sync is skipped as syncTranscripts is set to false`,
+                );
               }
 
               // Step 2.5: 同步会议总结（AI 摘要和纪要）
               if (record.state === 3 && (syncSummaries ?? true)) {
                 try {
-                  if (job) {
-                    await job.log(
-                      `${logPrefix} - Pulling and syncing meeting summary...`,
-                    );
-                  }
+                  await logToJob(
+                    `${logPrefix} - Pulling and syncing meeting summary...`,
+                  );
                   await this.upsertSummaryFromFile(
                     meeting.id,
                     recording.id,
                     file.record_file_id,
                     effectiveOperatorId,
                   );
-                  if (job) {
-                    await job.log(
-                      `${logPrefix} - Successfully synced summary for file ID: ${file.record_file_id}`,
-                    );
-                  }
+                  await logToJob(
+                    `${logPrefix} - Successfully synced summary for file ID: ${file.record_file_id}`,
+                  );
                 } catch (summaryError) {
                   const msg = `Failed to upsert summary for file ${file.record_file_id}: ${(summaryError as Error).message}`;
                   this.logger.warn(msg);
                   errors.push(msg);
-                  if (job) {
-                    await job.log(`${logPrefix} - [WARNING] ${msg}`);
-                  }
+                  await logToJob(`${logPrefix} - [WARNING] ${msg}`);
                 }
               } else if (record.state === 3 && !(syncSummaries ?? true)) {
-                if (job) {
-                  await job.log(
-                    `${logPrefix} - Summary sync is skipped as syncSummaries is set to false`,
-                  );
-                }
+                await logToJob(
+                  `${logPrefix} - Summary sync is skipped as syncSummaries is set to false`,
+                );
               }
 
               recordingsUpserted++;
@@ -343,9 +320,7 @@ export class TencentMtgSyncService {
               const msg = `Failed to upsert recording file ${file.record_file_id}: ${(fileError as Error).message}`;
               this.logger.warn(msg);
               errors.push(msg);
-              if (job) {
-                await job.log(`${logPrefix} - [WARNING] ${msg}`);
-              }
+              await logToJob(`${logPrefix} - [WARNING] ${msg}`);
             }
           }
         }
@@ -353,20 +328,16 @@ export class TencentMtgSyncService {
         const msg = `Failed to upsert meeting ${record.meeting_id}: ${(meetingError as Error).message}`;
         this.logger.warn(msg);
         errors.push(msg);
-        if (job) {
-          await job.log(`${logPrefix} - [ERROR] ${msg}`);
-        }
+        await logToJob(`${logPrefix} - [ERROR] ${msg}`);
       }
 
       // 更新进度
-      if (job) {
-        const progress = Math.round(((i + 1) / totalMeetings) * 100);
-        await job.updateProgress(progress);
-      }
+      const progress = Math.round(((i + 1) / totalMeetings) * 100);
+      await updateJobProgress(progress);
     }
 
-    if (totalMeetings === 0 && job) {
-      await job.updateProgress(100);
+    if (totalMeetings === 0) {
+      await updateJobProgress(100);
     }
 
     return { meetingsUpserted, recordingsUpserted, errors };
