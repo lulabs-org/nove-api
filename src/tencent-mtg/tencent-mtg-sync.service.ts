@@ -188,7 +188,10 @@ export class TencentMtgSyncService {
         let deduplicatedParticipants: ParticipantDetail[] = [];
         try {
           if (job) await job.log(`${logPrefix} - Syncing participants...`);
-          const actualSubid = meeting.subMeetingId === '__ROOT__' ? undefined : meeting.subMeetingId;
+          const actualSubid =
+            meeting.subMeetingId === '__ROOT__'
+              ? undefined
+              : meeting.subMeetingId;
           const participantResult = await this.participantSvc.list(
             record.meeting_id,
             effectiveOperatorId,
@@ -199,7 +202,10 @@ export class TencentMtgSyncService {
             await this.speakerSvc.syncPtUsers(deduplicatedParticipants);
           }
 
-          if (participantResult.original && participantResult.original.length > 0) {
+          if (
+            participantResult.original &&
+            participantResult.original.length > 0
+          ) {
             await this.meetingParticipantSvc.syncParticipants({
               meetid: record.meeting_id,
               subid: meeting.subMeetingId,
