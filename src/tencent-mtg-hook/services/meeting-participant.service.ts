@@ -176,8 +176,8 @@ export class MeetingParticipantService {
       const lastLeaveTime =
         maxLeftTimeNum !== -Infinity ? new Date(maxLeftTimeNum * 1000) : null;
 
-      // 使用该用户最后一个分段的原始数据作为 sessionData 模板（其中包含设备信息、版本号等）
-      const sessionData = segments[
+      // 使用该用户最后一个分段的原始数据作为 metadata 模板（其中包含设备信息、版本号等）
+      const metadata = segments[
         segments.length - 1
       ] as unknown as Prisma.InputJsonValue;
 
@@ -186,7 +186,7 @@ export class MeetingParticipantService {
         firstJoinTime,
         lastLeaveTime,
         totalDurationSeconds,
-        sessionData,
+        metadata,
       });
     }
   }

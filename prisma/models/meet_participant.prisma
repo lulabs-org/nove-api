@@ -14,11 +14,6 @@ model MeetingParticipant {
     lastLeaveTime        DateTime? @map("last_leave_time") @db.Timestamptz(6) // 最后离开时间
     totalDurationSeconds Int?      @map("total_duration_seconds") // 累计参与时长（秒）
 
-    // 平台特定的参会数据
-    instanceId  Int?  @map("instance_id") // 腾讯会议实例ID
-    userRole    Int?  @map("user_role") // 平台用户角色
-    sessionData Json? @map("session_data") @db.JsonB // 本次参会的特定数据
-
     // 元数据
     metadata Json @default("{}") @map("metadata") @db.JsonB // 扩展元数据
 
