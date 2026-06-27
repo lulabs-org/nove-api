@@ -257,10 +257,7 @@ export class MeetingDatabaseService {
           recordingId: recording.id,
         });
 
-        await this.transcriptSyncService.sync(
-          file.paragraphs || [],
-          res.id,
-        );
+        await this.transcriptSyncService.sync(file.paragraphs || [], res.id);
       }
     }
   }

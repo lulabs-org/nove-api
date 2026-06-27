@@ -24,6 +24,7 @@ import { TranscriptRepository } from '@/meeting/repositories/transcript.reposito
 import { TranscriptSyncService } from '@/tencent-mtg-hook/services/transcript-sync.service';
 import { ParticipantService } from '@/integrations/tencent-meeting/services';
 import { SpeakerService } from '@/tencent-mtg-hook/services/speaker.service';
+import { MeetingParticipantService } from '@/tencent-mtg-hook/services/meeting-participant.service';
 import { NewTranscriptParagraph } from '@/tencent-mtg-hook/types/transcript.types';
 
 @Injectable()
@@ -39,9 +40,10 @@ export class TencentMtgSyncService {
     private readonly transcriptSyncService: TranscriptSyncService,
     private readonly participantSvc: ParticipantService,
     private readonly speakerSvc: SpeakerService,
+    private readonly meetingParticipantSvc: MeetingParticipantService,
     @Inject(tencentMeetingConfig.KEY)
     private config: ConfigType<typeof tencentMeetingConfig>,
-  ) { }
+  ) {}
 
   /**
    * 触发同步，切分时间区间并投递到队列
@@ -54,6 +56,9 @@ export class TencentMtgSyncService {
     endTime?: number,
     operatorId?: string,
     forceReSyncTranscript?: boolean,
+    syncTranscripts: boolean = true,
+    syncSummaries: boolean = true,
+    syncParticipants: boolean = true,
   ): Promise<{ jobIds: string[]; message: string }> {
     const now = Math.floor(Date.now() / 1000);
     const effectiveEndTime = Math.min(endTime ?? now, now);
@@ -81,6 +86,9 @@ export class TencentMtgSyncService {
         endTime: currentEnd,
         operatorId,
         forceReSyncTranscript,
+        syncTranscripts,
+        syncSummaries,
+        syncParticipants,
       });
 
       if (job.id) {
@@ -117,6 +125,8 @@ export class TencentMtgSyncService {
     operatorId: string,
     errors: string[],
     forceReSyncTranscript: boolean = false,
+    syncTranscripts: boolean = true,
+    syncParticipants: boolean = true,
   ): Promise<number> {
     try {
       // Step 2.2: 同步录制文件信息
@@ -126,33 +136,49 @@ export class TencentMtgSyncService {
         record.state,
       );
 
+      const startTime = meeting.scheduledStartAt
+        ? Math.floor(meeting.scheduledStartAt.getTime() / 1000)
+        : undefined;
+      const endTime = meeting.scheduledEndAt
+        ? Math.floor(meeting.scheduledEndAt.getTime() / 1000)
+        : undefined;
+      const subMeetingId = meeting.subMeetingId || '__ROOT__';
+
+      // 如果需要同步参会者，但转写不需要同步，则独立触发参会者同步
+      if (syncParticipants && !syncTranscripts) {
+        await this.syncParticipantsForTranscript(
+          record.meeting_id,
+          subMeetingId,
+          operatorId,
+          startTime,
+          endTime,
+          true,
+        );
+      }
+
       // 状态 3 表示录制已完成，只有录制完成才有转写记录可以拉取
       if (record.state === 3) {
-        try {
-          const startTime = meeting.scheduledStartAt
-            ? Math.floor(meeting.scheduledStartAt.getTime() / 1000)
-            : undefined;
-          const endTime = meeting.scheduledEndAt
-            ? Math.floor(meeting.scheduledEndAt.getTime() / 1000)
-            : undefined;
-
-          // Step 2.3: 同步转写文本及其相关参会人信息
-          await this.upsertTranscriptFromFile(
-            record.meeting_id,
-            meeting.subMeetingId || '__ROOT__',
-            recording.id,
-            file.record_file_id,
-            operatorId,
-            startTime,
-            endTime,
-            forceReSyncTranscript,
-          );
-        } catch (transcriptError) {
-          this.handleSyncError(
-            errors,
-            `upsert transcript for file ${file.record_file_id}`,
-            transcriptError,
-          );
+        if (syncTranscripts) {
+          try {
+            // Step 2.3: 同步转写文本及其相关参会人信息
+            await this.upsertTranscriptFromFile(
+              record.meeting_id,
+              subMeetingId,
+              recording.id,
+              file.record_file_id,
+              operatorId,
+              startTime,
+              endTime,
+              forceReSyncTranscript,
+              syncParticipants,
+            );
+          } catch (transcriptError) {
+            this.handleSyncError(
+              errors,
+              `upsert transcript for file ${file.record_file_id}`,
+              transcriptError,
+            );
+          }
         }
       }
       return 1;
@@ -174,6 +200,8 @@ export class TencentMtgSyncService {
     operatorId: string,
     errors: string[],
     forceReSyncTranscript: boolean = false,
+    syncTranscripts: boolean = true,
+    syncParticipants: boolean = true,
   ): Promise<{ meetingsUpserted: number; recordingsUpserted: number }> {
     try {
       // Step 2.1: 同步会议基本信息
@@ -190,6 +218,8 @@ export class TencentMtgSyncService {
             operatorId,
             errors,
             forceReSyncTranscript,
+            syncTranscripts,
+            syncParticipants,
           );
         }
       }
@@ -219,6 +249,10 @@ export class TencentMtgSyncService {
     endTime: number,
     operatorId?: string,
     forceReSyncTranscript: boolean = false,
+    syncTranscripts: boolean = true,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    syncSummaries: boolean = true,
+    syncParticipants: boolean = true,
   ): Promise<{
     meetingsUpserted: number;
     recordingsUpserted: number;
@@ -249,7 +283,14 @@ export class TencentMtgSyncService {
 
     for (const record of recordMeetings) {
       const { meetingsUpserted, recordingsUpserted } =
-        await this.processMeetingRecord(record, effectiveOperatorId, errors, forceReSyncTranscript);
+        await this.processMeetingRecord(
+          record,
+          effectiveOperatorId,
+          errors,
+          forceReSyncTranscript,
+          syncTranscripts,
+          syncParticipants,
+        );
 
       totalMeetingsUpserted += meetingsUpserted;
       totalRecordingsUpserted += recordingsUpserted;
@@ -363,6 +404,7 @@ export class TencentMtgSyncService {
     startTime?: number,
     endTime?: number,
     forceReSyncTranscript: boolean = false,
+    syncParticipants: boolean = true,
   ) {
     let transcriptId: string | undefined;
 
@@ -390,6 +432,7 @@ export class TencentMtgSyncService {
       operatorId,
       startTime,
       endTime,
+      syncParticipants,
     );
 
     // 拉取所有转写段落数据
@@ -410,10 +453,7 @@ export class TencentMtgSyncService {
         transcriptId = transcript.id;
       }
 
-      await this.transcriptSyncService.sync(
-        allParagraphs,
-        transcriptId,
-      );
+      await this.transcriptSyncService.sync(allParagraphs, transcriptId);
     }
   }
 
@@ -423,27 +463,66 @@ export class TencentMtgSyncService {
     operatorId: string,
     startTime?: number,
     endTime?: number,
+    syncParticipants?: boolean,
   ): Promise<ParticipantDetail[]> {
+    let participantResult: {
+      deduplicated: ParticipantDetail[];
+      original: ParticipantDetail[];
+    } = { deduplicated: [], original: [] };
+    const actualSubid = subid === '__ROOT__' ? undefined : subid;
     try {
-      const actualSubid = subid === '__ROOT__' ? undefined : subid;
-      const participantResult = await this.participantSvc.list(
+      participantResult = await this.participantSvc.list(
         meetid,
         operatorId,
         actualSubid,
         startTime,
         endTime,
       );
-      const deduplicated = participantResult.deduplicated || [];
-      if (deduplicated.length > 0) {
-        await this.speakerSvc.syncPtUsers(deduplicated);
-      }
-      return deduplicated;
     } catch (e) {
-      this.logger.warn(
-        `Failed to fetch participants for meeting ${meetid}: ${e instanceof Error ? e.message : String(e)}`,
-      );
-      return [];
+      // Check if subMeetingId is illegal and retry without it
+      const errMsg = e instanceof Error ? e.message : String(e);
+      if (actualSubid && errMsg.includes('subMeetingId is illegal')) {
+        this.logger.warn(
+          `Retrying participants fetch without subid for meeting ${meetid} due to illegal subid error.`,
+        );
+        try {
+          participantResult = await this.participantSvc.list(
+            meetid,
+            operatorId,
+            undefined,
+            startTime,
+            endTime,
+          );
+        } catch (retryError) {
+          this.logger.warn(
+            `Failed to fetch participants on retry for meeting ${meetid}: ${retryError instanceof Error ? retryError.message : String(retryError)}`,
+          );
+        }
+      } else {
+        this.logger.warn(
+          `Failed to fetch participants for meeting ${meetid}: ${errMsg}`,
+        );
+      }
     }
+
+    const deduplicated = participantResult.deduplicated || [];
+    if (deduplicated.length > 0) {
+      await this.speakerSvc.syncPtUsers(deduplicated);
+    }
+
+    if (
+      syncParticipants &&
+      participantResult.original &&
+      participantResult.original.length > 0
+    ) {
+      await this.meetingParticipantSvc.syncParticipants({
+        meetid,
+        subid,
+        participants: participantResult.original,
+      });
+    }
+
+    return deduplicated;
   }
 
   private async fetchTranscriptParagraphs(
@@ -472,9 +551,9 @@ export class TencentMtgSyncService {
               speaker_info:
                 deduplicated.length > 0
                   ? await this.speakerSvc.enrichSpeakerInfo(
-                    p.speaker_info,
-                    deduplicated,
-                  )
+                      p.speaker_info,
+                      deduplicated,
+                    )
                   : p.speaker_info,
             })),
           );
