@@ -276,8 +276,6 @@ export class TencentMtgSyncService {
                   }
                   // Step 2.4: 同步转写文本及其相关参会人信息
                   await this.upsertTranscriptFromFile(
-                    record.meeting_id,
-                    meeting.subMeetingId || '__ROOT__',
                     recording.id,
                     file.record_file_id,
                     effectiveOperatorId,
@@ -467,8 +465,6 @@ export class TencentMtgSyncService {
    * 4. 批量插入处理好的转写段落到数据库中。
    */
   async upsertTranscriptFromFile(
-    meetid: string,
-    subid: string,
     recordingId: string,
     recordFileId: string,
     operatorId: string,
