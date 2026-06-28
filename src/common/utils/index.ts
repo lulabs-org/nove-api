@@ -15,3 +15,4 @@ export * from './http-file';
 export * from './user-mapper';
 export * from './password.util';
 export * from './time.util';
+export * from './crypto.util';

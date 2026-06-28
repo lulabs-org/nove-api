@@ -1,0 +1,14 @@
+model OrgIntegration {
+  id        String   @id @default(cuid()) @map("id")
+  orgId     String   @map("org_id")
+  platform  String   @map("platform")
+  config    Json     @map("config")
+  active    Boolean  @default(true) @map("active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  
+  org Org @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, platform])
+  @@map("org_integrations")
+}
