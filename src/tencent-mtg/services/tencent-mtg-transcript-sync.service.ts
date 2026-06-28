@@ -182,13 +182,10 @@ export class TencentMtgTranscriptSyncService {
           const mappedParagraphs = await Promise.all(
             res.minutes.paragraphs.map(async (p) => ({
               ...p,
-              speaker_info:
-                deduplicated.length > 0
-                  ? await this.speakerSvc.enrichSpeakerInfo(
-                      p.speaker_info,
-                      deduplicated,
-                    )
-                  : p.speaker_info,
+              speaker_info: await this.speakerSvc.enrichSpeakerInfo(
+                p.speaker_info,
+                deduplicated,
+              ),
             })),
           );
           allParagraphs.push(...mappedParagraphs);
