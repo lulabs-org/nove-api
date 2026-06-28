@@ -25,7 +25,7 @@ export class TencentMtgSyncService {
     private readonly summarySyncService: TencentMtgSummarySyncService,
     @Inject(tencentMeetingConfig.KEY)
     private config: ConfigType<typeof tencentMeetingConfig>,
-  ) { }
+  ) {}
 
   /**
    * 触发同步，切分时间区间并投递到队列
