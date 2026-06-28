@@ -59,7 +59,8 @@ export class SyncRecordingsDto {
   syncParticipants?: boolean;
 
   @ApiPropertyOptional({
-    description: '是否强制重新同步会议转写（删除旧转写后再重新同步），默认为 false',
+    description:
+      '是否强制重新同步会议转写（删除旧转写后再重新同步），默认为 false',
     example: false,
     default: false,
   })

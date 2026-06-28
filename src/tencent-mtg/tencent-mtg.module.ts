@@ -5,7 +5,10 @@ import { TencentModule } from '@/integrations';
 import { MeetingModule } from '@/meeting/meeting.module';
 import { PrismaModule } from '@/prisma/prisma.module';
 import { TencentMtgController } from './tencent-mtg.controller';
-import { TencentMtgSyncService } from './tencent-mtg-sync.service';
+import { TencentMtgSyncService } from './services/tencent-mtg-sync.service';
+import { TencentMtgMeetingSyncService } from './services/tencent-mtg-meeting-sync.service';
+import { TencentMtgTranscriptSyncService } from './services/tencent-mtg-transcript-sync.service';
+import { TencentMtgSummarySyncService } from './services/tencent-mtg-summary-sync.service';
 import { BullModule } from '@nestjs/bullmq';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
@@ -28,7 +31,13 @@ import { HookTencentMtgModule } from '@/tencent-mtg-hook/hook-tencent-mtg.module
     HookTencentMtgModule,
   ],
   controllers: [TencentMtgController],
-  providers: [TencentMtgSyncService, TencentMtgSyncProcessor],
+  providers: [
+    TencentMtgSyncService,
+    TencentMtgMeetingSyncService,
+    TencentMtgTranscriptSyncService,
+    TencentMtgSummarySyncService,
+    TencentMtgSyncProcessor,
+  ],
   exports: [TencentMtgSyncService],
 })
 export class TencentMtgModule {}

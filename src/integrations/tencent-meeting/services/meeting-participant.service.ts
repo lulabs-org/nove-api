@@ -76,10 +76,7 @@ export class ParticipantService {
       };
     } catch (error: unknown) {
       this.logger.warn(`获取会议参与者失败: ${meetingId}`, error);
-      return {
-        deduplicated: [],
-        original: [],
-      };
+      throw error;
     }
   }
 }

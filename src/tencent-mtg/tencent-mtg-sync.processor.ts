@@ -1,7 +1,7 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
-import { TencentMtgSyncService } from './tencent-mtg-sync.service';
+import { TencentMtgSyncService } from './services/tencent-mtg-sync.service';
 
 interface SyncJobData {
   startTime: number;
@@ -51,6 +51,9 @@ export class TencentMtgSyncProcessor extends WorkerHost {
       endTime,
       operatorId,
       forceReSyncTranscript,
+      syncTranscripts,
+      syncSummaries,
+      syncParticipants,
     );
 
     this.logger.log(

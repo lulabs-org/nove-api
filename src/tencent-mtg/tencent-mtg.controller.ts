@@ -14,7 +14,7 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { RequirePermissions } from '@/permission/decorators/permissions.decorator';
-import { TencentMtgSyncService } from './tencent-mtg-sync.service';
+import { TencentMtgSyncService } from './services/tencent-mtg-sync.service';
 import { SyncRecordingsDto } from './dto/sync-recordings.dto';
 
 /**
@@ -65,6 +65,9 @@ export class TencentMtgController {
       endTime,
       dto.operatorId,
       dto.forceReSyncTranscript,
+      dto.syncTranscripts,
+      dto.syncSummaries,
+      dto.syncParticipants,
     );
 
     return {
