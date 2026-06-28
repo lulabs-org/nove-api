@@ -33,7 +33,8 @@ model User {
   sessions      Session[]
   Authenticator Authenticator[]
   refreshTokens RefreshToken[] // User's refresh tokens
-
+  oauthAuthCodes OAuthAuthCode[] // User's OAuth auth codes
+  oauthTokens    OAuthToken[]    // User's OAuth tokens
   // 组织成员关联
   orgMembers OrgMember[] // 用户所属的组织成员关系
 

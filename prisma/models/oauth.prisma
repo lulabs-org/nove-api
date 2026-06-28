@@ -1,0 +1,57 @@
+model OAuthClient {
+  id           String   @id @default(uuid())
+  clientId     String   @unique @map("client_id")
+  clientSecret String   @map("client_secret") // 哈希存储
+  name         String
+  description  String?
+  logoUri      String?  @map("logo_uri")
+  redirectUris String[] @map("redirect_uris") // 允许的回调地址列表
+  grants       String[] // 允许的授权模式, 例如 ["authorization_code", "refresh_token"]
+  scopes       String[] // 允许请求的权限范围列表
+
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  authCodes    OAuthAuthCode[]
+  tokens       OAuthToken[]
+
+  @@map("oauth_clients")
+}
+
+model OAuthAuthCode {
+  code        String   @id
+  clientId    String   @map("client_id")
+  userId      String   @map("user_id")
+  redirectUri String   @map("redirect_uri")
+  scopes      String[]
+  expiresAt   DateTime @map("expires_at") @db.Timestamptz(6)
+
+  client      OAuthClient @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([clientId])
+  @@index([userId])
+  @@map("oauth_auth_codes")
+}
+
+model OAuthToken {
+  id           String   @id @default(uuid())
+  refreshToken String   @unique @map("refresh_token")
+  clientId     String   @map("client_id")
+  userId       String   @map("user_id")
+  scopes       String[]
+  expiresAt    DateTime @map("expires_at") @db.Timestamptz(6)
+  revoked      Boolean  @default(false)
+
+  client       OAuthClient @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([clientId])
+  @@index([userId])
+  @@map("oauth_tokens")
+}

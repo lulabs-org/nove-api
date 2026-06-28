@@ -63,6 +63,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!authUser) {
       throw new UnauthorizedException('用户不存在');
     }
+
+    // 如果 JWT 中带有 scope 权限范围（OAuth 2.0 场景），则将其附加到 authUser 上
+    if (payload.scopes) {
+      authUser.scopes = payload.scopes;
+    }
+
     return authUser;
   }
 }
