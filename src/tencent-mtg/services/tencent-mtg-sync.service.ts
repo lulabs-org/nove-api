@@ -4,7 +4,7 @@ import { Queue } from 'bullmq';
 import { ConfigType } from '@nestjs/config';
 import { tencentMeetingConfig } from '@/configs/tencent-mtg.config';
 import { TencentApiService } from '@/integrations/tencent-meeting/services/api.service';
-import { MeetingPlatform, RecordingSource, Meeting } from '@prisma/client';
+import { Meeting } from '@prisma/client';
 import type {
   RecordMeeting,
   RecordFile,
