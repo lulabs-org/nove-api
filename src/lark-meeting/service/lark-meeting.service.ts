@@ -18,7 +18,12 @@ import { InjectQueue } from '@nestjs/bullmq';
 import type { Queue } from 'bullmq';
 import { LarkEvent } from '../enums/lark-event.enum';
 import { PrismaService } from '@/prisma/prisma.service';
-import { Platform, MeetingPlatform, WebhookStatus } from '@prisma/client';
+import {
+  Platform,
+  MeetingPlatform,
+  WebhookStatus,
+  Prisma,
+} from '@prisma/client';
 
 @Injectable()
 export class LarkMeetingService {
@@ -56,14 +61,16 @@ export class LarkMeetingService {
         data: {
           provider: 'feishu',
           event: data.event_type || 'vc.meeting.all_meeting_ended_v1',
-          payload: data as any,
+          payload: data as unknown as Prisma.InputJsonValue,
           status: WebhookStatus.SUCCESS,
         },
       })
       .catch((err) => this.logger.error('save_webhook_log_failed', err));
 
     // 2. 插入或更新平台用户信息 (主持人与会议所有者)
-    const upsertPlatformUser = async (user: any) => {
+    const upsertPlatformUser = async (
+      user?: MeetingEndedEventData['meeting']['host_user'],
+    ) => {
       if (!user?.id?.union_id) return null;
       return this.prisma.platformUser.upsert({
         where: {
@@ -76,16 +83,17 @@ export class LarkMeetingService {
           platform: Platform.FEISHU,
           ptUnionId: user.id.union_id,
           ptUserId: user.id.user_id,
-          platformData: user,
+          platformData: user as unknown as Prisma.InputJsonValue,
         },
         update: {
           ptUserId: user.id.user_id,
-          platformData: user,
+          platformData: user as unknown as Prisma.InputJsonValue,
         },
       });
     };
 
-    let hostRecord, ownerRecord;
+    let hostRecord: { id: string } | null | undefined;
+    let ownerRecord: { id: string } | null | undefined;
     try {
       if (m.host_user) hostRecord = await upsertPlatformUser(m.host_user);
       if (m.owner) ownerRecord = await upsertPlatformUser(m.owner);
@@ -120,7 +128,7 @@ export class LarkMeetingService {
           durationSeconds,
           hostId: hostRecord?.id,
           createdById: ownerRecord?.id,
-          metadata: m as any,
+          metadata: m as unknown as Prisma.InputJsonValue,
         },
         update: {
           title: m.topic || '飞书会议',
@@ -130,7 +138,7 @@ export class LarkMeetingService {
           durationSeconds,
           hostId: hostRecord?.id,
           createdById: ownerRecord?.id,
-          metadata: m as any,
+          metadata: m as unknown as Prisma.InputJsonValue,
         },
       });
     } catch (err) {
