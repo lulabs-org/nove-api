@@ -41,4 +41,39 @@ export class WebhookLogService {
       return null;
     }
   }
+
+  async findAll(query: {
+    page?: number;
+    pageSize?: number;
+    provider?: string;
+    event?: string;
+    status?: WebhookStatus;
+  }) {
+    const { page = 1, pageSize = 20, provider, event, status } = query;
+    const skip = (page - 1) * pageSize;
+
+    const where: Prisma.WebhookLogWhereInput = {
+      ...(provider && { provider }),
+      ...(event && { event }),
+      ...(status && { status }),
+    };
+
+    const [total, data] = await Promise.all([
+      this.prisma.webhookLog.count({ where }),
+      this.prisma.webhookLog.findMany({
+        where,
+        skip,
+        take: pageSize,
+        orderBy: { createdAt: 'desc' },
+      }),
+    ]);
+
+    return { total, data };
+  }
+
+  async findOne(id: string) {
+    return this.prisma.webhookLog.findUnique({
+      where: { id },
+    });
+  }
 }
