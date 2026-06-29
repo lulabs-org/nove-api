@@ -1,10 +1,21 @@
 import { randomInt, createHash } from 'node:crypto';
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { Currency, OrderStatus, PaymentProvider, Prisma } from '@prisma/client';
+import {
+  Currency,
+  Order,
+  OrderStatus,
+  PaymentProvider,
+  Prisma,
+  RefundChannel,
+  RefundStatus,
+} from '@prisma/client';
 import { WechatOrderHistorySyncDto } from '../dto/wechat-order-history-sync.dto';
 import { WechatOrderWebhookDto } from '../dto/wechat-order-webhook.dto';
 import { WechatShopRepository } from '../repositories';
-import { WechatShopOrder } from '../types/wechat-shop.types';
+import {
+  WechatShopAftersaleDetail,
+  WechatShopOrder,
+} from '../types/wechat-shop.types';
 import {
   DEFAULT_WECHAT_ORDER_PAGE_SIZE,
   splitWechatOrderRanges,
@@ -33,6 +44,21 @@ export interface SyncWechatOrderPageResult {
   hasMore: boolean;
 }
 
+interface WechatOrderRefundSyncPayload {
+  afterSaleCode: string;
+  refundAmount?: number;
+  refundReason?: string;
+  submittedAt?: string;
+  refundedAt?: string;
+  status: RefundStatus;
+}
+
+// 历史订单同步时会额外携带退款时间和退款明细。
+interface WechatOrderSyncPayload extends WechatOrderWebhookDto {
+  refundedAt?: string;
+  refunds?: WechatOrderRefundSyncPayload[];
+}
+
 @Injectable()
 export class WechatShopService {
   constructor(
@@ -44,25 +70,30 @@ export class WechatShopService {
    * 飞书集成平台已经把微信小店原始字段转换成内部字段。
    * 这里仅按外部订单号做幂等写入：存在则更新，不存在则创建。
    */
-  async upsertWechatOrder(payload: WechatOrderWebhookDto) {
+  async upsertWechatOrder(payload: WechatOrderSyncPayload) {
     const existingOrder =
       await this.wechatShopRepository.findLatestByExternalId(payload.orderId);
+    let order: Order;
+    let action: 'created' | 'updated';
 
     if (existingOrder) {
-      const order = await this.wechatShopRepository.update(
+      order = await this.wechatShopRepository.update(
         existingOrder.id,
         this.buildUpdateData(payload),
       );
-
-      return { action: 'updated' as const, order };
+      action = 'updated';
+    } else {
+      const orderCode = this.generateOrderCode();
+      order = await this.wechatShopRepository.create(
+        this.buildCreateData(payload, orderCode),
+      );
+      action = 'created';
     }
 
-    const orderCode = this.generateOrderCode();
-    const order = await this.wechatShopRepository.create(
-      this.buildCreateData(payload, orderCode),
-    );
+    // 订单创建/更新成功后，再把微信退款明细同步到退款表。
+    const syncedRefunds = await this.syncWechatOrderRefunds(order, payload);
 
-    return { action: 'created' as const, order };
+    return { action, order, syncedRefunds };
   }
 
   /**
@@ -165,7 +196,7 @@ export class WechatShopService {
    * 创建订单时补齐系统生成的订单号、默认币种和必填金额。
    */
   private buildCreateData(
-    payload: WechatOrderWebhookDto,
+    payload: WechatOrderSyncPayload,
     orderCode: string,
   ): Prisma.OrderUncheckedCreateInput {
     return this.assignOptionalFields(
@@ -185,7 +216,7 @@ export class WechatShopService {
    * 更新订单时只同步外部平台字段，不重新生成订单号。
    */
   private buildUpdateData(
-    payload: WechatOrderWebhookDto,
+    payload: WechatOrderSyncPayload,
   ): Prisma.OrderUncheckedUpdateInput {
     return this.assignOptionalFields(
       {
@@ -204,9 +235,10 @@ export class WechatShopService {
     T extends
       | Prisma.OrderUncheckedCreateInput
       | Prisma.OrderUncheckedUpdateInput,
-  >(data: T, payload: WechatOrderWebhookDto): T {
+  >(data: T, payload: WechatOrderSyncPayload): T {
     if (payload.status) data.status = payload.status;
     if (payload.paidAt) data.paidAt = new Date(payload.paidAt);
+    if (payload.refundedAt) data.refundedAt = new Date(payload.refundedAt);
     if (payload.amount !== undefined) data.amount = payload.amount;
     if (payload.paymentProvider) data.paymentProvider = payload.paymentProvider;
     if (payload.providerTradeNo) data.providerTradeNo = payload.providerTradeNo;
@@ -220,12 +252,15 @@ export class WechatShopService {
   private mapWechatShopOrderToWebhookPayload(
     order: WechatShopOrder,
     fallbackOrderId: string,
-  ): WechatOrderWebhookDto {
+  ): WechatOrderSyncPayload {
     const product = order.order_detail?.product_infos?.[0];
     const payInfo = order.order_detail?.pay_info;
     const priceInfo = order.order_detail?.price_info;
     const addressInfo = order.order_detail?.delivery_info?.address_info;
     const orderId = String(order.order_id ?? fallbackOrderId);
+    // 优先从 aftersale_detail 提取售后明细，没有时兼容旧的 refund_info。
+    const refunds = this.extractWechatRefunds(order, orderId);
+    const refundedAt = this.resolveOrderRefundedAt(refunds);
 
     return {
       orderId,
@@ -240,6 +275,8 @@ export class WechatShopService {
       providerTradeNo: payInfo?.transaction_id,
       productName: product?.title,
       phone: addressInfo?.tel_number,
+      refundedAt,
+      refunds,
       metadata: {
         source: 'wechat_shop_history_sync',
         rawOrder: order,
@@ -251,6 +288,7 @@ export class WechatShopService {
           orderPrice: priceInfo?.order_price,
           openid: order.openid,
           unionid: order.unionid,
+          refundCount: refunds.length,
         },
       },
     };
@@ -260,7 +298,7 @@ export class WechatShopService {
     status: number | undefined,
     order: WechatShopOrder,
   ): OrderStatus | undefined {
-    if (this.hasWechatRefund(order)) return OrderStatus.REFUNDED;
+    if (this.hasWechatFullRefund(order)) return OrderStatus.REFUNDED;
 
     switch (status) {
       case 10:
@@ -286,8 +324,215 @@ export class WechatShopService {
     return Boolean(
       refundInfo?.amount ||
         refundInfo?.refund_amount ||
-        refundInfo?.refund_status,
+        refundInfo?.refund_status !== undefined,
     );
+  }
+
+  private hasWechatFullRefund(order: WechatShopOrder): boolean {
+    const refundAmount = this.resolveWechatRefundAmount(order);
+    const orderAmount = this.resolveWechatOrderAmount(order);
+
+    // 只有已结算退款金额覆盖订单金额，才把主订单标记为 REFUNDED。
+    return Boolean(
+      refundAmount !== undefined &&
+        orderAmount !== undefined &&
+        orderAmount > 0 &&
+        refundAmount >= orderAmount,
+    );
+  }
+
+  private resolveWechatRefundAmount(
+    order: WechatShopOrder,
+  ): number | undefined {
+    const refunds = this.extractWechatRefunds(
+      order,
+      String(order.order_id ?? 'unknown'),
+    );
+
+    if (!refunds.length) return undefined;
+
+    // 订单主状态只统计已结算退款，待处理退款不算全额退款。
+    return refunds.reduce(
+      (total, refund) =>
+        refund.status === RefundStatus.SETTLED
+          ? total + (refund.refundAmount ?? 0)
+          : total,
+      0,
+    );
+  }
+
+  private extractWechatRefunds(
+    order: WechatShopOrder,
+    orderId: string,
+  ): WechatOrderRefundSyncPayload[] {
+    // 微信可能返回单个售后对象，也可能返回售后数组，这里统一成数组处理。
+    const details = this.normalizeAftersaleDetails(order.aftersale_detail);
+    if (details.length) {
+      return details
+        .map((detail, index) =>
+          this.mapWechatAftersaleDetailToRefund(detail, orderId, index),
+        )
+        .filter(
+          (refund): refund is WechatOrderRefundSyncPayload =>
+            refund !== undefined,
+        );
+    }
+
+    const refundInfo = order.order_detail?.refund_info;
+    // 老结构里只有 refund_info，没有售后明细时也要兼容同步。
+    if (!this.hasWechatRefund(order) || !refundInfo) return [];
+
+    const refundAmount = refundInfo.refund_amount ?? refundInfo.amount;
+    const status = this.mapWechatRefundStatus(refundInfo.refund_status);
+    const refundedAt =
+      status === RefundStatus.SETTLED
+        ? unixSecondsToISOString(
+            refundInfo.refund_time ?? refundInfo.refunded_time,
+          )
+        : undefined;
+
+    return [
+      {
+        afterSaleCode:
+          this.pickString(
+            refundInfo.after_sale_code,
+            refundInfo.aftersale_code,
+            refundInfo.after_sale_id,
+            refundInfo.aftersale_id,
+            refundInfo.after_sale_order_id,
+            refundInfo.refund_id,
+          ) ?? `wechat:${orderId}:refund`,
+        refundAmount,
+        refundReason: refundInfo.refund_reason ?? refundInfo.reason,
+        submittedAt: unixSecondsToISOString(
+          refundInfo.create_time ?? refundInfo.update_time,
+        ),
+        refundedAt,
+        status,
+      },
+    ];
+  }
+
+  private normalizeAftersaleDetails(
+    details: WechatShopOrder['aftersale_detail'],
+  ): WechatShopAftersaleDetail[] {
+    if (!details) return [];
+    if (Array.isArray(details)) return details;
+
+    return [details];
+  }
+
+  private mapWechatAftersaleDetailToRefund(
+    detail: WechatShopAftersaleDetail,
+    orderId: string,
+    index: number,
+  ): WechatOrderRefundSyncPayload | undefined {
+    const refundAmount = detail.refund_amount ?? detail.amount;
+    const afterSaleCode =
+      this.pickString(
+        detail.after_sale_code,
+        detail.aftersale_code,
+        detail.after_sale_id,
+        detail.aftersale_id,
+        detail.after_sale_order_id,
+        detail.refund_id,
+      ) ?? `wechat:${orderId}:refund:${index + 1}`;
+
+    if (
+      refundAmount === undefined &&
+      detail.refund_status === undefined &&
+      detail.status === undefined
+    ) {
+      return undefined;
+    }
+
+    const status = this.mapWechatRefundStatus(
+      detail.refund_status ?? detail.status,
+    );
+    const refundedAt =
+      status === RefundStatus.SETTLED
+        ? unixSecondsToISOString(detail.refund_time ?? detail.refunded_time)
+        : undefined;
+
+    return {
+      afterSaleCode,
+      refundAmount,
+      refundReason: detail.refund_reason ?? detail.reason,
+      submittedAt: unixSecondsToISOString(
+        detail.create_time ?? detail.update_time,
+      ),
+      refundedAt,
+      status,
+    };
+  }
+
+  private mapWechatRefundStatus(status: number | undefined): RefundStatus {
+    // 当前只区分待处理和已结算：微信状态 0 视为待处理。
+    return status === 0 ? RefundStatus.PENDING : RefundStatus.SETTLED;
+  }
+
+  private resolveOrderRefundedAt(
+    refunds: WechatOrderRefundSyncPayload[],
+  ): string | undefined {
+    return refunds.find((refund) => refund.refundedAt)?.refundedAt;
+  }
+
+  private async syncWechatOrderRefunds(
+    order: Order,
+    payload: WechatOrderSyncPayload,
+  ) {
+    const refunds = payload.refunds ?? [];
+    if (!refunds.length) return [];
+
+    // afterSaleCode 是退款表唯一键，重复同步时更新同一条退款记录。
+    return Promise.all(
+      refunds.map((refund) =>
+        this.wechatShopRepository.upsertRefund(
+          refund.afterSaleCode,
+          {
+            afterSaleCode: refund.afterSaleCode,
+            orderId: order.id,
+            refundChannel: RefundChannel.WECHAT,
+            refundAmount: refund.refundAmount,
+            refundReason: refund.refundReason,
+            status: refund.status,
+            submittedAt: refund.submittedAt
+              ? new Date(refund.submittedAt)
+              : undefined,
+            refundedAt: refund.refundedAt
+              ? new Date(refund.refundedAt)
+              : undefined,
+          },
+          {
+            orderId: order.id,
+            refundChannel: RefundChannel.WECHAT,
+            refundAmount: refund.refundAmount,
+            refundReason: refund.refundReason,
+            status: refund.status,
+            submittedAt: refund.submittedAt
+              ? new Date(refund.submittedAt)
+              : undefined,
+            refundedAt: refund.refundedAt
+              ? new Date(refund.refundedAt)
+              : undefined,
+          },
+        ),
+      ),
+    );
+  }
+
+  private pickString(
+    ...values: Array<string | number | null | undefined>
+  ): string | undefined {
+    // 微信不同接口字段名不完全一致，按优先级取第一个有效编号。
+    for (const value of values) {
+      if (value === null || value === undefined) continue;
+
+      const stringValue = String(value).trim();
+      if (stringValue) return stringValue;
+    }
+
+    return undefined;
   }
 
   private resolveWechatOrderAmount(order: WechatShopOrder): number | undefined {

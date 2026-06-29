@@ -4,6 +4,8 @@ import { PrismaService } from '@/prisma/prisma.service';
 
 type CreateOrderData = Prisma.OrderUncheckedCreateInput;
 type UpdateOrderData = Prisma.OrderUncheckedUpdateInput;
+type CreateOrderRefundData = Prisma.OrderRefundUncheckedCreateInput;
+type UpdateOrderRefundData = Prisma.OrderRefundUncheckedUpdateInput;
 
 @Injectable()
 export class WechatShopRepository {
@@ -38,6 +40,22 @@ export class WechatShopRepository {
     return this.prisma.order.update({
       where: { id },
       data,
+    });
+  }
+
+  /**
+   * 按售后编号幂等写入退款记录。
+   */
+  async upsertRefund(
+    afterSaleCode: string,
+    create: CreateOrderRefundData,
+    update: UpdateOrderRefundData,
+  ) {
+    // afterSaleCode 是业务唯一键，重复同步时更新同一条记录。
+    return this.prisma.orderRefund.upsert({
+      where: { afterSaleCode },
+      create,
+      update,
     });
   }
 }
