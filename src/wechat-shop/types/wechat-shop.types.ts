@@ -14,6 +14,19 @@ export interface WechatShopOrderDetailResponse extends WechatShopApiResponse {
   order?: WechatShopOrder;
 }
 
+/** 微信小店售后单列表接口返回结构。 */
+export interface WechatShopAftersaleListResponse extends WechatShopApiResponse {
+  after_sale_order_id_list?: string[];
+  next_key?: string;
+  has_more?: boolean;
+}
+
+/** 微信小店售后单详情接口返回结构。 */
+export interface WechatShopAftersaleDetailResponse
+  extends WechatShopApiResponse {
+  after_sale_order?: WechatShopAftersaleDetail;
+}
+
 export interface WechatShopOrder {
   order_id?: string | number;
   create_time?: number;
@@ -52,7 +65,7 @@ export interface WechatShopOrder {
     refund_info?: {
       amount?: number;
       refund_amount?: number;
-      refund_status?: number;
+      refund_status?: string | number;
       after_sale_code?: string;
       aftersale_code?: string;
       after_sale_id?: string | number;
@@ -86,20 +99,28 @@ export interface WechatShopProductInfo {
 //如果微信返回的是 after_sale_code，我们能识别；如果返回的是 refund_id，我们也能识别。
 // 这样同步退款时更稳，兼容微信返回数据里可能出现的不同字段名，以免微信接口版本演进导致字段名变化而无法识别。
 export interface WechatShopAftersaleDetail {
+  order_id?: string | number;
+  after_sale_order_id?: string;
   after_sale_code?: string;
   aftersale_code?: string;
   after_sale_id?: string | number;
   aftersale_id?: string | number;
   after_sale_order_id?: string | number;
   refund_id?: string | number;
-  status?: number;
-  refund_status?: number;
+  status?: string | number;
+  refund_status?: string | number;
+  refund_info?: {
+    amount?: number;
+    refund_reason?: number;
+  };
   amount?: number;
   refund_amount?: number;
   reason?: string;
+  reason_text?: string;
   refund_reason?: string;
   create_time?: number;
   update_time?: number;
   refund_time?: number;
   refunded_time?: number;
+  complete_time?: number;
 }

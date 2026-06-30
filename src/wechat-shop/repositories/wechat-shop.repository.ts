@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, RefundStatus } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 
 type CreateOrderData = Prisma.OrderUncheckedCreateInput;
@@ -57,5 +57,21 @@ export class WechatShopRepository {
       create,
       update,
     });
+  }
+
+  /**
+   * 统计指定订单下所有已结算退款的金额总和。
+   */
+  async sumSettledRefundAmountByOrderId(orderId: string): Promise<number> {
+    const result = await this.prisma.orderRefund.aggregate({
+      where: {
+        orderId,
+        status: RefundStatus.SETTLED,
+        deletedAt: null,
+      },
+      _sum: { refundAmount: true },
+    });
+
+    return result._sum.refundAmount ?? 0;
   }
 }

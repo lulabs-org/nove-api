@@ -30,6 +30,7 @@ describe('WechatShopService', () => {
       ),
       update: jest.fn(),
       upsertRefund: jest.fn().mockResolvedValue({ id: 'refund_1' }),
+      sumSettledRefundAmountByOrderId: jest.fn().mockResolvedValue(1000),
     };
     // 这里 mock 掉微信小店客户端，所以不会请求真实微信接口。
     // getOrderIds/getOrder 返回一份手写的“微信订单 + 退款信息”。
@@ -117,6 +118,87 @@ describe('WechatShopService', () => {
         refundChannel: RefundChannel.WECHAT,
         refundAmount: 1000,
         status: RefundStatus.SETTLED,
+        refundedAt: new Date('2023-11-14T22:16:40.000Z'),
+      }),
+    );
+  });
+
+  it('syncs aftersale list details into order_refunds', async () => {
+    const repository = {
+      findLatestByExternalId: jest.fn().mockResolvedValue({
+        id: 'order_1',
+        externalId: 'wx_order_1',
+        amount: 1000,
+      }),
+      create: jest.fn(),
+      update: jest.fn(),
+      upsertRefund: jest.fn().mockResolvedValue({ id: 'refund_1' }),
+      sumSettledRefundAmountByOrderId: jest.fn().mockResolvedValue(1000),
+    };
+    const client = {
+      getAftersaleIds: jest.fn().mockResolvedValue({
+        after_sale_order_id_list: ['as_1'],
+        next_key: '',
+        has_more: false,
+      }),
+      getAftersale: jest.fn().mockResolvedValue({
+        order_id: 'wx_order_1',
+        after_sale_order_id: 'as_1',
+        status: 'MERCHANT_REFUND_SUCCESS',
+        refund_info: {
+          amount: 1000,
+          refund_reason: 3,
+        },
+        reason_text: '测试退款用',
+        create_time: 1_700_000_100,
+        complete_time: 1_700_000_200,
+      }),
+    };
+    const service = new WechatShopService(
+      repository as unknown as WechatShopRepository,
+      client as unknown as WechatShopOrderClientService,
+    );
+
+    const result = await service.syncWechatAftersalePage({
+      startTime: 1_700_000_000,
+      endTime: 1_700_001_000,
+      timeType: 'update',
+      pageSize: 10,
+    });
+
+    expect(result).toMatchObject({
+      fetched: 1,
+      synced: 1,
+      failed: [],
+      hasMore: false,
+    });
+    expect(client.getAftersale).toHaveBeenCalledWith('as_1');
+    expect(repository.upsertRefund).toHaveBeenCalledWith(
+      'as_1',
+      expect.objectContaining({
+        afterSaleCode: 'as_1',
+        orderId: 'order_1',
+        refundChannel: RefundChannel.WECHAT,
+        refundAmount: 1000,
+        refundReason: '测试退款用',
+        status: RefundStatus.SETTLED,
+        submittedAt: new Date('2023-11-14T22:15:00.000Z'),
+        refundedAt: new Date('2023-11-14T22:16:40.000Z'),
+      }),
+      expect.objectContaining({
+        orderId: 'order_1',
+        refundChannel: RefundChannel.WECHAT,
+        refundAmount: 1000,
+        refundReason: '测试退款用',
+        status: RefundStatus.SETTLED,
+        submittedAt: new Date('2023-11-14T22:15:00.000Z'),
+        refundedAt: new Date('2023-11-14T22:16:40.000Z'),
+      }),
+    );
+    expect(repository.update).toHaveBeenCalledWith(
+      'order_1',
+      expect.objectContaining({
+        status: OrderStatus.REFUNDED,
         refundedAt: new Date('2023-11-14T22:16:40.000Z'),
       }),
     );

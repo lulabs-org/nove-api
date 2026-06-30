@@ -54,4 +54,26 @@ export class WechatShopController {
       result,
     };
   }
+
+  @Public()
+  @Post('aftersales/history-sync')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Sync historical WeChat shop aftersales',
+    description:
+      '按 7 天时间片分页拉取微信小店售后单，并同步写入 order_refunds 表。',
+  })
+  @ApiBody({
+    type: WechatOrderHistorySyncDto,
+  })
+  @ApiResponse({ status: 200, description: '售后单同步完成' })
+  async syncWechatAftersaleHistory(@Body() payload: WechatOrderHistorySyncDto) {
+    const result =
+      await this.wechatShopService.syncWechatAftersaleHistory(payload);
+
+    return {
+      success: true,
+      result,
+    };
+  }
 }

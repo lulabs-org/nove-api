@@ -1,5 +1,8 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import {
+  WechatShopAftersaleDetail,
+  WechatShopAftersaleDetailResponse,
+  WechatShopAftersaleListResponse,
   WechatShopOrder,
   WechatShopOrderDetailResponse,
   WechatShopOrderListResponse,
@@ -23,19 +26,15 @@ export class WechatShopOrderClientService {
     status?: number;
   }): Promise<WechatShopOrderListResponse> {
     const payload: Record<string, unknown> = {
-      page_size: params.pageSize,
       next_key: params.nextKey ?? '',
     };
 
-    const timeRange = {
-      start_time: params.startTime,
-      end_time: params.endTime,
-    };
-
     if (params.timeType === 'update') {
-      payload.update_time_range = timeRange;
+      payload.begin_update_time = params.startTime;
+      payload.end_update_time = params.endTime;
     } else {
-      payload.create_time_range = timeRange;
+      payload.begin_create_time = params.startTime;
+      payload.end_create_time = params.endTime;
     }
 
     if (params.status !== undefined) {
@@ -61,6 +60,66 @@ export class WechatShopOrderClientService {
     }
 
     return response.order;
+  }
+
+  /**
+   * 分页拉取微信小店售后单 ID 列表。
+   */
+  async getAftersaleIds(params: {
+    startTime: number;
+    endTime: number;
+    timeType: 'create' | 'update';
+    pageSize: number;
+    nextKey?: string;
+    status?: string | number;
+  }): Promise<WechatShopAftersaleListResponse> {
+    const payload: Record<string, unknown> = {
+      page_size: params.pageSize,
+      next_key: params.nextKey ?? '',
+    };
+
+    const timeRange = {
+      start_time: params.startTime,
+      end_time: params.endTime,
+    };
+
+    if (params.timeType === 'update') {
+      payload.update_time_range = timeRange;
+    } else {
+      payload.create_time_range = timeRange;
+    }
+
+    if (params.status !== undefined) {
+      payload.status = params.status;
+    }
+
+    return this.postWechatApi<WechatShopAftersaleListResponse>(
+      '/channels/ec/aftersale/getaftersalelist',
+      payload,
+    );
+  }
+
+  /**
+   * 按售后单号获取单条售后详情。
+   */
+  async getAftersale(
+    afterSaleOrderId: string,
+  ): Promise<WechatShopAftersaleDetail> {
+    const response =
+      await this.postWechatApi<WechatShopAftersaleDetailResponse>(
+        '/channels/ec/aftersale/getaftersaleorder',
+        { after_sale_order_id: afterSaleOrderId },
+      );
+
+    const aftersale = response.after_sale_order;
+
+    if (!aftersale) {
+      throw new ServiceUnavailableException(
+        `Wechat aftersale detail missing: afterSaleOrderId=${afterSaleOrderId}`,
+      );
+    }
+
+    return aftersale;
   }
 
   private async postWechatApi<T extends WechatShopApiResponse>(
