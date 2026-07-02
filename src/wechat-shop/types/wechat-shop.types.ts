@@ -100,7 +100,6 @@ export interface WechatShopProductInfo {
 // 这样同步退款时更稳，兼容微信返回数据里可能出现的不同字段名，以免微信接口版本演进导致字段名变化而无法识别。
 export interface WechatShopAftersaleDetail {
   order_id?: string | number;
-  after_sale_order_id?: string;
   after_sale_code?: string;
   aftersale_code?: string;
   after_sale_id?: string | number;
