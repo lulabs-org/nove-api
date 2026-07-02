@@ -1,16 +1,26 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Public } from '@/auth/decorators/public.decorator';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import {
+  RequireAllPermissions,
+  RequirePermissions,
+} from '@/permission/decorators/permissions.decorator';
 import { WechatOrderHistorySyncDto } from './dto/wechat-order-history-sync.dto';
 import { WechatOrderWebhookDto } from './dto/wechat-order-webhook.dto';
 import { WechatShopService } from './service/wechat-shop.service';
 
 @ApiTags('Orders')
+@ApiBearerAuth()
 @Controller('webhooks/wechat/orders')
 export class WechatShopController {
   constructor(private readonly wechatShopService: WechatShopService) {}
 
-  @Public()
+  @RequireAllPermissions('order:create', 'order:update')
   @Post()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -34,7 +44,7 @@ export class WechatShopController {
     };
   }
 
-  @Public()
+  @RequireAllPermissions('order:create', 'order:update')
   @Post('history-sync')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -55,7 +65,7 @@ export class WechatShopController {
     };
   }
 
-  @Public()
+  @RequirePermissions('order:update')
   @Post('aftersales/history-sync')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({

@@ -219,7 +219,7 @@ export class WechatShopService {
       pageSize: params.pageSize,
       nextKey: params.nextKey ?? '',
     });
-    const listDetails = this.extractAftersaleDetailsFromList(listResult);
+    const listDetails = this.extractAftersaleDetailsFromList();
     const listIds = this.extractAftersaleIdsFromList(listResult);
     const details = [...listDetails];
     const failed: Array<{ afterSaleCode: string; reason: string }> = [];
@@ -736,9 +736,7 @@ export class WechatShopService {
    * 从售后列表响应中提取内嵌的售后详情。
    * 当前微信 getaftersalelist 接口不返回详情字段，后续接口扩展后可在此补充提取逻辑。
    */
-  private extractAftersaleDetailsFromList(
-    result: WechatShopAftersaleListResponse,
-  ): WechatShopAftersaleDetail[] {
+  private extractAftersaleDetailsFromList(): WechatShopAftersaleDetail[] {
     return [];
   }
 
