@@ -24,7 +24,7 @@ export const larkConfig = registerAs('lark', () => ({
     appToken: process.env.LARK_BITABLE_APP_TOKEN ?? '',
     tableIds: {
       meeting: process.env.LARK_TABLE_MEETING_RECORD ?? '',
-      meetingUser: process.env.LARK_TABLE_MEETING_USE ?? '',
+      meetingUser: process.env.LARK_TABLE_MEETING_USER ?? '',
       recordingFile: process.env.LARK_TABLE_MEETING_RECORDING ?? '',
       numberRecord: process.env.LARK_TABLE_PERSONAL_MEETING_SUMMARY ?? '',
     },
