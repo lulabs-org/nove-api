@@ -1,5 +1,6 @@
-import { randomInt, createHash } from 'node:crypto';
+import { randomInt, createHash, timingSafeEqual } from 'node:crypto';
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { WXBizMsgCrypt } from 'weixin-crypto';
 import {
   Currency,
   Order,
@@ -13,6 +14,8 @@ import { WechatOrderHistorySyncDto } from '../dto/wechat-order-history-sync.dto'
 import { WechatOrderWebhookDto } from '../dto/wechat-order-webhook.dto';
 import { WechatShopRepository } from '../repositories';
 import {
+  WechatShopEncryptedWebhookPayload,
+  WechatShopAftersaleUpdateWebhookPayload,
   WechatShopAftersaleDetail,
   WechatShopAftersaleListResponse,
   WechatShopOrder,
@@ -69,6 +72,13 @@ interface WechatOrderRefundSyncPayload {
 interface WechatOrderSyncPayload extends WechatOrderWebhookDto {
   refundedAt?: string;
   refunds?: WechatOrderRefundSyncPayload[];
+}
+
+interface WechatWebhookSignatureQuery {
+  signature?: string;
+  msg_signature?: string;
+  timestamp?: string;
+  nonce?: string;
 }
 
 @Injectable()
@@ -261,6 +271,100 @@ export class WechatShopService {
       failed,
       nextKey,
       hasMore: Boolean(listResult.has_more && nextKey),
+    };
+  }
+
+  verifyWechatWebhookSignature(
+    query: WechatWebhookSignatureQuery,
+    encryptedPayload?: string,
+  ): void {
+    const token = this.getWechatWebhookToken();
+    const signature = query.signature ?? query.msg_signature;
+    if (!signature || !query.timestamp || !query.nonce) {
+      throw new BadRequestException('Wechat webhook signature is missing');
+    }
+
+    const expectedSignature =
+      query.msg_signature && encryptedPayload
+        ? this.createWechatMsgCrypt(token).getSignature({
+            timestamp: query.timestamp,
+            nonce: query.nonce,
+            msg_encrypt: encryptedPayload,
+          })
+        : this.buildPlainWechatSignature(token, query.timestamp, query.nonce);
+
+    if (!this.isEqualSignature(signature, expectedSignature)) {
+      throw new BadRequestException('Wechat webhook signature is invalid');
+    }
+  }
+
+  verifyWechatWebhookEcho(
+    query: WechatWebhookSignatureQuery,
+    echoString?: string,
+  ): string {
+    if (query.msg_signature) {
+      if (!echoString) {
+        throw new BadRequestException('Wechat webhook echo string is missing');
+      }
+
+      this.verifyWechatWebhookSignature(query, echoString);
+      return this.decryptWechatMessage(echoString);
+    }
+
+    this.verifyWechatWebhookSignature(query);
+    return echoString ?? 'success';
+  }
+
+  decryptWechatAftersaleWebhookPayload(
+    payload:
+      | WechatShopAftersaleUpdateWebhookPayload
+      | WechatShopEncryptedWebhookPayload,
+    query: WechatWebhookSignatureQuery,
+  ): WechatShopAftersaleUpdateWebhookPayload {
+    const encryptedPayload = this.extractWechatEncryptedPayload(payload);
+    if (!encryptedPayload) {
+      this.verifyWechatWebhookSignature(query);
+      return payload as WechatShopAftersaleUpdateWebhookPayload;
+    }
+
+    this.verifyWechatWebhookSignature(query, encryptedPayload);
+    const decryptedPayload = this.decryptWechatMessage(encryptedPayload);
+
+    try {
+      return JSON.parse(
+        decryptedPayload,
+      ) as WechatShopAftersaleUpdateWebhookPayload;
+    } catch {
+      throw new BadRequestException(
+        'Wechat webhook decrypted payload is not valid JSON',
+      );
+    }
+  }
+
+  async syncWechatAftersaleWebhook(
+    payload: WechatShopAftersaleUpdateWebhookPayload,
+  ) {
+    if (payload.Event !== 'channels_ec_aftersale_update') {
+      throw new BadRequestException(
+        `Unsupported Wechat event: ${payload.Event}`,
+      );
+    }
+
+    const eventBody = payload.finder_shop_aftersale_status_update;
+    const afterSaleOrderId = this.pickString(eventBody?.after_sale_order_id);
+    if (!afterSaleOrderId) {
+      throw new BadRequestException('Wechat aftersale order id is missing');
+    }
+
+    const detail =
+      await this.wechatShopOrderClient.getAftersale(afterSaleOrderId);
+    const syncedRefund = await this.syncWechatAftersaleRefund(detail);
+
+    return {
+      afterSaleOrderId,
+      orderId: eventBody?.order_id,
+      status: eventBody?.status,
+      synced: Boolean(syncedRefund),
     };
   }
 
@@ -831,5 +935,82 @@ export class WechatShopService {
 
       return safeBigInt.toString(36).toUpperCase();
     }
+  }
+
+  private isEqualSignature(actual: string, expected: string): boolean {
+    const actualBuffer = Buffer.from(actual);
+    const expectedBuffer = Buffer.from(expected);
+
+    return (
+      actualBuffer.length === expectedBuffer.length &&
+      timingSafeEqual(actualBuffer, expectedBuffer)
+    );
+  }
+
+  private getWechatWebhookToken(): string {
+    const token =
+      process.env.WECHAT_SHOP_WEBHOOK_TOKEN ?? process.env.WECHAT_SHOP_TOKEN;
+    if (!token) {
+      throw new BadRequestException(
+        'Wechat shop webhook token is missing: set WECHAT_SHOP_WEBHOOK_TOKEN',
+      );
+    }
+
+    return token;
+  }
+
+  private createWechatMsgCrypt(token: string): WXBizMsgCrypt {
+    const appid = process.env.WECHAT_SHOP_APP_ID;
+    const encodingAESKey =
+      process.env.WECHAT_SHOP_WEBHOOK_ENCODING_AES_KEY ??
+      process.env.WECHAT_SHOP_ENCODING_AES_KEY;
+
+    if (!appid || !encodingAESKey) {
+      throw new BadRequestException(
+        'Wechat shop encrypted webhook config is missing: set WECHAT_SHOP_APP_ID and WECHAT_SHOP_WEBHOOK_ENCODING_AES_KEY',
+      );
+    }
+
+    return new WXBizMsgCrypt({
+      appid,
+      token,
+      encodingAESKey,
+    });
+  }
+
+  private buildPlainWechatSignature(
+    token: string,
+    timestamp: string,
+    nonce: string,
+  ): string {
+    return createHash('sha1')
+      .update([token, timestamp, nonce].sort().join(''))
+      .digest('hex');
+  }
+
+  private decryptWechatMessage(encryptedPayload: string): string {
+    try {
+      return this.createWechatMsgCrypt(this.getWechatWebhookToken()).decrypt(
+        encryptedPayload,
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new BadRequestException(
+        `Wechat webhook payload decryption failed: ${message}`,
+      );
+    }
+  }
+
+  private extractWechatEncryptedPayload(
+    payload:
+      | WechatShopAftersaleUpdateWebhookPayload
+      | WechatShopEncryptedWebhookPayload,
+  ): string | undefined {
+    const encryptedPayload = (payload as WechatShopEncryptedWebhookPayload)
+      .Encrypt;
+
+    return (
+      encryptedPayload ?? (payload as WechatShopEncryptedWebhookPayload).encrypt
+    );
   }
 }

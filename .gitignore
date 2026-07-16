@@ -20,6 +20,7 @@ lerna-debug.log*
 /.nyc_output
 /test/wechat-shop-sandbox
 /test/API接口表-设计文档/
+test/unit/wechat-shop.controller.spec.ts
 
 # IDEs and editors
 /.idea

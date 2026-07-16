@@ -27,6 +27,26 @@ export interface WechatShopAftersaleDetailResponse
   after_sale_order?: WechatShopAftersaleDetail;
 }
 
+export interface WechatShopAftersaleUpdateWebhookPayload {
+  ToUserName?: string;
+  FromUserName?: string;
+  CreateTime?: number;
+  MsgType?: string;
+  Event?: string;
+  finder_shop_aftersale_status_update?: {
+    status?: string;
+    after_sale_order_id?: string;
+    order_id?: string;
+  };
+  wxa_vip_discounted_price?: number;
+}
+
+export interface WechatShopEncryptedWebhookPayload {
+  ToUserName?: string;
+  Encrypt?: string;
+  encrypt?: string;
+}
+
 export interface WechatShopOrder {
   order_id?: string | number;
   create_time?: number;

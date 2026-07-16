@@ -1,4 +1,12 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Query,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -6,6 +14,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { Public } from '@/auth/decorators/public.decorator';
 import {
   RequireAllPermissions,
   RequirePermissions,
@@ -13,12 +22,84 @@ import {
 import { WechatOrderHistorySyncDto } from './dto/wechat-order-history-sync.dto';
 import { WechatOrderWebhookDto } from './dto/wechat-order-webhook.dto';
 import { WechatShopService } from './service/wechat-shop.service';
+import {
+  WechatShopAftersaleUpdateWebhookPayload,
+  WechatShopEncryptedWebhookPayload,
+} from './types/wechat-shop.types';
+
+interface WechatWebhookSignatureQuery {
+  signature?: string;
+  msg_signature?: string;
+  timestamp?: string;
+  nonce?: string;
+}
 
 @ApiTags('Orders')
 @ApiBearerAuth()
 @Controller('webhooks/wechat/orders')
 export class WechatShopController {
   constructor(private readonly wechatShopService: WechatShopService) {}
+
+  @Public()
+  @Get('aftersales')
+  @ApiOperation({
+    summary: 'Verify WeChat shop aftersale callback URL',
+    description: '微信小店售后单更新通知 URL 校验。',
+  })
+  @ApiResponse({ status: 200, description: '回调 URL 校验成功' })
+  verifyWechatAftersaleCallback(
+    @Query() query: WechatWebhookSignatureQuery,
+    @Query('echostr') echoString?: string,
+  ) {
+    return this.wechatShopService.verifyWechatWebhookEcho(query, echoString);
+  }
+
+  @Public()
+  @Post('aftersales')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Receive WeChat shop aftersale update callback',
+    description:
+      '接收微信小店售后单状态更新通知，并按售后单号拉取详情后同步退款记录。',
+  })
+  @ApiResponse({ status: 200, description: '售后单通知处理成功' })
+  async receiveWechatAftersaleCallback(
+    @Body()
+    payload:
+      | WechatShopAftersaleUpdateWebhookPayload
+      | WechatShopEncryptedWebhookPayload,
+    @Query() query: WechatWebhookSignatureQuery,
+  ) {
+    const decryptedPayload =
+      this.wechatShopService.decryptWechatAftersaleWebhookPayload(
+        payload,
+        query,
+      );
+    await this.wechatShopService.syncWechatAftersaleWebhook(decryptedPayload);
+
+    return 'success';
+  }
+
+  @RequirePermissions('order:update')
+  @Post('aftersales/relay')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Receive relayed WeChat shop aftersale update',
+    description:
+      '接收飞书集成平台中转的微信小店售后单状态更新通知，并按售后单号拉取详情后同步退款记录。',
+  })
+  @ApiResponse({ status: 200, description: '售后单中转通知处理成功' })
+  async receiveRelayedWechatAftersaleCallback(
+    @Body() payload: WechatShopAftersaleUpdateWebhookPayload,
+  ) {
+    const result =
+      await this.wechatShopService.syncWechatAftersaleWebhook(payload);
+
+    return {
+      success: true,
+      result,
+    };
+  }
 
   @RequireAllPermissions('order:create', 'order:update')
   @Post()

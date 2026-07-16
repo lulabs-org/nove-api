@@ -1,10 +1,12 @@
 import 'dotenv/config';
+import { createHash } from 'node:crypto';
 import {
   OrderStatus,
   PrismaClient,
   RefundChannel,
   RefundStatus,
 } from '@prisma/client';
+import { WXBizMsgCrypt } from 'weixin-crypto';
 import { WechatShopRepository } from '@/wechat-shop/repositories';
 import { WechatShopOrderClientService } from '@/wechat-shop/service/wechat-shop-order-client.service';
 import { WechatShopService } from '@/wechat-shop/service/wechat-shop.service';
@@ -15,6 +17,16 @@ const runManualWechatRefundDbTest =
 // 需要手动设置 RUN_WECHAT_REFUND_DB_TEST=1 才会执行。
 //RUN_WECHAT_REFUND_DB_TEST=1 npx jest --selectProjects unit --runTestsByPath test/unit/wechat-shop.service.spec.ts --runInBand --testNamePattern='manually upserts a settled WECHAT refund'
 const manualDbIt = runManualWechatRefundDbTest ? it : it.skip;
+
+function buildWechatSignature(params: {
+  token: string;
+  timestamp: string;
+  nonce: string;
+}) {
+  return createHash('sha1')
+    .update([params.token, params.timestamp, params.nonce].sort().join(''))
+    .digest('hex');
+}
 
 describe('WechatShopService', () => {
   it('syncs refunded wechat orders into order_refunds', async () => {
@@ -202,6 +214,203 @@ describe('WechatShopService', () => {
         refundedAt: new Date('2023-11-14T22:16:40.000Z'),
       }),
     );
+  });
+
+  it('pulls aftersale detail when receiving a WeChat aftersale webhook', async () => {
+    const repository = {
+      findLatestByExternalId: jest.fn().mockResolvedValue({
+        id: 'order_1',
+        externalId: 'wx_order_1',
+        amount: 1000,
+      }),
+      create: jest.fn(),
+      update: jest.fn(),
+      upsertRefund: jest.fn().mockResolvedValue({ id: 'refund_1' }),
+      sumSettledRefundAmountByOrderId: jest.fn().mockResolvedValue(1000),
+    };
+    const client = {
+      getAftersale: jest.fn().mockResolvedValue({
+        order_id: 'wx_order_1',
+        after_sale_order_id: 'as_1',
+        status: 'MERCHANT_REFUND_SUCCESS',
+        refund_info: {
+          amount: 1000,
+          refund_reason: 3,
+        },
+        reason_text: '测试退款用',
+        create_time: 1_700_000_100,
+        complete_time: 1_700_000_200,
+      }),
+    };
+    const service = new WechatShopService(
+      repository as unknown as WechatShopRepository,
+      client as unknown as WechatShopOrderClientService,
+    );
+
+    const result = await service.syncWechatAftersaleWebhook({
+      MsgType: 'event',
+      Event: 'channels_ec_aftersale_update',
+      finder_shop_aftersale_status_update: {
+        status: 'MERCHANT_REFUND_SUCCESS',
+        after_sale_order_id: 'as_1',
+        order_id: 'wx_order_1',
+      },
+    });
+
+    expect(result).toEqual({
+      afterSaleOrderId: 'as_1',
+      orderId: 'wx_order_1',
+      status: 'MERCHANT_REFUND_SUCCESS',
+      synced: true,
+    });
+    expect(client.getAftersale).toHaveBeenCalledWith('as_1');
+    expect(repository.upsertRefund).toHaveBeenCalledWith(
+      'as_1',
+      expect.objectContaining({
+        afterSaleCode: 'as_1',
+        orderId: 'order_1',
+        refundChannel: RefundChannel.WECHAT,
+        refundAmount: 1000,
+        refundReason: '测试退款用',
+        status: RefundStatus.SETTLED,
+      }),
+      expect.objectContaining({
+        orderId: 'order_1',
+        refundChannel: RefundChannel.WECHAT,
+        refundAmount: 1000,
+        refundReason: '测试退款用',
+        status: RefundStatus.SETTLED,
+      }),
+    );
+  });
+
+  it('validates WeChat webhook signatures', () => {
+    const originalToken = process.env.WECHAT_SHOP_WEBHOOK_TOKEN;
+    process.env.WECHAT_SHOP_WEBHOOK_TOKEN = 'test_token';
+
+    try {
+      const service = new WechatShopService(
+        {} as WechatShopRepository,
+        {} as WechatShopOrderClientService,
+      );
+      const timestamp = '1700000000';
+      const nonce = 'nonce_1';
+
+      expect(() =>
+        service.verifyWechatWebhookSignature({
+          timestamp,
+          nonce,
+          signature: buildWechatSignature({
+            token: 'test_token',
+            timestamp,
+            nonce,
+          }),
+        }),
+      ).not.toThrow();
+
+      expect(() =>
+        service.verifyWechatWebhookSignature({
+          timestamp,
+          nonce,
+          signature: 'invalid',
+        }),
+      ).toThrow('Wechat webhook signature is invalid');
+    } finally {
+      if (originalToken === undefined) {
+        delete process.env.WECHAT_SHOP_WEBHOOK_TOKEN;
+      } else {
+        process.env.WECHAT_SHOP_WEBHOOK_TOKEN = originalToken;
+      }
+    }
+  });
+
+  it('decrypts encrypted WeChat aftersale webhook payloads', () => {
+    const originalAppId = process.env.WECHAT_SHOP_APP_ID;
+    const originalToken = process.env.WECHAT_SHOP_WEBHOOK_TOKEN;
+    const originalEncodingAESKey =
+      process.env.WECHAT_SHOP_WEBHOOK_ENCODING_AES_KEY;
+    const appid = 'wx_test_appid';
+    const token = 'test_token';
+    const encodingAESKey = 'abcdefghijklmnopqrstuvwxyz0123456789ABCDEFG';
+
+    process.env.WECHAT_SHOP_APP_ID = appid;
+    process.env.WECHAT_SHOP_WEBHOOK_TOKEN = token;
+    process.env.WECHAT_SHOP_WEBHOOK_ENCODING_AES_KEY = encodingAESKey;
+
+    try {
+      const service = new WechatShopService(
+        {} as WechatShopRepository,
+        {} as WechatShopOrderClientService,
+      );
+      const timestamp = '1700000000';
+      const nonce = 'nonce_1';
+      const plainPayload = {
+        MsgType: 'event',
+        Event: 'channels_ec_aftersale_update',
+        finder_shop_aftersale_status_update: {
+          status: 'MERCHANT_REFUND_SUCCESS',
+          after_sale_order_id: 'as_1',
+          order_id: 'wx_order_1',
+        },
+      };
+      const wxCrypto = new WXBizMsgCrypt({
+        appid,
+        token,
+        encodingAESKey,
+      });
+      const encryptedPayload = wxCrypto.encrypt(JSON.stringify(plainPayload));
+      const msgSignature = wxCrypto.getSignature({
+        timestamp,
+        nonce,
+        msg_encrypt: encryptedPayload,
+      });
+
+      expect(
+        service.decryptWechatAftersaleWebhookPayload(
+          {
+            ToUserName: appid,
+            Encrypt: encryptedPayload,
+          },
+          {
+            timestamp,
+            nonce,
+            msg_signature: msgSignature,
+          },
+        ),
+      ).toEqual(plainPayload);
+
+      expect(() =>
+        service.decryptWechatAftersaleWebhookPayload(
+          {
+            Encrypt: encryptedPayload,
+          },
+          {
+            timestamp,
+            nonce,
+            msg_signature: 'invalid',
+          },
+        ),
+      ).toThrow('Wechat webhook signature is invalid');
+    } finally {
+      if (originalAppId === undefined) {
+        delete process.env.WECHAT_SHOP_APP_ID;
+      } else {
+        process.env.WECHAT_SHOP_APP_ID = originalAppId;
+      }
+
+      if (originalToken === undefined) {
+        delete process.env.WECHAT_SHOP_WEBHOOK_TOKEN;
+      } else {
+        process.env.WECHAT_SHOP_WEBHOOK_TOKEN = originalToken;
+      }
+
+      if (originalEncodingAESKey === undefined) {
+        delete process.env.WECHAT_SHOP_WEBHOOK_ENCODING_AES_KEY;
+      } else {
+        process.env.WECHAT_SHOP_WEBHOOK_ENCODING_AES_KEY =
+          originalEncodingAESKey;
+      }
+    }
   });
 
   manualDbIt(
