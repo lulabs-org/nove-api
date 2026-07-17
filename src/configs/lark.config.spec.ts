@@ -59,7 +59,7 @@ describe('larkConfig', () => {
     delete process.env.LARK_BASE_URL;
     delete process.env.LARK_BITABLE_APP_TOKEN;
     delete process.env.LARK_TABLE_MEETING_RECORD;
-    delete process.env.LARK_TABLE_MEETING_USE;
+    delete process.env.LARK_TABLE_MEETING_USER;
     delete process.env.LARK_TABLE_MEETING_RECORDING;
     delete process.env.LARK_TABLE_PERSONAL_MEETING_SUMMARY;
     delete process.env.LARK_EVENT_ENCRYPT_KEY;
