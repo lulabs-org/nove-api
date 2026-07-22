@@ -1,4 +1,9 @@
-import { randomInt, createHash, timingSafeEqual } from 'node:crypto';
+import {
+  randomInt,
+  createHash,
+  createDecipheriv,
+  timingSafeEqual,
+} from 'node:crypto';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { WXBizMsgCrypt } from 'weixin-crypto';
 import {
@@ -279,19 +284,23 @@ export class WechatShopService {
     encryptedPayload?: string,
   ): void {
     const token = this.getWechatWebhookToken();
-    const signature = query.signature ?? query.msg_signature;
+    // 官方文档：安全模式下用 msg_signature 验证，不要用 signature。
+    // 微信实际推送时 URL 同时携带 signature 和 msg_signature，
+    // 有加密体时必须优先取 msg_signature 进行比对。
+    const signature = encryptedPayload
+      ? (query.msg_signature ?? query.signature)
+      : (query.signature ?? query.msg_signature);
     if (!signature || !query.timestamp || !query.nonce) {
       throw new BadRequestException('Wechat webhook signature is missing');
     }
 
-    const expectedSignature =
-      query.msg_signature && encryptedPayload
-        ? this.createWechatMsgCrypt(token).getSignature({
-            timestamp: query.timestamp,
-            nonce: query.nonce,
-            msg_encrypt: encryptedPayload,
-          })
-        : this.buildPlainWechatSignature(token, query.timestamp, query.nonce);
+    const expectedSignature = encryptedPayload
+      ? this.createWechatMsgCrypt(token).getSignature({
+          timestamp: query.timestamp,
+          nonce: query.nonce,
+          msg_encrypt: encryptedPayload,
+        })
+      : this.buildPlainWechatSignature(token, query.timestamp, query.nonce);
 
     if (!this.isEqualSignature(signature, expectedSignature)) {
       throw new BadRequestException('Wechat webhook signature is invalid');
@@ -989,11 +998,52 @@ export class WechatShopService {
   }
 
   private decryptWechatMessage(encryptedPayload: string): string {
-    try {
-      return this.createWechatMsgCrypt(this.getWechatWebhookToken()).decrypt(
-        encryptedPayload,
+    const appid = process.env.WECHAT_SHOP_APP_ID;
+    const encodingAESKey =
+      process.env.WECHAT_SHOP_WEBHOOK_ENCODING_AES_KEY ??
+      process.env.WECHAT_SHOP_ENCODING_AES_KEY;
+
+    if (!appid || !encodingAESKey) {
+      throw new BadRequestException(
+        'Wechat shop encrypted webhook config is missing: set WECHAT_SHOP_APP_ID and WECHAT_SHOP_WEBHOOK_ENCODING_AES_KEY',
       );
+    }
+
+    try {
+      const aesKey = Buffer.from(`${encodingAESKey}=`, 'base64');
+      const iv = aesKey.subarray(0, 16);
+      const decipher = createDecipheriv('aes-256-cbc', aesKey, iv);
+      decipher.setAutoPadding(false);
+
+      const msgEncryptBuf = Buffer.from(encryptedPayload, 'base64');
+      let decryptedBuf = Buffer.concat([
+        decipher.update(msgEncryptBuf),
+        decipher.final(),
+      ]);
+
+      // PKCS#7 去填充（K=32）
+      const pad = decryptedBuf[decryptedBuf.length - 1];
+      if (pad < 1 || pad > 32) {
+        throw new Error('Invalid PKCS#7 padding');
+      }
+      decryptedBuf = decryptedBuf.subarray(0, decryptedBuf.length - pad);
+
+      // FullStr = random(16B) + msg_len(4B) + msg + appid
+      const content = decryptedBuf.subarray(16);
+      const msgLength = content.readInt32BE(0);
+      const message = content.subarray(4, 4 + msgLength).toString('utf8');
+      const extractedAppid = content.subarray(4 + msgLength).toString('utf8');
+
+      // 官方要求：解密后需验证 appid 是否与自身微信小店一致
+      if (extractedAppid !== appid) {
+        throw new BadRequestException(
+          `Wechat webhook appid mismatch: expected ${appid}, got ${extractedAppid}`,
+        );
+      }
+
+      return message;
     } catch (error) {
+      if (error instanceof BadRequestException) throw error;
       const message = error instanceof Error ? error.message : String(error);
       throw new BadRequestException(
         `Wechat webhook payload decryption failed: ${message}`,
