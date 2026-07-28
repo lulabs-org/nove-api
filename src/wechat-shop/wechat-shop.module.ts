@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
+import { HttpModule } from '@nestjs/axios';
 import { PrismaModule } from '@/prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
 import { wechatShopConfig } from '@/configs';
 import { BullModule } from '@nestjs/bullmq';
-import { WechatShopController } from './controllers/wechat-shop.controller';
+import { WechatShopOrderController } from './controllers/wechat-shop-order.controller';
 import { WechatShopEventController } from './controllers/wechat-shop-event.controller';
 import { WechatShopRepository } from './repositories';
 import { WechatShopOrderService } from './service/wechat-shop-order.service';
@@ -15,10 +16,11 @@ import { WechatShopProcessor } from './processor/wechat-shop.processor';
 @Module({
   imports: [
     PrismaModule,
+    HttpModule,
     ConfigModule.forFeature(wechatShopConfig),
     BullModule.registerQueue({ name: 'wechat-order-sync' }),
   ],
-  controllers: [WechatShopController, WechatShopEventController],
+  controllers: [WechatShopOrderController, WechatShopEventController],
   providers: [
     WechatShopOrderService,
     WechatShopEventService,

@@ -2,8 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { WechatOrderHistorySyncDto } from '../dto/wechat-order-history-sync.dto';
-import { Currency, Prisma } from '@prisma/client';
-import { WechatOrderWebhookDto } from '../dto/wechat-order-webhook.dto';
+import { Prisma, PaymentProvider } from '@prisma/client';
 import { WechatShopRepository } from '../repositories';
 import {
   DEFAULT_WECHAT_ORDER_PAGE_SIZE,
@@ -15,7 +14,7 @@ import {
   generateOrderCode,
   encodeOrderNumber,
 } from '../utils/order-number.util';
-import { toWebhookDto } from '../utils/wechat-order.mapper';
+import { mapWechatShopStatus } from '../utils/wechat-order.mapper';
 
 @Injectable()
 export class WechatShopOrderService {
@@ -26,42 +25,49 @@ export class WechatShopOrderService {
   ) {}
 
   /**
-   * 接收组装好的单条订单并执行幂等写入。
-   */
-  async upsert(payload: WechatOrderWebhookDto) {
-    const orderCode = generateOrderCode();
-    const orderData = {
-      status: payload.status,
-      paidAt: payload.paidAt ? new Date(payload.paidAt) : undefined,
-      amount: payload.amount,
-      paymentProvider: payload.paymentProvider,
-      providerTradeNo: payload.providerTradeNo,
-      productId: payload.productId,
-      productName: payload.productName,
-      phone: payload.phone,
-      externalId: payload.orderId,
-      metadata: (payload.metadata ?? {}) as Prisma.InputJsonValue,
-    };
-
-    return this.wechatShopRepository.upsert({
-      externalId: payload.orderId,
-      create: {
-        ...orderData,
-        orderCode,
-        orderNumber: encodeOrderNumber(orderCode),
-        amount: payload.amount ?? 0,
-        currency: Currency.CNY,
-      },
-      update: orderData,
-    });
-  }
-
-  /**
    * 针对微信订单号主动拉取，并进行同步写入。
    */
   async syncSingle(orderId: string) {
     const wechatOrder = await this.wechatShopClient.getOrder(orderId);
-    return this.upsert(toWebhookDto(wechatOrder));
+
+    const product = wechatOrder.order_detail?.product_infos?.[0];
+    const payInfo = wechatOrder.order_detail?.pay_info;
+    const priceInfo = wechatOrder.order_detail?.price_info;
+    const addressInfo = wechatOrder.order_detail?.delivery_info?.address_info;
+
+    const metadata = {
+      source: 'wechat_shop_history_sync',
+      openid: wechatOrder.openid,
+      unionid: wechatOrder.unionid,
+    };
+
+    const orderData = {
+      status: mapWechatShopStatus(wechatOrder.status),
+      paidAt: payInfo?.pay_time ? new Date(payInfo.pay_time * 1000) : undefined,
+      amount: priceInfo?.order_price,
+      paymentProvider: payInfo?.transaction_id
+        ? PaymentProvider.WECHAT
+        : undefined,
+      providerTradeNo: payInfo?.transaction_id,
+      productName: product?.title,
+      phone: addressInfo?.tel_number,
+      externalId: String(wechatOrder.order_id),
+      metadata: metadata as Prisma.InputJsonValue,
+    };
+
+    return this.wechatShopRepository.upsert({
+      externalId: orderData.externalId,
+      create: () => {
+        const orderCode = generateOrderCode();
+        return {
+          ...orderData,
+          orderCode,
+          orderNumber: encodeOrderNumber(orderCode),
+          amount: orderData.amount ?? 0,
+        };
+      },
+      update: orderData,
+    });
   }
 
   /**

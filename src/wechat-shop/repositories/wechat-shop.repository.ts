@@ -45,7 +45,7 @@ export class WechatShopRepository {
    */
   async upsert(params: {
     externalId: string;
-    create: CreateOrderData;
+    create: CreateOrderData | (() => CreateOrderData | Promise<CreateOrderData>);
     update: UpdateOrderData;
   }) {
     const existingOrder = await this.findLatestByExternalId(params.externalId);
@@ -56,7 +56,8 @@ export class WechatShopRepository {
       return { action: 'updated' as const, order };
     }
 
-    const order = await this.create(params.create);
+    const createData = typeof params.create === 'function' ? await params.create() : params.create;
+    const order = await this.create(createData);
 
     return { action: 'created' as const, order };
   }

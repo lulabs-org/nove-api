@@ -2,39 +2,14 @@ import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Public } from '@/auth/decorators/public.decorator';
 import { WechatOrderHistorySyncDto } from '../dto/wechat-order-history-sync.dto';
-import { WechatOrderWebhookDto } from '../dto/wechat-order-webhook.dto';
 import { WechatShopOrderService } from '../service/wechat-shop-order.service';
 
 @ApiTags('Orders')
-@Controller('webhooks/wechat/orders')
-export class WechatShopController {
+@Controller('wechat-shop/orders')
+export class WechatShopOrderController {
   constructor(
     private readonly wechatShopOrderService: WechatShopOrderService,
-  ) {}
-
-  @Public()
-  @Post()
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: 'Receive mapped WeChat order fields',
-    description: '接收飞书集成平台转换后的订单字段，并写入 orders 表。',
-  })
-  @ApiBody({
-    type: WechatOrderWebhookDto,
-  })
-  @ApiResponse({ status: 200, description: '订单写入成功' })
-  async receiveWechatOrder(@Body() payload: WechatOrderWebhookDto) {
-    const result = await this.wechatShopOrderService.upsert(payload);
-
-    return {
-      success: true,
-      action: result.action,
-      orderId: result.order.id,
-      orderCode: result.order.orderCode,
-      orderNumber: result.order.orderNumber,
-      externalId: result.order.externalId,
-    };
-  }
+  ) { }
 
   @Public()
   @Post('history-sync')

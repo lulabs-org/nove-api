@@ -1,18 +1,40 @@
 import { randomInt, createHash } from 'node:crypto';
 
 const ORDER_NUMBER_MASK = 0x5a17c3e5b79fn;
-const ORDER_CODE_RANDOM_SUFFIX_MAX = 1_000_000;
+
+let sequence = 0;
+let lastTimestamp = 0;
+
+// 使用环境变量中的 WORKER_ID，如果未提供则使用进程 PID，截取最后 2 位以确保多实例不冲突
+const WORKER_ID = process.env.WORKER_ID
+  ? process.env.WORKER_ID.padStart(2, '0').slice(-2)
+  : (process.pid % 100).toString().padStart(2, '0');
 
 /**
- * 生成内部订单号：时间戳 + 随机后缀，避免依赖数据库序列。
+ * 生成内部订单号：时间戳 + Worker ID + 序列号，解决高并发下的重复问题。
  */
 export function generateOrderCode(): string {
-  const timestamp = Date.now().toString();
-  const randomSuffix = randomInt(ORDER_CODE_RANDOM_SUFFIX_MAX)
-    .toString()
-    .padStart(6, '0');
+  let timestamp = Date.now();
 
-  return `${timestamp}${randomSuffix}`;
+  if (timestamp === lastTimestamp) {
+    // 同一毫秒内序列号自增，最大 9999
+    sequence = (sequence + 1) % 10000;
+    if (sequence === 0) {
+      // 如果一毫秒内并发超过 10000，等待下一毫秒
+      while (timestamp <= lastTimestamp) {
+        timestamp = Date.now();
+      }
+    }
+  } else {
+    // 不同毫秒，序列号从一个随机数开始，避免每次都是0
+    sequence = randomInt(100);
+  }
+  lastTimestamp = timestamp;
+
+  const sequenceStr = sequence.toString().padStart(4, '0');
+
+  // 时间戳(13位) + WorkerID(2位) + 序列号(4位) = 19位
+  return `${timestamp}${WORKER_ID}${sequenceStr}`;
 }
 
 /**
