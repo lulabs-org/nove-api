@@ -38,7 +38,7 @@ export class WechatShopService {
   constructor(
     private readonly wechatShopRepository: WechatShopRepository,
     private readonly wechatShopOrderClient: WechatShopOrderClientService,
-  ) {}
+  ) { }
 
   /**
    * 飞书集成平台已经把微信小店原始字段转换成内部字段。
@@ -161,6 +161,8 @@ export class WechatShopService {
     };
   }
 
+
+
   /**
    * 同步单条订单，通常用于接收到单条订单通知时使用
    */
@@ -215,8 +217,8 @@ export class WechatShopService {
    */
   private assignOptionalFields<
     T extends
-      | Prisma.OrderUncheckedCreateInput
-      | Prisma.OrderUncheckedUpdateInput,
+    | Prisma.OrderUncheckedCreateInput
+    | Prisma.OrderUncheckedUpdateInput,
   >(data: T, payload: WechatOrderWebhookDto): T {
     if (payload.status) data.status = payload.status;
     if (payload.paidAt) data.paidAt = new Date(payload.paidAt);
@@ -298,8 +300,8 @@ export class WechatShopService {
 
     return Boolean(
       refundInfo?.amount ||
-        refundInfo?.refund_amount ||
-        refundInfo?.refund_status,
+      refundInfo?.refund_amount ||
+      refundInfo?.refund_status,
     );
   }
 

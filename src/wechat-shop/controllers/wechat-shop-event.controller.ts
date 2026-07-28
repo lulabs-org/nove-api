@@ -12,7 +12,7 @@ import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
 import { generateSignature, decryptWechatMessage } from '../utils/wechat-crypto.util';
 import { Public } from '@/auth/decorators/public.decorator';
-import { WechatShopService } from '../service/wechat-shop.service';
+import { WechatShopEventService } from '../service/wechat-shop-event.service';
 import {
   WechatEventQueryDto,
   WechatEventBodyDto,
@@ -22,7 +22,7 @@ import {
 @Controller('webhooks/wechat-shop/events')
 export class WechatShopEventController {
   constructor(
-    private readonly wechatShopService: WechatShopService,
+    private readonly wechatShopEventService: WechatShopEventService,
     private readonly configService: ConfigService,
   ) { }
 
@@ -102,27 +102,8 @@ export class WechatShopEventController {
       );
     }
 
-    // 3. 根据解密后的 Event 字段进行路由分发处理
-    try {
-      const eventType = decryptedMsg.Event;
-
-      if (eventType === 'channels_ec_order_pay') {
-        const orderInfo = decryptedMsg.order_info as Record<string, unknown>;
-        const orderId = String(orderInfo?.order_id ?? '');
-        if (orderId) {
-          await this.wechatShopService.syncSingleOrder(orderId);
-        }
-      } else if (eventType === 'channels_ec_aftersale_update') {
-        const aftersaleInfo = decryptedMsg.finder_shop_aftersale_status_update as Record<string, unknown>;
-        const orderId = String(aftersaleInfo?.order_id ?? '');
-        if (orderId) {
-          await this.wechatShopService.syncSingleOrder(orderId);
-        }
-      }
-    } catch (err) {
-      // 记录错误但不抛出异常，为了能够向微信返回 success，避免微信持续重试
-      console.error(`Failed to process WeChat event [${decryptedMsg.Event}]:`, err);
-    }
+    // 3. 将解密后的事件传递给 Service 统一处理
+    await this.wechatShopEventService.handleWechatEvent(decryptedMsg);
 
     // 微信要求成功接收后返回 'success'
     return 'success';
