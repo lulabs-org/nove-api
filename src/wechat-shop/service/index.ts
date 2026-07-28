@@ -1,1 +1,1 @@
-export * from './wechat-shop.service';
+export * from './wechat-shop-order.service';

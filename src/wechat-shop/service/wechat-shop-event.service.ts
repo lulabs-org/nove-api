@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { WechatShopService } from './wechat-shop.service';
+import { WechatShopOrderService } from './wechat-shop-order.service';
 import {
   ChannelsEcOrderPayEvent,
   ChannelsEcAftersaleUpdateEvent,
@@ -9,7 +9,9 @@ import {
 export class WechatShopEventService {
   private readonly logger = new Logger(WechatShopEventService.name);
 
-  constructor(private readonly wechatShopService: WechatShopService) {}
+  constructor(
+    private readonly wechatShopOrderService: WechatShopOrderService,
+  ) {}
 
   /**
    * 处理微信小店 Webhook 事件
@@ -23,14 +25,14 @@ export class WechatShopEventService {
         const orderId = payload.order_info?.order_id;
 
         if (orderId) {
-          await this.wechatShopService.syncSingleOrder(String(orderId));
+          await this.wechatShopOrderService.syncSingle(String(orderId));
         }
       } else if (eventType === 'channels_ec_aftersale_update') {
         const payload = eventData as unknown as ChannelsEcAftersaleUpdateEvent;
         const orderId = payload.finder_shop_aftersale_status_update?.order_id;
 
         if (orderId) {
-          await this.wechatShopService.syncSingleOrder(String(orderId));
+          await this.wechatShopOrderService.syncSingle(String(orderId));
         }
       }
     } catch (err) {

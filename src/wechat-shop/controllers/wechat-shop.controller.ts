@@ -3,12 +3,14 @@ import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Public } from '@/auth/decorators/public.decorator';
 import { WechatOrderHistorySyncDto } from '../dto/wechat-order-history-sync.dto';
 import { WechatOrderWebhookDto } from '../dto/wechat-order-webhook.dto';
-import { WechatShopService } from '../service/wechat-shop.service';
+import { WechatShopOrderService } from '../service/wechat-shop-order.service';
 
 @ApiTags('Orders')
 @Controller('webhooks/wechat/orders')
 export class WechatShopController {
-  constructor(private readonly wechatShopService: WechatShopService) {}
+  constructor(
+    private readonly wechatShopOrderService: WechatShopOrderService,
+  ) {}
 
   @Public()
   @Post()
@@ -22,7 +24,7 @@ export class WechatShopController {
   })
   @ApiResponse({ status: 200, description: '订单写入成功' })
   async receiveWechatOrder(@Body() payload: WechatOrderWebhookDto) {
-    const result = await this.wechatShopService.upsertWechatOrder(payload);
+    const result = await this.wechatShopOrderService.upsert(payload);
 
     return {
       success: true,
@@ -46,8 +48,8 @@ export class WechatShopController {
     type: WechatOrderHistorySyncDto,
   })
   @ApiResponse({ status: 200, description: '历史订单同步完成' })
-  async syncWechatOrderHistory(@Body() payload: WechatOrderHistorySyncDto) {
-    const result = await this.wechatShopService.syncWechatOrderHistory(payload);
+  async syncHistory(@Body() payload: WechatOrderHistorySyncDto) {
+    const result = await this.wechatShopOrderService.syncHistory(payload);
 
     return {
       success: true,

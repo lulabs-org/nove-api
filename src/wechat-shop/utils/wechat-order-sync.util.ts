@@ -1,5 +1,3 @@
-import { BadRequestException } from '@nestjs/common';
-
 export const WECHAT_ORDER_MAX_RANGE_SECONDS = 7 * 24 * 60 * 60;
 export const DEFAULT_WECHAT_ORDER_PAGE_SIZE = 100;
 
@@ -8,12 +6,8 @@ export interface WechatOrderUnixRange {
   endTime: number;
 }
 
-export function toUnixSeconds(value: string | Date, fieldName: string): number {
+export function toUnixSeconds(value: string | Date): number {
   const timestamp = value instanceof Date ? value.getTime() : Date.parse(value);
-  if (Number.isNaN(timestamp)) {
-    throw new BadRequestException(`${fieldName} must be a valid ISO 8601 date`);
-  }
-
   return Math.floor(timestamp / 1000);
 }
 
