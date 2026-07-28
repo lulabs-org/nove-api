@@ -1,20 +1,24 @@
 import { Module } from '@nestjs/common';
 import { PrismaModule } from '@/prisma/prisma.module';
+import { ConfigModule } from '@nestjs/config';
+import { wechatShopConfig } from '@/configs';
 import { WechatShopController } from './controllers/wechat-shop.controller';
 import { WechatShopEventController } from './controllers/wechat-shop-event.controller';
 import { WechatShopRepository } from './repositories';
 import { WechatShopService } from './service/wechat-shop.service';
 import { WechatShopEventService } from './service/wechat-shop-event.service';
-import { WechatShopOrderClientService } from './service/wechat-shop-order-client.service';
+import { WechatShopClientService } from './service/wechat-shop-client.service';
+import { WechatShopTokenService } from './service/wechat-shop-token.service';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, ConfigModule.forFeature(wechatShopConfig)],
   controllers: [WechatShopController, WechatShopEventController],
   providers: [
     WechatShopService,
     WechatShopEventService,
     WechatShopRepository,
-    WechatShopOrderClientService,
+    WechatShopClientService,
+    WechatShopTokenService,
   ],
   exports: [WechatShopService, WechatShopRepository],
 })

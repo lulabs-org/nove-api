@@ -7,10 +7,14 @@ import {
   HttpCode,
   HttpStatus,
   UnauthorizedException,
+  Inject,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { ConfigService } from '@nestjs/config';
-import { generateSignature, decryptWechatMessage } from '../utils/wechat-crypto.util';
+import { wechatShopConfig, WechatShopConfig } from '@/configs';
+import {
+  generateSignature,
+  decryptWechatMessage,
+} from '../utils/wechat-crypto.util';
 import { Public } from '@/auth/decorators/public.decorator';
 import { WechatShopEventService } from '../service/wechat-shop-event.service';
 import {
@@ -23,8 +27,8 @@ import {
 export class WechatShopEventController {
   constructor(
     private readonly wechatShopEventService: WechatShopEventService,
-    private readonly configService: ConfigService,
-  ) { }
+    @Inject(wechatShopConfig.KEY) private readonly config: WechatShopConfig,
+  ) {}
 
   @Public()
   @Get()
@@ -38,7 +42,7 @@ export class WechatShopEventController {
     @Query('nonce') nonce: string,
     @Query('echostr') echostr: string,
   ) {
-    const token = this.configService.get<string>('WECHAT_SHOP_WEBHOOK_TOKEN');
+    const token = this.config.webhookToken;
 
     if (!token) {
       throw new UnauthorizedException('WeChat webhook token is not configured');
@@ -67,11 +71,7 @@ export class WechatShopEventController {
     @Query() query: WechatEventQueryDto,
     @Body() payload: WechatEventBodyDto,
   ) {
-    const token = this.configService.get<string>('WECHAT_SHOP_WEBHOOK_TOKEN');
-    const encodingAesKey = this.configService.get<string>(
-      'WECHAT_SHOP_ENCODING_AES_KEY',
-    );
-    const appId = this.configService.get<string>('WECHAT_SHOP_APP_ID');
+    const { webhookToken: token, encodingAesKey, appId } = this.config;
 
     if (!token || !encodingAesKey || !appId) {
       throw new UnauthorizedException(
@@ -86,7 +86,12 @@ export class WechatShopEventController {
     }
 
     // 1. 验证签名，确保事件来自微信
-    const hash = generateSignature(encrypt, query.timestamp, query.nonce, token);
+    const hash = generateSignature(
+      encrypt,
+      query.timestamp,
+      query.nonce,
+      token,
+    );
 
     if (hash !== query.msg_signature) {
       throw new UnauthorizedException('Invalid msg_signature');
@@ -108,5 +113,4 @@ export class WechatShopEventController {
     // 微信要求成功接收后返回 'success'
     return 'success';
   }
-
 }

@@ -5,7 +5,7 @@ import { createDecipheriv, createHash } from 'node:crypto';
  *
  * 将传入的字符串数组按字典序排序后，拼接成一个字符串，
  * 然后进行 SHA1 加密，返回加密后的十六进制字符串。
- * 
+ *
  * @param args 参与签名的参数（如 token, timestamp, nonce, encrypt 等）
  * @returns SHA1 签名字符串
  */

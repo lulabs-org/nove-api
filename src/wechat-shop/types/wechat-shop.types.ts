@@ -1,6 +1,38 @@
+export enum WechatShopOrderStatus {
+  /** 待付款 */
+  PENDING_PAYMENT = 10,
+  /** 礼物待收下 */
+  GIFT_PENDING_RECEIVE = 12,
+  /** 一起买待成团 */
+  GROUP_BUY_PENDING = 13,
+  /** 待发货（包括部分发货） */
+  PENDING_SHIPMENT = 20,
+  /** 部分发货 */
+  PARTIAL_SHIPMENT = 21,
+  /** 待收货（包括部分发货） */
+  PENDING_RECEIPT = 30,
+  /** 完成 */
+  COMPLETED = 100,
+  /** 订单取消（包括未付款取消，售后取消等） */
+  CANCELLED = 250,
+}
+
 export interface WechatShopApiResponse {
   errcode?: number;
   errmsg?: string;
+}
+
+export interface TimeRange {
+  startTime: number;
+  endTime: number;
+}
+
+export interface GetOrderListParams {
+  createTimeRange?: TimeRange;
+  updateTimeRange?: TimeRange;
+  pageSize?: number;
+  nextKey?: string;
+  status?: WechatShopOrderStatus | number;
 }
 
 export interface WechatShopOrderListResponse extends WechatShopApiResponse {
@@ -66,4 +98,21 @@ export interface WechatShopProductInfo {
   real_price?: number;
   sku_cnt?: number;
   sku_code?: string;
+}
+
+export interface SyncWechatOrderPageParams {
+  startTime: number;
+  endTime: number;
+  timeType: 'create' | 'update';
+  pageSize: number;
+  nextKey?: string | null;
+}
+
+export interface SyncWechatOrderPageResult {
+  fetched: number;
+  created: number;
+  updated: number;
+  failed: Array<{ orderId: string; reason: string }>;
+  nextKey: string;
+  hasMore: boolean;
 }
