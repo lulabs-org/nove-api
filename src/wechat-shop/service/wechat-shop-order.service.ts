@@ -8,6 +8,7 @@ import {
   DEFAULT_WECHAT_ORDER_PAGE_SIZE,
   splitWechatOrderRanges,
   toUnixSeconds,
+  WechatOrderUnixRange,
 } from '../utils/wechat-order-sync.util';
 import { WechatShopClientService } from './wechat-shop-client.service';
 import {
@@ -71,8 +72,8 @@ export class WechatShopOrderService {
   }
 
   /**
-   * 按微信小店创建/更新时间范围分页拉取历史订单，并将单条订单通过 BullMQ 分发异步同步。
-   * 微信接口单次时间范围不超过 7 天，这里会自动切片完整覆盖请求区间。
+   * 接收历史订单同步请求，支持最大 1 年时间跨度。
+   * 为防止接口超时，直接将切片后的 7 天任务分发到 BullMQ 异步处理。
    */
   async syncHistory(payload: WechatOrderHistorySyncDto) {
     const {
@@ -89,36 +90,64 @@ export class WechatShopOrderService {
       throw new BadRequestException('startTime must be earlier than endTime');
     }
 
+    // 限制最大时间跨度为 1 年（366天）
+    if (endTime - startTime > 366 * 24 * 60 * 60) {
+      throw new BadRequestException('Time range cannot exceed 1 year');
+    }
+
+    const ranges = splitWechatOrderRanges(startTime, endTime);
+    
+    const jobs = ranges.map((range) => ({
+      name: 'sync-history-range',
+      data: {
+        range,
+        pageSize,
+        timeType,
+      },
+    }));
+
+    await this.orderQueue.addBulk(jobs);
+
+    return { enqueuedRangeTasks: jobs.length };
+  }
+
+  /**
+   * 后台异步处理单个时间片（最大 7 天）的订单拉取
+   */
+  async processHistoryRange(data: {
+    range: WechatOrderUnixRange;
+    pageSize: number;
+    timeType: 'create' | 'update';
+  }) {
+    const { range, pageSize, timeType } = data;
     const timeRangeKey =
       timeType === 'update' ? 'updateTimeRange' : 'createTimeRange';
+    
+    let nextKey = '';
+    let hasMore = true;
     let enqueued = 0;
 
-    for (const range of splitWechatOrderRanges(startTime, endTime)) {
-      let nextKey = '';
-      let hasMore = true;
+    while (hasMore) {
+      const listResult = await this.wechatShopClient.getOrderList({
+        [timeRangeKey]: range,
+        pageSize,
+        nextKey,
+      });
 
-      while (hasMore) {
-        const listResult = await this.wechatShopClient.getOrderList({
-          [timeRangeKey]: range,
-          pageSize,
-          nextKey,
-        });
+      const orderIds = listResult.order_id_list ?? listResult.orders ?? [];
 
-        const orderIds = listResult.order_id_list ?? listResult.orders ?? [];
+      if (orderIds.length > 0) {
+        const jobs = orderIds.map((id) => ({
+          name: 'sync-single-order',
+          data: { orderId: String(id) },
+        }));
 
-        if (orderIds.length > 0) {
-          const jobs = orderIds.map((id) => ({
-            name: 'sync-single-order',
-            data: { orderId: String(id) },
-          }));
-
-          await this.orderQueue.addBulk(jobs);
-          enqueued += orderIds.length;
-        }
-
-        nextKey = listResult.next_key ?? '';
-        hasMore = Boolean(listResult.has_more && nextKey);
+        await this.orderQueue.addBulk(jobs);
+        enqueued += orderIds.length;
       }
+
+      nextKey = listResult.next_key ?? '';
+      hasMore = Boolean(listResult.has_more && nextKey);
     }
 
     return { enqueued };

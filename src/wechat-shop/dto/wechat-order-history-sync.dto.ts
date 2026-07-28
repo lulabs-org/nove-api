@@ -9,11 +9,11 @@ import {
 } from 'class-validator';
 
 export class WechatOrderHistorySyncDto {
-  @ApiProperty({ description: '同步开始时间，ISO 8601 格式' })
+  @ApiProperty({ description: '同步开始时间，ISO 8601 格式，与结束时间跨度最大为1年' })
   @IsDateString()
   startTime!: string;
 
-  @ApiProperty({ description: '同步结束时间，ISO 8601 格式' })
+  @ApiProperty({ description: '同步结束时间，ISO 8601 格式，与开始时间跨度最大为1年' })
   @IsDateString()
   endTime!: string;
 
