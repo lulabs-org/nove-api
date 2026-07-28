@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  Get,
   HttpCode,
   HttpStatus,
   Post,
@@ -41,20 +40,6 @@ export class WechatShopController {
   constructor(private readonly wechatShopService: WechatShopService) {}
 
   @Public()
-  @Get('aftersales')
-  @ApiOperation({
-    summary: 'Verify WeChat shop aftersale callback URL',
-    description: '微信小店售后单更新通知 URL 校验。',
-  })
-  @ApiResponse({ status: 200, description: '回调 URL 校验成功' })
-  verifyWechatAftersaleCallback(
-    @Query() query: WechatWebhookSignatureQuery,
-    @Query('echostr') echoString?: string,
-  ) {
-    return this.wechatShopService.verifyWechatWebhookEcho(query, echoString);
-  }
-
-  @Public()
   @Post('aftersales')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -78,27 +63,6 @@ export class WechatShopController {
     await this.wechatShopService.syncWechatAftersaleWebhook(decryptedPayload);
 
     return 'success';
-  }
-
-  @RequirePermissions('order:update')
-  @Post('aftersales/relay')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({
-    summary: 'Receive relayed WeChat shop aftersale update',
-    description:
-      '接收飞书集成平台中转的微信小店售后单状态更新通知，并按售后单号拉取详情后同步退款记录。',
-  })
-  @ApiResponse({ status: 200, description: '售后单中转通知处理成功' })
-  async receiveRelayedWechatAftersaleCallback(
-    @Body() payload: WechatShopAftersaleUpdateWebhookPayload,
-  ) {
-    const result =
-      await this.wechatShopService.syncWechatAftersaleWebhook(payload);
-
-    return {
-      success: true,
-      result,
-    };
   }
 
   @RequireAllPermissions('order:create', 'order:update')
