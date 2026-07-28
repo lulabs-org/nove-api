@@ -1,9 +1,9 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Public } from '@/auth/decorators/public.decorator';
-import { WechatOrderHistorySyncDto } from './dto/wechat-order-history-sync.dto';
-import { WechatOrderWebhookDto } from './dto/wechat-order-webhook.dto';
-import { WechatShopService } from './service/wechat-shop.service';
+import { WechatOrderHistorySyncDto } from '../dto/wechat-order-history-sync.dto';
+import { WechatOrderWebhookDto } from '../dto/wechat-order-webhook.dto';
+import { WechatShopService } from '../service/wechat-shop.service';
 
 @ApiTags('Orders')
 @Controller('webhooks/wechat/orders')
