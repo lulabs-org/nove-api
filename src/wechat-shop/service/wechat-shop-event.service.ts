@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { WechatShopService } from './wechat-shop.service';
+import { ChannelsEcOrderPayEvent, ChannelsEcAftersaleUpdateEvent } from '../types/wechat-shop-event.types';
 
 @Injectable()
 export class WechatShopEventService {
@@ -15,16 +16,18 @@ export class WechatShopEventService {
       const eventType = eventData.Event;
 
       if (eventType === 'channels_ec_order_pay') {
-        const orderInfo = eventData.order_info as Record<string, unknown>;
-        const orderId = String(orderInfo?.order_id ?? '');
+        const payload = eventData as unknown as ChannelsEcOrderPayEvent;
+        const orderId = payload.order_info?.order_id;
+
         if (orderId) {
-          await this.wechatShopService.syncSingleOrder(orderId);
+          await this.wechatShopService.syncSingleOrder(String(orderId));
         }
       } else if (eventType === 'channels_ec_aftersale_update') {
-        const aftersaleInfo = eventData.finder_shop_aftersale_status_update as Record<string, unknown>;
-        const orderId = String(aftersaleInfo?.order_id ?? '');
+        const payload = eventData as unknown as ChannelsEcAftersaleUpdateEvent;
+        const orderId = payload.finder_shop_aftersale_status_update?.order_id;
+        
         if (orderId) {
-          await this.wechatShopService.syncSingleOrder(orderId);
+          await this.wechatShopService.syncSingleOrder(String(orderId));
         }
       }
     } catch (err) {
