@@ -18,9 +18,7 @@ lerna-debug.log*
 # Tests
 /coverage
 /.nyc_output
-/test/wechat-shop-sandbox
-/test/API接口表-设计文档/
-test/unit/wechat-shop.controller.spec.ts
+/test/local/
 
 # IDEs and editors
 /.idea
@@ -75,9 +73,5 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 # Documentation (auto-generated)
 /documentation
 
-# Exports
-/exports/transcripts/
-
 .codex/
 .specify/
-test/unit/测试思路.md
