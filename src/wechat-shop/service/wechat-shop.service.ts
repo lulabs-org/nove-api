@@ -162,6 +162,19 @@ export class WechatShopService {
   }
 
   /**
+   * 同步单条订单，通常用于接收到单条订单通知时使用
+   */
+  async syncSingleOrder(orderId: string) {
+    const wechatOrder = await this.wechatShopOrderClient.getOrder(orderId);
+    const mappedPayload = this.mapWechatShopOrderToWebhookPayload(
+      wechatOrder,
+      orderId,
+    );
+
+    return this.upsertWechatOrder(mappedPayload);
+  }
+
+  /**
    * 创建订单时补齐系统生成的订单号、默认币种和必填金额。
    */
   private buildCreateData(
