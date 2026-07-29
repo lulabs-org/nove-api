@@ -56,8 +56,6 @@ export interface GetOrderListParams {
 export interface OrderListResponse {
   /** 订单 ID 列表 */
   order_id_list?: string[];
-  /** 订单列表 (兼容旧版本字段) */
-  orders?: string[];
   /** 下一页游标 */
   next_key?: string;
   /** 是否还有更多数据 */

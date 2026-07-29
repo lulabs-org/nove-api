@@ -131,7 +131,7 @@ export class WechatShopOrderService {
         next_key: nextKey,
       });
 
-      const orderIds = listResult.order_id_list ?? listResult.orders ?? [];
+      const orderIds = listResult.order_id_list ?? [];
 
       if (orderIds.length > 0) {
         await this.orderQueue.addBulk(

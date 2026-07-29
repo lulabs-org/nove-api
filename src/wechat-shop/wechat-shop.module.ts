@@ -4,6 +4,8 @@ import { PrismaModule } from '@/prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
 import { wechatShopConfig } from '@/configs';
 import { BullModule } from '@nestjs/bullmq';
+import { BullBoardModule } from '@bull-board/nestjs';
+import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { WechatShopOrderController } from './controllers/wechat-shop-order.controller';
 import { WechatShopEventController } from './controllers/wechat-shop-event.controller';
 import { WechatShopRepository } from './repositories';
@@ -19,6 +21,10 @@ import { WechatShopProcessor } from './processor/wechat-shop.processor';
     HttpModule,
     ConfigModule.forFeature(wechatShopConfig),
     BullModule.registerQueue({ name: 'wechat-order-sync' }),
+    BullBoardModule.forFeature({
+      name: 'wechat-order-sync',
+      adapter: BullMQAdapter,
+    }),
   ],
   controllers: [WechatShopOrderController, WechatShopEventController],
   providers: [
