@@ -11,17 +11,21 @@ export class WechatShopProcessor extends WorkerHost {
     super();
   }
 
-  async process(job: Job<any>) {
+  async process(job: Job<unknown>) {
     if (job.name === 'sync-single-order') {
+      const data = job.data as { orderId: string };
       try {
-        await this.wechatShopOrderService.syncSingle(job.data.orderId);
+        await this.wechatShopOrderService.syncSingle(data.orderId);
       } catch (error) {
-        this.logger.error(`Failed to sync order ${job.data.orderId}`, error);
+        this.logger.error(`Failed to sync order ${data.orderId}`, error);
         throw error;
       }
     } else if (job.name === 'sync-history-range') {
+      const data = job.data as Parameters<
+        WechatShopOrderService['processHistoryRange']
+      >[0];
       try {
-        await this.wechatShopOrderService.processHistoryRange(job.data);
+        await this.wechatShopOrderService.processHistoryRange(data);
       } catch (error) {
         this.logger.error(`Failed to process history range`, error);
         throw error;

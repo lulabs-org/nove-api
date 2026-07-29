@@ -6,15 +6,16 @@ import {
   ValidatorConstraintInterface,
   ValidateIf,
   IsDefined,
+  IsOptional,
 } from 'class-validator';
 
 @ValidatorConstraint({ name: 'isMutuallyExclusive', async: false })
 export class IsMutuallyExclusiveConstraint
   implements ValidatorConstraintInterface
 {
-  validate(value: any, args: ValidationArguments): boolean {
-    const [relatedPropertyName] = args.constraints;
-    const relatedValue = (args.object as Record<string, any>)[
+  validate(value: unknown, args: ValidationArguments): boolean {
+    const [relatedPropertyName] = args.constraints as [string];
+    const relatedValue = (args.object as Record<string, unknown>)[
       relatedPropertyName
     ];
 
@@ -26,7 +27,7 @@ export class IsMutuallyExclusiveConstraint
   }
 
   defaultMessage(args: ValidationArguments): string {
-    const [relatedPropertyName] = args.constraints;
+    const [relatedPropertyName] = args.constraints as [string];
     return `${args.property} 和 ${relatedPropertyName} 不能同时填写`;
   }
 }
@@ -48,14 +49,14 @@ export function IsMutuallyExclusive(
     // 因为互斥校验是双向的，一侧拦截就足够了。
     if (propertyName > relatedProperty) {
       // 较大的一侧我们只挂载一个 IsOptional，确保 ValidateNested 等不会在 undefined 时误报
-      const { IsOptional } = require('class-validator');
       IsOptional()(target, propertyName);
       return;
     }
 
     // 1. 核心逻辑：如果当前字段有值，或者关联字段没值，才进入后续校验。
     ValidateIf(
-      (o: any) => o[propertyName] != null || o[relatedProperty] == null,
+      (o: Record<string, unknown>) =>
+        o[propertyName] != null || o[relatedProperty] == null,
     )(target, propertyName);
 
     // 2. 保证非空（配合上面的 ValidateIf 实现了“至少填一个”的限制）

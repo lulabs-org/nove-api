@@ -12,11 +12,12 @@ export class WechatShopEventService {
   // 事件处理路由表，新增事件时只需在此处注册并添加对应的处理方法
   private readonly eventHandlers: Record<
     string,
-    (payload: any) => Promise<void>
+    (payload: unknown) => Promise<void>
   > = {
-    channels_ec_order_pay: (payload) => this.handleOrderPay(payload),
+    channels_ec_order_pay: (payload) =>
+      this.handleOrderPay(payload as ChannelsEcOrderPayEvent),
     channels_ec_aftersale_update: (payload) =>
-      this.handleAftersaleUpdate(payload),
+      this.handleAftersaleUpdate(payload as ChannelsEcAftersaleUpdateEvent),
   };
 
   constructor(
@@ -62,6 +63,7 @@ export class WechatShopEventService {
     const orderId = payload.finder_shop_aftersale_status_update?.order_id;
     if (orderId) {
       // TODO: 处理售后状态更新
+      await Promise.resolve();
     }
   }
 }
