@@ -43,8 +43,7 @@ export interface WechatShopAftersaleUpdateWebhookPayload {
 
 export interface WechatShopEncryptedWebhookPayload {
   ToUserName?: string;
-  Encrypt?: string;
-  encrypt?: string;
+  Encrypt: string;
 }
 
 export interface WechatShopOrder {

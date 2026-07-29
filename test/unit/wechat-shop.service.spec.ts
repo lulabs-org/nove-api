@@ -18,16 +18,6 @@ const runManualWechatRefundDbTest =
 //RUN_WECHAT_REFUND_DB_TEST=1 npx jest --selectProjects unit --runTestsByPath test/unit/wechat-shop.service.spec.ts --runInBand --testNamePattern='manually upserts a settled WECHAT refund'
 const manualDbIt = runManualWechatRefundDbTest ? it : it.skip;
 
-function buildWechatSignature(params: {
-  token: string;
-  timestamp: string;
-  nonce: string;
-}) {
-  return createHash('sha1')
-    .update([params.token, params.timestamp, params.nonce].sort().join(''))
-    .digest('hex');
-}
-
 describe('WechatShopService', () => {
   it('syncs refunded wechat orders into order_refunds', async () => {
     // 这里 mock 掉 repository，所以不会连接数据库。
@@ -284,37 +274,43 @@ describe('WechatShopService', () => {
     );
   });
 
-  it('validates WeChat webhook signatures', () => {
+  it('verifies a direct WeChat callback URL and returns echostr', () => {
     const originalToken = process.env.WECHAT_SHOP_WEBHOOK_TOKEN;
-    process.env.WECHAT_SHOP_WEBHOOK_TOKEN = 'test_token';
+    const token = 'test_token';
+    const timestamp = '1700000000';
+    const nonce = 'nonce_1';
+    const echoString = 'echo_123';
+    const signature = createHash('sha1')
+      .update([token, timestamp, nonce].sort().join(''))
+      .digest('hex');
+    process.env.WECHAT_SHOP_WEBHOOK_TOKEN = token;
 
     try {
       const service = new WechatShopService(
         {} as WechatShopRepository,
         {} as WechatShopOrderClientService,
       );
-      const timestamp = '1700000000';
-      const nonce = 'nonce_1';
+
+      expect(
+        service.verifyWechatWebhookEcho(
+          { signature, timestamp, nonce },
+          echoString,
+        ),
+      ).toBe(echoString);
 
       expect(() =>
-        service.verifyWechatWebhookSignature({
-          timestamp,
-          nonce,
-          signature: buildWechatSignature({
-            token: 'test_token',
-            timestamp,
-            nonce,
-          }),
-        }),
-      ).not.toThrow();
-
-      expect(() =>
-        service.verifyWechatWebhookSignature({
-          timestamp,
-          nonce,
-          signature: 'invalid',
-        }),
+        service.verifyWechatWebhookEcho(
+          { signature: 'invalid', timestamp, nonce },
+          echoString,
+        ),
       ).toThrow('Wechat webhook signature is invalid');
+
+      expect(() =>
+        service.verifyWechatWebhookEcho(
+          { signature, timestamp, nonce },
+          undefined,
+        ),
+      ).toThrow('Wechat webhook verification parameters are missing');
     } finally {
       if (originalToken === undefined) {
         delete process.env.WECHAT_SHOP_WEBHOOK_TOKEN;
@@ -391,6 +387,31 @@ describe('WechatShopService', () => {
           },
         ),
       ).toThrow('Wechat webhook signature is invalid');
+
+      expect(() =>
+        service.decryptWechatAftersaleWebhookPayload(
+          {
+            Encrypt: '',
+          },
+          {
+            timestamp,
+            nonce,
+            msg_signature: msgSignature,
+          },
+        ),
+      ).toThrow('Wechat webhook encrypted payload is missing');
+
+      expect(() =>
+        service.decryptWechatAftersaleWebhookPayload(
+          {
+            Encrypt: encryptedPayload,
+          },
+          {
+            timestamp,
+            nonce,
+          },
+        ),
+      ).toThrow('Wechat webhook signature is missing');
     } finally {
       if (originalAppId === undefined) {
         delete process.env.WECHAT_SHOP_APP_ID;

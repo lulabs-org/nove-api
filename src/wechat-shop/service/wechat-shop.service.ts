@@ -64,6 +64,7 @@ export interface SyncWechatAftersalePageResult {
   hasMore: boolean;
 }
 
+/** Service 内部统一使用的微信退款结构，屏蔽微信新旧接口字段差异。 */
 interface WechatOrderRefundSyncPayload {
   afterSaleCode: string;
   refundAmount?: number;
@@ -79,9 +80,16 @@ interface WechatOrderSyncPayload extends WechatOrderWebhookDto {
   refunds?: WechatOrderRefundSyncPayload[];
 }
 
+/** 飞书从微信原样转发的安全模式签名参数。 */
 interface WechatWebhookSignatureQuery {
-  signature?: string;
   msg_signature?: string;
+  timestamp?: string;
+  nonce?: string;
+}
+
+/** 微信配置直连回调 URL 时携带的普通签名参数。 */
+interface WechatWebhookVerificationQuery {
+  signature?: string;
   timestamp?: string;
   nonce?: string;
 }
@@ -279,63 +287,78 @@ export class WechatShopService {
     };
   }
 
+  /**
+   * 校验微信安全模式消息签名。
+   *
+   * msg_signature 由 Token、timestamp、nonce 和 Encrypt 共同计算；
+   * Encrypt 被篡改或飞书漏传任一参数时，本地计算结果都不会匹配。
+   * 该方法必须在 AES 解密之前执行。
+   */
   verifyWechatWebhookSignature(
     query: WechatWebhookSignatureQuery,
-    encryptedPayload?: string,
+    encryptedPayload: string,
   ): void {
     const token = this.getWechatWebhookToken();
-    // 官方文档：安全模式下用 msg_signature 验证，不要用 signature。
-    // 微信实际推送时 URL 同时携带 signature 和 msg_signature，
-    // 有加密体时必须优先取 msg_signature 进行比对。
-    const signature = encryptedPayload
-      ? (query.msg_signature ?? query.signature)
-      : (query.signature ?? query.msg_signature);
+    // 飞书原样转发微信安全模式消息，只接受包含 Encrypt 的 msg_signature。
+    const signature = query.msg_signature;
     if (!signature || !query.timestamp || !query.nonce) {
       throw new BadRequestException('Wechat webhook signature is missing');
     }
 
-    const expectedSignature = encryptedPayload
-      ? this.createWechatMsgCrypt(token).getSignature({
-          timestamp: query.timestamp,
-          nonce: query.nonce,
-          msg_encrypt: encryptedPayload,
-        })
-      : this.buildPlainWechatSignature(token, query.timestamp, query.nonce);
+    const expectedSignature = this.createWechatMsgCrypt(token).getSignature({
+      timestamp: query.timestamp,
+      nonce: query.nonce,
+      msg_encrypt: encryptedPayload,
+    });
 
     if (!this.isEqualSignature(signature, expectedSignature)) {
       throw new BadRequestException('Wechat webhook signature is invalid');
     }
   }
 
+  /**
+   * 验证微信配置直连回调 URL 时发送的 GET 请求。
+   *
+   * 按微信规则将 Token、timestamp、nonce 字典序排序后拼接并计算 SHA-1；
+   * 签名一致时必须原样返回 echostr。当前飞书链路不会调用此方法，它只作为
+   * 将来绕过飞书、由微信直连本项目时的备用能力。
+   */
   verifyWechatWebhookEcho(
-    query: WechatWebhookSignatureQuery,
+    query: WechatWebhookVerificationQuery,
     echoString?: string,
   ): string {
-    if (query.msg_signature) {
-      if (!echoString) {
-        throw new BadRequestException('Wechat webhook echo string is missing');
-      }
-
-      this.verifyWechatWebhookSignature(query, echoString);
-      return this.decryptWechatMessage(echoString);
+    if (!query.signature || !query.timestamp || !query.nonce || !echoString) {
+      throw new BadRequestException(
+        'Wechat webhook verification parameters are missing',
+      );
     }
 
-    this.verifyWechatWebhookSignature(query);
-    return echoString ?? 'success';
+    const expectedSignature = createHash('sha1')
+      .update(
+        [this.getWechatWebhookToken(), query.timestamp, query.nonce]
+          .sort()
+          .join(''),
+      )
+      .digest('hex');
+
+    if (!this.isEqualSignature(query.signature, expectedSignature)) {
+      throw new BadRequestException('Wechat webhook signature is invalid');
+    }
+
+    return echoString;
   }
 
+  /**
+   * 将飞书转发的微信安全模式请求转换成可供业务处理的售后事件。
+   *
+   * 处理顺序固定为：检查 Encrypt -> 验证 msg_signature -> AES 解密
+   * -> JSON 解析。这样调用方无法绕过验签直接提交明文事件。
+   */
   decryptWechatAftersaleWebhookPayload(
-    payload:
-      | WechatShopAftersaleUpdateWebhookPayload
-      | WechatShopEncryptedWebhookPayload,
+    payload: WechatShopEncryptedWebhookPayload,
     query: WechatWebhookSignatureQuery,
   ): WechatShopAftersaleUpdateWebhookPayload {
     const encryptedPayload = this.extractWechatEncryptedPayload(payload);
-    if (!encryptedPayload) {
-      this.verifyWechatWebhookSignature(query);
-      return payload as WechatShopAftersaleUpdateWebhookPayload;
-    }
-
     this.verifyWechatWebhookSignature(query, encryptedPayload);
     const decryptedPayload = this.decryptWechatMessage(encryptedPayload);
 
@@ -350,6 +373,13 @@ export class WechatShopService {
     }
   }
 
+  /**
+   * 消费解密后的售后更新事件。
+   *
+   * Webhook 只提供售后单号和简要状态，不能作为最终退款数据来源；
+   * 因此这里会使用 after_sale_order_id 再调用微信售后详情接口，
+   * 然后复用历史售后同步的退款落库逻辑。
+   */
   async syncWechatAftersaleWebhook(
     payload: WechatShopAftersaleUpdateWebhookPayload,
   ) {
@@ -572,6 +602,10 @@ export class WechatShopService {
     );
   }
 
+  /**
+   * 计算订单当前已结算的退款总额，用于判断是否为全额退款。
+   * 待处理退款不会提前改变订单主状态。
+   */
   private resolveWechatRefundAmount(
     order: WechatShopOrder,
   ): number | undefined {
@@ -592,6 +626,12 @@ export class WechatShopService {
     );
   }
 
+  /**
+   * 从微信订单详情中提取退款。
+   *
+   * 新接口优先读取 aftersale_detail；旧订单没有售后详情时回退到
+   * order_detail.refund_info，最终都转换成统一的内部退款结构。
+   */
   private extractWechatRefunds(
     order: WechatShopOrder,
     orderId: string,
@@ -644,6 +684,7 @@ export class WechatShopService {
     ];
   }
 
+  /** 将微信可能返回的单个售后对象或数组统一转换为数组。 */
   private normalizeAftersaleDetails(
     details: WechatShopOrder['aftersale_detail'],
   ): WechatShopAftersaleDetail[] {
@@ -653,6 +694,12 @@ export class WechatShopService {
     return [details];
   }
 
+  /**
+   * 将微信售后详情映射为内部退款结构。
+   *
+   * 微信不同接口和历史数据使用过多种编号、金额及时间字段名，
+   * 这里按优先级取值，并生成稳定的兜底 afterSaleCode。
+   */
   private mapWechatAftersaleDetailToRefund(
     detail: WechatShopAftersaleDetail,
     orderId: string,
@@ -731,6 +778,10 @@ export class WechatShopService {
     return syncedRefund;
   }
 
+  /**
+   * 将微信售后状态归一化为项目 RefundStatus。
+   * 当前业务只关心“处理中”和“已结算”两类状态。
+   */
   private mapWechatRefundStatus(
     status: string | number | undefined,
   ): RefundStatus {
@@ -761,12 +812,17 @@ export class WechatShopService {
     return status === undefined ? RefundStatus.SETTLED : RefundStatus.PENDING;
   }
 
+  /** 取第一笔带完成时间的退款，作为订单全额退款时的时间候选值。 */
   private resolveOrderRefundedAt(
     refunds: WechatOrderRefundSyncPayload[],
   ): string | undefined {
     return refunds.find((refund) => refund.refundedAt)?.refundedAt;
   }
 
+  /**
+   * 同步历史订单详情中携带的退款数组。
+   * 订单和各退款写入完成后，再统一判断订单是否已经全额退款。
+   */
   private async syncWechatOrderRefunds(
     order: Order,
     payload: WechatOrderSyncPayload,
@@ -785,6 +841,10 @@ export class WechatShopService {
     return syncedRefunds;
   }
 
+  /**
+   * 按微信售后单号幂等写入退款。
+   * afterSaleCode 是唯一键，Webhook 重试和历史补同步会更新同一条记录。
+   */
   private upsertWechatRefund(
     orderId: string | undefined,
     refund: WechatOrderRefundSyncPayload,
@@ -946,6 +1006,10 @@ export class WechatShopService {
     }
   }
 
+  /**
+   * 使用常量时间比较签名，避免普通字符串比较泄露前缀匹配时间差。
+   * 长度不一致时不能调用 timingSafeEqual，直接判定失败。
+   */
   private isEqualSignature(actual: string, expected: string): boolean {
     const actualBuffer = Buffer.from(actual);
     const expectedBuffer = Buffer.from(expected);
@@ -956,6 +1020,7 @@ export class WechatShopService {
     );
   }
 
+  /** 读取微信回调 Token；兼容旧环境变量名，但优先使用专用 Webhook 配置。 */
   private getWechatWebhookToken(): string {
     const token =
       process.env.WECHAT_SHOP_WEBHOOK_TOKEN ?? process.env.WECHAT_SHOP_TOKEN;
@@ -968,6 +1033,10 @@ export class WechatShopService {
     return token;
   }
 
+  /**
+   * 创建微信安全模式签名工具。
+   * 签名库初始化同时要求 AppID 和 EncodingAESKey 配置完整。
+   */
   private createWechatMsgCrypt(token: string): WXBizMsgCrypt {
     const appid = process.env.WECHAT_SHOP_APP_ID;
     const encodingAESKey =
@@ -987,16 +1056,12 @@ export class WechatShopService {
     });
   }
 
-  private buildPlainWechatSignature(
-    token: string,
-    timestamp: string,
-    nonce: string,
-  ): string {
-    return createHash('sha1')
-      .update([token, timestamp, nonce].sort().join(''))
-      .digest('hex');
-  }
-
+  /**
+   * 按微信安全模式协议解密 Encrypt。
+   *
+   * 明文结构为 random(16B) + msg_len(4B) + message + appid；
+   * 解密后必须校验尾部 AppID，防止接受不属于当前微信小店的消息。
+   */
   private decryptWechatMessage(encryptedPayload: string): string {
     const appid = process.env.WECHAT_SHOP_APP_ID;
     const encodingAESKey =
@@ -1051,16 +1116,19 @@ export class WechatShopService {
     }
   }
 
+  /**
+   * 严格读取微信安全模式密文。
+   * 当前真实链路不接受明文 Payload，也不兼容非官方的小写 encrypt 字段。
+   */
   private extractWechatEncryptedPayload(
-    payload:
-      | WechatShopAftersaleUpdateWebhookPayload
-      | WechatShopEncryptedWebhookPayload,
-  ): string | undefined {
-    const encryptedPayload = (payload as WechatShopEncryptedWebhookPayload)
-      .Encrypt;
+    payload: WechatShopEncryptedWebhookPayload,
+  ): string {
+    if (!payload.Encrypt) {
+      throw new BadRequestException(
+        'Wechat webhook encrypted payload is missing',
+      );
+    }
 
-    return (
-      encryptedPayload ?? (payload as WechatShopEncryptedWebhookPayload).encrypt
-    );
+    return payload.Encrypt;
   }
 }
