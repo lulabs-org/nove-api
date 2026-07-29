@@ -22,6 +22,7 @@ lerna-debug.log*
 /coverage
 /.nyc_output
 /test/wechat-shop-sandbox
+/test/local/
 
 # IDEs and editors
 /.idea
