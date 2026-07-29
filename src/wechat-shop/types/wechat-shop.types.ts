@@ -70,6 +70,41 @@ export interface OrderDetailResponse {
 }
 
 /**
+ * 获取售后单详情响应结果
+ */
+export interface AftersaleOrderDetailResponse {
+  after_sale_order?: WechatShopAftersaleOrder;
+}
+
+/**
+ * 微信小店售后单核心字段。
+ *
+ * 微信会持续扩展售后详情字段；这里只声明当前同步到本地退款表所需的字段，
+ * 未使用的返回字段由 JSON 反序列化自然忽略。
+ */
+export interface WechatShopAftersaleOrder {
+  after_sale_order_id: string;
+  status: string;
+  order_id: string;
+  openid?: string;
+  create_time?: number;
+  update_time?: number;
+  complete_time?: number;
+  reason?: string;
+  reason_text?: string;
+  type?: string;
+  refund_info?: {
+    amount?: number;
+    refund_reason?: number;
+  };
+  product_info?: {
+    product_id?: string;
+    sku_id?: string;
+    count?: number;
+  };
+}
+
+/**
  * 微信小店订单结构
  */
 export interface WechatShopOrder {

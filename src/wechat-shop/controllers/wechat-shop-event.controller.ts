@@ -14,6 +14,7 @@ import { wechatShopConfig, WechatShopConfig } from '@/configs';
 import {
   generateSignature,
   decryptWechatMessage,
+  isSignatureEqual,
 } from '../utils/wechat-crypto.util';
 import { Public } from '@/auth/decorators/public.decorator';
 import { WechatShopEventService } from '../service/wechat-shop-event.service';
@@ -47,11 +48,18 @@ export class WechatShopEventController {
     if (!token) {
       throw new UnauthorizedException('WeChat webhook token is not configured');
     }
+    // 提前区分参数缺失和签名错误，便于定位微信回调配置问题。
+    if (!signature || !timestamp || !nonce || echostr == null) {
+      throw new UnauthorizedException(
+        'WeChat webhook verification parameters are missing',
+      );
+    }
 
     const hash = generateSignature(token, timestamp, nonce);
 
     // 3. 开发者获得加密后的字符串可与 signature 对比，标识该请求来源于微信
-    if (hash !== signature) {
+    // 使用常量时间比较，避免普通字符串比较产生可利用的耗时差异。不让攻击者通过接口响应速度推测签名内容
+    if (!isSignatureEqual(signature, hash)) {
       throw new UnauthorizedException('Invalid signature');
     }
 
@@ -93,7 +101,7 @@ export class WechatShopEventController {
       token,
     );
 
-    if (hash !== query.msg_signature) {
+    if (!isSignatureEqual(query.msg_signature, hash)) {
       throw new UnauthorizedException('Invalid msg_signature');
     }
 

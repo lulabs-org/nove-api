@@ -1,4 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { WechatShopOrderService } from './wechat-shop-order.service';
 import {
   ChannelsEcOrderPayEvent,
@@ -22,27 +24,20 @@ export class WechatShopEventService {
 
   constructor(
     private readonly wechatShopOrderService: WechatShopOrderService,
+    @InjectQueue('wechat-order-sync') private readonly syncQueue: Queue,
   ) {}
 
   /**
    * 处理微信小店 Webhook 事件
    */
   async handleWechatEvent(eventData: Record<string, unknown>) {
-    try {
-      const eventType = String(eventData.Event);
-      const handler = this.eventHandlers[eventType];
+    const eventType = String(eventData.Event);
+    const handler = this.eventHandlers[eventType];
 
-      if (handler) {
-        await handler(eventData);
-      } else {
-        this.logger.debug(`Ignored WeChat event type: ${eventType}`);
-      }
-    } catch (err) {
-      // 记录错误但不抛出异常，为了能够向微信返回 success，避免微信持续重试
-      this.logger.error(
-        `Failed to process WeChat event [${String(eventData.Event)}]:`,
-        err,
-      );
+    if (handler) {
+      await handler(eventData);
+    } else {
+      this.logger.debug(`Ignored WeChat event type: ${eventType}`);
     }
   }
 
@@ -60,10 +55,23 @@ export class WechatShopEventService {
    * 处理售后状态更新事件
    */
   private async handleAftersaleUpdate(payload: ChannelsEcAftersaleUpdateEvent) {
-    const orderId = payload.finder_shop_aftersale_status_update?.order_id;
-    if (orderId) {
-      // TODO: 处理售后状态更新
-      await Promise.resolve();
+    const afterSaleOrderId =
+      payload.finder_shop_aftersale_status_update?.after_sale_order_id;
+
+    if (!afterSaleOrderId) {
+      throw new Error('Missing after_sale_order_id in WeChat aftersale event');
     }
+
+    // 回调只负责可靠入队，详情查询和数据库写入交给 Worker 重试处理。
+    await this.syncQueue.add(
+      'sync-single-aftersale',
+      { afterSaleOrderId: String(afterSaleOrderId) },
+      {
+        attempts: 5,
+        backoff: { type: 'exponential', delay: 1000 },
+        removeOnComplete: 100,
+        removeOnFail: 500,
+      },
+    );
   }
 }

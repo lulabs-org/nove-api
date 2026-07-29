@@ -11,6 +11,7 @@ import { AxiosError } from 'axios';
 import {
   OrderListResponse,
   OrderDetailResponse,
+  AftersaleOrderDetailResponse,
   WechatShopApiResponse,
   GetOrderListParams,
 } from '../types/wechat-shop.types';
@@ -67,6 +68,36 @@ export class WechatShopClientService {
       );
       throw new ServiceUnavailableException(
         `Wechat order detail missing: orderId=${orderId}`,
+      );
+    }
+
+    return response;
+  }
+
+  /**
+   * 按售后单号获取微信小店售后单详情。
+   *
+   * @see https://developers.weixin.qq.com/doc/store/shop/API/channels-shop-aftersale/aftersale/api_getaftersaleorder.html
+   */
+  async getAftersaleOrder(
+    afterSaleOrderId: string,
+  ): Promise<AftersaleOrderDetailResponse> {
+    const response = await this.request<AftersaleOrderDetailResponse>(
+      '/channels/ec/aftersale/getaftersaleorder',
+      {
+        data: {
+          after_sale_order_id: afterSaleOrderId,
+        },
+      },
+    );
+
+    if (!response?.after_sale_order) {
+      this.logger.error(
+        `Wechat aftersale detail missing: afterSaleOrderId=${afterSaleOrderId}`,
+        response,
+      );
+      throw new ServiceUnavailableException(
+        `Wechat aftersale detail missing: afterSaleOrderId=${afterSaleOrderId}`,
       );
     }
 
