@@ -11,25 +11,32 @@ export class WechatShopProcessor extends WorkerHost {
     super();
   }
 
-  async process(job: Job<unknown>) {
-    if (job.name === 'sync-single-order') {
-      const data = job.data as { orderId: string };
-      try {
-        await this.wechatShopOrderService.syncSingle(data.orderId);
-      } catch (error) {
-        this.logger.error(`Failed to sync order ${data.orderId}`, error);
-        throw error;
+  async process(job: Job) {
+    try {
+      switch (job.name) {
+        case 'sync-single-order': {
+          const data = job.data as { orderId: string };
+          await this.wechatShopOrderService.syncSingle(data.orderId);
+          break;
+        }
+
+        case 'sync-history-range': {
+          const data = job.data as Parameters<
+            WechatShopOrderService['processHistoryRange']
+          >[0];
+          await this.wechatShopOrderService.processHistoryRange(data);
+          break;
+        }
+
+        default:
+          this.logger.warn(`Unknown job name: ${job.name}`);
       }
-    } else if (job.name === 'sync-history-range') {
-      const data = job.data as Parameters<
-        WechatShopOrderService['processHistoryRange']
-      >[0];
-      try {
-        await this.wechatShopOrderService.processHistoryRange(data);
-      } catch (error) {
-        this.logger.error(`Failed to process history range`, error);
-        throw error;
-      }
+    } catch (error) {
+      this.logger.error(
+        `Failed to process job ${job.name} (id: ${job.id})`,
+        error,
+      );
+      throw error;
     }
   }
 }

@@ -83,39 +83,39 @@ export class WechatShopOrderService {
    * 为防止接口超时，直接将切片后的 7 天任务分发到 BullMQ 异步处理。
    */
   async syncHistory(payload: WechatOrderHistorySyncDto) {
-    if (!payload.create_time_range && !payload.update_time_range) {
+    const timeRangeKey = payload.update_time_range
+      ? 'update_time_range'
+      : 'create_time_range';
+    const timeRange = payload[timeRangeKey];
+
+    if (!timeRange) {
       throw new BadRequestException(
         'At least one of create_time_range or update_time_range must be provided',
       );
     }
 
-    const timeRangeKey = payload.update_time_range
-      ? 'update_time_range'
-      : 'create_time_range';
-    const { start_time, end_time } = payload[timeRangeKey]!;
-
-    const startTime = Math.floor(new Date(start_time).getTime() / 1000);
-    const endTime = Math.floor(new Date(end_time).getTime() / 1000);
+    const startTime = Math.floor(
+      new Date(timeRange.start_time).getTime() / 1000,
+    );
+    const endTime = Math.floor(new Date(timeRange.end_time).getTime() / 1000);
 
     if (startTime >= endTime) {
       throw new BadRequestException('startTime must be earlier than endTime');
     }
 
-    // 限制最大时间跨度为 1 年（366天）
-    if (endTime - startTime > 366 * 24 * 60 * 60) {
+    const ONE_YEAR_SECONDS = 366 * 24 * 60 * 60;
+    if (endTime - startTime > ONE_YEAR_SECONDS) {
       throw new BadRequestException('Time range cannot exceed 1 year');
     }
 
-    const ranges = splitTimeRanges(startTime, endTime);
+    const jobs = splitTimeRanges(startTime, endTime).map((range) => ({
+      name: 'sync-history-range',
+      data: { range, pageSize: DEFAULT_PAGE_SIZE, timeRangeKey },
+    }));
 
-    await this.orderQueue.addBulk(
-      ranges.map((range) => ({
-        name: 'sync-history-range',
-        data: { range, pageSize: DEFAULT_PAGE_SIZE, timeRangeKey },
-      })),
-    );
+    await this.orderQueue.addBulk(jobs);
 
-    return { enqueuedRangeTasks: ranges.length };
+    return { enqueuedRangeTasks: jobs.length };
   }
 
   /**
@@ -133,7 +133,11 @@ export class WechatShopOrderService {
     let enqueued = 0;
 
     while (hasMore) {
-      const listResult = await this.wechatShopClient.getOrderList({
+      const {
+        order_id_list = [],
+        has_more,
+        next_key,
+      } = await this.wechatShopClient.getOrderList({
         [timeRangeKey]: {
           start_time: range.startTime,
           end_time: range.endTime,
@@ -142,20 +146,17 @@ export class WechatShopOrderService {
         next_key: nextKey,
       });
 
-      const orderIds = listResult.order_id_list ?? [];
-
-      if (orderIds.length > 0) {
-        await this.orderQueue.addBulk(
-          orderIds.map((id) => ({
-            name: 'sync-single-order',
-            data: { orderId: String(id) },
-          })),
-        );
-        enqueued += orderIds.length;
+      if (order_id_list.length > 0) {
+        const jobs = order_id_list.map((id) => ({
+          name: 'sync-single-order',
+          data: { orderId: String(id) },
+        }));
+        await this.orderQueue.addBulk(jobs);
+        enqueued += order_id_list.length;
       }
 
-      nextKey = listResult.next_key;
-      hasMore = Boolean(listResult.has_more && nextKey);
+      nextKey = next_key;
+      hasMore = Boolean(has_more && nextKey);
     }
 
     return { enqueued };
