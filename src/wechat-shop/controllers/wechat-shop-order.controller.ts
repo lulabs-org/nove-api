@@ -1,8 +1,8 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Public } from '@/auth/decorators/public.decorator';
 import { WechatOrderHistorySyncDto } from '../dto/wechat-order-history-sync.dto';
 import { WechatShopOrderService } from '../service/wechat-shop-order.service';
+import { RequireRoles } from '@/role/decorators/roles.decorator';
 
 @ApiTags('Wechat Shop')
 @Controller('wechat-shop/orders')
@@ -11,7 +11,7 @@ export class WechatShopOrderController {
     private readonly wechatShopOrderService: WechatShopOrderService,
   ) { }
 
-  @Public()
+  @RequireRoles('SUPER_ADMIN')
   @Post('history-sync')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({

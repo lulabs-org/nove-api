@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString, IsNotEmpty } from 'class-validator';
 
 export class WechatEventQueryDto {
   @ApiPropertyOptional({ description: 'URL签名' })
@@ -9,14 +9,17 @@ export class WechatEventQueryDto {
 
   @ApiProperty({ description: '时间戳' })
   @IsString()
+  @IsNotEmpty()
   timestamp: string;
 
   @ApiProperty({ description: '随机数' })
   @IsString()
+  @IsNotEmpty()
   nonce: string;
 
   @ApiProperty({ description: '消息签名' })
   @IsString()
+  @IsNotEmpty()
   msg_signature: string;
 
   @ApiPropertyOptional({ description: '加密类型' })
@@ -41,8 +44,8 @@ export class WechatEventBodyDto {
   @IsOptional()
   ToUserName?: string;
 
-  @ApiPropertyOptional({ description: '加密的消息体' })
+  @ApiProperty({ description: '加密的消息体' })
   @IsString()
-  @IsOptional()
-  Encrypt?: string;
+  @IsNotEmpty()
+  Encrypt: string;
 }
