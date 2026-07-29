@@ -23,28 +23,26 @@ export class WechatShopOrderService {
     private readonly wechatShopRepository: WechatShopRepository,
     private readonly wechatShopClient: WechatShopClientService,
     @InjectQueue('wechat-order-sync') private orderQueue: Queue,
-  ) { }
+  ) {}
 
   /**
    * 针对微信订单号主动拉取，并进行同步写入。
    */
   async syncSingle(orderId: string) {
-    const response = await this.wechatShopClient.getOrder(orderId);
-    const wechatOrder = response.order!;
+    const { order } = await this.wechatShopClient.getOrder(orderId);
+    if (!order) return;
 
-    const product = wechatOrder.order_detail?.product_infos?.[0];
-    const payInfo = wechatOrder.order_detail?.pay_info;
-    const priceInfo = wechatOrder.order_detail?.price_info;
-    const addressInfo = wechatOrder.order_detail?.delivery_info?.address_info;
+    const {
+      product_infos: [product] = [],
+      pay_info: payInfo,
+      price_info: priceInfo,
+      delivery_info: deliveryInfo,
+    } = order.order_detail ?? {};
 
-    const metadata = {
-      source: 'wechat_shop_history_sync',
-      openid: wechatOrder.openid,
-      unionid: wechatOrder.unionid,
-    };
+    const addressInfo = deliveryInfo?.address_info;
 
     const orderData = {
-      status: mapWechatShopStatus(wechatOrder.status),
+      status: mapWechatShopStatus(order.status),
       paidAt: payInfo?.pay_time ? new Date(payInfo.pay_time * 1000) : undefined,
       amount: priceInfo?.order_price,
       paymentProvider: payInfo?.transaction_id
@@ -57,8 +55,12 @@ export class WechatShopOrderService {
         addressInfo?.virtual_order_tel_number ||
         addressInfo?.purchaser_tel_number,
       phoneCode: '+86',
-      externalId: String(wechatOrder.order_id),
-      metadata: metadata as Prisma.InputJsonValue,
+      externalId: String(order.order_id),
+      metadata: {
+        source: 'wechat_shop_history_sync',
+        openid: order.openid,
+        unionid: order.unionid,
+      } as Prisma.InputJsonValue,
     };
 
     return this.wechatShopRepository.upsert({
