@@ -29,7 +29,8 @@ export class WechatShopOrderService {
    * 针对微信订单号主动拉取，并进行同步写入。
    */
   async syncSingle(orderId: string) {
-    const wechatOrder = await this.wechatShopClient.getOrder(orderId);
+    const response = await this.wechatShopClient.getOrder(orderId);
+    const wechatOrder = response.order!;
 
     const product = wechatOrder.order_detail?.product_infos?.[0];
     const payInfo = wechatOrder.order_detail?.pay_info;
