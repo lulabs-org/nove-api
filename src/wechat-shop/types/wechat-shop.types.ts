@@ -31,7 +31,6 @@ export interface WechatShopApiResponse {
   errmsg?: string;
 }
 
-
 /**
  * 获取订单列表的请求参数
  */
@@ -61,8 +60,6 @@ export interface OrderListResponse {
   /** 是否还有更多数据 */
   has_more?: boolean;
 }
-
-
 
 /**
  * 订单详情响应结果

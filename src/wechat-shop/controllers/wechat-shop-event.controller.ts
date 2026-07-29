@@ -28,7 +28,7 @@ export class WechatShopEventController {
   constructor(
     private readonly wechatShopEventService: WechatShopEventService,
     @Inject(wechatShopConfig.KEY) private readonly config: WechatShopConfig,
-  ) { }
+  ) {}
 
   @Public()
   @Get()

@@ -5,7 +5,6 @@ export interface WechatOrderUnixRange {
   endTime: number;
 }
 
-
 /**
  * 微信订单列表接口限制单次时间范围不超过 7 天。
  *

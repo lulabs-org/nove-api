@@ -31,7 +31,7 @@ export class WechatShopClientService {
 
   /**
    * 获取订单列表
-   * 
+   *
    * @see https://developers.weixin.qq.com/doc/store/shop/API/channels-shop-order/api_getorderlist.html
    * @param params 请求参数。注意：createTimeRange 和 updateTimeRange 至少需要传入一个，且每次请求时间跨度不可超过 7 天
    * @returns 微信订单列表及分页游标
@@ -44,7 +44,7 @@ export class WechatShopClientService {
 
   /**
    * 获取订单详情
-   * 
+   *
    * @see https://developers.weixin.qq.com/doc/store/shop/API/channels-shop-order/api_getorder.html
    * @param orderId 订单 ID，可通过 获取订单列表 接口获取
    * @returns 微信订单详细数据信息
@@ -61,7 +61,10 @@ export class WechatShopClientService {
     );
 
     if (!response?.order) {
-      this.logger.error(`Wechat order detail missing: orderId=${orderId}`, response);
+      this.logger.error(
+        `Wechat order detail missing: orderId=${orderId}`,
+        response,
+      );
       throw new ServiceUnavailableException(
         `Wechat order detail missing: orderId=${orderId}`,
       );
@@ -72,7 +75,7 @@ export class WechatShopClientService {
 
   /**
    * 通用微信小店 API 请求封装
-   * 
+   *
    * 默认注入 access_token 并使用 POST 方式
    */
   private async request<T>(
@@ -84,13 +87,20 @@ export class WechatShopClientService {
       headers?: Record<string, string>;
       /** 是否跳过自动注入 access_token (部分特殊接口如获取 token 可能会用到) */
       skipToken?: boolean;
-    }
+    },
   ): Promise<T> {
-    const { method = 'POST', data, params = {}, headers, skipToken } = options ?? {};
+    const {
+      method = 'POST',
+      data,
+      params = {},
+      headers,
+      skipToken,
+    } = options ?? {};
 
     const mergedParams = { ...params };
     if (!skipToken) {
-      mergedParams['access_token'] = await this.wechatShopTokenService.getAccessToken();
+      mergedParams['access_token'] =
+        await this.wechatShopTokenService.getAccessToken();
     }
 
     const { data: responseData } = await firstValueFrom(

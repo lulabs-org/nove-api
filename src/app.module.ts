@@ -135,4 +135,4 @@ import { OAuthModule } from './oauth/oauth.module';
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}

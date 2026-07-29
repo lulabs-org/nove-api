@@ -14,14 +14,14 @@ export class WechatShopEventService {
     string,
     (payload: any) => Promise<void>
   > = {
-      channels_ec_order_pay: (payload) => this.handleOrderPay(payload),
-      channels_ec_aftersale_update: (payload) =>
-        this.handleAftersaleUpdate(payload),
-    };
+    channels_ec_order_pay: (payload) => this.handleOrderPay(payload),
+    channels_ec_aftersale_update: (payload) =>
+      this.handleAftersaleUpdate(payload),
+  };
 
   constructor(
     private readonly wechatShopOrderService: WechatShopOrderService,
-  ) { }
+  ) {}
 
   /**
    * 处理微信小店 Webhook 事件

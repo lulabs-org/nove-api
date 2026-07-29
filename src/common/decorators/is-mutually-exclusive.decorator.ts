@@ -9,10 +9,14 @@ import {
 } from 'class-validator';
 
 @ValidatorConstraint({ name: 'isMutuallyExclusive', async: false })
-export class IsMutuallyExclusiveConstraint implements ValidatorConstraintInterface {
+export class IsMutuallyExclusiveConstraint
+  implements ValidatorConstraintInterface
+{
   validate(value: any, args: ValidationArguments): boolean {
     const [relatedPropertyName] = args.constraints;
-    const relatedValue = (args.object as Record<string, any>)[relatedPropertyName];
+    const relatedValue = (args.object as Record<string, any>)[
+      relatedPropertyName
+    ];
 
     // 如果当前字段有值，则关联字段必须为空 (null 或 undefined)
     if (value != null) {
@@ -38,7 +42,7 @@ export function IsMutuallyExclusive(
   relatedProperty: string,
   validationOptions?: ValidationOptions,
 ) {
-  return function (target: Object, propertyName: string) {
+  return function (target: object, propertyName: string) {
     // 技巧：为了避免两个字段互相校验产生两条重复的错误信息，
     // 我们约定只在字典序较小的一侧注册校验规则。
     // 因为互斥校验是双向的，一侧拦截就足够了。
@@ -50,10 +54,9 @@ export function IsMutuallyExclusive(
     }
 
     // 1. 核心逻辑：如果当前字段有值，或者关联字段没值，才进入后续校验。
-    ValidateIf((o: any) => o[propertyName] != null || o[relatedProperty] == null)(
-      target,
-      propertyName,
-    );
+    ValidateIf(
+      (o: any) => o[propertyName] != null || o[relatedProperty] == null,
+    )(target, propertyName);
 
     // 2. 保证非空（配合上面的 ValidateIf 实现了“至少填一个”的限制）
     IsDefined({

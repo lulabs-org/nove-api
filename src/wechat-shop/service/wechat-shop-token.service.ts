@@ -11,7 +11,6 @@ import { AxiosError } from 'axios';
 import { RedisService } from '@/redis/redis.service';
 import { WechatShopApiResponse } from '../types/wechat-shop.types';
 
-
 @Injectable()
 export class WechatShopTokenService {
   private readonly logger = new Logger(WechatShopTokenService.name);
@@ -59,7 +58,9 @@ export class WechatShopTokenService {
         const token = await redisClient.get(this.redisKey);
         if (token) return token;
       } catch (err) {
-        this.logger.warn(`Failed to get access token from Redis: ${(err as Error).message}`);
+        this.logger.warn(
+          `Failed to get access token from Redis: ${(err as Error).message}`,
+        );
       }
     }
 
@@ -119,7 +120,9 @@ export class WechatShopTokenService {
       try {
         await redisClient.set(this.redisKey, token, 'EX', ttl);
       } catch (err) {
-        this.logger.warn(`Failed to set access token to Redis: ${(err as Error).message}`);
+        this.logger.warn(
+          `Failed to set access token to Redis: ${(err as Error).message}`,
+        );
       }
     }
   }

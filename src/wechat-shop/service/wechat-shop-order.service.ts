@@ -23,7 +23,7 @@ export class WechatShopOrderService {
     private readonly wechatShopRepository: WechatShopRepository,
     private readonly wechatShopClient: WechatShopClientService,
     @InjectQueue('wechat-order-sync') private orderQueue: Queue,
-  ) { }
+  ) {}
 
   /**
    * 针对微信订单号主动拉取，并进行同步写入。
@@ -83,7 +83,9 @@ export class WechatShopOrderService {
       );
     }
 
-    const timeRangeKey = payload.update_time_range ? 'update_time_range' : 'create_time_range';
+    const timeRangeKey = payload.update_time_range
+      ? 'update_time_range'
+      : 'create_time_range';
     const { start_time, end_time } = payload[timeRangeKey]!;
 
     const startTime = Math.floor(new Date(start_time).getTime() / 1000);
@@ -104,7 +106,7 @@ export class WechatShopOrderService {
       ranges.map((range) => ({
         name: 'sync-history-range',
         data: { range, pageSize: DEFAULT_PAGE_SIZE, timeRangeKey },
-      }))
+      })),
     );
 
     return { enqueuedRangeTasks: ranges.length };
@@ -126,7 +128,10 @@ export class WechatShopOrderService {
 
     while (hasMore) {
       const listResult = await this.wechatShopClient.getOrderList({
-        [timeRangeKey]: { start_time: range.startTime, end_time: range.endTime },
+        [timeRangeKey]: {
+          start_time: range.startTime,
+          end_time: range.endTime,
+        },
         page_size: pageSize,
         next_key: nextKey,
       });
@@ -138,7 +143,7 @@ export class WechatShopOrderService {
           orderIds.map((id) => ({
             name: 'sync-single-order',
             data: { orderId: String(id) },
-          }))
+          })),
         );
         enqueued += orderIds.length;
       }

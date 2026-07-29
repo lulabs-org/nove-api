@@ -1,6 +1,5 @@
 import { OrderStatus } from '@prisma/client';
 
-
 export function mapWechatShopStatus(
   status: number | undefined,
 ): OrderStatus | undefined {

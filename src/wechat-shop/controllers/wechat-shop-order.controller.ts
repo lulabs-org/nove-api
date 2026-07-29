@@ -9,7 +9,7 @@ import { RequireRoles } from '@/role/decorators/roles.decorator';
 export class WechatShopOrderController {
   constructor(
     private readonly wechatShopOrderService: WechatShopOrderService,
-  ) { }
+  ) {}
 
   @RequireRoles('SUPER_ADMIN')
   @Post('history-sync')
