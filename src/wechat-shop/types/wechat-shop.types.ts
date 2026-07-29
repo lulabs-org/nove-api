@@ -146,6 +146,8 @@ export interface WechatShopOrder {
         tel_number?: string;
         /** 虚拟收货号码（隐私号） */
         virtual_order_tel_number?: string;
+        /** 购买人电话（常用于虚拟商品） */
+        purchaser_tel_number?: string;
         /** 使用电话的类型 */
         use_tel_number?: number;
       };

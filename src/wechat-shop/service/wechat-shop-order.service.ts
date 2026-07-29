@@ -23,7 +23,7 @@ export class WechatShopOrderService {
     private readonly wechatShopRepository: WechatShopRepository,
     private readonly wechatShopClient: WechatShopClientService,
     @InjectQueue('wechat-order-sync') private orderQueue: Queue,
-  ) {}
+  ) { }
 
   /**
    * 针对微信订单号主动拉取，并进行同步写入。
@@ -52,7 +52,11 @@ export class WechatShopOrderService {
         : undefined,
       providerTradeNo: payInfo?.transaction_id,
       productName: product?.title,
-      phone: addressInfo?.tel_number,
+      phone:
+        addressInfo?.tel_number ||
+        addressInfo?.virtual_order_tel_number ||
+        addressInfo?.purchaser_tel_number,
+      phoneCode: '+86',
       externalId: String(wechatOrder.order_id),
       metadata: metadata as Prisma.InputJsonValue,
     };
