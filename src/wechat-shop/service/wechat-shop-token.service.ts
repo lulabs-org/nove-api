@@ -11,13 +11,12 @@ import { AxiosError } from 'axios';
 import { RedisService } from '@/redis/redis.service';
 import { WechatShopApiResponse } from '../types/wechat-shop.types';
 
-const TOKEN_REFRESH_SKEW_MS = 5 * 60 * 1000;
 
 @Injectable()
 export class WechatShopTokenService {
   private readonly logger = new Logger(WechatShopTokenService.name);
-  private cachedAccessToken?: string;
-  private cachedAccessTokenExpiresAt = 0;
+  private memoryToken?: string;
+  private memoryTokenExpiresAt = 0;
   private readonly appId: string;
   private readonly appSecret: string;
   private readonly redisKey: string;
@@ -43,8 +42,8 @@ export class WechatShopTokenService {
   }
 
   async getAccessToken(): Promise<string> {
-    const cachedToken = await this.getTokenFromCache();
-    if (cachedToken) return cachedToken;
+    const token = await this.getTokenFromCache();
+    if (token) return token;
 
     const { access_token, expires_in } = await this.fetchToken();
     await this.saveTokenToCache(access_token, expires_in ?? 7200);
@@ -60,16 +59,15 @@ export class WechatShopTokenService {
         const token = await redisClient.get(this.redisKey);
         if (token) return token;
       } catch (err) {
-        this.logger.warn(
-          `Failed to get access token from Redis: ${(err as Error).message}`,
-        );
+        this.logger.warn(`Failed to get access token from Redis: ${(err as Error).message}`);
       }
-    } else if (
-      this.cachedAccessToken &&
-      Date.now() < this.cachedAccessTokenExpiresAt - TOKEN_REFRESH_SKEW_MS
-    ) {
-      return this.cachedAccessToken;
     }
+
+    // Fallback to memory cache
+    if (this.memoryToken && Date.now() < this.memoryTokenExpiresAt) {
+      return this.memoryToken;
+    }
+
     return undefined;
   }
 
@@ -93,12 +91,15 @@ export class WechatShopTokenService {
       );
     });
 
-    if (data.errcode)
+    if (data.errcode) {
       throw new ServiceUnavailableException(
         `Wechat token error: ${data.errcode} ${data.errmsg}`,
       );
-    if (!data.access_token)
+    }
+
+    if (!data.access_token) {
       throw new ServiceUnavailableException('Wechat access token missing');
+    }
 
     return { access_token: data.access_token, expires_in: data.expires_in };
   }
@@ -110,17 +111,15 @@ export class WechatShopTokenService {
     const ttl = Math.max(1, expiresIn - 300); // 提前 5 分钟过期
 
     // Always update memory cache as fallback
-    this.cachedAccessToken = token;
-    this.cachedAccessTokenExpiresAt = Date.now() + ttl * 1000;
+    this.memoryToken = token;
+    this.memoryTokenExpiresAt = Date.now() + ttl * 1000;
 
     const redisClient = this.redisService.getClient();
     if (this.redisService.isReady() && redisClient) {
       try {
         await redisClient.set(this.redisKey, token, 'EX', ttl);
       } catch (err) {
-        this.logger.warn(
-          `Failed to set access token to Redis: ${(err as Error).message}`,
-        );
+        this.logger.warn(`Failed to set access token to Redis: ${(err as Error).message}`);
       }
     }
   }

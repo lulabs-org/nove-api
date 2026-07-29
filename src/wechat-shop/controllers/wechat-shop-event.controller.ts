@@ -22,18 +22,18 @@ import {
   WechatEventBodyDto,
 } from '../dto/wechat-event-webhook.dto';
 
-@ApiTags('Wechat Shop Events')
+@ApiTags('Wechat Shop')
 @Controller('webhooks/wechat-shop/events')
 export class WechatShopEventController {
   constructor(
     private readonly wechatShopEventService: WechatShopEventService,
     @Inject(wechatShopConfig.KEY) private readonly config: WechatShopConfig,
-  ) {}
+  ) { }
 
   @Public()
   @Get()
   @ApiOperation({
-    summary: 'Verify WeChat webhook URL',
+    summary: 'Verify webhook',
     description: '用于接收并响应微信小店事件推送服务器的 URL 验证请求。',
   })
   verifyWebhook(
@@ -63,7 +63,7 @@ export class WechatShopEventController {
   @Post()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Receive WeChat shop events',
+    summary: 'Receive events',
     description:
       '接收微信小店的各类事件推送（如订单、售后、商品等），并进行统一验证、解密和分发。',
   })

@@ -4,7 +4,7 @@ import { Public } from '@/auth/decorators/public.decorator';
 import { WechatOrderHistorySyncDto } from '../dto/wechat-order-history-sync.dto';
 import { WechatShopOrderService } from '../service/wechat-shop-order.service';
 
-@ApiTags('Orders')
+@ApiTags('Wechat Shop')
 @Controller('wechat-shop/orders')
 export class WechatShopOrderController {
   constructor(
@@ -15,7 +15,7 @@ export class WechatShopOrderController {
   @Post('history-sync')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Sync historical WeChat shop orders',
+    summary: 'Sync historical orders',
     description:
       '后台按 7 天时间片分页拉取微信小店历史订单并分发异步任务写入 orders 表，最大支持 1 年跨度。',
   })
