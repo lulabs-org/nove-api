@@ -1,4 +1,4 @@
-import { randomInt, createHash } from 'node:crypto';
+import { randomInt } from 'node:crypto';
 
 const ORDER_NUMBER_MASK = 0x5a17c3e5b79fn;
 
@@ -41,17 +41,8 @@ export function generateOrderCode(): string {
  * 对外展示订单号由内部订单号编码得到，避免直接暴露连续数字。
  */
 export function encodeOrderNumber(orderCode: string): string {
-  try {
-    const encoded = BigInt(orderCode) ^ ORDER_NUMBER_MASK;
+  // 严格要求 orderCode 为纯数字。如果含有非数字字符，BigInt 会自然抛出异常，符合 Fail-Fast 原则
+  const encoded = BigInt(orderCode) ^ ORDER_NUMBER_MASK;
 
-    return encoded.toString(36).toUpperCase();
-  } catch {
-    // Fallback: stable hash-based encoding when orderCode is not a valid integer
-    const hash = createHash('sha256').update(String(orderCode)).digest('hex');
-    // take a prefix of the hex hash and convert to BigInt for base36 encoding
-    const prefix = hash.slice(0, 12); // 12 hex chars -> up to 48 bits
-    const safeBigInt = BigInt('0x' + prefix);
-
-    return safeBigInt.toString(36).toUpperCase();
-  }
+  return encoded.toString(36).toUpperCase();
 }
