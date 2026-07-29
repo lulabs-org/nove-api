@@ -9,7 +9,6 @@ import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { AxiosError } from 'axios';
 import {
-  WechatShopOrder,
   OrderListResponse,
   OrderDetailResponse,
   WechatShopApiResponse,
@@ -37,37 +36,10 @@ export class WechatShopClientService {
    * @param params 请求参数。注意：createTimeRange 和 updateTimeRange 至少需要传入一个，且每次请求时间跨度不可超过 7 天
    * @returns 微信订单列表及分页游标
    */
-  async getOrderList({
-    createTimeRange,
-    updateTimeRange,
-    pageSize,
-    nextKey,
-    status,
-    openid,
-  }: GetOrderListParams): Promise<OrderListResponse> {
-    return this.request<OrderListResponse>(
-      '/channels/ec/order/list/get',
-      {
-        data: {
-          ...(pageSize !== undefined && { page_size: pageSize }),
-          next_key: nextKey ?? '',
-          ...(createTimeRange && {
-            create_time_range: {
-              start_time: createTimeRange.startTime,
-              end_time: createTimeRange.endTime,
-            },
-          }),
-          ...(updateTimeRange && {
-            update_time_range: {
-              start_time: updateTimeRange.startTime,
-              end_time: updateTimeRange.endTime,
-            },
-          }),
-          ...(status !== undefined && { status }),
-          ...(openid && { openid }),
-        }
-      },
-    );
+  async getOrderList(params: GetOrderListParams): Promise<OrderListResponse> {
+    return this.request<OrderListResponse>('/channels/ec/order/list/get', {
+      data: params as Record<string, unknown>,
+    });
   }
 
   /**

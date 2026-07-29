@@ -1,40 +1,33 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsDateString,
-  IsIn,
-  IsInt,
-  IsOptional,
-  Max,
-  Min,
-} from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsDateString, IsOptional, ValidateNested } from 'class-validator';
+
+export class WechatOrderTimeRangeDto {
+  @ApiProperty({ description: '开始时间，ISO 8601 格式' })
+  @IsDateString()
+  start_time!: string;
+
+  @ApiProperty({ description: '结束时间，ISO 8601 格式' })
+  @IsDateString()
+  end_time!: string;
+}
 
 export class WechatOrderHistorySyncDto {
-  @ApiProperty({ description: '同步开始时间，ISO 8601 格式，与结束时间跨度最大为1年' })
-  @IsDateString()
-  startTime!: string;
-
-  @ApiProperty({ description: '同步结束时间，ISO 8601 格式，与开始时间跨度最大为1年' })
-  @IsDateString()
-  endTime!: string;
-
   @ApiPropertyOptional({
-    enum: ['create', 'update'],
-    default: 'create',
-    description: '按订单创建时间或更新时间拉取',
+    description: '订单创建时间范围，时间范围至少填一个',
+    type: WechatOrderTimeRangeDto,
   })
   @IsOptional()
-  @IsIn(['create', 'update'])
-  timeType?: 'create' | 'update';
+  @ValidateNested()
+  @Type(() => WechatOrderTimeRangeDto)
+  create_time_range?: WechatOrderTimeRangeDto;
 
   @ApiPropertyOptional({
-    description: '每页数量，微信小店限制不超过 100',
-    default: 100,
-    minimum: 1,
-    maximum: 100,
+    description: '订单更新时间范围，时间范围至少填一个',
+    type: WechatOrderTimeRangeDto,
   })
   @IsOptional()
-  @IsInt()
-  @Min(1)
-  @Max(100)
-  pageSize?: number;
+  @ValidateNested()
+  @Type(() => WechatOrderTimeRangeDto)
+  update_time_range?: WechatOrderTimeRangeDto;
 }

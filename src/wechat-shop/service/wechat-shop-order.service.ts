@@ -5,9 +5,7 @@ import { WechatOrderHistorySyncDto } from '../dto/wechat-order-history-sync.dto'
 import { Prisma, PaymentProvider } from '@prisma/client';
 import { WechatShopRepository } from '../repositories';
 import {
-  DEFAULT_WECHAT_ORDER_PAGE_SIZE,
-  splitWechatOrderRanges,
-  toUnixSeconds,
+  splitTimeRanges,
   WechatOrderUnixRange,
 } from '../utils/wechat-order-sync.util';
 import { WechatShopClientService } from './wechat-shop-client.service';
@@ -17,13 +15,15 @@ import {
 } from '../utils/order-number.util';
 import { mapWechatShopStatus } from '../utils/wechat-order.mapper';
 
+const DEFAULT_PAGE_SIZE = 100;
+
 @Injectable()
 export class WechatShopOrderService {
   constructor(
     private readonly wechatShopRepository: WechatShopRepository,
     private readonly wechatShopClient: WechatShopClientService,
     @InjectQueue('wechat-order-sync') private orderQueue: Queue,
-  ) {}
+  ) { }
 
   /**
    * 针对微信订单号主动拉取，并进行同步写入。
@@ -77,15 +77,17 @@ export class WechatShopOrderService {
    * 为防止接口超时，直接将切片后的 7 天任务分发到 BullMQ 异步处理。
    */
   async syncHistory(payload: WechatOrderHistorySyncDto) {
-    const {
-      startTime: startStr,
-      endTime: endStr,
-      pageSize = DEFAULT_WECHAT_ORDER_PAGE_SIZE,
-      timeType = 'create',
-    } = payload;
+    if (!payload.create_time_range && !payload.update_time_range) {
+      throw new BadRequestException(
+        'At least one of create_time_range or update_time_range must be provided',
+      );
+    }
 
-    const startTime = toUnixSeconds(startStr);
-    const endTime = toUnixSeconds(endStr);
+    const timeRangeKey = payload.update_time_range ? 'update_time_range' : 'create_time_range';
+    const { start_time, end_time } = payload[timeRangeKey]!;
+
+    const startTime = Math.floor(new Date(start_time).getTime() / 1000);
+    const endTime = Math.floor(new Date(end_time).getTime() / 1000);
 
     if (startTime >= endTime) {
       throw new BadRequestException('startTime must be earlier than endTime');
@@ -96,20 +98,16 @@ export class WechatShopOrderService {
       throw new BadRequestException('Time range cannot exceed 1 year');
     }
 
-    const ranges = splitWechatOrderRanges(startTime, endTime);
-    
-    const jobs = ranges.map((range) => ({
-      name: 'sync-history-range',
-      data: {
-        range,
-        pageSize,
-        timeType,
-      },
-    }));
+    const ranges = splitTimeRanges(startTime, endTime);
 
-    await this.orderQueue.addBulk(jobs);
+    await this.orderQueue.addBulk(
+      ranges.map((range) => ({
+        name: 'sync-history-range',
+        data: { range, pageSize: DEFAULT_PAGE_SIZE, timeRangeKey },
+      }))
+    );
 
-    return { enqueuedRangeTasks: jobs.length };
+    return { enqueuedRangeTasks: ranges.length };
   }
 
   /**
@@ -118,36 +116,34 @@ export class WechatShopOrderService {
   async processHistoryRange(data: {
     range: WechatOrderUnixRange;
     pageSize: number;
-    timeType: 'create' | 'update';
+    timeRangeKey: 'create_time_range' | 'update_time_range';
   }) {
-    const { range, pageSize, timeType } = data;
-    const timeRangeKey =
-      timeType === 'update' ? 'updateTimeRange' : 'createTimeRange';
-    
-    let nextKey = '';
+    const { range, pageSize, timeRangeKey } = data;
+
+    let nextKey: string | undefined;
     let hasMore = true;
     let enqueued = 0;
 
     while (hasMore) {
       const listResult = await this.wechatShopClient.getOrderList({
-        [timeRangeKey]: range,
-        pageSize,
-        nextKey,
+        [timeRangeKey]: { start_time: range.startTime, end_time: range.endTime },
+        page_size: pageSize,
+        next_key: nextKey,
       });
 
       const orderIds = listResult.order_id_list ?? listResult.orders ?? [];
 
       if (orderIds.length > 0) {
-        const jobs = orderIds.map((id) => ({
-          name: 'sync-single-order',
-          data: { orderId: String(id) },
-        }));
-
-        await this.orderQueue.addBulk(jobs);
+        await this.orderQueue.addBulk(
+          orderIds.map((id) => ({
+            name: 'sync-single-order',
+            data: { orderId: String(id) },
+          }))
+        );
         enqueued += orderIds.length;
       }
 
-      nextKey = listResult.next_key ?? '';
+      nextKey = listResult.next_key;
       hasMore = Boolean(listResult.has_more && nextKey);
     }
 

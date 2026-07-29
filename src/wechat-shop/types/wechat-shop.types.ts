@@ -31,28 +31,19 @@ export interface WechatShopApiResponse {
   errmsg?: string;
 }
 
-/**
- * 时间范围查询参数
- */
-export interface TimeRange {
-  /** 起始时间（秒级时间戳） */
-  startTime: number;
-  /** 结束时间（秒级时间戳） */
-  endTime: number;
-}
 
 /**
  * 获取订单列表的请求参数
  */
 export interface GetOrderListParams {
-  /** 订单创建时间范围（与 updateTimeRange 至少填一个，跨度不超过7天） */
-  createTimeRange?: TimeRange;
-  /** 订单更新时间范围（与 createTimeRange 至少填一个，跨度不超过7天） */
-  updateTimeRange?: TimeRange;
+  /** 订单创建时间范围（与 update_time_range 至少填一个，跨度不超过7天） */
+  create_time_range?: { start_time: number; end_time: number };
+  /** 订单更新时间范围（与 create_time_range 至少填一个，跨度不超过7天） */
+  update_time_range?: { start_time: number; end_time: number };
   /** 每页数量，不超过100 */
-  pageSize?: number;
+  page_size?: number;
   /** 分页游标，上一页请求返回 */
-  nextKey?: string;
+  next_key?: string;
   /** 订单状态过滤 */
   status?: WechatShopOrderStatus | number;
   /** 买家 openid 过滤 */
