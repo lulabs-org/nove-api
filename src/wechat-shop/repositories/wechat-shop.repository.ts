@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
-
 type CreateOrderData = Prisma.OrderUncheckedCreateInput;
 type UpdateOrderData = Prisma.OrderUncheckedUpdateInput;
 
@@ -39,5 +38,32 @@ export class WechatShopRepository {
       where: { id },
       data,
     });
+  }
+
+  /**
+   * 订单的幂等写入：存在则更新，不存在则创建。
+   */
+  async upsert(params: {
+    externalId: string;
+    create:
+      | CreateOrderData
+      | (() => CreateOrderData | Promise<CreateOrderData>);
+    update: UpdateOrderData;
+  }) {
+    const existingOrder = await this.findLatestByExternalId(params.externalId);
+
+    if (existingOrder) {
+      const order = await this.update(existingOrder.id, params.update);
+
+      return { action: 'updated' as const, order };
+    }
+
+    const createData =
+      typeof params.create === 'function'
+        ? await params.create()
+        : params.create;
+    const order = await this.create(createData);
+
+    return { action: 'created' as const, order };
   }
 }

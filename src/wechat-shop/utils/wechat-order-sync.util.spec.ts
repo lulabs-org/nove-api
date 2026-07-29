@@ -1,34 +1,34 @@
 import {
-  WECHAT_ORDER_MAX_RANGE_SECONDS,
-  splitWechatOrderRanges,
+  MAX_TIME_RANGE_SECONDS,
+  splitTimeRanges,
 } from './wechat-order-sync.util';
 
 describe('wechat-order-sync.util', () => {
-  describe('splitWechatOrderRanges', () => {
+  describe('splitTimeRanges', () => {
     it('splits long ranges into contiguous 7-day windows', () => {
       const startTime = 1000;
-      const endTime = startTime + WECHAT_ORDER_MAX_RANGE_SECONDS * 2 + 12;
+      const endTime = startTime + MAX_TIME_RANGE_SECONDS * 2 + 12;
 
-      const ranges = splitWechatOrderRanges(startTime, endTime);
+      const ranges = splitTimeRanges(startTime, endTime);
 
       expect(ranges).toEqual([
         {
-          startTime,
-          endTime: startTime + WECHAT_ORDER_MAX_RANGE_SECONDS,
+          startTime: startTime,
+          endTime: startTime + MAX_TIME_RANGE_SECONDS,
         },
         {
-          startTime: startTime + WECHAT_ORDER_MAX_RANGE_SECONDS,
-          endTime: startTime + WECHAT_ORDER_MAX_RANGE_SECONDS * 2,
+          startTime: startTime + MAX_TIME_RANGE_SECONDS + 1,
+          endTime: startTime + MAX_TIME_RANGE_SECONDS * 2 + 1,
         },
         {
-          startTime: startTime + WECHAT_ORDER_MAX_RANGE_SECONDS * 2,
-          endTime,
+          startTime: startTime + MAX_TIME_RANGE_SECONDS * 2 + 2,
+          endTime: endTime,
         },
       ]);
     });
 
     it('returns one range when duration is within the WeChat limit', () => {
-      expect(splitWechatOrderRanges(1000, 2000)).toEqual([
+      expect(splitTimeRanges(1000, 2000)).toEqual([
         { startTime: 1000, endTime: 2000 },
       ]);
     });
