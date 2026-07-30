@@ -89,6 +89,7 @@
     "cookie-parser": "^1.4.7",
     "dotenv": "^17.2.2",
     "express-basic-auth": "^1.2.1",
+    "fast-xml-parser": "^5.10.1",
     "graphql": "^16.11.0",
     "ioredis": "^5.4.1",
     "nestjs-redoc": "^2.2.2",
