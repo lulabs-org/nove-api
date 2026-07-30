@@ -12,8 +12,9 @@ import {
   splitTimeRanges,
   WechatOrderUnixRange,
 } from '../utils';
+import { UserCommandRepository } from '@/user/repositories/user-command.repository';
+import { UserQueryRepository } from '@/user/repositories/user-query.repository';
 import { WechatShopClientService } from './wechat-shop-client.service';
-
 const DEFAULT_PAGE_SIZE = 100;
 
 @Injectable()
@@ -21,6 +22,8 @@ export class WechatShopOrderService {
   constructor(
     private readonly wechatShopRepository: WechatShopRepository,
     private readonly wechatShopClient: WechatShopClientService,
+    private readonly userQuery: UserQueryRepository,
+    private readonly userCommand: UserCommandRepository,
     @InjectQueue('wechat-order-sync') private orderQueue: Queue,
   ) {}
 
@@ -40,6 +43,29 @@ export class WechatShopOrderService {
 
     const addressInfo = deliveryInfo?.address_info;
 
+    const phone =
+      addressInfo?.tel_number ||
+      addressInfo?.virtual_order_tel_number ||
+      addressInfo?.purchaser_tel_number;
+
+    let purchaserId: string | undefined;
+
+    if (phone) {
+      let user = await this.userQuery.byPhone('+86', phone);
+      if (!user) {
+        const defaultName =
+          addressInfo?.user_name || `微信小店用户${phone.slice(-4)}`;
+        user = await this.userCommand.createWithProfile({
+          phone,
+          countryCode: '+86',
+          password: null,
+          username: defaultName,
+          profileName: defaultName,
+        });
+      }
+      purchaserId = user.id;
+    }
+
     const orderData = {
       status: mapWechatShopStatus(order.status),
       paidAt: payInfo?.pay_time ? new Date(payInfo.pay_time * 1000) : undefined,
@@ -49,11 +75,9 @@ export class WechatShopOrderService {
         : undefined,
       providerTradeNo: payInfo?.transaction_id,
       productName: product?.title,
-      phone:
-        addressInfo?.tel_number ||
-        addressInfo?.virtual_order_tel_number ||
-        addressInfo?.purchaser_tel_number,
+      phone,
       phoneCode: '+86',
+      purchaserId,
       externalId: String(order.order_id),
       metadata: {
         source: 'wechat_shop_history_sync',
