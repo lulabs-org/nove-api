@@ -59,6 +59,7 @@ import { OAuthClientAdminModule } from './admin/oauth-client/oauth-client-admin.
 import { ProjectModule } from './project/project.module';
 import { ProfitSharingModule } from './profit-sharing/profit-sharing.module';
 import { DriveModule } from './drive/drive.module';
+import { WecomModule } from './wecom/wecom.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -134,6 +135,7 @@ import { DriveModule } from './drive/drive.module';
     ProjectModule,
     ProfitSharingModule,
     DriveModule,
+    WecomModule,
   ],
   controllers: [AppController],
   providers: [
