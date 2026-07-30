@@ -1,19 +1,20 @@
+import { HttpService } from '@nestjs/axios';
 import {
+  Inject,
   Injectable,
   Logger,
   ServiceUnavailableException,
-  Inject,
 } from '@nestjs/common';
-import { wechatShopConfig, WechatShopConfig } from '@/configs';
-import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
 import { AxiosError } from 'axios';
+import { firstValueFrom } from 'rxjs';
+
+import { wechatShopConfig, WechatShopConfig } from '@/configs';
 import {
-  OrderListResponse,
-  OrderDetailResponse,
-  WechatShopApiResponse,
   GetOrderListParams,
-} from '../types/wechat-shop.types';
+  OrderDetailResponse,
+  OrderListResponse,
+  WechatShopApiResponse,
+} from '../types';
 import { WechatShopTokenService } from './wechat-shop-token.service';
 
 @Injectable()

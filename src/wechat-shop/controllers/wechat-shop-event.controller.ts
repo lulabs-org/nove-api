@@ -1,26 +1,21 @@
 import {
+  Body,
   Controller,
   Get,
-  Post,
-  Body,
-  Query,
   HttpCode,
   HttpStatus,
-  UnauthorizedException,
   Inject,
+  Post,
+  Query,
+  UnauthorizedException,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { wechatShopConfig, WechatShopConfig } from '@/configs';
-import {
-  generateSignature,
-  decryptWechatMessage,
-} from '../utils/wechat-crypto.util';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
+
 import { Public } from '@/auth/decorators/public.decorator';
-import { WechatShopEventService } from '../service/wechat-shop-event.service';
-import {
-  WechatEventQueryDto,
-  WechatEventBodyDto,
-} from '../dto/wechat-event-webhook.dto';
+import { wechatShopConfig, WechatShopConfig } from '@/configs';
+import { WechatEventBodyDto, WechatEventQueryDto } from '../dto';
+import { WechatShopEventService } from '../service';
+import { decryptWechatMessage, generateSignature } from '../utils';
 
 @ApiTags('Wechat Shop')
 @Controller('webhooks/wechat-shop/events')

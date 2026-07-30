@@ -1,9 +1,16 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
-import { WechatOrderHistorySyncDto } from '../dto/wechat-order-history-sync.dto';
-import { WechatShopOrderService } from '../service/wechat-shop-order.service';
-import { RequireRoles } from '@/role/decorators/roles.decorator';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+
 import { NoPermissionRequired } from '@/permission/decorators/permissions.decorator';
+import { RequireRoles } from '@/role/decorators/roles.decorator';
+import { WechatOrderHistorySyncDto } from '../dto';
+import { WechatShopOrderService } from '../service';
 
 @ApiTags('Wechat Shop')
 @ApiBearerAuth()
@@ -11,7 +18,7 @@ import { NoPermissionRequired } from '@/permission/decorators/permissions.decora
 export class WechatShopOrderController {
   constructor(
     private readonly wechatShopOrderService: WechatShopOrderService,
-  ) { }
+  ) {}
 
   @RequireRoles('SUPER_ADMIN')
   @NoPermissionRequired()

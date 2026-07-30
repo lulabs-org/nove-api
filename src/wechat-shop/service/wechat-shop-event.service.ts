@@ -1,9 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { WechatShopOrderService } from './wechat-shop-order.service';
+
 import {
-  ChannelsEcOrderPayEvent,
   ChannelsEcAftersaleUpdateEvent,
-} from '../types/wechat-shop-event.types';
+  ChannelsEcOrderPayEvent,
+} from '../types';
+import { WechatShopOrderService } from './wechat-shop-order.service';
 
 @Injectable()
 export class WechatShopEventService {
