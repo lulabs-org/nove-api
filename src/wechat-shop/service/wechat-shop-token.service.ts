@@ -1,15 +1,16 @@
+import { HttpService } from '@nestjs/axios';
 import {
+  Inject,
   Injectable,
   Logger,
   ServiceUnavailableException,
-  Inject,
 } from '@nestjs/common';
-import { wechatShopConfig, WechatShopConfig } from '@/configs';
-import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
 import { AxiosError } from 'axios';
+import { firstValueFrom } from 'rxjs';
+
+import { wechatShopConfig, WechatShopConfig } from '@/configs';
 import { RedisService } from '@/redis/redis.service';
-import { WechatShopApiResponse } from '../types/wechat-shop.types';
+import { WechatShopApiResponse } from '../types';
 
 @Injectable()
 export class WechatShopTokenService {

@@ -1,19 +1,18 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { PaymentProvider, Prisma } from '@prisma/client';
 import { Queue } from 'bullmq';
+
 import { WechatOrderHistorySyncDto } from '../dto/wechat-order-history-sync.dto';
-import { Prisma, PaymentProvider } from '@prisma/client';
 import { WechatShopRepository } from '../repositories';
 import {
+  encodeOrderNumber,
+  generateOrderCode,
+  mapWechatShopStatus,
   splitTimeRanges,
   WechatOrderUnixRange,
-} from '../utils/wechat-order-sync.util';
+} from '../utils';
 import { WechatShopClientService } from './wechat-shop-client.service';
-import {
-  generateOrderCode,
-  encodeOrderNumber,
-} from '../utils/order-number.util';
-import { mapWechatShopStatus } from '../utils/wechat-order.mapper';
 
 const DEFAULT_PAGE_SIZE = 100;
 
