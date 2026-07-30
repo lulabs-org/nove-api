@@ -50,6 +50,7 @@ import { WechatShopModule } from './wechat-shop/wechat-shop.module';
 import { OrderModule } from './order/order.module';
 import { WebhookLogModule } from './webhook-log/webhook-log.module';
 import { OAuthModule } from './oauth/oauth.module';
+import { WecomModule } from './wecom/wecom.module';
 
 @Module({
   imports: [
@@ -116,6 +117,7 @@ import { OAuthModule } from './oauth/oauth.module';
     OrderModule,
     WebhookLogModule,
     OAuthModule,
+    WecomModule,
   ],
   controllers: [AppController],
   providers: [
