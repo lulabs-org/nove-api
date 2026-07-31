@@ -55,13 +55,27 @@ export class WechatShopOrderService {
       if (!user) {
         const defaultName =
           addressInfo?.user_name || `微信小店用户${phone.slice(-4)}`;
-        user = await this.userCommand.createWithProfile({
-          phone,
-          countryCode: '+86',
-          password: null,
-          username: defaultName,
-          profileName: defaultName,
-        });
+        try {
+          user = await this.userCommand.createWithProfile({
+            phone,
+            countryCode: '+86',
+            password: null,
+            profileName: defaultName,
+          });
+        } catch (error) {
+          if (
+            error instanceof Prisma.PrismaClientKnownRequestError &&
+            error.code === 'P2002'
+          ) {
+            // Concurrent creation race condition, fetch the user again
+            user = await this.userQuery.byPhone('+86', phone);
+            if (!user) {
+              throw error;
+            }
+          } else {
+            throw error;
+          }
+        }
       }
       purchaserId = user.id;
     }
