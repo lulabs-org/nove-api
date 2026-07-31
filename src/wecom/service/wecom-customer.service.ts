@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Platform, Prisma } from '@prisma/client';
 
-import { PrismaService } from '@/prisma/prisma.service';
+import { WecomRepository } from '../repositories';
 import { WecomClientService } from './wecom-client.service';
 
 @Injectable()
@@ -9,7 +9,7 @@ export class WecomCustomerService {
   private readonly logger = new Logger(WecomCustomerService.name);
 
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly wecomRepository: WecomRepository,
     private readonly wecomClientService: WecomClientService,
   ) {}
 
@@ -27,7 +27,7 @@ export class WecomCustomerService {
         await this.wecomClientService.getExternalContact(externalUserId);
 
       // 2. 将数据合并并 Upsert 到 PlatformUser 表
-      await this.prisma.platformUser.upsert({
+      await this.wecomRepository.upsertPlatformUser({
         where: {
           unique_platform_union_user: {
             platform: Platform.WECOM,

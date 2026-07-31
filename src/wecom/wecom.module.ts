@@ -12,9 +12,12 @@ import { WecomCustomerService } from './service/wecom-customer.service';
 import { WecomEventService } from './service/wecom-event.service';
 import { WecomEventController } from './controllers/wecom-event.controller';
 import { WecomEventProcessor } from './processor/wecom-event.processor';
+import { WecomRepository } from './repositories';
+import { PrismaModule } from '@/prisma/prisma.module';
 
 @Module({
   imports: [
+    PrismaModule,
     HttpModule,
     ConfigModule.forFeature(wecomConfig),
     BullModule.registerQueue({ name: 'wecom-event' }),
@@ -24,6 +27,7 @@ import { WecomEventProcessor } from './processor/wecom-event.processor';
     }),
   ],
   providers: [
+    WecomRepository,
     WecomTokenService,
     WecomClientService,
     WecomCustomerService,
