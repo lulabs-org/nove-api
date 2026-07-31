@@ -1,4 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import { XMLParser } from 'fast-xml-parser';
 
 import {
@@ -14,6 +16,10 @@ export class WecomEventService {
     ignoreAttributes: true,
     parseTagValue: false, // keep as string/node
   });
+
+  constructor(
+    @InjectQueue('wecom-event') private readonly wecomEventQueue: Queue,
+  ) {}
 
   /**
    * 处理企业微信事件
@@ -66,8 +72,36 @@ export class WecomEventService {
     this.logger.log(
       `External contact changed: [${event.ChangeType}] UserID=${event.UserID}, ExternalUserID=${event.ExternalUserID}`,
     );
-    // TODO: 具体的客户变更业务逻辑
-    await Promise.resolve();
+
+    // 对于新增、编辑联系人的事件，推入异步队列进行拉取最新详情并同步到数据库
+    if (
+      event.ChangeType === 'add_external_contact' ||
+      event.ChangeType === 'edit_external_contact' ||
+      event.ChangeType === 'add_half_external_contact'
+    ) {
+      await this.wecomEventQueue
+        .add(
+          'sync_external_contact',
+          { externalUserId: event.ExternalUserID },
+          {
+            removeOnComplete: true,
+            removeOnFail: false,
+            attempts: 3,
+            backoff: { type: 'exponential', delay: 2000 }, // 失败后指数退避重试
+          },
+        )
+        .catch((e: Error) => {
+          this.logger.error(`Failed to enqueue sync contact job: ${e.message}`);
+        });
+    } else if (
+      event.ChangeType === 'del_external_contact' ||
+      event.ChangeType === 'del_follow_user'
+    ) {
+      // TODO: 处理删除事件，比如在 PlatformUser 中标记为删除或取消特定跟进关系
+      this.logger.log(
+        `Handling deletion for ExternalUserID=${event.ExternalUserID}`,
+      );
+    }
   }
 
   private async handleChangeExternalChat(event: WecomChangeExternalChatEvent) {
