@@ -194,6 +194,7 @@ export class OrgMemberService {
           orgDisplayName: name,
           primaryDept: { connect: { id: dto.primaryDeptId } },
           title: dto.title?.trim() || undefined,
+          employeeNo: dto.employeeNo?.trim() || undefined,
           status: 'PENDING',
         },
       });

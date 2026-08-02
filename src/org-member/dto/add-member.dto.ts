@@ -95,6 +95,15 @@ export class AddMemberDto {
   title?: string;
 
   @ApiPropertyOptional({
+    description: '工号',
+    example: 'EMP-001',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(50, { message: '工号最多 50 个字符' })
+  employeeNo?: string;
+
+  @ApiPropertyOptional({
     description: '角色 ID 列表',
     example: ['clx3333333333333333'],
     type: [String],
