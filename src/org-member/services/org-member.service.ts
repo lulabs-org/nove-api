@@ -12,10 +12,7 @@ import { OrganizationRepository } from '@/org/repositories/organization.reposito
 import { MailService } from '@/mail/mail.service';
 import { ConfigService } from '@nestjs/config';
 import { generateRandomToken } from '@/common/utils/random';
-import {
-  buildInviteEmail,
-  buildJoinNotificationEmail,
-} from '@/common/email-templates';
+import { buildInviteEmail } from '@/common/email-templates';
 import { OrgMemberRepository } from '../repositories/org-member.repository';
 import {
   CreateOrgMemberDto,
@@ -90,7 +87,7 @@ export class OrgMemberService {
         : undefined,
       externalCompany: dto.externalCompany,
       title: dto.title,
-      status: 'PENDING',
+      status: 'ACTIVE',
     });
 
     if (dto.departmentIds && dto.departmentIds.length > 0) {
@@ -154,45 +151,34 @@ export class OrgMemberService {
     const countryCode = (dto.countryCode || DEFAULT_COUNTRY_CODE).trim();
     const phone = dto.phone.trim();
 
-    // 4. 检查邮箱/手机号是否已注册（新用户走邮箱验证码登录，不生成 username/密码）
-    let existingUser = await this.userQueryRepository.byEmail(email);
-    if (!existingUser) {
-      existingUser = await this.userQueryRepository.byPhone(countryCode, phone);
+    // 4. 邮箱/手机号任一已注册即拒绝，避免误关联或覆写已有用户
+    const existingByEmail = await this.userQueryRepository.byEmail(email);
+    if (existingByEmail) {
+      throw new BadRequestException('该邮箱已被注册，无法添加为新成员');
     }
-
-    const isNewUser = !existingUser;
-    let userId: string;
-    let invitationToken: string | undefined;
-
-    if (existingUser) {
-      userId = existingUser.id;
-    } else {
-      // 生成邀请令牌（7 天有效），用户接受邀请后通过邮箱验证码登录
-      invitationToken = generateRandomToken(32);
-      const invitationExpiresAt = new Date(
-        Date.now() + INVITATION_EXPIRES_DAYS * 24 * 60 * 60 * 1000,
-      );
-
-      const newUser = await this.userCommandRepository.createWithProfile({
-        email,
-        phone,
-        countryCode,
-        password: null,
-        profileName: name,
-        invitationToken,
-        invitationExpiresAt,
-      });
-      userId = newUser.id;
-    }
-
-    // 5. 校验用户是否已是组织成员
-    const existingMember = await this.orgMemberRepository.findByOrgAndUser(
-      orgId,
-      userId,
+    const existingByPhone = await this.userQueryRepository.byPhone(
+      countryCode,
+      phone,
     );
-    if (existingMember) {
-      throw new BadRequestException('该用户已是组织成员');
+    if (existingByPhone) {
+      throw new BadRequestException('该手机号已被注册，无法添加为新成员');
     }
+
+    // 5. 创建新用户（无密码、无 username），生成 7 天有效的邀请令牌
+    const invitationToken = generateRandomToken(32);
+    const invitationExpiresAt = new Date(
+      Date.now() + INVITATION_EXPIRES_DAYS * 24 * 60 * 60 * 1000,
+    );
+    const newUser = await this.userCommandRepository.createWithProfile({
+      email,
+      phone,
+      countryCode,
+      password: null,
+      profileName: name,
+      invitationToken,
+      invitationExpiresAt,
+    });
+    const userId = newUser.id;
 
     // 6. 事务内创建成员（status = PENDING）+ 绑定部门 + 绑定角色
     const uniqueDeptIds = [...new Set(dto.departmentIds)];
@@ -212,8 +198,6 @@ export class OrgMemberService {
         },
       });
 
-      // 覆盖式写入部门关系，并标记主部门
-      await tx.memberDepartment.deleteMany({ where: { memberId: created.id } });
       for (const deptId of uniqueDeptIds) {
         await tx.memberDepartment.create({
           data: {
@@ -224,12 +208,7 @@ export class OrgMemberService {
           },
         });
       }
-      await tx.orgMember.update({
-        where: { id: created.id },
-        data: { primaryDeptId: dto.primaryDeptId },
-      });
 
-      // 绑定角色关系
       if (uniqueRoleIds.length > 0) {
         await tx.memberRole.createMany({
           data: uniqueRoleIds.map((roleId) => ({
@@ -249,20 +228,18 @@ export class OrgMemberService {
     );
     const memberDto = this.toDetailDto(memberDetail!);
 
-    // 8. 发送邮件通知（失败不阻塞业务）
+    // 8. 发送邀请邮件（失败不阻塞业务）
     const emailSent = await this.sendInviteEmail({
       orgId,
       name,
       email,
-      isNewUser,
       invitationToken,
       memberId: member.id,
-      memberEmail: existingUser?.email || email,
+      invitationExpiresInDays: INVITATION_EXPIRES_DAYS,
     });
 
     return {
       member: memberDto,
-      isNewUser,
       emailSent,
     };
   }
@@ -304,47 +281,41 @@ export class OrgMemberService {
   }
 
   /**
-   * 发送邀请邮件。新用户发含邀请链接的邮件，已有用户发加入通知邮件。
-   * 失败时记录日志并返回 false，不抛出异常。
+   * 发送邀请邮件（含邀请链接）。失败时记录日志并返回 false，不抛出异常。
    */
   private async sendInviteEmail(args: {
     orgId: string;
     name: string;
     email: string;
-    isNewUser: boolean;
-    invitationToken?: string;
-    memberId?: string;
-    memberEmail: string | null;
+    invitationToken: string;
+    memberId: string;
+    invitationExpiresInDays: number;
   }): Promise<boolean> {
     const frontendUrl =
       this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5173';
     const org = await this.organizationRepository.findById(args.orgId);
     const orgName = org?.name || '组织';
-    const targetEmail = args.memberEmail || args.email;
 
-    const emailData = {
+    const { subject, html } = buildInviteEmail({
       name: args.name,
       orgName,
-      email: targetEmail,
-      invitationToken: args.isNewUser ? args.invitationToken : undefined,
-      memberId: args.isNewUser ? args.memberId : undefined,
+      email: args.email,
+      invitationToken: args.invitationToken,
+      memberId: args.memberId,
       frontendUrl,
-    };
-
-    const { subject, html } = args.isNewUser
-      ? buildInviteEmail(emailData)
-      : buildJoinNotificationEmail(emailData);
+      invitationExpiresInDays: args.invitationExpiresInDays,
+    });
 
     try {
       await this.mailService.sendSimpleEmail({
-        to: targetEmail,
+        to: args.email,
         subject,
         html,
       });
       return true;
     } catch (error) {
       this.logger.warn(
-        `邀请邮件发送失败: ${targetEmail} - ${
+        `邀请邮件发送失败: ${args.email} - ${
           error instanceof Error ? error.message : String(error)
         }`,
       );
@@ -597,7 +568,7 @@ export class OrgMemberService {
               }
             : undefined,
           title: memberData.title,
-          status: 'PENDING',
+          status: 'ACTIVE',
         });
 
         successCount++;

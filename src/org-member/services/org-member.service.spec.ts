@@ -180,7 +180,7 @@ describe('OrgMemberService - addMember', () => {
     );
   });
 
-  it('throws when the user is already an org member', async () => {
+  it('throws when the email is already registered', async () => {
     prisma.dept.findMany.mockResolvedValue([
       { id: primaryDeptId },
       { id: otherDeptId },
@@ -189,11 +189,27 @@ describe('OrgMemberService - addMember', () => {
       id: 'user-existing',
       email: 'alice@example.com',
     } as never);
-    orgMemberRepository.findByOrgAndUser.mockResolvedValue(createdMember);
 
     await expect(service.addMember(orgId, baseDto)).rejects.toThrow(
       BadRequestException,
     );
+    expect(userCommandRepository.createWithProfile).not.toHaveBeenCalled();
+  });
+
+  it('throws when the phone is already registered', async () => {
+    prisma.dept.findMany.mockResolvedValue([
+      { id: primaryDeptId },
+      { id: otherDeptId },
+    ]);
+    userQueryRepository.byPhone.mockResolvedValue({
+      id: 'user-by-phone',
+      phone: '13800138000',
+    } as never);
+
+    await expect(service.addMember(orgId, baseDto)).rejects.toThrow(
+      BadRequestException,
+    );
+    expect(userCommandRepository.createWithProfile).not.toHaveBeenCalled();
   });
 
   it('creates a new user, member, and sends an invite email with invite link', async () => {
@@ -203,15 +219,6 @@ describe('OrgMemberService - addMember', () => {
     ]);
 
     const result = await service.addMember(orgId, baseDto);
-
-    // User lookup by email & phone
-    expect(userQueryRepository.byEmail).toHaveBeenCalledWith(
-      'alice@example.com',
-    );
-    expect(userQueryRepository.byPhone).toHaveBeenCalledWith(
-      '+86',
-      '13800138000',
-    );
 
     // New user created without username/password, with invitation token
     expect(userCommandRepository.createWithProfile).toHaveBeenCalledTimes(1);
@@ -234,10 +241,8 @@ describe('OrgMemberService - addMember', () => {
     expect(memberInput.orgDisplayName).toBe('Alice');
     expect(memberInput.employeeNo).toBeUndefined();
 
-    // Departments bound (delete + create per dept + primary update)
-    expect(tx.memberDepartment.deleteMany).toHaveBeenCalledWith({
-      where: { memberId: 'member-1' },
-    });
+    // Departments bound (create per dept, no deleteMany on new member)
+    expect(tx.memberDepartment.deleteMany).not.toHaveBeenCalled();
     expect(tx.memberDepartment.create).toHaveBeenCalledTimes(2);
 
     // Roles bound
@@ -252,69 +257,12 @@ describe('OrgMemberService - addMember', () => {
     expect(emailArg.to).toBe('alice@example.com');
     expect(emailArg.subject).toContain('邀请');
     expect(emailArg.html).toContain('/invite/accept');
+    expect(emailArg.html).toContain('7 天内有效');
     expect(emailArg.html).not.toContain('初始密码');
 
-    // Response has no password field
-    expect(result.isNewUser).toBe(true);
+    // Response
     expect(result.emailSent).toBe(true);
     expect(result.member.id).toBe('member-1');
-  });
-
-  it('reuses existing user (by email) without creating a new user or token', async () => {
-    prisma.dept.findMany.mockResolvedValue([
-      { id: primaryDeptId },
-      { id: otherDeptId },
-    ]);
-    userQueryRepository.byEmail.mockResolvedValue({
-      id: 'user-existing',
-      email: 'zhangsan@example.com',
-      username: 'existing',
-    } as never);
-
-    const result = await service.addMember(orgId, baseDto);
-
-    expect(userCommandRepository.createWithProfile).not.toHaveBeenCalled();
-    expect(tx.orgMember.create).toHaveBeenCalledTimes(1);
-    const memberInput = tx.orgMember.create.mock.calls[0]?.[0].data;
-    expect((memberInput.user as { connect: { id: string } }).connect.id).toBe(
-      'user-existing',
-    );
-
-    // Join notification email sent (no invite link, no password)
-    expect(mailService.sendSimpleEmail).toHaveBeenCalledTimes(1);
-    const emailArg = mailService.sendSimpleEmail.mock.calls[0][0];
-    expect(emailArg.subject).toContain('加入');
-    expect(emailArg.html).not.toContain('初始密码');
-    expect(emailArg.html).not.toContain('/invite/accept');
-
-    expect(result.isNewUser).toBe(false);
-    expect(result.emailSent).toBe(true);
-  });
-
-  it('reuses existing user by phone when email is not registered', async () => {
-    prisma.dept.findMany.mockResolvedValue([
-      { id: primaryDeptId },
-      { id: otherDeptId },
-    ]);
-    userQueryRepository.byEmail.mockResolvedValue(null);
-    userQueryRepository.byPhone.mockResolvedValue({
-      id: 'user-by-phone',
-      email: 'other@example.com',
-      phone: '13800138000',
-    } as never);
-
-    const result = await service.addMember(orgId, baseDto);
-
-    expect(userCommandRepository.createWithProfile).not.toHaveBeenCalled();
-    const memberInput = tx.orgMember.create.mock.calls[0]?.[0].data;
-    expect((memberInput.user as { connect: { id: string } }).connect.id).toBe(
-      'user-by-phone',
-    );
-    // Sends to the existing user's email
-    expect(mailService.sendSimpleEmail.mock.calls[0][0].to).toBe(
-      'other@example.com',
-    );
-    expect(result.isNewUser).toBe(false);
   });
 
   it('returns emailSent=false when sending the email throws', async () => {
@@ -326,7 +274,6 @@ describe('OrgMemberService - addMember', () => {
 
     const result = await service.addMember(orgId, baseDto);
 
-    expect(result.isNewUser).toBe(true);
     expect(result.emailSent).toBe(false);
     // Member was still created
     expect(tx.orgMember.create).toHaveBeenCalledTimes(1);

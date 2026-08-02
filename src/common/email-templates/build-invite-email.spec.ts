@@ -1,7 +1,4 @@
-import {
-  buildInviteEmail,
-  buildJoinNotificationEmail,
-} from './build-invite-email';
+import { buildInviteEmail } from './build-invite-email';
 
 const baseData = {
   name: '张三',
@@ -10,6 +7,7 @@ const baseData = {
   invitationToken: 'tok-abc123',
   memberId: 'member-1',
   frontendUrl: 'https://example.com',
+  invitationExpiresInDays: 7,
 };
 
 describe('build-invite-email', () => {
@@ -53,22 +51,14 @@ describe('build-invite-email', () => {
       expect(subject).toBe('您已被邀请加入 ');
       expect(html).toContain('用户，您好');
     });
-  });
 
-  describe('buildJoinNotificationEmail', () => {
-    it('builds subject containing the org name', () => {
-      const { subject } = buildJoinNotificationEmail(baseData);
-      expect(subject).toBe('您已加入 LuLab');
-    });
-
-    it('builds html that does NOT contain the invite token/link', () => {
-      const { html } = buildJoinNotificationEmail(baseData);
-      expect(html).toContain('张三');
-      expect(html).toContain('https://example.com/login');
-      expect(html).not.toContain('tok-abc123');
-      expect(html).not.toContain('/invite/accept');
-      expect(html).not.toContain('初始密码');
-      expect(html).toContain('已有账号');
+    it('renders the configured expiry days (not hardcoded)', () => {
+      const { html } = buildInviteEmail({
+        ...baseData,
+        invitationExpiresInDays: 14,
+      });
+      expect(html).toContain('14 天内有效');
+      expect(html).not.toContain('7 天内有效');
     });
   });
 });

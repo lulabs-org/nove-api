@@ -104,13 +104,17 @@ export class LoginService {
 
       await this.userCommandRepo.updateLastLogin(user.id, new Date());
 
-      // 首次登录：将用户所有 AGREED 状态的成员记录激活为 ACTIVE
-      try {
-        await this.orgMemberRepository.activateAgreedMembers(user.id);
-      } catch (err) {
-        this.logger.warn(
-          `激活成员状态失败: ${user.id} - ${err instanceof Error ? err.message : String(err)}`,
-        );
+      // 被邀请用户登录时激活其 AGREED 状态的成员记录
+      // 仅当用户曾被邀请（invitationAcceptedAt 非空）时才触发，
+      // 避免对普通注册用户的每次登录都执行无命中的 UPDATE
+      if (user.invitationAcceptedAt) {
+        try {
+          await this.orgMemberRepository.activateAgreedMembers(user.id);
+        } catch (err) {
+          this.logger.warn(
+            `激活成员状态失败: ${user.id} - ${err instanceof Error ? err.message : String(err)}`,
+          );
+        }
       }
 
       await this.authPolicy.createLoginLog({
