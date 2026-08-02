@@ -18,6 +18,7 @@ export class TaskEntity {
   jobId!: string | null;
   repeatKey!: string | null;
   cron!: string | null;
+  timezone!: string | null;
   runAt!: Date | null;
   payload!: Record<string, unknown>;
   status!: TaskStatus;
