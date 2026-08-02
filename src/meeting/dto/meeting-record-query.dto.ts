@@ -28,6 +28,7 @@ export class QueryMeetingRecordsDto {
     example: MeetingPlatform.TENCENT_MEETING,
   })
   @IsOptional()
+  @Transform(({ value }) => (value === '' ? undefined : (value as string)))
   @IsEnum(MeetingPlatform)
   platform?: MeetingPlatform;
 
@@ -37,6 +38,7 @@ export class QueryMeetingRecordsDto {
     example: ProcessingStatus.COMPLETED,
   })
   @IsOptional()
+  @Transform(({ value }) => (value === '' ? undefined : (value as string)))
   @IsEnum(ProcessingStatus)
   status?: ProcessingStatus;
 
@@ -46,6 +48,7 @@ export class QueryMeetingRecordsDto {
     example: MeetingType.SCHEDULED,
   })
   @IsOptional()
+  @Transform(({ value }) => (value === '' ? undefined : (value as string)))
   @IsEnum(MeetingType)
   type?: MeetingType;
 
