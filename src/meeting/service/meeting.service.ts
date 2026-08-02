@@ -174,29 +174,29 @@ export class MeetingService {
     };
   }
 
-  /**
-   * 重新处理会议记录
-   */
-  async reprocessMeetingRecord(id: string): Promise<MeetingRecordResponseDto> {
-    const record = await this.meetingRepository.findById(id);
-    if (!record) {
-      throw new MeetingRecordNotFoundException(id);
-    }
-
-    // 重置处理状态
-    await this.meetingRepository.update(id, {
-      processingStatus: ProcessingStatus.PROCESSING,
-    });
-
-    // 重新处理录制文件
-    // 这里可以根据需要重新调用处理逻辑
-
-    // 返回更新后的记录
-    const updatedRecord = await this.meetingRepository.findById(id);
-    if (!updatedRecord) {
-      throw new MeetingRecordNotFoundException(id);
-    }
-
-    return updatedRecord;
-  }
+  // /**
+  //  * 重新处理会议记录
+  //  */
+  // async reprocessMeetingRecord(id: string): Promise<MeetingRecordResponseDto> {
+  //   const record = await this.meetingRepository.findById(id);
+  //   if (!record) {
+  //     throw new MeetingRecordNotFoundException(id);
+  //   }
+  //
+  //   // 重置处理状态
+  //   await this.meetingRepository.update(id, {
+  //     processingStatus: ProcessingStatus.PROCESSING,
+  //   });
+  //
+  //   // 重新处理录制文件
+  //   // 这里可以根据需要重新调用处理逻辑
+  //
+  //   // 返回更新后的记录
+  //   const updatedRecord = await this.meetingRepository.findById(id);
+  //   if (!updatedRecord) {
+  //     throw new MeetingRecordNotFoundException(id);
+  //   }
+  //
+  //   return updatedRecord;
+  // }
 }
