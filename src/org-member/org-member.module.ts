@@ -5,17 +5,10 @@ import { OrgMemberRepository } from './repositories/org-member.repository';
 import { PrismaModule } from '@/prisma/prisma.module';
 import { UserModule } from '@/user/user.module';
 import { MailModule } from '@/mail/mail.module';
-import { DepartmentModule } from '@/dept/department.module';
 import { OrganizationModule } from '@/org/organization.module';
 
 @Module({
-  imports: [
-    PrismaModule,
-    UserModule,
-    MailModule,
-    DepartmentModule,
-    OrganizationModule,
-  ],
+  imports: [PrismaModule, UserModule, MailModule, OrganizationModule],
   controllers: [OrgMemberController],
   providers: [OrgMemberService, OrgMemberRepository],
   exports: [OrgMemberService, OrgMemberRepository],

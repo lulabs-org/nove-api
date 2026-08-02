@@ -1,13 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-  BadRequestException,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { OrgMemberService } from './org-member.service';
 import { OrgMemberRepository } from '../repositories/org-member.repository';
 import { UserQueryRepository } from '@/user/repositories/user-query.repository';
 import { UserCommandRepository } from '@/user/repositories/user-command.repository';
-import { DepartmentRepository } from '@/dept/repositories/department.repository';
 import { OrganizationRepository } from '@/org/repositories/organization.repository';
 import { MailService } from '@/mail/mail.service';
 import { PrismaService } from '@/prisma/prisma.service';
@@ -144,16 +140,12 @@ describe('OrgMemberService - addMember', () => {
       sendSimpleEmail: jest.fn().mockResolvedValue(undefined),
     } as unknown as jest.Mocked<MailService>;
 
-    const unusedDepartmentRepository =
-      {} as unknown as jest.Mocked<DepartmentRepository>;
-
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         OrgMemberService,
         { provide: OrgMemberRepository, useValue: orgMemberRepository },
         { provide: UserQueryRepository, useValue: userQueryRepository },
         { provide: UserCommandRepository, useValue: userCommandRepository },
-        { provide: DepartmentRepository, useValue: unusedDepartmentRepository },
         { provide: OrganizationRepository, useValue: organizationRepository },
         { provide: MailService, useValue: mailService },
         { provide: PrismaService, useValue: prisma },
@@ -360,21 +352,23 @@ describe('OrgMemberService - addMember', () => {
 
       await service.acceptInvitation(memberId, token);
 
-      expect(orgMemberRepository.updateStatus).toHaveBeenCalledWith(
-        memberId,
-        'AGREED',
-      );
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(tx.orgMember.update).toHaveBeenCalledWith({
+        where: { id: memberId },
+        data: { status: 'AGREED' },
+      });
       expect(userCommandRepository.acceptInvitation).toHaveBeenCalledWith(
         userId,
+        tx,
       );
     });
 
     it('throws when the member does not exist', async () => {
       orgMemberRepository.findById.mockResolvedValue(null);
 
-      await expect(
-        service.acceptInvitation(memberId, token),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.acceptInvitation(memberId, token)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('throws when the member is not in PENDING status', async () => {
@@ -384,9 +378,9 @@ describe('OrgMemberService - addMember', () => {
         userId,
       } as never);
 
-      await expect(
-        service.acceptInvitation(memberId, token),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.acceptInvitation(memberId, token)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('throws when the token does not match', async () => {
@@ -401,9 +395,9 @@ describe('OrgMemberService - addMember', () => {
         invitationExpiresAt: futureDate,
       } as never);
 
-      await expect(
-        service.acceptInvitation(memberId, token),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.acceptInvitation(memberId, token)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('throws when the invitation has expired', async () => {
@@ -419,9 +413,9 @@ describe('OrgMemberService - addMember', () => {
         invitationExpiresAt: pastDate,
       } as never);
 
-      await expect(
-        service.acceptInvitation(memberId, token),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.acceptInvitation(memberId, token)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 });

@@ -8,7 +8,6 @@ import { Prisma, OrgMember } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { UserQueryRepository } from '@/user/repositories/user-query.repository';
 import { UserCommandRepository } from '@/user/repositories/user-command.repository';
-import { DepartmentRepository } from '@/dept/repositories/department.repository';
 import { OrganizationRepository } from '@/org/repositories/organization.repository';
 import { MailService } from '@/mail/mail.service';
 import { ConfigService } from '@nestjs/config';
@@ -45,7 +44,6 @@ export class OrgMemberService {
     private readonly prisma: PrismaService,
     private readonly userQueryRepository: UserQueryRepository,
     private readonly userCommandRepository: UserCommandRepository,
-    private readonly departmentRepository: DepartmentRepository,
     private readonly organizationRepository: OrganizationRepository,
     private readonly mailService: MailService,
     private readonly configService: ConfigService,
@@ -296,8 +294,13 @@ export class OrgMemberService {
       throw new BadRequestException('邀请已过期');
     }
 
-    await this.orgMemberRepository.updateStatus(memberId, 'AGREED');
-    await this.userCommandRepository.acceptInvitation(user.id);
+    await this.prisma.$transaction(async (tx) => {
+      await tx.orgMember.update({
+        where: { id: memberId },
+        data: { status: 'AGREED' },
+      });
+      await this.userCommandRepository.acceptInvitation(user.id, tx);
+    });
   }
 
   /**

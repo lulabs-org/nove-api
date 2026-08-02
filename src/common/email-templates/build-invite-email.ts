@@ -36,9 +36,10 @@ export function buildInviteEmail(data: InviteEmailData): {
   const safeLoginUrl = escapeHtml(`${data.frontendUrl}/login`);
 
   // 构造邀请接受链接：前端页面携带 token 与 memberId 调用接受接口
-  const inviteUrl = data.invitationToken && data.memberId
-    ? `${data.frontendUrl}/invite/accept?memberId=${encodeURIComponent(data.memberId)}&token=${encodeURIComponent(data.invitationToken)}`
-    : safeLoginUrl;
+  const inviteUrl =
+    data.invitationToken && data.memberId
+      ? `${data.frontendUrl}/invite/accept?memberId=${encodeURIComponent(data.memberId)}&token=${encodeURIComponent(data.invitationToken)}`
+      : safeLoginUrl;
   const safeInviteUrl = escapeHtml(inviteUrl);
 
   const subject = `您已被邀请加入 ${data.orgName}`;

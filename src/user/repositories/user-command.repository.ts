@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import type { User, UserProfile } from '@prisma/client';
+import { Prisma, User, UserProfile } from '@prisma/client';
 
 @Injectable()
 export class UserCommandRepository {
@@ -80,9 +80,15 @@ export class UserCommandRepository {
 
   /**
    * 接受组织邀请：标记邮箱已验证、清除邀请 token、记录接受时间。
+   * 注意：调用方需在事务中执行以保证与成员状态变更的原子性，
+   * 因此本方法保留为直接 prisma 调用，不自带事务包裹。
    */
-  acceptInvitation(userId: string): Promise<User> {
-    return this.prisma.user.update({
+  acceptInvitation(
+    userId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<User> {
+    const client = tx ?? this.prisma;
+    return client.user.update({
       where: { id: userId },
       data: {
         emailVerifiedAt: new Date(),
