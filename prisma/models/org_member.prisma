@@ -41,8 +41,10 @@ enum MemberType {
 }
 
 enum MemberStatus {
-  INVITED
-  ACTIVE
-  SUSPENDED
-  LEFT
+  INVITED   // [deprecated] 旧状态，保留用于历史数据兼容
+  PENDING   // 已邀请，未接受
+  AGREED    // 已接受邀请
+  ACTIVE    // 正常
+  SUSPENDED // 已停用
+  LEFT      // 已离职
 }

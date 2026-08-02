@@ -302,12 +302,23 @@ export class OrgMemberRepository {
 
   async updateStatus(
     id: string,
-    status: 'INVITED' | 'ACTIVE' | 'SUSPENDED' | 'LEFT',
+    status: 'INVITED' | 'PENDING' | 'AGREED' | 'ACTIVE' | 'SUSPENDED' | 'LEFT',
   ): Promise<OrgMember> {
     return this.prisma.orgMember.update({
       where: { id },
       data: { status },
     });
+  }
+
+  /**
+   * 将用户所有 AGREED 状态的成员记录批量转为 ACTIVE（首次登录激活）。
+   */
+  async activateAgreedMembers(userId: string): Promise<number> {
+    const result = await this.prisma.orgMember.updateMany({
+      where: { userId, status: 'AGREED', deletedAt: null },
+      data: { status: 'ACTIVE' },
+    });
+    return result.count;
   }
 
   async delete(id: string): Promise<OrgMember> {
@@ -334,7 +345,7 @@ export class OrgMemberRepository {
 
   async countByStatus(
     orgId: string,
-    status: 'INVITED' | 'ACTIVE' | 'SUSPENDED' | 'LEFT',
+    status: 'INVITED' | 'PENDING' | 'AGREED' | 'ACTIVE' | 'SUSPENDED' | 'LEFT',
   ): Promise<number> {
     return this.prisma.orgMember.count({
       where: {

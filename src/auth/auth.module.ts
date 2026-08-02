@@ -31,6 +31,7 @@ import { JwtUserLookupService } from './services/jwt-user-lookup.service';
 import { TokenBlacklistService } from './services/token-blacklist.service';
 import { jwtConfig } from '@/configs/jwt.config';
 import { PermissionModule } from '@/permission/permission.module';
+import { OrgMemberModule } from '@/org-member/org-member.module';
 import { UnifiedAuthGuard } from './guards/unified-auth.guard';
 
 @Module({
@@ -39,6 +40,7 @@ import { UnifiedAuthGuard } from './guards/unified-auth.guard';
     UserModule,
     VerificationModule,
     PermissionModule,
+    OrgMemberModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     ConfigModule.forFeature(jwtConfig),
     JwtModule.registerAsync({

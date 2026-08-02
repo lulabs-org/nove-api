@@ -11,10 +11,12 @@ export class UserCommandRepository {
     email?: string | null;
     phone?: string | null;
     countryCode?: string | null;
-    password: string | null;
+    password?: string | null;
     emailVerifiedAt?: Date | null;
     phoneVerifiedAt?: Date | null;
     profileName: string;
+    invitationToken?: string | null;
+    invitationExpiresAt?: Date | null;
   }): Promise<
     User & {
       profile: UserProfile | null;
@@ -31,9 +33,11 @@ export class UserCommandRepository {
         email: data.email ?? null,
         phone: data.phone ?? null,
         countryCode: data.countryCode ?? null,
-        passwordHash: data.password,
+        passwordHash: data.password ?? null,
         emailVerifiedAt: data.emailVerifiedAt ?? null,
         phoneVerifiedAt: data.phoneVerifiedAt ?? null,
+        invitationToken: data.invitationToken ?? null,
+        invitationExpiresAt: data.invitationExpiresAt ?? null,
         profile: {
           create: {
             displayName: data.profileName,
@@ -72,6 +76,21 @@ export class UserCommandRepository {
         }>;
       }
     >;
+  }
+
+  /**
+   * 接受组织邀请：标记邮箱已验证、清除邀请 token、记录接受时间。
+   */
+  acceptInvitation(userId: string): Promise<User> {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        emailVerifiedAt: new Date(),
+        invitationAcceptedAt: new Date(),
+        invitationToken: null,
+        invitationExpiresAt: null,
+      },
+    });
   }
 
   updateLastLogin(id: string, date: Date): Promise<User> {

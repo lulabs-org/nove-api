@@ -14,6 +14,7 @@ import { TokenService } from './token.service';
 import { AuthPolicyService } from './auth-policy.service';
 import { UserQueryRepository } from '@/user/repositories/user-query.repository';
 import { UserCommandRepository } from '@/user/repositories/user-command.repository';
+import { OrgMemberRepository } from '@/org-member/repositories/org-member.repository';
 import { formatAuthUserResponse } from '@/auth/utils/auth-user-mapper';
 
 @Injectable()
@@ -26,6 +27,7 @@ export class LoginService {
     private readonly verificationService: VerificationService,
     private readonly tokenService: TokenService,
     private readonly authPolicy: AuthPolicyService,
+    private readonly orgMemberRepository: OrgMemberRepository,
   ) {}
 
   async login(
@@ -59,6 +61,21 @@ export class LoginService {
 
     let failureReason = '';
 
+    // 未接受邀请的用户不允许登录（invitationToken 未清除说明邀请未接受）
+    if (user.invitationToken) {
+      failureReason = '请先点击邮件中的链接接受邀请';
+      await this.authPolicy.createLoginLog({
+        userId: user.id,
+        target,
+        loginType: this.authPolicy.getLoginType(type),
+        success: false,
+        ip,
+        userAgent,
+        failReason: failureReason,
+      });
+      throw new UnauthorizedException(failureReason);
+    }
+
     try {
       if (type === AuthType.EMAIL_CODE || type === AuthType.PHONE_CODE) {
         const verifyResult = await this.verificationService.verifyCode(
@@ -86,6 +103,15 @@ export class LoginService {
       }
 
       await this.userCommandRepo.updateLastLogin(user.id, new Date());
+
+      // 首次登录：将用户所有 AGREED 状态的成员记录激活为 ACTIVE
+      try {
+        await this.orgMemberRepository.activateAgreedMembers(user.id);
+      } catch (err) {
+        this.logger.warn(
+          `激活成员状态失败: ${user.id} - ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
 
       await this.authPolicy.createLoginLog({
         userId: user.id,

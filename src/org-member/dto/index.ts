@@ -5,4 +5,5 @@ export * from './update-member-departments.dto';
 export * from './batch-import-members.dto';
 export * from './pagination.dto';
 export * from './org-member.dto';
-export * from './batch-import-members.dto';
+export * from './add-member.dto';
+export * from './add-member-response.dto';

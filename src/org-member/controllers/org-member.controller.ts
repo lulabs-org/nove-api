@@ -17,8 +17,10 @@ import {
   ApiResponse,
   ApiBearerAuth,
   ApiParam,
+  ApiBody,
 } from '@nestjs/swagger';
 import { RequirePermissions } from '@/permission/decorators/permissions.decorator';
+import { Public } from '@/auth/decorators/public.decorator';
 
 import { OrgMemberService } from '../services/org-member.service';
 import {
@@ -31,6 +33,8 @@ import {
   OrgMemberDetailDto,
   OrgMemberListResponse,
   BatchImportResponse,
+  AddMemberDto,
+  AddMemberResponseDto,
 } from '../dto';
 
 @ApiTags('Admin - OrgMembers')
@@ -68,6 +72,70 @@ export class OrgMemberController {
     @Body() dto: CreateOrgMemberDto,
   ): Promise<OrgMemberDetailDto> {
     return this.orgMemberService.createMember(orgId, dto);
+  }
+
+  @Post('orgs/:orgId/members/add')
+  @ApiOperation({
+    summary: '添加成员',
+    description:
+      '通过姓名、手机号、邮箱等基础信息添加成员。系统自动完成用户创建、邀请令牌生成、邮件发送和组织关联。',
+  })
+  @ApiParam({
+    name: 'orgId',
+    description: '组织 ID',
+    example: 'clx1234567890abcdef',
+  })
+  @ApiResponse({
+    status: 201,
+    description: '成员添加成功',
+    type: AddMemberResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: '请求参数无效（必填字段缺失、邮箱格式错误、主部门不合法等）',
+  })
+  @ApiResponse({
+    status: 401,
+    description: '未授权',
+  })
+  @RequirePermissions('org-member:create')
+  async addMember(
+    @Param('orgId') orgId: string,
+    @Body() dto: AddMemberDto,
+  ): Promise<AddMemberResponseDto> {
+    return this.orgMemberService.addMember(orgId, dto);
+  }
+
+  @Post('members/:memberId/accept')
+  @Public()
+  @ApiOperation({
+    summary: '接受组织邀请',
+    description:
+      '成员通过邮件中的邀请链接接受邀请，将成员状态从 PENDING 转为 AGREED，并标记用户邮箱已验证。',
+  })
+  @ApiParam({
+    name: 'memberId',
+    description: '成员 ID',
+    example: 'clx1234567890abcdef',
+  })
+  @ApiBody({
+    description: '邀请令牌',
+    schema: {
+      type: 'object',
+      properties: {
+        token: { type: 'string', description: '邀请令牌（来自邮件链接）' },
+      },
+      required: ['token'],
+    },
+  })
+  @ApiResponse({ status: 200, description: '邀请已接受' })
+  @ApiResponse({ status: 400, description: '邀请令牌无效或已过期' })
+  @ApiResponse({ status: 404, description: '成员不存在' })
+  async acceptInvitation(
+    @Param('memberId') memberId: string,
+    @Body('token') token: string,
+  ): Promise<void> {
+    await this.orgMemberService.acceptInvitation(memberId, token);
   }
 
   @Get('orgs/:orgId/members')

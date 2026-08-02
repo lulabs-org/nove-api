@@ -22,6 +22,11 @@ model User {
   // 用户状态
   active Boolean @default(true) // 用户状态：true=活跃，false=禁用
 
+  // 邀请相关字段（组织邀请加入流程）
+  invitationToken      String?   @unique @map("invitation_token") @db.VarChar(64)
+  invitationExpiresAt  DateTime? @map("invitation_expires_at") @db.Timestamptz(6)
+  invitationAcceptedAt DateTime? @map("invitation_accepted_at") @db.Timestamptz(6)
+
   // 系统时间戳字段
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
