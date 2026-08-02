@@ -236,7 +236,15 @@ describe('OrgMemberService - addMember', () => {
     // Member created in transaction with PENDING status
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(tx.orgMember.create).toHaveBeenCalledTimes(1);
-    const memberInput = tx.orgMember.create.mock.calls[0][0].data;
+    const memberInput = (
+      tx.orgMember.create.mock.calls as {
+        data: {
+          status: string;
+          orgDisplayName: string;
+          employeeNo?: string | null;
+        };
+      }[][]
+    )[0][0].data;
     expect(memberInput.status).toBe('PENDING');
     expect(memberInput.orgDisplayName).toBe('Alice');
     expect(memberInput.employeeNo).toBeUndefined();
