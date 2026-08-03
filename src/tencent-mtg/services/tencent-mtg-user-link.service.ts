@@ -73,8 +73,8 @@ export class TencentMtgUserLinkService {
       `Found ${hashToUserId.size} matching UserPhoneHash record(s).`,
     );
 
-    // 3. 批量更新匹配到的 PlatformUser
-    let linked = 0;
+    // 3. 收集所有需要更新的操作，批量提交事务
+    const updateOps: { id: string; localUserId: string }[] = [];
     let skipped = 0;
 
     for (const platformUser of unlinkedPlatformUsers) {
@@ -83,15 +83,23 @@ export class TencentMtgUserLinkService {
         skipped++;
         continue;
       }
+      updateOps.push({ id: platformUser.id, localUserId: matchedUserId });
+    }
 
-      await this.prisma.platformUser.update({
-        where: { id: platformUser.id },
-        data: { localUserId: matchedUserId },
-      });
+    const linked = updateOps.length;
 
-      linked++;
+    if (linked > 0) {
+      await this.prisma.$transaction(
+        updateOps.map(({ id, localUserId }) =>
+          this.prisma.platformUser.update({
+            where: { id },
+            data: { localUserId },
+          }),
+        ),
+      );
+
       this.logger.debug(
-        `Linked PlatformUser(${platformUser.id}) -> User(${matchedUserId}) via phoneHash.`,
+        `Batch linked ${linked} PlatformUser(s) via phoneHash in a single transaction.`,
       );
     }
 
