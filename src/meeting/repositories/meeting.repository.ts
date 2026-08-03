@@ -191,8 +191,8 @@ export class MeetingRepository {
     const [records, total] = await Promise.all([
       this.prisma.meeting.findMany({
         where,
-        include: {
-          recordings: true,
+        omit: {
+          metadata: true,
         },
         orderBy: {
           createdAt: 'desc',

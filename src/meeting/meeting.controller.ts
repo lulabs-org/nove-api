@@ -21,7 +21,7 @@ import {
   ApiUpdateMeetingRecordDocs,
   ApiDeleteMeetingRecordDocs,
   ApiGetMeetingStatsDocs,
-  ApiReprocessMeetingRecordDocs,
+  // ApiReprocessMeetingRecordDocs, // 暂时注释掉
   ApiGetTranscriptByRecordingIdDocs,
 } from './decorators/meeting-record.decorators';
 import { MeetingService } from './service/meeting.service';
@@ -213,31 +213,31 @@ export class MeetingController {
     }
   }
 
-  /**
-   * 重新处理会议录制文件
-   */
-  @Post(':id/reprocess')
-  @RequirePermissions('meeting:reprocess')
-  @HttpCode(HttpStatus.OK)
-  @ApiReprocessMeetingRecordDocs()
-  async reprocessMeetingRecord(
-    @Param('id', CuidPipe) id: string,
-  ): Promise<MeetingRecordResponseDto> {
-    this.logger.log(`重新处理会议录制文件: ${id}`);
-
-    try {
-      const record = await this.meetingService.reprocessMeetingRecord(id);
-
-      this.logger.log(`重新处理会议录制文件成功: ${record.id}`);
-      return record;
-    } catch (error: unknown) {
-      this.logger.error(
-        `重新处理会议录制文件失败: ${id}`,
-        (error as Error).stack,
-      );
-      throw error;
-    }
-  }
+  // /**
+  //  * 重新处理会议录制文件
+  //  */
+  // @Post(':id/reprocess')
+  // @RequirePermissions('meeting:reprocess')
+  // @HttpCode(HttpStatus.OK)
+  // @ApiReprocessMeetingRecordDocs()
+  // async reprocessMeetingRecord(
+  //   @Param('id', CuidPipe) id: string,
+  // ): Promise<MeetingRecordResponseDto> {
+  //   this.logger.log(`重新处理会议录制文件: ${id}`);
+  //
+  //   try {
+  //     const record = await this.meetingService.reprocessMeetingRecord(id);
+  //
+  //     this.logger.log(`重新处理会议录制文件成功: ${record.id}`);
+  //     return record;
+  //   } catch (error: unknown) {
+  //     this.logger.error(
+  //       `重新处理会议录制文件失败: ${id}`,
+  //       (error as Error).stack,
+  //     );
+  //     throw error;
+  //   }
+  // }
 
   /**
    * 获取录制的转写文本
