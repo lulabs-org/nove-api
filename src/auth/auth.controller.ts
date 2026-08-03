@@ -28,6 +28,7 @@ import {
   ApiRegisterDocs,
   ApiLoginDocs,
   ApiResetPasswordDocs,
+  ApiChangePasswordDocs,
   ApiRefreshTokenDocs,
   ApiLogoutDocs,
   ApiGetMeDocs,
@@ -41,6 +42,7 @@ import {
   RefreshTokenDto,
   AuthUserWithPermissionsDto,
   PermissionsResponseDto,
+  ChangePasswordDto,
 } from '@/auth/dto';
 import { LoginService, RegisterService, TokenService } from '@/auth/services';
 import { PasswordService } from './services/password.service';
@@ -168,6 +170,45 @@ export class AuthController {
       ip,
       userAgent,
     );
+  }
+
+  @Post('change-password')
+  @HttpCode(HttpStatus.OK)
+  @ApiChangePasswordDocs()
+  @ApiBearerAuth()
+  @RequireAuth('jwt')
+  async changePassword(
+    @Body(ValidationPipe) dto: ChangePasswordDto,
+    @User() user: CurrentUser,
+    @Req() req: Request,
+  ): Promise<{ success: boolean; message: string }> {
+    const authHeader = req.get('authorization') || req.get('Authorization');
+    const accessToken = authHeader?.startsWith('Bearer ')
+      ? authHeader.slice('Bearer '.length).trim()
+      : undefined;
+    if (!accessToken) {
+      throw new UnauthorizedException('未找到访问令牌');
+    }
+
+    const ip = HttpUtil.getClientIp(req);
+    const userAgent = req.get('User-Agent');
+
+    await this.passwordService.changePassword(
+      user.id,
+      dto.oldPassword,
+      dto.newPassword,
+      ip,
+      userAgent,
+    );
+
+    // 撤销当前 access token + 所有设备的 refresh token
+    await this.tokenService.logout(user.id, accessToken, {
+      revokeAllDevices: true,
+      ip,
+      userAgent,
+    });
+
+    return { success: true, message: '密码修改成功' };
   }
 
   @Public()

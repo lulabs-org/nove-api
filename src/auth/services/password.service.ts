@@ -17,7 +17,11 @@ import { UserCommandRepository } from '@/user/repositories/user-command.reposito
 import { AuthPolicyService } from './auth-policy.service';
 import { MailService } from '@/mail/mail.service';
 import { buildPasswordResetNotificationEmail } from '../../common/email-templates';
-import { hashPassword, validatePassword } from '@/common/utils/password.util';
+import {
+  hashPassword,
+  validatePassword,
+  comparePassword,
+} from '@/common/utils/password.util';
 import { LoginType } from '@/auth/enums';
 
 @Injectable()
@@ -96,6 +100,77 @@ export class PasswordService {
     return {
       success: true,
       message: '密码重置成功',
+    };
+  }
+
+  async changePassword(
+    userId: string,
+    oldPassword: string,
+    newPassword: string,
+    ip: string,
+    userAgent?: string,
+  ): Promise<{ success: boolean; message: string }> {
+    const user = await this.userQueryRepo.withProfile(userId);
+    if (!user) {
+      throw new BadRequestException('用户不存在');
+    }
+
+    if (!user.passwordHash) {
+      throw new BadRequestException('该账户未设置密码');
+    }
+
+    const isOldPasswordValid = await comparePassword(
+      oldPassword,
+      user.passwordHash,
+    );
+    if (!isOldPasswordValid) {
+      throw new BadRequestException('当前密码错误');
+    }
+
+    validatePassword(newPassword);
+
+    const hashedPassword = await hashPassword(newPassword);
+    await this.userCommandRepo.updatePassword(userId, hashedPassword);
+
+    const target = user.email || user.username || user.phone || userId;
+    await this.authPolicy.createLoginLog({
+      userId: user.id,
+      target,
+      loginType: LoginType.PASSWORD_CHANGE,
+      success: true,
+      ip,
+      userAgent,
+    });
+
+    if (user.email) {
+      try {
+        const displayName =
+          typeof user.profile === 'object' &&
+          user.profile &&
+          'name' in user.profile
+            ? (user.profile as { name?: string }).name || 'User'
+            : 'User';
+
+        const { subject, html } = buildPasswordResetNotificationEmail(
+          displayName,
+          new Date(),
+        );
+
+        await this.mailService.sendSimpleEmail({
+          to: user.email,
+          subject,
+          html,
+        });
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        this.logger.warn(`发送密码修改通知邮件失败: ${errorMessage}`);
+      }
+    }
+
+    return {
+      success: true,
+      message: '密码修改成功',
     };
   }
 }
