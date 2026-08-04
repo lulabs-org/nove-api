@@ -59,7 +59,7 @@ export class UpdatePlatformUserDto {
   })
   @IsString()
   @IsOptional()
-  localUserId?: string;
+  localUserId?: string | null;
 
   @ApiPropertyOptional({
     description: '是否激活',

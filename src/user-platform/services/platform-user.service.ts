@@ -148,6 +148,43 @@ export class PlatformUserService {
     return this.platformUserRepo.deleteById(id);
   }
 
+  async findMany(params: {
+    platform?: Platform;
+    keyword?: string;
+    active?: boolean;
+    localUserId?: string;
+    page?: number;
+    pageSize?: number;
+  }): Promise<{
+    items: PlatformUser[];
+    total: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+  }> {
+    const page = params.page ?? 1;
+    const pageSize = params.pageSize ?? 20;
+    const { items, total } = await this.platformUserRepo.findMany({
+      ...params,
+      page,
+      pageSize,
+    });
+    return {
+      items,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    };
+  }
+
+  async searchLocalUsers(keyword: string) {
+    if (!keyword || keyword.trim() === '') {
+      return [];
+    }
+    return this.platformUserRepo.searchLocalUsers(keyword.trim());
+  }
+
   async deleteByPhone(countryCode: string, phone: string): Promise<number> {
     const result = await this.platformUserRepo.deleteByPhone(
       countryCode,
