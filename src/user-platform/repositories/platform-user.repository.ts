@@ -243,4 +243,73 @@ export class PlatformUserRepository {
       },
     });
   }
+
+  async findMany(params: {
+    platform?: Platform;
+    keyword?: string;
+    active?: boolean;
+    localUserId?: string;
+    page?: number;
+    pageSize?: number;
+  }): Promise<{ items: PlatformUser[]; total: number }> {
+    const { platform, keyword, active, localUserId, page = 1, pageSize = 20 } = params;
+
+    const where: Prisma.PlatformUserWhereInput = {
+      deletedAt: null,
+      ...(platform ? { platform } : {}),
+      ...(active !== undefined ? { active } : {}),
+      ...(localUserId ? { localUserId } : {}),
+      ...(keyword
+        ? {
+            OR: [
+              { displayName: { contains: keyword, mode: 'insensitive' } },
+              { phone: { contains: keyword } },
+            ],
+          }
+        : {}),
+    };
+
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.platformUser.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      this.prisma.platformUser.count({ where }),
+    ]);
+
+    return { items, total };
+  }
+
+  async searchLocalUsers(keyword: string) {
+    return this.prisma.user.findMany({
+      where: {
+        deletedAt: null,
+        OR: [
+          { username: { contains: keyword, mode: 'insensitive' } },
+          { email: { contains: keyword, mode: 'insensitive' } },
+          { phone: { contains: keyword } },
+          {
+            profile: {
+              displayName: { contains: keyword, mode: 'insensitive' },
+            },
+          },
+        ],
+      },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        phone: true,
+        profile: {
+          select: {
+            displayName: true,
+            avatar: true,
+          },
+        },
+      },
+      take: 20,
+    });
+  }
 }
