@@ -56,6 +56,9 @@ describe('OrgMemberService - addMember', () => {
     primaryDeptId,
     externalCompany: null,
     title: '工程师',
+    invitationToken: null,
+    invitationExpiresAt: null,
+    invitationAcceptedAt: null,
     joinedAt: new Date(),
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -113,6 +116,7 @@ describe('OrgMemberService - addMember', () => {
       findDetailById: jest.fn().mockResolvedValue(memberDetail),
       findById: jest.fn().mockResolvedValue(null),
       updateStatus: jest.fn().mockResolvedValue(createdMember),
+      acceptInvitation: jest.fn().mockResolvedValue(undefined),
     } as unknown as jest.Mocked<OrgMemberRepository>;
 
     userQueryRepository = {
@@ -129,7 +133,7 @@ describe('OrgMemberService - addMember', () => {
         profile: { displayName: 'Alice', avatar: null },
         orgMembers: [],
       }),
-      acceptInvitation: jest.fn().mockResolvedValue(undefined),
+      markEmailVerified: jest.fn().mockResolvedValue(undefined),
     } as unknown as jest.Mocked<UserCommandRepository>;
 
     organizationRepository = {
@@ -220,7 +224,8 @@ describe('OrgMemberService - addMember', () => {
 
     const result = await service.addMember(orgId, baseDto);
 
-    // New user created without username/password, with invitation token
+    // New user created without username/password and without invitation fields
+    // (invitation lifecycle now lives on OrgMember)
     expect(userCommandRepository.createWithProfile).toHaveBeenCalledTimes(1);
     const createArg = userCommandRepository.createWithProfile.mock.calls[0][0];
     expect(createArg.username).toBeUndefined();
@@ -229,11 +234,8 @@ describe('OrgMemberService - addMember', () => {
     expect(createArg.countryCode).toBe('+86');
     expect(createArg.profileName).toBe('Alice');
     expect(createArg.password).toBeNull();
-    expect(typeof createArg.invitationToken).toBe('string');
-    expect(createArg.invitationToken).not.toBe('');
-    expect(createArg.invitationExpiresAt).toBeInstanceOf(Date);
 
-    // Member created in transaction with PENDING status
+    // Member created in transaction with PENDING status and invitation token
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(tx.orgMember.create).toHaveBeenCalledTimes(1);
     const memberInput = (
@@ -242,12 +244,17 @@ describe('OrgMemberService - addMember', () => {
           status: string;
           orgDisplayName: string;
           employeeNo?: string | null;
+          invitationToken: string;
+          invitationExpiresAt: Date;
         };
       }[][]
     )[0][0].data;
     expect(memberInput.status).toBe('PENDING');
     expect(memberInput.orgDisplayName).toBe('Alice');
     expect(memberInput.employeeNo).toBeUndefined();
+    expect(typeof memberInput.invitationToken).toBe('string');
+    expect(memberInput.invitationToken).not.toBe('');
+    expect(memberInput.invitationExpiresAt).toBeInstanceOf(Date);
 
     // Departments bound (create per dept, no deleteMany on new member)
     expect(tx.memberDepartment.deleteMany).not.toHaveBeenCalled();
@@ -293,14 +300,11 @@ describe('OrgMemberService - addMember', () => {
     const token = 'valid-token';
     const futureDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-    it('transitions member PENDING → AGREED and clears the user invitation token', async () => {
+    it('transitions member PENDING → AGREED and marks user email verified', async () => {
       orgMemberRepository.findById.mockResolvedValue({
         ...createdMember,
         status: 'PENDING',
         userId,
-      } as never);
-      userQueryRepository.byId.mockResolvedValue({
-        id: userId,
         invitationToken: token,
         invitationExpiresAt: futureDate,
       } as never);
@@ -308,11 +312,11 @@ describe('OrgMemberService - addMember', () => {
       await service.acceptInvitation(memberId, token);
 
       expect(prisma.$transaction).toHaveBeenCalledTimes(1);
-      expect(tx.orgMember.update).toHaveBeenCalledWith({
-        where: { id: memberId },
-        data: { status: 'AGREED' },
-      });
-      expect(userCommandRepository.acceptInvitation).toHaveBeenCalledWith(
+      expect(orgMemberRepository.acceptInvitation).toHaveBeenCalledWith(
+        memberId,
+        tx,
+      );
+      expect(userCommandRepository.markEmailVerified).toHaveBeenCalledWith(
         userId,
         tx,
       );
@@ -331,6 +335,8 @@ describe('OrgMemberService - addMember', () => {
         ...createdMember,
         status: 'AGREED',
         userId,
+        invitationToken: token,
+        invitationExpiresAt: futureDate,
       } as never);
 
       await expect(service.acceptInvitation(memberId, token)).rejects.toThrow(
@@ -343,9 +349,6 @@ describe('OrgMemberService - addMember', () => {
         ...createdMember,
         status: 'PENDING',
         userId,
-      } as never);
-      userQueryRepository.byId.mockResolvedValue({
-        id: userId,
         invitationToken: 'different-token',
         invitationExpiresAt: futureDate,
       } as never);
@@ -356,14 +359,11 @@ describe('OrgMemberService - addMember', () => {
     });
 
     it('throws when the invitation has expired', async () => {
+      const pastDate = new Date(Date.now() - 60 * 1000);
       orgMemberRepository.findById.mockResolvedValue({
         ...createdMember,
         status: 'PENDING',
         userId,
-      } as never);
-      const pastDate = new Date(Date.now() - 60 * 1000);
-      userQueryRepository.byId.mockResolvedValue({
-        id: userId,
         invitationToken: token,
         invitationExpiresAt: pastDate,
       } as never);

@@ -15,8 +15,6 @@ export class UserCommandRepository {
     emailVerifiedAt?: Date | null;
     phoneVerifiedAt?: Date | null;
     profileName: string;
-    invitationToken?: string | null;
-    invitationExpiresAt?: Date | null;
   }): Promise<
     User & {
       profile: UserProfile | null;
@@ -36,8 +34,6 @@ export class UserCommandRepository {
         passwordHash: data.password ?? null,
         emailVerifiedAt: data.emailVerifiedAt ?? null,
         phoneVerifiedAt: data.phoneVerifiedAt ?? null,
-        invitationToken: data.invitationToken ?? null,
-        invitationExpiresAt: data.invitationExpiresAt ?? null,
         profile: {
           create: {
             displayName: data.profileName,
@@ -79,11 +75,11 @@ export class UserCommandRepository {
   }
 
   /**
-   * 接受组织邀请：标记邮箱已验证、清除邀请 token、记录接受时间。
+   * 接受邀请时标记用户邮箱已验证。
    * 注意：调用方需在事务中执行以保证与成员状态变更的原子性，
    * 因此本方法保留为直接 prisma 调用，不自带事务包裹。
    */
-  acceptInvitation(
+  markEmailVerified(
     userId: string,
     tx?: Prisma.TransactionClient,
   ): Promise<User> {
@@ -92,9 +88,6 @@ export class UserCommandRepository {
       where: { id: userId },
       data: {
         emailVerifiedAt: new Date(),
-        invitationAcceptedAt: new Date(),
-        invitationToken: null,
-        invitationExpiresAt: null,
       },
     });
   }

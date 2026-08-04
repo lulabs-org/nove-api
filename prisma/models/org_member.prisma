@@ -14,6 +14,12 @@ model OrgMember {
   externalCompany String? @map("external_company")
   title           String?
 
+  // 邀请相关字段（组织邀请加入流程）
+  // 邀请生命周期归属于 membership 而非 user，支持一个用户被多个组织并行邀请
+  invitationToken      String?   @unique @map("invitation_token") @db.VarChar(64)
+  invitationExpiresAt  DateTime? @map("invitation_expires_at") @db.Timestamptz(6)
+  invitationAcceptedAt DateTime? @map("invitation_accepted_at") @db.Timestamptz(6)
+
   joinedAt  DateTime  @default(now()) @map("joined_at") @db.Timestamptz(6)
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)

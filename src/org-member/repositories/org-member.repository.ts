@@ -321,6 +321,54 @@ export class OrgMemberRepository {
     return result.count;
   }
 
+  /**
+   * 用户是否存在尚未接受的邀请（invitationToken 未清空）。
+   * 用于登录时拦截未接受邀请的用户。
+   */
+  async hasPendingInvitations(userId: string): Promise<boolean> {
+    const count = await this.prisma.orgMember.count({
+      where: {
+        userId,
+        invitationToken: { not: null },
+        deletedAt: null,
+      },
+      take: 1,
+    });
+    return count > 0;
+  }
+
+  /**
+   * 用户是否存在 AGREED 状态的成员记录（用于登录时判断是否需要触发激活）。
+   */
+  async hasAgreedMembers(userId: string): Promise<boolean> {
+    const count = await this.prisma.orgMember.count({
+      where: { userId, status: 'AGREED', deletedAt: null },
+      take: 1,
+    });
+    return count > 0;
+  }
+
+  /**
+   * 接受邀请：将成员状态 PENDING → AGREED，记录接受时间并清空邀请 token。
+   * 注意：调用方需在事务中执行以保证与 user.emailVerifiedAt 更新的原子性，
+   * 因此本方法保留为直接 prisma 调用，不自带事务包裹。
+   */
+  acceptInvitation(
+    memberId: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<OrgMember> {
+    const client = tx ?? this.prisma;
+    return client.orgMember.update({
+      where: { id: memberId },
+      data: {
+        status: 'AGREED',
+        invitationAcceptedAt: new Date(),
+        invitationToken: null,
+        invitationExpiresAt: null,
+      },
+    });
+  }
+
   async delete(id: string): Promise<OrgMember> {
     return this.prisma.orgMember.delete({
       where: { id },

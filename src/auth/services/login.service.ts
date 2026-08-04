@@ -61,8 +61,8 @@ export class LoginService {
 
     let failureReason = '';
 
-    // 未接受邀请的用户不允许登录（invitationToken 未清除说明邀请未接受）
-    if (user.invitationToken) {
+    // 未接受邀请的用户不允许登录（任一 OrgMember 的 invitationToken 未清空说明邀请未接受）
+    if (await this.orgMemberRepository.hasPendingInvitations(user.id)) {
       failureReason = '请先点击邮件中的链接接受邀请';
       await this.authPolicy.createLoginLog({
         userId: user.id,
@@ -105,9 +105,9 @@ export class LoginService {
       await this.userCommandRepo.updateLastLogin(user.id, new Date());
 
       // 被邀请用户登录时激活其 AGREED 状态的成员记录
-      // 仅当用户曾被邀请（invitationAcceptedAt 非空）时才触发，
+      // 仅当用户存在 AGREED 成员时才触发 UPDATE，
       // 避免对普通注册用户的每次登录都执行无命中的 UPDATE
-      if (user.invitationAcceptedAt) {
+      if (await this.orgMemberRepository.hasAgreedMembers(user.id)) {
         try {
           await this.orgMemberRepository.activateAgreedMembers(user.id);
         } catch (err) {

@@ -164,23 +164,21 @@ export class OrgMemberService {
       throw new BadRequestException('该手机号已被注册，无法添加为新成员');
     }
 
-    // 5. 创建新用户（无密码、无 username），生成 7 天有效的邀请令牌
-    const invitationToken = generateRandomToken(32);
-    const invitationExpiresAt = new Date(
-      Date.now() + INVITATION_EXPIRES_DAYS * 24 * 60 * 60 * 1000,
-    );
+    // 5. 创建新用户（无密码、无 username、无邀请字段——邀请生命周期归属于 OrgMember）
     const newUser = await this.userCommandRepository.createWithProfile({
       email,
       phone,
       countryCode,
       password: null,
       profileName: name,
-      invitationToken,
-      invitationExpiresAt,
     });
     const userId = newUser.id;
 
-    // 6. 事务内创建成员（status = PENDING）+ 绑定部门 + 绑定角色
+    // 6. 事务内创建成员（status = PENDING，携带邀请令牌）+ 绑定部门 + 绑定角色
+    const invitationToken = generateRandomToken(32);
+    const invitationExpiresAt = new Date(
+      Date.now() + INVITATION_EXPIRES_DAYS * 24 * 60 * 60 * 1000,
+    );
     const uniqueDeptIds = [...new Set(dto.departmentIds)];
     const uniqueRoleIds =
       dto.roleIds && dto.roleIds.length > 0 ? [...new Set(dto.roleIds)] : [];
@@ -196,6 +194,8 @@ export class OrgMemberService {
           title: dto.title?.trim() || undefined,
           employeeNo: dto.employeeNo?.trim() || undefined,
           status: 'PENDING',
+          invitationToken,
+          invitationExpiresAt,
         },
       });
 
@@ -247,7 +247,7 @@ export class OrgMemberService {
 
   /**
    * 接受组织邀请：校验成员状态、令牌与有效期，将成员 PENDING → AGREED，
-   * 并清除用户邀请令牌、标记邮箱已验证与接受时间。
+   * 并清除成员邀请令牌、标记用户邮箱已验证与接受时间。
    */
   async acceptInvitation(memberId: string, token: string): Promise<void> {
     const member = await this.orgMemberRepository.findById(memberId);
@@ -257,27 +257,19 @@ export class OrgMemberService {
     if (member.status !== 'PENDING') {
       throw new BadRequestException('该邀请已处理或不可接受');
     }
-
-    const user = await this.userQueryRepository.byId(member.userId);
-    if (!user) {
-      throw new NotFoundException('用户不存在');
-    }
-    if (!user.invitationToken || user.invitationToken !== token) {
+    if (!member.invitationToken || member.invitationToken !== token) {
       throw new BadRequestException('邀请令牌无效');
     }
     if (
-      !user.invitationExpiresAt ||
-      user.invitationExpiresAt.getTime() <= Date.now()
+      !member.invitationExpiresAt ||
+      member.invitationExpiresAt.getTime() <= Date.now()
     ) {
       throw new BadRequestException('邀请已过期');
     }
 
     await this.prisma.$transaction(async (tx) => {
-      await tx.orgMember.update({
-        where: { id: memberId },
-        data: { status: 'AGREED' },
-      });
-      await this.userCommandRepository.acceptInvitation(user.id, tx);
+      await this.orgMemberRepository.acceptInvitation(memberId, tx);
+      await this.userCommandRepository.markEmailVerified(member.userId, tx);
     });
   }
 
