@@ -59,5 +59,6 @@ enum Platform {
   FEISHU // 飞书
   WEBEX // Cisco Webex
   VOOV // 腾讯会议国际版
+  WECOM // 企业微信
   OTHER // 其他平台
 }
