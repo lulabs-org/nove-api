@@ -301,4 +301,74 @@ describe('MeetingRepository', () => {
       expect(result).toEqual(mockMinimalMeeting);
     });
   });
+
+  describe('get', () => {
+    it('should expose the host under the API contract field name', async () => {
+      (prismaService.meeting.findUnique as jest.Mock).mockResolvedValue({
+        id: 'meeting-with-host',
+        hostId: 'platform-user-1',
+        host: { id: 'platform-user-1', displayName: '杨仕明' },
+        recordings: [],
+      });
+
+      const result = await repository.findById('meeting-with-host');
+
+      expect(result).toEqual({
+        id: 'meeting-with-host',
+        hostPlatformUserId: 'platform-user-1',
+        host: { id: 'platform-user-1', displayName: '杨仕明' },
+        recordings: [],
+      });
+    });
+
+    it('should derive hasRecording from active recording records', async () => {
+      (prismaService.meeting.findMany as jest.Mock).mockResolvedValue([
+        {
+          id: 'meeting-with-recording',
+          hostId: 'platform-user-1',
+          host: { id: 'platform-user-1', displayName: '杨仕明' },
+          hasRecording: false,
+          recordings: [{ id: 'recording-1' }],
+        },
+        {
+          id: 'meeting-without-recording',
+          hostId: null,
+          host: null,
+          hasRecording: true,
+          recordings: [],
+        },
+      ]);
+      (prismaService.meeting.count as jest.Mock).mockResolvedValue(2);
+
+      const result = await repository.get({ page: 1, limit: 10 });
+
+      expect(result.records).toEqual([
+        {
+          id: 'meeting-with-recording',
+          hostPlatformUserId: 'platform-user-1',
+          host: { id: 'platform-user-1', displayName: '杨仕明' },
+          hasRecording: true,
+        },
+        {
+          id: 'meeting-without-recording',
+          host: null,
+          hostPlatformUserId: null,
+          hasRecording: false,
+        },
+      ]);
+      expect(prismaService.meeting.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          include: {
+            recordings: {
+              where: { deletedAt: null },
+              select: { id: true },
+            },
+            host: {
+              select: { id: true, displayName: true },
+            },
+          },
+        }),
+      );
+    });
+  });
 });

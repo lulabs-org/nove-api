@@ -14,6 +14,19 @@ type CreateMeetingRecordData = Omit<
 export class MeetingRepository {
   constructor(private prisma: PrismaService) {}
 
+  private toResponseRecord<
+    T extends {
+      hostId: string | null;
+      host?: { id: string; displayName: string | null } | null;
+    },
+  >(record: T) {
+    const { hostId, ...responseRecord } = record;
+    return {
+      ...responseRecord,
+      hostPlatformUserId: hostId,
+    };
+  }
+
   /**
    * Find meeting record by platform and meeting ID
    */
@@ -38,12 +51,17 @@ export class MeetingRepository {
    * Find meeting record by ID
    */
   async findById(id: string) {
-    return this.prisma.meeting.findUnique({
+    const record = await this.prisma.meeting.findUnique({
       where: { id, deletedAt: null },
       include: {
         recordings: true,
+        host: {
+          select: { id: true, displayName: true },
+        },
       },
     });
+
+    return record ? this.toResponseRecord(record) : null;
   }
 
   /**
@@ -194,6 +212,15 @@ export class MeetingRepository {
         omit: {
           metadata: true,
         },
+        include: {
+          recordings: {
+            where: { deletedAt: null },
+            select: { id: true },
+          },
+          host: {
+            select: { id: true, displayName: true },
+          },
+        },
         orderBy: {
           createdAt: 'desc',
         },
@@ -203,8 +230,15 @@ export class MeetingRepository {
       this.prisma.meeting.count({ where }),
     ]);
 
+    const recordsWithRecordingFlag = records.map(
+      ({ recordings, ...record }) => ({
+        ...this.toResponseRecord(record),
+        hasRecording: recordings.length > 0,
+      }),
+    );
+
     return {
-      records,
+      records: recordsWithRecordingFlag,
       total,
       page,
       limit,
