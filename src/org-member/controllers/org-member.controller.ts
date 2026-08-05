@@ -42,7 +42,8 @@ export class OrgMemberController {
   @Post('orgs/:orgId/members')
   @ApiOperation({
     summary: '新增成员',
-    description: '在指定组织下新增成员（绑定已有用户）',
+    description:
+      '通过手机号或邮箱在指定组织下新增成员；已有用户直接关联，否则创建待验证用户',
   })
   @ApiParam({
     name: 'orgId',
@@ -61,6 +62,10 @@ export class OrgMemberController {
   @ApiResponse({
     status: 401,
     description: '未授权',
+  })
+  @ApiResponse({
+    status: 409,
+    description: '联系方式冲突、成员已存在或工号已存在',
   })
   @RequirePermissions('org-member:create')
   async createMember(

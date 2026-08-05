@@ -1,5 +1,7 @@
 export interface OrgMemberCreateInput {
-  userId: string;
+  email?: string;
+  countryCode?: string;
+  phone?: string;
   orgDisplayName?: string;
   employeeNo?: string;
   primaryDeptId?: string;
