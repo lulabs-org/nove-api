@@ -1,6 +1,14 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { MeetingPlatform, MeetingType, ProcessingStatus } from '@prisma/client';
 
+export class MeetingHostResponseDto {
+  @ApiProperty({ description: '平台用户 ID' })
+  id: string;
+
+  @ApiPropertyOptional({ description: '主持人显示名称', nullable: true })
+  displayName?: string | null;
+}
+
 export class MeetingRecordResponseDto {
   @ApiProperty({ description: '会议记录ID' })
   id: string;
@@ -37,6 +45,13 @@ export class MeetingRecordResponseDto {
 
   @ApiPropertyOptional({ description: '主持人平台用户ID' })
   hostPlatformUserId?: string | null;
+
+  @ApiPropertyOptional({
+    description: '主持人信息',
+    type: MeetingHostResponseDto,
+    nullable: true,
+  })
+  host?: MeetingHostResponseDto | null;
 
   @ApiPropertyOptional({ description: '参会人数' })
   participantCount?: number | null;
