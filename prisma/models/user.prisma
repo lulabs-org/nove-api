@@ -36,7 +36,8 @@ model User {
   oauthAuthCodes OAuthAuthCode[] // User's OAuth auth codes
   oauthTokens    OAuthToken[]    // User's OAuth tokens
   // 组织成员关联
-  orgMembers OrgMember[] // 用户所属的组织成员关系
+  orgMembers     OrgMember[] // 用户所属的组织成员关系
+  ledDepartments Dept[]      @relation("DepartmentLeader")
 
   // 个人详细信息
   profile     UserProfile?

@@ -63,8 +63,9 @@ export class UpdateDepartmentDto {
   @ApiPropertyOptional({
     description: '负责人用户 ID',
     example: 'clx1234567890abcdef',
+    nullable: true,
   })
   @IsOptional()
   @IsString()
-  leaderUserId?: string;
+  leaderUserId?: string | null;
 }

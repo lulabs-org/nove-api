@@ -23,16 +23,23 @@ import {
 export class DepartmentService {
   constructor(private readonly departmentRepository: DepartmentRepository) {}
 
+  private static readonly AUTO_CODE_PREFIX = 'DEPT-';
+  private static readonly AUTO_CODE_PATTERN = /^DEPT-(\d+)$/;
+
   async createDepartment(
     organizationId: string,
     dto: CreateDepartmentDto,
   ): Promise<DepartmentDto> {
-    const existingDept = await this.departmentRepository.findByOrgIdAndCode(
-      organizationId,
-      dto.code,
-    );
-    if (existingDept) {
-      throw new BadRequestException('Department code already exists');
+    const suppliedCode = dto.code?.trim();
+    const leaderUserId = dto.leaderUserId?.trim();
+    if (suppliedCode) {
+      const existingDept = await this.departmentRepository.findByOrgIdAndCode(
+        organizationId,
+        suppliedCode,
+      );
+      if (existingDept) {
+        throw new BadRequestException('Department code already exists');
+      }
     }
 
     if (dto.parentId) {
@@ -47,9 +54,48 @@ export class DepartmentService {
       }
     }
 
-    const department = await this.departmentRepository.create({
+    await this.validateLeader(organizationId, leaderUserId);
+
+    if (suppliedCode) {
+      const department = await this.departmentRepository.create(
+        this.buildCreateData(organizationId, dto, suppliedCode, leaderUserId),
+      );
+      return this.toDto(department);
+    }
+
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const generatedCode = await this.generateDepartmentCode(organizationId);
+      try {
+        const department = await this.departmentRepository.create(
+          this.buildCreateData(
+            organizationId,
+            dto,
+            generatedCode,
+            leaderUserId,
+          ),
+        );
+        return this.toDto(department);
+      } catch (error) {
+        if (!this.isUniqueConstraintError(error)) {
+          throw error;
+        }
+      }
+    }
+
+    throw new BadRequestException(
+      'Unable to generate a unique department code',
+    );
+  }
+
+  private buildCreateData(
+    organizationId: string,
+    dto: CreateDepartmentDto,
+    code: string,
+    leaderUserId?: string,
+  ): Prisma.DeptCreateInput {
+    return {
       name: dto.name,
-      code: dto.code,
+      code,
       description: dto.description,
       org: {
         connect: { id: organizationId },
@@ -59,12 +105,54 @@ export class DepartmentService {
             connect: { id: dto.parentId },
           }
         : undefined,
+      leaderUser: leaderUserId
+        ? {
+            connect: { id: leaderUserId },
+          }
+        : undefined,
       level: dto.level || 1,
       sortOrder: dto.sortOrder || 0,
       active: dto.active !== undefined ? dto.active : true,
-    });
+    };
+  }
 
-    return this.toDto(department);
+  private async generateDepartmentCode(
+    organizationId: string,
+  ): Promise<string> {
+    const codes =
+      await this.departmentRepository.findCodesByOrganizationId(organizationId);
+    const highestSequence = codes.reduce((highest, code) => {
+      const match = DepartmentService.AUTO_CODE_PATTERN.exec(code);
+      return match ? Math.max(highest, Number(match[1])) : highest;
+    }, 0);
+
+    return `${DepartmentService.AUTO_CODE_PREFIX}${String(
+      highestSequence + 1,
+    ).padStart(4, '0')}`;
+  }
+
+  private isUniqueConstraintError(error: unknown): boolean {
+    return (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === 'P2002'
+    );
+  }
+
+  private async validateLeader(
+    organizationId: string,
+    leaderUserId?: string | null,
+  ): Promise<void> {
+    if (!leaderUserId) return;
+
+    const isEligible = await this.departmentRepository.isEligibleLeader(
+      organizationId,
+      leaderUserId,
+    );
+    if (!isEligible) {
+      throw new BadRequestException(
+        'Department leader must be an active organization member',
+      );
+    }
   }
 
   async getDepartmentTree(
@@ -88,6 +176,7 @@ export class DepartmentService {
       active: boolean;
       createdAt: Date;
       updatedAt: Date;
+      leaderUserId?: string | null;
     }>,
     parentId: string | null = null,
   ): DepartmentTreeDto[] {
@@ -177,10 +266,25 @@ export class DepartmentService {
       }
     }
 
+    const leaderUserId = dto.leaderUserId?.trim() || null;
+    if (dto.leaderUserId !== undefined) {
+      await this.validateLeader(existingDept.orgId, leaderUserId);
+    }
+
     const department = await this.departmentRepository.update(id, {
       name: dto.name,
       code: dto.code,
       description: dto.description,
+      leaderUser:
+        dto.leaderUserId !== undefined
+          ? leaderUserId
+            ? {
+                connect: { id: leaderUserId },
+              }
+            : {
+                disconnect: true,
+              }
+          : undefined,
       parent:
         dto.parentId !== undefined
           ? dto.parentId
@@ -333,6 +437,7 @@ export class DepartmentService {
     createdAt: Date;
     updatedAt: Date;
     deletedAt?: Date | null;
+    leaderUserId?: string | null;
   }): DepartmentDto {
     return {
       id: department.id,
@@ -347,7 +452,7 @@ export class DepartmentService {
       createdAt: department.createdAt,
       updatedAt: department.updatedAt,
       deletedAt: department.deletedAt || null,
-      leaderUserId: null,
+      leaderUserId: department.leaderUserId || null,
     };
   }
 

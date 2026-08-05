@@ -17,13 +17,13 @@ export class CreateDepartmentDto {
   @IsNotEmpty()
   name: string;
 
-  @ApiProperty({
-    description: '部门编码',
-    example: 'TECH',
+  @ApiPropertyOptional({
+    description: '部门编码（未提供时由系统自动生成）',
+    example: 'DEPT-0001',
   })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  code: string;
+  code?: string;
 
   @ApiPropertyOptional({
     description: '部门描述',
