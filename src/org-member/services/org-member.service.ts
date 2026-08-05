@@ -2,6 +2,8 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ConflictException,
+  HttpException,
 } from '@nestjs/common';
 import { Prisma, OrgMember } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
@@ -18,6 +20,7 @@ import {
   OrgMemberListResponse,
   BatchImportResponse,
 } from '../dto';
+import { DesensitizationUtil } from '@/common/utils/desensitization.util';
 
 @Injectable()
 export class OrgMemberService {
@@ -30,66 +33,10 @@ export class OrgMemberService {
     orgId: string,
     dto: CreateOrgMemberDto,
   ): Promise<OrgMemberDetailDto> {
-    const existingMember = await this.orgMemberRepository.findByOrgAndUser(
-      orgId,
-      dto.userId,
-    );
-    if (existingMember) {
-      throw new BadRequestException(
-        'User is already a member of this organization',
-      );
-    }
+    const memberId = await this.createMemberWithRetry(orgId, dto);
 
-    if (dto.employeeNo) {
-      const employeeNoExists = await this.orgMemberRepository.findByEmployeeNo(
-        orgId,
-        dto.employeeNo,
-      );
-      if (employeeNoExists) {
-        throw new BadRequestException('Employee number already exists');
-      }
-    }
-
-    const member = await this.orgMemberRepository.create({
-      org: {
-        connect: { id: orgId },
-      },
-      user: {
-        connect: { id: dto.userId },
-      },
-      type: dto.type || 'INTERNAL',
-      orgDisplayName: dto.orgDisplayName,
-      employeeNo: dto.employeeNo,
-      primaryDept: dto.primaryDeptId
-        ? {
-            connect: { id: dto.primaryDeptId },
-          }
-        : undefined,
-      externalCompany: dto.externalCompany,
-      title: dto.title,
-      status: 'INVITED',
-    });
-
-    if (dto.departmentIds && dto.departmentIds.length > 0) {
-      await this.updateMemberDepartments(member.id, {
-        departmentIds: dto.departmentIds,
-        primaryDeptId: dto.primaryDeptId,
-      });
-    }
-
-    if (dto.roleIds && dto.roleIds.length > 0) {
-      await this.prisma.memberRole.createMany({
-        data: [...new Set(dto.roleIds)].map((roleId) => ({
-          memberId: member.id,
-          roleId,
-        })),
-        skipDuplicates: true,
-      });
-    }
-
-    const memberDetail = await this.orgMemberRepository.findDetailById(
-      member.id,
-    );
+    const memberDetail =
+      await this.orgMemberRepository.findDetailById(memberId);
     return this.toDetailDto(memberDetail!);
   }
 
@@ -290,62 +237,20 @@ export class OrgMemberService {
     orgId: string,
     dto: BatchImportMemberDto,
   ): Promise<BatchImportResponse> {
-    const failures: Array<{ userId: string; reason: string }> = [];
+    const failures: BatchImportResponse['failures'] = [];
     let successCount = 0;
 
-    for (const memberData of dto.members) {
+    for (const [index, memberData] of dto.members.entries()) {
       try {
-        const existingMember = await this.orgMemberRepository.findByOrgAndUser(
-          orgId,
-          memberData.userId,
-        );
-        if (existingMember) {
-          failures.push({
-            userId: memberData.userId,
-            reason: 'User is already a member of this organization',
-          });
-          continue;
-        }
-
-        if (memberData.employeeNo) {
-          const employeeNoExists =
-            await this.orgMemberRepository.findByEmployeeNo(
-              orgId,
-              memberData.employeeNo,
-            );
-          if (employeeNoExists) {
-            failures.push({
-              userId: memberData.userId,
-              reason: 'Employee number already exists',
-            });
-            continue;
-          }
-        }
-
-        await this.orgMemberRepository.create({
-          org: {
-            connect: { id: orgId },
-          },
-          user: {
-            connect: { id: memberData.userId },
-          },
-          type: 'INTERNAL',
-          orgDisplayName: memberData.orgDisplayName,
-          employeeNo: memberData.employeeNo,
-          primaryDept: memberData.primaryDeptId
-            ? {
-                connect: { id: memberData.primaryDeptId },
-              }
-            : undefined,
-          title: memberData.title,
-          status: 'INVITED',
-        });
-
+        await this.createMemberWithRetry(orgId, memberData);
         successCount++;
       } catch (error) {
         failures.push({
-          userId: memberData.userId,
-          reason: error instanceof Error ? error.message : 'Unknown error',
+          index,
+          email: DesensitizationUtil.maskEmail(memberData.email),
+          phone: DesensitizationUtil.maskPhone(memberData.phone),
+          code: this.getFailureCode(error),
+          reason: this.getErrorMessage(error),
         });
       }
     }
@@ -357,12 +262,313 @@ export class OrgMemberService {
     };
   }
 
+  private async createMemberWithRetry(
+    orgId: string,
+    dto: CreateOrgMemberDto,
+  ): Promise<string> {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        return await this.prisma.$transaction((tx) =>
+          this.createMemberInTransaction(tx, orgId, dto),
+        );
+      } catch (error) {
+        const isUniqueConflict =
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === 'P2002';
+
+        if (isUniqueConflict && attempt === 0) {
+          continue;
+        }
+
+        if (isUniqueConflict) {
+          throw new ConflictException('用户联系方式或组织成员关系已存在');
+        }
+
+        if (
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === 'P2003'
+        ) {
+          throw new BadRequestException('组织、部门或角色不存在');
+        }
+
+        throw error;
+      }
+    }
+
+    throw new ConflictException('成员创建发生并发冲突，请重试');
+  }
+
+  private async createMemberInTransaction(
+    tx: Prisma.TransactionClient,
+    orgId: string,
+    dto: CreateOrgMemberDto,
+  ): Promise<string> {
+    const email = this.normalizeEmail(dto.email);
+    const phone = this.normalizePhone(dto.phone);
+    const countryCode = phone
+      ? this.normalizeCountryCode(dto.countryCode)
+      : undefined;
+
+    if (!email && !phone) {
+      throw new BadRequestException('手机号与邮箱至少填写一个');
+    }
+    if (phone && !countryCode) {
+      throw new BadRequestException('填写手机号时必须提供国家代码');
+    }
+
+    const [emailUser, phoneUser] = await Promise.all([
+      email
+        ? tx.user.findFirst({
+            where: { email: { equals: email, mode: 'insensitive' } },
+          })
+        : null,
+      phone && countryCode
+        ? this.findUserByPhone(tx, countryCode, phone)
+        : null,
+    ]);
+
+    if (emailUser && phoneUser && emailUser.id !== phoneUser.id) {
+      throw new ConflictException('该邮箱和手机号属于不同用户');
+    }
+
+    const existingUser = emailUser ?? phoneUser;
+    let userId: string;
+
+    if (existingUser) {
+      if (!existingUser.active || existingUser.deletedAt) {
+        throw new ConflictException('匹配到的用户已停用或删除');
+      }
+
+      const existingEmail = this.normalizeEmail(existingUser.email);
+      if (email && existingEmail && email !== existingEmail) {
+        throw new ConflictException('邮箱与已有用户资料不一致');
+      }
+
+      const existingPhone = this.normalizePhone(existingUser.phone);
+      const existingCountryCode = existingPhone
+        ? this.normalizeCountryCode(existingUser.countryCode)
+        : undefined;
+      if (
+        phone &&
+        existingPhone &&
+        (phone !== existingPhone || countryCode !== existingCountryCode)
+      ) {
+        throw new ConflictException('手机号与已有用户资料不一致');
+      }
+
+      await tx.user.update({
+        where: { id: existingUser.id },
+        data: {
+          ...(!existingEmail && email ? { email } : {}),
+          ...(!existingPhone && phone && countryCode
+            ? { phone, countryCode }
+            : {}),
+          profile: {
+            upsert: {
+              create: { displayName: dto.orgDisplayName ?? null },
+              update: {},
+            },
+          },
+        },
+      });
+      userId = existingUser.id;
+    } else {
+      const user = await tx.user.create({
+        data: {
+          email: email ?? null,
+          phone: phone ?? null,
+          countryCode: countryCode ?? null,
+          passwordHash: null,
+          emailVerifiedAt: null,
+          phoneVerifiedAt: null,
+          profile: {
+            create: { displayName: dto.orgDisplayName ?? null },
+          },
+        },
+      });
+      userId = user.id;
+    }
+
+    const existingMember = await tx.orgMember.findUnique({
+      where: { orgId_userId: { orgId, userId } },
+    });
+
+    if (existingMember && !existingMember.deletedAt) {
+      throw new ConflictException('该用户已是当前组织成员');
+    }
+
+    if (dto.employeeNo) {
+      const employeeNoExists = await tx.orgMember.findFirst({
+        where: {
+          orgId,
+          employeeNo: dto.employeeNo,
+          deletedAt: null,
+          ...(existingMember ? { id: { not: existingMember.id } } : {}),
+        },
+      });
+      if (employeeNoExists) {
+        throw new ConflictException('工号已存在');
+      }
+    }
+
+    const departmentIds = [
+      ...new Set([
+        ...(dto.departmentIds ?? []),
+        ...(dto.primaryDeptId ? [dto.primaryDeptId] : []),
+      ]),
+    ];
+    const roleIds = [...new Set(dto.roleIds ?? [])];
+
+    if (departmentIds.length > 0) {
+      const departmentCount = await tx.dept.count({
+        where: {
+          id: { in: departmentIds },
+          orgId,
+          deletedAt: null,
+        },
+      });
+      if (departmentCount !== departmentIds.length) {
+        throw new BadRequestException('包含不存在或不属于当前组织的部门');
+      }
+    }
+
+    if (roleIds.length > 0) {
+      const roleCount = await tx.role.count({
+        where: {
+          id: { in: roleIds },
+          orgId,
+          isDeleted: false,
+          deletedAt: null,
+        },
+      });
+      if (roleCount !== roleIds.length) {
+        throw new BadRequestException('包含不存在或不属于当前组织的角色');
+      }
+    }
+
+    const member = existingMember
+      ? await tx.orgMember.update({
+          where: { id: existingMember.id },
+          data: {
+            type: dto.type ?? 'INTERNAL',
+            status: 'INVITED',
+            orgDisplayName: dto.orgDisplayName ?? null,
+            employeeNo: dto.employeeNo ?? null,
+            primaryDeptId: dto.primaryDeptId ?? null,
+            externalCompany: dto.externalCompany ?? null,
+            title: dto.title ?? null,
+            deletedAt: null,
+          },
+        })
+      : await tx.orgMember.create({
+          data: {
+            orgId,
+            userId,
+            type: dto.type ?? 'INTERNAL',
+            status: 'INVITED',
+            orgDisplayName: dto.orgDisplayName,
+            employeeNo: dto.employeeNo,
+            primaryDeptId: dto.primaryDeptId,
+            externalCompany: dto.externalCompany,
+            title: dto.title,
+          },
+        });
+
+    if (existingMember) {
+      await Promise.all([
+        tx.memberDepartment.deleteMany({ where: { memberId: member.id } }),
+        tx.memberRole.deleteMany({ where: { memberId: member.id } }),
+      ]);
+    }
+
+    if (departmentIds.length > 0) {
+      await tx.memberDepartment.createMany({
+        data: departmentIds.map((deptId) => ({
+          memberId: member.id,
+          deptId,
+          orgId,
+          isPrimary: deptId === dto.primaryDeptId,
+        })),
+      });
+    }
+
+    if (roleIds.length > 0) {
+      await tx.memberRole.createMany({
+        data: roleIds.map((roleId) => ({ memberId: member.id, roleId })),
+      });
+    }
+
+    return member.id;
+  }
+
+  private async findUserByPhone(
+    tx: Prisma.TransactionClient,
+    countryCode: string,
+    phone: string,
+  ) {
+    const exactUser = await tx.user.findUnique({
+      where: {
+        uq_users_country_code_phone: { countryCode, phone },
+      },
+    });
+    if (exactUser) return exactUser;
+
+    return tx.user.findFirst({
+      where: {
+        countryCode: countryCode.slice(1),
+        phone,
+      },
+    });
+  }
+
+  private normalizeEmail(email?: string | null): string | undefined {
+    const normalized = email?.trim().toLowerCase();
+    return normalized || undefined;
+  }
+
+  private normalizePhone(phone?: string | null): string | undefined {
+    const normalized = phone?.replace(/\D/g, '');
+    if (!normalized) return undefined;
+    if (normalized.length > 20) {
+      throw new BadRequestException('手机号格式不正确');
+    }
+    return normalized;
+  }
+
+  private normalizeCountryCode(
+    countryCode?: string | null,
+  ): string | undefined {
+    const digits = countryCode?.replace(/\D/g, '');
+    return digits ? `+${digits}` : undefined;
+  }
+
+  private getErrorMessage(error: unknown): string {
+    if (error instanceof HttpException) {
+      const response = error.getResponse();
+      if (typeof response === 'string') return response;
+      const message = (response as { message?: string | string[] }).message;
+      return Array.isArray(message)
+        ? message.join('; ')
+        : message || error.message;
+    }
+    return error instanceof Error ? error.message : '未知错误';
+  }
+
+  private getFailureCode(error: unknown): string {
+    if (error instanceof ConflictException) return 'CONFLICT';
+    if (error instanceof BadRequestException) return 'INVALID_REQUEST';
+    if (error instanceof NotFoundException) return 'NOT_FOUND';
+    return 'INTERNAL_ERROR';
+  }
+
   private toDto(
     member: OrgMember & {
       user?: {
         id: string;
         username: string | null;
         email: string | null;
+        countryCode: string | null;
+        phone: string | null;
         profile?: {
           displayName: string | null;
           avatar: string | null;
@@ -401,6 +607,8 @@ export class OrgMemberService {
         id: string;
         username: string | null;
         email: string | null;
+        countryCode: string | null;
+        phone: string | null;
         profile?: {
           displayName: string | null;
           avatar: string | null;
@@ -434,6 +642,8 @@ export class OrgMemberService {
         id: '',
         username: null,
         email: null,
+        countryCode: null,
+        phone: null,
         profile: null,
       },
       primaryDept: member.primaryDept,

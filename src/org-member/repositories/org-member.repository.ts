@@ -74,6 +74,8 @@ export class OrgMemberRepository {
               id: true,
               username: true,
               email: true,
+              countryCode: true,
+              phone: true,
               profile: {
                 select: {
                   displayName: true,
@@ -106,6 +108,8 @@ export class OrgMemberRepository {
             id: true,
             username: true,
             email: true,
+            countryCode: true,
+            phone: true,
             profile: {
               select: {
                 displayName: true,
@@ -187,6 +191,8 @@ export class OrgMemberRepository {
               id: true,
               username: true,
               email: true,
+              countryCode: true,
+              phone: true,
               profile: {
                 select: {
                   displayName: true,
@@ -267,6 +273,8 @@ export class OrgMemberRepository {
               id: true,
               username: true,
               email: true,
+              countryCode: true,
+              phone: true,
               profile: {
                 select: {
                   displayName: true,

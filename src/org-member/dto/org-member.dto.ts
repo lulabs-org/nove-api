@@ -23,6 +23,20 @@ export class OrgMemberUserInfo {
   email: string | null;
 
   @ApiPropertyOptional({
+    description: '国家代码',
+    example: '+86',
+    nullable: true,
+  })
+  countryCode: string | null;
+
+  @ApiPropertyOptional({
+    description: '手机号',
+    example: '13800138000',
+    nullable: true,
+  })
+  phone: string | null;
+
+  @ApiPropertyOptional({
     description: '用户资料',
     nullable: true,
   })
@@ -257,10 +271,28 @@ export class OrgMemberListResponse {
 
 export class BatchImportFailure {
   @ApiProperty({
-    description: '用户 ID',
-    example: 'clx1234567890abcdef',
+    description: '成员在批量请求中的序号（从 0 开始）',
+    example: 0,
   })
-  userId: string;
+  index: number;
+
+  @ApiPropertyOptional({
+    description: '脱敏邮箱',
+    example: 'zh***@example.com',
+  })
+  email?: string;
+
+  @ApiPropertyOptional({
+    description: '脱敏手机号',
+    example: '138****8000',
+  })
+  phone?: string;
+
+  @ApiProperty({
+    description: '稳定错误码',
+    example: 'CONFLICT',
+  })
+  code: string;
 
   @ApiProperty({
     description: '失败原因',

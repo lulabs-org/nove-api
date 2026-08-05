@@ -8,50 +8,12 @@
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsNotEmpty, IsString, IsOptional } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { ArrayMinSize, IsArray, ValidateNested } from 'class-validator';
+import { CreateOrgMemberDto } from './create-org-member.dto';
 
-export class BatchImportMemberItemDto {
-  @ApiProperty({
-    description: '用户 ID',
-    example: 'clx1234567890abcdef',
-  })
-  @IsString()
-  @IsNotEmpty()
-  userId: string;
-
-  @ApiPropertyOptional({
-    description: '组织显示名称',
-    example: '张三',
-  })
-  @IsOptional()
-  @IsString()
-  orgDisplayName?: string;
-
-  @ApiPropertyOptional({
-    description: '内部员工工号',
-    example: 'EMP001',
-  })
-  @IsOptional()
-  @IsString()
-  employeeNo?: string;
-
-  @ApiPropertyOptional({
-    description: '主要部门 ID',
-    example: 'clx0987654321fedcba',
-  })
-  @IsOptional()
-  @IsString()
-  primaryDeptId?: string;
-
-  @ApiPropertyOptional({
-    description: '职位/头衔',
-    example: '软件工程师',
-  })
-  @IsOptional()
-  @IsString()
-  title?: string;
-}
+export class BatchImportMemberItemDto extends CreateOrgMemberDto {}
 
 export class BatchImportMemberDto {
   @ApiProperty({
@@ -59,6 +21,8 @@ export class BatchImportMemberDto {
     type: [BatchImportMemberItemDto],
   })
   @IsArray()
-  @IsNotEmpty()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => BatchImportMemberItemDto)
   members: BatchImportMemberItemDto[];
 }
