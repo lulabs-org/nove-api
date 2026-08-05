@@ -6,6 +6,7 @@ model Dept {
   description String? // 部门描述
   orgId       String  @map("org_id") // 所属组织ID
   parentId    String? @map("parent_id") // 父部门ID
+  leaderUserId String? @map("leader_user_id") // 负责人用户ID
   level       Int     @default(1) // 部门层级
   sortOrder   Int     @default(0) @map("sort_order") // 排序
   active      Boolean @default(true) // 是否启用
@@ -15,6 +16,7 @@ model Dept {
   parent   Dept?              @relation("DepartmentHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
   children Dept[]             @relation("DepartmentHierarchy")
   members  MemberDepartment[]
+  leaderUser User?           @relation("DepartmentLeader", fields: [leaderUserId], references: [id], onDelete: SetNull)
 
   createdAt  DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt  DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -23,6 +25,7 @@ model Dept {
 
   @@unique([orgId, code])
   @@index([parentId])
+  @@index([leaderUserId])
   @@index([code])
   @@index([orgId, active]) // 活跃部门查询
   @@index([parentId, sortOrder]) // 子部门排序查询

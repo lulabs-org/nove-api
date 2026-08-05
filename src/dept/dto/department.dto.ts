@@ -61,6 +61,7 @@ export class DepartmentDto {
     description: '负责人用户 ID',
     example: 'clx1234567890abcdef',
     nullable: true,
+    type: String,
   })
   leaderUserId: string | null;
 

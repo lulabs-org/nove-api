@@ -29,6 +29,31 @@ export class DepartmentRepository {
     });
   }
 
+  async findCodesByOrganizationId(organizationId: string): Promise<string[]> {
+    const departments = await this.prisma.dept.findMany({
+      where: { orgId: organizationId },
+      select: { code: true },
+    });
+
+    return departments.map((department) => department.code);
+  }
+
+  async isEligibleLeader(
+    organizationId: string,
+    userId: string,
+  ): Promise<boolean> {
+    const count = await this.prisma.orgMember.count({
+      where: {
+        orgId: organizationId,
+        userId,
+        deletedAt: null,
+        status: { in: ['INVITED', 'ACTIVE'] },
+      },
+    });
+
+    return count > 0;
+  }
+
   async findByOrganizationId(
     organizationId: string,
     options?: {
