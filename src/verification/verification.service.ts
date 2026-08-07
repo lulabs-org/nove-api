@@ -5,7 +5,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { VerificationRepository } from './repositories/verification.repository';
-import { MailService } from '@/mail/mail.service';
+import { MailService } from '@/mail/services/mail.service';
 import { SmsService } from '../sms/sms.service';
 import { CodeType } from '@/verification/enums';
 import { VerificationCodeType } from '@prisma/client';

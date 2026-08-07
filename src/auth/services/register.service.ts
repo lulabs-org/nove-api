@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { VerificationService } from '@/verification/verification.service';
-import { MailService } from '@/mail/mail.service';
+import { MailService } from '@/mail/services/mail.service';
 import { RegisterDto } from '../dto/register.dto';
 import { AuthResponseDto } from '../dto/auth-response.dto';
 import { AuthType } from '@/auth/enums';

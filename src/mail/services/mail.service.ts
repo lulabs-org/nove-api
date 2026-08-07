@@ -10,12 +10,12 @@
  */
 
 import { Injectable, Logger } from '@nestjs/common';
-import { SendEmailDto } from './dto/send-email.dto';
-import { MailerService, MailerSendOptions } from '../integrations/email';
+import { SendEmailDto } from '../dto/send-email.dto';
+import { MailerService, MailerSendOptions } from './mailer.service';
 import {
   buildWelcomeEmail,
   buildVerificationEmail,
-} from '../common/email-templates';
+} from '../../common/email-templates';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 

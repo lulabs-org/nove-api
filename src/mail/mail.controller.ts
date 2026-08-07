@@ -18,7 +18,7 @@ import {
   HttpException,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { MailService } from './mail.service';
+import { MailService } from './services/mail.service';
 import { SendEmailDto } from './dto/send-email.dto';
 import { Public } from '@/auth/decorators/public.decorator';
 import {
