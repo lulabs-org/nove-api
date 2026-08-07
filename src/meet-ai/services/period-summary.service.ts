@@ -66,9 +66,7 @@ export class PeriodSummaryService {
     });
 
     // 2. 提取唯一的平台用户 ID 列表
-    const platformUserIds = [
-      ...new Set(summaries.map((s) => s.platformUserId).filter(Boolean)),
-    ] as string[];
+    const platformUserIds = summaries.map((s) => s.platformUserId).filter(Boolean) as string[];
 
     if (platformUserIds.length === 0) {
       this.logger.warn(
@@ -140,15 +138,15 @@ export class PeriodSummaryService {
       aiModel: this.config.model,
     });
 
-    // 关联子总结
-    for (const child of userSummaries) {
-      await this.summaryRepo.createSummaryRelation({
+    // 关联子总结 (批量插入)
+    await this.summaryRepo.createSummaryRelations(
+      userSummaries.map((child) => ({
         parentSummaryId: parentSummary.id,
         childSummaryId: child.id,
         parentPeriodType: ctx.parent,
         childPeriodType: periodType,
-      });
-    }
+      }))
+    );
 
     this.logger.log(
       `创建了 ${userSummaries.length} 条关联记录, 父总结 ID: ${parentSummary.id}`,
@@ -168,7 +166,14 @@ export class PeriodSummaryService {
       你只需要根据用户输入，总结用户在会议中的活动，输出 markdown 格式的总结。
     `.trim();
 
-    const prompt = JSON.stringify(userSummaries);
+    // 优化上下文大小：只传递必要字段，剔除无用的元数据
+    const leanSummaries = userSummaries.map(s => ({
+      userName: s.userName,
+      partSummary: s.partSummary,
+      periodStart: s.periodStart,
+      periodEnd: s.periodEnd,
+    }));
+    const prompt = JSON.stringify(leanSummaries);
     return { systemPrompt, prompt };
   }
 }
