@@ -10,27 +10,10 @@ export class MeetAiPromptService {
     transcript: any,
     platformUser: any,
   ) {
-    const segments = transcript.segments.map((segment: any) => {
-      const timeMs = Number(segment.startTimeMs);
-      const hours = Math.floor(timeMs / 3600000);
-      const minutes = Math.floor((timeMs % 3600000) / 60000);
-      const seconds = Math.floor((timeMs % 60000) / 1000);
+    const segments = this.formatSegments(transcript.segments);
+    const userName = this.extractUserName(platformUser);
 
-      const timeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-      const speakerName = segment.speakerName || segment.speaker?.displayName || '未知发言人';
-      const content = segment.text || '';
 
-      return [timeStr, speakerName, content];
-    });
-
-    const user = platformUser.user;
-    const profile = user?.profile;
-    const userName =
-      platformUser.displayName ||
-      profile?.displayName ||
-      user?.username ||
-      (profile?.lastName || '') + (profile?.firstName || '') ||
-      '未知用户';
 
     const systemPrompt = '你是专业的会议总结助手，擅长为参会者提供个性化、实用的会议总结。';
 
@@ -79,5 +62,33 @@ export class MeetAiPromptService {
     const prompt = JSON.stringify(leanSummaries);
     
     return { systemPrompt, prompt };
+  }
+
+  private extractUserName(platformUser: any): string {
+    const user = platformUser?.user;
+    const profile = user?.profile;
+    return (
+      platformUser?.displayName ||
+      profile?.displayName ||
+      user?.username ||
+      (profile?.lastName || '') + (profile?.firstName || '') ||
+      '未知用户'
+    );
+  }
+
+  private formatSegments(segments: any[] = []) {
+    return segments.map((segment: any) => {
+      const timeStr = this.formatTime(Number(segment.startTimeMs || 0));
+      const speakerName = segment.speakerName || segment.speaker?.displayName || '未知发言人';
+      const content = segment.text || '';
+      return [timeStr, speakerName, content];
+    });
+  }
+
+  private formatTime(timeMs: number): string {
+    const hours = Math.floor(timeMs / 3600000);
+    const minutes = Math.floor((timeMs % 3600000) / 60000);
+    const seconds = Math.floor((timeMs % 60000) / 1000);
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   }
 }
