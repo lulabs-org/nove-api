@@ -21,7 +21,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { NoPermissionRequired } from '@/permission/decorators/permissions.decorator';
-import { MeetAiService } from '../services/meet-ai.service';
+import { ParticipantSummaryService } from '../services/participant-summary.service';
 import { PeriodSummaryService } from '../services/period-summary.service';
 import { TriggerSummaryDto } from '../dto/meet-ai.dto';
 
@@ -33,7 +33,7 @@ export class MeetAiController {
   private readonly logger = new Logger(MeetAiController.name);
 
   constructor(
-    private readonly meetAiService: MeetAiService,
+    private readonly participantSummaryService: ParticipantSummaryService,
     private readonly periodSummaryService: PeriodSummaryService,
   ) {}
 
@@ -60,10 +60,12 @@ export class MeetAiController {
       recordId: body.recordId,
       platformUserId: body.platformUserId,
     });
-    return this.meetAiService.generateParticipantSummary(
+    
+    const summary = await this.participantSummaryService.generateSummary(
       body.recordId,
       body.platformUserId,
     );
+    return { success: true, message: '参会者总结生成成功', data: summary };
   }
 
   @Post('period-summary')

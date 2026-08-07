@@ -7,6 +7,22 @@ import { ParticipantSummaryRepository } from '../repositories/participant-summar
 import { PeriodTimeRange } from '../utils/period-time-range';
 import { openaiConfig } from '../../configs/openai.config';
 
+interface PeriodContext {
+  parent: PeriodType;
+  label: string;
+}
+
+const getPeriodContext = (periodType: PeriodType): PeriodContext | undefined => {
+  const periodMap: Partial<Record<PeriodType, PeriodContext>> = {
+    [PeriodType.YEARLY]: { parent: PeriodType.MONTHLY, label: '本年' },
+    [PeriodType.QUARTERLY]: { parent: PeriodType.MONTHLY, label: '本季度' },
+    [PeriodType.MONTHLY]: { parent: PeriodType.DAILY, label: '本月' },
+    [PeriodType.WEEKLY]: { parent: PeriodType.DAILY, label: '本周' },
+    [PeriodType.DAILY]: { parent: PeriodType.SINGLE, label: '本日' },
+  };
+  return periodMap[periodType];
+};
+
 @Injectable()
 export class PeriodSummaryService {
   private readonly logger = new Logger(PeriodSummaryService.name);
@@ -20,22 +36,6 @@ export class PeriodSummaryService {
   ) {}
 
   /**
-   * 获取周期配置上下文
-   */
-  private getContext(periodType: PeriodType) {
-    const periodMap: Partial<
-      Record<PeriodType, { parent: PeriodType; label: string }>
-    > = {
-      [PeriodType.YEARLY]: { parent: PeriodType.MONTHLY, label: '本年' },
-      [PeriodType.QUARTERLY]: { parent: PeriodType.MONTHLY, label: '本季度' },
-      [PeriodType.MONTHLY]: { parent: PeriodType.DAILY, label: '本月' },
-      [PeriodType.WEEKLY]: { parent: PeriodType.DAILY, label: '本周' },
-      [PeriodType.DAILY]: { parent: PeriodType.SINGLE, label: '本日' },
-    };
-    return periodMap[periodType];
-  }
-
-  /**
    * 处理总结任务
    */
   async process(periodType: PeriodType): Promise<{ ok: boolean; at: string }> {
@@ -44,7 +44,7 @@ export class PeriodSummaryService {
       new Date().toISOString(),
     );
 
-    const ctx = this.getContext(periodType);
+    const ctx = getPeriodContext(periodType);
     if (!ctx) {
       this.logger.warn(`不支持或未知的周期类型: ${periodType}`);
       return { ok: false, at: new Date().toISOString() };
@@ -79,14 +79,17 @@ export class PeriodSummaryService {
 
     this.logger.log(`需处理的用户数: ${platformUserIds.length}`);
 
-    // 3. 遍历并处理每个用户的总结
-    for (const platformUserId of platformUserIds) {
-      await this.processUser(
-        platformUserId,
-        periodType,
-        ctx,
-        periodStart,
-        periodEnd,
+    // 3. 遍历并分批处理每个用户的总结 (并发度控制为 5)
+    const chunkSize = 5;
+    for (let i = 0; i < platformUserIds.length; i += chunkSize) {
+      const chunk = platformUserIds.slice(i, i + chunkSize);
+      await Promise.all(
+        chunk.map((platformUserId) =>
+          this.processUser(platformUserId, periodType, ctx, periodStart, periodEnd)
+            .catch((err) => {
+              this.logger.error(`处理用户 ${platformUserId} 的会议总结时发生错误`, err.stack);
+            })
+        )
       );
     }
 
@@ -99,7 +102,7 @@ export class PeriodSummaryService {
   private async processUser(
     platformUserId: string,
     periodType: PeriodType,
-    ctx: { parent: PeriodType; label: string },
+    ctx: PeriodContext,
     periodStart: Date,
     periodEnd: Date,
   ) {
@@ -117,22 +120,11 @@ export class PeriodSummaryService {
       `获取到用户(${platformUserId})的参会议记录: ${userSummaries.length} 条`,
     );
 
-    // AI 总结
-    const systemPrompt = `
-      你是人工智能助手，需要总结用户"${userName}"${ctx.label} 的会议记录。
-      字段说明：
-      - userName: 参会人在 onstage会议的昵称
-      - partSummary: 参会人 onstage会议的总结
-      - periodStart: 会议总结的开始区间
-      - periodEnd: 会议总结的结束区间
-
-      切记以上只是字段解释，不是输出内容。
-      你只需要根据用户输入，总结用户在会议中的活动，输出 markdown 格式的总结。
-    `.trim();
+    const { systemPrompt, prompt } = this.buildPrompt(userName, ctx, userSummaries);
 
     const reply = await this.llmService.createChatCompletion([
       { role: 'system', content: systemPrompt },
-      { role: 'user', content: JSON.stringify(userSummaries) },
+      { role: 'user', content: prompt },
     ]);
 
     this.logger.log(`LLM聊天完成: ${reply?.slice(0, 200)}`);
@@ -161,5 +153,22 @@ export class PeriodSummaryService {
     this.logger.log(
       `创建了 ${userSummaries.length} 条关联记录, 父总结 ID: ${parentSummary.id}`,
     );
+  }
+
+  private buildPrompt(userName: string, ctx: PeriodContext, userSummaries: any[]) {
+    const systemPrompt = `
+      你是人工智能助手，需要总结用户"${userName}"${ctx.label} 的会议记录。
+      字段说明：
+      - userName: 参会人在 onstage会议的昵称
+      - partSummary: 参会人 onstage会议的总结
+      - periodStart: 会议总结的开始区间
+      - periodEnd: 会议总结的结束区间
+
+      切记以上只是字段解释，不是输出内容。
+      你只需要根据用户输入，总结用户在会议中的活动，输出 markdown 格式的总结。
+    `.trim();
+
+    const prompt = JSON.stringify(userSummaries);
+    return { systemPrompt, prompt };
   }
 }
