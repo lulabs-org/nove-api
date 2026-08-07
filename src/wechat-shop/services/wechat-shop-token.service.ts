@@ -4,41 +4,91 @@ import {
   Injectable,
   Logger,
   ServiceUnavailableException,
+  OnModuleInit,
 } from '@nestjs/common';
 import { AxiosError } from 'axios';
 import { firstValueFrom } from 'rxjs';
-
+import { OnEvent } from '@nestjs/event-emitter';
 import { wechatShopConfig, WechatShopConfig } from '@/configs';
 import { RedisService } from '@/redis/redis.service';
 import { WechatShopApiResponse } from '../types';
+import { SystemConfigService } from '@/admin/system-config/system-config.service';
+import { decrypt } from '@/common/utils/crypto.util';
 
 @Injectable()
-export class WechatShopTokenService {
+export class WechatShopTokenService implements OnModuleInit {
   private readonly logger = new Logger(WechatShopTokenService.name);
   private memoryToken?: string;
   private memoryTokenExpiresAt = 0;
-  private readonly appId: string;
-  private readonly appSecret: string;
-  private readonly redisKey: string;
-  private readonly baseUrl: string;
+  private appId: string;
+  private appSecret: string;
+  private redisKey: string;
+  private baseUrl: string;
 
   constructor(
     @Inject(wechatShopConfig.KEY) private readonly config: WechatShopConfig,
     private readonly httpService: HttpService,
     private readonly redisService: RedisService,
+    private readonly systemConfigService: SystemConfigService,
   ) {
-    const { appId, appSecret, apiBaseUrl } = this.config;
+    this.appId = this.config.appId;
+    this.appSecret = this.config.appSecret;
+    this.baseUrl = this.config.apiBaseUrl;
+    this.redisKey = `WECHAT_SHOP_ACCESS_TOKEN:${this.appId}`;
+  }
 
-    if (!appId || !appSecret) {
-      throw new Error(
-        'WECHAT_SHOP_APP_ID and WECHAT_SHOP_APP_SECRET must be configured',
-      );
+  async onModuleInit() {
+    await this.reloadConfig();
+  }
+
+  @OnEvent('config.wechat-shop.updated')
+  async handleConfigUpdate() {
+    this.logger.log('Received config.wechat-shop.updated event, reloading config...');
+    // Clear old token cache
+    await this.clearTokenCache();
+    // Reload config
+    await this.reloadConfig();
+  }
+
+  private async reloadConfig() {
+    const rawConfig = await this.systemConfigService.getRawWechatShopConfig();
+    
+    if (rawConfig && rawConfig.value) {
+      const dbConfig = rawConfig.value as any;
+      
+      this.appId = dbConfig.appId ?? this.config.appId;
+      this.baseUrl = dbConfig.apiBaseUrl ?? this.config.apiBaseUrl;
+      this.redisKey = `WECHAT_SHOP_ACCESS_TOKEN:${this.appId}`;
+      
+      if (dbConfig.appSecret) {
+        try {
+          this.appSecret = decrypt(dbConfig.appSecret);
+        } catch (e) {
+          this.logger.error('Failed to decrypt WeChat appSecret from DB');
+        }
+      }
     }
 
-    this.appId = appId;
-    this.appSecret = appSecret;
-    this.redisKey = `WECHAT_SHOP_ACCESS_TOKEN:${appId}`;
-    this.baseUrl = apiBaseUrl;
+    if (!this.appId || !this.appSecret) {
+      this.logger.warn(
+        'WeChat Shop configuration missing (appId or appSecret), API requests will fail.',
+      );
+    }
+  }
+
+  private async clearTokenCache() {
+    this.memoryToken = undefined;
+    this.memoryTokenExpiresAt = 0;
+    
+    const redisClient = this.redisService.getClient();
+    if (this.redisService.isReady() && redisClient && this.redisKey) {
+      try {
+        await redisClient.del(this.redisKey);
+        this.logger.log(`Cleared Redis token cache for ${this.redisKey}`);
+      } catch (err) {
+        this.logger.warn(`Failed to clear Redis token cache: ${(err as Error).message}`);
+      }
+    }
   }
 
   async getAccessToken(): Promise<string> {
@@ -77,6 +127,10 @@ export class WechatShopTokenService {
     access_token: string;
     expires_in?: number;
   }> {
+    if (!this.appId || !this.appSecret) {
+      throw new ServiceUnavailableException('WECHAT_SHOP_APP_ID and WECHAT_SHOP_APP_SECRET must be configured');
+    }
+
     const { data } = await firstValueFrom(
       this.httpService.post<
         WechatShopApiResponse & { access_token?: string; expires_in?: number }

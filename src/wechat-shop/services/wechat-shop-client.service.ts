@@ -4,9 +4,11 @@ import {
   Injectable,
   Logger,
   ServiceUnavailableException,
+  OnModuleInit,
 } from '@nestjs/common';
 import { AxiosError } from 'axios';
 import { firstValueFrom } from 'rxjs';
+import { OnEvent } from '@nestjs/event-emitter';
 
 import { wechatShopConfig, WechatShopConfig } from '@/configs';
 import {
@@ -16,18 +18,39 @@ import {
   WechatShopApiResponse,
 } from '../types';
 import { WechatShopTokenService } from './wechat-shop-token.service';
+import { SystemConfigService } from '@/admin/system-config/system-config.service';
 
 @Injectable()
-export class WechatShopClientService {
+export class WechatShopClientService implements OnModuleInit {
   private readonly logger = new Logger(WechatShopClientService.name);
-  private readonly baseUrl: string;
+  private baseUrl: string;
 
   constructor(
     @Inject(wechatShopConfig.KEY) private readonly config: WechatShopConfig,
     private readonly httpService: HttpService,
     private readonly wechatShopTokenService: WechatShopTokenService,
+    private readonly systemConfigService: SystemConfigService,
   ) {
     this.baseUrl = this.config.apiBaseUrl;
+  }
+
+  async onModuleInit() {
+    await this.reloadConfig();
+  }
+
+  @OnEvent('config.wechat-shop.updated')
+  async handleConfigUpdate() {
+    this.logger.log('Received config.wechat-shop.updated event, reloading baseUrl...');
+    await this.reloadConfig();
+  }
+
+  private async reloadConfig() {
+    const rawConfig = await this.systemConfigService.getRawWechatShopConfig();
+    
+    if (rawConfig && rawConfig.value) {
+      const dbConfig = rawConfig.value as any;
+      this.baseUrl = dbConfig.apiBaseUrl ?? this.config.apiBaseUrl;
+    }
   }
 
   /**
