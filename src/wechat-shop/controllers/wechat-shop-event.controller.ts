@@ -8,22 +8,74 @@ import {
   Post,
   Query,
   UnauthorizedException,
+  OnModuleInit,
+  Logger,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-
+import { OnEvent } from '@nestjs/event-emitter';
 import { Public } from '@/auth/decorators/public.decorator';
 import { wechatShopConfig, WechatShopConfig } from '@/configs';
 import { WechatEventBodyDto, WechatEventQueryDto } from '../dto';
 import { WechatShopEventService } from '../services';
 import { decryptWechatMessage, generateSignature } from '../utils';
+import { SystemConfigService } from '@/admin/system-config/system-config.service';
+import { decrypt } from '@/common/utils/crypto.util';
 
 @ApiTags('Wechat Shop')
 @Controller('webhooks/wechat-shop/events')
-export class WechatShopEventController {
+export class WechatShopEventController implements OnModuleInit {
+  private readonly logger = new Logger(WechatShopEventController.name);
+  private webhookToken: string;
+  private encodingAesKey: string;
+  private appId: string;
+
   constructor(
     private readonly wechatShopEventService: WechatShopEventService,
     @Inject(wechatShopConfig.KEY) private readonly config: WechatShopConfig,
-  ) {}
+    private readonly systemConfigService: SystemConfigService,
+  ) {
+    this.webhookToken = this.config.webhookToken;
+    this.encodingAesKey = this.config.encodingAesKey;
+    this.appId = this.config.appId;
+  }
+
+  async onModuleInit() {
+    await this.reloadConfig();
+  }
+
+  @OnEvent('config.wechat-shop.updated')
+  async handleConfigUpdate() {
+    this.logger.log(
+      'Received config.wechat-shop.updated event, reloading controller config...',
+    );
+    await this.reloadConfig();
+  }
+
+  private async reloadConfig() {
+    const rawConfig =
+      await this.systemConfigService.getRawConfig('wechat-shop');
+
+    if (rawConfig && rawConfig.value) {
+      const dbConfig = rawConfig.value as Record<string, string>;
+      this.appId = dbConfig.appId ?? this.config.appId;
+
+      if (dbConfig.webhookToken) {
+        try {
+          this.webhookToken = decrypt(dbConfig.webhookToken);
+        } catch {
+          this.logger.error('Failed to decrypt webhookToken from DB');
+        }
+      }
+
+      if (dbConfig.encodingAesKey) {
+        try {
+          this.encodingAesKey = decrypt(dbConfig.encodingAesKey);
+        } catch {
+          this.logger.error('Failed to decrypt encodingAesKey from DB');
+        }
+      }
+    }
+  }
 
   @Public()
   @Get()
@@ -37,7 +89,7 @@ export class WechatShopEventController {
     @Query('nonce') nonce: string,
     @Query('echostr') echostr: string,
   ) {
-    const token = this.config.webhookToken;
+    const token = this.webhookToken;
 
     if (!token) {
       throw new UnauthorizedException('WeChat webhook token is not configured');
@@ -66,7 +118,9 @@ export class WechatShopEventController {
     @Query() query: WechatEventQueryDto,
     @Body() payload: WechatEventBodyDto,
   ) {
-    const { webhookToken: token, encodingAesKey, appId } = this.config;
+    const token = this.webhookToken;
+    const encodingAesKey = this.encodingAesKey;
+    const appId = this.appId;
 
     if (!token || !encodingAesKey || !appId) {
       throw new UnauthorizedException(

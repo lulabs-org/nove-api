@@ -16,6 +16,8 @@ import { WechatShopTokenService } from './services/wechat-shop-token.service';
 import { WechatShopProcessor } from './processor/wechat-shop.processor';
 import { UserModule } from '@/user/user.module';
 
+import { SystemConfigModule } from '@/admin/system-config/system-config.module';
+
 @Module({
   imports: [
     PrismaModule,
@@ -27,6 +29,7 @@ import { UserModule } from '@/user/user.module';
       name: 'wechat-order-sync',
       adapter: BullMQAdapter,
     }),
+    SystemConfigModule,
   ],
   controllers: [WechatShopOrderController, WechatShopEventController],
   providers: [

@@ -19,6 +19,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { MailProcessor } from './mail.processor';
+import { SystemConfigModule } from '@/admin/system-config/system-config.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { MailProcessor } from './mail.processor';
       name: 'mail',
       adapter: BullMQAdapter,
     }),
+    SystemConfigModule,
   ],
   controllers: [MailController],
   providers: [MailerService, MailService, MailProcessor], // 注册MailProcessor

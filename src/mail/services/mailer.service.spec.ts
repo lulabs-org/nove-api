@@ -1,6 +1,7 @@
 import { MailerService } from './mailer.service';
 import type { ConfigType } from '@nestjs/config';
 import { emailConfig } from '@/configs/email.config';
+import { SystemConfigService } from '@/admin/system-config/system-config.service';
 import * as nodemailer from 'nodemailer';
 
 jest.mock('nodemailer', () => ({
@@ -52,6 +53,11 @@ describe('MailerService', () => {
     jest.clearAllMocks();
   });
 
+  const mockSystemConfigService = {
+    getConfig: jest.fn().mockResolvedValue(null),
+    getRawConfig: jest.fn().mockResolvedValue(null),
+  } as unknown as SystemConfigService;
+
   it('skips transporter when SMTP creds missing; send/verify are no-ops', async () => {
     const config = makeConfig({
       smtp: {
@@ -63,7 +69,8 @@ describe('MailerService', () => {
         from: '',
       },
     });
-    const svc = new MailerService(config);
+    const svc = new MailerService(config, mockSystemConfigService);
+    await svc.onModuleInit();
 
     // No transporter -> send returns null, verify returns false
     await expect(svc.send({ to: 'a@b.com', subject: 'x' })).resolves.toBeNull();
@@ -87,7 +94,8 @@ describe('MailerService', () => {
         from: 'noreply@test.com',
       },
     });
-    const svc = new MailerService(config);
+    const svc = new MailerService(config, mockSystemConfigService);
+    await svc.onModuleInit();
 
     // explicit from has highest precedence
     transporter.sendMail.mockResolvedValueOnce({ messageId: 'mid-1' });
@@ -121,7 +129,11 @@ describe('MailerService', () => {
         from: 'user@test.com', // 模拟配置中的回退逻辑
       },
     });
-    const svcWithoutFrom = new MailerService(configWithoutFrom);
+    const svcWithoutFrom = new MailerService(
+      configWithoutFrom,
+      mockSystemConfigService,
+    );
+    await svcWithoutFrom.onModuleInit();
     transporter.sendMail.mockResolvedValueOnce({ messageId: 'mid-3' });
     const r3 = await svcWithoutFrom.send({ to: 'z@z.com', subject: 'C' });
     expect(r3).toEqual({ messageId: 'mid-3' });
@@ -155,7 +167,8 @@ describe('MailerService', () => {
         from: 'test@test.com',
       },
     });
-    const svc = new MailerService(config);
+    const svc = new MailerService(config, mockSystemConfigService);
+    await svc.onModuleInit();
 
     await expect(svc.verify()).resolves.toBe(true);
     expect(transporter.verify).toHaveBeenCalled();
@@ -183,12 +196,13 @@ describe('MailerService', () => {
         from: 'test@test.com',
       },
     });
-    const svc = new MailerService(config);
+    const svc = new MailerService(config, mockSystemConfigService);
+    await svc.onModuleInit();
 
     await expect(svc.verify()).resolves.toBe(false);
   });
 
-  it('logs warning when transporter.verify callback reports config error', () => {
+  it('logs warning when transporter.verify callback reports config error', async () => {
     const transporter = makeTransporter({ verifyCbError: new Error('config') });
     createTransport.mockReturnValue(transporter);
     const config = makeConfig({
@@ -204,7 +218,8 @@ describe('MailerService', () => {
     // constructor triggers callback branch
     // no assertions needed; execution covers warning branch
 
-    new MailerService(config);
+    const svc = new MailerService(config, mockSystemConfigService);
+    await svc.onModuleInit();
     expect(createTransport).toHaveBeenCalled();
     expect(transporter.verify).toHaveBeenCalled();
   });

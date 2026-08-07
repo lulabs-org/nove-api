@@ -12,6 +12,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -50,6 +51,7 @@ import { WechatShopModule } from './wechat-shop/wechat-shop.module';
 import { OrderModule } from './order/order.module';
 import { WebhookLogModule } from './webhook-log/webhook-log.module';
 import { OAuthModule } from './oauth/oauth.module';
+import { SystemConfigModule } from './admin/system-config/system-config.module';
 
 @Module({
   imports: [
@@ -94,6 +96,7 @@ import { OAuthModule } from './oauth/oauth.module';
     }),
     TasksModule,
     ScheduleModule.forRoot(),
+    EventEmitterModule.forRoot(),
     PrismaModule,
     MailModule,
     AuthModule,
@@ -116,6 +119,7 @@ import { OAuthModule } from './oauth/oauth.module';
     OrderModule,
     WebhookLogModule,
     OAuthModule,
+    SystemConfigModule,
   ],
   controllers: [AppController],
   providers: [
