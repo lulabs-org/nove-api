@@ -9,6 +9,10 @@ export class ParticipantSummaryRepository {
 
   constructor(private readonly prisma: PrismaService) {}
 
+  // ==========================================
+  // WRITE OPERATIONS
+  // ==========================================
+
   async create(data: Prisma.ParticipantSummaryUncheckedCreateInput) {
     // Provide some application-level defaults if they are missing
     if (!data.generatedBy) data.generatedBy = GenerationMethod.AI;
@@ -16,6 +20,13 @@ export class ParticipantSummaryRepository {
     if (!data.keywords) data.keywords = [];
     
     return this.prisma.participantSummary.create({ data });
+  }
+
+  async update(id: string, data: Prisma.ParticipantSummaryUpdateInput) {
+    return this.prisma.participantSummary.update({
+      where: { id },
+      data,
+    });
   }
 
   async upsert(data: Prisma.ParticipantSummaryUncheckedCreateInput) {
@@ -37,6 +48,60 @@ export class ParticipantSummaryRepository {
     } else {
       return this.create(data);
     }
+  }
+
+  async saveNewVersion(params: Prisma.ParticipantSummaryUncheckedCreateInput) {
+    return this.prisma.$transaction(async (tx) => {
+      const existing = await tx.participantSummary.findFirst({
+        where: {
+          periodType: params.periodType,
+          platformUserId: params.platformUserId,
+          meetingId: params.meetingId,
+          meetingRecordingId: params.meetingRecordingId,
+          isLatest: true,
+          deletedAt: null,
+        },
+      });
+
+      if (existing) {
+        this.logger.warn(`参会者: ${params.userName} 已存在最新总结，将弃用旧版本并创建新版本`);
+        await tx.participantSummary.update({
+          where: { id: existing.id },
+          data: { isLatest: false },
+        });
+      }
+
+      return tx.participantSummary.create({
+        data: {
+          ...params,
+          version: existing ? existing.version + 1 : 1,
+          isLatest: true,
+        },
+      });
+    });
+  }
+
+  // ==========================================
+  // READ OPERATIONS
+  // ==========================================
+
+  async findLatestSummary(params: {
+    periodType: PeriodType;
+    platformUserId: string;
+    meetingId: string;
+    meetingRecordingId: string;
+    isLatest: boolean;
+  }) {
+    return this.prisma.participantSummary.findFirst({
+      where: {
+        periodType: params.periodType,
+        platformUserId: params.platformUserId,
+        meetingId: params.meetingId,
+        meetingRecordingId: params.meetingRecordingId,
+        isLatest: params.isLatest,
+        deletedAt: null,
+      },
+    });
   }
 
   async findManyByDateRange(params: {
@@ -74,32 +139,6 @@ export class ParticipantSummaryRepository {
           },
         },
       },
-    });
-  }
-
-  async findLatestSummary(params: {
-    periodType: PeriodType;
-    platformUserId: string;
-    meetingId: string;
-    meetingRecordingId: string;
-    isLatest: boolean;
-  }) {
-    return this.prisma.participantSummary.findFirst({
-      where: {
-        periodType: params.periodType,
-        platformUserId: params.platformUserId,
-        meetingId: params.meetingId,
-        meetingRecordingId: params.meetingRecordingId,
-        isLatest: params.isLatest,
-        deletedAt: null,
-      },
-    });
-  }
-
-  async update(id: string, data: Prisma.ParticipantSummaryUpdateInput) {
-    return this.prisma.participantSummary.update({
-      where: { id },
-      data,
     });
   }
 
@@ -171,37 +210,6 @@ export class ParticipantSummaryRepository {
         periodEnd: true,
         platformUserId: true,
       },
-    });
-  }
-
-  async saveNewVersion(params: Prisma.ParticipantSummaryUncheckedCreateInput) {
-    return this.prisma.$transaction(async (tx) => {
-      const existing = await tx.participantSummary.findFirst({
-        where: {
-          periodType: params.periodType,
-          platformUserId: params.platformUserId,
-          meetingId: params.meetingId,
-          meetingRecordingId: params.meetingRecordingId,
-          isLatest: true,
-          deletedAt: null,
-        },
-      });
-
-      if (existing) {
-        this.logger.warn(`参会者: ${params.userName} 已存在最新总结，将弃用旧版本并创建新版本`);
-        await tx.participantSummary.update({
-          where: { id: existing.id },
-          data: { isLatest: false },
-        });
-      }
-
-      return tx.participantSummary.create({
-        data: {
-          ...params,
-          version: existing ? existing.version + 1 : 1,
-          isLatest: true,
-        },
-      });
     });
   }
 }
