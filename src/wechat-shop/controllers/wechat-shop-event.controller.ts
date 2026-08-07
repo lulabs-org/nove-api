@@ -14,7 +14,7 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Public } from '@/auth/decorators/public.decorator';
 import { wechatShopConfig, WechatShopConfig } from '@/configs';
 import { WechatEventBodyDto, WechatEventQueryDto } from '../dto';
-import { WechatShopEventService } from '../service';
+import { WechatShopEventService } from '../services';
 import { decryptWechatMessage, generateSignature } from '../utils';
 
 @ApiTags('Wechat Shop')

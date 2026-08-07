@@ -12,6 +12,9 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 
+# Daily log files (runtime Docker logs, not source files)
+/daily-log
+
 # OS
 .DS_Store
 

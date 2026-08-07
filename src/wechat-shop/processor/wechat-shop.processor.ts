@@ -1,7 +1,7 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
-import { WechatShopOrderService } from '../service/wechat-shop-order.service';
+import { WechatShopOrderService } from '../services/wechat-shop-order.service';
 
 @Processor('wechat-order-sync')
 export class WechatShopProcessor extends WorkerHost {

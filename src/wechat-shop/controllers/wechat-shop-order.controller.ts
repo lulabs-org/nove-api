@@ -10,7 +10,7 @@ import {
 import { NoPermissionRequired } from '@/permission/decorators/permissions.decorator';
 import { RequireRoles } from '@/role/decorators/roles.decorator';
 import { WechatOrderHistorySyncDto } from '../dto';
-import { WechatShopOrderService } from '../service';
+import { WechatShopOrderService } from '../services';
 
 @ApiTags('Wechat Shop')
 @ApiBearerAuth()
