@@ -18,7 +18,7 @@ import { TasksController } from './tasks.controller';
 import { TasksService } from './services/tasks.service';
 import { TaskProcessor } from './processors/task.processor';
 import { PrismaService } from '../prisma/prisma.service';
-import { OpenaiModule } from '../integrations/openai/openai.module';
+import { LlmModule } from '../llm/llm.module';
 import { HttpModule } from '@nestjs/axios';
 import { TasksRepository } from './repositories/tasks.repository';
 import { TaskExecutionLogsRepository } from './repositories/task-execution-logs.repository';
@@ -39,7 +39,7 @@ import { MigratePhoneHashesHandler } from './handlers/migrate-phone-hashes.handl
       name: TASK_QUEUE_NAME,
       adapter: BullMQAdapter,
     }),
-    OpenaiModule,
+    LlmModule,
     ConfigModule.forFeature(openaiConfig),
     HttpModule,
   ],
