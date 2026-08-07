@@ -1,4 +1,4 @@
-import { Controller, Get, Put, Body, Param } from '@nestjs/common';
+import { Controller, Get, Put, Delete, Body, Param } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -41,5 +41,17 @@ export class SystemConfigController {
     @Body() data: Record<string, unknown>,
   ) {
     return this.systemConfigService.updateConfig(module, data);
+  }
+
+  @Delete(':module')
+  @ApiOperation({ summary: 'Delete module configuration' })
+  @ApiParam({
+    name: 'module',
+    description: 'Module name (e.g., mail, wechat-shop)',
+    example: 'mail',
+  })
+  @RequirePermissions('system:config:write')
+  async deleteConfig(@Param('module') module: string) {
+    return this.systemConfigService.deleteConfig(module);
   }
 }

@@ -32,4 +32,15 @@ export class SystemConfigRepository {
       },
     });
   }
+
+  async delete(key: string): Promise<SystemConfig | null> {
+    try {
+      return await this.prisma.systemConfig.delete({
+        where: { key },
+      });
+    } catch {
+      // Return null if the record does not exist
+      return null;
+    }
+  }
 }

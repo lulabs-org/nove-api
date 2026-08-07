@@ -109,4 +109,27 @@ export class SystemConfigService {
 
     return { success: true, message: 'Configuration saved successfully' };
   }
+
+  async deleteConfig(module: string) {
+    const entry = SystemConfigRegistry[module];
+    if (!entry) {
+      throw new NotFoundException(`Module configuration for '${module}' not found in registry`);
+    }
+
+    const key = this.getModuleKey(module);
+    const existing = await this.configRepository.findByKey(key);
+
+    if (!existing) {
+      throw new NotFoundException(`Configuration for module '${module}' does not exist`);
+    }
+
+    await this.configRepository.delete(key);
+
+    this.logger.log(`${entry.description} deleted by admin.`);
+
+    // Emit event for hot reload so that services know config is gone
+    this.eventEmitter.emit(`config.${module}.deleted`);
+
+    return { success: true, message: 'Configuration deleted successfully' };
+  }
 }
