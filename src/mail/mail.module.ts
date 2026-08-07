@@ -12,8 +12,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { emailConfig } from '@/configs/email.config';
-import { MailerService } from './mailer.service';
-import { MailService } from './mail.service';
+import { MailerService } from './services/mailer.service';
+import { MailService } from './services/mail.service';
 import { MailController } from './mail.controller';
 import { BullModule } from '@nestjs/bullmq';
 import { BullBoardModule } from '@bull-board/nestjs';
