@@ -11,7 +11,7 @@
 
 import { Injectable, Logger } from '@nestjs/common';
 import { GenerationMethod, PeriodType } from '@prisma/client';
-import { OpenaiService } from '@/integrations/openai/openai.service';
+import { LlmService } from '@/llm/llm.service';
 import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
 import { MeetingRepository } from '@/meeting/repositories/meeting.repository';
 import { ParticipantSummaryRepository } from '../repositories';
@@ -27,7 +27,7 @@ export class ParticipantSummaryService {
   private readonly logger = new Logger(ParticipantSummaryService.name);
 
   constructor(
-    private readonly openaiService: OpenaiService,
+    private readonly llmService: LlmService,
     private readonly partSummaryRepo: ParticipantSummaryRepository,
     private readonly ptUserRepo: PlatformUserRepository,
     private readonly recordingRepo: MeetingRecordingRepository,
@@ -115,7 +115,7 @@ export class ParticipantSummaryService {
 会议转录内容: ${JSON.stringify(segments)}\n
 请根据以上信息，为参会者 ${userName} 生成一份个性化的会议总结，重点关注与该参会者相关的内容。`;
 
-    const summary = await this.openaiService.ask(prompt, systemPrompt);
+    const summary = await this.llmService.ask(prompt, systemPrompt);
 
     const res = await this.partSummaryRepo.findByPeriodAndMeeting({
       periodType: PeriodType.SINGLE,

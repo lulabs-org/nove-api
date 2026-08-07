@@ -14,7 +14,7 @@ import { MeetAiController } from './controllers/meet-ai.controller';
 import { MeetAiService, ParticipantSummaryService } from './services';
 import { ParticipantSummaryRepository } from './repositories';
 import { PrismaModule } from '../prisma/prisma.module';
-import { OpenaiModule } from '@/integrations/openai/openai.module';
+import { LlmModule } from '@/llm/llm.module';
 import { UserModule } from '@/user/user.module';
 import { MeetingModule } from '@/meeting/meeting.module';
 import { UserPlatformModule } from '@/user-platform/user-platform.module';
@@ -29,7 +29,7 @@ import { PeriodSummaryHandler } from './handlers/period-summary.handler';
 @Module({
   imports: [
     PrismaModule,
-    OpenaiModule,
+    LlmModule,
     UserModule,
     MeetingModule,
     UserPlatformModule,

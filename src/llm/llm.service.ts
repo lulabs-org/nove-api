@@ -1,11 +1,11 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import { ConfigType } from '@nestjs/config';
 import OpenAI from 'openai';
-import { openaiConfig } from '../../configs/openai.config';
+import { openaiConfig } from '../configs/openai.config';
 
 @Injectable()
-export class OpenaiService {
-  private readonly logger = new Logger(OpenaiService.name);
+export class LlmService {
+  private readonly logger = new Logger(LlmService.name);
   private openai: OpenAI;
 
   constructor(

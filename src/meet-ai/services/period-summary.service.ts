@@ -2,7 +2,7 @@ import { Injectable, Logger, Inject } from '@nestjs/common';
 import { PeriodType } from '@prisma/client';
 import { ConfigType } from '@nestjs/config';
 
-import { OpenaiService } from '../../integrations/openai/openai.service';
+import { LlmService } from '../../llm/llm.service';
 import { PeriodSummaryRepository } from '../repositories/period-summary.repository';
 import { PeriodTimeRange } from '../utils/period-time-range';
 import { openaiConfig } from '../../configs/openai.config';
@@ -14,7 +14,7 @@ export class PeriodSummaryService {
   constructor(
     private readonly summaryRepo: PeriodSummaryRepository,
     private readonly periodTimeRange: PeriodTimeRange,
-    private readonly openaiService: OpenaiService,
+    private readonly llmService: LlmService,
     @Inject(openaiConfig.KEY)
     private readonly config: ConfigType<typeof openaiConfig>,
   ) {}
@@ -130,12 +130,12 @@ export class PeriodSummaryService {
       你只需要根据用户输入，总结用户在会议中的活动，输出 markdown 格式的总结。
     `.trim();
 
-    const reply = await this.openaiService.createChatCompletion([
+    const reply = await this.llmService.createChatCompletion([
       { role: 'system', content: systemPrompt },
       { role: 'user', content: JSON.stringify(userSummaries) },
     ]);
 
-    this.logger.log(`OpenAI聊天完成: ${reply?.slice(0, 200)}`);
+    this.logger.log(`LLM聊天完成: ${reply?.slice(0, 200)}`);
 
     // 保存主总结
     const parentSummary = await this.summaryRepo.create({

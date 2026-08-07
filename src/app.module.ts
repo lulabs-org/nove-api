@@ -31,7 +31,7 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { AppResolver } from './app.resolver';
 import { ScheduleModule } from '@nestjs/schedule';
-import { OpenaiModule } from './integrations/openai/openai.module';
+import { LlmModule } from './llm/llm.module';
 import { BullModule } from '@nestjs/bullmq';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { ExpressAdapter } from '@bull-board/express';
@@ -103,7 +103,7 @@ import { OAuthModule } from './oauth/oauth.module';
     TencentMtgModule,
     LarkMeetingModule,
     VerificationModule,
-    OpenaiModule,
+    LlmModule,
     ApiKeyModule,
     PermissionModule,
     McpServerModule,
