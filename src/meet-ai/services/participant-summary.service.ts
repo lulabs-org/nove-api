@@ -55,48 +55,48 @@ export class ParticipantSummaryService {
 
     const summary = await this.llmService.ask(prompt, systemPrompt);
 
-    await this.saveSummary(
+    await this.saveSummary({
       ptByUnionId,
       recordid,
       meeting,
       recording,
       userName,
       summary,
-    );
+    });
 
     this.logger.log(`成功生成参会者: ${userName}总结`);
     return summary;
   }
 
   private async fetchMeetingContext(recordid: string, ptByUnionId: string) {
-    const recording = await this.recordingRepo.findById(recordid);
+    const [recording, transcript, platformUser] = await Promise.all([
+      this.recordingRepo.findById(recordid),
+      this.transcriptRepo.findDetails(recordid),
+      this.ptUserRepo.findById(ptByUnionId),
+    ]);
+
     if (!recording) throw new NotFoundException(`录制记录不存在: ${recordid}`);
+    if (!transcript) throw new NotFoundException(`转录记录不存在: ${recordid}`);
+    if (!platformUser) throw new NotFoundException(`平台用户不存在: ${ptByUnionId}`);
 
     const meeting = await this.meetingRepo.findById(recording.meetingId);
     if (!meeting) throw new NotFoundException(`会议记录不存在: ${recording.meetingId}`);
 
-    const platformUser = await this.ptUserRepo.findById(ptByUnionId);
-    if (!platformUser) throw new NotFoundException(`平台用户不存在: ${ptByUnionId}`);
-
     const meetingSummary = await this.meetingSummaryRepo.findByMeetingId(meeting.id);
     if (!meetingSummary) throw new NotFoundException(`会议总结不存在: ${meeting.id}`);
-
-    const transcript = await this.transcriptRepo.findDetails(recordid);
-    if (!transcript) throw new NotFoundException(`转录记录不存在: ${recordid}`);
 
     return { recording, meeting, platformUser, meetingSummary, transcript };
   }
 
-
-
-  private async saveSummary(
-    ptByUnionId: string,
-    recordid: string,
-    meeting: any,
-    recording: any,
-    userName: string,
-    summary: string,
-  ) {
+  private async saveSummary(params: {
+    ptByUnionId: string;
+    recordid: string;
+    meeting: any;
+    recording: any;
+    userName: string;
+    summary: string;
+  }) {
+    const { ptByUnionId, recordid, meeting, recording, userName, summary } = params;
     const res = await this.partSummaryRepo.findLatestSummary({
       periodType: PeriodType.SINGLE,
       platformUserId: ptByUnionId,
