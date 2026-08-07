@@ -16,15 +16,15 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { TaskStatus, TaskType } from '@prisma/client';
-import { CreateOnceDto } from '../dtos/create-once.dto';
-import { CreateCronDto } from '../dtos/create-cron.dto';
-import { UpdateTaskDto } from '../dtos/update-task.dto';
+import { CreateOnceDto } from '../dto/create-once.dto';
+import { CreateCronDto } from '../dto/create-cron.dto';
+import { UpdateTaskDto } from '../dto/update-task.dto';
 import {
   OkResponse,
   RunNowResponse,
   TaskEntity,
   PaginatedTasksResponse,
-} from '../dtos/responses.dto';
+} from '../dto/responses.dto';
 
 // --- Shared Api Responses ---
 const ApiUnauthorizedResponse = ApiResponse({

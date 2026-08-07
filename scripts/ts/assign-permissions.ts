@@ -9,7 +9,7 @@
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved. 
  */
 import { PrismaClient } from '@prisma/client';
-import { assignPermissionsToRole } from '../prisma/seeds/relations/permission-relations/role-permissions';
+import { assignPermissionsToRole } from '../../prisma/seeds/relations/permission-relations/role-permissions';
 
 const prisma = new PrismaClient();
 

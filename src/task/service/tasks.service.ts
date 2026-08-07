@@ -2,10 +2,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import type { Queue, JobsOptions, RepeatOptions } from 'bullmq';
-import { CreateOnceDto } from '../dtos/create-once.dto';
-import { CreateCronDto } from '../dtos/create-cron.dto';
-import { UpdateTaskDto } from '../dtos/update-task.dto';
-import { QueryDto } from '../dtos/query.dto';
+import { CreateOnceDto } from '../dto/create-once.dto';
+import { CreateCronDto } from '../dto/create-cron.dto';
+import { UpdateTaskDto } from '../dto/update-task.dto';
+import { QueryDto } from '../dto/query.dto';
 import { ScheduledTask, TaskStatus, TaskType } from '@prisma/client';
 import { TasksRepository } from '../repositories/tasks.repository';
 import { TASK_QUEUE_NAME, DEFAULT_JOB_OPTIONS } from '../task.constants';

@@ -1,3 +1,14 @@
+// =============================================================================
+// 关联中间表（Junction Tables）
+// 本文件存放所有多对多关系的中间表 model，包括：
+//   - MemberDepartment   成员 ↔ 部门
+//   - MemberRole         成员 ↔ 角色
+//   - RolePermission     角色 ↔ 权限
+//   - MemberPermission   成员 ↔ 权限（特殊授权）
+//   - RoleDataPermission     角色 ↔ 数据权限规则
+//   - MemberDataPermission   成员 ↔ 数据权限规则
+// =============================================================================
+
 // 成员部门关联表
 model MemberDepartment {
   id        String  @id @default(cuid())
