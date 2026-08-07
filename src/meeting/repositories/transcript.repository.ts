@@ -16,6 +16,23 @@ import { PrismaTransaction } from '@/tencent-mtg-hook/types';
 export class TranscriptRepository {
   constructor(private readonly prisma: PrismaService) { }
 
+  // ==========================================
+  // WRITE OPERATIONS
+  // ==========================================
+
+  async create(data: {
+    source: string;
+    rawFileUrl?: string;
+    status: number;
+    startedAt?: Date;
+    finishedAt?: Date;
+    recordingId: string;
+  }) {
+    return this.prisma.transcript.create({
+      data,
+    });
+  }
+
   async create_tx(
     tx: PrismaTransaction,
     data: {
@@ -32,7 +49,7 @@ export class TranscriptRepository {
     });
   }
 
-  async create(data: {
+  async upsert(data: {
     source: string;
     rawFileUrl?: string;
     status: number;
@@ -40,10 +57,42 @@ export class TranscriptRepository {
     finishedAt?: Date;
     recordingId: string;
   }) {
-    return this.prisma.transcript.create({
-      data,
+    const existingTranscript = await this.findByRecordingId(data.recordingId);
+
+    if (existingTranscript) {
+      return this.prisma.transcript.update({
+        where: { id: existingTranscript.id },
+        data: {
+          source: data.source,
+          rawFileUrl: data.rawFileUrl,
+          status: data.status,
+          startedAt: data.startedAt,
+          finishedAt: data.finishedAt,
+        },
+      });
+    } else {
+      return this.prisma.transcript.create({
+        data: {
+          source: data.source,
+          rawFileUrl: data.rawFileUrl,
+          status: data.status,
+          startedAt: data.startedAt,
+          finishedAt: data.finishedAt,
+          recordingId: data.recordingId,
+        },
+      });
+    }
+  }
+
+  async deleteSegments(transcriptId: string) {
+    return this.prisma.transcriptSegment.deleteMany({
+      where: { transcriptId },
     });
   }
+
+  // ==========================================
+  // READ OPERATIONS
+  // ==========================================
 
   async findById(id: string) {
     return this.prisma.transcript.findUnique({
@@ -93,46 +142,5 @@ export class TranscriptRepository {
     return this.prisma.transcriptSegment.count({
       where: { transcriptId },
     });
-  }
-
-  async deleteSegments(transcriptId: string) {
-    return this.prisma.transcriptSegment.deleteMany({
-      where: { transcriptId },
-    });
-  }
-
-  async upsert(data: {
-    source: string;
-    rawFileUrl?: string;
-    status: number;
-    startedAt?: Date;
-    finishedAt?: Date;
-    recordingId: string;
-  }) {
-    const existingTranscript = await this.findByRecordingId(data.recordingId);
-
-    if (existingTranscript) {
-      return this.prisma.transcript.update({
-        where: { id: existingTranscript.id },
-        data: {
-          source: data.source,
-          rawFileUrl: data.rawFileUrl,
-          status: data.status,
-          startedAt: data.startedAt,
-          finishedAt: data.finishedAt,
-        },
-      });
-    } else {
-      return this.prisma.transcript.create({
-        data: {
-          source: data.source,
-          rawFileUrl: data.rawFileUrl,
-          status: data.status,
-          startedAt: data.startedAt,
-          finishedAt: data.finishedAt,
-          recordingId: data.recordingId,
-        },
-      });
-    }
   }
 }
