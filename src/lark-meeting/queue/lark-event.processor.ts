@@ -13,7 +13,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import type { Job } from 'bullmq';
-import { LarkMeetingService } from '../service/lark-meeting.service';
+import { LarkMeetingService } from '../services/lark-meeting.service';
 import { MeetingEndedEventData } from '../types/lark-meeting.types';
 
 @Injectable()

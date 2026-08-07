@@ -3,13 +3,13 @@
  * @Date: 2025-11-23 11:04:45
  * @LastEditors: 杨仕明 shiming.y@qq.com
  * @LastEditTime: 2025-11-23 11:18:42
- * @FilePath: /lulab_backend/src/lark-meeting/service/lark-meeting.service.ts
+ * @FilePath: /nove_api/src/lark-meeting/services/lark-meeting.service.ts
  * @Description:
  *
  * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
  */
 
-// src/lark-meeting/service/lark-meeting.service.ts
+// src/lark-meeting/services/lark-meeting.service.ts
 import { Injectable, Logger } from '@nestjs/common';
 import { MeetingBitableRepository } from '@/integrations/lark';
 import { MeetingEndedEventData } from '../types/lark-meeting.types';

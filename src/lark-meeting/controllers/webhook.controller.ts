@@ -25,7 +25,7 @@ import { EventDispatcher } from '@larksuiteoapi/node-sdk';
 import { createLarkAdapter } from '../adapter/lark-event-adapter';
 import { MeetingEndedEventData } from '../types/lark-meeting.types';
 import { Response, Request } from 'express';
-import { LarkMeetingService } from '../service/lark-meeting.service';
+import { LarkMeetingService } from '../services/lark-meeting.service';
 import { LarkEvent } from '../enums/lark-event.enum';
 import { ConfigType } from '@nestjs/config';
 import { larkConfig } from '@/configs/lark.config';

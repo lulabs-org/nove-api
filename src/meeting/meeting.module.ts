@@ -11,8 +11,8 @@
 
 import { Module } from '@nestjs/common';
 import { MeetingController } from './meeting.controller';
-import { MeetingService } from './service/meeting.service';
-import { TranscriptService } from './service/transcript.service';
+import { MeetingService } from './services/meeting.service';
+import { TranscriptService } from './services/transcript.service';
 import { MeetingRepository } from './repositories/meeting.repository';
 import { MeetingFileRepository } from './repositories/meeting-file.repository';
 import { MeetingSummaryRepository } from './repositories/meeting-summary.repository';

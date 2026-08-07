@@ -24,8 +24,8 @@ import {
   // ApiReprocessMeetingRecordDocs, // 暂时注释掉
   ApiGetTranscriptByRecordingIdDocs,
 } from './decorators/meeting-record.decorators';
-import { MeetingService } from './service/meeting.service';
-import { TranscriptService } from './service/transcript.service';
+import { MeetingService } from './services/meeting.service';
+import { TranscriptService } from './services/transcript.service';
 import {
   QueryMeetingRecordsDto,
   MeetingRecordResponseDto,

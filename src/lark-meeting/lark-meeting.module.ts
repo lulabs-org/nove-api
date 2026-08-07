@@ -12,7 +12,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { LarkWebhookController } from './controllers/webhook.controller';
-import { LarkEventWsService, LarkMeetingService } from './service';
+import { LarkEventWsService, LarkMeetingService } from './services';
 import { LarkModule } from '../integrations/lark/lark.module';
 import { LarkEventProcessor } from './queue/lark-event.processor';
 import { BullModule } from '@nestjs/bullmq';

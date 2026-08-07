@@ -48,7 +48,8 @@ export class PlatformUserController {
   @RequirePermissions('platform-user:read')
   @ApiOperation({
     summary: '平台用户分页列表',
-    description: '支持按平台类型、关键字、活跃状态、本地用户 ID 过滤的分页列表查询。',
+    description:
+      '支持按平台类型、关键字、活跃状态、本地用户 ID 过滤的分页列表查询。',
   })
   @ApiQuery({ name: 'platform', required: false, enum: Platform })
   @ApiQuery({ name: 'keyword', required: false, type: String })
@@ -62,7 +63,10 @@ export class PlatformUserController {
     schema: {
       type: 'object',
       properties: {
-        items: { type: 'array', items: { $ref: getSchemaPath(PlatformUserDto) } },
+        items: {
+          type: 'array',
+          items: { $ref: getSchemaPath(PlatformUserDto) },
+        },
         total: { type: 'integer' },
         page: { type: 'integer' },
         pageSize: { type: 'integer' },
@@ -78,7 +82,8 @@ export class PlatformUserController {
   @RequirePermissions('platform-user:read')
   @ApiOperation({
     summary: '搜索本地用户',
-    description: '根据关键字模糊搜索本地用户，用于手动关联平台用户时选择本地用户。',
+    description:
+      '根据关键字模糊搜索本地用户，用于手动关联平台用户时选择本地用户。',
   })
   @ApiQuery({ name: 'keyword', required: true, type: String })
   @ApiResponse({
