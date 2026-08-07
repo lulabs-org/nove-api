@@ -46,7 +46,7 @@ export class ParticipantSummaryService {
     const { recording, meeting, platformUser, meetingSummary, transcript } =
       await this.fetchMeetingContext(recordid, ptByUnionId);
 
-    const { systemPrompt, prompt, userName } = this.promptService.buildParticipantSummaryPrompt(
+    const { systemPrompt, prompt, userName } = this.promptService.buildParticipantSummary(
       meeting,
       meetingSummary,
       transcript,

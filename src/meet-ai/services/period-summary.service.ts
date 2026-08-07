@@ -122,7 +122,7 @@ export class PeriodSummaryService {
       `获取到用户(${platformUserId})的参会议记录: ${userSummaries.length} 条`,
     );
 
-    const { systemPrompt, prompt } = this.promptService.buildPeriodSummaryPrompt(userName, ctx, userSummaries);
+    const { systemPrompt, prompt } = this.promptService.buildPeriodSummary(userName, ctx, userSummaries);
 
     const reply = await this.llmService.createChatCompletion([
       { role: 'system', content: systemPrompt },

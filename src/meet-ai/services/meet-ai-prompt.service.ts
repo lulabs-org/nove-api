@@ -4,7 +4,7 @@ import { formatToBeijingTime } from '@/common/utils/time.util';
 
 @Injectable()
 export class MeetAiPromptService {
-  buildParticipantSummaryPrompt(
+  buildParticipantSummary(
     meeting: any,
     meetingSummary: any,
     transcript: any,
@@ -35,7 +35,7 @@ export class MeetAiPromptService {
     return { systemPrompt, prompt, userName };
   }
 
-  buildPeriodSummaryPrompt(
+  buildPeriodSummary(
     userName: string, 
     ctx: { parent: PeriodType; label: string }, 
     userSummaries: any[]
