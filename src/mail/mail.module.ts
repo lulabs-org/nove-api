@@ -10,7 +10,9 @@
  */
 
 import { Module } from '@nestjs/common';
-import { MailerModule } from '../integrations/email';
+import { ConfigModule } from '@nestjs/config';
+import { emailConfig } from '@/configs/email.config';
+import { MailerService } from './mailer.service';
 import { MailService } from './mail.service';
 import { MailController } from './mail.controller';
 import { BullModule } from '@nestjs/bullmq';
@@ -20,7 +22,7 @@ import { MailProcessor } from './mail.processor';
 
 @Module({
   imports: [
-    MailerModule,
+    ConfigModule.forFeature(emailConfig),
     BullModule.registerQueue({
       name: 'mail', // 队列名称
     }),
@@ -30,7 +32,7 @@ import { MailProcessor } from './mail.processor';
     }),
   ],
   controllers: [MailController],
-  providers: [MailService, MailProcessor], // 注册MailProcessor
+  providers: [MailerService, MailService, MailProcessor], // 注册MailProcessor
   exports: [MailService], // 导出服务以便其他模块使用
 })
 export class MailModule {}
