@@ -3,8 +3,8 @@
  * @Date: 2025-09-23 06:15:34
  * @LastEditors: 杨仕明 shiming.y@qq.com
  * @LastEditTime: 2025-10-02 02:48:09
- * @FilePath: /lulab_backend/src/integrations/aliyun/aliyun-sms.service.ts
- * @Description: 阿里云短信服务
+ * @FilePath: /lulab_backend/src/sms/sms.service.ts
+ * @Description: 短信服务
  *
  * Copyright (c) 2025 by 杨仕明 shiming.y@qq.com, All Rights Reserved.
  */
@@ -15,12 +15,12 @@ import Dysmsapi20170525, * as $Dysmsapi20170525 from '@alicloud/dysmsapi20170525
 import * as $OpenApi from '@alicloud/openapi-client';
 import * as $Util from '@alicloud/tea-util';
 import Credential from '@alicloud/credentials';
-import { CodeType } from '../../common/enums';
-import { aliyunConfig } from '../../configs/aliyun.config';
+import { CodeType } from '../common/enums';
+import { aliyunConfig } from '../configs/aliyun.config';
 
 @Injectable()
-export class AliyunSmsService {
-  private readonly logger = new Logger(AliyunSmsService.name);
+export class SmsService {
+  private readonly logger = new Logger(SmsService.name);
   private client: Dysmsapi20170525;
 
   constructor(

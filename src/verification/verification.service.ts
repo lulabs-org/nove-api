@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { VerificationRepository } from './repositories/verification.repository';
 import { MailService } from '@/mail/mail.service';
-import { AliyunSmsService } from '../integrations/aliyun/aliyun-sms.service';
+import { SmsService } from '../sms/sms.service';
 import { CodeType } from '@/verification/enums';
 import { VerificationCodeType } from '@prisma/client';
 import {
@@ -20,7 +20,7 @@ export class VerificationService {
   constructor(
     private readonly repo: VerificationRepository,
     private readonly mailService: MailService,
-    private readonly aliyunSmsService: AliyunSmsService,
+    private readonly smsService: SmsService,
   ) {}
 
   async sendCode(
@@ -141,7 +141,7 @@ export class VerificationService {
     countryCode?: string,
   ): Promise<void> {
     try {
-      await this.aliyunSmsService.sendSms(phone, code, type, countryCode);
+      await this.smsService.sendSms(phone, code, type, countryCode);
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);

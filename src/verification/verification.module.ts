@@ -11,13 +11,13 @@
 import { Global, Module } from '@nestjs/common';
 import { VerificationService } from './verification.service';
 import { VerificationRepository } from './repositories/verification.repository';
-import { AliyunModule } from '../integrations/aliyun/aliyun.module';
+import { SmsModule } from '../sms/sms.module';
 import { MailModule } from '@/mail/mail.module';
 import { VerificationController } from './verification.controller';
 
 @Global()
 @Module({
-  imports: [AliyunModule, MailModule],
+  imports: [SmsModule, MailModule],
   controllers: [VerificationController],
   providers: [VerificationService, VerificationRepository],
   exports: [VerificationService],
