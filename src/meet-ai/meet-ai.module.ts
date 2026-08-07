@@ -12,7 +12,7 @@
 import { Module } from '@nestjs/common';
 import { MeetAiController } from './controllers/meet-ai.controller';
 import { ParticipantSummaryService } from './services';
-import { ParticipantSummaryRepository } from './repositories';
+import { ParticipantSummaryRepository, SummaryRelationRepository } from './repositories';
 import { PrismaModule } from '../prisma/prisma.module';
 import { LlmModule } from '@/llm/llm.module';
 import { UserModule } from '@/user/user.module';
@@ -38,6 +38,7 @@ import { PeriodSummaryHandler } from './handlers/period-summary.handler';
   controllers: [MeetAiController],
   providers: [
     ParticipantSummaryRepository,
+    SummaryRelationRepository,
     ParticipantSummaryService,
     PeriodSummaryService,
     PeriodTimeRange,
@@ -45,6 +46,7 @@ import { PeriodSummaryHandler } from './handlers/period-summary.handler';
   ],
   exports: [
     ParticipantSummaryRepository,
+    SummaryRelationRepository,
     ParticipantSummaryService,
     PeriodSummaryService,
     PeriodTimeRange,

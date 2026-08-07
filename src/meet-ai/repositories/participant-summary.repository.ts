@@ -172,28 +172,4 @@ export class ParticipantSummaryRepository {
     });
   }
 
-  async createSummaryRelation(data: {
-    parentSummaryId: string;
-    childSummaryId: string;
-    parentPeriodType: PeriodType;
-    childPeriodType: PeriodType;
-  }) {
-    return this.prisma.summaryRelation.create({
-      data,
-    });
-  }
-
-  async createSummaryRelations(
-    data: {
-      parentSummaryId: string;
-      childSummaryId: string;
-      parentPeriodType: PeriodType;
-      childPeriodType: PeriodType;
-    }[],
-  ) {
-    if (!data.length) return;
-    return this.prisma.summaryRelation.createMany({
-      data,
-    });
-  }
 }

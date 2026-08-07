@@ -4,6 +4,7 @@ import { ConfigType } from '@nestjs/config';
 
 import { LlmService } from '../../llm/llm.service';
 import { ParticipantSummaryRepository } from '../repositories/participant-summary.repository';
+import { SummaryRelationRepository } from '../repositories/summary-relation.repository';
 import { PeriodTimeRange } from '../utils/period-time-range';
 import { openaiConfig } from '../../configs/openai.config';
 
@@ -29,6 +30,7 @@ export class PeriodSummaryService {
 
   constructor(
     private readonly summaryRepo: ParticipantSummaryRepository,
+    private readonly summaryRelationRepo: SummaryRelationRepository,
     private readonly periodTimeRange: PeriodTimeRange,
     private readonly llmService: LlmService,
     @Inject(openaiConfig.KEY)
@@ -139,7 +141,7 @@ export class PeriodSummaryService {
     });
 
     // 关联子总结 (批量插入)
-    await this.summaryRepo.createSummaryRelations(
+    await this.summaryRelationRepo.createMany(
       userSummaries.map((child) => ({
         parentSummaryId: parentSummary.id,
         childSummaryId: child.id,
