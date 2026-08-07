@@ -23,6 +23,7 @@ import {
 } from '@/meeting/repositories';
 import { formatToBeijingTime } from '@/common/utils/time.util';
 import { openaiConfig } from '@/configs/openai.config';
+import { MeetAiPromptService } from './meet-ai-prompt.service';
 
 @Injectable()
 export class ParticipantSummaryService {
@@ -36,6 +37,7 @@ export class ParticipantSummaryService {
     private readonly meetingRepo: MeetingRepository,
     private readonly meetingSummaryRepo: MeetingSummaryRepository,
     private readonly transcriptRepo: TranscriptRepository,
+    private readonly promptService: MeetAiPromptService,
     @Inject(openaiConfig.KEY)
     private readonly config: ConfigType<typeof openaiConfig>,
   ) {}
@@ -44,7 +46,7 @@ export class ParticipantSummaryService {
     const { recording, meeting, platformUser, meetingSummary, transcript } =
       await this.fetchMeetingContext(recordid, ptByUnionId);
 
-    const { systemPrompt, prompt, userName } = this.buildPrompt(
+    const { systemPrompt, prompt, userName } = this.promptService.buildParticipantSummaryPrompt(
       meeting,
       meetingSummary,
       transcript,
@@ -85,53 +87,7 @@ export class ParticipantSummaryService {
     return { recording, meeting, platformUser, meetingSummary, transcript };
   }
 
-  private buildPrompt(
-    meeting: any,
-    meetingSummary: any,
-    transcript: any,
-    platformUser: any,
-  ) {
-    const segments = transcript.segments.map((segment: any) => {
-      const timeMs = Number(segment.startTimeMs);
-      const hours = Math.floor(timeMs / 3600000);
-      const minutes = Math.floor((timeMs % 3600000) / 60000);
-      const seconds = Math.floor((timeMs % 60000) / 1000);
 
-      const timeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-      const speakerName = segment.speakerName || segment.speaker?.displayName || '未知发言人';
-      const content = segment.text || '';
-
-      return [timeStr, speakerName, content];
-    });
-
-    const user = platformUser.user;
-    const profile = user?.profile;
-    const userName =
-      platformUser.displayName ||
-      profile?.displayName ||
-      user?.username ||
-      (profile?.lastName || '') + (profile?.firstName || '') ||
-      '未知用户';
-
-    const systemPrompt = '你是专业的会议总结助手，擅长为参会者提供个性化、实用的会议总结。';
-
-    const prompt = `请为参会者 ${userName} 生成会议总结。
-需要总结的参会者姓名: ${userName}\n
-会议ID: ${meeting.id}\n
-会议主题: ${meeting.title}\n
-会议时间（北京时间）: ${formatToBeijingTime(meeting.startAt)} 至 ${formatToBeijingTime(meeting.endAt)}\n
-会议纪要: ${meetingSummary.aiMinutes ? JSON.stringify(meetingSummary.aiMinutes) : '暂无会议纪要'}\n
-关键要点: ${meetingSummary.keyPoints ? JSON.stringify(meetingSummary.keyPoints) : '暂无关键要点'}\n
-行动项: ${meetingSummary.actionItems ? JSON.stringify(meetingSummary.actionItems) : '暂无行动项'}\n
-决策记录: ${meetingSummary.decisions ? JSON.stringify(meetingSummary.decisions) : '暂无决策记录'}\n
-会议金句: ${meetingSummary.goldenQuotes ? JSON.stringify(meetingSummary.goldenQuotes) : '暂无会议金句'}\n
-关键词: ${meetingSummary.keywords?.join(', ') || '暂无关键词'}\n
-会议转录格式：[时间戳, 说话人姓名, 内容]\n
-会议转录内容: ${JSON.stringify(segments)}\n
-请根据以上信息，为参会者 ${userName} 生成一份个性化的会议总结，重点关注与该参会者相关的内容。`;
-
-    return { systemPrompt, prompt, userName };
-  }
 
   private async saveSummary(
     ptByUnionId: string,

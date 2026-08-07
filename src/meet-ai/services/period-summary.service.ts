@@ -7,6 +7,7 @@ import { ParticipantSummaryRepository } from '../repositories/participant-summar
 import { SummaryRelationRepository } from '../repositories/summary-relation.repository';
 import { PeriodTimeRange } from '../utils/period-time-range';
 import { openaiConfig } from '../../configs/openai.config';
+import { MeetAiPromptService } from './meet-ai-prompt.service';
 
 interface PeriodContext {
   parent: PeriodType;
@@ -33,6 +34,7 @@ export class PeriodSummaryService {
     private readonly summaryRelationRepo: SummaryRelationRepository,
     private readonly periodTimeRange: PeriodTimeRange,
     private readonly llmService: LlmService,
+    private readonly promptService: MeetAiPromptService,
     @Inject(openaiConfig.KEY)
     private readonly config: ConfigType<typeof openaiConfig>,
   ) {}
@@ -120,7 +122,7 @@ export class PeriodSummaryService {
       `获取到用户(${platformUserId})的参会议记录: ${userSummaries.length} 条`,
     );
 
-    const { systemPrompt, prompt } = this.buildPrompt(userName, ctx, userSummaries);
+    const { systemPrompt, prompt } = this.promptService.buildPeriodSummaryPrompt(userName, ctx, userSummaries);
 
     const reply = await this.llmService.createChatCompletion([
       { role: 'system', content: systemPrompt },
@@ -153,29 +155,5 @@ export class PeriodSummaryService {
     this.logger.log(
       `创建了 ${userSummaries.length} 条关联记录, 父总结 ID: ${parentSummary.id}`,
     );
-  }
-
-  private buildPrompt(userName: string, ctx: PeriodContext, userSummaries: any[]) {
-    const systemPrompt = `
-      你是人工智能助手，需要总结用户"${userName}"${ctx.label} 的会议记录。
-      字段说明：
-      - userName: 参会人在 onstage会议的昵称
-      - partSummary: 参会人 onstage会议的总结
-      - periodStart: 会议总结的开始区间
-      - periodEnd: 会议总结的结束区间
-
-      切记以上只是字段解释，不是输出内容。
-      你只需要根据用户输入，总结用户在会议中的活动，输出 markdown 格式的总结。
-    `.trim();
-
-    // 优化上下文大小：只传递必要字段，剔除无用的元数据
-    const leanSummaries = userSummaries.map(s => ({
-      userName: s.userName,
-      partSummary: s.partSummary,
-      periodStart: s.periodStart,
-      periodEnd: s.periodEnd,
-    }));
-    const prompt = JSON.stringify(leanSummaries);
-    return { systemPrompt, prompt };
   }
 }
