@@ -4,7 +4,7 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { PrismaService } from '@/prisma/prisma.service';
+import { SystemConfigRepository } from './system-config.repository';
 import { Prisma } from '@prisma/client';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { encrypt } from '@/common/utils/crypto.util';
@@ -17,7 +17,7 @@ export class SystemConfigService {
   private readonly logger = new Logger(SystemConfigService.name);
 
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly configRepository: SystemConfigRepository,
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
@@ -27,9 +27,7 @@ export class SystemConfigService {
 
   async getRawConfig(module: string) {
     const key = this.getModuleKey(module);
-    return this.prisma.systemConfig.findUnique({
-      where: { key },
-    });
+    return this.configRepository.findByKey(key);
   }
 
   async getConfig(module: string) {
@@ -41,9 +39,7 @@ export class SystemConfigService {
     }
 
     const key = this.getModuleKey(module);
-    const config = await this.prisma.systemConfig.findUnique({
-      where: { key },
-    });
+    const config = await this.configRepository.findByKey(key);
 
     if (!config || !config.value) {
       return null;
@@ -82,9 +78,7 @@ export class SystemConfigService {
 
     const key = this.getModuleKey(module);
     let currentConfig: Record<string, unknown> = {};
-    const existing = await this.prisma.systemConfig.findUnique({
-      where: { key },
-    });
+    const existing = await this.configRepository.findByKey(key);
 
     if (existing && existing.value) {
       currentConfig = existing.value as Record<string, unknown>;
@@ -101,19 +95,12 @@ export class SystemConfigService {
       }
     }
 
-    await this.prisma.systemConfig.upsert({
-      where: { key },
-      update: {
-        value: newConfig as Prisma.InputJsonValue,
-        isEncrypted: entry.secretFields.length > 0,
-      },
-      create: {
-        key,
-        value: newConfig as Prisma.InputJsonValue,
-        isEncrypted: entry.secretFields.length > 0,
-        description: entry.description,
-      },
-    });
+    await this.configRepository.upsert(
+      key,
+      newConfig as Prisma.InputJsonValue,
+      entry.secretFields.length > 0,
+      entry.description,
+    );
 
     this.logger.log(`${entry.description} updated by admin.`);
 
