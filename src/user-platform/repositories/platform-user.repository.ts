@@ -252,7 +252,14 @@ export class PlatformUserRepository {
     page?: number;
     pageSize?: number;
   }): Promise<{ items: PlatformUser[]; total: number }> {
-    const { platform, keyword, active, localUserId, page = 1, pageSize = 20 } = params;
+    const {
+      platform,
+      keyword,
+      active,
+      localUserId,
+      page = 1,
+      pageSize = 20,
+    } = params;
 
     const where: Prisma.PlatformUserWhereInput = {
       deletedAt: null,
