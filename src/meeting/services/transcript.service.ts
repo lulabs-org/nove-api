@@ -14,7 +14,7 @@ export class TranscriptService {
    */
   async getTranscript(recordingId: string): Promise<string> {
     const transcript =
-      await this.transcriptRepository.findSegmentsDetails(recordingId);
+      await this.transcriptRepository.findDetails(recordingId);
     if (!transcript || !transcript.segments) {
       return '';
     }
@@ -45,7 +45,7 @@ export class TranscriptService {
    */
   async getTranscriptJson(recordingId: string): Promise<any[]> {
     const transcript =
-      await this.transcriptRepository.findSegmentsDetails(recordingId);
+      await this.transcriptRepository.findDetails(recordingId);
     if (!transcript || !transcript.segments) {
       return [];
     }
