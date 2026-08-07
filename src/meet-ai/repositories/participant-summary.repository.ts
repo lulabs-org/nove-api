@@ -1,10 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { GenerationMethod, PeriodType, Prisma } from '@prisma/client';
 import type { Meeting, ParticipantSummary } from '@prisma/client';
 
 @Injectable()
 export class ParticipantSummaryRepository {
+  private readonly logger = new Logger(ParticipantSummaryRepository.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   async create(data: Prisma.ParticipantSummaryUncheckedCreateInput) {
@@ -172,4 +174,34 @@ export class ParticipantSummaryRepository {
     });
   }
 
+  async saveNewVersion(params: Prisma.ParticipantSummaryUncheckedCreateInput) {
+    return this.prisma.$transaction(async (tx) => {
+      const existing = await tx.participantSummary.findFirst({
+        where: {
+          periodType: params.periodType,
+          platformUserId: params.platformUserId,
+          meetingId: params.meetingId,
+          meetingRecordingId: params.meetingRecordingId,
+          isLatest: true,
+          deletedAt: null,
+        },
+      });
+
+      if (existing) {
+        this.logger.warn(`参会者: ${params.userName} 已存在最新总结，将弃用旧版本并创建新版本`);
+        await tx.participantSummary.update({
+          where: { id: existing.id },
+          data: { isLatest: false },
+        });
+      }
+
+      return tx.participantSummary.create({
+        data: {
+          ...params,
+          version: existing ? existing.version + 1 : 1,
+          isLatest: true,
+        },
+      });
+    });
+  }
 }

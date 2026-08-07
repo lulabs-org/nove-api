@@ -21,7 +21,6 @@ import {
   MeetingSummaryRepository,
   TranscriptRepository,
 } from '@/meeting/repositories';
-import { formatToBeijingTime } from '@/common/utils/time.util';
 import { openaiConfig } from '@/configs/openai.config';
 import { MeetAiPromptService } from './meet-ai-prompt.service';
 
@@ -40,7 +39,7 @@ export class ParticipantSummaryService {
     private readonly promptService: MeetAiPromptService,
     @Inject(openaiConfig.KEY)
     private readonly config: ConfigType<typeof openaiConfig>,
-  ) {}
+  ) { }
 
   async generateSummary(recordid: string, ptByUnionId: string): Promise<string> {
     const { recording, meeting, platformUser, meetingSummary, transcript } =
@@ -55,13 +54,17 @@ export class ParticipantSummaryService {
 
     const summary = await this.llmService.ask(prompt, systemPrompt);
 
-    await this.saveSummary({
-      ptByUnionId,
-      recordid,
-      meeting,
-      recording,
-      userName,
-      summary,
+    await this.partSummaryRepo.saveNewVersion({
+      periodType: PeriodType.SINGLE,
+      platformUserId: ptByUnionId,
+      meetingId: meeting.id,
+      meetingRecordingId: recordid,
+      userName: userName,
+      partSummary: summary,
+      generatedBy: GenerationMethod.AI,
+      aiModel: this.config.model,
+      periodStart: recording.startAt || meeting.startAt || undefined,
+      periodEnd: recording.endAt || meeting.endAt || undefined,
     });
 
     this.logger.log(`成功生成参会者: ${userName}总结`);
@@ -86,43 +89,5 @@ export class ParticipantSummaryService {
     if (!meetingSummary) throw new NotFoundException(`会议总结不存在: ${meeting.id}`);
 
     return { recording, meeting, platformUser, meetingSummary, transcript };
-  }
-
-  private async saveSummary(params: {
-    ptByUnionId: string;
-    recordid: string;
-    meeting: any;
-    recording: any;
-    userName: string;
-    summary: string;
-  }) {
-    const { ptByUnionId, recordid, meeting, recording, userName, summary } = params;
-    const res = await this.partSummaryRepo.findLatestSummary({
-      periodType: PeriodType.SINGLE,
-      platformUserId: ptByUnionId,
-      meetingId: meeting.id,
-      meetingRecordingId: recordid,
-      isLatest: true,
-    });
-
-    if (res) {
-      this.logger.warn(`参会者: ${userName} 已存在最新总结，将弃用旧版本并创建新版本`);
-      await this.partSummaryRepo.update(res.id, { isLatest: false });
-    }
-
-    await this.partSummaryRepo.create({
-      periodType: PeriodType.SINGLE,
-      platformUserId: ptByUnionId,
-      meetingId: meeting.id,
-      meetingRecordingId: recordid,
-      userName: userName,
-      partSummary: summary,
-      generatedBy: GenerationMethod.AI,
-      aiModel: this.config.model,
-      version: res ? res.version + 1 : 1,
-      isLatest: true,
-      periodStart: recording.startAt || meeting.startAt || undefined,
-      periodEnd: recording.endAt || meeting.endAt || undefined,
-    });
   }
 }
