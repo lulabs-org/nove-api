@@ -1,4 +1,10 @@
-import { IsString, IsNotEmpty, IsInt, IsBoolean, IsOptional } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsInt,
+  IsBoolean,
+  IsOptional,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdateMailConfigDto {
@@ -25,7 +31,10 @@ export class UpdateMailConfigDto {
   @IsOptional()
   pass?: string;
 
-  @ApiProperty({ description: 'From Email Address', example: 'noreply@example.com' })
+  @ApiProperty({
+    description: 'From Email Address',
+    example: 'noreply@example.com',
+  })
   @IsString()
   @IsNotEmpty()
   from: string;

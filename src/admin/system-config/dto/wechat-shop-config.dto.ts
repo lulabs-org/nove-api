@@ -2,7 +2,10 @@ import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdateWechatShopConfigDto {
-  @ApiProperty({ description: 'Wechat Shop App ID', example: 'wx1234567890abcdef' })
+  @ApiProperty({
+    description: 'Wechat Shop App ID',
+    example: 'wx1234567890abcdef',
+  })
   @IsString()
   @IsNotEmpty()
   appId: string;
@@ -22,7 +25,10 @@ export class UpdateWechatShopConfigDto {
   @IsOptional()
   encodingAesKey?: string;
 
-  @ApiProperty({ description: 'API Base URL', example: 'https://api.weixin.qq.com' })
+  @ApiProperty({
+    description: 'API Base URL',
+    example: 'https://api.weixin.qq.com',
+  })
   @IsString()
   @IsOptional()
   apiBaseUrl?: string;

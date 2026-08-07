@@ -40,15 +40,18 @@ export class WechatShopClientService implements OnModuleInit {
 
   @OnEvent('config.wechat-shop.updated')
   async handleConfigUpdate() {
-    this.logger.log('Received config.wechat-shop.updated event, reloading baseUrl...');
+    this.logger.log(
+      'Received config.wechat-shop.updated event, reloading baseUrl...',
+    );
     await this.reloadConfig();
   }
 
   private async reloadConfig() {
-    const rawConfig = await this.systemConfigService.getRawConfig('wechat-shop');
-    
+    const rawConfig =
+      await this.systemConfigService.getRawConfig('wechat-shop');
+
     if (rawConfig && rawConfig.value) {
-      const dbConfig = rawConfig.value as any;
+      const dbConfig = rawConfig.value as Record<string, string>;
       this.baseUrl = dbConfig.apiBaseUrl ?? this.config.apiBaseUrl;
     }
   }

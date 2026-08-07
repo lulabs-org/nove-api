@@ -1,6 +1,7 @@
 import { MailerService } from './mailer.service';
 import type { ConfigType } from '@nestjs/config';
 import { emailConfig } from '@/configs/email.config';
+import { SystemConfigService } from '@/admin/system-config/system-config.service';
 import * as nodemailer from 'nodemailer';
 
 jest.mock('nodemailer', () => ({
@@ -55,7 +56,7 @@ describe('MailerService', () => {
   const mockSystemConfigService = {
     getConfig: jest.fn().mockResolvedValue(null),
     getRawConfig: jest.fn().mockResolvedValue(null),
-  } as any;
+  } as unknown as SystemConfigService;
 
   it('skips transporter when SMTP creds missing; send/verify are no-ops', async () => {
     const config = makeConfig({
@@ -128,7 +129,10 @@ describe('MailerService', () => {
         from: 'user@test.com', // 模拟配置中的回退逻辑
       },
     });
-    const svcWithoutFrom = new MailerService(configWithoutFrom, mockSystemConfigService);
+    const svcWithoutFrom = new MailerService(
+      configWithoutFrom,
+      mockSystemConfigService,
+    );
     await svcWithoutFrom.onModuleInit();
     transporter.sendMail.mockResolvedValueOnce({ messageId: 'mid-3' });
     const r3 = await svcWithoutFrom.send({ to: 'z@z.com', subject: 'C' });

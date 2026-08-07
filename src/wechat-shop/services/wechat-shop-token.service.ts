@@ -43,7 +43,9 @@ export class WechatShopTokenService implements OnModuleInit {
 
   @OnEvent('config.wechat-shop.updated')
   async handleConfigUpdate() {
-    this.logger.log('Received config.wechat-shop.updated event, reloading config...');
+    this.logger.log(
+      'Received config.wechat-shop.updated event, reloading config...',
+    );
     // Clear old token cache
     await this.clearTokenCache();
     // Reload config
@@ -51,20 +53,20 @@ export class WechatShopTokenService implements OnModuleInit {
   }
 
   private async reloadConfig() {
-    const rawConfig = await this.systemConfigService.getRawConfig('wechat-shop');
-    
+    const rawConfig =
+      await this.systemConfigService.getRawConfig('wechat-shop');
+
     if (rawConfig && rawConfig.value) {
-      const dbConfig = rawConfig.value as any;
-      
+      const dbConfig = rawConfig.value as Record<string, string>;
       this.appId = dbConfig.appId ?? this.config.appId;
       this.baseUrl = dbConfig.apiBaseUrl ?? this.config.apiBaseUrl;
       this.redisKey = `WECHAT_SHOP_ACCESS_TOKEN:${this.appId}`;
-      
+
       if (dbConfig.appSecret) {
         try {
           this.appSecret = decrypt(dbConfig.appSecret);
-        } catch (e) {
-          this.logger.error('Failed to decrypt WeChat appSecret from DB');
+        } catch {
+          this.logger.error('Failed to decrypt wechat-shop appSecret from DB');
         }
       }
     }
@@ -79,14 +81,16 @@ export class WechatShopTokenService implements OnModuleInit {
   private async clearTokenCache() {
     this.memoryToken = undefined;
     this.memoryTokenExpiresAt = 0;
-    
+
     const redisClient = this.redisService.getClient();
     if (this.redisService.isReady() && redisClient && this.redisKey) {
       try {
         await redisClient.del(this.redisKey);
         this.logger.log(`Cleared Redis token cache for ${this.redisKey}`);
       } catch (err) {
-        this.logger.warn(`Failed to clear Redis token cache: ${(err as Error).message}`);
+        this.logger.warn(
+          `Failed to clear Redis token cache: ${(err as Error).message}`,
+        );
       }
     }
   }
@@ -128,7 +132,9 @@ export class WechatShopTokenService implements OnModuleInit {
     expires_in?: number;
   }> {
     if (!this.appId || !this.appSecret) {
-      throw new ServiceUnavailableException('WECHAT_SHOP_APP_ID and WECHAT_SHOP_APP_SECRET must be configured');
+      throw new ServiceUnavailableException(
+        'WECHAT_SHOP_APP_ID and WECHAT_SHOP_APP_SECRET must be configured',
+      );
     }
 
     const { data } = await firstValueFrom(

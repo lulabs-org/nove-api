@@ -21,7 +21,7 @@ export interface MailerSendOptions {
 export class MailerService implements OnModuleInit {
   private readonly logger = new Logger(MailerService.name);
   private transporter?: nodemailer.Transporter<SMTPTransport.SentMessageInfo>;
-  private activeConfig: any = null;
+  private activeConfig: Record<string, string> | null = null;
 
   constructor(
     @Inject(emailConfig.KEY)
@@ -35,7 +35,9 @@ export class MailerService implements OnModuleInit {
 
   @OnEvent('config.mail.updated')
   async handleMailConfigUpdate() {
-    this.logger.log('Received config.mail.updated event, reloading transporter...');
+    this.logger.log(
+      'Received config.mail.updated event, reloading transporter...',
+    );
     await this.reloadTransporter();
   }
 
@@ -51,27 +53,27 @@ export class MailerService implements OnModuleInit {
     let smtpFrom = this.config.smtp.from;
 
     if (dbConfig) {
-      smtpHost = dbConfig.host ?? smtpHost;
-      smtpPort = dbConfig.port ?? smtpPort;
-      smtpSecure = dbConfig.secure ?? smtpSecure;
-      smtpUser = dbConfig.user ?? smtpUser;
-      smtpFrom = dbConfig.from ?? smtpFrom;
-      
+      smtpHost = (dbConfig.host as string) ?? smtpHost;
+      smtpPort = (dbConfig.port as number) ?? smtpPort;
+      smtpSecure = (dbConfig.secure as boolean) ?? smtpSecure;
+      smtpUser = (dbConfig.user as string) ?? smtpUser;
+      smtpFrom = (dbConfig.from as string) ?? smtpFrom;
+
       // dbConfig.pass returned by getMailConfig is masked.
       // We must query the raw DB value to get the encrypted password.
-      // Alternatively, we can use a raw prisma call here, but let's just 
+      // Alternatively, we can use a raw prisma call here, but let's just
       // create a specific method in SystemConfigService or use Prisma directly.
       // Since MailerService shouldn't know about Prisma, let's fetch raw config.
     }
-    
+
     // To keep it simple, we will fetch raw from SystemConfigService here:
     const rawConfig = await this.systemConfigService.getRawConfig('mail');
     if (rawConfig && rawConfig.value) {
-      const val = rawConfig.value as any;
+      const val = rawConfig.value as Record<string, string>;
       if (val.pass) {
         try {
           smtpPass = decrypt(val.pass);
-        } catch (e) {
+        } catch {
           this.logger.error('Failed to decrypt SMTP password from DB');
         }
       }
@@ -125,7 +127,8 @@ export class MailerService implements OnModuleInit {
       return null;
     }
 
-    const defaultFrom = options.from || this.activeConfig?.from || this.config.smtp.from;
+    const defaultFrom =
+      options.from || this.activeConfig?.from || this.config.smtp.from;
 
     const mailOptions: nodemailer.SendMailOptions = {
       from: defaultFrom,

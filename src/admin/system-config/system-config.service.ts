@@ -1,5 +1,11 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { encrypt } from '@/common/utils/crypto.util';
 import { SystemConfigRegistry } from './system-config.registry';
@@ -29,7 +35,9 @@ export class SystemConfigService {
   async getConfig(module: string) {
     const entry = SystemConfigRegistry[module];
     if (!entry) {
-      throw new NotFoundException(`Module configuration for '${module}' not found in registry`);
+      throw new NotFoundException(
+        `Module configuration for '${module}' not found in registry`,
+      );
     }
 
     const key = this.getModuleKey(module);
@@ -41,8 +49,8 @@ export class SystemConfigService {
       return null;
     }
 
-    const value = config.value as Record<string, any>;
-    
+    const value = config.value as Record<string, unknown>;
+
     // Mask secret fields
     for (const field of entry.secretFields) {
       if (value[field]) {
@@ -53,29 +61,33 @@ export class SystemConfigService {
     return value;
   }
 
-  async updateConfig(module: string, data: Record<string, any>) {
+  async updateConfig(module: string, data: Record<string, unknown>) {
     const entry = SystemConfigRegistry[module];
     if (!entry) {
-      throw new NotFoundException(`Module configuration for '${module}' not found in registry`);
+      throw new NotFoundException(
+        `Module configuration for '${module}' not found in registry`,
+      );
     }
 
     // Transform and validate data dynamically
-    const dtoInstance = plainToInstance(entry.dto, data);
+    const dtoInstance = plainToInstance(entry.dto, data) as object;
     const errors = await validate(dtoInstance);
-    
+
     if (errors.length > 0) {
-      const messages = errors.map(e => Object.values(e.constraints || {}).join(', ')).join('; ');
+      const messages = errors
+        .map((e) => Object.values(e.constraints || {}).join(', '))
+        .join('; ');
       throw new BadRequestException(`Validation failed: ${messages}`);
     }
 
     const key = this.getModuleKey(module);
-    let currentConfig: Record<string, any> = {};
+    let currentConfig: Record<string, unknown> = {};
     const existing = await this.prisma.systemConfig.findUnique({
       where: { key },
     });
 
     if (existing && existing.value) {
-      currentConfig = existing.value as Record<string, any>;
+      currentConfig = existing.value as Record<string, unknown>;
     }
 
     const newConfig = { ...currentConfig, ...data };
@@ -83,7 +95,7 @@ export class SystemConfigService {
     // Encrypt secrets if provided
     for (const field of entry.secretFields) {
       if (data[field] && data[field] !== '********') {
-        newConfig[field] = encrypt(String(data[field]));
+        newConfig[field] = encrypt(data[field] as string);
       } else if (data[field] === '********') {
         newConfig[field] = currentConfig[field];
       }
@@ -92,12 +104,12 @@ export class SystemConfigService {
     await this.prisma.systemConfig.upsert({
       where: { key },
       update: {
-        value: newConfig,
+        value: newConfig as Prisma.InputJsonValue,
         isEncrypted: entry.secretFields.length > 0,
       },
       create: {
         key,
-        value: newConfig,
+        value: newConfig as Prisma.InputJsonValue,
         isEncrypted: entry.secretFields.length > 0,
         description: entry.description,
       },

@@ -1,5 +1,10 @@
 import { Controller, Get, Put, Body, Param } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiParam,
+} from '@nestjs/swagger';
 import { SystemConfigService } from './system-config.service';
 import { RequirePermissions } from '@/permission/decorators/permissions.decorator';
 
@@ -11,17 +16,30 @@ export class SystemConfigController {
 
   @Get(':module')
   @ApiOperation({ summary: 'Get global configuration for a specific module' })
-  @ApiParam({ name: 'module', description: 'Module name (e.g., mail, wechat-shop)', example: 'mail' })
+  @ApiParam({
+    name: 'module',
+    description: 'Module name (e.g., mail, wechat-shop)',
+    example: 'mail',
+  })
   @RequirePermissions('system:config:read')
   async getConfig(@Param('module') module: string) {
     return this.systemConfigService.getConfig(module);
   }
 
   @Put(':module')
-  @ApiOperation({ summary: 'Update global configuration for a specific module' })
-  @ApiParam({ name: 'module', description: 'Module name (e.g., mail, wechat-shop)', example: 'mail' })
+  @ApiOperation({
+    summary: 'Update global configuration for a specific module',
+  })
+  @ApiParam({
+    name: 'module',
+    description: 'Module name (e.g., mail, wechat-shop)',
+    example: 'mail',
+  })
   @RequirePermissions('system:config:write')
-  async updateConfig(@Param('module') module: string, @Body() data: Record<string, any>) {
+  async updateConfig(
+    @Param('module') module: string,
+    @Body() data: Record<string, unknown>,
+  ) {
     return this.systemConfigService.updateConfig(module, data);
   }
 }

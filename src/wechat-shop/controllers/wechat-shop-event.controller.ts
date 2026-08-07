@@ -45,29 +45,32 @@ export class WechatShopEventController implements OnModuleInit {
 
   @OnEvent('config.wechat-shop.updated')
   async handleConfigUpdate() {
-    this.logger.log('Received config.wechat-shop.updated event, reloading controller config...');
+    this.logger.log(
+      'Received config.wechat-shop.updated event, reloading controller config...',
+    );
     await this.reloadConfig();
   }
 
   private async reloadConfig() {
-    const rawConfig = await this.systemConfigService.getRawConfig('wechat-shop');
-    
+    const rawConfig =
+      await this.systemConfigService.getRawConfig('wechat-shop');
+
     if (rawConfig && rawConfig.value) {
-      const dbConfig = rawConfig.value as any;
+      const dbConfig = rawConfig.value as Record<string, string>;
       this.appId = dbConfig.appId ?? this.config.appId;
-      
+
       if (dbConfig.webhookToken) {
         try {
           this.webhookToken = decrypt(dbConfig.webhookToken);
-        } catch (e) {
+        } catch {
           this.logger.error('Failed to decrypt webhookToken from DB');
         }
       }
-      
+
       if (dbConfig.encodingAesKey) {
         try {
           this.encodingAesKey = decrypt(dbConfig.encodingAesKey);
-        } catch (e) {
+        } catch {
           this.logger.error('Failed to decrypt encodingAesKey from DB');
         }
       }
