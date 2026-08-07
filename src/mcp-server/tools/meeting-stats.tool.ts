@@ -73,7 +73,7 @@ export class MeetingStatsTool {
 
     const platformUserIds = platformUsers.map((u) => u.id);
 
-    const summaries = await this.participantSummaryRepo.getSummaries({
+    const summaries = await this.participantSummaryRepo.findManyByDateRange({
       platformUserIds,
       startDate: startDateObj,
       endDate: endDateObj,

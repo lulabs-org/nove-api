@@ -1,69 +1,27 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import { GenerationMethod, PeriodType } from '@prisma/client';
+import { GenerationMethod, PeriodType, Prisma } from '@prisma/client';
 import type { Meeting, ParticipantSummary } from '@prisma/client';
 
 @Injectable()
 export class ParticipantSummaryRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(data: {
-    periodType: PeriodType;
-    platformUserId?: string;
-    meetingId?: string;
-    recordingId?: string;
-    userName: string;
-    partSummary: string;
-    keywords?: string[];
-    generatedBy?: GenerationMethod;
-    aiModel?: string;
-    confidence?: number;
-    version?: number;
-    isLatest?: boolean;
-    period_start?: Date;
-    period_end?: Date;
-  }) {
-    return this.prisma.participantSummary.create({
-      data: {
-        periodType: data.periodType,
-        platformUserId: data.platformUserId,
-        meetingId: data.meetingId,
-        meetingRecordingId: data.recordingId,
-        userName: data.userName,
-        partSummary: data.partSummary,
-        keywords: data.keywords || [],
-        generatedBy: data.generatedBy || GenerationMethod.AI,
-        aiModel: data.aiModel || 'tencent-meeting-ai',
-        confidence: data.confidence,
-        version: data.version || 1,
-        isLatest: data.isLatest !== undefined ? data.isLatest : true,
-        periodStart: data.period_start,
-        periodEnd: data.period_end,
-      },
-    });
+  async create(data: Prisma.ParticipantSummaryUncheckedCreateInput) {
+    // Provide some application-level defaults if they are missing
+    if (!data.generatedBy) data.generatedBy = GenerationMethod.AI;
+    if (!data.aiModel) data.aiModel = 'tencent-meeting-ai';
+    if (!data.keywords) data.keywords = [];
+    
+    return this.prisma.participantSummary.create({ data });
   }
 
-  async upsert(data: {
-    periodType: PeriodType;
-    platformUserId?: string;
-    meetingId?: string;
-    recordingId?: string;
-    userName: string;
-    partSummary: string;
-    keywords?: string[];
-    generatedBy?: GenerationMethod;
-    aiModel?: string;
-    confidence?: number;
-    version?: number;
-    isLatest?: boolean;
-    period_start?: Date;
-    period_end?: Date;
-  }) {
+  async upsert(data: Prisma.ParticipantSummaryUncheckedCreateInput) {
     const existingSummary = await this.prisma.participantSummary.findFirst({
       where: {
         platformUserId: data.platformUserId,
         meetingId: data.meetingId,
-        meetingRecordingId: data.recordingId,
+        meetingRecordingId: data.meetingRecordingId,
         periodType: data.periodType,
         isLatest: true,
       },
@@ -72,76 +30,14 @@ export class ParticipantSummaryRepository {
     if (existingSummary) {
       return this.prisma.participantSummary.update({
         where: { id: existingSummary.id },
-        data: {
-          partSummary: data.partSummary,
-          keywords: data.keywords,
-          generatedBy: data.generatedBy,
-          aiModel: data.aiModel,
-          confidence: data.confidence,
-          updatedAt: new Date(),
-          periodStart: data.period_start,
-          periodEnd: data.period_end,
-        },
+        data,
       });
     } else {
-      return this.prisma.participantSummary.create({
-        data: {
-          periodType: data.periodType,
-          platformUserId: data.platformUserId,
-          meetingId: data.meetingId,
-          meetingRecordingId: data.recordingId,
-          userName: data.userName,
-          partSummary: data.partSummary,
-          keywords: data.keywords || [],
-          generatedBy: data.generatedBy || GenerationMethod.AI,
-          aiModel: data.aiModel || 'tencent-meeting-ai',
-          confidence: data.confidence,
-          version: data.version || 1,
-          isLatest: data.isLatest !== undefined ? data.isLatest : true,
-          periodStart: data.period_start,
-          periodEnd: data.period_end,
-        },
-      });
+      return this.create(data);
     }
   }
 
-  async findByMeetingId(meetingId: string) {
-    return this.prisma.participantSummary.findMany({
-      where: {
-        meetingId,
-        deletedAt: null,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-  }
-
-  async findByPtUserId(platformUserId: string) {
-    return this.prisma.participantSummary.findMany({
-      where: {
-        platformUserId,
-        deletedAt: null,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-  }
-
-  async findByRecordingId(meetingRecordingId: string) {
-    return this.prisma.participantSummary.findMany({
-      where: {
-        meetingRecordingId,
-        deletedAt: null,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
-  }
-
-  async getSummaries(params: {
+  async findManyByDateRange(params: {
     platformUserIds: string[];
     startDate: Date;
     endDate: Date;
@@ -179,11 +75,11 @@ export class ParticipantSummaryRepository {
     });
   }
 
-  async findByPeriodAndMeeting(params: {
+  async findLatestSummary(params: {
     periodType: PeriodType;
     platformUserId: string;
     meetingId: string;
-    recordingId: string;
+    meetingRecordingId: string;
     isLatest: boolean;
   }) {
     return this.prisma.participantSummary.findFirst({
@@ -191,37 +87,98 @@ export class ParticipantSummaryRepository {
         periodType: params.periodType,
         platformUserId: params.platformUserId,
         meetingId: params.meetingId,
-        meetingRecordingId: params.recordingId,
+        meetingRecordingId: params.meetingRecordingId,
         isLatest: params.isLatest,
         deletedAt: null,
       },
     });
   }
 
-  async update(
-    id: string,
-    data: {
-      partSummary?: string;
-      keywords?: string[];
-      generatedBy?: GenerationMethod;
-      aiModel?: string;
-      confidence?: number;
-      version?: number;
-      isLatest?: boolean;
-    },
-  ) {
+  async update(id: string, data: Prisma.ParticipantSummaryUpdateInput) {
     return this.prisma.participantSummary.update({
       where: { id },
-      data: {
-        partSummary: data.partSummary,
-        keywords: data.keywords,
-        generatedBy: data.generatedBy,
-        aiModel: data.aiModel,
-        confidence: data.confidence,
-        version: data.version,
-        isLatest: data.isLatest,
-        updatedAt: new Date(),
+      data,
+    });
+  }
+
+  async findUserIdsByPeriod(params: {
+    periodStart: Date;
+    periodEnd: Date;
+    parentPeriodType: PeriodType;
+  }) {
+    return (
+      (await this.prisma.participantSummary.findMany({
+        where: {
+          platformUserId: { not: null },
+          periodType: params.parentPeriodType,
+          OR: [
+            {
+              periodStart: {
+                gte: params.periodStart,
+                lte: params.periodEnd,
+              },
+            },
+            {
+              periodStart: null,
+              createdAt: {
+                gte: params.periodStart,
+                lte: params.periodEnd,
+              },
+            },
+          ],
+        },
+        select: {
+          platformUserId: true,
+        },
+      })) ?? []
+    );
+  }
+
+  async findPeriodSummariesByPlatformUserId(params: {
+    parentPeriodType: PeriodType;
+    platformUserId: string;
+    periodStart: Date;
+    periodEnd: Date;
+  }) {
+    return await this.prisma.participantSummary.findMany({
+      where: {
+        platformUserId: params.platformUserId,
+        periodType: params.parentPeriodType,
+        OR: [
+          {
+            periodStart: {
+              gte: params.periodStart,
+              lte: params.periodEnd,
+            },
+          },
+          {
+            periodStart: null,
+            createdAt: {
+              gte: params.periodStart,
+              lte: params.periodEnd,
+            },
+          },
+        ],
       },
+      select: {
+        id: true,
+        partSummary: true,
+        userName: true,
+        periodStart: true,
+        periodEnd: true,
+        platformUserId: true,
+      },
+    });
+  }
+
+  async createSummaryRelation(data: {
+    parentSummaryId: string;
+    childSummaryId: string;
+    parentPeriodType: PeriodType;
+    childPeriodType: PeriodType;
+  }) {
+    return this.prisma.summaryRelation.create({
+      data,
     });
   }
 }

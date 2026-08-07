@@ -117,11 +117,11 @@ export class ParticipantSummaryService {
 
     const summary = await this.llmService.ask(prompt, systemPrompt);
 
-    const res = await this.partSummaryRepo.findByPeriodAndMeeting({
+    const res = await this.partSummaryRepo.findLatestSummary({
       periodType: PeriodType.SINGLE,
       platformUserId: ptByUnionId,
       meetingId: meeting.id,
-      recordingId: recordid,
+      meetingRecordingId: recordid,
       isLatest: true,
     });
 
@@ -136,15 +136,15 @@ export class ParticipantSummaryService {
         periodType: PeriodType.SINGLE,
         platformUserId: ptByUnionId,
         meetingId: meeting.id,
-        recordingId: recordid,
+        meetingRecordingId: recordid,
         userName: userName,
         partSummary: summary,
         generatedBy: GenerationMethod.AI,
         aiModel: 'deepseek-v3-1-terminus',
         version: res.version + 1,
         isLatest: true,
-        period_start: recording.startAt || meeting.startAt || undefined,
-        period_end: recording.endAt || meeting.endAt || undefined,
+        periodStart: recording.startAt || meeting.startAt || undefined,
+        periodEnd: recording.endAt || meeting.endAt || undefined,
       });
       return summary;
     }
@@ -153,15 +153,15 @@ export class ParticipantSummaryService {
       periodType: PeriodType.SINGLE,
       platformUserId: ptByUnionId,
       meetingId: meeting.id,
-      recordingId: recordid,
+      meetingRecordingId: recordid,
       userName: userName,
       partSummary: summary,
       generatedBy: GenerationMethod.AI,
       aiModel: 'deepseek-v3-1-terminus',
       version: 1,
       isLatest: true,
-      period_start: recording.startAt || meeting.startAt || undefined,
-      period_end: recording.endAt || meeting.endAt || undefined,
+      periodStart: recording.startAt || meeting.startAt || undefined,
+      periodEnd: recording.endAt || meeting.endAt || undefined,
     });
 
     this.logger.log(`成功生成参会者: ${userName}总结`);

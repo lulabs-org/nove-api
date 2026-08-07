@@ -3,7 +3,7 @@ import { PeriodType } from '@prisma/client';
 import { ConfigType } from '@nestjs/config';
 
 import { LlmService } from '../../llm/llm.service';
-import { PeriodSummaryRepository } from '../repositories/period-summary.repository';
+import { ParticipantSummaryRepository } from '../repositories/participant-summary.repository';
 import { PeriodTimeRange } from '../utils/period-time-range';
 import { openaiConfig } from '../../configs/openai.config';
 
@@ -12,7 +12,7 @@ export class PeriodSummaryService {
   private readonly logger = new Logger(PeriodSummaryService.name);
 
   constructor(
-    private readonly summaryRepo: PeriodSummaryRepository,
+    private readonly summaryRepo: ParticipantSummaryRepository,
     private readonly periodTimeRange: PeriodTimeRange,
     private readonly llmService: LlmService,
     @Inject(openaiConfig.KEY)
@@ -59,7 +59,7 @@ export class PeriodSummaryService {
     }
 
     // 1. 获取所有符合条件的参与总结记录
-    const summaries = await this.summaryRepo.findMany({
+    const summaries = await this.summaryRepo.findUserIdsByPeriod({
       periodStart,
       periodEnd,
       parentPeriodType: ctx.parent,
@@ -103,7 +103,7 @@ export class PeriodSummaryService {
     periodStart: Date,
     periodEnd: Date,
   ) {
-    const userSummaries = await this.summaryRepo.findByPlatformUserId({
+    const userSummaries = await this.summaryRepo.findPeriodSummariesByPlatformUserId({
       platformUserId,
       parentPeriodType: ctx.parent,
       periodStart,
@@ -150,7 +150,7 @@ export class PeriodSummaryService {
 
     // 关联子总结
     for (const child of userSummaries) {
-      await this.summaryRepo.createRelation({
+      await this.summaryRepo.createSummaryRelation({
         parentSummaryId: parentSummary.id,
         childSummaryId: child.id,
         parentPeriodType: ctx.parent,
