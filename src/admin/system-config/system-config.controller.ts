@@ -1,8 +1,6 @@
-import { Controller, Get, Put, Body } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { Controller, Get, Put, Body, Param } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { SystemConfigService } from './system-config.service';
-import { UpdateMailConfigDto } from './dto/mail-config.dto';
-import { UpdateWechatShopConfigDto } from './dto/wechat-shop-config.dto';
 import { RequirePermissions } from '@/permission/decorators/permissions.decorator';
 
 @ApiTags('Admin / System Config')
@@ -11,32 +9,19 @@ import { RequirePermissions } from '@/permission/decorators/permissions.decorato
 export class SystemConfigController {
   constructor(private readonly systemConfigService: SystemConfigService) {}
 
-  @Get('mail')
-  @ApiOperation({ summary: 'Get global mail configuration' })
+  @Get(':module')
+  @ApiOperation({ summary: 'Get global configuration for a specific module' })
+  @ApiParam({ name: 'module', description: 'Module name (e.g., mail, wechat-shop)', example: 'mail' })
   @RequirePermissions('system:config:read')
-  async getMailConfig() {
-    return this.systemConfigService.getMailConfig();
+  async getConfig(@Param('module') module: string) {
+    return this.systemConfigService.getConfig(module);
   }
 
-  @Put('mail')
-  @ApiOperation({ summary: 'Update global mail configuration' })
+  @Put(':module')
+  @ApiOperation({ summary: 'Update global configuration for a specific module' })
+  @ApiParam({ name: 'module', description: 'Module name (e.g., mail, wechat-shop)', example: 'mail' })
   @RequirePermissions('system:config:write')
-  async updateMailConfig(@Body() dto: UpdateMailConfigDto) {
-    return this.systemConfigService.updateMailConfig(dto);
-  }
-
-  @Get('wechat-shop')
-  @ApiOperation({ summary: 'Get global wechat shop configuration' })
-  @RequirePermissions('system:config:read')
-  async getWechatShopConfig() {
-    return this.systemConfigService.getWechatShopConfig();
-  }
-
-  @Put('wechat-shop')
-  @ApiOperation({ summary: 'Update global wechat shop configuration' })
-  @RequirePermissions('system:config:write')
-  async updateWechatShopConfig(@Body() dto: UpdateWechatShopConfigDto) {
-    return this.systemConfigService.updateWechatShopConfig(dto);
+  async updateConfig(@Param('module') module: string, @Body() data: Record<string, any>) {
+    return this.systemConfigService.updateConfig(module, data);
   }
 }
-

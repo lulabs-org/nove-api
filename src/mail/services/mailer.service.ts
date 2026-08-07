@@ -41,7 +41,7 @@ export class MailerService implements OnModuleInit {
 
   private async reloadTransporter() {
     // 1. Try to load from database first
-    const dbConfig = await this.systemConfigService.getMailConfig();
+    const dbConfig = await this.systemConfigService.getConfig('mail');
 
     let smtpUser = this.config.smtp.user;
     let smtpPass = this.config.smtp.pass;
@@ -65,7 +65,7 @@ export class MailerService implements OnModuleInit {
     }
     
     // To keep it simple, we will fetch raw from SystemConfigService here:
-    const rawConfig = await this.systemConfigService.getRawMailConfig();
+    const rawConfig = await this.systemConfigService.getRawConfig('mail');
     if (rawConfig && rawConfig.value) {
       const val = rawConfig.value as any;
       if (val.pass) {

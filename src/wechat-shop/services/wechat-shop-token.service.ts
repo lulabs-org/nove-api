@@ -51,7 +51,7 @@ export class WechatShopTokenService implements OnModuleInit {
   }
 
   private async reloadConfig() {
-    const rawConfig = await this.systemConfigService.getRawWechatShopConfig();
+    const rawConfig = await this.systemConfigService.getRawConfig('wechat-shop');
     
     if (rawConfig && rawConfig.value) {
       const dbConfig = rawConfig.value as any;

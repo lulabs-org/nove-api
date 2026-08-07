@@ -1,12 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { UpdateMailConfigDto } from './dto/mail-config.dto';
-import { UpdateWechatShopConfigDto } from './dto/wechat-shop-config.dto';
 import { encrypt } from '@/common/utils/crypto.util';
-
-export const MAIL_SMTP_CONFIG_KEY = 'MAIL_SMTP_CONFIG';
-export const WECHAT_SHOP_CONFIG_KEY = 'WECHAT_SHOP_CONFIG';
+import { SystemConfigRegistry } from './system-config.registry';
+import { validate } from 'class-validator';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class SystemConfigService {
@@ -17,146 +15,99 @@ export class SystemConfigService {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  async getRawMailConfig() {
+  private getModuleKey(module: string): string {
+    return `${module.toUpperCase()}_CONFIG`;
+  }
+
+  async getRawConfig(module: string) {
+    const key = this.getModuleKey(module);
     return this.prisma.systemConfig.findUnique({
-      where: { key: MAIL_SMTP_CONFIG_KEY },
+      where: { key },
     });
   }
 
-  async getMailConfig() {
+  async getConfig(module: string) {
+    const entry = SystemConfigRegistry[module];
+    if (!entry) {
+      throw new NotFoundException(`Module configuration for '${module}' not found in registry`);
+    }
+
+    const key = this.getModuleKey(module);
     const config = await this.prisma.systemConfig.findUnique({
-      where: { key: MAIL_SMTP_CONFIG_KEY },
+      where: { key },
     });
 
     if (!config || !config.value) {
       return null;
     }
 
-    const value = config.value as any;
-    // Do not return the real password to the frontend
-    if (value.pass) {
-      value.pass = '********';
+    const value = config.value as Record<string, any>;
+    
+    // Mask secret fields
+    for (const field of entry.secretFields) {
+      if (value[field]) {
+        value[field] = '********';
+      }
     }
 
     return value;
   }
 
-  async updateMailConfig(dto: UpdateMailConfigDto) {
-    let currentConfig: any = {};
+  async updateConfig(module: string, data: Record<string, any>) {
+    const entry = SystemConfigRegistry[module];
+    if (!entry) {
+      throw new NotFoundException(`Module configuration for '${module}' not found in registry`);
+    }
+
+    // Transform and validate data dynamically
+    const dtoInstance = plainToInstance(entry.dto, data);
+    const errors = await validate(dtoInstance);
+    
+    if (errors.length > 0) {
+      const messages = errors.map(e => Object.values(e.constraints || {}).join(', ')).join('; ');
+      throw new BadRequestException(`Validation failed: ${messages}`);
+    }
+
+    const key = this.getModuleKey(module);
+    let currentConfig: Record<string, any> = {};
     const existing = await this.prisma.systemConfig.findUnique({
-      where: { key: MAIL_SMTP_CONFIG_KEY },
+      where: { key },
     });
 
     if (existing && existing.value) {
-      currentConfig = existing.value;
+      currentConfig = existing.value as Record<string, any>;
     }
 
-    const newConfig = { ...currentConfig, ...dto };
-
-    // Encrypt password if provided
-    if (dto.pass && dto.pass !== '********') {
-      newConfig.pass = encrypt(dto.pass);
-    } else if (dto.pass === '********') {
-      // Retain the existing encrypted password
-      newConfig.pass = currentConfig.pass;
-    }
-
-    await this.prisma.systemConfig.upsert({
-      where: { key: MAIL_SMTP_CONFIG_KEY },
-      update: {
-        value: newConfig,
-        isEncrypted: true,
-      },
-      create: {
-        key: MAIL_SMTP_CONFIG_KEY,
-        value: newConfig,
-        isEncrypted: true,
-        description: 'Global SMTP Mail Configuration',
-      },
-    });
-
-    this.logger.log('Mail configuration updated by admin.');
-
-    // Emit event for hot reload
-    this.eventEmitter.emit('config.mail.updated');
-
-    return { success: true, message: 'Configuration saved successfully' };
-  }
-
-  async getRawWechatShopConfig() {
-    return this.prisma.systemConfig.findUnique({
-      where: { key: WECHAT_SHOP_CONFIG_KEY },
-    });
-  }
-
-  async getWechatShopConfig() {
-    const config = await this.prisma.systemConfig.findUnique({
-      where: { key: WECHAT_SHOP_CONFIG_KEY },
-    });
-
-    if (!config || !config.value) {
-      return null;
-    }
-
-    const value = config.value as any;
-    if (value.appSecret) value.appSecret = '********';
-    if (value.webhookToken) value.webhookToken = '********';
-    if (value.encodingAesKey) value.encodingAesKey = '********';
-
-    return value;
-  }
-
-  async updateWechatShopConfig(dto: UpdateWechatShopConfigDto) {
-    let currentConfig: any = {};
-    const existing = await this.prisma.systemConfig.findUnique({
-      where: { key: WECHAT_SHOP_CONFIG_KEY },
-    });
-
-    if (existing && existing.value) {
-      currentConfig = existing.value;
-    }
-
-    const newConfig = { ...currentConfig, ...dto };
+    const newConfig = { ...currentConfig, ...data };
 
     // Encrypt secrets if provided
-    if (dto.appSecret && dto.appSecret !== '********') {
-      newConfig.appSecret = encrypt(dto.appSecret);
-    } else if (dto.appSecret === '********') {
-      newConfig.appSecret = currentConfig.appSecret;
-    }
-
-    if (dto.webhookToken && dto.webhookToken !== '********') {
-      newConfig.webhookToken = encrypt(dto.webhookToken);
-    } else if (dto.webhookToken === '********') {
-      newConfig.webhookToken = currentConfig.webhookToken;
-    }
-
-    if (dto.encodingAesKey && dto.encodingAesKey !== '********') {
-      newConfig.encodingAesKey = encrypt(dto.encodingAesKey);
-    } else if (dto.encodingAesKey === '********') {
-      newConfig.encodingAesKey = currentConfig.encodingAesKey;
+    for (const field of entry.secretFields) {
+      if (data[field] && data[field] !== '********') {
+        newConfig[field] = encrypt(String(data[field]));
+      } else if (data[field] === '********') {
+        newConfig[field] = currentConfig[field];
+      }
     }
 
     await this.prisma.systemConfig.upsert({
-      where: { key: WECHAT_SHOP_CONFIG_KEY },
+      where: { key },
       update: {
         value: newConfig,
-        isEncrypted: true,
+        isEncrypted: entry.secretFields.length > 0,
       },
       create: {
-        key: WECHAT_SHOP_CONFIG_KEY,
+        key,
         value: newConfig,
-        isEncrypted: true,
-        description: 'Global Wechat Shop Configuration',
+        isEncrypted: entry.secretFields.length > 0,
+        description: entry.description,
       },
     });
 
-    this.logger.log('Wechat Shop configuration updated by admin.');
+    this.logger.log(`${entry.description} updated by admin.`);
 
     // Emit event for hot reload
-    this.eventEmitter.emit('config.wechat-shop.updated');
+    this.eventEmitter.emit(`config.${module}.updated`);
 
     return { success: true, message: 'Configuration saved successfully' };
   }
 }
-

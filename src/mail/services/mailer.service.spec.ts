@@ -53,8 +53,8 @@ describe('MailerService', () => {
   });
 
   const mockSystemConfigService = {
-    getMailConfig: jest.fn().mockResolvedValue(null),
-    getRawMailConfig: jest.fn().mockResolvedValue(null),
+    getConfig: jest.fn().mockResolvedValue(null),
+    getRawConfig: jest.fn().mockResolvedValue(null),
   } as any;
 
   it('skips transporter when SMTP creds missing; send/verify are no-ops', async () => {
