@@ -86,7 +86,7 @@ describe('ParticipantSummaryService', () => {
 
   it('generates and saves a summary using two parallel context lookups', async () => {
     await expect(
-      service.generateSummary('recording-1', 'platform-user-1'),
+      service.generateSummary({ recordId: 'recording-1', platformUserId: 'platform-user-1' }),
     ).resolves.toBe('generated summary');
 
     expect(repository.findGenerationContext).toHaveBeenCalledTimes(1);
@@ -127,7 +127,7 @@ describe('ParticipantSummaryService', () => {
     repository.findGenerationContext.mockResolvedValue(null);
 
     await expect(
-      service.generateSummary('missing-recording', 'platform-user-1'),
+      service.generateSummary({ recordId: 'missing-recording', platformUserId: 'platform-user-1' }),
     ).rejects.toBeInstanceOf(RecordingNotFoundException);
   });
 
@@ -138,7 +138,7 @@ describe('ParticipantSummaryService', () => {
     });
 
     await expect(
-      service.generateSummary('recording-1', 'platform-user-1'),
+      service.generateSummary({ recordId: 'recording-1', platformUserId: 'platform-user-1' }),
     ).rejects.toBeInstanceOf(MeetingRecordNotFoundException);
   });
 
@@ -149,7 +149,7 @@ describe('ParticipantSummaryService', () => {
     });
 
     await expect(
-      service.generateSummary('recording-1', 'platform-user-1'),
+      service.generateSummary({ recordId: 'recording-1', platformUserId: 'platform-user-1' }),
     ).rejects.toBeInstanceOf(MeetingSummaryNotFoundException);
   });
 
@@ -160,7 +160,7 @@ describe('ParticipantSummaryService', () => {
     });
 
     await expect(
-      service.generateSummary('recording-1', 'platform-user-1'),
+      service.generateSummary({ recordId: 'recording-1', platformUserId: 'platform-user-1' }),
     ).rejects.toEqual(new NotFoundException('转录记录不存在: recording-1'));
   });
 });
