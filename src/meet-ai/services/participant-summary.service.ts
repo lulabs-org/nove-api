@@ -13,9 +13,7 @@ import { Injectable, Logger, Inject, NotFoundException } from '@nestjs/common';
 import { GenerationMethod, PeriodType } from '@prisma/client';
 import { ConfigType } from '@nestjs/config';
 import { formatToTimezone, formatTimeMs } from '@/common/utils/time.util';
-import { extractUserName } from '@/common/utils/user.util';
 import { LlmService } from '@/llm/llm.service';
-import { PlatformUserService } from '@/user-platform/services/platform-user.service';
 import { ParticipantSummaryRepository } from '../repositories';
 import { GenerateParticipantSummaryDto } from '../dto/meet-ai.dto';
 import { SummarySegment } from '../types';
@@ -35,10 +33,9 @@ export class ParticipantSummaryService {
   constructor(
     private readonly llmService: LlmService,
     private readonly partSummaryRepo: ParticipantSummaryRepository,
-    private readonly platformUserService: PlatformUserService,
     @Inject(openaiConfig.KEY)
     private readonly config: ConfigType<typeof openaiConfig>,
-  ) {}
+  ) { }
 
   async generateSummary({
     recordId,
@@ -47,19 +44,22 @@ export class ParticipantSummaryService {
     const { recording, meeting, meetingSummary, transcript } =
       await this.fetchMeetingContext(recordId);
 
-    const hasSpoken = transcript.segments.some(
+    const spokenSegment = transcript.segments.find(
       (segment) => segment.speaker?.id === platformUserId,
     );
 
-    if (!hasSpoken) {
+    if (!spokenSegment) {
       this.logger.log(`参会者 ${platformUserId} 未参与发言，无需生成总结`);
       return '';
     }
 
-    const platformUser = await this.platformUserService.findById(platformUserId);
+    const userName = spokenSegment.speakerName;
+    if (!userName) {
+      this.logger.warn(`无法获取参会者 ${platformUserId} 的姓名，无法生成总结`);
+      return '';
+    }
 
     const segments = this.formatSegments(transcript.segments);
-    const userName = extractUserName(platformUser);
 
     const { systemPrompt, prompt } = generatePrompt('PARTICIPANT_SUMMARY', {
       userName,
