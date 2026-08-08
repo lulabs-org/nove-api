@@ -87,6 +87,74 @@ export class ParticipantSummaryRepository {
   // READ OPERATIONS
   // ==========================================
 
+  async findGenerationContext(recordingId: string) {
+    return this.prisma.meetingRecording.findFirst({
+      where: {
+        id: recordingId,
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        startAt: true,
+        endAt: true,
+        meeting: {
+          select: {
+            id: true,
+            title: true,
+            startAt: true,
+            endAt: true,
+            deletedAt: true,
+            summaries: {
+              where: {
+                isLatest: true,
+                deletedAt: null,
+              },
+              orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
+              take: 1,
+              select: {
+                aiMinutes: true,
+                keyPoints: true,
+                actionItems: true,
+                decisions: true,
+                goldenQuotes: true,
+                keywords: true,
+              },
+            },
+          },
+        },
+        transcripts: {
+          where: {
+            deletedAt: null,
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+          take: 1,
+          select: {
+            segments: {
+              where: {
+                deletedAt: null,
+              },
+              orderBy: {
+                startTimeMs: 'asc',
+              },
+              select: {
+                startTimeMs: true,
+                speakerName: true,
+                text: true,
+                speaker: {
+                  select: {
+                    displayName: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
   async findByDateRange(params: {
     platformUserIds: string[];
     startDate: Date;

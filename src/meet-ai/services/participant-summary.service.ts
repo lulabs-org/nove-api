@@ -9,20 +9,28 @@
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
-import { Injectable, Logger, Inject } from '@nestjs/common';
+import { Injectable, Logger, Inject, NotFoundException } from '@nestjs/common';
 import { GenerationMethod, PeriodType } from '@prisma/client';
 import { ConfigType } from '@nestjs/config';
 import { formatToBeijingTime, formatTimeMs } from '@/common/utils/time.util';
 import { extractUserName } from '@/common/utils/user.util';
 import { LlmService } from '@/llm/llm.service';
 import { PlatformUserService } from '@/user-platform/services/platform-user.service';
-import { MeetingService } from '@/meeting/services/meeting.service';
-import { MeetingRecordingService } from '@/meeting/services/meeting-recording.service';
-import { MeetingSummaryService } from '@/meeting/services/meeting-summary.service';
-import { TranscriptService } from '@/meeting/services/transcript.service';
 import { ParticipantSummaryRepository } from '../repositories';
 import { openaiConfig } from '@/configs/openai.config';
 import { generatePrompt } from '@/common/utils';
+import {
+  MeetingRecordNotFoundException,
+  MeetingSummaryNotFoundException,
+  RecordingNotFoundException,
+} from '@/meeting/exceptions/meeting.exceptions';
+
+type SummarySegment = {
+  startTimeMs: bigint;
+  speakerName: string | null;
+  text: string;
+  speaker: { displayName: string | null } | null;
+};
 
 @Injectable()
 export class ParticipantSummaryService {
@@ -32,47 +40,42 @@ export class ParticipantSummaryService {
     private readonly llmService: LlmService,
     private readonly partSummaryRepo: ParticipantSummaryRepository,
     private readonly platformUserService: PlatformUserService,
-    private readonly meetingService: MeetingService,
-    private readonly meetingRecordingService: MeetingRecordingService,
-    private readonly meetingSummaryService: MeetingSummaryService,
-    private readonly transcriptService: TranscriptService,
     @Inject(openaiConfig.KEY)
     private readonly config: ConfigType<typeof openaiConfig>,
-  ) { }
+  ) {}
 
   async generateSummary(
-    recordid: string,
-    ptByUnionId: string,
+    recordingId: string,
+    platformUserId: string,
   ): Promise<string> {
     const { recording, meeting, platformUser, meetingSummary, transcript } =
-      await this.fetchMeetingContext(recordid, ptByUnionId);
+      await this.fetchMeetingContext(recordingId, platformUserId);
 
     const segments = this.formatSegments(transcript.segments);
     const userName = extractUserName(platformUser);
 
-    const { systemPrompt, prompt } =
-      generatePrompt('PARTICIPANT_SUMMARY', {
-        userName,
-        meetingId: meeting.id,
-        meetingTitle: meeting.title,
-        startTime: formatToBeijingTime(meeting.startAt),
-        endTime: formatToBeijingTime(meeting.endAt),
-        meetingSummaryMinutes: meetingSummary.aiMinutes,
-        meetingSummaryKeyPoints: meetingSummary.keyPoints,
-        meetingSummaryActionItems: meetingSummary.actionItems,
-        meetingSummaryDecisions: meetingSummary.decisions,
-        meetingSummaryGoldenQuotes: meetingSummary.goldenQuotes,
-        meetingSummaryKeywords: meetingSummary.keywords?.join(', '),
-        segments,
-      });
+    const { systemPrompt, prompt } = generatePrompt('PARTICIPANT_SUMMARY', {
+      userName,
+      meetingId: meeting.id,
+      meetingTitle: meeting.title,
+      startTime: formatToBeijingTime(meeting.startAt),
+      endTime: formatToBeijingTime(meeting.endAt),
+      meetingSummaryMinutes: meetingSummary.aiMinutes,
+      meetingSummaryKeyPoints: meetingSummary.keyPoints,
+      meetingSummaryActionItems: meetingSummary.actionItems,
+      meetingSummaryDecisions: meetingSummary.decisions,
+      meetingSummaryGoldenQuotes: meetingSummary.goldenQuotes,
+      meetingSummaryKeywords: meetingSummary.keywords?.join(', '),
+      segments,
+    });
 
     const summary = await this.llmService.ask(prompt, systemPrompt);
 
     await this.partSummaryRepo.saveNewVersion({
       periodType: PeriodType.SINGLE,
-      platformUserId: ptByUnionId,
+      platformUserId,
       meetingId: meeting.id,
-      meetingRecordingId: recordid,
+      meetingRecordingId: recordingId,
       userName: userName,
       partSummary: summary,
       generatedBy: GenerationMethod.AI,
@@ -85,24 +88,43 @@ export class ParticipantSummaryService {
     return summary;
   }
 
-  private formatSegments(segments: any[] = []) {
-    return segments.map((segment: any) => {
+  private formatSegments(segments: SummarySegment[] = []) {
+    return segments.map((segment) => {
       const timeStr = formatTimeMs(Number(segment.startTimeMs || 0));
-      const speakerName = segment.speakerName || segment.speaker?.displayName || '未知发言人';
+      const speakerName =
+        segment.speakerName || segment.speaker?.displayName || '未知发言人';
       const content = segment.text || '';
       return [timeStr, speakerName, content];
     });
   }
 
-  private async fetchMeetingContext(recordid: string, ptByUnionId: string) {
-    const [recording, transcript, platformUser] = await Promise.all([
-      this.meetingRecordingService.getById(recordid),
-      this.transcriptService.getDetails(recordid),
-      this.platformUserService.findById(ptByUnionId),
+  private async fetchMeetingContext(
+    recordingId: string,
+    platformUserId: string,
+  ) {
+    const [recording, platformUser] = await Promise.all([
+      this.partSummaryRepo.findGenerationContext(recordingId),
+      this.platformUserService.findById(platformUserId),
     ]);
 
-    const meeting = await this.meetingService.findById(recording.meetingId);
-    const meetingSummary = await this.meetingSummaryService.getByMeetingId(meeting.id);
+    if (!recording) {
+      throw new RecordingNotFoundException(recordingId);
+    }
+
+    const meeting = recording.meeting;
+    if (meeting.deletedAt) {
+      throw new MeetingRecordNotFoundException(meeting.id);
+    }
+
+    const [meetingSummary] = meeting.summaries;
+    if (!meetingSummary) {
+      throw new MeetingSummaryNotFoundException(meeting.id);
+    }
+
+    const [transcript] = recording.transcripts;
+    if (!transcript) {
+      throw new NotFoundException(`转录记录不存在: ${recordingId}`);
+    }
 
     return { recording, meeting, platformUser, meetingSummary, transcript };
   }
