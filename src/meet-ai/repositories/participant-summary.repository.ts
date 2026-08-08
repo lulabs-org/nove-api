@@ -142,38 +142,31 @@ export class ParticipantSummaryRepository {
     });
   }
 
+  private getPeriodCondition(start: Date, end: Date): Prisma.ParticipantSummaryWhereInput {
+    return {
+      OR: [
+        { periodStart: { gte: start, lte: end } },
+        { periodStart: null, createdAt: { gte: start, lte: end } },
+      ],
+    };
+  }
+
   async findUserIdsByPeriod(params: {
     periodStart: Date;
     periodEnd: Date;
     parentPeriodType: PeriodType;
   }) {
-    return (
-      (await this.prisma.participantSummary.findMany({
-        where: {
-          platformUserId: { not: null },
-          periodType: params.parentPeriodType,
-          OR: [
-            {
-              periodStart: {
-                gte: params.periodStart,
-                lte: params.periodEnd,
-              },
-            },
-            {
-              periodStart: null,
-              createdAt: {
-                gte: params.periodStart,
-                lte: params.periodEnd,
-              },
-            },
-          ],
-        },
-        select: {
-          platformUserId: true,
-        },
-        distinct: ['platformUserId'],
-      })) ?? []
-    );
+    return this.prisma.participantSummary.findMany({
+      where: {
+        platformUserId: { not: null },
+        periodType: params.parentPeriodType,
+        ...this.getPeriodCondition(params.periodStart, params.periodEnd),
+      },
+      select: {
+        platformUserId: true,
+      },
+      distinct: ['platformUserId'],
+    });
   }
 
   async findPeriodSummariesByPlatformUserId(params: {
@@ -182,25 +175,11 @@ export class ParticipantSummaryRepository {
     periodStart: Date;
     periodEnd: Date;
   }) {
-    return await this.prisma.participantSummary.findMany({
+    return this.prisma.participantSummary.findMany({
       where: {
         platformUserId: params.platformUserId,
         periodType: params.parentPeriodType,
-        OR: [
-          {
-            periodStart: {
-              gte: params.periodStart,
-              lte: params.periodEnd,
-            },
-          },
-          {
-            periodStart: null,
-            createdAt: {
-              gte: params.periodStart,
-              lte: params.periodEnd,
-            },
-          },
-        ],
+        ...this.getPeriodCondition(params.periodStart, params.periodEnd),
       },
       select: {
         id: true,
