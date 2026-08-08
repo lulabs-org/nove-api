@@ -24,11 +24,15 @@ const PERIOD_CONTEXT_MAP: Partial<Record<PeriodType, PeriodContext>> = {
   [PeriodType.DAILY]: { parent: PeriodType.SINGLE, label: '本日' },
 };
 
-export const getPeriodContext = (periodType: PeriodType): PeriodContext | undefined =>
-  PERIOD_CONTEXT_MAP[periodType];
+export const getPeriodContext = (
+  periodType: PeriodType,
+): PeriodContext | undefined => PERIOD_CONTEXT_MAP[periodType];
 
 // 获取对应周期的起止时间（基于当前触发时间）
-export const getdayRange = (periodType: PeriodType, targetDate?: Date): { periodStart: Date; periodEnd: Date } => {
+export const getdayRange = (
+  periodType: PeriodType,
+  targetDate?: Date,
+): { periodStart: Date; periodEnd: Date } => {
   const now = targetDate || new Date();
   const [y, m, d] = [now.getFullYear(), now.getMonth(), now.getDate()];
   let start: Date, end: Date;
@@ -42,11 +46,12 @@ export const getdayRange = (periodType: PeriodType, targetDate?: Date): { period
       start = new Date(y, m, 1, 0, 0, 0, 0);
       end = new Date(y, m + 1, 0, 23, 59, 59, 999);
       break;
-    case PeriodType.WEEKLY:
+    case PeriodType.WEEKLY: {
       const currentDay = now.getDay() === 0 ? 7 : now.getDay();
       start = new Date(y, m, d - currentDay + 1, 0, 0, 0, 0);
       end = new Date(y, m, d + (7 - currentDay), 23, 59, 59, 999);
       break;
+    }
     case PeriodType.DAILY:
     default:
       start = new Date(y, m, d, 0, 0, 0, 0);

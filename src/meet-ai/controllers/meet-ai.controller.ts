@@ -17,13 +17,15 @@ import {
   HttpCode,
   HttpStatus,
   Logger,
-  ValidationPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { NoPermissionRequired } from '@/permission/decorators/permissions.decorator';
 import { ParticipantSummaryService } from '../services/participant-summary.service';
 import { PeriodSummaryService } from '../services/period-summary.service';
-import { TriggerSummaryDto, GenerateParticipantSummaryDto } from '../dto/meet-ai.dto';
+import {
+  TriggerSummaryDto,
+  GenerateParticipantSummaryDto,
+} from '../dto/meet-ai.dto';
 
 @ApiTags('Meet AI')
 @Controller('meet-ai')
@@ -35,7 +37,7 @@ export class MeetAiController {
   constructor(
     private readonly participantSummaryService: ParticipantSummaryService,
     private readonly periodSummaryService: PeriodSummaryService,
-  ) { }
+  ) {}
 
   @Get('health')
   @HttpCode(HttpStatus.OK)
@@ -49,9 +51,7 @@ export class MeetAiController {
 
   @Post('summaries/participant')
   @HttpCode(HttpStatus.OK)
-  async generateParticipantSummary(
-    @Body() dto: GenerateParticipantSummaryDto,
-  ) {
+  async generateParticipantSummary(@Body() dto: GenerateParticipantSummaryDto) {
     return {
       success: true,
       message: '参会者总结生成成功',

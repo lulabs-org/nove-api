@@ -5,13 +5,25 @@
  * @returns A string representing the user's display name, falling back to '未知用户' if not found.
  */
 export function extractUserName(platformUser: any): string {
-  const user = platformUser?.user;
+  const pUser = platformUser as {
+    displayName?: string;
+    user?: {
+      username?: string;
+      profile?: {
+        displayName?: string;
+        lastName?: string;
+        firstName?: string;
+      };
+    };
+  };
+
+  const user = pUser?.user;
   const profile = user?.profile;
-  return (
-    platformUser?.displayName ||
+  const result =
+    pUser?.displayName ||
     profile?.displayName ||
     user?.username ||
-    (profile?.lastName || '') + (profile?.firstName || '') ||
-    '未知用户'
-  );
+    (profile?.lastName || '') + (profile?.firstName || '');
+
+  return result || '未知用户';
 }

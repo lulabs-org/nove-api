@@ -35,22 +35,31 @@ export type PromptTemplateKey = keyof typeof PROMPT_TEMPLATES;
 /**
  * 通用的 Prompt 渲染函数，将变量替换到模板中
  */
-function renderTemplate(template: string, variables: Record<string, any>): string {
-  return template.replace(/\{\{([^{}]+)\}\}/g, (match, key) => {
+function renderTemplate(
+  template: string,
+  variables: Record<string, any>,
+): string {
+  return template.replace(/\{\{([^{}]+)\}\}/g, (match: string, key: string) => {
     const trimmedKey = key.trim();
-    const value = variables[trimmedKey];
+    const value: unknown = variables[trimmedKey];
 
+    if (value === undefined || value === null) {
+      return '暂无数据';
+    }
     if (typeof value === 'object') {
       return JSON.stringify(value);
     }
-    return value !== undefined && value !== null ? String(value) : '暂无数据';
+    return String(value as string | number | boolean);
   });
 }
 
 /**
  * 根据模板名称生成 System 和 User Prompt
  */
-export function generatePrompt(promptKey: PromptTemplateKey, variables: Record<string, any>) {
+export function generatePrompt(
+  promptKey: PromptTemplateKey,
+  variables: Record<string, any>,
+) {
   const template = PROMPT_TEMPLATES[promptKey];
   if (!template) {
     throw new Error(`Prompt template ${promptKey} not found`);

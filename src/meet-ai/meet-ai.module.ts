@@ -51,4 +51,4 @@ import { PeriodSummaryHandler } from './handlers/period-summary.handler';
     PeriodSummaryService,
   ],
 })
-export class MeetAiModule { }
+export class MeetAiModule {}

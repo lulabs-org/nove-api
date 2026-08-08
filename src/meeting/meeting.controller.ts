@@ -120,8 +120,7 @@ export class MeetingController {
     });
 
     try {
-      const record =
-        await this.meetingService.create(createParams);
+      const record = await this.meetingService.create(createParams);
 
       this.logger.log(`创建会议记录成功: ${record.id}`);
       return record;
@@ -145,10 +144,7 @@ export class MeetingController {
     this.logger.log(`更新会议记录: ${id}`, updateParams);
 
     try {
-      const record = await this.meetingService.update(
-        id,
-        updateParams,
-      );
+      const record = await this.meetingService.update(id, updateParams);
 
       this.logger.log(`更新会议记录成功: ${record.id}`);
       return record;
@@ -254,8 +250,7 @@ export class MeetingController {
 
     try {
       if (format === 'json') {
-        const data =
-          await this.transcriptService.getJson(recordingId);
+        const data = await this.transcriptService.getJson(recordingId);
 
         this.logger.log(`获取录制的转写 JSON 成功: ${recordingId}`);
         return { data };

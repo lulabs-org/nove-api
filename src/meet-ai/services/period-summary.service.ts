@@ -9,8 +9,6 @@ import { getdayRange, getPeriodContext } from '../utils/period-time-range';
 import { openaiConfig } from '../../configs/openai.config';
 import { generatePrompt } from '@/common/utils';
 
-
-
 @Injectable()
 export class PeriodSummaryService {
   private readonly logger = new Logger(PeriodSummaryService.name);
@@ -21,15 +19,15 @@ export class PeriodSummaryService {
     private readonly llmService: LlmService,
     @Inject(openaiConfig.KEY)
     private readonly config: ConfigType<typeof openaiConfig>,
-  ) { }
+  ) {}
 
   /**
    * 触发并执行指定周期的总结任务。
-   * 
+   *
    * 该方法会根据给定的周期类型 (PeriodType) 计算目标时间范围，
    * 筛选出在该时间区间内有会议记录的所有活跃用户，
    * 并通过控制并发度（默认并发量 5）批量为这些用户生成聚合总结。
-   * 
+   *
    * @param periodType 目标总结周期类型 (如 WEEKLY, MONTHLY 等)
    * @returns 包含执行结果及时间戳的对象
    */
@@ -61,10 +59,16 @@ export class PeriodSummaryService {
     });
 
     // 2. 提取唯一的平台用户 ID 列表
-    const uniqueUserIds = [...new Set(summaries.map(s => s.platformUserId).filter(Boolean) as string[])];
+    const uniqueUserIds = [
+      ...new Set(
+        summaries.map((s) => s.platformUserId).filter(Boolean) as string[],
+      ),
+    ];
 
     if (!uniqueUserIds.length) {
-      this.logger.warn('没有找到符合条件的记录, participantSummary的新增记录为空');
+      this.logger.warn(
+        '没有找到符合条件的记录, participantSummary的新增记录为空',
+      );
       return { ok: true, at: new Date().toISOString() };
     }
 
@@ -73,10 +77,17 @@ export class PeriodSummaryService {
     // 3. 遍历并分批处理每个用户的总结 (并发度控制为 5)
     for (let i = 0; i < uniqueUserIds.length; i += 5) {
       await Promise.all(
-        uniqueUserIds.slice(i, i + 5).map(userId =>
-          this.processUser(userId, periodType, targetDate)
-            .catch(err => this.logger.error(`处理用户 ${userId} 总结时失败`, err.stack))
-        )
+        uniqueUserIds
+          .slice(i, i + 5)
+          .map((userId) =>
+            this.processUser(userId, periodType, targetDate).catch(
+              (err: unknown) =>
+                this.logger.error(
+                  `处理用户 ${userId} 总结时失败`,
+                  err instanceof Error ? err.stack : String(err),
+                ),
+            ),
+          ),
       );
     }
 
@@ -85,13 +96,13 @@ export class PeriodSummaryService {
 
   /**
    * 为单个用户生成特定周期的聚合会议总结。
-   * 
+   *
    * 工作流如下：
    * 1. 获取目标用户在该周期内的所有子级总结数据 (如：周总结依赖日总结)。
    * 2. 将提取的子总结数据作为上下文，组装 Prompt 请求大模型 (LLM)。
    * 3. 将大模型生成的结果落库，作为新的父级总结。
    * 4. 建立父级总结与子级总结的层级关联关系 (SummaryRelation)。
-   * 
+   *
    * @param platformUserId 第三方平台的用户唯一标识
    * @param periodType 当前要生成的周期类型 (如 WEEKLY, MONTHLY 等)
    * @param targetDate 目标日期，用于计算当前周期的起止时间
@@ -127,14 +138,11 @@ export class PeriodSummaryService {
       periodEnd: s.periodEnd,
     }));
 
-    const { systemPrompt, prompt } = generatePrompt(
-      'PERIOD_SUMMARY',
-      {
-        userName,
-        ctxLabel: ctx.label,
-        leanSummaries,
-      },
-    );
+    const { systemPrompt, prompt } = generatePrompt('PERIOD_SUMMARY', {
+      userName,
+      ctxLabel: ctx.label,
+      leanSummaries,
+    });
 
     const reply = await this.llmService.createChatCompletion([
       { role: 'system', content: systemPrompt },

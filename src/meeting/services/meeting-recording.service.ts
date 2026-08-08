@@ -4,7 +4,9 @@ import { RecordingNotFoundException } from '../exceptions/meeting.exceptions';
 
 @Injectable()
 export class MeetingRecordingService {
-  constructor(private readonly meetingRecordingRepository: MeetingRecordingRepository) { }
+  constructor(
+    private readonly meetingRecordingRepository: MeetingRecordingRepository,
+  ) {}
 
   /**
    * 获取录制记录详情
