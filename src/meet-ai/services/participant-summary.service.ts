@@ -12,7 +12,8 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import { GenerationMethod, PeriodType } from '@prisma/client';
 import { ConfigType } from '@nestjs/config';
-import { formatToBeijingTime } from '@/common/utils/time.util';
+import { formatToBeijingTime, formatTimeMs } from '@/common/utils/time.util';
+import { extractUserName } from '@/common/utils/user.util';
 import { LlmService } from '@/llm/llm.service';
 import { PlatformUserService } from '@/user-platform/services/platform-user.service';
 import { MeetingService } from '@/meeting/services/meeting.service';
@@ -37,7 +38,7 @@ export class ParticipantSummaryService {
     private readonly transcriptService: TranscriptService,
     @Inject(openaiConfig.KEY)
     private readonly config: ConfigType<typeof openaiConfig>,
-  ) {}
+  ) { }
 
   async generateSummary(
     recordid: string,
@@ -47,7 +48,7 @@ export class ParticipantSummaryService {
       await this.fetchMeetingContext(recordid, ptByUnionId);
 
     const segments = this.formatSegments(transcript.segments);
-    const userName = this.extractUserName(platformUser);
+    const userName = extractUserName(platformUser);
 
     const { systemPrompt, prompt } =
       generatePrompt('PARTICIPANT_SUMMARY', {
@@ -84,32 +85,13 @@ export class ParticipantSummaryService {
     return summary;
   }
 
-  private extractUserName(platformUser: any): string {
-    const user = platformUser?.user;
-    const profile = user?.profile;
-    return (
-      platformUser?.displayName ||
-      profile?.displayName ||
-      user?.username ||
-      (profile?.lastName || '') + (profile?.firstName || '') ||
-      '未知用户'
-    );
-  }
-
   private formatSegments(segments: any[] = []) {
     return segments.map((segment: any) => {
-      const timeStr = this.formatTime(Number(segment.startTimeMs || 0));
+      const timeStr = formatTimeMs(Number(segment.startTimeMs || 0));
       const speakerName = segment.speakerName || segment.speaker?.displayName || '未知发言人';
       const content = segment.text || '';
       return [timeStr, speakerName, content];
     });
-  }
-
-  private formatTime(timeMs: number): string {
-    const hours = Math.floor(timeMs / 3600000);
-    const minutes = Math.floor((timeMs % 3600000) / 60000);
-    const seconds = Math.floor((timeMs % 60000) / 1000);
-    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   }
 
   private async fetchMeetingContext(recordid: string, ptByUnionId: string) {

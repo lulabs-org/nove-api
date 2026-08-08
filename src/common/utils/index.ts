@@ -16,3 +16,4 @@ export * from './user-mapper';
 export * from './password.util';
 export * from './time.util';
 export * from './prompt.util';
+export * from './user.util';

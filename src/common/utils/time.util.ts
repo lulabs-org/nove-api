@@ -89,3 +89,19 @@ export function formatToTimezone(
 export function formatToBeijingTime(date: Date | null | undefined): string {
   return formatToTimezone(date, 8);
 }
+
+/**
+ * Formats a duration in milliseconds to a HH:MM:SS string.
+ *
+ * @param timeMs - The duration in milliseconds.
+ * @returns Formatted time string in HH:MM:SS format.
+ *
+ * @example
+ * formatTimeMs(3661000) // "01:01:01"
+ */
+export function formatTimeMs(timeMs: number): string {
+  const hours = Math.floor(timeMs / 3600000);
+  const minutes = Math.floor((timeMs % 3600000) / 60000);
+  const seconds = Math.floor((timeMs % 60000) / 1000);
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
