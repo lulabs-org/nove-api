@@ -151,7 +151,7 @@ export class ParticipantSummaryRepository {
     };
   }
 
-  async findUserIdsByPeriod(params: {
+  async findActiveUserIds(params: {
     periodStart: Date;
     periodEnd: Date;
     parentPeriodType: PeriodType;
@@ -169,7 +169,7 @@ export class ParticipantSummaryRepository {
     });
   }
 
-  async findPeriodSummariesByPlatformUserId(params: {
+  async findByUserAndPeriod(params: {
     parentPeriodType: PeriodType;
     platformUserId: string;
     periodStart: Date;

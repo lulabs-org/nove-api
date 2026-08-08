@@ -63,7 +63,7 @@ export class PeriodSummaryService {
     }
 
     // 1. 获取所有符合条件的参与总结记录
-    const summaries = await this.summaryRepo.findUserIdsByPeriod({
+    const summaries = await this.summaryRepo.findActiveUserIds({
       periodStart,
       periodEnd,
       parentPeriodType: ctx.parent,
@@ -108,7 +108,7 @@ export class PeriodSummaryService {
     periodStart: Date,
     periodEnd: Date,
   ) {
-    const userSummaries = await this.summaryRepo.findPeriodSummariesByPlatformUserId({
+    const userSummaries = await this.summaryRepo.findByUserAndPeriod({
       platformUserId,
       parentPeriodType: ctx.parent,
       periodStart,
