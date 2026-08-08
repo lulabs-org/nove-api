@@ -21,7 +21,7 @@ export class PeriodSummaryService {
     private readonly llmService: LlmService,
     @Inject(openaiConfig.KEY)
     private readonly config: ConfigType<typeof openaiConfig>,
-  ) {}
+  ) { }
 
   /**
    * 触发并执行指定周期的总结任务。
@@ -144,7 +144,7 @@ export class PeriodSummaryService {
     this.logger.log(`LLM聊天完成: ${reply?.slice(0, 200)}`);
 
     // 保存主总结
-    const parentSummary = await this.summaryRepo.create({
+    const childSummary = await this.summaryRepo.create({
       periodType,
       periodStart,
       periodEnd,
@@ -156,16 +156,16 @@ export class PeriodSummaryService {
 
     // 关联子总结 (批量插入)
     await this.summaryRelationRepo.createMany(
-      userSummaries.map((child) => ({
-        parentSummaryId: parentSummary.id,
-        childSummaryId: child.id,
-        parentPeriodType: periodType,
-        childPeriodType: ctx.parent,
+      userSummaries.map((p) => ({
+        parentSummaryId: p.id,
+        childSummaryId: childSummary.id,
+        parentPeriodType: ctx.parent,
+        childPeriodType: periodType,
       })),
     );
 
     this.logger.log(
-      `创建了 ${userSummaries.length} 条关联记录, 父总结 ID: ${parentSummary.id}`,
+      `创建了 ${userSummaries.length} 条关联记录, 新总结 ID: ${childSummary.id}`,
     );
   }
 }

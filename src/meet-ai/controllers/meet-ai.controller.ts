@@ -23,7 +23,7 @@ import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { NoPermissionRequired } from '@/permission/decorators/permissions.decorator';
 import { ParticipantSummaryService } from '../services/participant-summary.service';
 import { PeriodSummaryService } from '../services/period-summary.service';
-import { TriggerSummaryDto } from '../dto/meet-ai.dto';
+import { TriggerSummaryDto, GenerateParticipantSummaryDto } from '../dto/meet-ai.dto';
 
 @ApiTags('Meet AI')
 @Controller('meet-ai')
@@ -35,7 +35,7 @@ export class MeetAiController {
   constructor(
     private readonly participantSummaryService: ParticipantSummaryService,
     private readonly periodSummaryService: PeriodSummaryService,
-  ) {}
+  ) { }
 
   @Get('health')
   @HttpCode(HttpStatus.OK)
@@ -47,28 +47,19 @@ export class MeetAiController {
     };
   }
 
-  @Post('participant-summary')
+  @Post('summaries/participant')
   @HttpCode(HttpStatus.OK)
   async generateParticipantSummary(
-    @Body(new ValidationPipe())
-    body: {
-      recordId: string;
-      platformUserId: string;
-    },
+    @Body() dto: GenerateParticipantSummaryDto,
   ) {
-    this.logger.log('生成参会者总结', {
-      recordId: body.recordId,
-      platformUserId: body.platformUserId,
-    });
-
-    const summary = await this.participantSummaryService.generateSummary(
-      body.recordId,
-      body.platformUserId,
-    );
-    return { success: true, message: '参会者总结生成成功', data: summary };
+    return {
+      success: true,
+      message: '参会者总结生成成功',
+      data: await this.participantSummaryService.generateSummary(dto),
+    };
   }
 
-  @Post('period-summary')
+  @Post('summaries/period')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '手动或由定时任务触发周期性总结' })
   process(@Body() { periodType }: TriggerSummaryDto) {

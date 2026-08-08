@@ -17,6 +17,7 @@ import { extractUserName } from '@/common/utils/user.util';
 import { LlmService } from '@/llm/llm.service';
 import { PlatformUserService } from '@/user-platform/services/platform-user.service';
 import { ParticipantSummaryRepository } from '../repositories';
+import { GenerateParticipantSummaryDto } from '../dto/meet-ai.dto';
 import { openaiConfig } from '@/configs/openai.config';
 import { generatePrompt } from '@/common/utils';
 import {
@@ -44,10 +45,10 @@ export class ParticipantSummaryService {
     private readonly config: ConfigType<typeof openaiConfig>,
   ) {}
 
-  async generateSummary(
-    recordingId: string,
-    platformUserId: string,
-  ): Promise<string> {
+  async generateSummary({
+    recordId: recordingId,
+    platformUserId,
+  }: GenerateParticipantSummaryDto): Promise<string> {
     const { recording, meeting, platformUser, meetingSummary, transcript } =
       await this.fetchMeetingContext(recordingId, platformUserId);
 

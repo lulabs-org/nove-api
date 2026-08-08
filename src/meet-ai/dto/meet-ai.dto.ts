@@ -43,3 +43,15 @@ export class TriggerSummaryDto {
   @IsNotEmpty({ message: 'periodType 不能为空' })
   periodType!: PeriodType;
 }
+
+export class GenerateParticipantSummaryDto {
+  @ApiProperty({ description: '记录ID' })
+  @IsString()
+  @IsNotEmpty()
+  recordId: string;
+
+  @ApiProperty({ description: '平台用户ID' })
+  @IsString()
+  @IsNotEmpty()
+  platformUserId: string;
+}
