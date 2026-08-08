@@ -85,26 +85,7 @@ export class ParticipantSummaryRepository {
   // READ OPERATIONS
   // ==========================================
 
-  async findLatestSummary(params: {
-    periodType: PeriodType;
-    platformUserId: string;
-    meetingId: string;
-    meetingRecordingId: string;
-    isLatest: boolean;
-  }) {
-    return this.prisma.participantSummary.findFirst({
-      where: {
-        periodType: params.periodType,
-        platformUserId: params.platformUserId,
-        meetingId: params.meetingId,
-        meetingRecordingId: params.meetingRecordingId,
-        isLatest: params.isLatest,
-        deletedAt: null,
-      },
-    });
-  }
-
-  async findManyByDateRange(params: {
+  async findByDateRange(params: {
     platformUserIds: string[];
     startDate: Date;
     endDate: Date;
