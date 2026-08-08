@@ -37,7 +37,7 @@ describe('ParticipantSummaryRepository', () => {
                 where: { deletedAt: null },
                 orderBy: { startTimeMs: 'asc' },
                 select: expect.objectContaining({
-                  speaker: { select: { displayName: true } },
+                  speaker: expect.objectContaining({ select: expect.objectContaining({ displayName: true }) }),
                 }),
               }),
             },

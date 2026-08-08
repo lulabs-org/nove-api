@@ -96,7 +96,7 @@ describe('ParticipantSummaryService', () => {
         userName: 'Alice',
         meetingId: 'meeting-1',
         meetingTitle: 'Weekly meeting',
-        meetingSummaryKeywords: 'AI',
+        keywords: 'AI',
         segments: [['00:00:01', 'Alice', 'Hello']],
       }),
     );
