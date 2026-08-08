@@ -41,32 +41,31 @@ export class ParticipantSummaryService {
     recordId,
     platformUserId,
   }: GenerateParticipantSummaryDto): Promise<string> {
+    // 1. 获取全局上下文数据
     const { recording, meeting, meetingSummary, transcript } =
       await this.fetchMeetingContext(recordId);
 
-    const spokenSegment = transcript.segments.find(
-      (segment) => segment.speaker?.id === platformUserId,
+    // 2. 校验参会者发言记录并获取姓名
+    const userName = this.getParticipantName(transcript.segments, platformUserId);
+    if (!userName) return '';
+
+    // 3. 提取并格式化专属上下文片段 (带语境窗口)
+    const relevantSegments = this.extractUserContextSegments(
+      transcript.segments,
+      platformUserId,
+      3,
     );
+    const segments = this.formatSegments(relevantSegments);
 
-    if (!spokenSegment) {
-      this.logger.log(`参会者 ${platformUserId} 未参与发言，无需生成总结`);
-      return '';
-    }
-
-    const userName = spokenSegment.speakerName;
-    if (!userName) {
-      this.logger.warn(`无法获取参会者 ${platformUserId} 的姓名，无法生成总结`);
-      return '';
-    }
-
-    const segments = this.formatSegments(transcript.segments);
-
+    // 4. 构建大模型 Prompt
+    const periodStart = recording.startAt ?? meeting.startAt;
+    const periodEnd = recording.endAt ?? meeting.endAt;
     const { systemPrompt, prompt } = generatePrompt('PARTICIPANT_SUMMARY', {
       userName,
       meetingId: meeting.id,
       meetingTitle: meeting.title,
-      startTime: formatToTimezone(meeting.startAt!, 8),
-      endTime: formatToTimezone(meeting.endAt!, 8),
+      startTime: periodStart ? formatToTimezone(periodStart, 8) : '未知',
+      endTime: periodEnd ? formatToTimezone(periodEnd, 8) : '未知',
       minutes: meetingSummary.aiMinutes,
       keyPoints: meetingSummary.keyPoints,
       actionItems: meetingSummary.actionItems,
@@ -76,23 +75,66 @@ export class ParticipantSummaryService {
       segments,
     });
 
+    // 5. 调用大模型生成总结
     const summary = await this.llmService.ask(prompt, systemPrompt);
 
+    // 6. 结果持久化
     await this.partSummaryRepo.saveNewVersion({
       periodType: PeriodType.SINGLE,
       platformUserId,
       meetingId: meeting.id,
       meetingRecordingId: recordId,
-      userName: userName,
+      userName,
       partSummary: summary,
       generatedBy: GenerationMethod.AI,
       aiModel: this.config.model,
-      periodStart: recording.startAt ?? meeting.startAt ?? undefined,
-      periodEnd: recording.endAt ?? meeting.endAt ?? undefined,
+      periodStart,
+      periodEnd,
     });
 
     this.logger.log(`成功生成参会者: ${userName}总结`);
     return summary;
+  }
+
+  private getParticipantName(segments: SummarySegment[], platformUserId: string): string | null {
+    const spokenSegment = segments.find(
+      (segment) => segment.speaker?.id === platformUserId,
+    );
+
+    if (!spokenSegment) {
+      this.logger.log(`参会者 ${platformUserId} 未参与发言，无需生成总结`);
+      return null;
+    }
+
+    const userName = spokenSegment.speakerName;
+    if (!userName) {
+      this.logger.warn(`无法获取参会者 ${platformUserId} 的姓名，无法生成总结`);
+      return null;
+    }
+
+    return userName;
+  }
+
+  private extractUserContextSegments(
+    segments: SummarySegment[],
+    targetUserId: string,
+    contextSize: number = 2,
+  ): SummarySegment[] {
+    const includedIndices = new Set<number>();
+
+    segments.forEach((segment, index) => {
+      if (segment.speaker?.id === targetUserId) {
+        const start = Math.max(0, index - contextSize);
+        const end = Math.min(segments.length - 1, index + contextSize);
+        for (let i = start; i <= end; i++) {
+          includedIndices.add(i);
+        }
+      }
+    });
+
+    return Array.from(includedIndices)
+      .sort((a, b) => a - b)
+      .map((index) => segments[index]);
   }
 
   private formatSegments(segments: SummarySegment[] = []) {
