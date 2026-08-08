@@ -144,6 +144,7 @@ export class ParticipantSummaryRepository {
                 text: true,
                 speaker: {
                   select: {
+                    id: true,
                     displayName: true,
                   },
                 },

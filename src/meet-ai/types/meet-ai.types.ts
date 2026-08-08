@@ -10,3 +10,10 @@ export interface MeetAiSummary {
   keyPoints: string[];
   actionItems: string[];
 }
+
+export type SummarySegment = {
+  startTimeMs: bigint;
+  speakerName: string | null;
+  text: string;
+  speaker: { id: string; displayName: string | null } | null;
+};
