@@ -12,6 +12,7 @@
 import { Injectable, Logger, Inject, NotFoundException } from '@nestjs/common';
 import { GenerationMethod, PeriodType } from '@prisma/client';
 import { ConfigType } from '@nestjs/config';
+import { formatToBeijingTime } from '@/common/utils/time.util';
 import { LlmService } from '@/llm/llm.service';
 import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
 import { MeetingRepository } from '@/meeting/repositories/meeting.repository';
@@ -22,7 +23,7 @@ import {
   TranscriptRepository,
 } from '@/meeting/repositories';
 import { openaiConfig } from '@/configs/openai.config';
-import { MeetAiPromptService } from './meet-ai-prompt.service';
+import { generatePrompt } from '@/common/utils';
 
 @Injectable()
 export class ParticipantSummaryService {
@@ -36,7 +37,6 @@ export class ParticipantSummaryService {
     private readonly meetingRepo: MeetingRepository,
     private readonly meetingSummaryRepo: MeetingSummaryRepository,
     private readonly transcriptRepo: TranscriptRepository,
-    private readonly promptService: MeetAiPromptService,
     @Inject(openaiConfig.KEY)
     private readonly config: ConfigType<typeof openaiConfig>,
   ) {}
@@ -48,13 +48,24 @@ export class ParticipantSummaryService {
     const { recording, meeting, platformUser, meetingSummary, transcript } =
       await this.fetchMeetingContext(recordid, ptByUnionId);
 
-    const { systemPrompt, prompt, userName } =
-      this.promptService.buildParticipantSummary(
-        meeting,
-        meetingSummary,
-        transcript,
-        platformUser,
-      );
+    const segments = this.formatSegments(transcript.segments);
+    const userName = this.extractUserName(platformUser);
+
+    const { systemPrompt, prompt } =
+      generatePrompt('PARTICIPANT_SUMMARY', {
+        userName,
+        meetingId: meeting.id,
+        meetingTitle: meeting.title,
+        startTime: formatToBeijingTime(meeting.startAt),
+        endTime: formatToBeijingTime(meeting.endAt),
+        meetingSummaryMinutes: meetingSummary.aiMinutes,
+        meetingSummaryKeyPoints: meetingSummary.keyPoints,
+        meetingSummaryActionItems: meetingSummary.actionItems,
+        meetingSummaryDecisions: meetingSummary.decisions,
+        meetingSummaryGoldenQuotes: meetingSummary.goldenQuotes,
+        meetingSummaryKeywords: meetingSummary.keywords?.join(', '),
+        segments,
+      });
 
     const summary = await this.llmService.ask(prompt, systemPrompt);
 
@@ -73,6 +84,34 @@ export class ParticipantSummaryService {
 
     this.logger.log(`成功生成参会者: ${userName}总结`);
     return summary;
+  }
+
+  private extractUserName(platformUser: any): string {
+    const user = platformUser?.user;
+    const profile = user?.profile;
+    return (
+      platformUser?.displayName ||
+      profile?.displayName ||
+      user?.username ||
+      (profile?.lastName || '') + (profile?.firstName || '') ||
+      '未知用户'
+    );
+  }
+
+  private formatSegments(segments: any[] = []) {
+    return segments.map((segment: any) => {
+      const timeStr = this.formatTime(Number(segment.startTimeMs || 0));
+      const speakerName = segment.speakerName || segment.speaker?.displayName || '未知发言人';
+      const content = segment.text || '';
+      return [timeStr, speakerName, content];
+    });
+  }
+
+  private formatTime(timeMs: number): string {
+    const hours = Math.floor(timeMs / 3600000);
+    const minutes = Math.floor((timeMs % 3600000) / 60000);
+    const seconds = Math.floor((timeMs % 60000) / 1000);
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   }
 
   private async fetchMeetingContext(recordid: string, ptByUnionId: string) {

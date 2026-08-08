@@ -7,7 +7,7 @@ import { ParticipantSummaryRepository } from '../repositories/participant-summar
 import { SummaryRelationRepository } from '../repositories/summary-relation.repository';
 import { PeriodTimeRange } from '../utils/period-time-range';
 import { openaiConfig } from '../../configs/openai.config';
-import { MeetAiPromptService } from './meet-ai-prompt.service';
+import { generatePrompt } from '@/common/utils';
 
 interface PeriodContext {
   parent: PeriodType;
@@ -36,7 +36,6 @@ export class PeriodSummaryService {
     private readonly summaryRelationRepo: SummaryRelationRepository,
     private readonly periodTimeRange: PeriodTimeRange,
     private readonly llmService: LlmService,
-    private readonly promptService: MeetAiPromptService,
     @Inject(openaiConfig.KEY)
     private readonly config: ConfigType<typeof openaiConfig>,
   ) {}
@@ -134,10 +133,20 @@ export class PeriodSummaryService {
       `获取到用户(${platformUserId})的参会议记录: ${userSummaries.length} 条`,
     );
 
-    const { systemPrompt, prompt } = this.promptService.buildPeriodSummary(
-      userName,
-      ctx,
-      userSummaries,
+    const leanSummaries = userSummaries.map((s) => ({
+      userName: s.userName,
+      partSummary: s.partSummary,
+      periodStart: s.periodStart,
+      periodEnd: s.periodEnd,
+    }));
+
+    const { systemPrompt, prompt } = generatePrompt(
+      'PERIOD_SUMMARY',
+      {
+        userName,
+        ctxLabel: ctx.label,
+        leanSummaries,
+      },
     );
 
     const reply = await this.llmService.createChatCompletion([

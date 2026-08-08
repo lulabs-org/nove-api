@@ -11,7 +11,7 @@
 
 import { Module } from '@nestjs/common';
 import { MeetAiController } from './controllers/meet-ai.controller';
-import { MeetAiPromptService, ParticipantSummaryService } from './services';
+import { ParticipantSummaryService } from './services';
 import {
   ParticipantSummaryRepository,
   SummaryRelationRepository,
@@ -42,7 +42,6 @@ import { PeriodSummaryHandler } from './handlers/period-summary.handler';
   providers: [
     ParticipantSummaryRepository,
     SummaryRelationRepository,
-    MeetAiPromptService,
     ParticipantSummaryService,
     PeriodSummaryService,
     PeriodTimeRange,
@@ -51,7 +50,6 @@ import { PeriodSummaryHandler } from './handlers/period-summary.handler';
   exports: [
     ParticipantSummaryRepository,
     SummaryRelationRepository,
-    MeetAiPromptService,
     ParticipantSummaryService,
     PeriodSummaryService,
     PeriodTimeRange,
