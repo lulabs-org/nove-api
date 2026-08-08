@@ -37,13 +37,54 @@ export class ParticipantSummaryService {
     private readonly config: ConfigType<typeof openaiConfig>,
   ) { }
 
-  async generateSummary({
+  async generateSummaries({
     recordId,
-    platformUserId,
-  }: GenerateParticipantSummaryDto): Promise<string> {
+    platformUserIds,
+  }: GenerateParticipantSummaryDto): Promise<Record<string, string>> {
     // 1. 获取全局上下文数据
-    const { recording, meeting, meetingSummary, transcript } =
-      await this.fetchMeetingContext(recordId);
+    const context = await this.fetchMeetingContext(recordId);
+    const { transcript } = context;
+
+    let userIdsToProcess = platformUserIds;
+    if (!userIdsToProcess || userIdsToProcess.length === 0) {
+      userIdsToProcess = [
+        ...new Set(
+          transcript.segments
+            .map((s) => s.speaker?.id)
+            .filter((id): id is string => id != null),
+        ),
+      ];
+    }
+
+    if (userIdsToProcess.length === 0) {
+      this.logger.warn(`录制 ${recordId} 未检测到任何发言人，无法生成总结`);
+      return {};
+    }
+
+    this.logger.log(`需生成总结的发言人数: ${userIdsToProcess.length}`);
+
+    const results: Record<string, string> = {};
+
+    for (const userId of userIdsToProcess) {
+      try {
+        const summary = await this.generateUserSummary(userId, recordId, context);
+        if (summary) {
+          results[userId] = summary;
+        }
+      } catch (err) {
+        this.logger.error(`生成参会者 ${userId} 总结失败`, err instanceof Error ? err.stack : String(err));
+      }
+    }
+
+    return results;
+  }
+
+  private async generateUserSummary(
+    platformUserId: string,
+    recordId: string,
+    context: Awaited<ReturnType<typeof this.fetchMeetingContext>>,
+  ): Promise<string> {
+    const { recording, meeting, meetingSummary, transcript } = context;
 
     // 2. 校验参会者发言记录并获取姓名
     const userName = this.getParticipantName(transcript.segments, platformUserId);

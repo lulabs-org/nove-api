@@ -20,8 +20,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { NoPermissionRequired } from '@/permission/decorators/permissions.decorator';
-import { ParticipantSummaryService } from '../services/participant-summary.service';
-import { PeriodSummaryService } from '../services/period-summary.service';
+import { PeriodSummaryService, ParticipantSummaryService } from '../services';
 import {
   TriggerSummaryDto,
   GenerateParticipantSummaryDto,
@@ -37,7 +36,7 @@ export class MeetAiController {
   constructor(
     private readonly participantSummaryService: ParticipantSummaryService,
     private readonly periodSummaryService: PeriodSummaryService,
-  ) {}
+  ) { }
 
   @Get('health')
   @HttpCode(HttpStatus.OK)
@@ -51,19 +50,18 @@ export class MeetAiController {
 
   @Post('summaries/participant')
   @HttpCode(HttpStatus.OK)
-  async generateSummary(@Body() dto: GenerateParticipantSummaryDto) {
+  async generateSummaries(@Body() dto: GenerateParticipantSummaryDto) {
     return {
       success: true,
-      message: '参会者总结生成成功',
-      data: await this.participantSummaryService.generateSummary(dto),
+      message: '参会者总结生成完成',
+      data: await this.participantSummaryService.generateSummaries(dto),
     };
   }
 
   @Post('summaries/period')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '手动或由定时任务触发周期性总结' })
-  process(@Body() { periodType }: TriggerSummaryDto) {
-    this.logger.log('触发周期性总结任务', { periodType });
-    return this.periodSummaryService.generateSummaries(periodType);
+  process(@Body() dto: TriggerSummaryDto) {
+    return this.periodSummaryService.generateSummaries(dto);
   }
 }

@@ -9,8 +9,9 @@
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
-import { IsString, IsNotEmpty, IsEnum } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsString, IsNotEmpty, IsEnum, IsOptional, IsDate, IsArray } from 'class-validator';
+import { Type } from 'class-transformer';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PeriodType } from '@prisma/client';
 
 export class AnalyzeMeetingDto {
@@ -42,6 +43,18 @@ export class TriggerSummaryDto {
   @IsEnum(PeriodType, { message: '无效的周期类型' })
   @IsNotEmpty({ message: 'periodType 不能为空' })
   periodType!: PeriodType;
+
+  @ApiPropertyOptional({ description: '目标日期' })
+  @IsOptional()
+  @IsDate({ message: '无效的日期格式' })
+  @Type(() => Date)
+  targetDate?: Date;
+
+  @ApiPropertyOptional({ description: '指定生成总结的部分用户 (platformUserId 列表)', type: [String] })
+  @IsOptional()
+  @IsArray({ message: 'platformUserIds 必须是数组' })
+  @IsString({ each: true, message: 'platformUserIds 数组必须包含字符串' })
+  platformUserIds?: string[];
 }
 
 export class GenerateParticipantSummaryDto {
@@ -50,8 +63,9 @@ export class GenerateParticipantSummaryDto {
   @IsNotEmpty()
   recordId: string;
 
-  @ApiProperty({ description: '平台用户ID' })
-  @IsString()
-  @IsNotEmpty()
-  platformUserId: string;
+  @ApiPropertyOptional({ description: '指定生成总结的部分平台用户ID (不传则生成所有发过言的用户)', type: [String] })
+  @IsOptional()
+  @IsArray({ message: 'platformUserIds 必须是数组' })
+  @IsString({ each: true, message: 'platformUserIds 数组必须包含字符串' })
+  platformUserIds?: string[];
 }

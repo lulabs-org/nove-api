@@ -210,10 +210,11 @@ export class ParticipantSummaryRepository {
     periodStart: Date;
     periodEnd: Date;
     parentPeriodType: PeriodType;
+    platformUserIds?: string[];
   }) {
     return this.prisma.participantSummary.findMany({
       where: {
-        platformUserId: { not: null },
+        platformUserId: params.platformUserIds?.length ? { in: params.platformUserIds } : { not: null },
         periodType: params.parentPeriodType,
         ...this.getPeriodCondition(params.periodStart, params.periodEnd),
       },

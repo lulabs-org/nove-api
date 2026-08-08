@@ -32,10 +32,12 @@ export class PeriodSummaryService {
    * @param targetDate 目标日期，用于计算当前周期的起止时间范围，默认为当前时间
    * @returns 包含执行结果及时间戳的对象
    */
-  async generateSummaries(
-    periodType: PeriodType,
-    targetDate: Date = new Date(),
-  ): Promise<{ ok: boolean; at: string }> {
+  async generateSummaries(params: {
+    periodType: PeriodType;
+    targetDate?: Date;
+    platformUserIds?: string[];
+  }): Promise<{ ok: boolean; at: string }> {
+    const { periodType, targetDate = new Date(), platformUserIds } = params;
     this.logger.log(`开始执行任务: personal${periodType}MeetingSummary`);
 
     const ctx = getPeriodContext(periodType);
@@ -55,6 +57,7 @@ export class PeriodSummaryService {
       periodStart,
       periodEnd,
       parentPeriodType: ctx.parent,
+      platformUserIds,
     });
 
     // 2. 提取唯一的平台用户 ID 列表
