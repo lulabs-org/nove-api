@@ -51,7 +51,7 @@ export class MeetAiController {
 
   @Post('summaries/participant')
   @HttpCode(HttpStatus.OK)
-  async generateParticipantSummary(@Body() dto: GenerateParticipantSummaryDto) {
+  async generateSummary(@Body() dto: GenerateParticipantSummaryDto) {
     return {
       success: true,
       message: '参会者总结生成成功',

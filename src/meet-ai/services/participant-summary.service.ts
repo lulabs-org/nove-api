@@ -12,7 +12,7 @@
 import { Injectable, Logger, Inject, NotFoundException } from '@nestjs/common';
 import { GenerationMethod, PeriodType } from '@prisma/client';
 import { ConfigType } from '@nestjs/config';
-import { formatToBeijingTime, formatTimeMs } from '@/common/utils/time.util';
+import { formatToTimezone, formatTimeMs } from '@/common/utils/time.util';
 import { extractUserName } from '@/common/utils/user.util';
 import { LlmService } from '@/llm/llm.service';
 import { PlatformUserService } from '@/user-platform/services/platform-user.service';
@@ -46,11 +46,11 @@ export class ParticipantSummaryService {
   ) {}
 
   async generateSummary({
-    recordId: recordingId,
+    recordId,
     platformUserId,
   }: GenerateParticipantSummaryDto): Promise<string> {
     const { recording, meeting, platformUser, meetingSummary, transcript } =
-      await this.fetchMeetingContext(recordingId, platformUserId);
+      await this.fetchMeetingContext(recordId, platformUserId);
 
     const segments = this.formatSegments(transcript.segments);
     const userName = extractUserName(platformUser);
@@ -59,14 +59,14 @@ export class ParticipantSummaryService {
       userName,
       meetingId: meeting.id,
       meetingTitle: meeting.title,
-      startTime: formatToBeijingTime(meeting.startAt),
-      endTime: formatToBeijingTime(meeting.endAt),
-      meetingSummaryMinutes: meetingSummary.aiMinutes,
-      meetingSummaryKeyPoints: meetingSummary.keyPoints,
-      meetingSummaryActionItems: meetingSummary.actionItems,
-      meetingSummaryDecisions: meetingSummary.decisions,
-      meetingSummaryGoldenQuotes: meetingSummary.goldenQuotes,
-      meetingSummaryKeywords: meetingSummary.keywords?.join(', '),
+      startTime: formatToTimezone(meeting.startAt!, 8),
+      endTime: formatToTimezone(meeting.endAt!, 8),
+      minutes: meetingSummary.aiMinutes,
+      keyPoints: meetingSummary.keyPoints,
+      actionItems: meetingSummary.actionItems,
+      decisions: meetingSummary.decisions,
+      goldenQuotes: meetingSummary.goldenQuotes,
+      keywords: meetingSummary.keywords?.join(', '),
       segments,
     });
 
@@ -76,7 +76,7 @@ export class ParticipantSummaryService {
       periodType: PeriodType.SINGLE,
       platformUserId,
       meetingId: meeting.id,
-      meetingRecordingId: recordingId,
+      meetingRecordingId: recordId,
       userName: userName,
       partSummary: summary,
       generatedBy: GenerationMethod.AI,

@@ -59,10 +59,10 @@ export class SummaryService {
 
           const recording = await this.recordingRepo.find(meeting.id, file.id);
 
-          const summary = await this.participantSummarySvc.generateSummary(
-            recording?.id || '',
-            ptByUnionId?.id || '',
-          );
+          const summary = await this.participantSummarySvc.generateSummary({
+            recordId: recording?.id || '',
+            platformUserId: ptByUnionId?.id || '',
+          });
 
           const uId = await this.bitableService.safeUpsertMeetingUserRecord(u);
           const recordingFile =
