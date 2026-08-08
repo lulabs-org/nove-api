@@ -13,8 +13,7 @@ export class TranscriptService {
    * 基于段落（Segment）获取录制的转写文本
    */
   async getTranscript(recordingId: string): Promise<string> {
-    const transcript =
-      await this.transcriptRepository.findDetails(recordingId);
+    const transcript = await this.transcriptRepository.findDetails(recordingId);
     if (!transcript || !transcript.segments) {
       return '';
     }
@@ -44,8 +43,7 @@ export class TranscriptService {
    * 基于段落（Segment）获取录制的转写 JSON
    */
   async getTranscriptJson(recordingId: string): Promise<any[]> {
-    const transcript =
-      await this.transcriptRepository.findDetails(recordingId);
+    const transcript = await this.transcriptRepository.findDetails(recordingId);
     if (!transcript || !transcript.segments) {
       return [];
     }

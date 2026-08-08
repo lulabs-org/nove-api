@@ -60,7 +60,7 @@ export class MeetAiController {
       recordId: body.recordId,
       platformUserId: body.platformUserId,
     });
-    
+
     const summary = await this.participantSummaryService.generateSummary(
       body.recordId,
       body.platformUserId,

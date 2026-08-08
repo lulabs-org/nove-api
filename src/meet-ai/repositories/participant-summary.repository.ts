@@ -18,7 +18,7 @@ export class ParticipantSummaryRepository {
     if (!data.generatedBy) data.generatedBy = GenerationMethod.AI;
     if (!data.aiModel) data.aiModel = 'tencent-meeting-ai';
     if (!data.keywords) data.keywords = [];
-    
+
     return this.prisma.participantSummary.create({ data });
   }
 
@@ -64,7 +64,9 @@ export class ParticipantSummaryRepository {
       });
 
       if (existing) {
-        this.logger.warn(`参会者: ${params.userName} 已存在最新总结，将弃用旧版本并创建新版本`);
+        this.logger.warn(
+          `参会者: ${params.userName} 已存在最新总结，将弃用旧版本并创建新版本`,
+        );
         await tx.participantSummary.update({
           where: { id: existing.id },
           data: { isLatest: false },
@@ -123,7 +125,10 @@ export class ParticipantSummaryRepository {
     });
   }
 
-  private getPeriodCondition(start: Date, end: Date): Prisma.ParticipantSummaryWhereInput {
+  private getPeriodCondition(
+    start: Date,
+    end: Date,
+  ): Prisma.ParticipantSummaryWhereInput {
     return {
       OR: [
         { periodStart: { gte: start, lte: end } },

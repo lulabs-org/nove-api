@@ -113,14 +113,18 @@ export class SystemConfigService {
   async deleteConfig(module: string) {
     const entry = SystemConfigRegistry[module];
     if (!entry) {
-      throw new NotFoundException(`Module configuration for '${module}' not found in registry`);
+      throw new NotFoundException(
+        `Module configuration for '${module}' not found in registry`,
+      );
     }
 
     const key = this.getModuleKey(module);
     const existing = await this.configRepository.findByKey(key);
 
     if (!existing) {
-      throw new NotFoundException(`Configuration for module '${module}' does not exist`);
+      throw new NotFoundException(
+        `Configuration for module '${module}' does not exist`,
+      );
     }
 
     await this.configRepository.delete(key);

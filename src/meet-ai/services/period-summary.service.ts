@@ -14,7 +14,9 @@ interface PeriodContext {
   label: string;
 }
 
-const getPeriodContext = (periodType: PeriodType): PeriodContext | undefined => {
+const getPeriodContext = (
+  periodType: PeriodType,
+): PeriodContext | undefined => {
   const periodMap: Partial<Record<PeriodType, PeriodContext>> = {
     [PeriodType.YEARLY]: { parent: PeriodType.MONTHLY, label: '本年' },
     [PeriodType.QUARTERLY]: { parent: PeriodType.MONTHLY, label: '本季度' },
@@ -70,7 +72,9 @@ export class PeriodSummaryService {
     });
 
     // 2. 提取唯一的平台用户 ID 列表
-    const platformUserIds = summaries.map((s) => s.platformUserId).filter(Boolean) as string[];
+    const platformUserIds = summaries
+      .map((s) => s.platformUserId)
+      .filter(Boolean) as string[];
 
     if (platformUserIds.length === 0) {
       this.logger.warn(
@@ -87,11 +91,19 @@ export class PeriodSummaryService {
       const chunk = platformUserIds.slice(i, i + chunkSize);
       await Promise.all(
         chunk.map((platformUserId) =>
-          this.processUser(platformUserId, periodType, ctx, periodStart, periodEnd)
-            .catch((err) => {
-              this.logger.error(`处理用户 ${platformUserId} 的会议总结时发生错误`, err.stack);
-            })
-        )
+          this.processUser(
+            platformUserId,
+            periodType,
+            ctx,
+            periodStart,
+            periodEnd,
+          ).catch((err) => {
+            this.logger.error(
+              `处理用户 ${platformUserId} 的会议总结时发生错误`,
+              err.stack,
+            );
+          }),
+        ),
       );
     }
 
@@ -122,7 +134,11 @@ export class PeriodSummaryService {
       `获取到用户(${platformUserId})的参会议记录: ${userSummaries.length} 条`,
     );
 
-    const { systemPrompt, prompt } = this.promptService.buildPeriodSummary(userName, ctx, userSummaries);
+    const { systemPrompt, prompt } = this.promptService.buildPeriodSummary(
+      userName,
+      ctx,
+      userSummaries,
+    );
 
     const reply = await this.llmService.createChatCompletion([
       { role: 'system', content: systemPrompt },
@@ -149,7 +165,7 @@ export class PeriodSummaryService {
         childSummaryId: child.id,
         parentPeriodType: ctx.parent,
         childPeriodType: periodType,
-      }))
+      })),
     );
 
     this.logger.log(

@@ -12,7 +12,10 @@
 import { Module } from '@nestjs/common';
 import { MeetAiController } from './controllers/meet-ai.controller';
 import { MeetAiPromptService, ParticipantSummaryService } from './services';
-import { ParticipantSummaryRepository, SummaryRelationRepository } from './repositories';
+import {
+  ParticipantSummaryRepository,
+  SummaryRelationRepository,
+} from './repositories';
 import { PrismaModule } from '../prisma/prisma.module';
 import { LlmModule } from '@/llm/llm.module';
 import { UserModule } from '@/user/user.module';

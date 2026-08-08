@@ -4,7 +4,7 @@ import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class SummaryRelationRepository {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async create(data: Prisma.SummaryRelationUncheckedCreateInput) {
     return this.prisma.summaryRelation.create({
@@ -12,9 +12,7 @@ export class SummaryRelationRepository {
     });
   }
 
-  async createMany(
-    data: Prisma.SummaryRelationUncheckedCreateInput[],
-  ) {
+  async createMany(data: Prisma.SummaryRelationUncheckedCreateInput[]) {
     if (!data.length) return;
     return this.prisma.summaryRelation.createMany({
       data,

@@ -39,18 +39,22 @@ export class ParticipantSummaryService {
     private readonly promptService: MeetAiPromptService,
     @Inject(openaiConfig.KEY)
     private readonly config: ConfigType<typeof openaiConfig>,
-  ) { }
+  ) {}
 
-  async generateSummary(recordid: string, ptByUnionId: string): Promise<string> {
+  async generateSummary(
+    recordid: string,
+    ptByUnionId: string,
+  ): Promise<string> {
     const { recording, meeting, platformUser, meetingSummary, transcript } =
       await this.fetchMeetingContext(recordid, ptByUnionId);
 
-    const { systemPrompt, prompt, userName } = this.promptService.buildParticipantSummary(
-      meeting,
-      meetingSummary,
-      transcript,
-      platformUser,
-    );
+    const { systemPrompt, prompt, userName } =
+      this.promptService.buildParticipantSummary(
+        meeting,
+        meetingSummary,
+        transcript,
+        platformUser,
+      );
 
     const summary = await this.llmService.ask(prompt, systemPrompt);
 
@@ -80,13 +84,18 @@ export class ParticipantSummaryService {
 
     if (!recording) throw new NotFoundException(`录制记录不存在: ${recordid}`);
     if (!transcript) throw new NotFoundException(`转录记录不存在: ${recordid}`);
-    if (!platformUser) throw new NotFoundException(`平台用户不存在: ${ptByUnionId}`);
+    if (!platformUser)
+      throw new NotFoundException(`平台用户不存在: ${ptByUnionId}`);
 
     const meeting = await this.meetingRepo.findById(recording.meetingId);
-    if (!meeting) throw new NotFoundException(`会议记录不存在: ${recording.meetingId}`);
+    if (!meeting)
+      throw new NotFoundException(`会议记录不存在: ${recording.meetingId}`);
 
-    const meetingSummary = await this.meetingSummaryRepo.findByMeetingId(meeting.id);
-    if (!meetingSummary) throw new NotFoundException(`会议总结不存在: ${meeting.id}`);
+    const meetingSummary = await this.meetingSummaryRepo.findByMeetingId(
+      meeting.id,
+    );
+    if (!meetingSummary)
+      throw new NotFoundException(`会议总结不存在: ${meeting.id}`);
 
     return { recording, meeting, platformUser, meetingSummary, transcript };
   }
