@@ -64,6 +64,6 @@ export class MeetAiController {
   @ApiOperation({ summary: '手动或由定时任务触发周期性总结' })
   process(@Body() { periodType }: TriggerSummaryDto) {
     this.logger.log('触发周期性总结任务', { periodType });
-    return this.periodSummaryService.process(periodType);
+    return this.periodSummaryService.generateSummaries(periodType);
   }
 }

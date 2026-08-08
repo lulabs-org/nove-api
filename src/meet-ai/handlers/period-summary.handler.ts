@@ -39,7 +39,7 @@ export class PeriodSummaryHandler implements ITaskHandler, OnModuleInit {
     );
 
     // Call the service directly
-    const result = await this.summaryService.process(periodType);
+    const result = await this.summaryService.generateSummaries(periodType);
 
     return { ok: true, data: result };
   }
