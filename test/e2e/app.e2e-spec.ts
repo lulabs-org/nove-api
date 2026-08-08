@@ -27,7 +27,7 @@ describe('AppController (e2e)', () => {
       const response = await request(app.getHttpServer()).get('/').expect(200);
 
       expect(response.text).toBe(
-        'Welcome to LULAB Backend API Service - Empowering Education Technology',
+        'Welcome to Nove Backend Service',
       );
     });
 

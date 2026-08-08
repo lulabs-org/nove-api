@@ -9,18 +9,21 @@
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject, NotFoundException } from '@nestjs/common';
 import { GenerationMethod, PeriodType } from '@prisma/client';
+import { ConfigType } from '@nestjs/config';
+import { formatToTimezone, formatTimeMs } from '@/common/utils/time.util';
 import { LlmService } from '@/llm/llm.service';
-import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
-import { MeetingRepository } from '@/meeting/repositories/meeting.repository';
 import { ParticipantSummaryRepository } from '../repositories';
+import { GenerateParticipantSummaryDto } from '../dto/meet-ai.dto';
+import { SummarySegment } from '../types';
+import { openaiConfig } from '@/configs/openai.config';
+import { generatePrompt } from '@/common/utils';
 import {
-  MeetingRecordingRepository,
-  MeetingSummaryRepository,
-  TranscriptRepository,
-} from '@/meeting/repositories';
-import { formatToBeijingTime } from '@/common/utils/time.util';
+  MeetingRecordNotFoundException,
+  MeetingSummaryNotFoundException,
+  RecordingNotFoundException,
+} from '@/meeting/exceptions/meeting.exceptions';
 
 @Injectable()
 export class ParticipantSummaryService {
@@ -29,142 +32,186 @@ export class ParticipantSummaryService {
   constructor(
     private readonly llmService: LlmService,
     private readonly partSummaryRepo: ParticipantSummaryRepository,
-    private readonly ptUserRepo: PlatformUserRepository,
-    private readonly recordingRepo: MeetingRecordingRepository,
-    private readonly meetingRepo: MeetingRepository,
-    private readonly meetingSummaryRepo: MeetingSummaryRepository,
-    private readonly transcriptRepo: TranscriptRepository,
+    @Inject(openaiConfig.KEY)
+    private readonly config: ConfigType<typeof openaiConfig>,
   ) {}
 
-  async generateSummary(
-    recordid: string,
-    ptByUnionId: string,
-  ): Promise<string | null> {
-    const recording = await this.recordingRepo.findById(recordid);
-    if (!recording) {
-      this.logger.warn(`录制记录不存在: ${recordid}`);
-      return null;
+  async generateSummaries({
+    recordId,
+    platformUserIds,
+  }: GenerateParticipantSummaryDto): Promise<Record<string, string>> {
+    // 1. 获取全局上下文数据
+    const context = await this.fetchMeetingContext(recordId);
+    const { transcript } = context;
+
+    let userIdsToProcess = platformUserIds;
+    if (!userIdsToProcess || userIdsToProcess.length === 0) {
+      userIdsToProcess = [
+        ...new Set(
+          transcript.segments
+            .map((s) => s.speaker?.id)
+            .filter((id): id is string => id != null),
+        ),
+      ];
     }
 
-    const meeting = await this.meetingRepo.findById(recording.meetingId);
-    if (!meeting) {
-      this.logger.warn(`会议记录不存在: ${recording.meetingId}`);
-      return null;
+    if (userIdsToProcess.length === 0) {
+      this.logger.warn(`录制 ${recordId} 未检测到任何发言人，无法生成总结`);
+      return {};
     }
 
-    const platformUser = await this.ptUserRepo.findById(ptByUnionId);
-    if (!platformUser) {
-      this.logger.warn(`平台用户不存在: ${ptByUnionId}`);
-      return null;
+    this.logger.log(`需生成总结的发言人数: ${userIdsToProcess.length}`);
+
+    const results: Record<string, string> = {};
+
+    for (const userId of userIdsToProcess) {
+      try {
+        const summary = await this.generateUserSummary(
+          userId,
+          recordId,
+          context,
+        );
+        if (summary) {
+          results[userId] = summary;
+        }
+      } catch (err) {
+        this.logger.error(
+          `生成参会者 ${userId} 总结失败`,
+          err instanceof Error ? err.stack : String(err),
+        );
+      }
     }
 
-    const meetingSummary = await this.meetingSummaryRepo.findByMeetingId(
-      meeting.id,
+    return results;
+  }
+
+  private async generateUserSummary(
+    platformUserId: string,
+    recordId: string,
+    context: Awaited<ReturnType<typeof this.fetchMeetingContext>>,
+  ): Promise<string> {
+    const { recording, meeting, meetingSummary, transcript } = context;
+
+    // 2. 校验参会者发言记录并获取姓名
+    const userName = this.getParticipantName(
+      transcript.segments,
+      platformUserId,
     );
-    if (!meetingSummary) {
-      this.logger.warn(`会议总结不存在: ${meeting.id}`);
-      return null;
-    }
+    if (!userName) return '';
 
-    const transcript = await this.transcriptRepo.findDetails(recordid);
-    if (!transcript) {
-      this.logger.warn(`转录记录不存在: ${recordid}`);
-      return null;
-    }
+    // 3. 提取并格式化专属上下文片段 (带语境窗口)
+    const relevantSegments = this.extractUserContextSegments(
+      transcript.segments,
+      platformUserId,
+      3,
+    );
+    const segments = this.formatSegments(relevantSegments);
 
-    const segments = transcript.segments.map((segment) => {
-      const timeMs = Number(segment.startTimeMs);
-      const hours = Math.floor(timeMs / 3600000);
-      const minutes = Math.floor((timeMs % 3600000) / 60000);
-      const seconds = Math.floor((timeMs % 60000) / 1000);
-
-      const timeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-
-      const speakerName =
-        segment.speakerName || segment.speaker?.displayName || '未知发言人';
-
-      const content = segment.text || '';
-
-      return [timeStr, speakerName, content];
+    // 4. 构建大模型 Prompt
+    const periodStart = recording.startAt ?? meeting.startAt;
+    const periodEnd = recording.endAt ?? meeting.endAt;
+    const { systemPrompt, prompt } = generatePrompt('PARTICIPANT_SUMMARY', {
+      userName,
+      meetingId: meeting.id,
+      meetingTitle: meeting.title,
+      startTime: periodStart ? formatToTimezone(periodStart, 8) : '未知',
+      endTime: periodEnd ? formatToTimezone(periodEnd, 8) : '未知',
+      minutes: meetingSummary.aiMinutes,
+      keyPoints: meetingSummary.keyPoints,
+      actionItems: meetingSummary.actionItems,
+      decisions: meetingSummary.decisions,
+      goldenQuotes: meetingSummary.goldenQuotes,
+      keywords: meetingSummary.keywords?.join(', '),
+      segments,
     });
 
-    const user = platformUser.user;
-    const profile = user?.profile;
-    const userName =
-      platformUser.displayName ||
-      profile?.displayName ||
-      user?.username ||
-      (profile?.lastName || '') + (profile?.firstName || '') ||
-      '未知用户';
-
-    const systemPrompt =
-      '你是专业的会议总结助手，擅长为参会者提供个性化、实用的会议总结。';
-
-    const prompt = `请为参会者 ${userName} 生成会议总结。
-需要总结的参会者姓名: ${userName}\n
-会议ID: ${meeting.id}\n
-会议主题: ${meeting.title}\n
-会议时间（北京时间）: ${formatToBeijingTime(meeting.startAt)} 至 ${formatToBeijingTime(meeting.endAt)}\n
-会议纪要: ${meetingSummary.aiMinutes ? JSON.stringify(meetingSummary.aiMinutes) : '暂无会议纪要'}\n
-关键要点: ${meetingSummary.keyPoints ? JSON.stringify(meetingSummary.keyPoints) : '暂无关键要点'}\n
-行动项: ${meetingSummary.actionItems ? JSON.stringify(meetingSummary.actionItems) : '暂无行动项'}\n
-决策记录: ${meetingSummary.decisions ? JSON.stringify(meetingSummary.decisions) : '暂无决策记录'}\n
-会议金句: ${meetingSummary.goldenQuotes ? JSON.stringify(meetingSummary.goldenQuotes) : '暂无会议金句'}\n
-关键词: ${meetingSummary.keywords?.join(', ') || '暂无关键词'}\n
-会议转录格式：[时间戳, 说话人姓名, 内容]\n
-会议转录内容: ${JSON.stringify(segments)}\n
-请根据以上信息，为参会者 ${userName} 生成一份个性化的会议总结，重点关注与该参会者相关的内容。`;
-
+    // 5. 调用大模型生成总结
     const summary = await this.llmService.ask(prompt, systemPrompt);
 
-    const res = await this.partSummaryRepo.findByPeriodAndMeeting({
+    // 6. 结果持久化
+    await this.partSummaryRepo.saveNewVersion({
       periodType: PeriodType.SINGLE,
-      platformUserId: ptByUnionId,
+      platformUserId,
       meetingId: meeting.id,
-      recordingId: recordid,
-      isLatest: true,
-    });
-
-    if (res) {
-      this.logger.warn(`参会者: ${userName} 已存在总结`);
-
-      await this.partSummaryRepo.update(res.id, {
-        isLatest: false,
-      });
-
-      await this.partSummaryRepo.create({
-        periodType: PeriodType.SINGLE,
-        platformUserId: ptByUnionId,
-        meetingId: meeting.id,
-        recordingId: recordid,
-        userName: userName,
-        partSummary: summary,
-        generatedBy: GenerationMethod.AI,
-        aiModel: 'deepseek-v3-1-terminus',
-        version: res.version + 1,
-        isLatest: true,
-        period_start: recording.startAt || meeting.startAt || undefined,
-        period_end: recording.endAt || meeting.endAt || undefined,
-      });
-      return summary;
-    }
-
-    await this.partSummaryRepo.upsert({
-      periodType: PeriodType.SINGLE,
-      platformUserId: ptByUnionId,
-      meetingId: meeting.id,
-      recordingId: recordid,
-      userName: userName,
+      meetingRecordingId: recordId,
+      userName,
       partSummary: summary,
       generatedBy: GenerationMethod.AI,
-      aiModel: 'deepseek-v3-1-terminus',
-      version: 1,
-      isLatest: true,
-      period_start: recording.startAt || meeting.startAt || undefined,
-      period_end: recording.endAt || meeting.endAt || undefined,
+      aiModel: this.config.model,
+      periodStart,
+      periodEnd,
     });
 
     this.logger.log(`成功生成参会者: ${userName}总结`);
     return summary;
+  }
+
+  private getParticipantName(
+    segments: SummarySegment[],
+    platformUserId: string,
+  ): string | null {
+    const spokenSegment = segments.find(
+      (segment) => segment.speaker?.id === platformUserId,
+    );
+
+    if (!spokenSegment) {
+      this.logger.log(`参会者 ${platformUserId} 未参与发言，无需生成总结`);
+      return null;
+    }
+
+    const userName = spokenSegment.speakerName;
+    if (!userName) {
+      this.logger.warn(`无法获取参会者 ${platformUserId} 的姓名，无法生成总结`);
+      return null;
+    }
+
+    return userName;
+  }
+
+  private extractUserContextSegments(
+    segments: SummarySegment[],
+    targetUserId: string,
+    contextSize: number = 2,
+  ): SummarySegment[] {
+    const includedIndices = new Set<number>();
+
+    segments.forEach((segment, index) => {
+      if (segment.speaker?.id === targetUserId) {
+        const start = Math.max(0, index - contextSize);
+        const end = Math.min(segments.length - 1, index + contextSize);
+        for (let i = start; i <= end; i++) {
+          includedIndices.add(i);
+        }
+      }
+    });
+
+    return Array.from(includedIndices)
+      .sort((a, b) => a - b)
+      .map((index) => segments[index]);
+  }
+
+  private formatSegments(segments: SummarySegment[] = []) {
+    return segments.map((segment) => [
+      formatTimeMs(Number(segment.startTimeMs || 0)),
+      segment.speakerName || segment.speaker?.displayName || '未知发言人',
+      segment.text || '',
+    ]);
+  }
+
+  private async fetchMeetingContext(recordingId: string) {
+    const recording =
+      await this.partSummaryRepo.findGenerationContext(recordingId);
+    if (!recording) throw new RecordingNotFoundException(recordingId);
+
+    const meeting = recording.meeting;
+    const transcript = recording.transcripts[0];
+    const meetingSummary = meeting.summaries[0];
+
+    if (meeting.deletedAt) throw new MeetingRecordNotFoundException(meeting.id);
+    if (!meetingSummary) throw new MeetingSummaryNotFoundException(meeting.id);
+    if (!transcript)
+      throw new NotFoundException(`转录记录不存在: ${recordingId}`);
+
+    return { recording, meeting, meetingSummary, transcript };
   }
 }

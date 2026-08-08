@@ -188,6 +188,7 @@ describe('Tencent Meeting Real API Integration Tests', () => {
       // 获取最近24小时的会议记录
       const endTime = Math.floor(Date.now() / 1000);
       const startTime = endTime - TEST_CONFIG.TIME_RANGE_HOURS * 60 * 60;
+      const userId = configService.get<string>('USER_ID');
 
       try {
         const response: RecordMeetingsResponse =
@@ -196,6 +197,7 @@ describe('Tencent Meeting Real API Integration Tests', () => {
             endTime,
             TEST_CONFIG.PAGE_SIZE,
             1,
+            userId,
           );
 
         console.log('📊 查询到', response.total_count, '条会议记录');
@@ -271,6 +273,7 @@ describe('Tencent Meeting Real API Integration Tests', () => {
           endTime,
           1,
           1,
+          userId,
         );
 
         if (
@@ -711,6 +714,7 @@ describe('Tencent Meeting Real API Integration Tests', () => {
           endTime,
           1,
           1,
+          userId,
         );
 
         if (
@@ -828,6 +832,7 @@ describe('Tencent Meeting Real API Integration Tests', () => {
           endTime,
           1,
           1,
+          userId,
         );
 
         if (

@@ -17,13 +17,14 @@ import {
   HttpCode,
   HttpStatus,
   Logger,
-  ValidationPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { NoPermissionRequired } from '@/permission/decorators/permissions.decorator';
-import { MeetAiService } from '../services/meet-ai.service';
-import { PeriodSummaryService } from '../services/period-summary.service';
-import { TriggerSummaryDto } from '../dto/meet-ai.dto';
+import { PeriodSummaryService, ParticipantSummaryService } from '../services';
+import {
+  TriggerSummaryDto,
+  GenerateParticipantSummaryDto,
+} from '../dto/meet-ai.dto';
 
 @ApiTags('Meet AI')
 @Controller('meet-ai')
@@ -33,7 +34,7 @@ export class MeetAiController {
   private readonly logger = new Logger(MeetAiController.name);
 
   constructor(
-    private readonly meetAiService: MeetAiService,
+    private readonly participantSummaryService: ParticipantSummaryService,
     private readonly periodSummaryService: PeriodSummaryService,
   ) {}
 
@@ -47,30 +48,20 @@ export class MeetAiController {
     };
   }
 
-  @Post('participant-summary')
+  @Post('summaries/participant')
   @HttpCode(HttpStatus.OK)
-  async generateParticipantSummary(
-    @Body(new ValidationPipe())
-    body: {
-      recordId: string;
-      platformUserId: string;
-    },
-  ) {
-    this.logger.log('生成参会者总结', {
-      recordId: body.recordId,
-      platformUserId: body.platformUserId,
-    });
-    return this.meetAiService.generateParticipantSummary(
-      body.recordId,
-      body.platformUserId,
-    );
+  async generateSummaries(@Body() dto: GenerateParticipantSummaryDto) {
+    return {
+      success: true,
+      message: '参会者总结生成完成',
+      data: await this.participantSummaryService.generateSummaries(dto),
+    };
   }
 
-  @Post('period-summary')
+  @Post('summaries/period')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '手动或由定时任务触发周期性总结' })
-  process(@Body() { periodType }: TriggerSummaryDto) {
-    this.logger.log('触发周期性总结任务', { periodType });
-    return this.periodSummaryService.process(periodType);
+  process(@Body() dto: TriggerSummaryDto) {
+    return this.periodSummaryService.generateSummaries(dto);
   }
 }

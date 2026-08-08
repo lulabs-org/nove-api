@@ -16,21 +16,9 @@ import { PrismaTransaction } from '@/tencent-mtg-hook/types';
 export class TranscriptRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create_tx(
-    tx: PrismaTransaction,
-    data: {
-      source: string;
-      rawFileUrl?: string;
-      status: number;
-      startedAt?: Date;
-      finishedAt?: Date;
-      recordingId: string;
-    },
-  ) {
-    return tx.transcript.create({
-      data,
-    });
-  }
+  // ==========================================
+  // WRITE OPERATIONS
+  // ==========================================
 
   async create(data: {
     source: string;
@@ -45,63 +33,19 @@ export class TranscriptRepository {
     });
   }
 
-  async findById(id: string) {
-    return this.prisma.transcript.findUnique({
-      where: { id },
-      include: {
-        segments: {
-          orderBy: {
-            startTimeMs: 'asc',
-          },
-          include: {
-            speaker: true,
-          },
-        },
-      },
-    });
-  }
-
-  async findByRecordingId(recordingId: string) {
-    return this.prisma.transcript.findFirst({
-      where: { recordingId },
-    });
-  }
-
-  async findDetails(recordingId: string) {
-    return this.findSegmentsDetails(recordingId);
-  }
-
-  async findSegmentsDetails(recordingId: string) {
-    return this.prisma.transcript.findFirst({
-      where: { recordingId },
-      include: {
-        segments: {
-          orderBy: {
-            startTimeMs: 'asc',
-          },
-          include: {
-            speaker: true,
-          },
-        },
-      },
-    });
-  }
-
-  async findBySource(source: string) {
-    return this.prisma.transcript.findFirst({
-      where: { source },
-    });
-  }
-
-  async countSegments(transcriptId: string) {
-    return this.prisma.transcriptSegment.count({
-      where: { transcriptId },
-    });
-  }
-
-  async deleteSegments(transcriptId: string) {
-    return this.prisma.transcriptSegment.deleteMany({
-      where: { transcriptId },
+  async create_tx(
+    tx: PrismaTransaction,
+    data: {
+      source: string;
+      rawFileUrl?: string;
+      status: number;
+      startedAt?: Date;
+      finishedAt?: Date;
+      recordingId: string;
+    },
+  ) {
+    return tx.transcript.create({
+      data,
     });
   }
 
@@ -138,5 +82,65 @@ export class TranscriptRepository {
         },
       });
     }
+  }
+
+  async deleteSegments(transcriptId: string) {
+    return this.prisma.transcriptSegment.deleteMany({
+      where: { transcriptId },
+    });
+  }
+
+  // ==========================================
+  // READ OPERATIONS
+  // ==========================================
+
+  async findById(id: string) {
+    return this.prisma.transcript.findUnique({
+      where: { id },
+      include: {
+        segments: {
+          orderBy: {
+            startTimeMs: 'asc',
+          },
+          include: {
+            speaker: true,
+          },
+        },
+      },
+    });
+  }
+
+  async findByRecordingId(recordingId: string) {
+    return this.prisma.transcript.findFirst({
+      where: { recordingId },
+    });
+  }
+
+  async findDetails(recordingId: string) {
+    return this.prisma.transcript.findFirst({
+      where: { recordingId },
+      include: {
+        segments: {
+          orderBy: {
+            startTimeMs: 'asc',
+          },
+          include: {
+            speaker: true,
+          },
+        },
+      },
+    });
+  }
+
+  async findBySource(source: string) {
+    return this.prisma.transcript.findFirst({
+      where: { source },
+    });
+  }
+
+  async countSegments(transcriptId: string) {
+    return this.prisma.transcriptSegment.count({
+      where: { transcriptId },
+    });
   }
 }

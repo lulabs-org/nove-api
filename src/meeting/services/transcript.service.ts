@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { TranscriptRepository } from '../repositories/transcript.repository';
 
 /**
@@ -10,11 +10,21 @@ export class TranscriptService {
   constructor(private readonly transcriptRepository: TranscriptRepository) {}
 
   /**
+   * 获取转写原始记录（含 segments）
+   */
+  async getDetails(recordingId: string) {
+    const transcript = await this.transcriptRepository.findDetails(recordingId);
+    if (!transcript) {
+      throw new NotFoundException(`转录记录不存在: ${recordingId}`);
+    }
+    return transcript;
+  }
+
+  /**
    * 基于段落（Segment）获取录制的转写文本
    */
-  async getTranscript(recordingId: string): Promise<string> {
-    const transcript =
-      await this.transcriptRepository.findSegmentsDetails(recordingId);
+  async getText(recordingId: string): Promise<string> {
+    const transcript = await this.transcriptRepository.findDetails(recordingId);
     if (!transcript || !transcript.segments) {
       return '';
     }
@@ -43,9 +53,8 @@ export class TranscriptService {
   /**
    * 基于段落（Segment）获取录制的转写 JSON
    */
-  async getTranscriptJson(recordingId: string): Promise<any[]> {
-    const transcript =
-      await this.transcriptRepository.findSegmentsDetails(recordingId);
+  async getJson(recordingId: string): Promise<any[]> {
+    const transcript = await this.transcriptRepository.findDetails(recordingId);
     if (!transcript || !transcript.segments) {
       return [];
     }

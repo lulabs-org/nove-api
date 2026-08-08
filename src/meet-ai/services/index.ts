@@ -1,2 +1,2 @@
-export * from './meet-ai.service';
 export * from './participant-summary.service';
+export * from './period-summary.service';

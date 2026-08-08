@@ -49,21 +49,19 @@ export function parseDurationToMs(duration: string): number {
 /**
  * Formats a date to a specified timezone string.
  *
- * @param date - The date to format, can be null or undefined
+ * @param date - The date to format
  * @param timezoneOffsetHours - The timezone offset in hours from UTC (default: 8 for Beijing time)
- * @returns Formatted time string in YYYY-MM-DD HH:MM:SS format, or '未知' if date is null/undefined
+ * @returns Formatted time string in YYYY-MM-DD HH:MM:SS format
  *
  * @example
  * formatToTimezone(new Date()) // "2026-03-30 12:34:56" (Beijing time, UTC+8)
  * formatToTimezone(new Date(), 0) // "2026-03-30 04:34:56" (UTC time)
  * formatToTimezone(new Date(), -5) // "2026-03-29 23:34:56" (EST time, UTC-5)
- * formatToTimezone(null) // "未知"
  */
 export function formatToTimezone(
-  date: Date | null | undefined,
+  date: Date,
   timezoneOffsetHours: number = 8,
 ): string {
-  if (!date) return '未知';
   const timezoneTime = new Date(
     date.getTime() + timezoneOffsetHours * 60 * 60 * 1000,
   );
@@ -77,15 +75,17 @@ export function formatToTimezone(
 }
 
 /**
- * Formats a date to Beijing time (UTC+8) string.
+ * Formats a duration in milliseconds to a HH:MM:SS string.
  *
- * @param date - The date to format, can be null or undefined
- * @returns Formatted Beijing time string in YYYY-MM-DD HH:MM:SS format, or '未知' if date is null/undefined
+ * @param timeMs - The duration in milliseconds.
+ * @returns Formatted time string in HH:MM:SS format.
  *
  * @example
- * formatToBeijingTime(new Date()) // "2026-03-30 12:34:56"
- * formatToBeijingTime(null) // "未知"
+ * formatTimeMs(3661000) // "01:01:01"
  */
-export function formatToBeijingTime(date: Date | null | undefined): string {
-  return formatToTimezone(date, 8);
+export function formatTimeMs(timeMs: number): string {
+  const hours = Math.floor(timeMs / 3600000);
+  const minutes = Math.floor((timeMs % 3600000) / 60000);
+  const seconds = Math.floor((timeMs % 60000) / 1000);
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }

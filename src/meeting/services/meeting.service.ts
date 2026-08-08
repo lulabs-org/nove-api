@@ -24,7 +24,7 @@ export class MeetingService {
   /**
    * 获取会议记录列表
    */
-  async getMeetingRecords(params: GetMeetingRecordsParams): Promise<{
+  async findMany(params: GetMeetingRecordsParams): Promise<{
     records: MeetingRecordResponseDto[];
     total: number;
     page: number;
@@ -37,7 +37,7 @@ export class MeetingService {
   /**
    * 获取会议记录详情
    */
-  async getMeetingRecordById(id: string): Promise<MeetingRecordResponseDto> {
+  async findById(id: string): Promise<MeetingRecordResponseDto> {
     const record = await this.meetingRepository.findById(id);
     if (!record) {
       throw new MeetingRecordNotFoundException(id);
@@ -48,7 +48,7 @@ export class MeetingService {
   /**
    * 创建会议记录
    */
-  async createMeetingRecord(
+  async create(
     params: CreateMeetingRecordDto,
   ): Promise<MeetingRecordResponseDto> {
     // 检查是否已存在
@@ -91,7 +91,7 @@ export class MeetingService {
   /**
    * 更新会议记录
    */
-  async updateMeetingRecord(
+  async update(
     id: string,
     params: UpdateMeetingRecordDto,
   ): Promise<MeetingRecordResponseDto> {
@@ -141,7 +141,7 @@ export class MeetingService {
   /**
    * 删除会议记录（软删除）
    */
-  async deleteMeetingRecord(id: string): Promise<MeetingRecordResponseDto> {
+  async delete(id: string): Promise<MeetingRecordResponseDto> {
     const record = await this.meetingRepository.findById(id);
     if (!record) {
       throw new MeetingRecordNotFoundException(id);
@@ -153,18 +153,13 @@ export class MeetingService {
   /**
    * 获取会议统计信息
    */
-  getMeetingStats(params: {
+  getStats(params: {
     startDate?: Date;
     endDate?: Date;
     platform?: string;
   }): MeetingStatsResponseDto {
     void params;
-    // TODO: 实现统计逻辑 - 根据日期范围、平台等条件统计会议数据
-    // - 统计会议总数
-    // - 按平台分组统计
-    // - 按状态分组统计
-    // - 按类型分组统计
-    // - 获取最近会议记录
+    // TODO: 实现统计逻辑
     return {
       total: 0,
       platformStats: [],
@@ -173,30 +168,4 @@ export class MeetingService {
       recentMeetings: [],
     };
   }
-
-  // /**
-  //  * 重新处理会议记录
-  //  */
-  // async reprocessMeetingRecord(id: string): Promise<MeetingRecordResponseDto> {
-  //   const record = await this.meetingRepository.findById(id);
-  //   if (!record) {
-  //     throw new MeetingRecordNotFoundException(id);
-  //   }
-  //
-  //   // 重置处理状态
-  //   await this.meetingRepository.update(id, {
-  //     processingStatus: ProcessingStatus.PROCESSING,
-  //   });
-  //
-  //   // 重新处理录制文件
-  //   // 这里可以根据需要重新调用处理逻辑
-  //
-  //   // 返回更新后的记录
-  //   const updatedRecord = await this.meetingRepository.findById(id);
-  //   if (!updatedRecord) {
-  //     throw new MeetingRecordNotFoundException(id);
-  //   }
-  //
-  //   return updatedRecord;
-  // }
 }

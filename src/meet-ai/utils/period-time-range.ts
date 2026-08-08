@@ -8,169 +8,56 @@
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
+
 import { PeriodType } from '@prisma/client';
-import { Injectable } from '@nestjs/common';
 
-@Injectable()
-export class PeriodTimeRange {
-  // 生成当前天从早到晚的时间范围
-  dailyRange(): {
-    periodStart: Date;
-    periodEnd: Date;
-  } {
-    const now = new Date();
-
-    const periodStart = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate() - 1,
-      0,
-      0,
-      0,
-      0,
-    );
-
-    const periodEnd = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate() - 1,
-      23,
-      59,
-      59,
-      999,
-    );
-
-    return { periodStart, periodEnd };
-  }
-
-  // 生成当前周从早到晚的时间范围
-  weeklyRange(): {
-    periodStart: Date;
-    periodEnd: Date;
-  } {
-    const now = new Date();
-
-    // 上周一的日期
-    const lastMonday = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate() - now.getDay() - 6 + 1, // 调整到上周一
-      0,
-      0,
-      0,
-      0,
-    );
-
-    // 上周日的日期
-    const lastSunday = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate() - now.getDay(), // 上周日
-      23,
-      59,
-      59,
-      999,
-    );
-
-    return { periodStart: lastMonday, periodEnd: lastSunday };
-  }
-
-  // 获取“上一个完整月份”的时间范围
-  monthlyRange(): {
-    periodStart: Date;
-    periodEnd: Date;
-  } {
-    const now = new Date();
-
-    // 上个月最后一天 23:59:59.999
-    // 当天是0的时候，它会返回上一个月的最后一天
-    const lastMonthEnd = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      0,
-      23,
-      59,
-      59,
-      999,
-    );
-
-    // 根据上个月最后一天，计算上个月第一天 00:00:00.000
-    const lastMonthStart = new Date(
-      lastMonthEnd.getFullYear(),
-      lastMonthEnd.getMonth(),
-      1,
-      0,
-      0,
-      0,
-      0,
-    );
-
-    return {
-      periodStart: lastMonthStart,
-      periodEnd: lastMonthEnd,
-    };
-  }
-
-  // 获取“上一个完整年份”的时间范围
-  yearlyRange(): {
-    periodStart: Date;
-    periodEnd: Date;
-  } {
-    const now = new Date();
-
-    // 去年最后一天 23:59:59.999
-    const lastYearEnd = new Date(
-      now.getFullYear(),
-      0, // 1 月
-      0, // 第 0 天 → 回退到上一年的最后一天
-      23,
-      59,
-      59,
-      999,
-    );
-
-    // 去年第一天 00:00:00.000
-    const lastYearStart = new Date(
-      lastYearEnd.getFullYear(),
-      0, // 1 月
-      1,
-      0,
-      0,
-      0,
-      0,
-    );
-
-    return {
-      periodStart: lastYearStart,
-      periodEnd: lastYearEnd,
-    };
-  }
-
-  // 获取总结的时间范围
-  getdayRange(periodType: PeriodType): {
-    periodStart: Date;
-    periodEnd: Date;
-  } {
-    let periodStart: Date;
-    let periodEnd: Date;
-
-    switch (periodType) {
-      case PeriodType.YEARLY:
-        ({ periodStart, periodEnd } = this.yearlyRange());
-        break;
-      case PeriodType.MONTHLY:
-        ({ periodStart, periodEnd } = this.monthlyRange());
-        break;
-      case PeriodType.WEEKLY:
-        ({ periodStart, periodEnd } = this.weeklyRange());
-        break;
-      case PeriodType.DAILY:
-        ({ periodStart, periodEnd } = this.dailyRange());
-        break;
-      default:
-        ({ periodStart, periodEnd } = this.dailyRange());
-    }
-
-    return { periodStart, periodEnd };
-  }
+export interface PeriodContext {
+  parent: PeriodType;
+  label: string;
 }
+
+const PERIOD_CONTEXT_MAP: Partial<Record<PeriodType, PeriodContext>> = {
+  [PeriodType.YEARLY]: { parent: PeriodType.MONTHLY, label: '本年' },
+  [PeriodType.QUARTERLY]: { parent: PeriodType.MONTHLY, label: '本季度' },
+  [PeriodType.MONTHLY]: { parent: PeriodType.DAILY, label: '本月' },
+  [PeriodType.WEEKLY]: { parent: PeriodType.DAILY, label: '本周' },
+  [PeriodType.DAILY]: { parent: PeriodType.SINGLE, label: '本日' },
+};
+
+export const getPeriodContext = (
+  periodType: PeriodType,
+): PeriodContext | undefined => PERIOD_CONTEXT_MAP[periodType];
+
+// 获取对应周期的起止时间（基于当前触发时间）
+export const getdayRange = (
+  periodType: PeriodType,
+  targetDate?: Date,
+): { periodStart: Date; periodEnd: Date } => {
+  const now = targetDate || new Date();
+  const [y, m, d] = [now.getFullYear(), now.getMonth(), now.getDate()];
+  let start: Date, end: Date;
+
+  switch (periodType) {
+    case PeriodType.YEARLY:
+      start = new Date(y, 0, 1, 0, 0, 0, 0);
+      end = new Date(y, 11, 31, 23, 59, 59, 999);
+      break;
+    case PeriodType.MONTHLY:
+      start = new Date(y, m, 1, 0, 0, 0, 0);
+      end = new Date(y, m + 1, 0, 23, 59, 59, 999);
+      break;
+    case PeriodType.WEEKLY: {
+      const currentDay = now.getDay() === 0 ? 7 : now.getDay();
+      start = new Date(y, m, d - currentDay + 1, 0, 0, 0, 0);
+      end = new Date(y, m, d + (7 - currentDay), 23, 59, 59, 999);
+      break;
+    }
+    case PeriodType.DAILY:
+    default:
+      start = new Date(y, m, d, 0, 0, 0, 0);
+      end = new Date(y, m, d, 23, 59, 59, 999);
+      break;
+  }
+
+  return { periodStart: start, periodEnd: end };
+};
