@@ -66,7 +66,7 @@ export class MeetingController {
     this.logger.log('获取会议记录列表', { query });
 
     try {
-      const result = await this.meetingService.getMeetingRecords(query);
+      const result = await this.meetingService.findMany(query);
 
       this.logger.log(`获取会议记录成功，共 ${result.total} 条记录`);
       return {
@@ -95,7 +95,7 @@ export class MeetingController {
     this.logger.log(`获取会议记录详情: ${id}`);
 
     try {
-      const record = await this.meetingService.getMeetingRecordById(id);
+      const record = await this.meetingService.findById(id);
 
       this.logger.log(`获取会议记录详情成功: ${record.id}`);
       return record;
@@ -121,7 +121,7 @@ export class MeetingController {
 
     try {
       const record =
-        await this.meetingService.createMeetingRecord(createParams);
+        await this.meetingService.create(createParams);
 
       this.logger.log(`创建会议记录成功: ${record.id}`);
       return record;
@@ -145,7 +145,7 @@ export class MeetingController {
     this.logger.log(`更新会议记录: ${id}`, updateParams);
 
     try {
-      const record = await this.meetingService.updateMeetingRecord(
+      const record = await this.meetingService.update(
         id,
         updateParams,
       );
@@ -171,7 +171,7 @@ export class MeetingController {
     this.logger.log(`删除会议记录: ${id}`);
 
     try {
-      const record = await this.meetingService.deleteMeetingRecord(id);
+      const record = await this.meetingService.delete(id);
 
       this.logger.log(`删除会议记录成功: ${record.id}`);
 
@@ -200,7 +200,7 @@ export class MeetingController {
     this.logger.log('获取会议统计信息', { startDate, endDate });
 
     try {
-      const stats = this.meetingService.getMeetingStats({
+      const stats = this.meetingService.getStats({
         startDate: startDate ? new Date(startDate) : undefined,
         endDate: endDate ? new Date(endDate) : undefined,
       });
@@ -255,13 +255,13 @@ export class MeetingController {
     try {
       if (format === 'json') {
         const data =
-          await this.transcriptService.getTranscriptJson(recordingId);
+          await this.transcriptService.getJson(recordingId);
 
         this.logger.log(`获取录制的转写 JSON 成功: ${recordingId}`);
         return { data };
       }
 
-      const text = await this.transcriptService.getTranscript(recordingId);
+      const text = await this.transcriptService.getText(recordingId);
 
       this.logger.log(`获取录制的转写文本成功: ${recordingId}`);
       return { text };

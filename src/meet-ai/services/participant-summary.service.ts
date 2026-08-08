@@ -16,6 +16,8 @@ import { formatToBeijingTime } from '@/common/utils/time.util';
 import { LlmService } from '@/llm/llm.service';
 import { PlatformUserService } from '@/user-platform/services/platform-user.service';
 import { MeetingService } from '@/meeting/services/meeting.service';
+import { MeetingRecordingService } from '@/meeting/services/meeting-recording.service';
+import { MeetingSummaryService } from '@/meeting/services/meeting-summary.service';
 import { TranscriptService } from '@/meeting/services/transcript.service';
 import { ParticipantSummaryRepository } from '../repositories';
 import { openaiConfig } from '@/configs/openai.config';
@@ -30,6 +32,8 @@ export class ParticipantSummaryService {
     private readonly partSummaryRepo: ParticipantSummaryRepository,
     private readonly platformUserService: PlatformUserService,
     private readonly meetingService: MeetingService,
+    private readonly meetingRecordingService: MeetingRecordingService,
+    private readonly meetingSummaryService: MeetingSummaryService,
     private readonly transcriptService: TranscriptService,
     @Inject(openaiConfig.KEY)
     private readonly config: ConfigType<typeof openaiConfig>,
@@ -110,13 +114,13 @@ export class ParticipantSummaryService {
 
   private async fetchMeetingContext(recordid: string, ptByUnionId: string) {
     const [recording, transcript, platformUser] = await Promise.all([
-      this.meetingService.getRecordingById(recordid),
-      this.transcriptService.getTranscriptDetails(recordid),
+      this.meetingRecordingService.getById(recordid),
+      this.transcriptService.getDetails(recordid),
       this.platformUserService.findById(ptByUnionId),
     ]);
 
-    const meeting = await this.meetingService.getMeetingRecordById(recording.meetingId);
-    const meetingSummary = await this.meetingService.getMeetingSummaryByMeetingId(meeting.id);
+    const meeting = await this.meetingService.findById(recording.meetingId);
+    const meetingSummary = await this.meetingSummaryService.getByMeetingId(meeting.id);
 
     return { recording, meeting, platformUser, meetingSummary, transcript };
   }

@@ -1,8 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ProcessingStatus, Prisma } from '@prisma/client';
 import { MeetingRepository } from '../repositories/meeting.repository';
-import { MeetingRecordingRepository } from '../repositories/meeting-recording.repository';
-import { MeetingSummaryRepository } from '../repositories/meeting-summary.repository';
 import { GetMeetingRecordsParams } from '../types';
 import {
   MeetingRecordResponseDto,
@@ -13,8 +11,6 @@ import {
 import {
   MeetingRecordNotFoundException,
   MeetingRecordAlreadyExistsException,
-  RecordingNotFoundException,
-  MeetingSummaryNotFoundException,
 } from '../exceptions/meeting.exceptions';
 
 /**
@@ -23,16 +19,12 @@ import {
  */
 @Injectable()
 export class MeetingService {
-  constructor(
-    private readonly meetingRepository: MeetingRepository,
-    private readonly meetingRecordingRepository: MeetingRecordingRepository,
-    private readonly meetingSummaryRepository: MeetingSummaryRepository,
-  ) {}
+  constructor(private readonly meetingRepository: MeetingRepository) {}
 
   /**
    * 获取会议记录列表
    */
-  async getMeetingRecords(params: GetMeetingRecordsParams): Promise<{
+  async findMany(params: GetMeetingRecordsParams): Promise<{
     records: MeetingRecordResponseDto[];
     total: number;
     page: number;
@@ -45,7 +37,7 @@ export class MeetingService {
   /**
    * 获取会议记录详情
    */
-  async getMeetingRecordById(id: string): Promise<MeetingRecordResponseDto> {
+  async findById(id: string): Promise<MeetingRecordResponseDto> {
     const record = await this.meetingRepository.findById(id);
     if (!record) {
       throw new MeetingRecordNotFoundException(id);
@@ -56,7 +48,7 @@ export class MeetingService {
   /**
    * 创建会议记录
    */
-  async createMeetingRecord(
+  async create(
     params: CreateMeetingRecordDto,
   ): Promise<MeetingRecordResponseDto> {
     // 检查是否已存在
@@ -99,7 +91,7 @@ export class MeetingService {
   /**
    * 更新会议记录
    */
-  async updateMeetingRecord(
+  async update(
     id: string,
     params: UpdateMeetingRecordDto,
   ): Promise<MeetingRecordResponseDto> {
@@ -149,7 +141,7 @@ export class MeetingService {
   /**
    * 删除会议记录（软删除）
    */
-  async deleteMeetingRecord(id: string): Promise<MeetingRecordResponseDto> {
+  async delete(id: string): Promise<MeetingRecordResponseDto> {
     const record = await this.meetingRepository.findById(id);
     if (!record) {
       throw new MeetingRecordNotFoundException(id);
@@ -161,7 +153,7 @@ export class MeetingService {
   /**
    * 获取会议统计信息
    */
-  getMeetingStats(params: {
+  getStats(params: {
     startDate?: Date;
     endDate?: Date;
     platform?: string;
@@ -175,27 +167,5 @@ export class MeetingService {
       typeStats: [],
       recentMeetings: [],
     };
-  }
-
-  /**
-   * 获取录制记录详情
-   */
-  async getRecordingById(id: string) {
-    const recording = await this.meetingRecordingRepository.findById(id);
-    if (!recording) {
-      throw new RecordingNotFoundException(id);
-    }
-    return recording;
-  }
-
-  /**
-   * 根据会议 ID 获取最新的会议总结
-   */
-  async getMeetingSummaryByMeetingId(meetingId: string) {
-    const summary = await this.meetingSummaryRepository.findByMeetingId(meetingId);
-    if (!summary) {
-      throw new MeetingSummaryNotFoundException(meetingId);
-    }
-    return summary;
   }
 }
