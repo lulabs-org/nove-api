@@ -21,7 +21,7 @@ import { LlmModule } from '@/llm/llm.module';
 import { UserPlatformModule } from '@/user-platform/user-platform.module';
 import { MeetingModule } from '@/meeting/meeting.module';
 import { PeriodSummaryService } from './services/period-summary.service';
-import { PeriodTimeRange } from './utils/period-time-range';
+
 import { ConfigModule } from '@nestjs/config';
 import { openaiConfig } from '@/configs/openai.config';
 import { TasksModule } from '@/task/tasks.module';
@@ -42,7 +42,6 @@ import { PeriodSummaryHandler } from './handlers/period-summary.handler';
     SummaryRelationRepository,
     ParticipantSummaryService,
     PeriodSummaryService,
-    PeriodTimeRange,
     PeriodSummaryHandler,
   ],
   exports: [
@@ -50,7 +49,6 @@ import { PeriodSummaryHandler } from './handlers/period-summary.handler';
     SummaryRelationRepository,
     ParticipantSummaryService,
     PeriodSummaryService,
-    PeriodTimeRange,
   ],
 })
-export class MeetAiModule {}
+export class MeetAiModule { }

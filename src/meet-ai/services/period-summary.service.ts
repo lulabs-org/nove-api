@@ -5,27 +5,11 @@ import { ConfigType } from '@nestjs/config';
 import { LlmService } from '../../llm/llm.service';
 import { ParticipantSummaryRepository } from '../repositories/participant-summary.repository';
 import { SummaryRelationRepository } from '../repositories/summary-relation.repository';
-import { PeriodTimeRange } from '../utils/period-time-range';
+import { getdayRange, getPeriodContext } from '../utils/period-time-range';
 import { openaiConfig } from '../../configs/openai.config';
 import { generatePrompt } from '@/common/utils';
 
-interface PeriodContext {
-  parent: PeriodType;
-  label: string;
-}
 
-const getPeriodContext = (
-  periodType: PeriodType,
-): PeriodContext | undefined => {
-  const periodMap: Partial<Record<PeriodType, PeriodContext>> = {
-    [PeriodType.YEARLY]: { parent: PeriodType.MONTHLY, label: '本年' },
-    [PeriodType.QUARTERLY]: { parent: PeriodType.MONTHLY, label: '本季度' },
-    [PeriodType.MONTHLY]: { parent: PeriodType.DAILY, label: '本月' },
-    [PeriodType.WEEKLY]: { parent: PeriodType.DAILY, label: '本周' },
-    [PeriodType.DAILY]: { parent: PeriodType.SINGLE, label: '本日' },
-  };
-  return periodMap[periodType];
-};
 
 @Injectable()
 export class PeriodSummaryService {
@@ -34,14 +18,20 @@ export class PeriodSummaryService {
   constructor(
     private readonly summaryRepo: ParticipantSummaryRepository,
     private readonly summaryRelationRepo: SummaryRelationRepository,
-    private readonly periodTimeRange: PeriodTimeRange,
     private readonly llmService: LlmService,
     @Inject(openaiConfig.KEY)
     private readonly config: ConfigType<typeof openaiConfig>,
   ) {}
 
   /**
-   * 处理总结任务
+   * 触发并执行指定周期的总结任务。
+   * 
+   * 该方法会根据给定的周期类型 (PeriodType) 计算目标时间范围，
+   * 筛选出在该时间区间内有会议记录的所有活跃用户，
+   * 并通过控制并发度（默认并发量 5）批量为这些用户生成聚合总结。
+   * 
+   * @param periodType 目标总结周期类型 (如 WEEKLY, MONTHLY 等)
+   * @returns 包含执行结果及时间戳的对象
    */
   async process(periodType: PeriodType): Promise<{ ok: boolean; at: string }> {
     this.logger.log(
@@ -49,14 +39,14 @@ export class PeriodSummaryService {
       new Date().toISOString(),
     );
 
+    const targetDate = new Date();
     const ctx = getPeriodContext(periodType);
     if (!ctx) {
       this.logger.warn(`不支持或未知的周期类型: ${periodType}`);
       return { ok: false, at: new Date().toISOString() };
     }
 
-    const { periodStart, periodEnd } =
-      this.periodTimeRange.getdayRange(periodType);
+    const { periodStart, periodEnd } = getdayRange(periodType, targetDate);
 
     if (!periodStart || !periodEnd) {
       this.logger.warn(`无法解析时间区间, 周期类型: ${periodType}`);
@@ -71,38 +61,22 @@ export class PeriodSummaryService {
     });
 
     // 2. 提取唯一的平台用户 ID 列表
-    const platformUserIds = summaries
-      .map((s) => s.platformUserId)
-      .filter(Boolean) as string[];
+    const uniqueUserIds = [...new Set(summaries.map(s => s.platformUserId).filter(Boolean) as string[])];
 
-    if (platformUserIds.length === 0) {
-      this.logger.warn(
-        '没有找到符合条件的记录, participantSummary的新增记录为空',
-      );
+    if (!uniqueUserIds.length) {
+      this.logger.warn('没有找到符合条件的记录, participantSummary的新增记录为空');
       return { ok: true, at: new Date().toISOString() };
     }
 
-    this.logger.log(`需处理的用户数: ${platformUserIds.length}`);
+    this.logger.log(`需处理的用户数: ${uniqueUserIds.length}`);
 
     // 3. 遍历并分批处理每个用户的总结 (并发度控制为 5)
-    const chunkSize = 5;
-    for (let i = 0; i < platformUserIds.length; i += chunkSize) {
-      const chunk = platformUserIds.slice(i, i + chunkSize);
+    for (let i = 0; i < uniqueUserIds.length; i += 5) {
       await Promise.all(
-        chunk.map((platformUserId) =>
-          this.processUser(
-            platformUserId,
-            periodType,
-            ctx,
-            periodStart,
-            periodEnd,
-          ).catch((err) => {
-            this.logger.error(
-              `处理用户 ${platformUserId} 的会议总结时发生错误`,
-              err.stack,
-            );
-          }),
-        ),
+        uniqueUserIds.slice(i, i + 5).map(userId =>
+          this.processUser(userId, periodType, targetDate)
+            .catch(err => this.logger.error(`处理用户 ${userId} 总结时失败`, err.stack))
+        )
       );
     }
 
@@ -110,15 +84,28 @@ export class PeriodSummaryService {
   }
 
   /**
-   * 处理单个用户的会议总结
+   * 为单个用户生成特定周期的聚合会议总结。
+   * 
+   * 工作流如下：
+   * 1. 获取目标用户在该周期内的所有子级总结数据 (如：周总结依赖日总结)。
+   * 2. 将提取的子总结数据作为上下文，组装 Prompt 请求大模型 (LLM)。
+   * 3. 将大模型生成的结果落库，作为新的父级总结。
+   * 4. 建立父级总结与子级总结的层级关联关系 (SummaryRelation)。
+   * 
+   * @param platformUserId 第三方平台的用户唯一标识
+   * @param periodType 当前要生成的周期类型 (如 WEEKLY, MONTHLY 等)
+   * @param targetDate 目标日期，用于计算当前周期的起止时间
    */
   private async processUser(
     platformUserId: string,
     periodType: PeriodType,
-    ctx: PeriodContext,
-    periodStart: Date,
-    periodEnd: Date,
+    targetDate: Date,
   ) {
+    const ctx = getPeriodContext(periodType);
+    if (!ctx) return;
+
+    const { periodStart, periodEnd } = getdayRange(periodType, targetDate);
+
     const userSummaries = await this.summaryRepo.findByUserAndPeriod({
       platformUserId,
       parentPeriodType: ctx.parent,
@@ -172,8 +159,8 @@ export class PeriodSummaryService {
       userSummaries.map((child) => ({
         parentSummaryId: parentSummary.id,
         childSummaryId: child.id,
-        parentPeriodType: ctx.parent,
-        childPeriodType: periodType,
+        parentPeriodType: periodType,
+        childPeriodType: ctx.parent,
       })),
     );
 
