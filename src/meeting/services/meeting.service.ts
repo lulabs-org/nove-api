@@ -13,19 +13,9 @@ import {
 import {
   MeetingRecordNotFoundException,
   MeetingRecordAlreadyExistsException,
+  RecordingNotFoundException,
+  MeetingSummaryNotFoundException,
 } from '../exceptions/meeting.exceptions';
-
-class RecordingNotFoundException extends Error {
-  constructor(id: string) {
-    super(`录制记录不存在: ${id}`);
-  }
-}
-
-class MeetingSummaryNotFoundException extends Error {
-  constructor(meetingId: string) {
-    super(`会议总结不存在: ${meetingId}`);
-  }
-}
 
 /**
  * 核心会议服务

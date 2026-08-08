@@ -72,3 +72,21 @@ export class MeetingStatusException extends MeetingException {
     );
   }
 }
+
+/**
+ * 录制记录未找到异常
+ */
+export class RecordingNotFoundException extends MeetingException {
+  constructor(recordingId: string) {
+    super(`录制记录不存在: ${recordingId}`, HttpStatus.NOT_FOUND);
+  }
+}
+
+/**
+ * 会议总结未找到异常
+ */
+export class MeetingSummaryNotFoundException extends MeetingException {
+  constructor(meetingId: string) {
+    super(`会议总结不存在: ${meetingId}`, HttpStatus.NOT_FOUND);
+  }
+}
