@@ -39,7 +39,9 @@ export class PeriodSummaryHandler implements ITaskHandler, OnModuleInit {
     );
 
     // Call the service directly
-    const result = await this.summaryService.generateSummaries({ periodType: periodType as PeriodType });
+    const result = await this.summaryService.generateSummaries({
+      periodType: periodType,
+    });
     this.logger.log(`[定时任务] ${periodType} 总结任务执行完成:`, result);
 
     return { ok: true, data: result };

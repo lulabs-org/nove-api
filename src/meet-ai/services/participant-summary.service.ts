@@ -25,7 +25,6 @@ import {
   RecordingNotFoundException,
 } from '@/meeting/exceptions/meeting.exceptions';
 
-
 @Injectable()
 export class ParticipantSummaryService {
   private readonly logger = new Logger(ParticipantSummaryService.name);
@@ -35,7 +34,7 @@ export class ParticipantSummaryService {
     private readonly partSummaryRepo: ParticipantSummaryRepository,
     @Inject(openaiConfig.KEY)
     private readonly config: ConfigType<typeof openaiConfig>,
-  ) { }
+  ) {}
 
   async generateSummaries({
     recordId,
@@ -67,12 +66,19 @@ export class ParticipantSummaryService {
 
     for (const userId of userIdsToProcess) {
       try {
-        const summary = await this.generateUserSummary(userId, recordId, context);
+        const summary = await this.generateUserSummary(
+          userId,
+          recordId,
+          context,
+        );
         if (summary) {
           results[userId] = summary;
         }
       } catch (err) {
-        this.logger.error(`生成参会者 ${userId} 总结失败`, err instanceof Error ? err.stack : String(err));
+        this.logger.error(
+          `生成参会者 ${userId} 总结失败`,
+          err instanceof Error ? err.stack : String(err),
+        );
       }
     }
 
@@ -87,7 +93,10 @@ export class ParticipantSummaryService {
     const { recording, meeting, meetingSummary, transcript } = context;
 
     // 2. 校验参会者发言记录并获取姓名
-    const userName = this.getParticipantName(transcript.segments, platformUserId);
+    const userName = this.getParticipantName(
+      transcript.segments,
+      platformUserId,
+    );
     if (!userName) return '';
 
     // 3. 提取并格式化专属上下文片段 (带语境窗口)
@@ -137,7 +146,10 @@ export class ParticipantSummaryService {
     return summary;
   }
 
-  private getParticipantName(segments: SummarySegment[], platformUserId: string): string | null {
+  private getParticipantName(
+    segments: SummarySegment[],
+    platformUserId: string,
+  ): string | null {
     const spokenSegment = segments.find(
       (segment) => segment.speaker?.id === platformUserId,
     );
@@ -187,7 +199,8 @@ export class ParticipantSummaryService {
   }
 
   private async fetchMeetingContext(recordingId: string) {
-    const recording = await this.partSummaryRepo.findGenerationContext(recordingId);
+    const recording =
+      await this.partSummaryRepo.findGenerationContext(recordingId);
     if (!recording) throw new RecordingNotFoundException(recordingId);
 
     const meeting = recording.meeting;
@@ -196,7 +209,8 @@ export class ParticipantSummaryService {
 
     if (meeting.deletedAt) throw new MeetingRecordNotFoundException(meeting.id);
     if (!meetingSummary) throw new MeetingSummaryNotFoundException(meeting.id);
-    if (!transcript) throw new NotFoundException(`转录记录不存在: ${recordingId}`);
+    if (!transcript)
+      throw new NotFoundException(`转录记录不存在: ${recordingId}`);
 
     return { recording, meeting, meetingSummary, transcript };
   }

@@ -19,7 +19,7 @@ export class PeriodSummaryService {
     private readonly llmService: LlmService,
     @Inject(openaiConfig.KEY)
     private readonly config: ConfigType<typeof openaiConfig>,
-  ) { }
+  ) {}
 
   /**
    * 触发并执行指定周期的总结任务。
@@ -68,7 +68,9 @@ export class PeriodSummaryService {
     ];
 
     if (!uniqueUserIds.length) {
-      this.logger.warn('没有找到符合条件的记录, participantSummary的新增记录为空');
+      this.logger.warn(
+        '没有找到符合条件的记录, participantSummary的新增记录为空',
+      );
       return this.result(true);
     }
 
@@ -76,11 +78,12 @@ export class PeriodSummaryService {
 
     // 3. 分批并发处理每个用户的总结 (并发度 5)
     await this.runBatched(uniqueUserIds, 5, (userId) =>
-      this.generateUserSummary(userId, periodType, targetDate).catch((err: unknown) =>
-        this.logger.error(
-          `处理用户 ${userId} 总结时失败`,
-          err instanceof Error ? err.stack : String(err),
-        ),
+      this.generateUserSummary(userId, periodType, targetDate).catch(
+        (err: unknown) =>
+          this.logger.error(
+            `处理用户 ${userId} 总结时失败`,
+            err instanceof Error ? err.stack : String(err),
+          ),
       ),
     );
 

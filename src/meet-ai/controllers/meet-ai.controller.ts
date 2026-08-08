@@ -36,7 +36,7 @@ export class MeetAiController {
   constructor(
     private readonly participantSummaryService: ParticipantSummaryService,
     private readonly periodSummaryService: PeriodSummaryService,
-  ) { }
+  ) {}
 
   @Get('health')
   @HttpCode(HttpStatus.OK)

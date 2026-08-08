@@ -214,7 +214,9 @@ export class ParticipantSummaryRepository {
   }) {
     return this.prisma.participantSummary.findMany({
       where: {
-        platformUserId: params.platformUserIds?.length ? { in: params.platformUserIds } : { not: null },
+        platformUserId: params.platformUserIds?.length
+          ? { in: params.platformUserIds }
+          : { not: null },
         periodType: params.parentPeriodType,
         ...this.getPeriodCondition(params.periodStart, params.periodEnd),
       },

@@ -6,7 +6,6 @@ import {
 } from '@/meeting/exceptions/meeting.exceptions';
 import { generatePrompt } from '@/common/utils';
 import { LlmService } from '@/llm/llm.service';
-import { PlatformUserService } from '@/user-platform/services/platform-user.service';
 import { ParticipantSummaryRepository } from '../repositories';
 import { ParticipantSummaryService } from './participant-summary.service';
 
@@ -43,9 +42,9 @@ describe('ParticipantSummaryService', () => {
         segments: [
           {
             startTimeMs: 1_000n,
-            speakerName: null,
+            speakerName: 'Alice',
             text: 'Hello',
-            speaker: { displayName: 'Alice' },
+            speaker: { id: 'platform-user-1', displayName: 'Alice' },
           },
         ],
       },
@@ -57,7 +56,6 @@ describe('ParticipantSummaryService', () => {
     findGenerationContext: jest.Mock;
     saveNewVersion: jest.Mock;
   };
-  let platformUserService: { findById: jest.Mock };
   let service: ParticipantSummaryService;
 
   beforeEach(() => {
@@ -66,13 +64,9 @@ describe('ParticipantSummaryService', () => {
       findGenerationContext: jest.fn().mockResolvedValue(context),
       saveNewVersion: jest.fn().mockResolvedValue(undefined),
     };
-    platformUserService = {
-      findById: jest.fn().mockResolvedValue({ displayName: 'Alice' }),
-    };
     service = new ParticipantSummaryService(
       llmService as unknown as LlmService,
       repository as unknown as ParticipantSummaryRepository,
-      platformUserService as unknown as PlatformUserService,
       {
         apiKey: { ark: '', openai: '' },
         baseURL: 'https://example.com',
@@ -86,16 +80,15 @@ describe('ParticipantSummaryService', () => {
 
   it('generates and saves a summary using two parallel context lookups', async () => {
     await expect(
-      service.generateSummary({ recordId: 'recording-1', platformUserId: 'platform-user-1' }),
-    ).resolves.toBe('generated summary');
+      service.generateSummaries({
+        recordId: 'recording-1',
+        platformUserIds: ['platform-user-1'],
+      }),
+    ).resolves.toEqual({ 'platform-user-1': 'generated summary' });
 
     expect(repository.findGenerationContext).toHaveBeenCalledTimes(1);
     expect(repository.findGenerationContext).toHaveBeenCalledWith(
       'recording-1',
-    );
-    expect(platformUserService.findById).toHaveBeenCalledTimes(1);
-    expect(platformUserService.findById).toHaveBeenCalledWith(
-      'platform-user-1',
     );
     expect(generatePrompt).toHaveBeenCalledWith(
       'PARTICIPANT_SUMMARY',
@@ -127,7 +120,10 @@ describe('ParticipantSummaryService', () => {
     repository.findGenerationContext.mockResolvedValue(null);
 
     await expect(
-      service.generateSummary({ recordId: 'missing-recording', platformUserId: 'platform-user-1' }),
+      service.generateSummaries({
+        recordId: 'missing-recording',
+        platformUserIds: ['platform-user-1'],
+      }),
     ).rejects.toBeInstanceOf(RecordingNotFoundException);
   });
 
@@ -138,7 +134,10 @@ describe('ParticipantSummaryService', () => {
     });
 
     await expect(
-      service.generateSummary({ recordId: 'recording-1', platformUserId: 'platform-user-1' }),
+      service.generateSummaries({
+        recordId: 'recording-1',
+        platformUserIds: ['platform-user-1'],
+      }),
     ).rejects.toBeInstanceOf(MeetingRecordNotFoundException);
   });
 
@@ -149,7 +148,10 @@ describe('ParticipantSummaryService', () => {
     });
 
     await expect(
-      service.generateSummary({ recordId: 'recording-1', platformUserId: 'platform-user-1' }),
+      service.generateSummaries({
+        recordId: 'recording-1',
+        platformUserIds: ['platform-user-1'],
+      }),
     ).rejects.toBeInstanceOf(MeetingSummaryNotFoundException);
   });
 
@@ -160,7 +162,10 @@ describe('ParticipantSummaryService', () => {
     });
 
     await expect(
-      service.generateSummary({ recordId: 'recording-1', platformUserId: 'platform-user-1' }),
+      service.generateSummaries({
+        recordId: 'recording-1',
+        platformUserIds: ['platform-user-1'],
+      }),
     ).rejects.toEqual(new NotFoundException('转录记录不存在: recording-1'));
   });
 });

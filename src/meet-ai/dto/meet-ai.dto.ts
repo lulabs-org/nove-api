@@ -9,7 +9,14 @@
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
-import { IsString, IsNotEmpty, IsEnum, IsOptional, IsDate, IsArray } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsEnum,
+  IsOptional,
+  IsDate,
+  IsArray,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PeriodType } from '@prisma/client';
@@ -50,7 +57,10 @@ export class TriggerSummaryDto {
   @Type(() => Date)
   targetDate?: Date;
 
-  @ApiPropertyOptional({ description: '指定生成总结的部分用户 (platformUserId 列表)', type: [String] })
+  @ApiPropertyOptional({
+    description: '指定生成总结的部分用户 (platformUserId 列表)',
+    type: [String],
+  })
   @IsOptional()
   @IsArray({ message: 'platformUserIds 必须是数组' })
   @IsString({ each: true, message: 'platformUserIds 数组必须包含字符串' })
@@ -63,7 +73,10 @@ export class GenerateParticipantSummaryDto {
   @IsNotEmpty()
   recordId: string;
 
-  @ApiPropertyOptional({ description: '指定生成总结的部分平台用户ID (不传则生成所有发过言的用户)', type: [String] })
+  @ApiPropertyOptional({
+    description: '指定生成总结的部分平台用户ID (不传则生成所有发过言的用户)',
+    type: [String],
+  })
   @IsOptional()
   @IsArray({ message: 'platformUserIds 必须是数组' })
   @IsString({ each: true, message: 'platformUserIds 数组必须包含字符串' })
