@@ -23,9 +23,9 @@ import {
   ApiGetMeetingStatsDocs,
   // ApiReprocessMeetingRecordDocs, // 暂时注释掉
   ApiGetTranscriptByRecordingIdDocs,
-} from './decorators/meeting-record.decorators';
-import { MeetingService } from './services/meeting.service';
-import { TranscriptService } from './services/transcript.service';
+} from '../decorators/meeting-record.decorators';
+import { MeetingService } from '../services/meeting.service';
+import { TranscriptService } from '../services/transcript.service';
 import {
   QueryMeetingRecordsDto,
   MeetingRecordResponseDto,
@@ -34,7 +34,7 @@ import {
   DeleteMeetingRecordResponseDto,
   CreateMeetingRecordDto,
   UpdateMeetingRecordDto,
-} from './dto';
+} from '../dto';
 import { CuidPipe } from '@/common/pipes/cuid.pipe';
 
 /**

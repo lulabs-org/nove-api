@@ -1,0 +1,90 @@
+import {
+  IsString,
+  IsOptional,
+  IsArray,
+  IsEnum,
+  IsObject,
+  IsInt,
+  Min,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ProcessingStatus } from '@prisma/client';
+
+export class CreateMeetingSummaryDto {
+  @ApiPropertyOptional({ description: '总结标题' })
+  @IsOptional()
+  @IsString()
+  title?: string;
+
+  @ApiProperty({ description: '总结内容' })
+  @IsString()
+  content: string;
+
+  @ApiPropertyOptional({ description: '关键词' })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  keywords?: string[];
+
+  @ApiPropertyOptional({ description: 'AI生成的会议纪要' })
+  @IsOptional()
+  @IsObject()
+  aiMinutes?: any;
+
+  @ApiPropertyOptional({ description: '关键要点' })
+  @IsOptional()
+  @IsObject()
+  keyPoints?: any;
+
+  @ApiPropertyOptional({ description: '行动项' })
+  @IsOptional()
+  @IsObject()
+  actionItems?: any;
+
+  @ApiPropertyOptional({ description: '决策记录' })
+  @IsOptional()
+  @IsObject()
+  decisions?: any;
+
+  @ApiPropertyOptional({ description: '扩展元数据' })
+  @IsOptional()
+  @IsObject()
+  metadata?: any;
+}
+
+export class UpdateMeetingSummaryDto extends CreateMeetingSummaryDto {
+  @ApiPropertyOptional({ description: '处理状态', enum: ProcessingStatus })
+  @IsOptional()
+  @IsEnum(ProcessingStatus)
+  status?: ProcessingStatus;
+}
+
+export class QueryMeetingSummaryDto {
+  @ApiPropertyOptional({
+    description: '页码（从 1 开始）',
+    example: 1,
+    minimum: 1,
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number = 1;
+
+  @ApiPropertyOptional({ description: '每页数量', example: 10, minimum: 1 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  limit?: number = 10;
+
+  @ApiPropertyOptional({ description: '是否为最新版本' })
+  @IsOptional()
+  isLatest?: boolean;
+
+  @ApiPropertyOptional({ description: '状态', enum: ProcessingStatus })
+  @IsOptional()
+  @IsEnum(ProcessingStatus)
+  status?: ProcessingStatus;
+}

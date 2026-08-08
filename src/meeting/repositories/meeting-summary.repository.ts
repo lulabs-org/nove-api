@@ -89,4 +89,44 @@ export class MeetingSummaryRepository {
       },
     });
   }
+
+  async findById(id: string) {
+    return this.prisma.meetingSummary.findUnique({
+      where: { id, deletedAt: null },
+    });
+  }
+
+  async findMany(meetingId: string, skip: number, take: number) {
+    const [total, records] = await this.prisma.$transaction([
+      this.prisma.meetingSummary.count({
+        where: { meetingId, deletedAt: null },
+      }),
+      this.prisma.meetingSummary.findMany({
+        where: { meetingId, deletedAt: null },
+        skip,
+        take,
+        orderBy: { createdAt: 'desc' },
+      }),
+    ]);
+    return { total, records };
+  }
+
+  async update(id: string, data: Prisma.MeetingSummaryUpdateInput) {
+    return this.prisma.meetingSummary.update({
+      where: { id },
+      data: {
+        ...data,
+        updatedAt: new Date(),
+      },
+    });
+  }
+
+  async delete(id: string) {
+    return this.prisma.meetingSummary.update({
+      where: { id },
+      data: {
+        deletedAt: new Date(),
+      },
+    });
+  }
 }

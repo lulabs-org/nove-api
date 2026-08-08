@@ -100,7 +100,16 @@ export class TencentApiService {
         headers,
       });
 
-      const responseData = (await response.json()) as {
+      let responseData: any;
+      try {
+        responseData = await response.json();
+      } catch (error) {
+        throw new Error(
+          'Invalid JSON: ' +
+            (error instanceof Error ? error.message : String(error)),
+        );
+      }
+      const parsedData = responseData as {
         error_info?: {
           error_code?: number;
           new_error_code?: number;
@@ -108,11 +117,11 @@ export class TencentApiService {
         };
       } & T;
 
-      if (responseData.error_info) {
-        this.handleApiError(responseData.error_info, fullRequestUri, timestamp);
+      if (parsedData.error_info) {
+        this.handleApiError(parsedData.error_info, fullRequestUri, timestamp);
       }
 
-      return responseData;
+      return parsedData;
     } catch (error: unknown) {
       this.logger.error(
         'API请求失败:',
@@ -273,7 +282,7 @@ export class TencentApiService {
       userid: userId,
     };
 
-    if (subMeetingId !== undefined) {
+    if (subMeetingId != null) {
       queryParams.sub_meeting_id = subMeetingId;
     }
 
