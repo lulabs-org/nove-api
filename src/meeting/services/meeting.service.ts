@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { ProcessingStatus, Prisma } from '@prisma/client';
 import { MeetingRepository } from '../repositories/meeting.repository';
+import { MeetingRecordingRepository } from '../repositories/meeting-recording.repository';
+import { MeetingSummaryRepository } from '../repositories/meeting-summary.repository';
 import { GetMeetingRecordsParams } from '../types';
 import {
   MeetingRecordResponseDto,
@@ -13,13 +15,29 @@ import {
   MeetingRecordAlreadyExistsException,
 } from '../exceptions/meeting.exceptions';
 
+class RecordingNotFoundException extends Error {
+  constructor(id: string) {
+    super(`录制记录不存在: ${id}`);
+  }
+}
+
+class MeetingSummaryNotFoundException extends Error {
+  constructor(meetingId: string) {
+    super(`会议总结不存在: ${meetingId}`);
+  }
+}
+
 /**
  * 核心会议服务
  * 负责协调各平台服务和文件处理器
  */
 @Injectable()
 export class MeetingService {
-  constructor(private readonly meetingRepository: MeetingRepository) {}
+  constructor(
+    private readonly meetingRepository: MeetingRepository,
+    private readonly meetingRecordingRepository: MeetingRecordingRepository,
+    private readonly meetingSummaryRepository: MeetingSummaryRepository,
+  ) {}
 
   /**
    * 获取会议记录列表
@@ -159,12 +177,7 @@ export class MeetingService {
     platform?: string;
   }): MeetingStatsResponseDto {
     void params;
-    // TODO: 实现统计逻辑 - 根据日期范围、平台等条件统计会议数据
-    // - 统计会议总数
-    // - 按平台分组统计
-    // - 按状态分组统计
-    // - 按类型分组统计
-    // - 获取最近会议记录
+    // TODO: 实现统计逻辑
     return {
       total: 0,
       platformStats: [],
@@ -174,29 +187,25 @@ export class MeetingService {
     };
   }
 
-  // /**
-  //  * 重新处理会议记录
-  //  */
-  // async reprocessMeetingRecord(id: string): Promise<MeetingRecordResponseDto> {
-  //   const record = await this.meetingRepository.findById(id);
-  //   if (!record) {
-  //     throw new MeetingRecordNotFoundException(id);
-  //   }
-  //
-  //   // 重置处理状态
-  //   await this.meetingRepository.update(id, {
-  //     processingStatus: ProcessingStatus.PROCESSING,
-  //   });
-  //
-  //   // 重新处理录制文件
-  //   // 这里可以根据需要重新调用处理逻辑
-  //
-  //   // 返回更新后的记录
-  //   const updatedRecord = await this.meetingRepository.findById(id);
-  //   if (!updatedRecord) {
-  //     throw new MeetingRecordNotFoundException(id);
-  //   }
-  //
-  //   return updatedRecord;
-  // }
+  /**
+   * 获取录制记录详情
+   */
+  async getRecordingById(id: string) {
+    const recording = await this.meetingRecordingRepository.findById(id);
+    if (!recording) {
+      throw new RecordingNotFoundException(id);
+    }
+    return recording;
+  }
+
+  /**
+   * 根据会议 ID 获取最新的会议总结
+   */
+  async getMeetingSummaryByMeetingId(meetingId: string) {
+    const summary = await this.meetingSummaryRepository.findByMeetingId(meetingId);
+    if (!summary) {
+      throw new MeetingSummaryNotFoundException(meetingId);
+    }
+    return summary;
+  }
 }

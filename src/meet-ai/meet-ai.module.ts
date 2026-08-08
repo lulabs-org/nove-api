@@ -18,9 +18,8 @@ import {
 } from './repositories';
 import { PrismaModule } from '../prisma/prisma.module';
 import { LlmModule } from '@/llm/llm.module';
-import { UserModule } from '@/user/user.module';
-import { MeetingModule } from '@/meeting/meeting.module';
 import { UserPlatformModule } from '@/user-platform/user-platform.module';
+import { MeetingModule } from '@/meeting/meeting.module';
 import { PeriodSummaryService } from './services/period-summary.service';
 import { PeriodTimeRange } from './utils/period-time-range';
 import { ConfigModule } from '@nestjs/config';
@@ -32,7 +31,6 @@ import { PeriodSummaryHandler } from './handlers/period-summary.handler';
   imports: [
     PrismaModule,
     LlmModule,
-    UserModule,
     MeetingModule,
     UserPlatformModule,
     ConfigModule.forFeature(openaiConfig),

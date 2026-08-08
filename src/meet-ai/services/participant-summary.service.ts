@@ -9,19 +9,15 @@
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
-import { Injectable, Logger, Inject, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, Inject } from '@nestjs/common';
 import { GenerationMethod, PeriodType } from '@prisma/client';
 import { ConfigType } from '@nestjs/config';
 import { formatToBeijingTime } from '@/common/utils/time.util';
 import { LlmService } from '@/llm/llm.service';
-import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
-import { MeetingRepository } from '@/meeting/repositories/meeting.repository';
+import { PlatformUserService } from '@/user-platform/services/platform-user.service';
+import { MeetingService } from '@/meeting/services/meeting.service';
+import { TranscriptService } from '@/meeting/services/transcript.service';
 import { ParticipantSummaryRepository } from '../repositories';
-import {
-  MeetingRecordingRepository,
-  MeetingSummaryRepository,
-  TranscriptRepository,
-} from '@/meeting/repositories';
 import { openaiConfig } from '@/configs/openai.config';
 import { generatePrompt } from '@/common/utils';
 
@@ -32,11 +28,9 @@ export class ParticipantSummaryService {
   constructor(
     private readonly llmService: LlmService,
     private readonly partSummaryRepo: ParticipantSummaryRepository,
-    private readonly ptUserRepo: PlatformUserRepository,
-    private readonly recordingRepo: MeetingRecordingRepository,
-    private readonly meetingRepo: MeetingRepository,
-    private readonly meetingSummaryRepo: MeetingSummaryRepository,
-    private readonly transcriptRepo: TranscriptRepository,
+    private readonly platformUserService: PlatformUserService,
+    private readonly meetingService: MeetingService,
+    private readonly transcriptService: TranscriptService,
     @Inject(openaiConfig.KEY)
     private readonly config: ConfigType<typeof openaiConfig>,
   ) {}
@@ -116,25 +110,13 @@ export class ParticipantSummaryService {
 
   private async fetchMeetingContext(recordid: string, ptByUnionId: string) {
     const [recording, transcript, platformUser] = await Promise.all([
-      this.recordingRepo.findById(recordid),
-      this.transcriptRepo.findDetails(recordid),
-      this.ptUserRepo.findById(ptByUnionId),
+      this.meetingService.getRecordingById(recordid),
+      this.transcriptService.getTranscriptDetails(recordid),
+      this.platformUserService.findById(ptByUnionId),
     ]);
 
-    if (!recording) throw new NotFoundException(`录制记录不存在: ${recordid}`);
-    if (!transcript) throw new NotFoundException(`转录记录不存在: ${recordid}`);
-    if (!platformUser)
-      throw new NotFoundException(`平台用户不存在: ${ptByUnionId}`);
-
-    const meeting = await this.meetingRepo.findById(recording.meetingId);
-    if (!meeting)
-      throw new NotFoundException(`会议记录不存在: ${recording.meetingId}`);
-
-    const meetingSummary = await this.meetingSummaryRepo.findByMeetingId(
-      meeting.id,
-    );
-    if (!meetingSummary)
-      throw new NotFoundException(`会议总结不存在: ${meeting.id}`);
+    const meeting = await this.meetingService.getMeetingRecordById(recording.meetingId);
+    const meetingSummary = await this.meetingService.getMeetingSummaryByMeetingId(meeting.id);
 
     return { recording, meeting, platformUser, meetingSummary, transcript };
   }
