@@ -7,7 +7,7 @@ import {
   IsInt,
   Min,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ProcessingStatus } from '@prisma/client';
 
@@ -81,10 +81,17 @@ export class QueryMeetingSummaryDto {
 
   @ApiPropertyOptional({ description: '是否为最新版本' })
   @IsOptional()
+  @Transform(({ value }) => {
+    if (value === '') return undefined;
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return value;
+  })
   isLatest?: boolean;
 
   @ApiPropertyOptional({ description: '状态', enum: ProcessingStatus })
   @IsOptional()
+  @Transform(({ value }) => (value === '' ? undefined : (value as string)))
   @IsEnum(ProcessingStatus)
   status?: ProcessingStatus;
 }

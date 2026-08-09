@@ -26,6 +26,8 @@ import {
   UpdateMeetingRecordingDto,
   QueryMeetingRecordingDto,
   MeetingRecordingListResponseDto,
+  MeetingRecordingDto,
+  MeetingRecordingDeleteResponseDto,
 } from '../dto/meeting-recording.dto';
 
 @ApiTags('Meet Recording')
@@ -46,6 +48,7 @@ export class MeetingRecordingController {
   @RequirePermissions('meeting:create')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '创建录音记录' })
+  @ApiResponse({ status: HttpStatus.CREATED, description: '创建成功', type: MeetingRecordingDto })
   async createRecording(
     @Body(new ValidationPipe()) createParams: CreateMeetingRecordingDto,
   ) {
@@ -72,6 +75,7 @@ export class MeetingRecordingController {
   @Get(':id')
   @RequirePermissions('meeting:read')
   @ApiGetMeetingRecordByIdDocs()
+  @ApiResponse({ status: HttpStatus.OK, description: '获取成功', type: MeetingRecordingDto })
   async getRecordingById(@Param('id', CuidPipe) id: string) {
     return this.recordingService.getById(id);
   }
@@ -116,6 +120,7 @@ export class MeetingRecordingController {
   @Patch(':id')
   @RequirePermissions('meeting:update')
   @ApiOperation({ summary: '更新录音记录' })
+  @ApiResponse({ status: HttpStatus.OK, description: '更新成功', type: MeetingRecordingDto })
   async updateRecording(
     @Param('id', CuidPipe) id: string,
     @Body(new ValidationPipe()) updateParams: UpdateMeetingRecordingDto,
@@ -129,6 +134,7 @@ export class MeetingRecordingController {
   @Delete(':id')
   @RequirePermissions('meeting:delete')
   @ApiOperation({ summary: '删除录音记录' })
+  @ApiResponse({ status: HttpStatus.OK, description: '删除成功', type: MeetingRecordingDeleteResponseDto })
   async deleteRecording(@Param('id', CuidPipe) id: string) {
     return this.recordingService.delete(id);
   }

@@ -7,7 +7,7 @@ import {
   IsInt,
   Min,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PeriodType } from '@prisma/client';
 
@@ -71,11 +71,13 @@ export class QueryParticipantSummaryDto {
 
   @ApiPropertyOptional({ description: '周期类型', enum: PeriodType })
   @IsOptional()
+  @Transform(({ value }) => (value === '' ? undefined : (value as string)))
   @IsEnum(PeriodType)
   periodType?: PeriodType;
 
   @ApiPropertyOptional({ description: '平台用户ID' })
   @IsOptional()
+  @Transform(({ value }) => (value === '' ? undefined : (value as string)))
   @IsString()
   platformUserId?: string;
 }
