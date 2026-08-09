@@ -146,7 +146,7 @@ export class TranscriptRepository {
 
   async findDetails(recordingId: string) {
     return this.prisma.transcript.findFirst({
-      where: { recordingId },
+      where: { recordingId, deletedAt: null },
       include: {
         segments: {
           orderBy: {

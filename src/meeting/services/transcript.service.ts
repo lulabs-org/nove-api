@@ -74,7 +74,10 @@ export class TranscriptService {
    */
   async getText(recordingId: string): Promise<string> {
     const transcript = await this.transcriptRepository.findDetails(recordingId);
-    if (!transcript || !transcript.segments) {
+    if (!transcript) {
+      throw new NotFoundException(`转录记录不存在: ${recordingId}`);
+    }
+    if (!transcript.segments) {
       return '';
     }
 
@@ -104,7 +107,10 @@ export class TranscriptService {
    */
   async getJson(recordingId: string): Promise<any[]> {
     const transcript = await this.transcriptRepository.findDetails(recordingId);
-    if (!transcript || !transcript.segments) {
+    if (!transcript) {
+      throw new NotFoundException(`转录记录不存在: ${recordingId}`);
+    }
+    if (!transcript.segments) {
       return [];
     }
 
