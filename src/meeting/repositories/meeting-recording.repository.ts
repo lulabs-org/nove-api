@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import { RecordingSource, RecordingStatus, PrismaClient } from '@prisma/client';
+import {
+  RecordingSource,
+  RecordingStatus,
+  PrismaClient,
+  Prisma,
+} from '@prisma/client';
 
 type PrismaTransaction = Omit<
   PrismaClient,
@@ -42,12 +47,18 @@ export class MeetingRecordingRepository {
         ...data,
         source: data.source || RecordingSource.PLATFORM_AUTO,
         status: data.status || RecordingStatus.COMPLETED,
-        metadata: data.metadata || {},
+        metadata: data.metadata ? (data.metadata as Prisma.InputJsonValue) : {},
       },
     });
   }
 
-  async findMany(query: { meetingId?: string; source?: RecordingSource; status?: RecordingStatus; skip: number; take: number }) {
+  async findMany(query: {
+    meetingId?: string;
+    source?: RecordingSource;
+    status?: RecordingStatus;
+    skip: number;
+    take: number;
+  }) {
     const where = {
       deletedAt: null,
       ...(query.meetingId ? { meetingId: query.meetingId } : {}),
@@ -68,7 +79,7 @@ export class MeetingRecordingRepository {
     return { total, records };
   }
 
-  async update(id: string, data: any) {
+  async update(id: string, data: Prisma.MeetingRecordingUpdateInput) {
     return this.prisma.meetingRecording.update({
       where: { id },
       data,

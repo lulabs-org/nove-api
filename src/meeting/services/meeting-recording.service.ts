@@ -1,7 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { MeetingRecordingRepository } from '../repositories/meeting-recording.repository';
 import { RecordingNotFoundException } from '../exceptions/meeting.exceptions';
-import { QueryMeetingRecordingDto, UpdateMeetingRecordingDto, CreateMeetingRecordingDto } from '../dto/meeting-recording.dto';
+import {
+  QueryMeetingRecordingDto,
+  UpdateMeetingRecordingDto,
+  CreateMeetingRecordingDto,
+} from '../dto/meeting-recording.dto';
 
 @Injectable()
 export class MeetingRecordingService {
@@ -47,7 +51,7 @@ export class MeetingRecordingService {
   }
 
   async update(id: string, updateData: UpdateMeetingRecordingDto) {
-    const recording = await this.getById(id);
+    await this.getById(id);
     return this.meetingRecordingRepository.update(id, updateData);
   }
 

@@ -1,5 +1,14 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import { IsString, IsOptional, IsEnum, IsDate, IsNumber, Min, Max, IsObject } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsDate,
+  IsNumber,
+  Min,
+  Max,
+  IsObject,
+} from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { RecordingSource, RecordingStatus } from '@prisma/client';
 
@@ -81,7 +90,9 @@ export class CreateMeetingRecordingDto {
   metadata?: any;
 }
 
-export class UpdateMeetingRecordingDto extends PartialType(CreateMeetingRecordingDto) {}
+export class UpdateMeetingRecordingDto extends PartialType(
+  CreateMeetingRecordingDto,
+) {}
 
 export class MeetingRecordingDto {
   @ApiProperty({ description: '录音ID' })

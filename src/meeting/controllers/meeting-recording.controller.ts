@@ -12,14 +12,18 @@ import {
   Delete,
   ValidationPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+} from '@nestjs/swagger';
 import { RequirePermissions } from '@/permission/decorators/permissions.decorator';
 import { MeetingRecordingService } from '../services/meeting-recording.service';
 import { TranscriptService } from '../services/transcript.service';
 import { CuidPipe } from '@/common/pipes/cuid.pipe';
-import {
-  ApiGetTranscriptByRecordingIdDocs
-} from '../decorators/meeting-record.decorators';
+import { ApiGetTranscriptByRecordingIdDocs } from '../decorators/meeting-record.decorators';
 import {
   CreateMeetingRecordingDto,
   UpdateMeetingRecordingDto,
@@ -38,7 +42,7 @@ export class MeetingRecordingController {
   constructor(
     private readonly recordingService: MeetingRecordingService,
     private readonly transcriptService: TranscriptService,
-  ) { }
+  ) {}
 
   /**
    * 创建录音
@@ -47,7 +51,11 @@ export class MeetingRecordingController {
   @RequirePermissions('meeting:create')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '创建录音记录' })
-  @ApiResponse({ status: HttpStatus.CREATED, description: '创建成功', type: MeetingRecordingDto })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: '创建成功',
+    type: MeetingRecordingDto,
+  })
   async createRecording(
     @Body(new ValidationPipe()) createParams: CreateMeetingRecordingDto,
   ) {
@@ -63,7 +71,8 @@ export class MeetingRecordingController {
   @ApiOperation({ summary: '获取录音列表' })
   @ApiResponse({ status: 200, type: MeetingRecordingListResponseDto })
   async getRecordings(
-    @Query(new ValidationPipe({ transform: true })) query: QueryMeetingRecordingDto,
+    @Query(new ValidationPipe({ transform: true }))
+    query: QueryMeetingRecordingDto,
   ) {
     return this.recordingService.findMany(query);
   }
@@ -75,7 +84,11 @@ export class MeetingRecordingController {
   @RequirePermissions('meeting:read')
   @ApiOperation({ summary: '获取录音详情' })
   @ApiParam({ name: 'id', description: '录音记录ID', type: 'string' })
-  @ApiResponse({ status: HttpStatus.OK, description: '获取成功', type: MeetingRecordingDto })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: '获取成功',
+    type: MeetingRecordingDto,
+  })
   async getRecordingById(@Param('id', CuidPipe) id: string) {
     return this.recordingService.getById(id);
   }
@@ -120,7 +133,11 @@ export class MeetingRecordingController {
   @Patch(':id')
   @RequirePermissions('meeting:update')
   @ApiOperation({ summary: '更新录音记录' })
-  @ApiResponse({ status: HttpStatus.OK, description: '更新成功', type: MeetingRecordingDto })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: '更新成功',
+    type: MeetingRecordingDto,
+  })
   async updateRecording(
     @Param('id', CuidPipe) id: string,
     @Body(new ValidationPipe()) updateParams: UpdateMeetingRecordingDto,
@@ -134,7 +151,11 @@ export class MeetingRecordingController {
   @Delete(':id')
   @RequirePermissions('meeting:delete')
   @ApiOperation({ summary: '删除录音记录' })
-  @ApiResponse({ status: HttpStatus.OK, description: '删除成功', type: MeetingRecordingDeleteResponseDto })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: '删除成功',
+    type: MeetingRecordingDeleteResponseDto,
+  })
   async deleteRecording(@Param('id', CuidPipe) id: string) {
     return this.recordingService.delete(id);
   }
