@@ -12,13 +12,15 @@ import {
   Logger,
   ValidationPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { RequirePermissions } from '@/permission/decorators/permissions.decorator';
 import { ParticipantSummaryCrudService } from '../services/participant-summary-crud.service';
 import {
   QueryParticipantSummaryDto,
   CreateParticipantSummaryDto,
   UpdateParticipantSummaryDto,
+  ParticipantSummaryDto,
+  ParticipantSummaryListResponseDto,
 } from '../dto/participant-summary.dto';
 import { CuidPipe } from '@/common/pipes/cuid.pipe';
 
@@ -36,6 +38,7 @@ export class ParticipantSummaryController {
   @RequirePermissions('meeting:read')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '获取参会者总结列表' })
+  @ApiResponse({ status: HttpStatus.OK, type: ParticipantSummaryListResponseDto })
   async getSummaries(
     @Param('meetingId', CuidPipe) meetingId: string,
     @Query(new ValidationPipe({ transform: true }))
@@ -53,6 +56,7 @@ export class ParticipantSummaryController {
   @RequirePermissions('meeting:read')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '获取参会者总结详情' })
+  @ApiResponse({ status: HttpStatus.OK, type: ParticipantSummaryDto })
   async getSummaryById(@Param('id', CuidPipe) id: string) {
     this.logger.log(`获取参会者总结详情: ${id}`);
     return this.participantSummaryCrudService.findById(id);
@@ -62,6 +66,7 @@ export class ParticipantSummaryController {
   @RequirePermissions('meeting:create')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '创建参会者总结' })
+  @ApiResponse({ status: HttpStatus.CREATED, type: ParticipantSummaryDto })
   async createSummary(
     @Param('meetingId', CuidPipe) meetingId: string,
     @Body(new ValidationPipe()) createParams: CreateParticipantSummaryDto,
@@ -74,6 +79,7 @@ export class ParticipantSummaryController {
   @RequirePermissions('meeting:update')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '更新参会者总结' })
+  @ApiResponse({ status: HttpStatus.OK, type: ParticipantSummaryDto })
   async updateSummary(
     @Param('id', CuidPipe) id: string,
     @Body(new ValidationPipe()) updateParams: UpdateParticipantSummaryDto,
@@ -86,6 +92,7 @@ export class ParticipantSummaryController {
   @RequirePermissions('meeting:delete')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '删除参会者总结' })
+  @ApiResponse({ status: HttpStatus.OK, type: ParticipantSummaryDto })
   async deleteSummary(@Param('id', CuidPipe) id: string) {
     this.logger.log(`删除参会者总结: ${id}`);
     return this.participantSummaryCrudService.delete(id);

@@ -79,3 +79,52 @@ export class QueryParticipantSummaryDto {
   @IsString()
   platformUserId?: string;
 }
+
+export class ParticipantSummaryDto {
+  @ApiProperty({ description: '总结ID' })
+  id: string;
+
+  @ApiProperty({ description: '总结周期类型', enum: PeriodType })
+  periodType: PeriodType;
+
+  @ApiPropertyOptional({ description: '平台用户ID' })
+  platformUserId?: string;
+
+  @ApiPropertyOptional({ description: '关联的会议ID' })
+  meetingId?: string;
+
+  @ApiPropertyOptional({ description: '关联的录制ID' })
+  meetingRecordingId?: string;
+
+  @ApiProperty({ description: '参会人名称' })
+  userName: string;
+
+  @ApiProperty({ description: '总结内容' })
+  partSummary: string;
+
+  @ApiPropertyOptional({ description: '关键词' })
+  keywords?: string[];
+
+  @ApiProperty({ description: '创建时间' })
+  createdAt: Date;
+
+  @ApiProperty({ description: '更新时间' })
+  updatedAt: Date;
+}
+
+export class ParticipantSummaryListResponseDto {
+  @ApiProperty({ type: [ParticipantSummaryDto], description: '参会者总结列表' })
+  data: ParticipantSummaryDto[];
+
+  @ApiProperty({ description: '总条数' })
+  total: number;
+
+  @ApiProperty({ description: '当前页码' })
+  page: number;
+
+  @ApiProperty({ description: '每页条数' })
+  limit: number;
+
+  @ApiProperty({ description: '总页数' })
+  totalPages: number;
+}

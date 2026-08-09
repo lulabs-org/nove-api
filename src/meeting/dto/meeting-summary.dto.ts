@@ -88,3 +88,64 @@ export class QueryMeetingSummaryDto {
   @IsEnum(ProcessingStatus)
   status?: ProcessingStatus;
 }
+
+export class MeetingSummaryDto {
+  @ApiProperty({ description: '总结ID' })
+  id: string;
+
+  @ApiPropertyOptional({ description: '总结标题' })
+  title?: string;
+
+  @ApiProperty({ description: '总结内容' })
+  content: string;
+
+  @ApiPropertyOptional({ description: 'AI生成的结构化会议纪要' })
+  aiMinutes?: any;
+
+  @ApiPropertyOptional({ description: '关键要点' })
+  keyPoints?: any;
+
+  @ApiPropertyOptional({ description: '行动项' })
+  actionItems?: any;
+
+  @ApiPropertyOptional({ description: '决策记录' })
+  decisions?: any;
+
+  @ApiPropertyOptional({ description: '参与者总结' })
+  speakerInsights?: any;
+
+  @ApiPropertyOptional({ description: '会议金句' })
+  goldenQuotes?: any;
+
+  @ApiPropertyOptional({ description: '关键词' })
+  keywords?: string[];
+
+  @ApiPropertyOptional({ description: '元数据' })
+  metadata?: any;
+
+  @ApiPropertyOptional({ description: '状态', enum: ProcessingStatus })
+  status?: ProcessingStatus;
+
+  @ApiProperty({ description: '创建时间' })
+  createdAt: Date;
+
+  @ApiProperty({ description: '更新时间' })
+  updatedAt: Date;
+}
+
+export class MeetingSummaryListResponseDto {
+  @ApiProperty({ type: [MeetingSummaryDto], description: '总结列表' })
+  data: MeetingSummaryDto[];
+
+  @ApiProperty({ description: '总条数' })
+  total: number;
+
+  @ApiProperty({ description: '当前页码' })
+  page: number;
+
+  @ApiProperty({ description: '每页条数' })
+  limit: number;
+
+  @ApiProperty({ description: '总页数' })
+  totalPages: number;
+}

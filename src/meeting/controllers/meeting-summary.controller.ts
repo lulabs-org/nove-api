@@ -12,13 +12,15 @@ import {
   Logger,
   ValidationPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { RequirePermissions } from '@/permission/decorators/permissions.decorator';
 import { MeetingSummaryService } from '../services/meeting-summary.service';
 import {
   QueryMeetingSummaryDto,
   CreateMeetingSummaryDto,
   UpdateMeetingSummaryDto,
+  MeetingSummaryDto,
+  MeetingSummaryListResponseDto,
 } from '../dto/meeting-summary.dto';
 import { CuidPipe } from '@/common/pipes/cuid.pipe';
 
@@ -34,6 +36,7 @@ export class MeetingSummaryController {
   @RequirePermissions('meeting:read')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '获取会议总结列表' })
+  @ApiResponse({ status: HttpStatus.OK, type: MeetingSummaryListResponseDto })
   async getSummaries(
     @Param('meetingId', CuidPipe) meetingId: string,
     @Query(new ValidationPipe({ transform: true }))
@@ -51,6 +54,7 @@ export class MeetingSummaryController {
   @RequirePermissions('meeting:read')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '获取会议总结详情' })
+  @ApiResponse({ status: HttpStatus.OK, type: MeetingSummaryDto })
   async getSummaryById(
     @Param('meetingId', CuidPipe) meetingId: string,
     @Param('id', CuidPipe) id: string,
@@ -63,6 +67,7 @@ export class MeetingSummaryController {
   @RequirePermissions('meeting:create')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '创建会议总结' })
+  @ApiResponse({ status: HttpStatus.CREATED, type: MeetingSummaryDto })
   async createSummary(
     @Param('meetingId', CuidPipe) meetingId: string,
     @Body(new ValidationPipe()) createParams: CreateMeetingSummaryDto,
@@ -75,6 +80,7 @@ export class MeetingSummaryController {
   @RequirePermissions('meeting:update')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '更新会议总结' })
+  @ApiResponse({ status: HttpStatus.OK, type: MeetingSummaryDto })
   async updateSummary(
     @Param('meetingId', CuidPipe) meetingId: string,
     @Param('id', CuidPipe) id: string,
@@ -88,6 +94,7 @@ export class MeetingSummaryController {
   @RequirePermissions('meeting:delete')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '删除会议总结' })
+  @ApiResponse({ status: HttpStatus.OK, type: MeetingSummaryDto })
   async deleteSummary(
     @Param('meetingId', CuidPipe) meetingId: string,
     @Param('id', CuidPipe) id: string,
