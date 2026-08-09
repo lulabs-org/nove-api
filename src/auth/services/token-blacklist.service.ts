@@ -76,6 +76,34 @@ export class TokenBlacklistService {
     return { jti, added: true };
   }
 
+  // Add a jti directly to blacklist (without decoding a token string)
+  // Used for batch-blacklisting access tokens of other devices on password reset
+  async addJti(
+    jti: string,
+    ttlSec: number,
+    scope: TokenBlacklistScope = TokenBlacklistScope.AccessToken,
+  ): Promise<boolean> {
+    if (ttlSec <= 0) return false;
+
+    const key = this.composeKey(scope, jti);
+    const ttl = Math.max(ttlSec, 1);
+
+    if (this.redis.isReady()) {
+      try {
+        await this.redis.getClient()!.set(key, '1', 'EX', ttl);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        this.logger.error(`Redis set failed: ${msg}`);
+        this.local.set(key, Date.now() + ttl * 1000);
+        setTimeout(() => this.local.delete(key), ttl * 1000).unref?.();
+      }
+    } else {
+      this.local.set(key, Date.now() + ttl * 1000);
+      setTimeout(() => this.local.delete(key), ttl * 1000).unref?.();
+    }
+    return true;
+  }
+
   // Check if a jti is blacklisted
   async isTokenBlacklisted(
     jti: string,

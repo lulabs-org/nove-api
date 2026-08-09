@@ -132,6 +132,19 @@ export class RefreshTokenRepository {
   }
 
   /**
+   * 查询用户所有活跃 refresh token 记录的 jti（用于批量拉黑 access token）
+   */
+  async findActiveJtisByUserId(userId: string): Promise<string[]> {
+    const records = await this.prisma.refreshToken.findMany({
+      where: { userId, revokedAt: null, jti: { not: null } },
+      select: { jti: true },
+    });
+    return records
+      .map((r) => r.jti)
+      .filter((jti): jti is string => jti !== null);
+  }
+
+  /**
    * 检查JTI是否有效
    */
   async isJtiValid(jti: string): Promise<boolean> {

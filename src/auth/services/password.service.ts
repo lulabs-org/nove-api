@@ -16,7 +16,9 @@ import { UserQueryRepository } from '@/user/repositories/user-query.repository';
 import { UserCommandRepository } from '@/user/repositories/user-command.repository';
 import { AuthPolicyService } from './auth-policy.service';
 import { TokenService } from './token.service';
+import { TokenBlacklistService } from './token-blacklist.service';
 import { RefreshTokenRepository } from '../repositories/refresh-token.repository';
+import { TokenBlacklistScope } from '@/auth/types/jwt.types';
 import { MailService } from '@/mail/services/mail.service';
 import { buildPasswordResetNotificationEmail } from '../../common/email-templates';
 import { hashPassword, validatePassword } from '@/common/utils/password.util';
@@ -34,6 +36,7 @@ export class PasswordService {
     private readonly mailService: MailService,
     private readonly tokenService: TokenService,
     private readonly refreshTokenRepo: RefreshTokenRepository,
+    private readonly tokenBlacklist: TokenBlacklistService,
   ) {}
 
   async resetPassword(
@@ -68,6 +71,22 @@ export class PasswordService {
 
     const hashedPassword = await hashPassword(newPassword);
     await this.userCommandRepo.updatePassword(user.id, hashedPassword);
+
+    // 查出所有活跃 access token 的 jti，批量拉黑（立即踢掉其他设备的 access token）
+    const activeJtis =
+      await this.refreshTokenRepo.findActiveJtisByUserId(user.id);
+    const accessTtlSec = this.tokenService.accessTokenTtlSec;
+    if (activeJtis.length > 0) {
+      await Promise.all(
+        activeJtis.map((jti) =>
+          this.tokenBlacklist.addJti(
+            jti,
+            accessTtlSec,
+            TokenBlacklistScope.AccessToken,
+          ),
+        ),
+      );
+    }
 
     // 吊销该用户所有现有 refresh token（踢掉其他设备 + 本设备旧 token）
     await this.refreshTokenRepo.revokeAllTokensByUserId(user.id);

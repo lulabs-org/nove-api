@@ -51,6 +51,11 @@ export class TokenService {
     this.refreshExpiresIn = this.config.refreshExpiresIn;
   }
 
+  /** access token 的 TTL（秒），供批量拉黑时计算黑名单过期时间 */
+  get accessTokenTtlSec(): number {
+    return Math.floor(parseDurationToMs(this.accessExpiresIn) / 1000);
+  }
+
   /**
    * 生成令牌并存储刷新令牌到数据库
    */
@@ -88,7 +93,7 @@ export class TokenService {
       await this.refreshTokenRepo.createRefreshToken({
         userId,
         token: refreshToken,
-        jti: undefined,
+        jti: accessJti,
         expiresAt,
         deviceInfo: context?.deviceInfo,
         deviceId: context?.deviceId,
@@ -129,12 +134,13 @@ export class TokenService {
         throw new UnauthorizedException('用户不存在');
       }
 
+      const accessJti = randomUUID();
       const accessToken = this.jwtService.sign(
         { sub: user.id },
         {
           secret: this.accessSecret,
           expiresIn: this.accessExpiresIn,
-          jwtid: randomUUID(),
+          jwtid: accessJti,
         },
       );
 
@@ -156,7 +162,7 @@ export class TokenService {
         await this.refreshTokenRepo.createRefreshToken({
           userId: user.id,
           token: newRefreshToken,
-          jti: undefined,
+          jti: accessJti,
           expiresAt: newExpiresAt,
           deviceInfo:
             context?.deviceInfo || oldTokenRecord.deviceInfo || undefined,
@@ -186,10 +192,6 @@ export class TokenService {
         refreshExpiresIn: refreshExpiresInSeconds,
       };
     } catch (error) {
-      if (error instanceof UnauthorizedException) {
-        // Do not log business logic exceptions as system errors
-        throw error;
-      }
       this.logger.error('Refresh token validation failed', error);
       throw new UnauthorizedException('刷新令牌无效');
     }
