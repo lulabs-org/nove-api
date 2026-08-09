@@ -15,6 +15,8 @@ import { CodeType } from '@/verification/enums';
 import { UserQueryRepository } from '@/user/repositories/user-query.repository';
 import { UserCommandRepository } from '@/user/repositories/user-command.repository';
 import { AuthPolicyService } from './auth-policy.service';
+import { TokenService } from './token.service';
+import { RefreshTokenRepository } from '../repositories/refresh-token.repository';
 import { MailService } from '@/mail/services/mail.service';
 import { buildPasswordResetNotificationEmail } from '../../common/email-templates';
 import { hashPassword, validatePassword } from '@/common/utils/password.util';
@@ -30,13 +32,22 @@ export class PasswordService {
     private readonly verificationService: VerificationService,
     private readonly authPolicy: AuthPolicyService,
     private readonly mailService: MailService,
+    private readonly tokenService: TokenService,
+    private readonly refreshTokenRepo: RefreshTokenRepository,
   ) {}
 
   async resetPassword(
     resetPasswordDto: ResetPasswordDto,
     ip: string,
     userAgent?: string,
-  ): Promise<{ success: boolean; message: string }> {
+  ): Promise<{
+    success: boolean;
+    message: string;
+    accessToken: string;
+    expiresIn: number;
+    refreshToken: string;
+    refreshExpiresIn: number;
+  }> {
     const { target, code, newPassword } = resetPasswordDto;
 
     const verifyResult = await this.verificationService.verifyCode(
@@ -57,6 +68,15 @@ export class PasswordService {
 
     const hashedPassword = await hashPassword(newPassword);
     await this.userCommandRepo.updatePassword(user.id, hashedPassword);
+
+    // 吊销该用户所有现有 refresh token（踢掉其他设备 + 本设备旧 token）
+    await this.refreshTokenRepo.revokeAllTokensByUserId(user.id);
+
+    // 为本设备签发新 token，实现无缝续会话（对齐飞书体验）
+    const tokens = await this.tokenService.generateTokens(user.id, {
+      ip,
+      userAgent,
+    });
 
     await this.authPolicy.createLoginLog({
       userId: user.id,
@@ -96,6 +116,10 @@ export class PasswordService {
     return {
       success: true,
       message: '密码重置成功',
+      accessToken: tokens.accessToken,
+      expiresIn: tokens.expiresIn,
+      refreshToken: tokens.refreshToken,
+      refreshExpiresIn: tokens.refreshExpiresIn,
     };
   }
 }

@@ -160,14 +160,48 @@ export class AuthController {
   async resetPassword(
     @Body(ValidationPipe) resetPasswordDto: ResetPasswordDto,
     @Req() req: Request,
-  ): Promise<{ success: boolean; message: string }> {
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<{
+    success: boolean;
+    message: string;
+    accessToken: string;
+    expiresIn: number;
+    refreshToken?: string;
+    refreshExpiresIn?: number;
+  }> {
     const ip = HttpUtil.getClientIp(req);
     const userAgent = req.get('User-Agent');
-    return await this.passwordService.resetPassword(
+    const result = await this.passwordService.resetPassword(
       resetPasswordDto,
       ip,
       userAgent,
     );
+
+    const isWebClient = resetPasswordDto.clientType === ClientType.Web;
+    if (isWebClient) {
+      res.cookie('refreshToken', result.refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: result.refreshExpiresIn * 1000,
+        path: '/',
+      });
+      return {
+        success: result.success,
+        message: result.message,
+        accessToken: result.accessToken,
+        expiresIn: result.expiresIn,
+      };
+    }
+
+    return {
+      success: result.success,
+      message: result.message,
+      accessToken: result.accessToken,
+      expiresIn: result.expiresIn,
+      refreshToken: result.refreshToken,
+      refreshExpiresIn: result.refreshExpiresIn,
+    };
   }
 
   @Public()
