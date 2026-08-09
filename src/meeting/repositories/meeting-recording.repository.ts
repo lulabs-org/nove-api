@@ -22,7 +22,60 @@ export class MeetingRecordingRepository {
 
   async findById(id: string) {
     return this.prisma.meetingRecording.findUnique({
+      where: { id, deletedAt: null },
+      omit: { deletedAt: true },
+    });
+  }
+
+  async create(data: {
+    meetingId: string;
+    externalId?: string;
+    source?: RecordingSource;
+    status?: RecordingStatus;
+    startAt?: Date;
+    endAt?: Date;
+  }) {
+    return this.prisma.meetingRecording.create({
+      data: {
+        ...data,
+        source: data.source || RecordingSource.PLATFORM_AUTO,
+        status: data.status || RecordingStatus.COMPLETED,
+      },
+    });
+  }
+
+  async findMany(query: { meetingId?: string; source?: RecordingSource; status?: RecordingStatus; skip: number; take: number }) {
+    const where = {
+      deletedAt: null,
+      ...(query.meetingId ? { meetingId: query.meetingId } : {}),
+      ...(query.source ? { source: query.source } : {}),
+      ...(query.status ? { status: query.status } : {}),
+    };
+
+    const [total, records] = await this.prisma.$transaction([
+      this.prisma.meetingRecording.count({ where }),
+      this.prisma.meetingRecording.findMany({
+        where,
+        skip: query.skip,
+        take: query.take,
+        orderBy: { createdAt: 'desc' },
+        omit: { deletedAt: true },
+      }),
+    ]);
+    return { total, records };
+  }
+
+  async update(id: string, data: any) {
+    return this.prisma.meetingRecording.update({
       where: { id },
+      data,
+    });
+  }
+
+  async delete(id: string) {
+    return this.prisma.meetingRecording.update({
+      where: { id },
+      data: { deletedAt: new Date() },
     });
   }
 

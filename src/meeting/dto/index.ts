@@ -8,3 +8,4 @@ export * from './meeting-record-create.dto';
 export * from './meeting-record-update.dto';
 export * from './transcript.dto';
 export * from './health-check.dto';
+export * from './meeting-recording.dto';

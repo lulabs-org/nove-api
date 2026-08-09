@@ -229,7 +229,7 @@ export const ApiGetTranscriptByRecordingIdDocs = () =>
       description: '根据录制记录ID获取其对应的转写文本',
     }),
     ApiParam({
-      name: 'recordingId',
+      name: 'id',
       description: '录制记录ID',
       type: 'string',
     }),
