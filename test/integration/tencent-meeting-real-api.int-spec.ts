@@ -285,7 +285,8 @@ describe('Tencent Meeting Real API Integration Tests', () => {
           const meetingDetail: MeetingDetailResponse =
             await apiService.getMeetingDetail(meetingId, userId || '');
 
-          const meetingInfo = meetingDetail.meeting_info_list?.[0] || meetingDetail;
+          const meetingInfo =
+            meetingDetail.meeting_info_list?.[0] || meetingDetail;
 
           console.log('🏢 会议详情:', {
             meeting_id: meetingInfo.meeting_id,

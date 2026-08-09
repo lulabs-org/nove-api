@@ -100,9 +100,9 @@ export class TencentApiService {
         headers,
       });
 
-      let responseData: any;
+      let responseData: unknown;
       try {
-        responseData = await response.json();
+        responseData = (await response.json()) as unknown;
       } catch (error) {
         throw new Error(
           'Invalid JSON: ' +
