@@ -88,3 +88,27 @@ export class TranscriptListResponseDto {
   totalPages: number;
 }
 
+export class TranscriptParagraphDto {
+  @ApiPropertyOptional({ description: '说话人名称' })
+  speakerName?: string;
+
+  @ApiPropertyOptional({ description: '开始时间, 格式 hh:mm:ss' })
+  startTime?: string;
+
+  @ApiPropertyOptional({ description: '结束时间, 格式 hh:mm:ss' })
+  endTime?: string;
+
+  @ApiPropertyOptional({ description: '文本内容' })
+  text?: string;
+}
+
+export class TranscriptByRecordingIdResponseDto {
+  @ApiPropertyOptional({ description: '拼接后的转写文本 (format=text 时返回)' })
+  text?: string;
+
+  @ApiPropertyOptional({
+    type: [TranscriptParagraphDto],
+    description: '转写段落 JSON 数组 (format=json 时返回)',
+  })
+  data?: TranscriptParagraphDto[];
+}

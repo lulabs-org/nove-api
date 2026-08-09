@@ -114,6 +114,7 @@ export class TranscriptRepository {
           },
         },
       },
+      omit: { deletedAt: true },
     });
   }
 
@@ -130,6 +131,7 @@ export class TranscriptRepository {
         skip,
         take,
         orderBy: { createdAt: 'desc' },
+        omit: { deletedAt: true },
       }),
     ]);
     return { total, records };
@@ -138,6 +140,7 @@ export class TranscriptRepository {
   async findByRecordingId(recordingId: string) {
     return this.prisma.transcript.findFirst({
       where: { recordingId },
+      omit: { deletedAt: true },
     });
   }
 
@@ -154,12 +157,14 @@ export class TranscriptRepository {
           },
         },
       },
+      omit: { deletedAt: true },
     });
   }
 
   async findBySource(source: string) {
     return this.prisma.transcript.findFirst({
       where: { source },
+      omit: { deletedAt: true },
     });
   }
 

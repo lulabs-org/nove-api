@@ -44,9 +44,7 @@ import { CuidPipe } from '@/common/pipes/cuid.pipe';
 export class MeetingController {
   private readonly logger = new Logger(MeetingController.name);
 
-  constructor(
-    private readonly meetingService: MeetingService,
-  ) {}
+  constructor(private readonly meetingService: MeetingService) {}
 
   /**
    * 获取会议记录列表
@@ -204,5 +202,4 @@ export class MeetingController {
       throw error;
     }
   }
-
 }

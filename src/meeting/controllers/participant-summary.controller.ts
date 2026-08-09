@@ -12,7 +12,12 @@ import {
   Logger,
   ValidationPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { RequirePermissions } from '@/permission/decorators/permissions.decorator';
 import { ParticipantSummaryCrudService } from '../services/participant-summary-crud.service';
 import {
@@ -38,7 +43,10 @@ export class ParticipantSummaryController {
   @RequirePermissions('meeting:read')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '获取参会者总结列表' })
-  @ApiResponse({ status: HttpStatus.OK, type: ParticipantSummaryListResponseDto })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    type: ParticipantSummaryListResponseDto,
+  })
   async getSummaries(
     @Param('meetingId', CuidPipe) meetingId: string,
     @Query(new ValidationPipe({ transform: true }))

@@ -11,10 +11,19 @@ import {
   Body,
   ValidationPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
 import { RequirePermissions } from '@/permission/decorators/permissions.decorator';
 import { TranscriptService } from '../services/transcript.service';
-import { CreateTranscriptDto, TranscriptDto, TranscriptListResponseDto } from '../dto';
+import {
+  CreateTranscriptDto,
+  TranscriptDto,
+  TranscriptListResponseDto,
+} from '../dto';
 import { CuidPipe } from '@/common/pipes/cuid.pipe';
 import { ApiGetTranscriptByRecordingIdDocs } from '../decorators/meeting-record.decorators';
 
@@ -24,7 +33,7 @@ import { ApiGetTranscriptByRecordingIdDocs } from '../decorators/meeting-record.
 export class TranscriptController {
   private readonly logger = new Logger(TranscriptController.name);
 
-  constructor(private readonly transcriptService: TranscriptService) { }
+  constructor(private readonly transcriptService: TranscriptService) {}
 
   /**
    * 获取转录文本
@@ -87,7 +96,11 @@ export class TranscriptController {
     @Query('limit') limit: number = 10,
     @Query('recordingId') recordingId?: string,
   ) {
-    return this.transcriptService.findMany(recordingId, Number(page), Number(limit));
+    return this.transcriptService.findMany(
+      recordingId,
+      Number(page),
+      Number(limit),
+    );
   }
 
   /**

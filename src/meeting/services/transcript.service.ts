@@ -34,7 +34,11 @@ export class TranscriptService {
 
   async findMany(recordingId?: string, page: number = 1, limit: number = 10) {
     const skip = (page - 1) * limit;
-    const { total, records } = await this.transcriptRepository.findMany(skip, limit, recordingId);
+    const { total, records } = await this.transcriptRepository.findMany(
+      skip,
+      limit,
+      recordingId,
+    );
     return {
       data: records,
       total,
@@ -49,7 +53,14 @@ export class TranscriptService {
     if (!transcript) {
       throw new NotFoundException(`转录记录不存在: ${id}`);
     }
-    return transcript;
+    return {
+      ...transcript,
+      segments: transcript.segments?.map((segment) => ({
+        ...segment,
+        startTimeMs: Number(segment.startTimeMs),
+        endTimeMs: Number(segment.endTimeMs),
+      })),
+    };
   }
 
   async delete(id: string) {
