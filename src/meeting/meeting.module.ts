@@ -27,6 +27,7 @@ import { PrismaModule } from '../prisma/prisma.module';
 
 import { MeetingSummaryController } from './controllers/meeting-summary.controller';
 import { ParticipantSummaryController } from './controllers/participant-summary.controller';
+import { TranscriptController } from './controllers/transcript.controller';
 import { ParticipantSummaryCrudService } from './services/participant-summary-crud.service';
 import { ParticipantSummaryRepository } from '@/meet-ai/repositories';
 
@@ -36,6 +37,7 @@ import { ParticipantSummaryRepository } from '@/meet-ai/repositories';
     MeetingController,
     MeetingSummaryController,
     ParticipantSummaryController,
+    TranscriptController,
   ],
   providers: [
     MeetingService,
