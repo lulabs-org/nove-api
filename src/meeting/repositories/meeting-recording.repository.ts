@@ -34,12 +34,15 @@ export class MeetingRecordingRepository {
     status?: RecordingStatus;
     startAt?: Date;
     endAt?: Date;
+    recorderUserId?: string;
+    metadata?: any;
   }) {
     return this.prisma.meetingRecording.create({
       data: {
         ...data,
         source: data.source || RecordingSource.PLATFORM_AUTO,
         status: data.status || RecordingStatus.COMPLETED,
+        metadata: data.metadata || {},
       },
     });
   }

@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import { IsString, IsOptional, IsEnum, IsDate, IsNumber, Min, Max } from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsDate, IsNumber, Min, Max, IsObject } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { RecordingSource, RecordingStatus } from '@prisma/client';
 
@@ -69,6 +69,16 @@ export class CreateMeetingRecordingDto {
   @Type(() => Date)
   @IsDate()
   endAt?: Date;
+
+  @ApiPropertyOptional({ description: '录制用户ID' })
+  @IsOptional()
+  @IsString()
+  recorderUserId?: string;
+
+  @ApiPropertyOptional({ description: '元数据' })
+  @IsOptional()
+  @IsObject()
+  metadata?: any;
 }
 
 export class UpdateMeetingRecordingDto extends PartialType(CreateMeetingRecordingDto) {}
