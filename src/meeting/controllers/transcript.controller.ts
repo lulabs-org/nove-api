@@ -85,6 +85,7 @@ export class TranscriptController {
   @Delete(':id')
   @RequirePermissions('meeting:delete')
   @ApiOperation({ summary: '删除转录记录' })
+  @ApiResponse({ status: HttpStatus.OK, type: TranscriptDto })
   async deleteTranscript(@Param('id', CuidPipe) id: string) {
     return this.transcriptService.delete(id);
   }

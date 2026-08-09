@@ -12,13 +12,12 @@ import {
   Delete,
   ValidationPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { RequirePermissions } from '@/permission/decorators/permissions.decorator';
 import { MeetingRecordingService } from '../services/meeting-recording.service';
 import { TranscriptService } from '../services/transcript.service';
 import { CuidPipe } from '@/common/pipes/cuid.pipe';
 import {
-  ApiGetMeetingRecordByIdDocs,
   ApiGetTranscriptByRecordingIdDocs
 } from '../decorators/meeting-record.decorators';
 import {
@@ -74,7 +73,8 @@ export class MeetingRecordingController {
    */
   @Get(':id')
   @RequirePermissions('meeting:read')
-  @ApiGetMeetingRecordByIdDocs()
+  @ApiOperation({ summary: '获取录音详情' })
+  @ApiParam({ name: 'id', description: '录音记录ID', type: 'string' })
   @ApiResponse({ status: HttpStatus.OK, description: '获取成功', type: MeetingRecordingDto })
   async getRecordingById(@Param('id', CuidPipe) id: string) {
     return this.recordingService.getById(id);

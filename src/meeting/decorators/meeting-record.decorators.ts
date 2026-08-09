@@ -13,6 +13,7 @@ import {
   DeleteMeetingRecordResponseDto,
   HealthCheckResponseDto,
   TranscriptByRecordingIdResponseDto,
+  MeetingRecordResponseDto,
 } from '../dto';
 
 /**
@@ -100,6 +101,7 @@ export const ApiGetMeetingRecordByIdDocs = () =>
     ApiResponse({
       status: 200,
       description: '获取成功',
+      type: MeetingRecordResponseDto,
     }),
     ApiResponse({
       status: 404,
@@ -120,6 +122,7 @@ export const ApiCreateMeetingRecordDocs = () =>
     ApiResponse({
       status: 201,
       description: '创建成功',
+      type: MeetingRecordResponseDto,
     }),
     ApiResponse({
       status: 400,
@@ -150,6 +153,7 @@ export const ApiUpdateMeetingRecordDocs = () =>
     ApiResponse({
       status: 200,
       description: '更新成功',
+      type: MeetingRecordResponseDto,
     }),
     ApiResponse({
       status: 404,
