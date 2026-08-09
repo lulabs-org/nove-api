@@ -206,28 +206,7 @@ export const ApiGetMeetingStatsDocs = () =>
     ApiResponse({ status: 500, description: '服务器内部错误' }),
   );
 
-export const ApiReprocessMeetingRecordDocs = () =>
-  applyDecorators(
-    ApiOperation({
-      summary: '重新处理会议录制文件',
-      description: '重新处理指定会议的录制文件，重新生成AI摘要和转录等',
-    }),
-    ApiParam({
-      name: 'id',
-      description: '会议记录ID',
-      type: 'string',
-      format: 'uuid',
-    }),
-    ApiResponse({
-      status: 200,
-      description: '重新处理成功',
-    }),
-    ApiResponse({
-      status: 404,
-      description: '会议记录不存在',
-    }),
-    ApiResponse({ status: 500, description: '服务器内部错误' }),
-  );
+
 
 export const ApiHealthCheckDocs = () =>
   applyDecorators(
