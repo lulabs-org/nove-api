@@ -7,10 +7,14 @@ import {
   HttpStatus,
   Logger,
   Delete,
+  Post,
+  Body,
+  ValidationPipe,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { RequirePermissions } from '@/permission/decorators/permissions.decorator';
 import { TranscriptService } from '../services/transcript.service';
+import { CreateTranscriptDto } from '../dto';
 import { CuidPipe } from '@/common/pipes/cuid.pipe';
 import { ApiGetTranscriptByRecordingIdDocs } from '../decorators/meeting-record.decorators';
 
@@ -54,6 +58,20 @@ export class TranscriptController {
       );
       throw error;
     }
+  }
+
+  /**
+   * 创建转录记录
+   */
+  @Post()
+  @RequirePermissions('meeting:create')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: '创建转录记录' })
+  async createTranscript(
+    @Body(new ValidationPipe()) createParams: CreateTranscriptDto,
+  ) {
+    this.logger.log(`创建转录记录: ${createParams.recordingId}`);
+    return this.transcriptService.create(createParams);
   }
 
   /**

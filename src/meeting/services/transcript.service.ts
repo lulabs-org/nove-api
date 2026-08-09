@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { TranscriptRepository } from '../repositories/transcript.repository';
+import { CreateTranscriptDto } from '../dto/transcript.dto';
 
 /**
  * 转写相关服务
@@ -18,6 +19,17 @@ export class TranscriptService {
       throw new NotFoundException(`转录记录不存在: ${recordingId}`);
     }
     return transcript;
+  }
+
+  async create(data: CreateTranscriptDto) {
+    return this.transcriptRepository.create({
+      source: data.source,
+      rawFileUrl: data.rawFileUrl,
+      status: data.status ?? 0,
+      startedAt: data.startedAt,
+      finishedAt: data.finishedAt,
+      recordingId: data.recordingId,
+    });
   }
 
   async findMany(recordingId?: string, page: number = 1, limit: number = 10) {
