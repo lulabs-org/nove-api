@@ -38,3 +38,53 @@ export class CreateTranscriptDto {
   @IsOptional()
   finishedAt?: Date;
 }
+
+export class TranscriptDto {
+  @ApiProperty({ description: '记录ID' })
+  id: string;
+
+  @ApiPropertyOptional({ description: '转写来源/文件名' })
+  source?: string;
+
+  @ApiPropertyOptional({ description: '关联的会议录制ID' })
+  recordingId?: string;
+
+  @ApiPropertyOptional({ description: '原始文件的存储链接' })
+  rawFileUrl?: string;
+
+  @ApiProperty({ description: '语言' })
+  language: string;
+
+  @ApiProperty({ description: '转写状态' })
+  status: number;
+
+  @ApiPropertyOptional({ description: '开始时间' })
+  startedAt?: Date;
+
+  @ApiPropertyOptional({ description: '结束时间' })
+  finishedAt?: Date;
+
+  @ApiProperty({ description: '创建时间' })
+  createdAt: Date;
+
+  @ApiProperty({ description: '更新时间' })
+  updatedAt: Date;
+}
+
+export class TranscriptListResponseDto {
+  @ApiProperty({ type: [TranscriptDto], description: '转写记录列表' })
+  data: TranscriptDto[];
+
+  @ApiProperty({ description: '总条数' })
+  total: number;
+
+  @ApiProperty({ description: '当前页码' })
+  page: number;
+
+  @ApiProperty({ description: '每页条数' })
+  limit: number;
+
+  @ApiProperty({ description: '总页数' })
+  totalPages: number;
+}
+

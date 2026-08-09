@@ -11,10 +11,10 @@ import {
   Body,
   ValidationPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { RequirePermissions } from '@/permission/decorators/permissions.decorator';
 import { TranscriptService } from '../services/transcript.service';
-import { CreateTranscriptDto } from '../dto';
+import { CreateTranscriptDto, TranscriptDto, TranscriptListResponseDto } from '../dto';
 import { CuidPipe } from '@/common/pipes/cuid.pipe';
 import { ApiGetTranscriptByRecordingIdDocs } from '../decorators/meeting-record.decorators';
 
@@ -24,10 +24,10 @@ import { ApiGetTranscriptByRecordingIdDocs } from '../decorators/meeting-record.
 export class TranscriptController {
   private readonly logger = new Logger(TranscriptController.name);
 
-  constructor(private readonly transcriptService: TranscriptService) {}
+  constructor(private readonly transcriptService: TranscriptService) { }
 
   /**
-   * 获取录制的转写文本
+   * 获取转录文本
    */
   @Get('recording/:recordingId')
   @RequirePermissions('meeting:read')
@@ -37,7 +37,7 @@ export class TranscriptController {
     @Param('recordingId', CuidPipe) recordingId: string,
     @Query('format') format?: 'text' | 'json',
   ): Promise<any> {
-    this.logger.log(`获取录制的转写文本: ${recordingId}, format: ${format}`);
+    this.logger.log(`获取转录文本: ${recordingId}, format: ${format}`);
 
     try {
       if (format === 'json') {
@@ -67,6 +67,7 @@ export class TranscriptController {
   @RequirePermissions('meeting:create')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '创建转录记录' })
+  @ApiResponse({ status: HttpStatus.CREATED, type: TranscriptDto })
   async createTranscript(
     @Body(new ValidationPipe()) createParams: CreateTranscriptDto,
   ) {
@@ -80,6 +81,7 @@ export class TranscriptController {
   @Get()
   @RequirePermissions('meeting:read')
   @ApiOperation({ summary: '获取转录列表' })
+  @ApiResponse({ status: HttpStatus.OK, type: TranscriptListResponseDto })
   async getTranscripts(
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10,
@@ -94,6 +96,7 @@ export class TranscriptController {
   @Get(':id')
   @RequirePermissions('meeting:read')
   @ApiOperation({ summary: '获取转录记录详情' })
+  @ApiResponse({ status: HttpStatus.OK, type: TranscriptDto })
   async getTranscriptById(@Param('id', CuidPipe) id: string) {
     return this.transcriptService.findById(id);
   }
