@@ -177,7 +177,7 @@ export class AuthController {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
-        maxAge: result.refreshExpiresIn * 1000,
+        maxAge: (result.refreshExpiresIn || 0) * 1000,
         path: '/',
       });
       return {
