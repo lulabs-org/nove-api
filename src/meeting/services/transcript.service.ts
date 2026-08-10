@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { TranscriptRepository } from '../repositories/transcript.repository';
+import { CreateTranscriptDto } from '../dto/transcript.dto';
 
 /**
  * 转写相关服务
@@ -20,12 +21,63 @@ export class TranscriptService {
     return transcript;
   }
 
+  async create(data: CreateTranscriptDto) {
+    return this.transcriptRepository.create({
+      source: data.source,
+      rawFileUrl: data.rawFileUrl,
+      status: data.status ?? 0,
+      startedAt: data.startedAt,
+      finishedAt: data.finishedAt,
+      recordingId: data.recordingId,
+    });
+  }
+
+  async findMany(recordingId?: string, page: number = 1, limit: number = 10) {
+    const skip = (page - 1) * limit;
+    const { total, records } = await this.transcriptRepository.findMany(
+      skip,
+      limit,
+      recordingId,
+    );
+    return {
+      data: records,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async findById(id: string) {
+    const transcript = await this.transcriptRepository.findById(id);
+    if (!transcript) {
+      throw new NotFoundException(`转录记录不存在: ${id}`);
+    }
+    return {
+      ...transcript,
+      segments: transcript.segments?.map((segment) => ({
+        ...segment,
+        startTimeMs: Number(segment.startTimeMs),
+        endTimeMs: Number(segment.endTimeMs),
+      })),
+    };
+  }
+
+  async delete(id: string) {
+    const transcript = await this.findById(id);
+    await this.transcriptRepository.delete(id);
+    return { success: true, data: transcript, deletedAt: new Date() };
+  }
+
   /**
    * 基于段落（Segment）获取录制的转写文本
    */
   async getText(recordingId: string): Promise<string> {
     const transcript = await this.transcriptRepository.findDetails(recordingId);
-    if (!transcript || !transcript.segments) {
+    if (!transcript) {
+      throw new NotFoundException(`转录记录不存在: ${recordingId}`);
+    }
+    if (!transcript.segments) {
       return '';
     }
 
@@ -55,7 +107,10 @@ export class TranscriptService {
    */
   async getJson(recordingId: string): Promise<any[]> {
     const transcript = await this.transcriptRepository.findDetails(recordingId);
-    if (!transcript || !transcript.segments) {
+    if (!transcript) {
+      throw new NotFoundException(`转录记录不存在: ${recordingId}`);
+    }
+    if (!transcript.segments) {
       return [];
     }
 

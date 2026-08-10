@@ -90,13 +90,20 @@ export class TranscriptRepository {
     });
   }
 
+  async delete(id: string) {
+    return this.prisma.transcript.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
+  }
+
   // ==========================================
   // READ OPERATIONS
   // ==========================================
 
   async findById(id: string) {
     return this.prisma.transcript.findUnique({
-      where: { id },
+      where: { id, deletedAt: null },
       include: {
         segments: {
           orderBy: {
@@ -107,18 +114,39 @@ export class TranscriptRepository {
           },
         },
       },
+      omit: { deletedAt: true },
     });
+  }
+
+  async findMany(skip: number = 0, take: number = 10, recordingId?: string) {
+    const where = {
+      deletedAt: null,
+      ...(recordingId ? { recordingId } : {}),
+    };
+
+    const [total, records] = await this.prisma.$transaction([
+      this.prisma.transcript.count({ where }),
+      this.prisma.transcript.findMany({
+        where,
+        skip,
+        take,
+        orderBy: { createdAt: 'desc' },
+        omit: { deletedAt: true },
+      }),
+    ]);
+    return { total, records };
   }
 
   async findByRecordingId(recordingId: string) {
     return this.prisma.transcript.findFirst({
       where: { recordingId },
+      omit: { deletedAt: true },
     });
   }
 
   async findDetails(recordingId: string) {
     return this.prisma.transcript.findFirst({
-      where: { recordingId },
+      where: { recordingId, deletedAt: null },
       include: {
         segments: {
           orderBy: {
@@ -129,12 +157,14 @@ export class TranscriptRepository {
           },
         },
       },
+      omit: { deletedAt: true },
     });
   }
 
   async findBySource(source: string) {
     return this.prisma.transcript.findFirst({
       where: { source },
+      omit: { deletedAt: true },
     });
   }
 

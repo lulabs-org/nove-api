@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import { RecordingSource, RecordingStatus, PrismaClient } from '@prisma/client';
+import {
+  RecordingSource,
+  RecordingStatus,
+  PrismaClient,
+  Prisma,
+} from '@prisma/client';
 
 type PrismaTransaction = Omit<
   PrismaClient,
@@ -22,7 +27,69 @@ export class MeetingRecordingRepository {
 
   async findById(id: string) {
     return this.prisma.meetingRecording.findUnique({
+      where: { id, deletedAt: null },
+      omit: { deletedAt: true },
+    });
+  }
+
+  async create(data: {
+    meetingId: string;
+    externalId?: string;
+    source?: RecordingSource;
+    status?: RecordingStatus;
+    startAt?: Date;
+    endAt?: Date;
+    recorderUserId?: string;
+    metadata?: any;
+  }) {
+    return this.prisma.meetingRecording.create({
+      data: {
+        ...data,
+        source: data.source || RecordingSource.PLATFORM_AUTO,
+        status: data.status || RecordingStatus.COMPLETED,
+        metadata: data.metadata ? (data.metadata as Prisma.InputJsonValue) : {},
+      },
+    });
+  }
+
+  async findMany(query: {
+    meetingId?: string;
+    source?: RecordingSource;
+    status?: RecordingStatus;
+    skip: number;
+    take: number;
+  }) {
+    const where = {
+      deletedAt: null,
+      ...(query.meetingId ? { meetingId: query.meetingId } : {}),
+      ...(query.source ? { source: query.source } : {}),
+      ...(query.status ? { status: query.status } : {}),
+    };
+
+    const [total, records] = await this.prisma.$transaction([
+      this.prisma.meetingRecording.count({ where }),
+      this.prisma.meetingRecording.findMany({
+        where,
+        skip: query.skip,
+        take: query.take,
+        orderBy: { createdAt: 'desc' },
+        omit: { deletedAt: true },
+      }),
+    ]);
+    return { total, records };
+  }
+
+  async update(id: string, data: Prisma.MeetingRecordingUpdateInput) {
+    return this.prisma.meetingRecording.update({
       where: { id },
+      data,
+    });
+  }
+
+  async delete(id: string) {
+    return this.prisma.meetingRecording.update({
+      where: { id },
+      data: { deletedAt: new Date() },
     });
   }
 

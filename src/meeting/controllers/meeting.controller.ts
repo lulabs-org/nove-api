@@ -21,11 +21,8 @@ import {
   ApiUpdateMeetingRecordDocs,
   ApiDeleteMeetingRecordDocs,
   ApiGetMeetingStatsDocs,
-  // ApiReprocessMeetingRecordDocs, // 暂时注释掉
-  ApiGetTranscriptByRecordingIdDocs,
-} from './decorators/meeting-record.decorators';
-import { MeetingService } from './services/meeting.service';
-import { TranscriptService } from './services/transcript.service';
+} from '../decorators/meeting-record.decorators';
+import { MeetingService } from '../services/meeting.service';
 import {
   QueryMeetingRecordsDto,
   MeetingRecordResponseDto,
@@ -34,7 +31,7 @@ import {
   DeleteMeetingRecordResponseDto,
   CreateMeetingRecordDto,
   UpdateMeetingRecordDto,
-} from './dto';
+} from '../dto';
 import { CuidPipe } from '@/common/pipes/cuid.pipe';
 
 /**
@@ -47,10 +44,7 @@ import { CuidPipe } from '@/common/pipes/cuid.pipe';
 export class MeetingController {
   private readonly logger = new Logger(MeetingController.name);
 
-  constructor(
-    private readonly meetingService: MeetingService,
-    private readonly transcriptService: TranscriptService,
-  ) {}
+  constructor(private readonly meetingService: MeetingService) {}
 
   /**
    * 获取会议记录列表
@@ -205,66 +199,6 @@ export class MeetingController {
       return stats;
     } catch (error: unknown) {
       this.logger.error('获取会议统计信息失败', (error as Error).stack);
-      throw error;
-    }
-  }
-
-  // /**
-  //  * 重新处理会议录制文件
-  //  */
-  // @Post(':id/reprocess')
-  // @RequirePermissions('meeting:reprocess')
-  // @HttpCode(HttpStatus.OK)
-  // @ApiReprocessMeetingRecordDocs()
-  // async reprocessMeetingRecord(
-  //   @Param('id', CuidPipe) id: string,
-  // ): Promise<MeetingRecordResponseDto> {
-  //   this.logger.log(`重新处理会议录制文件: ${id}`);
-  //
-  //   try {
-  //     const record = await this.meetingService.reprocessMeetingRecord(id);
-  //
-  //     this.logger.log(`重新处理会议录制文件成功: ${record.id}`);
-  //     return record;
-  //   } catch (error: unknown) {
-  //     this.logger.error(
-  //       `重新处理会议录制文件失败: ${id}`,
-  //       (error as Error).stack,
-  //     );
-  //     throw error;
-  //   }
-  // }
-
-  /**
-   * 获取录制的转写文本
-   */
-  @Get('recordings/:recordingId/transcript')
-  @RequirePermissions('meeting:read')
-  @HttpCode(HttpStatus.OK)
-  @ApiGetTranscriptByRecordingIdDocs()
-  async getTranscriptByRecordingId(
-    @Param('recordingId', CuidPipe) recordingId: string,
-    @Query('format') format?: 'text' | 'json',
-  ): Promise<any> {
-    this.logger.log(`获取录制的转写文本: ${recordingId}, format: ${format}`);
-
-    try {
-      if (format === 'json') {
-        const data = await this.transcriptService.getJson(recordingId);
-
-        this.logger.log(`获取录制的转写 JSON 成功: ${recordingId}`);
-        return { data };
-      }
-
-      const text = await this.transcriptService.getText(recordingId);
-
-      this.logger.log(`获取录制的转写文本成功: ${recordingId}`);
-      return { text };
-    } catch (error: unknown) {
-      this.logger.error(
-        `获取录制的转写文本失败: ${recordingId}`,
-        (error as Error).stack,
-      );
       throw error;
     }
   }

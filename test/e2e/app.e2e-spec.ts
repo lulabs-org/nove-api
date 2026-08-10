@@ -26,9 +26,7 @@ describe('AppController (e2e)', () => {
     it('/ (GET) should return welcome message without authentication', async () => {
       const response = await request(app.getHttpServer()).get('/').expect(200);
 
-      expect(response.text).toBe(
-        'Welcome to Nove Backend Service',
-      );
+      expect(response.text).toBe('Welcome to Nove Backend Service');
     });
 
     it('/ (GET) should have proper headers', async () => {

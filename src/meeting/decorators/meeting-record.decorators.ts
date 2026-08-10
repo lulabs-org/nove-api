@@ -11,6 +11,9 @@ import {
   MeetingRecordListResponseDto,
   MeetingStatsResponseDto,
   DeleteMeetingRecordResponseDto,
+  HealthCheckResponseDto,
+  TranscriptByRecordingIdResponseDto,
+  MeetingRecordResponseDto,
 } from '../dto';
 
 /**
@@ -98,6 +101,7 @@ export const ApiGetMeetingRecordByIdDocs = () =>
     ApiResponse({
       status: 200,
       description: '获取成功',
+      type: MeetingRecordResponseDto,
     }),
     ApiResponse({
       status: 404,
@@ -118,6 +122,7 @@ export const ApiCreateMeetingRecordDocs = () =>
     ApiResponse({
       status: 201,
       description: '创建成功',
+      type: MeetingRecordResponseDto,
     }),
     ApiResponse({
       status: 400,
@@ -148,6 +153,7 @@ export const ApiUpdateMeetingRecordDocs = () =>
     ApiResponse({
       status: 200,
       description: '更新成功',
+      type: MeetingRecordResponseDto,
     }),
     ApiResponse({
       status: 404,
@@ -206,29 +212,6 @@ export const ApiGetMeetingStatsDocs = () =>
     ApiResponse({ status: 500, description: '服务器内部错误' }),
   );
 
-export const ApiReprocessMeetingRecordDocs = () =>
-  applyDecorators(
-    ApiOperation({
-      summary: '重新处理会议录制文件',
-      description: '重新处理指定会议的录制文件，重新生成AI摘要和转录等',
-    }),
-    ApiParam({
-      name: 'id',
-      description: '会议记录ID',
-      type: 'string',
-      format: 'uuid',
-    }),
-    ApiResponse({
-      status: 200,
-      description: '重新处理成功',
-    }),
-    ApiResponse({
-      status: 404,
-      description: '会议记录不存在',
-    }),
-    ApiResponse({ status: 500, description: '服务器内部错误' }),
-  );
-
 export const ApiHealthCheckDocs = () =>
   applyDecorators(
     ApiOperation({
@@ -238,14 +221,7 @@ export const ApiHealthCheckDocs = () =>
     ApiResponse({
       status: 200,
       description: '服务正常运行',
-      schema: {
-        type: 'object',
-        properties: {
-          status: { type: 'string', example: 'ok' },
-          timestamp: { type: 'string', example: '2023-12-01T10:00:00.000Z' },
-          service: { type: 'string', example: 'meeting-service' },
-        },
-      },
+      type: HealthCheckResponseDto,
     }),
     ApiResponse({ status: 500, description: '服务器内部错误' }),
   );
@@ -257,7 +233,7 @@ export const ApiGetTranscriptByRecordingIdDocs = () =>
       description: '根据录制记录ID获取其对应的转写文本',
     }),
     ApiParam({
-      name: 'recordingId',
+      name: 'id',
       description: '录制记录ID',
       type: 'string',
     }),
@@ -270,40 +246,7 @@ export const ApiGetTranscriptByRecordingIdDocs = () =>
     ApiResponse({
       status: 200,
       description: '获取成功',
-      schema: {
-        oneOf: [
-          {
-            type: 'object',
-            properties: {
-              text: { type: 'string', description: '拼接后的转写文本' },
-            },
-          },
-          {
-            type: 'object',
-            properties: {
-              data: {
-                type: 'array',
-                items: {
-                  type: 'object',
-                  properties: {
-                    speakerName: { type: 'string' },
-                    startTime: {
-                      type: 'string',
-                      description: '开始时间, 格式 hh:mm:ss',
-                    },
-                    endTime: {
-                      type: 'string',
-                      description: '结束时间, 格式 hh:mm:ss',
-                    },
-                    text: { type: 'string' },
-                  },
-                },
-                description: '转写段落 JSON 数组',
-              },
-            },
-          },
-        ],
-      },
+      type: TranscriptByRecordingIdResponseDto,
     }),
     ApiResponse({
       status: 404,

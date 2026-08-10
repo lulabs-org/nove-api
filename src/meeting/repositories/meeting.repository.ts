@@ -17,12 +17,16 @@ export class MeetingRepository {
   private toResponseRecord<
     T extends {
       hostId: string | null;
+      durationMs?: bigint | null;
       host?: { id: string; displayName: string | null } | null;
     },
   >(record: T) {
-    const { hostId, ...responseRecord } = record;
+    const { hostId, durationMs, ...responseRecord } = record;
     return {
       ...responseRecord,
+      ...(durationMs !== undefined && {
+        durationMs: durationMs ? Number(durationMs) : null,
+      }),
       hostPlatformUserId: hostId,
     };
   }

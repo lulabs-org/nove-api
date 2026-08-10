@@ -10,7 +10,7 @@
  */
 
 import { Module } from '@nestjs/common';
-import { MeetingController } from './meeting.controller';
+import { MeetingController } from './controllers/meeting.controller';
 import { MeetingService } from './services/meeting.service';
 import { MeetingRecordingService } from './services/meeting-recording.service';
 import { MeetingSummaryService } from './services/meeting-summary.service';
@@ -25,9 +25,22 @@ import { MeetingParticipantRepository } from './repositories/meeting-participant
 import { HttpModule } from '@nestjs/axios';
 import { PrismaModule } from '../prisma/prisma.module';
 
+import { MeetingSummaryController } from './controllers/meeting-summary.controller';
+import { ParticipantSummaryController } from './controllers/participant-summary.controller';
+import { TranscriptController } from './controllers/transcript.controller';
+import { MeetingRecordingController } from './controllers/meeting-recording.controller';
+import { ParticipantSummaryCrudService } from './services/participant-summary-crud.service';
+import { ParticipantSummaryRepository } from '@/meet-ai/repositories';
+
 @Module({
   imports: [HttpModule, PrismaModule],
-  controllers: [MeetingController],
+  controllers: [
+    MeetingController,
+    MeetingSummaryController,
+    ParticipantSummaryController,
+    TranscriptController,
+    MeetingRecordingController,
+  ],
   providers: [
     MeetingService,
     MeetingRecordingService,
@@ -38,8 +51,9 @@ import { PrismaModule } from '../prisma/prisma.module';
     MeetingSummaryRepository,
     MeetingRecordingRepository,
     TranscriptRepository,
-
     MeetingParticipantRepository,
+    ParticipantSummaryCrudService,
+    ParticipantSummaryRepository,
   ],
   exports: [
     MeetingService,
@@ -51,8 +65,8 @@ import { PrismaModule } from '../prisma/prisma.module';
     MeetingSummaryRepository,
     MeetingRecordingRepository,
     TranscriptRepository,
-
     MeetingParticipantRepository,
+    ParticipantSummaryCrudService,
   ],
 })
 export class MeetingModule {}
