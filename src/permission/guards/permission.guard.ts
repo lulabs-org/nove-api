@@ -13,13 +13,14 @@ import {
   NO_PERMISSION_REQUIRED_KEY,
 } from '../decorators/permissions.decorator';
 import { IS_PUBLIC_KEY } from '@/auth/decorators/public.decorator';
+import type { AuthContext } from '@/auth/types/auth-context.interface';
 import { PermService } from '../services/permission.service';
 
 interface RequestWithAuthContext {
-  authContext?: {
-    userId: string | null;
-    permissions: string[];
-  };
+  authContext?: Pick<
+    AuthContext,
+    'authMethod' | 'userId' | 'permissions' | 'apiKeyId'
+  >;
   user?: {
     id: string;
   };
@@ -83,20 +84,30 @@ export class PermissionGuard implements CanActivate {
     }
 
     try {
+      const permissionsToCheck = this.getPermissionsAllowedByApiKey(
+        request.authContext,
+        requiredPermissions,
+        mode,
+      );
+
+      if (!permissionsToCheck) {
+        return false;
+      }
+
       let hasPermission = false;
 
       switch (mode) {
         case PermissionMode.ALL:
           hasPermission = await this.permissionService.hasAllPermissions(
             userId,
-            requiredPermissions,
+            permissionsToCheck,
           );
           break;
         case PermissionMode.ANY:
         default:
           hasPermission = await this.permissionService.hasAnyPermission(
             userId,
-            requiredPermissions,
+            permissionsToCheck,
           );
           break;
       }
@@ -112,5 +123,39 @@ export class PermissionGuard implements CanActivate {
       this.logger.error('Error checking permissions', error);
       return false;
     }
+  }
+
+  /**
+   * API Key 权限是创建者权限的收窄，而不是创建者权限的替代品。
+   *
+   * ANY 模式下必须保证同一个权限点同时存在于 Key scopes 和用户角色中；
+   * 不能出现 Key 有 A、用户有 B，却因为双方各自满足 ANY 而放行的情况。
+   */
+  private getPermissionsAllowedByApiKey(
+    authContext: RequestWithAuthContext['authContext'],
+    requiredPermissions: string[],
+    mode: PermissionMode,
+  ): string[] | null {
+    if (authContext?.authMethod !== 'api_key') {
+      return requiredPermissions;
+    }
+
+    const apiKeyScopes = new Set(authContext.permissions);
+    const scopedPermissions = requiredPermissions.filter((permission) =>
+      apiKeyScopes.has(permission),
+    );
+    const hasRequiredScopes =
+      mode === PermissionMode.ALL
+        ? scopedPermissions.length === requiredPermissions.length
+        : scopedPermissions.length > 0;
+
+    if (!hasRequiredScopes) {
+      this.logger.warn(
+        `API key ${authContext.apiKeyId ?? 'unknown'} does not have required scopes: ${requiredPermissions.join(', ')}`,
+      );
+      return null;
+    }
+
+    return scopedPermissions;
   }
 }
