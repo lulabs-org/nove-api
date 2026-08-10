@@ -192,6 +192,10 @@ export class TokenService {
         refreshExpiresIn: refreshExpiresInSeconds,
       };
     } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        // Do not log business logic exceptions as system errors
+        throw error;
+      }
       this.logger.error('Refresh token validation failed', error);
       throw new UnauthorizedException('刷新令牌无效');
     }

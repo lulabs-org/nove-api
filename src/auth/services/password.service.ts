@@ -85,7 +85,7 @@ export class PasswordService {
     // 吊销该用户所有现有 refresh token（踢掉其他设备 + 本设备旧 token）
     await this.refreshTokenRepo.revokeAllTokensByUserId(user.id);
 
-    // 为本设备签发新 token，实现无缝续会话（对齐飞书体验）
+    // 为本设备签发新 token，实现无缝续会话
     const tokens = await this.tokenService.generateTokens(user.id, {
       ip,
       userAgent,
