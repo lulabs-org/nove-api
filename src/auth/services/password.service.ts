@@ -10,6 +10,7 @@
  */
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
+import { ResetPasswordResponseDto } from '../dto/reset-password-response.dto';
 import { VerificationService } from '@/verification/verification.service';
 import { CodeType } from '@/verification/enums';
 import { UserQueryRepository } from '@/user/repositories/user-query.repository';
@@ -43,14 +44,7 @@ export class PasswordService {
     resetPasswordDto: ResetPasswordDto,
     ip: string,
     userAgent?: string,
-  ): Promise<{
-    success: boolean;
-    message: string;
-    accessToken: string;
-    expiresIn: number;
-    refreshToken: string;
-    refreshExpiresIn: number;
-  }> {
+  ): Promise<ResetPasswordResponseDto> {
     const { target, code, newPassword } = resetPasswordDto;
 
     const verifyResult = await this.verificationService.verifyCode(

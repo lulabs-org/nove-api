@@ -16,44 +16,23 @@ import {
   ApiConsumes,
   ApiProduces,
 } from '@nestjs/swagger';
+import { ResetPasswordResponseDto } from '../../dto/reset-password-response.dto';
 
 export function ApiResetPasswordDocs() {
   return applyDecorators(
     ApiOperation({
       summary: '重置密码',
       description:
-        '通过验证码重置用户密码。需要先调用发送验证码接口获取验证码，然后提供验证码和新密码完成重置。',
+        '通过验证码重置用户密码。需要先调用发送验证码接口获取验证码，然后提供验证码和新密码完成重置。重置成功后会吊销该用户所有现有会话（含其他设备）并为本设备签发新 token，实现无缝续会话。',
       tags: ['Auth'],
     }),
     ApiConsumes('application/json'),
     ApiProduces('application/json'),
     ApiResponse({
       status: 200,
-      description: '密码重置成功，返回新的访问令牌（web 客户端的 refreshToken 通过 httpOnly cookie 下发，body 不返回）',
-      schema: {
-        type: 'object',
-        required: ['success', 'accessToken', 'expiresIn'],
-        properties: {
-          success: { type: 'boolean', description: '重置是否成功' },
-          message: { type: 'string', description: '重置结果消息' },
-          accessToken: { type: 'string', description: '新的访问令牌（JWT）' },
-          expiresIn: { type: 'number', description: '访问令牌有效期（秒）' },
-          refreshToken: {
-            type: 'string',
-            description: '新的刷新令牌（仅 app 客户端返回，web 客户端通过 cookie 下发）',
-          },
-          refreshExpiresIn: {
-            type: 'number',
-            description: '刷新令牌有效期（秒，仅 app 客户端返回）',
-          },
-        },
-        example: {
-          success: true,
-          message: '密码重置成功',
-          accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-          expiresIn: 900,
-        },
-      },
+      description:
+        '密码重置成功，返回新的访问令牌（web 客户端的 refreshToken 通过 httpOnly cookie 下发，body 不返回）',
+      type: ResetPasswordResponseDto,
     }),
     ApiResponse({
       status: 400,

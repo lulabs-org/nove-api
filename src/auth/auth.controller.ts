@@ -46,6 +46,7 @@ import { LoginService, RegisterService, TokenService } from '@/auth/services';
 import { PasswordService } from './services/password.service';
 import { Public } from '@/auth/decorators/public.decorator';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { ResetPasswordResponseDto } from './dto/reset-password-response.dto';
 import { TokenBlacklistService } from './services/token-blacklist.service';
 import { User, CurrentUser } from '@/auth/decorators/user.decorator';
 import { RequireAuth } from '@/auth/decorators/require-auth.decorator';
@@ -161,14 +162,7 @@ export class AuthController {
     @Body(ValidationPipe) resetPasswordDto: ResetPasswordDto,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<{
-    success: boolean;
-    message: string;
-    accessToken: string;
-    expiresIn: number;
-    refreshToken?: string;
-    refreshExpiresIn?: number;
-  }> {
+  ): Promise<ResetPasswordResponseDto> {
     const ip = HttpUtil.getClientIp(req);
     const userAgent = req.get('User-Agent');
     const result = await this.passwordService.resetPassword(
