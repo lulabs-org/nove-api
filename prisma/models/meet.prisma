@@ -20,7 +20,7 @@ model Meeting {
   createdBy        PlatformUser? @relation("MeetingCreator", fields: [createdById], references: [id], onDelete: SetNull)
   hostId           String?       @map("host_id") // Host's platform user ID
   host             PlatformUser? @relation("HostedMeetings", fields: [hostId], references: [id], onDelete: SetNull)
-  participantCount Int? // 参与人数
+  participantCount Int? @map("participant_count") // 参与人数
 
   // 时间信息
   scheduledStartAt DateTime? @map("scheduled_start_at") @db.Timestamptz(6) // 预定开始时间
@@ -31,9 +31,9 @@ model Meeting {
   timezone         String?   @db.VarChar(50) // 时区
 
   // 录制和处理状态
-  hasRecording     Boolean          @default(false)
-  recordingStatus  ProcessingStatus @default(PENDING) // Status for recording processing (e.g. video/audio file generation)
-  processingStatus ProcessingStatus @default(PENDING) // Status for overall meeting processing (e.g. transcription, summary generation)
+  hasRecording     Boolean          @default(false) @map("has_recording")
+  recordingStatus  ProcessingStatus @default(PENDING) @map("recording_status") // Status for recording processing (e.g. video/audio file generation)
+  processingStatus ProcessingStatus @default(PENDING) @map("processing_status") // Status for overall meeting processing (e.g. transcription, summary generation)
 
   // 元数据
   metadata Json @default("{}") @db.JsonB // 平台特定的元数据
