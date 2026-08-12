@@ -55,19 +55,24 @@ export class RecordingCompletedHandler extends BaseEventHandler {
     const { meeting_info, recording_files = [] } = payload;
     const { meeting_id, sub_meeting_id, creator } = meeting_info;
 
-    let r: RecordingData = {};
+    const fetchResult = await this.dataFetcher.fetch({
+      meetid: meeting_id,
+      cid: creator.userid || '',
+      subid: sub_meeting_id,
+      files: recording_files.map((file) => ({ id: file.record_file_id })),
+    });
 
-    r.meetid = meeting_id;
-    r.subject = meeting_info.subject || '';
-    r.start_time = meeting_info.start_time || 0;
-    r.end_time = meeting_info.end_time || 0;
-    r.subid = sub_meeting_id;
-    r.cid = creator.userid || '';
-    r.files = recording_files.map((file) => ({
-      id: file.record_file_id,
-    }));
-
-    r = await this.dataFetcher.fetch(r);
+    const r: RecordingData = {
+      meetid: meeting_id,
+      subject: meeting_info.subject || '',
+      start_time: meeting_info.start_time || 0,
+      end_time: meeting_info.end_time || 0,
+      subid: sub_meeting_id,
+      cid: creator.userid || '',
+      deduplicated: fetchResult.deduplicated,
+      participants: fetchResult.participants,
+      files: fetchResult.files,
+    };
 
     if (!r.deduplicated) {
       this.logger.warn('获取参会者列表失败');

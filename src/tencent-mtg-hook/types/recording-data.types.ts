@@ -8,10 +8,26 @@
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
-
 import { ParticipantDetail } from '@/integrations/tencent-meeting/types';
 import { NewSpeakerInfo } from './speaker.types';
 import { NewTranscriptParagraph } from './transcript.types';
+
+export interface RecordingDataFile {
+  /** 文件ID */
+  id: string;
+  /** 待办事项 */
+  todo?: string;
+  /** 完整的会议总结 */
+  fullsummary?: string;
+  /** AI 生成的会议纪要 */
+  aiminutes?: string;
+  /** AI 生成的格式化文本 */
+  formattedtext?: string;
+  /** 说话人列表 */
+  speakerlist?: NewSpeakerInfo[];
+  /** 会议纪要段落 */
+  paragraphs?: NewTranscriptParagraph[];
+}
 
 export interface RecordingData {
   /** 会议ID (meeting_id) */
@@ -36,20 +52,6 @@ export interface RecordingData {
    * 顺序不保证严格反映发言时间，主要用于简单的日志记录和进出事件统计
    */
   participants?: ParticipantDetail[];
-  files?: Array<{
-    /** 文件ID */
-    id: string;
-    /** 待办事项 */
-    todo?: string;
-    /** 完整的会议总结 */
-    fullsummary?: string;
-    /** AI 生成的会议纪要 */
-    aiminutes?: string;
-    /** AI 生成的格式化文本 */
-    formattedtext?: string;
-    /** 说话人列表 */
-    speakerlist?: NewSpeakerInfo[];
-    /** 会议纪要段落 */
-    paragraphs?: NewTranscriptParagraph[];
-  }>;
+  /** 录制文件数据集合 */
+  files?: RecordingDataFile[];
 }
