@@ -6,7 +6,7 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { SystemConfigService } from './system-config.service';
-import { RequirePermissions } from '@/permission/decorators/permissions.decorator';
+import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
 
 @ApiTags('Admin / System Config')
 @ApiBearerAuth()

@@ -50,11 +50,11 @@ import { TokenBlacklistService } from './services/token-blacklist.service';
 import { User, CurrentUser } from '@/auth/decorators/user.decorator';
 import { RequireAuth } from '@/auth/decorators/require-auth.decorator';
 import { ClientType } from '@/auth/types/jwt.types';
-import { PermService } from '@/permission/services/permission.service';
+import { PermService } from '@/admin/permission/services/permission.service';
 import { HttpUtil } from '@/common/utils/http.util';
 import { DesensitizationUtil } from '@/common/utils/desensitization.util';
-import { UserOrgService } from '@/api-key/services/user-organization.service';
-import { NoPermissionRequired } from '@/permission/decorators/permissions.decorator';
+import { UserOrgService } from '@/admin/api-key/services/user-organization.service';
+import { NoPermissionRequired } from '@/admin/permission/decorators/permissions.decorator';
 
 @ApiTags('Auth')
 @Controller({

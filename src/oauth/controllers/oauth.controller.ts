@@ -18,7 +18,7 @@ import { AuthorizeDto, TokenDto } from '../dto/oauth.dto';
 import { RequireAuth } from '@/auth/decorators/require-auth.decorator';
 import { User, CurrentUser } from '@/auth/decorators/user.decorator';
 import { Public } from '@/auth/decorators/public.decorator';
-import { NoPermissionRequired } from '@/permission/decorators/permissions.decorator';
+import { NoPermissionRequired } from '@/admin/permission/decorators/permissions.decorator';
 
 @ApiTags('OAuth')
 @Controller({

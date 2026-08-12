@@ -18,7 +18,7 @@ import {
   ApiBearerAuth,
   ApiParam,
 } from '@nestjs/swagger';
-import { RequirePermissions } from '@/permission/decorators/permissions.decorator';
+import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
 
 import { OrgMemberService } from '../services/org-member.service';
 import {

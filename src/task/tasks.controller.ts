@@ -21,7 +21,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiTags, ApiExtraModels } from '@nestjs/swagger';
-import { NoPermissionRequired } from '@/permission/decorators/permissions.decorator';
+import { NoPermissionRequired } from '@/admin/permission/decorators/permissions.decorator';
 import { TasksService } from './services/tasks.service';
 import { CreateOnceDto } from './dto/create-once.dto';
 import { CreateCronDto } from './dto/create-cron.dto';

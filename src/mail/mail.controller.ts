@@ -25,7 +25,7 @@ import {
   ApiSendEmailDocs,
   ApiVerifyConnectionDocs,
 } from './decorators/mail.decorators';
-import { NoPermissionRequired } from '@/permission/decorators/permissions.decorator';
+import { NoPermissionRequired } from '@/admin/permission/decorators/permissions.decorator';
 
 @ApiTags('Mail')
 @Controller('mail')

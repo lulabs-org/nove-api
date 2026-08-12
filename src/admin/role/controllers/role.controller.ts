@@ -17,7 +17,7 @@ import {
   ApiBearerAuth,
   ApiParam,
 } from '@nestjs/swagger';
-import { RequirePermissions } from '@/permission/decorators/permissions.decorator';
+import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
 
 import { RoleService } from '../services/role.service';
 import {
@@ -30,7 +30,7 @@ import {
   CreateRoleBindingDto,
   RoleBindingDto,
 } from '../dto';
-import { PermissionDto } from '@/permission/dto';
+import { PermissionDto } from '@/admin/permission/dto';
 
 @ApiTags('Admin - Roles')
 @Controller('admin/roles')

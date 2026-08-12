@@ -17,7 +17,7 @@ import {
   ApiOperation,
   ApiResponse,
 } from '@nestjs/swagger';
-import { RequirePermissions } from '@/permission/decorators/permissions.decorator';
+import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
 import { TranscriptService } from '../services/transcript.service';
 import {
   CreateTranscriptDto,

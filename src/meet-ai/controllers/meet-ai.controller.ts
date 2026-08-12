@@ -19,7 +19,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
-import { NoPermissionRequired } from '@/permission/decorators/permissions.decorator';
+import { NoPermissionRequired } from '@/admin/permission/decorators/permissions.decorator';
 import { PeriodSummaryService, ParticipantSummaryService } from '../services';
 import {
   TriggerSummaryDto,

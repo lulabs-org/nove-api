@@ -6,9 +6,9 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { UnifiedAuthGuard } from './unified-auth.guard';
-import { ApiKeyService } from '@/api-key/services/api-key.service';
-import { UserOrgService } from '@/api-key/services/user-organization.service';
-import { PermService } from '@/permission/services/permission.service';
+import { ApiKeyService } from '@/admin/api-key/services/api-key.service';
+import { UserOrgService } from '@/admin/api-key/services/user-organization.service';
+import { PermService } from '@/admin/permission/services/permission.service';
 import { REQUIRE_AUTH_KEY } from '../decorators/require-auth.decorator';
 
 /* eslint-disable @typescript-eslint/unbound-method */

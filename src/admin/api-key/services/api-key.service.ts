@@ -25,7 +25,7 @@ import {
   RotateApiKeyResponse,
 } from '../dto';
 import { ApiKeyAuthContext } from '../types';
-import { PermService } from '@/permission/services/permission.service';
+import { PermService } from '@/admin/permission/services/permission.service';
 
 /**
  * API Key Service

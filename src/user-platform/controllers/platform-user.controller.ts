@@ -18,7 +18,7 @@ import {
   ApiTags,
   getSchemaPath,
 } from '@nestjs/swagger';
-import { RequirePermissions } from '@/permission/decorators/permissions.decorator';
+import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
 import { PlatformUserService } from '../services/platform-user.service';
 import { Platform } from '@prisma/client';
 import {

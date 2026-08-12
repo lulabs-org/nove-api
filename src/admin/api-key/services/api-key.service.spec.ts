@@ -10,7 +10,7 @@ import { apiKeyConfig } from '@/configs/api-key.config';
 import { ApiKeyStatus } from '@prisma/client';
 import { CreateApiKeyDto, UpdateApiKeyDto } from '../dto';
 import { computeKeyHash } from '../utils/crypto.util';
-import { PermService } from '@/permission/services/permission.service';
+import { PermService } from '@/admin/permission/services/permission.service';
 
 /* eslint-disable @typescript-eslint/unbound-method */
 

@@ -18,7 +18,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { NoPermissionRequired } from '@/permission/decorators/permissions.decorator';
+import { NoPermissionRequired } from '@/admin/permission/decorators/permissions.decorator';
 import { Request } from 'express';
 import { ProfileService } from './services/profile.service';
 import { User, CurrentUser } from '@/auth/decorators/user.decorator';

@@ -27,9 +27,9 @@ import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
 import { AuthContext, AuthMethod } from '../types/auth-context.interface';
 import { REQUIRE_AUTH_KEY } from '../decorators/require-auth.decorator';
-import { ApiKeyService } from '@/api-key/services/api-key.service';
-import { UserOrgService } from '@/api-key/services/user-organization.service';
-import { PermService } from '@/permission/services/permission.service';
+import { ApiKeyService } from '@/admin/api-key/services/api-key.service';
+import { UserOrgService } from '@/admin/api-key/services/user-organization.service';
+import { PermService } from '@/admin/permission/services/permission.service';
 import type { AuthenticatedUser } from '@/auth/types/jwt.types';
 
 @Injectable()
