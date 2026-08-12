@@ -171,8 +171,8 @@ export class MeetingDatabaseService {
       throw new Error('Meeting not found');
     }
 
-    for (let index = 0; index < (r.files?.length || 0); index++) {
-      const file = r.files![index];
+    for (let index = 0; index < (r.recordingFiles?.length || 0); index++) {
+      const file = r.recordingFiles![index];
 
       const recording = await this.recordingRepo.upsert({
         meetingId: meeting.id,
@@ -205,8 +205,8 @@ export class MeetingDatabaseService {
       throw new Error('Meeting not found');
     }
 
-    for (let index = 0; index < (r.files?.length || 0); index++) {
-      const file = r.files![index];
+    for (let index = 0; index < (r.recordingFiles?.length || 0); index++) {
+      const file = r.recordingFiles![index];
 
       const recording = await this.recordingRepo.find(meeting.id, file.id);
 
@@ -245,8 +245,8 @@ export class MeetingDatabaseService {
       throw new Error('Meeting not found');
     }
 
-    for (let index = 0; index < (r.files?.length || 0); index++) {
-      const file = r.files![index];
+    for (let index = 0; index < (r.recordingFiles?.length || 0); index++) {
+      const file = r.recordingFiles![index];
 
       const recording = await this.recordingRepo.find(meeting.id, file.id);
 

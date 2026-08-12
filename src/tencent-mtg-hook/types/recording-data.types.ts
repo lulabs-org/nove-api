@@ -53,5 +53,5 @@ export interface RecordingData {
    */
   participants?: ParticipantDetail[];
   /** 录制文件数据集合 */
-  files?: RecordingDataFile[];
+  recordingFiles?: RecordingDataFile[];
 }

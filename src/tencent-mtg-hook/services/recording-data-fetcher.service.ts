@@ -36,7 +36,7 @@ export interface FetchRecordingParams {
   /** 子会议ID（周期性会议会有此字段） */
   subid?: string;
   /** 需要处理的录制文件基本信息列表 */
-  files: Array<{ id: string }>;
+  recordingFiles: Array<{ id: string }>;
 }
 
 /**
@@ -48,7 +48,7 @@ export interface FetchRecordingResult {
   /** 包含重复进出记录的原始参会者列表 */
   participants?: ParticipantDetail[];
   /** 经过处理并填充了总结、转写和说话人信息的录制文件列表 */
-  files: RecordingDataFile[];
+  recordingFiles: RecordingDataFile[];
 }
 
 /**
@@ -72,11 +72,11 @@ export class RecordingDataFetcherService {
    * @returns 补充完整后的会议衍生数据集合
    */
   async fetch(params: FetchRecordingParams): Promise<FetchRecordingResult> {
-    const { meetid, cid, subid, files } = params;
+    const { meetid, cid, subid, recordingFiles } = params;
 
     if (!meetid || !cid) {
       this.logger.warn('缺少必要参数: meetid 或 cid');
-      return { files: [] };
+      return { recordingFiles: [] };
     }
 
     let deduplicated: ParticipantDetail[] | undefined;
@@ -93,13 +93,13 @@ export class RecordingDataFetcherService {
       );
     }
 
-    const processedFiles: RecordingDataFile[] = (files || []).map((f) => ({
+    const processedFiles: RecordingDataFile[] = (recordingFiles || []).map((f) => ({
       id: f.id,
     }));
 
     if (!processedFiles.length) {
       this.logger.warn('没有录制文件');
-      return { deduplicated, participants, files: processedFiles };
+      return { deduplicated, participants, recordingFiles: processedFiles };
     }
 
     // 并发处理所有文件
@@ -107,7 +107,7 @@ export class RecordingDataFetcherService {
       processedFiles.map((file) => this.processFile(file, cid, deduplicated)),
     );
 
-    return { deduplicated, participants, files: processedFiles };
+    return { deduplicated, participants, recordingFiles: processedFiles };
   }
 
   /**

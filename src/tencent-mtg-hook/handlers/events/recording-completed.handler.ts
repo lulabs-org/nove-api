@@ -59,7 +59,7 @@ export class RecordingCompletedHandler extends BaseEventHandler {
       meetid: meeting_id,
       cid: creator.userid || '',
       subid: sub_meeting_id,
-      files: recording_files.map((file) => ({ id: file.record_file_id })),
+      recordingFiles: recording_files.map((file) => ({ id: file.record_file_id })),
     });
 
     const r: RecordingData = {
@@ -71,7 +71,7 @@ export class RecordingCompletedHandler extends BaseEventHandler {
       cid: creator.userid || '',
       deduplicated: fetchResult.deduplicated,
       participants: fetchResult.participants,
-      files: fetchResult.files,
+      recordingFiles: fetchResult.recordingFiles,
     };
 
     if (!r.deduplicated) {

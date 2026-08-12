@@ -47,8 +47,8 @@ export class SummaryService {
       throw new Error('Meeting not found');
     }
 
-    for (let index = 0; index < (r.files?.length || 0); index++) {
-      const file = r.files![index];
+    for (let index = 0; index < (r.recordingFiles?.length || 0); index++) {
+      const file = r.recordingFiles![index];
 
       for (const u of r.deduplicated || []) {
         if (file.speakerlist?.find((uInfo) => uInfo.username === u.user_name)) {
