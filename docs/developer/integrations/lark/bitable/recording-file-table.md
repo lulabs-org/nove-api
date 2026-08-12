@@ -61,7 +61,7 @@ LARK_TABLE_MEETING_RECORD_FILE=your_recording_file_table_id
 ### 2. 在代码中使用
 
 ```typescript
-import { RecordingFileBitableRepository } from '@libs/integrations-lark/repositories';
+import { RecordingFileBitableRepository } from '@/integrations/lark/repositories';
 
 // 注入服务
 constructor(private readonly recordingFileRepo: RecordingFileBitableRepository) {}

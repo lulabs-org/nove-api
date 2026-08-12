@@ -1,202 +1,47 @@
-# 系统架构设计文档
+# 系统架构
 
-## 概述
+Nove API 是一个 NestJS 单体应用，围绕身份与权限、组织管理、会议数据、AI 总结、订单和第三方集成组织领域模块。应用同时暴露 REST、GraphQL、MCP、Webhook 与运维入口，PostgreSQL 保存业务数据，Redis 支撑 BullMQ 队列。
 
-本文档提供了 Nove API 系统的架构概览和详细文档索引。Nove API 是一个基于 NestJS 的企业级智能数据仓库与 AI Agent 基础设施，提供实时数据处理、用户认证、会议管理、AI 智能体集成和第三方服务协同等功能。
-
-## 整体架构概览
-
-### 系统架构图
+## 运行时拓扑
 
 ```mermaid
-graph TB
-    subgraph Clients["客户端/第三方服务"]
-        WebUI[Web UI]
-        Mobile[移动应用]
-        ThirdPartyAPI[第三方API集成]
-        MCPClient[MCP 客户端]
-    end
+flowchart LR
+  Client[管理端 / API 客户端] --> REST[REST + Swagger]
+  Agent[MCP 客户端] --> MCP[MCP Server]
+  Vendor[腾讯会议 / 飞书 / 微信小店] --> Hook[Webhook Controllers]
 
-    subgraph APIGateway["API网关"]
-        Routing[路由管理]
-        RateLimit[限流控制]
-        Validation[请求验证]
-    end
+  REST --> Guard[UnifiedAuth + Scope + Permission Guards]
+  MCP --> App[NestJS 领域模块]
+  Hook --> App
+  Guard --> App
 
-    subgraph LoadBalancer["负载均衡器<br/>(Nginx/HAProxy/ALB)"]
-        LB[负载均衡]
-    end
-
-    subgraph AppInstances["应用实例"]
-        subgraph App1["应用实例1 (NestJS)"]
-            Auth1[认证/权限模块]
-            Meeting1[会议与AI模块]
-            Integration1[集成/Webhook模块]
-            Business1[订单与业务模块]
-        end
-
-        subgraph App2["应用实例2 (NestJS)"]
-            Auth2[认证/权限模块]
-            Meeting2[会议与AI模块]
-            Integration2[集成/Webhook模块]
-            Business2[订单与业务模块]
-        end
-    end
-
-    subgraph DataStorage["数据存储"]
-        subgraph PostgreSQL["PostgreSQL<br/>主数据库"]
-            UserData[用户与组织数据]
-            MeetingData[会议与录制数据]
-            BusinessData[业务与日志数据]
-        end
-
-        subgraph Redis["Redis<br/>缓存/队列"]
-            Session[会话存储]
-            Queue[Task/BullMQ 任务队列]
-            Cache[临时缓存]
-        end
-
-        subgraph ObjectStorage["对象存储<br/>(OSS/COS)"]
-            Recordings[录制文件]
-            Attachments[附件文件]
-            Static[静态资源]
-        end
-    end
-
-    subgraph ThirdPartyServices["第三方服务"]
-        subgraph TencentMeeting["腾讯会议API"]
-            Webhook[Webhook事件]
-            Recording[会议录制]
-            Participant[参会者管理]
-        end
-
-        subgraph Feishu["飞书API"]
-            Bitable[多维表格]
-            Notification[通知消息]
-            AppIntegration[应用集成]
-        end
-
-        subgraph WechatShop["微信小店API"]
-            WechatOrders[订单同步]
-        end
-
-        subgraph OtherServices["其他第三方服务"]
-            SMS[阿里云短信]
-            Email[邮件服务]
-            OpenAI[OpenAI / LLM API]
-        end
-    end
-
-    Clients -->|HTTPS/WebSocket/Webhook| APIGateway
-    APIGateway --> LoadBalancer
-    LoadBalancer --> AppInstances
-    AppInstances --> DataStorage
-    AppInstances --> ThirdPartyServices
+  App --> DB[(PostgreSQL / Prisma)]
+  App --> Queue[(Redis / BullMQ)]
+  Queue --> Worker[队列处理器]
+  Worker --> DB
+  App --> External[LLM / 邮件 / 短信 / 平台 API]
 ```
 
-## 技术栈概览
+全局 `ValidationPipe` 开启 `whitelist`、`forbidNonWhitelisted` 和 `transform`。认证、Scope 与权限守卫在 `AppModule` 中以 `APP_GUARD` 注册；公开接口或只要求认证的接口必须使用项目装饰器显式声明。
 
-系统采用现代化的技术栈，包括 Node.js、NestJS、TypeScript、Prisma、PostgreSQL、Redis 等。详细的技术栈信息请参考 [技术栈文档](./tech-stack.md)。
+## 主要边界
 
-## 架构文档索引
+- **身份与授权**：`auth`、`api-key`、`oauth`、`role`、`permission`。
+- **组织域**：`org`、`dept`、`org-member`、`user`、`user-platform`。
+- **会议域**：`meeting` 负责会议、录制、转写和总结 CRUD；`meet-ai` 负责生成参会者与周期总结。
+- **集成域**：`tencent-mtg`、`tencent-mtg-hook`、`lark-meeting`、`wechat-shop`。
+- **基础能力**：`prisma`、`task`、`webhook-log`、`mail`、`sms`、`llm`、`admin/system-config`。
 
-以下文档详细描述了系统架构的各个方面：
+模块清单见[模块地图](./module-map.md)，目录约定见[项目结构](./project-structure.md)，真实脚本以[命令说明](../guides/development/package-scripts.md)为准。
 
-### 核心架构文档
+## 本地入口
 
-| 文档 | 描述 |
-|------|------|
-| [技术栈](./tech-stack.md) | 详细介绍系统使用的技术栈和第三方服务集成 |
-| [模块设计](./modules.md) | 系统模块划分和各模块的职责与交互 |
-| [数据流设计](./data-flow.md) | 系统数据流和处理逻辑 |
-| [项目结构](./project-structure.md) | 项目目录结构和组织方式 |
+启动 `pnpm start:dev` 后可访问：
 
-## 开发指南
+- Swagger UI：`http://localhost:3000/api`
+- OpenAPI JSON：`http://localhost:3000/api-json`
+- Redoc：`http://localhost:3000/docs`
+- GraphQL：`http://localhost:3000/graphql`
+- Bull Board：`http://localhost:3000/queues`（Basic Auth）
 
-### 快速开始
-
-1. **环境准备**:
-   - 安装 Node.js 18.x+ 和 pnpm
-   - 安装 PostgreSQL 14+ 和 Redis 7.x
-   - 配置环境变量
-
-2. **项目设置**:
-   ```bash
-   # 克隆项目
-   git clone <repository-url>
-   cd nove-api
-   
-   # 安装依赖
-   pnpm install
-   
-   # 配置环境变量
-   cp .env.example .env
-   # 编辑 .env 文件，配置必要的环境变量
-   
-   # 数据库设置
-   pnpm db:generate
-   pnpm db:migrate
-   pnpm db:seed
-   
-   # 启动开发服务器
-   pnpm start:dev
-   ```
-
-3. **访问应用**:
-   - API 文档: http://localhost:3000/api
-   - 健康检查: http://localhost:3000/health
-
-### 开发流程
-
-1. **代码规范**:
-   - 使用 ESLint 和 Prettier 进行代码格式化
-   - 遵循 TypeScript 严格模式
-   - 编写单元测试和集成测试
-
-2. **提交规范**:
-   - 使用 Conventional Commits 规范
-   - 提交前运行测试和代码检查
-   - 创建 Pull Request 进行代码审查
-
-3. **测试流程**:
-   ```bash
-   # 运行单元测试
-   pnpm test:unit
-    
-   # 运行集成测试
-   pnpm test:integration
-    
-   # 运行所有测试
-   pnpm test:all
-    
-   # 生成测试覆盖率报告
-   pnpm test:cov
-   ```
-
-## 部署指南
-
-### 环境配置
-
-系统支持多环境部署，包括开发、测试和生产环境。每个环境有独立的配置和数据库实例。
-
-### 部署方式
-
-1. **传统部署**:
-   - 使用 PM2 进行进程管理
-   - Nginx 作为反向代理和负载均衡器
-   - PostgreSQL 主从复制和 Redis 集群
-
-2. **容器化部署**:
-   - 使用 Docker 和 Docker Compose
-   - Kubernetes 集群部署
-   - Helm Charts 管理部署配置
-
-### 监控和日志
-
-- 使用 Prometheus 和 Grafana 进行指标监控
-- ELK Stack 进行日志聚合和分析
-- OpenTelemetry 进行分布式追踪
-
-## 延伸阅读
-
-Nove API 系统采用现代化的技术栈和模块化架构设计，具有高性能、高可用、易扩展的特点。如需深入了解特定方面，请参考上方的架构文档索引表格。
+根路由 `/` 是当前应用健康响应；`/meet-ai/health` 用于 Meet AI 子域检查。

@@ -1,5 +1,8 @@
 # 第三方会议集成插件化架构规划
 
+> [!IMPORTANT]
+> **文档性质：路线图。** 当前仓库仍使用 `src/integrations/tencent-meeting`、`src/tencent-mtg` 与 `src/tencent-mtg-hook`，下文的统一插件契约、`meeting-core` 和热插拔能力尚未实现。
+
 ## 1. 背景与痛点
 
 目前系统内的腾讯会议集成（位于 `src/integrations/tencent-meeting`）深度依赖了 Nest.js 框架（如 `@Injectable`, `@Inject`, `Logger` 等），这在当前阶段能够快速跑通业务，但在系统未来长期的发展中会面临以下挑战：
