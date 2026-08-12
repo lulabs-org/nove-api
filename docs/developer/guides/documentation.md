@@ -1,63 +1,46 @@
-# Nove API 项目文档
+# 文档维护指南
 
-欢迎来到 Nove API 项目文档！本文档库提供了项目的全面指南，包括架构、集成、功能模块和部署等信息。
+Nove API 文档采用“当前事实、操作指南、模块契约、集成实现、外部参考、未来规划”分层，避免把愿景或厂商资料误当成当前系统行为。
 
-## 📚 文档导航
+## 目录职责
 
-本文档分为两个主要板块，请根据您的角色选择合适的文档入口：
-
-### 👨‍💻 开发者文档
-面向开发团队成员，包含技术实现细节、架构设计、开发指南等。
-
-[📖 进入开发者文档](developer/index.md)
-
-### 👤 用户文档
-面向最终用户，包含如何使用系统功能、API接口等。
-
-[📖 进入用户文档](user/index.md)
-
-## 🏗️ 文档结构
-
-```
+```text
 docs/
-├── .vitepress/          # VitePress 站点配置与主题
-├── developer/           # 开发者文档
-│   ├── architecture/    #   架构设计（整体架构、技术栈、数据流、模块设计）
-│   ├── setup/           #   环境搭建（数据库、部署）
-│   ├── development/     #   开发指南（Git 协作、脚本、安全、测试）
-│   ├── modules/         #   核心模块（认证、API Key、MCP）
-│   ├── integrations/    #   第三方集成（飞书、腾讯会议、阿里云、邮件）
-│   └── roadmap/         #   路线图（项目目标、多租户架构）
-├── user/                # 用户文档
-│   ├── getting-started/ #   快速开始与用户指南
-│   ├── api/             #   API 使用指南
-│   └── faq/             #   常见问题
-├── public/              # 静态资源（Logo 等）
-└── index.md             # 站点首页
+├── developer/
+│   ├── architecture/   # 当前系统的整体结构和数据流
+│   ├── guides/         # 开发、数据库、部署和文档操作指南
+│   ├── modules/        # Nove 自有模块与 API 契约
+│   ├── integrations/   # 第三方服务在 Nove 中的实现
+│   ├── reference/      # 厂商 API、协议和原始 Payload 样本
+│   └── roadmap/        # 尚未完成或仍在演进的方案
+├── user/               # 面向 API 使用者的说明
+├── public/             # 站点静态资源
+└── index.md            # 文档站首页
 ```
 
-## 🚀 本地启动文档站点
+## 放置规则
+
+- 描述当前跨模块结构：放入 `architecture/`。
+- 回答“如何开发、测试、部署”：放入 `guides/`。
+- 解释 Nove 领域模块、路由或权限：放入 `modules/`。
+- 解释 Nove 如何调用第三方：放入 `integrations/`。
+- 保存第三方原始接口说明和请求/响应样本：放入 `reference/`。
+- 尚未完全实现的设计：放入 `roadmap/`，页面开头标明状态。
+
+不要在多个目录复制同一契约。运行时 DTO、控制器、Prisma schema 和根 `package.json` 是事实来源，文档负责解释和导航。
+
+## 页面与导航
+
+每个一级目录必须有 `index.md`，说明目录边界并链接主要页面。新增、移动或删除页面后同步 `.vitepress/config.mts`。厂商参考资料可以不全部放进主侧栏，但必须从 `reference/index.md` 可发现。
+
+内部 Markdown 链接使用相对路径；运行时 localhost 地址用代码格式，避免被 VitePress 当作构建期死链。不要关闭 `ignoreDeadLinks`。
+
+## 验证
 
 ```bash
-# 在项目根目录下
 pnpm docs:dev
-
-# 或进入 docs 目录
-cd docs
-pnpm run docs:dev
-```
-
-构建静态站点：
-
-```bash
 pnpm docs:build
+git diff --check
 ```
 
-## 📝 文档贡献
-
-如果您想为文档做出贡献，请遵循以下原则：
-- 保持文档的准确性和时效性
-- 使用清晰简洁的语言
-- 为新功能添加相应的文档
-- 遵循现有的文档结构和格式规范
-- 当修改系统逻辑时，同步更新对应的文档
+`pnpm docs:build` 必须在 `ignoreDeadLinks: false` 下通过。若页面描述了构建入口、脚本或生成文件，再运行对应代码命令验证，不只检查文字。

@@ -41,50 +41,48 @@ export default withMermaid(
           text: '🏗️ 架构设计',
           collapsed: false,
           items: [
+            { text: '架构索引', link: '/developer/architecture/' },
             { text: '整体架构', link: '/developer/architecture/overview' },
             { text: '技术栈', link: '/developer/architecture/tech-stack' },
             { text: '数据流设计', link: '/developer/architecture/data-flow' },
-            { text: '模块设计', link: '/developer/architecture/modules' },
+            { text: '模块地图', link: '/developer/architecture/module-map' },
             { text: '项目结构', link: '/developer/architecture/project-structure' },
-          ],
-        },
-        {
-          text: '⚙️ 环境搭建',
-          collapsed: false,
-          items: [
-            {
-              text: '数据库配置',
-              collapsed: true,
-              items: [
-                { text: 'Prisma 配置', link: '/developer/setup/database/prisma-setup' },
-                { text: '数据库规范', link: '/developer/setup/database/style-guide' },
-              ],
-            },
-            {
-              text: '部署配置',
-              collapsed: true,
-              items: [
-                { text: '部署概述', link: '/developer/setup/deployment/overview' },
-                { text: '部署指南', link: '/developer/setup/deployment/guide' },
-              ],
-            },
           ],
         },
         {
           text: '📖 开发指南',
           collapsed: false,
           items: [
-            { text: 'Git 协作', link: '/developer/development/git-collaboration' },
-            { text: '脚本说明', link: '/developer/development/package-scripts' },
-            { text: '安全规范', link: '/developer/development/security' },
-            { text: '版本控制', link: '/developer/development/version-control' },
-            { text: 'NestJS 测试规范', link: '/developer/development/nestjs-testing-standards' },
+            { text: '指南索引', link: '/developer/guides/' },
+            {
+              text: '数据库配置',
+              collapsed: true,
+              items: [
+                { text: 'Prisma 配置', link: '/developer/guides/database/prisma-setup' },
+                { text: '数据库规范', link: '/developer/guides/database/style-guide' },
+              ],
+            },
+            {
+              text: '部署配置',
+              collapsed: true,
+              items: [
+                { text: '部署概述', link: '/developer/guides/deployment/overview' },
+                { text: '部署指南', link: '/developer/guides/deployment/guide' },
+              ],
+            },
+            { text: 'Git 协作', link: '/developer/guides/development/git-collaboration' },
+            { text: '脚本说明', link: '/developer/guides/development/package-scripts' },
+            { text: '测试规范', link: '/developer/guides/development/nestjs-testing-standards' },
+            { text: '安全规范', link: '/developer/guides/development/security' },
+            { text: '版本控制', link: '/developer/guides/development/version-control' },
+            { text: '文档维护', link: '/developer/guides/documentation' },
           ],
         },
         {
           text: '🧩 核心模块',
           collapsed: false,
           items: [
+            { text: '模块索引', link: '/developer/modules/' },
             {
               text: '认证模块',
               collapsed: true,
@@ -130,6 +128,7 @@ export default withMermaid(
           text: '🔌 第三方集成',
           collapsed: false,
           items: [
+            { text: '集成索引', link: '/developer/integrations/' },
             {
               text: '飞书集成',
               collapsed: true,
@@ -171,8 +170,17 @@ export default withMermaid(
           ],
         },
         {
+          text: '📚 参考资料',
+          collapsed: true,
+          items: [
+            { text: '参考索引', link: '/developer/reference/' },
+            { text: '腾讯会议 API 与样本', link: '/developer/reference/tencent-meeting/' },
+          ],
+        },
+        {
           text: '🗺️ 路线图',
           items: [
+            { text: '路线图索引', link: '/developer/roadmap/' },
             { text: '项目愿景与目标', link: '/developer/roadmap/project-goals' },
             { text: '多租户架构', link: '/developer/roadmap/multi-tenant-architecture' },
             { text: '会议插件系统', link: '/developer/roadmap/meeting-plugin-system' },

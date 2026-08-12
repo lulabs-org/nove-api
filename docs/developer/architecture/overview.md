@@ -32,7 +32,7 @@ flowchart LR
 - **集成域**：`tencent-mtg`、`tencent-mtg-hook`、`lark-meeting`、`wechat-shop`。
 - **基础能力**：`prisma`、`task`、`webhook-log`、`mail`、`sms`、`llm`、`admin/system-config`。
 
-模块清单见[模块设计](./modules.md)，目录约定见[项目结构](./project-structure.md)，真实脚本以[命令说明](../development/package-scripts.md)为准。
+模块清单见[模块地图](./module-map.md)，目录约定见[项目结构](./project-structure.md)，真实脚本以[命令说明](../guides/development/package-scripts.md)为准。
 
 ## 本地入口
 

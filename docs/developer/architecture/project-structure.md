@@ -22,7 +22,16 @@ nove_api/
 │   ├── migrations/            # 已提交迁移
 │   └── seeds/ seed-utils/     # 可重复执行的种子数据
 ├── test/                      # 集成、系统、E2E 与共享夹具
-├── docs/                      # VitePress 开发者/用户文档
+├── docs/                      # VitePress 文档站
+│   ├── developer/
+│   │   ├── architecture/      # 当前跨模块架构
+│   │   ├── guides/            # 开发、数据库、部署指南
+│   │   ├── modules/           # Nove 自有模块契约
+│   │   ├── integrations/      # 第三方在 Nove 中的实现
+│   │   ├── reference/         # 厂商 API 与 Payload 样本
+│   │   └── roadmap/           # 未完成或演进中方案
+│   ├── user/                  # API 使用者文档
+│   └── public/                # 文档站静态资源
 ├── scripts/                   # 运维、迁移和数据脚本
 └── dist/ coverage/            # 生成物，不作为源码编辑
 ```
@@ -56,3 +65,7 @@ Prisma 采用 schema folder：根 `schema.prisma` 保存 generator/datasource，
 - 集成：`test/integration/**/*.int-spec.ts`
 - 系统：`test/system/**/*.spec.ts`
 - E2E：`test/e2e/**/*.e2e-spec.ts`
+
+## 文档放置
+
+当前事实与未来方案必须分开：`architecture/`、`modules/`、`integrations/` 描述已实现能力，`reference/` 保存外部资料，`roadmap/` 保存目标设计。详细规则见[文档维护指南](../guides/documentation.md)。
