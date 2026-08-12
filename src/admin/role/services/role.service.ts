@@ -15,7 +15,7 @@ import {
   RoleBindingDto,
 } from '../dto';
 import { Role, RoleType, Permission } from '@prisma/client';
-import { PermissionDto } from '@/permission/dto';
+import { PermissionDto } from '@/admin/permission/dto';
 
 interface RoleWithPermissions extends Role {
   permissions: Array<{

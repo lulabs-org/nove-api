@@ -10,7 +10,7 @@
  */
 
 import { Module, Global } from '@nestjs/common';
-import { PrismaModule } from '../prisma/prisma.module';
+import { PrismaModule } from '@/prisma/prisma.module';
 import { PermService } from './services/permission.service';
 import { DataPermService } from './services/data-permission.service';
 import { PermRepository, DataPermRepository } from './repositories';

@@ -13,7 +13,7 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { RequirePermissions } from '@/permission/decorators/permissions.decorator';
+import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
 import { TencentMtgSyncService } from './services/tencent-mtg-sync.service';
 import { TencentMtgUserLinkService } from './services/tencent-mtg-user-link.service';
 import { SyncRecordingsDto } from './dto/sync-recordings.dto';

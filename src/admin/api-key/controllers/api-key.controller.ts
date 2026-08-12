@@ -16,7 +16,7 @@ import {
   ApiBearerAuth,
   ApiParam,
 } from '@nestjs/swagger';
-import { RequirePermissions } from '@/permission/decorators/permissions.decorator';
+import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
 
 import { RequireAuth } from '@/auth/decorators/require-auth.decorator';
 import { User, CurrentUser } from '@/auth/decorators/user.decorator';

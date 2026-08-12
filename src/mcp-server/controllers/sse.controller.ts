@@ -24,7 +24,7 @@ import {
 
 import { McpSseService } from '@rekog/mcp-nest';
 import { Public } from '@/auth/decorators/public.decorator';
-import { McpAuthJwtGuard } from '@/api-key/guards/api-key-mcp-auth.guard';
+import { McpAuthJwtGuard } from '@/admin/api-key/guards/api-key-mcp-auth.guard';
 
 /**
  * Advanced SSE Controller - Direct use of McpSseService

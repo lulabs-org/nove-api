@@ -13,8 +13,8 @@ import { Global, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from '@/prisma/prisma.module';
 import { apiKeyConfig } from '@/configs/api-key.config';
-import { RoleModule } from '@/role/role.module';
-import { PermissionModule } from '@/permission/permission.module';
+import { RoleModule } from '@/admin/role/role.module';
+import { PermissionModule } from '@/admin/permission/permission.module';
 
 import { ApiKeyController } from './controllers/api-key.controller';
 

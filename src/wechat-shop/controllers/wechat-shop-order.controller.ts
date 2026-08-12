@@ -7,8 +7,8 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
-import { NoPermissionRequired } from '@/permission/decorators/permissions.decorator';
-import { RequireRoles } from '@/role/decorators/roles.decorator';
+import { NoPermissionRequired } from '@/admin/permission/decorators/permissions.decorator';
+import { RequireRoles } from '@/admin/role/decorators/roles.decorator';
 import { WechatOrderHistorySyncDto } from '../dto';
 import { WechatShopOrderService } from '../services';
 

@@ -18,7 +18,7 @@ import {
   ApiOperation,
   ApiResponse,
 } from '@nestjs/swagger';
-import { RequirePermissions } from '@/permission/decorators/permissions.decorator';
+import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
 import { MeetingSummaryService } from '../services/meeting-summary.service';
 import {
   QueryMeetingSummaryDto,
