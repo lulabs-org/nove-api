@@ -1,90 +1,44 @@
-# 模块设计文档
+# 模块设计
 
-本文档详细描述了 Nove API 系统的模块划分和设计，包括核心业务模块、集成模块和基础设施模块。
+本页列出当前由 `src/app.module.ts` 装配的主要领域能力。实际路由、DTO 与权限要求以控制器和生成的 OpenAPI 文档为准。
 
-## 模块架构概览
+## 身份、组织与权限
 
-本系统采用模块化架构设计，每个模块遵循单一职责原则，通过依赖注入实现松耦合。模块分为核心业务、权限与组织架构、电商与订单、集成模块和基础设施模块五大类。
+| 模块 | 目录 | 当前职责 |
+|---|---|---|
+| Auth | `src/auth` | 注册、登录、刷新、登出、密码重置；支持 JWT 与客户端类型 |
+| API Key / OAuth | `src/api-key`、`src/oauth` | 应用凭证、Scope 与 OAuth 2.0 授权能力 |
+| Role / Permission | `src/role`、`src/permission` | RBAC、数据权限规则与全局权限守卫 |
+| Organization | `src/org` | 组织生命周期与租户上下文 |
+| Department | `src/dept` | 部门树、移动、状态、负责人和成员查询 |
+| Org Member | `src/org-member` | 用邮箱/手机号新增、批量导入、角色/部门关联及软删除 |
+| User Platform | `src/user-platform` | 外部平台账号与本地用户关联 |
 
-## 核心业务模块
+参见[组织与成员](../modules/org-management/overview.md)。
 
-### 1. 认证模块 (Auth Module)
-**目录结构**: `src/auth/`
-**职责**: 用户身份验证、授权管理和令牌处理
-**核心组件**: AuthController, Register/Login/PasswordService, TokenService 等。基于 JWT 实现。
+## 会议与 AI
 
-### 2. 会议模块 (Meeting Module)
-**目录结构**: `src/meeting/`
-**职责**: 会议记录管理、会议数据分析和会议统计
-**核心组件**: MeetingController, MeetingService, MeetingStatisticsService。负责会议信息的 CRUD 与核心展现。
+`meeting` 将会议、录制、转写、会议总结和参会者总结拆成独立控制器与服务。`meet-ai` 负责按参会者或时间周期生成总结，并通过仓储一次聚合生成上下文，避免服务层重复读取关系。腾讯会议与飞书接入分别由 `tencent-mtg` / `tencent-mtg-hook` 和 `lark-meeting` 负责。
 
-### 3. 会议智能与处理 (Meet AI Module)
-**目录结构**: `src/meet-ai/`
-**职责**: 结合大模型对会议内容进行提取、分析和总结。
+## 订单与外部集成
 
-### 4. 用户基础模块 (User & User Platform)
-**目录结构**: `src/user/`, `src/user-platform/`
-**职责**: 用户档案管理、多平台（如飞书、微信）账号绑定。
-**核心组件**: UserController, PlatformUserController, ProfileService。
+- `wechat-shop`：验证和解密回调、同步历史订单，并用 `wechat-order-sync` 队列异步处理。
+- `order`：订单、退款及本地业务映射。
+- `mail`、`sms`、`verification`：邮件、短信和一次性验证码。
+- `llm`：隔离具体 LLM 供应商，为会议 AI 提供统一调用面。
+- `mcp-server`：通过 SSE/HTTP 等传输向外部 Agent 暴露 MCP 能力。
 
-### 5. API Key 管理 (API Key Module)
-**目录结构**: `src/api-key/`
-**职责**: 开发者或第三方应用访问本系统 API 的凭证管理。
+## 基础设施
 
-## 权限与组织架构模块
+- `prisma`：数据库连接和事务入口。
+- `task`：计划任务、后台任务与处理器。
+- `webhook-log`：保存第三方回调的处理状态和脱敏上下文。
+- `admin/system-config`：管理 `mail` 与 `wechat-shop` 动态配置，更新后发出热更新事件。参见[系统配置](../modules/system-config/overview.md)。
 
-本系统实现了灵活的多租户和企业级权限管控 (RBAC)。
+## 模块依赖规则
 
-### 1. 组织与部门 (Org, Dept, Org Member)
-**目录结构**: `src/org/`, `src/dept/`, `src/org-member/`
-**职责**: 企业租户 (Organization) 管理，部门树形结构维护，以及组织成员的生命周期管理。
-
-### 2. 角色与权限 (Role & Permission)
-**目录结构**: `src/role/`, `src/permission/`
-**职责**: 细粒度的权限点定义（支持树形层级结构）与角色绑定。基于 `permission.guard.ts` 和 `@Permissions()` 装饰器进行路由拦截。
-
-## 电商与订单模块
-
-### 1. 订单管理 (Order Module)
-**目录结构**: `src/order/`
-**职责**: 系统内部的商品购买订单生命周期管理与退款逻辑。
-
-### 2. 微信小店集成 (Wechat Shop Module)
-**目录结构**: `src/wechat-shop/`
-**职责**: 对接微信视频号/微信小店 API，拉取订单事件并同步到系统内。
-
-## 集成模块
-
-### 1. 腾讯会议 (Tencent Meeting)
-**目录结构**: `src/tencent-mtg/`, `src/tencent-mtg-hook/`
-**职责**: 腾讯会议 OpenAPI 的调用与 Webhook 事件（录制完成、参会人进出、结束等）的异步处理。
-
-### 2. 飞书会议 (Lark Meeting & Integrations)
-**目录结构**: `src/lark-meeting/`, `src/integrations/lark/`
-**职责**: 飞书 Webhook 事件接收，以及将系统内产生的会议纪要、录制记录同步推送至飞书多维表格 (Bitable)。
-
-### 3. MCP 服务器 (MCP Server)
-**目录结构**: `src/mcp-server/`
-**职责**: 提供 Model Context Protocol (MCP) 接口，允许外部大语言模型客户端直接通过标准协议查询或操作系统内部资源。
-
-### 4. 邮件与短信 (Mail & Verification)
-**目录结构**: `src/mail/`, `src/verification/`
-**职责**: SMTP 邮件发送（包含带鉴权的延时发送）、阿里云短信发送，以及验证码的生成与校验。
-
-## 基础设施模块
-
-### 1. 任务调度 (Task Module)
-**目录结构**: `src/task/`
-**职责**: 系统定时任务 (Cron) 与后台异步任务执行管理，确保长耗时操作不阻塞 HTTP 请求。
-
-### 2. Webhook 日志 (Webhook Log Module)
-**目录结构**: `src/webhook-log/`
-**职责**: 记录所有外部服务（腾讯会议、飞书、微信小店）回调本系统的原始 Payload 和处理状态，方便排障与重试。
-
-### 3. 数据库与缓存 (Prisma & Redis)
-**目录结构**: `src/prisma/`, `src/redis/`
-**职责**: PostgreSQL 的 Prisma ORM 客户端实例化与生命周期管理，Redis 客户端封装与缓存辅助。
-
-### 4. 通用与配置 (Common & Configs)
-**目录结构**: `src/common/`, `src/configs/`
-**职责**: 系统级异常过滤器、响应拦截器、加密工具、全局环境变量注册。
+1. 通过 NestJS Module 的 imports/exports 建立依赖，不跨领域实例化服务。
+2. Controller 必须声明认证/权限语义，并将输入放入 DTO 校验。
+3. 集成凭据不得出现在业务日志或响应中；使用配置服务及掩码契约。
+4. 网络调用、批量同步等耗时任务优先进入 BullMQ；是否异步以现有模块实现为准。
+5. 新增模块后同步 `AppModule`、权限种子、OpenAPI 装饰器、测试和本页。

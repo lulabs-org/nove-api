@@ -1,93 +1,34 @@
 # Nove API 开发者文档
 
-欢迎来到 Nove API 开发者文档！本文档面向开发团队成员，提供了系统架构、开发指南、核心模块机制、第三方集成实现和环境部署等全面详细的技术文档。
+本文档面向后端开发、集成开发和运维人员。内容以当前 NestJS 模块、Prisma schema、根 `package.json`、Docker/CI 配置为基线；具体接口字段始终以运行中的 OpenAPI 文档为准。
 
-## 📚 文档导览
+## 快速定位
 
-根据您的职责和当前需求，请参考以下分类内容：
+| 目标 | 文档 |
+|---|---|
+| 理解运行时、模块和目录 | [系统架构](architecture/overview.md) · [模块设计](architecture/modules.md) · [项目结构](architecture/project-structure.md) |
+| 搭建数据库和运行项目 | [Prisma 配置](setup/database/prisma-setup.md) · [Package 脚本](development/package-scripts.md) |
+| 编写和运行测试 | [NestJS 测试规范](development/nestjs-testing-standards.md) |
+| 理解认证和 API Key | [认证概述](modules/authentication/overview.md) · [API Key](modules/api-key/overview.md) |
+| 开发组织/成员能力 | [组织、部门与成员](modules/org-management/overview.md) |
+| 管理动态密钥配置 | [全局系统配置](modules/system-config/overview.md) |
+| 接入 Agent | [MCP 连接指南](modules/mcp/connection-guide.md) |
+| 维护腾讯会议或飞书 | [腾讯会议](integrations/tencent-meeting/overview.md) · [飞书](integrations/lark/overview.md) |
+| 构建与发布 | [部署概览](setup/deployment/overview.md) · [部署指南](setup/deployment/guide.md) |
 
-### 🔍 快速定位
+## 当前能力边界
 
-| 我想要... | 去看 |
-|-----------|------|
-| 了解项目整体架构和技术选型 | [整体架构](architecture/overview.md) / [技术栈](architecture/tech-stack.md) |
-| 搭建本地开发环境 | [项目结构](architecture/project-structure.md) → [Prisma 配置](setup/database/prisma-setup.md) |
-| 了解 Git 工作流和提交规范 | [Git 协作](development/git-collaboration.md) |
-| 查找 package.json 脚本用途 | [脚本说明](development/package-scripts.md) |
-| 编写或阅读测试 | [NestJS 测试规范](development/nestjs-testing-standards.md) |
-| 对接认证模块 | [认证概述](modules/authentication/overview.md) |
-| 使用或管理 API Key | [API Key 概述](modules/api-key/overview.md) |
-| 连接 MCP / AI 智能体 | [MCP 连接指南](modules/mcp/connection-guide.md) |
-| 集成飞书/腾讯会议 | [飞书集成](integrations/lark/overview.md) / [腾讯会议](integrations/tencent-meeting/overview.md) |
-| 了解项目未来规划 | [项目愿景与目标](roadmap/project-goals.md) |
+- REST、GraphQL、MCP 与三类平台 Webhook 由同一 NestJS 应用承载。
+- PostgreSQL/Prisma 保存业务数据；Redis/BullMQ 承担飞书和微信订单等异步任务。
+- 全局认证、Scope、权限和 DTO 校验统一生效，例外必须通过装饰器显式声明。
+- 会议域覆盖会议、录制、转写、会议总结和参会者总结；AI 生成由 `meet-ai` + `llm` 编排。
+- 全局系统配置目前支持邮件与微信小店，敏感字段只返回掩码。
 
-### 🏗️ 架构设计
-快速了解项目的宏观系统设计和技术结构：
-- [整体架构](architecture/overview.md) - 系统架构概览与进程通信
-- [技术栈](architecture/tech-stack.md) - 后端核心技术选型和第三方服务清单
-- [数据流设计](architecture/data-flow.md) - 关键业务对象（会议、用户、组织等）的流转逻辑
-- [模块设计](architecture/modules.md) - NestJS 系统模块划分和职责
-- [项目结构](architecture/project-structure.md) - 源码目录结构及标准组织方式
+路线图文档（如[会议插件系统](roadmap/meeting-plugin-system.md)）描述未来方案，不代表已经实现；阅读时应与[模块设计](architecture/modules.md)中的当前能力区分。
 
-### ⚙️ 环境搭建
-本地环境准备、数据库构建与服务器部署说明：
-- **数据库配置**
-  - [Prisma 配置](setup/database/prisma-setup.md) - Prisma ORM 集成参数和工作流
-  - [数据库规范](setup/database/style-guide.md) - 表结构与字段设计规范
-- **部署配置**
-  - [部署概述](setup/deployment/overview.md) - 应用部署拓扑与运维概述
-  - [部署指南](setup/deployment/guide.md) - 各环境（开发、测试、生产）部署详细指引
+## 文档维护规则
 
-### 📖 开发指南
-团队协同、代码风格保障与代码质量维持的指导文件：
-- [Git 协作](development/git-collaboration.md) - Commit 提交规范与分支模型
-- [脚本说明](development/package-scripts.md) - Package.json 中的 NPM 脚本用途查询
-- [安全规范](development/security.md) - 安全最佳实践与漏洞防范
-- [版本控制](development/version-control.md) - 标签与发版记录管理
-- [NestJS 测试规范](development/nestjs-testing-standards.md) - 单元测试与端到端（E2E）覆盖率要求
-
-### 🧩 核心模块
-深挖复杂功能的具体实现与原理：
-- **认证模块**
-  - [认证概述](modules/authentication/overview.md)
-  - [注册流程](modules/authentication/registration-flow.md)
-  - [登出实现](modules/authentication/logout-implementation.md)
-- **API Key 模块**
-  - [概述](modules/api-key/overview.md)
-  - [使用示例](modules/api-key/examples.md)
-  - [变更日志](modules/api-key/changelog.md)
-- **MCP Server**
-  - [连接指南](modules/mcp/connection-guide.md) - Model Context Protocol AI 集成说明
-
-### 🔌 第三方集成
-内外部服务接入机制：
-- **飞书/Lark 集成**
-  - [集成概述](integrations/lark/overview.md)
-  - [集成总结](integrations/lark/summary.md)
-  - [Webhook 集成](integrations/lark/webhook/integration.md)
-  - **飞书多维表格 (Bitable) 同步**
-    - [批量操作](integrations/lark/bitable/batch-operations.md)
-    - [Upsert 指南](integrations/lark/bitable/upsert-guide.md)
-    - [Upsert 操作](integrations/lark/bitable/upsert-operations.md)
-    - [测试指南](integrations/lark/bitable/testing-guide.md)
-    - [详细测试指南](integrations/lark/bitable/testing-guide-detailed.md)
-    - [录制文件表](integrations/lark/bitable/recording-file-table.md)
-- **腾讯会议集成**
-  - [集成概述](integrations/tencent-meeting/overview.md)
-  - [Webhook 处理](integrations/tencent-meeting/webhook.md)
-  - [Webhook 测试](integrations/tencent-meeting/webhook-testing.md)
-- **其他基础设施集成**
-  - [阿里云短信](integrations/aliyun/sms-setup.md) - Dysmsapi 接入
-  - [邮件服务](integrations/email/api.md) - SMTP 队列处理
-
-### 🗺️ 路线图
-了解项目未来的架构演进计划：
-- [项目愿景与目标](roadmap/project-goals.md)
-- [多租户架构](roadmap/multi-tenant-architecture.md)
-
----
-
-## 👨‍🔧 文档反馈与贡献
-
-当您在开发相关功能且改变了系统固有逻辑时，请务必同步更新对应的文档文件。
-保证本文档与对应的源码库版本时效一致。
+1. 修改路由、DTO、权限码或脚本时，同步更新对应文档。
+2. 架构页只写当前代码可验证的行为；设想放入 `roadmap/` 并标注阶段。
+3. 新增页面后更新 `.vitepress/config.mts` 导航。
+4. 提交前运行 `pnpm docs:build`，不得通过关闭死链检查绕过错误。

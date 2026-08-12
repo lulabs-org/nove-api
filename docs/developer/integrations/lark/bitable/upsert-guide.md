@@ -356,17 +356,12 @@ const updateOrderStatus = async (orderNo: string, status: string) => {
 
 ## 测试
 
-提供了测试脚本，可以通过以下命令测试upsert功能：
+当前 upsert 行为由真实集成测试覆盖：
 
 ```bash
-# 设置测试环境变量
-export LARK_APP_ID=your_app_id
-export LARK_APP_SECRET=your_app_secret
-export LARK_APP_TOKEN=your_app_token
-export LARK_TABLE_ID=your_table_id
-
-# 运行测试
-npx ts-node libs/integrations-lark/examples/test-upsert.ts
+pnpm test:integration -- --runInBand \
+  test/integration/bitable.service.int-spec.ts \
+  --testNamePattern='Upsert'
 ```
 
 ## 技术支持
@@ -374,5 +369,5 @@ npx ts-node libs/integrations-lark/examples/test-upsert.ts
 如需更多帮助，请参考：
 
 - [飞书多维表格API文档](https://open.feishu.cn/document/server-docs/docs/bitable-v1/bitable-overview)
-- [示例代码](libs/integrations-lark/examples/upsert-usage.example.ts)
-- [测试脚本](libs/integrations-lark/examples/test-upsert.ts)
+- [测试指南](./testing-guide.md)
+- 源码：`src/integrations/lark/services/bitable.service.ts`

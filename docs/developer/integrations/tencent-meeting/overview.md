@@ -139,7 +139,7 @@ POST /meetings/:id/reprocess
 #### 7. 健康检查
 
 ```text
-GET /meetings/health
+GET /
 ```
 
 ## 数据库模型
@@ -227,25 +227,25 @@ GET /meetings/health
 
 ### 模块依赖与分层
 
-- libs/integrations/tencent-meeting（通用集成层）
+- `src/integrations/tencent-meeting`（通用集成层）
   - 提供 TencentModule（导出 TencentApiService），以及 crypto.util、exceptions、types。
-  - 不依赖 src；供业务模块（src/…）直接复用，利于共享与测试。
-- src/tencent-meeting（业务层）
-  - 通过依赖 `TencentModule` 使用 API 客户端；通过 `@libs/integrations/tencent-meeting` 直接复用异常、加解密与类型。
+  - 由 `TencentModule` 导出 API 服务，供业务模块通过 NestJS 依赖注入复用。
+- `src/tencent-mtg` 与 `src/tencent-mtg-hook`（业务层）
+  - 前者封装主动 OpenAPI 调用，后者负责 Webhook 验签、解密、事件分派与数据同步。
   - Webhook 配置读取集中在 `TencentMeetingConfigService`，控制器不再直接拼装配置。
 - 数据访问与共享
   - `PrismaModule` 统一提供 `PrismaService`；`MeetingModule` 导出 `MeetingRepository`。
   - `TencentMeetingModule` 通过导入 `MeetingModule` 获取仓储，避免跨域直接提供者注入。
 - 工具与别名
-  - `HttpFileUtil` 上移到 `libs/common/utils/http-file.ts`，统一通过 `@libs/common/utils` 引用。
-  - 统一使用路径别名：`@libs/*`、`@/*`。
+  - `HttpFileUtil` 位于 `src/common/utils/http-file.ts`，通过 `@/common/utils` 或模块导出引用。
+  - 当前路径别名使用 `@/*` 和 `@common/*`，不存在 `@libs/*`。
 
 ### 主要改进点
 
 1. **模块化架构** - 使用NestJS的模块系统组织代码
 2. **依赖注入** - 更好的代码解耦和测试支持
-3. **类型安全** - 完整的TypeScript类型定义（统一在 libs）
-4. **错误处理** - 统一的异常处理（统一在 libs）
+3. **类型安全** - 集成层集中维护 TypeScript 类型定义
+4. **错误处理** - 集成层集中维护异常与协议转换
 5. **日志记录** - 结构化的日志输出
 6. **配置管理** - Webhook 配置集中服务 + 环境变量统一管理
 

@@ -3,7 +3,7 @@ import { withMermaid } from 'vitepress-plugin-mermaid'
 
 export default withMermaid(
   defineConfig({
-  ignoreDeadLinks: true,
+  ignoreDeadLinks: false,
   lang: 'zh-CN',
   title: 'Nove API',
   description: 'Nove API 项目文档 — 面向 AI 时代的企业级智能数据仓库与 Agent 基础设施',
@@ -110,6 +110,20 @@ export default withMermaid(
                 { text: '连接指南', link: '/developer/modules/mcp/connection-guide' },
               ],
             },
+            {
+              text: '组织与成员',
+              collapsed: true,
+              items: [
+                { text: '模块概述', link: '/developer/modules/org-management/overview' },
+              ],
+            },
+            {
+              text: '系统配置',
+              collapsed: true,
+              items: [
+                { text: '全局配置', link: '/developer/modules/system-config/overview' },
+              ],
+            },
           ],
         },
         {
@@ -161,6 +175,7 @@ export default withMermaid(
           items: [
             { text: '项目愿景与目标', link: '/developer/roadmap/project-goals' },
             { text: '多租户架构', link: '/developer/roadmap/multi-tenant-architecture' },
+            { text: '会议插件系统', link: '/developer/roadmap/meeting-plugin-system' },
           ],
         },
       ],

@@ -199,7 +199,7 @@ pnpm db:push
 
 ### 2. 环境变量
 确保以下环境变量正确配置：
-```env
+```text
 JWT_SECRET=your-access-token-secret
 JWT_REFRESH_SECRET=your-refresh-token-secret
 JWT_EXPIRES_IN=15m

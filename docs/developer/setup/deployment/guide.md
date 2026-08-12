@@ -1,622 +1,111 @@
 # 部署指南
 
-## 概述
+本文以仓库当前 `Dockerfile`、`docker-compose.yml`、`.env.example` 和 GitHub Actions 为准。容器部署是推荐路径；手工部署适用于受控主机。
 
-本文档详细说明了如何在不同环境中部署本应用，包括开发环境、测试环境和生产环境的部署步骤。
-
-## 环境要求
-
-### 系统要求
-
-- **操作系统**: Linux (推荐Ubuntu 20.04+) / macOS / Windows (WSL2)
-- **Node.js**: v18.x 或 v20.x
-- **pnpm**: v8.x 或更高版本
-- **PostgreSQL**: v13+ (推荐v15+)
-- **内存**: 最小4GB (推荐8GB+)
-- **存储**: 最小20GB可用空间
-
-### 第三方服务
-
-- 腾讯会议开发者账号
-- 飞书开发者账号
-- 阿里云账号（短信服务）
-- 邮件服务SMTP配置
-
-## 开发环境部署
-
-### 1. 克隆代码库
-
-```bash
-git clone <repository-url>
-cd nove_api
-```
-
-### 2. 安装依赖
-
-```bash
-pnpm install
-```
-
-### 3. 配置环境变量
-
-复制环境配置文件：
+## 准备配置
 
 ```bash
 cp .env.example .env
 ```
 
-编辑 `.env` 文件，配置环境变量。详细配置说明和所有可用参数请参考项目根目录下的 `.env.example` 文件。
+生产环境至少检查：
 
-关键配置项包括：
-- 数据库连接配置（DATABASE_URL）
-- JWT 认证配置（JWT_SECRET 等）
-- 腾讯会议 API 配置（TENCENT_MEETING_*）
-- 飞书集成配置（LARK_*）
-- 阿里云短信服务配置（ALIYUN_SMS_*）
-- 邮件服务配置（SMTP_*）
-- Redis 配置（REDIS_*）
-- OpenAI API 配置（OPENAI_*）
+- `DATABASE_URL` 与 `POSTGRES_*`
+- `REDIS_*` / `REDIS_URL`
+- `JWT_SECRET`、`JWT_REFRESH_SECRET` 及有效期
+- `CORS_ORIGINS`、`CORS_ORIGIN_REGEXES`、`CORS_CREDENTIALS`
+- `BULL_BOARD_USER`、`BULL_BOARD_PASSWORD`
+- 腾讯会议、飞书、微信小店、SMTP、短信和 LLM 凭据
+- 数据库加密密钥（用于动态系统配置）
 
-请确保所有必需的配置项都已正确填写，特别是密钥和凭证信息。
+不要直接使用 `.env.example` 中的占位密钥。生产凭据应由部署平台的 Secret 管理能力注入，并限制 `.env` 文件权限。
 
-### 4. 数据库设置
+## 本地开发
 
-#### 安装PostgreSQL
-
-**Ubuntu/Debian:**
-```bash
-sudo apt update
-sudo apt install postgresql postgresql-contrib
-sudo systemctl start postgresql
-sudo systemctl enable postgresql
-```
-
-**macOS (Homebrew):**
-```bash
-brew install postgresql
-brew services start postgresql
-```
-
-#### 创建数据库
+CI 使用 Node 20 + pnpm 9；Docker 使用 Node 22。开发机应选择其中一个已验证组合。
 
 ```bash
-# 切换到postgres用户
-sudo -u postgres psql
-
-# 创建数据库用户
-CREATE USER lulab_user WITH PASSWORD 'your_password';
-ALTER USER lulab_user CREATEDB;
-
-# 创建数据库
-CREATE DATABASE nove_api OWNER lulab_user;
-
-# 退出
-\q
-```
-
-#### 运行数据库初始化
-
-```bash
-# 生成Prisma客户端
+pnpm install --frozen-lockfile
 pnpm db:generate
-
-# 运行数据库推送（开发环境）
-pnpm db:push
-
-# 或者运行迁移（生产环境）
 pnpm db:migrate
-
-# 初始化种子数据（可选）
-pnpm db:seed
-```
-
-### 5. 启动应用
-
-```bash
-# 开发模式启动
+pnpm db:seed        # 仅在确实需要初始数据时
 pnpm start:dev
-
-# 或者构建后启动
-pnpm build
-pnpm start:prod
 ```
 
-### 6. 验证部署
+验证入口：
 
-访问以下URL验证应用是否正常运行：
+- 根健康响应：`http://localhost:3000/`
+- Meet AI 健康检查：`http://localhost:3000/meet-ai/health`
+- Swagger：`http://localhost:3000/api`
+- OpenAPI JSON：`http://localhost:3000/api-json`
+- GraphQL：`http://localhost:3000/graphql`
 
-- 主页: `http://localhost:3000`
-- API文档: `http://localhost:3000/api`
-- GraphQL Playground: `http://localhost:3000/graphql`
-- 会议健康检查: `http://localhost:3000/meetings/health`
+## Docker Compose
 
-## 测试环境部署
-
-### 1. Docker部署（推荐）
-
-创建 `docker-compose.test.yml`:
-
-```yaml
-version: '3.8'
-
-services:
-  app:
-    build: .
-    ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=test
-      - DATABASE_URL=postgresql://lulab_user:password@postgres:5432/nove_api
-    depends_on:
-      - postgres
-    volumes:
-      - ./logs:/app/logs
-
-  postgres:
-    image: postgres:15
-    environment:
-      - POSTGRES_DB=nove_api
-      - POSTGRES_USER=lulab_user
-      - POSTGRES_PASSWORD=password
-    volumes:
-      - postgres_data_test:/var/lib/postgresql/data
-    ports:
-      - "5433:5432"
-
-volumes:
-  postgres_data_test:
-```
-
-启动测试环境：
+当前 Compose 不负责构建镜像，先构建本地镜像或设置 `NOVE_IMAGE`：
 
 ```bash
-docker-compose -f docker-compose.test.yml up -d
+docker build -t noveapi:local .
+docker compose up -d
+docker compose ps
+docker compose logs -f nove
 ```
 
-### 2. 运行测试
+可通过 `.env` 覆盖 `NOVE_IMAGE`、`NOVE_PORT`、`POSTGRES_PORT`、`REDIS_PORT` 等变量。PostgreSQL 和 Redis 默认映射到宿主机；生产环境若不需要外部访问，应删除端口映射并只保留内部网络。
+
+部署新镜像前执行迁移：
 
 ```bash
-# 运行单元测试
-pnpm test
-
-# 运行集成测试
-pnpm test:integration
-
-# 运行系统测试
-pnpm test:system
-
-# 运行端到端测试
-pnpm test:e2e
-
-# 运行所有测试
-pnpm test:all
-
-# 生成测试覆盖率报告
-pnpm test:cov
-
-# CI 环境下的测试
-pnpm test:ci
-```
-
-## 生产环境部署
-
-### 1. 服务器准备
-
-#### 系统优化
-
-```bash
-# 更新系统
-sudo apt update && sudo apt upgrade -y
-
-# 安装必要工具
-sudo apt install -y git curl wget nginx supervisor
-
-# 安装Node.js (使用NodeSource)
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt-get install -y nodejs
-
-# 安装pnpm
-npm install -g pnpm
-```
-
-### 2. 应用部署
-
-#### 克隆代码
-
-```bash
-# 创建应用目录
-sudo mkdir -p /opt/nove_api
-sudo chown $USER:$USER /opt/nove_api
-
-# 克隆代码
-cd /opt/nove_api
-git clone <repository-url> .
-```
-
-#### 安装依赖和构建
-
-```bash
-# 安装依赖（生产模式）
-pnpm install --prod
-
-# 构建应用
-pnpm build
-
-# 验证构建结果
-node dist/main.js --version
-```
-
-#### 配置环境变量
-
-创建生产环境配置文件：
-
-```bash
-# 创建配置目录
-sudo mkdir -p /etc/nove_api
-
-# 复制配置文件
-sudo cp .env.example /etc/nove_api/.env
-
-# 编辑生产配置
-sudo nano /etc/nove_api/.env
-```
-
-### 3. 数据库设置
-
-#### 运行生产迁移
-
-```bash
-# 运行生产数据库迁移
-pnpm db:migrate
-
-# 或者使用 Prisma CLI
-pnpm exec prisma migrate deploy
-
-# 初始化生产数据（可选）
-pnpm db:seed
-```
-
-### 4. 进程管理
-
-#### 使用PM2管理应用
-
-```bash
-# 安装PM2
-pnpm install -g pm2
-
-# 启动应用
-pm2 start dist/main.js --name "lulab-backend" --env production
-
-# 设置开机自启
-pm2 startup
-pm2 save
-```
-
-#### 使用Systemd管理应用
-
-创建服务文件 `/etc/systemd/system/lulab-backend.service`:
-
-```ini
-[Unit]
-Description=Lulab Backend Application
-After=network.target
-
-[Service]
-Type=simple
-User=www-data
-WorkingDirectory=/opt/nove_api
-Environment=NODE_ENV=production
-EnvironmentFile=/etc/nove_api/.env
-ExecStart=/opt/nove_api/node_modules/.bin/node dist/main.js
-Restart=always
-RestartSec=10
-StandardOutput=journal
-StandardError=journal
-
-[Install]
-WantedBy=multi-user.target
-```
-
-启用服务：
-
-```bash
-sudo systemctl daemon-reload
-sudo systemctl enable lulab-backend
-sudo systemctl start lulab-backend
-```
-
-### 5. 反向代理配置
-
-配置Nginx作为反向代理：
-
-```nginx
-server {
-    listen 80;
-    server_name your-domain.com;
-    
-    location / {
-        proxy_pass http://localhost:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_cache_bypass $http_upgrade;
-    }
-    
-    # 启用HTTPS重定向
-    location /.well-known/acme-challenge/ {
-        root /var/www/certbot;
-    }
-}
-```
-
-配置SSL证书（使用Let's Encrypt）：
-
-```bash
-# 安装certbot
-sudo apt install certbot python3-certbot-nginx
-
-# 获取SSL证书
-sudo certbot --nginx -d your-domain.com
-```
-
-### 6. 监控和日志
-
-#### 日志管理
-
-```bash
-# 查看应用日志
-journalctl -u lulab-backend -f
-
-# 或者使用PM2日志
-pm2 logs lulab-backend
-```
-
-#### 监控配置
-
-安装监控工具：
-
-```bash
-# 安装htop用于系统监控
-sudo apt install htop
-
-# 安装logwatch用于日志分析
-sudo apt install logwatch
-```
-
-### 7. 备份策略
-
-#### 数据库备份
-
-创建备份脚本 `/opt/nove_api/scripts/backup.sh`:
-
-```bash
-#!/bin/bash
-
-BACKUP_DIR="/opt/nove_api/backups"
-DATE=$(date +%Y%m%d_%H%M%S)
-BACKUP_NAME="nove_api_$DATE"
-
-# 创建备份目录
-mkdir -p $BACKUP_DIR
-
-# 数据库备份
-pg_dump -h localhost -U lulab_user -d nove_api > $BACKUP_DIR/${BACKUP_NAME}.sql
-
-# 压缩备份文件
-gzip $BACKUP_DIR/${BACKUP_NAME}.sql
-
-# 删除7天前的备份
-find $BACKUP_DIR -name "*.sql.gz" -mtime +7 -delete
-
-echo "Backup completed: $BACKUP_NAME.sql.gz"
-```
-
-设置定时备份：
-
-```bash
-# 编辑crontab
-crontab -e
-
-# 添加每日凌晨2点备份
-0 2 * * * /opt/nove_api/scripts/backup.sh
-```
-
-## 环境变量详解
-
-### 必需配置
-
-| 变量名 | 描述 | 示例值 |
-|--------|------|--------|
-| DATABASE_URL | 数据库连接字符串 | postgresql://user:pass@host:port/db |
-| JWT_SECRET | JWT密钥 | your_jwt_secret_key |
-| JWT_EXPIRES_IN | JWT过期时间 | 24h |
-
-### 腾讯会议配置
-
-| 变量名 | 描述 | 示例值 |
-|--------|------|--------|
-| TENCENT_MEETING_APP_ID | 应用ID | your_app_id |
-| TENCENT_MEETING_SDK_ID | SDK ID | your_sdk_id |
-| TENCENT_MEETING_SECRET_ID | 密钥ID | your_secret_id |
-| TENCENT_MEETING_SECRET_KEY | 密钥 | your_secret_key |
-| TENCENT_MEETING_TOKEN | Webhook令牌 | your_webhook_token |
-| TENCENT_MEETING_ENCODING_AES_KEY | AES密钥 | your_encoding_aes_key |
-
-### 飞书配置
-
-| 变量名 | 描述 | 示例值 |
-|--------|------|--------|
-| LARK_APP_ID | 飞书应用ID | your_app_id |
-| LARK_APP_SECRET | 飞书应用密钥 | your_app_secret |
-| LARK_BITABLE_APP_TOKEN | 多维表格应用令牌 | your_app_token |
-| LARK_TABLE_MEETING | 会议表格ID | your_meeting_table_id |
-| LARK_TABLE_MEETING_RECORD_FILE | 录制文件表格ID | your_recording_file_table_id |
-
-## 故障排除
-
-### 常见问题
-
-#### 1. 数据库连接失败
-
-**问题**: 应用无法连接到数据库
-
-**解决方案**:
-```bash
-# 检查数据库服务状态
-sudo systemctl status postgresql
-
-# 检查连接字符串
-echo $DATABASE_URL
-
-# 测试数据库连接
-psql $DATABASE_URL
-```
-
-#### 2. 环境变量未加载
-
-**问题**: 配置未正确加载
-
-**解决方案**:
-```bash
-# 检查环境变量
-printenv | grep YOUR_PREFIX
-
-# 验证配置文件路径
-ls -la /etc/nove_api/.env
-```
-
-#### 3. 端口被占用
-
-**问题**: 应用启动失败，端口被占用
-
-**解决方案**:
-```bash
-# 查找占用端口的进程
-lsof -i :3000
-
-# 终止进程
-kill -9 <PID>
-
-# 或者更改应用端口
-export PORT=3001
-```
-
-### 日志查看
-
-```bash
-# PM2日志
-pm2 logs lulab-backend
-
-# Systemd日志
-journalctl -u lulab-backend -f
-
-# 应用日志文件
-tail -f /opt/nove_api/logs/app.log
-```
-
-## 性能调优
-
-### Node.js调优
-
-```bash
-# 设置Node.js内存限制
-export NODE_OPTIONS="--max-old-space-size=4096"
-
-# 启用生产环境优化
-export NODE_ENV=production
-```
-
-### 数据库调优
-
-在 `postgresql.conf` 中调整以下参数：
-
-```conf
-# 连接设置
-max_connections = 200
-shared_buffers = 256MB
-effective_cache_size = 1GB
-work_mem = 4MB
-maintenance_work_mem = 64MB
-```
-
-### Nginx调优
-
-在Nginx配置中添加：
-
-```nginx
-# 启用gzip压缩
-gzip on;
-gzip_types text/plain text/css application/json application/javascript text/xml application/xml;
-
-# 设置连接超时
-keepalive_timeout 65;
-```
-
-## 安全加固
-
-### 应用安全
-
-```bash
-# 设置文件权限
-chmod 600 /etc/nove_api/.env
-chown www-data:www-data /etc/nove_api/.env
-
-# 限制目录访问
-find /opt/nove_api -type d -exec chmod 755 {} \;
-find /opt/nove_api -type f -exec chmod 644 {} \;
-```
-
-### 网络安全
-
-配置防火墙：
-
-```bash
-# 安装ufw
-sudo apt install ufw
-
-# 设置规则
-sudo ufw default deny incoming
-sudo ufw default allow outgoing
-sudo ufw allow ssh
-sudo ufw allow 'Nginx Full'
-sudo ufw enable
-```
-
-## 升级和维护
-
-### 应用升级
-
-```bash
-# 停止应用
-pm2 stop lulab-backend
-
-# 拉取最新代码
-cd /opt/nove_api
-git pull
-
-# 安装新依赖
-pnpm install --prod
-
-# 构建应用
-pnpm run build
-
-# 运行数据库迁移
 pnpm db:migrate:prod
-
-# 启动应用
-pm2 start lulab-backend
 ```
 
-### 数据库维护
+不要在生产运行 `db:push`、`db:migrate`（dev）或 `db:reset`。迁移和应用发布应具备明确的先后顺序与回滚方案。
+
+## 手工生产部署
 
 ```bash
-# 数据库统计信息更新
-psql -d nove_api -c "ANALYZE;"
-
-# 数据库清理
-psql -d nove_api -c "VACUUM ANALYZE;"
+corepack enable
+pnpm install --frozen-lockfile
+pnpm db:generate
+pnpm build
+pnpm db:migrate:prod
+NODE_ENV=production node dist/src/main.js
 ```
+
+当前编译产物入口是 `dist/src/main.js`，与 `Dockerfile` 一致。根 `package.json` 的 `start:prod` 仍指向 `dist/main`，在修正脚本前不要把它作为生产启动命令。
+
+使用 systemd、容器编排器或其他进程管理器时，应以非 root 用户运行，向进程发送可转发的终止信号，并将结构化日志输出到平台日志系统。
+
+## 反向代理与网络
+
+- 外部流量只通过 HTTPS 进入 API；PostgreSQL 和 Redis 不暴露公网。
+- 保留 Webhook 原始请求头和请求体，不让代理改写签名相关字段。
+- 为长连接/SSE 配置合理的读超时和关闭代理缓冲。
+- `CORS_ORIGINS` 使用精确域名；启用 Cookie 凭据时不能使用通配符。
+- `/queues` 必须配置强 Basic Auth，并尽量限制到内网或运维身份。
+
+## 发布门禁
+
+```bash
+pnpm lint
+pnpm lint:prisma
+pnpm prisma validate
+pnpm build
+pnpm test:unit
+pnpm docs:build
+```
+
+涉及外部服务或数据库行为时，再运行对应 integration/system/e2e 测试。真实集成测试必须使用隔离资源和测试凭据。
+
+## 发布后检查
+
+1. 检查根路由、OpenAPI 和关键受保护接口。
+2. 确认 Prisma 迁移状态与应用版本一致。
+3. 检查 BullMQ 队列、失败任务及 Redis/PostgreSQL 健康状态。
+4. 验证至少一个测试 Webhook 的验签、日志和消费链路。
+5. 检查日志中没有 Token、密码、完整签名或个人敏感信息。
+6. 观察错误率与资源使用，确认后再扩大流量。
+
+## 备份与回滚
+
+数据库变更前创建可验证的 PostgreSQL 备份，并定期演练恢复。应用回滚必须考虑迁移的前后兼容：优先使用扩展—迁移—收缩方式，避免旧版本读取不了新 schema。`pnpm db:backup` 调用仓库脚本，但生产使用前应审查目标路径、保留策略和恢复步骤。

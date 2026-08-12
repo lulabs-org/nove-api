@@ -23,7 +23,7 @@ cp .env.example .env
 
 在 `.env` 文件中配置你的邮件服务信息：
 
-```env
+```text
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_SECURE=false
@@ -58,7 +58,7 @@ SMTP_FROM=your-email@gmail.com
 
 邮件服务使用BullMQ队列系统，需要配置Redis：
 
-```env
+```text
 REDIS_HOST=localhost
 REDIS_PORT=6379
 REDIS_PASSWORD=
@@ -97,7 +97,7 @@ src/integrations/email/
 
 ### 1. 发送邮件
 
-**接口地址：** `POST /api/mail/send`
+**接口地址：** `POST /mail/send`
 
 **认证要求：** 需要Bearer Token认证
 
@@ -159,7 +159,7 @@ src/integrations/email/
 
 ### 2. 验证SMTP连接
 
-**接口地址：** `GET /api/mail/verify`
+**接口地址：** `GET /mail/verify`
 
 **认证要求：** 无需认证（公开接口）
 
@@ -191,7 +191,7 @@ src/integrations/email/
 
 ### 3. 延迟发送邮件
 
-**接口地址：** `POST /api/mail/send-later`
+**接口地址：** `POST /mail/send-later`
 
 **认证要求：** 需要Bearer Token认证
 
@@ -259,7 +259,7 @@ interface EmailOptions {
 
 ```bash
 # 发送简单邮件
-curl -X POST http://localhost:3000/api/mail/send \
+curl -X POST http://localhost:3000/mail/send \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -d '{
@@ -269,7 +269,7 @@ curl -X POST http://localhost:3000/api/mail/send \
   }'
 
 # 发送HTML邮件
-curl -X POST http://localhost:3000/api/mail/send \
+curl -X POST http://localhost:3000/mail/send \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -d '{
@@ -281,10 +281,10 @@ curl -X POST http://localhost:3000/api/mail/send \
   }'
 
 # 验证SMTP连接
-curl http://localhost:3000/api/mail/verify
+curl http://localhost:3000/mail/verify
 
 # 延迟发送邮件
-curl -X POST http://localhost:3000/api/mail/send-later \
+curl -X POST http://localhost:3000/mail/send-later \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -d '{
@@ -299,7 +299,7 @@ curl -X POST http://localhost:3000/api/mail/send-later \
 // 发送邮件
 const sendEmail = async () => {
   try {
-    const response = await fetch('http://localhost:3000/api/mail/send', {
+    const response = await fetch('http://localhost:3000/mail/send', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -323,7 +323,7 @@ const sendEmail = async () => {
 // 验证连接
 const verifyConnection = async () => {
   try {
-    const response = await fetch('http://localhost:3000/api/mail/verify');
+    const response = await fetch('http://localhost:3000/mail/verify');
     const result = await response.json();
     console.log('连接状态:', result);
   } catch (error) {
@@ -334,7 +334,7 @@ const verifyConnection = async () => {
 // 延迟发送邮件
 const sendEmailLater = async () => {
   try {
-    const response = await fetch('http://localhost:3000/api/mail/send-later', {
+    const response = await fetch('http://localhost:3000/mail/send-later', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -386,12 +386,12 @@ pnpm run build
 pnpm run start:prod
 ```
 
-服务启动后，邮件API将在 `http://localhost:3000/api/mail` 路径下可用。
+服务启动后，邮件 API 在 `http://localhost:3000/mail` 路径下可用。
 
 ## Swagger API文档
 
 启动服务后，可以通过以下地址访问Swagger API文档：
-- 开发环境: http://localhost:3000/api
+- 开发环境 Swagger：`http://localhost:3000/api`
 - 生产环境: http://your-domain/api
 
 在Swagger文档中，你可以：
