@@ -17,6 +17,7 @@ import {
   ApiBearerAuth,
   ApiOperation,
   ApiResponse,
+  ApiParam,
 } from '@nestjs/swagger';
 import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
 import { ParticipantSummaryCrudService } from '../services/participant-summary-crud.service';
@@ -64,6 +65,7 @@ export class ParticipantSummaryController {
   @RequirePermissions('meeting:read')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '获取参会者总结详情' })
+  @ApiParam({ name: 'meetingId', type: 'string', description: '会议ID' })
   @ApiResponse({ status: HttpStatus.OK, type: ParticipantSummaryDto })
   async getSummaryById(@Param('id', CuidPipe) id: string) {
     this.logger.log(`获取参会者总结详情: ${id}`);
@@ -87,6 +89,7 @@ export class ParticipantSummaryController {
   @RequirePermissions('meeting:update')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '更新参会者总结' })
+  @ApiParam({ name: 'meetingId', type: 'string', description: '会议ID' })
   @ApiResponse({ status: HttpStatus.OK, type: ParticipantSummaryDto })
   async updateSummary(
     @Param('id', CuidPipe) id: string,
@@ -100,6 +103,7 @@ export class ParticipantSummaryController {
   @RequirePermissions('meeting:delete')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '删除参会者总结' })
+  @ApiParam({ name: 'meetingId', type: 'string', description: '会议ID' })
   @ApiResponse({ status: HttpStatus.OK, type: ParticipantSummaryDto })
   async deleteSummary(@Param('id', CuidPipe) id: string) {
     this.logger.log(`删除参会者总结: ${id}`);
