@@ -30,6 +30,7 @@ import { TaskHandlerRegistry } from './handlers/task-handler.registry';
 import { HttpTaskHandler } from './handlers/http.handler';
 import { MigratePhoneHashesHandler } from './handlers/migrate-phone-hashes.handler';
 import { LinkPlatformUsersByPhoneHashHandler } from './handlers/link-platform-users-by-phone-hash.handler';
+import { LinkOrdersToUsersByPhoneHandler } from './handlers/link-orders-to-users-by-phone.handler';
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import { LinkPlatformUsersByPhoneHashHandler } from './handlers/link-platform-us
     HttpTaskHandler,
     MigratePhoneHashesHandler,
     LinkPlatformUsersByPhoneHashHandler,
+    LinkOrdersToUsersByPhoneHandler,
   ],
   exports: [TaskHandlerRegistry],
 })
