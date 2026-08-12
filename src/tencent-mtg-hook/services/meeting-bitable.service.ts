@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { MeetingSessionInfo, Meetuser, RecordingData } from '../types';
+import { MeetingSessionInfo, Meetuser, MeetingRecordingContext } from '../types';
 import { TencentEventUtils } from '../utils/tencent-event.utils';
 import {
   MeetingBitableRepository,
@@ -313,7 +313,7 @@ export class MeetingBitableService {
    * @param r 录制数据
    * @returns 录制文件记录ID数组
    */
-  async upsertRecording(r: RecordingData): Promise<string[]> {
+  async upsertRecording(r: MeetingRecordingContext): Promise<string[]> {
     try {
       const recordingRecordIds: string[] = [];
 
@@ -332,8 +332,8 @@ export class MeetingBitableService {
 
       const meetIds: string[] = recordId ? [recordId] : [];
 
-      for (let index = 0; index < (r.files?.length || 0); index++) {
-        const file = r.files![index];
+      for (let index = 0; index < (r.recordingFiles?.length || 0); index++) {
+        const file = r.recordingFiles![index];
 
         const res = await this.recordingFileBitable.upsertRecordingFileRecord({
           record_file_id: file.id || '',
@@ -360,7 +360,7 @@ export class MeetingBitableService {
       return recordingRecordIds;
     } catch (error: unknown) {
       this.logger.error(
-        `创建录制文件记录失败: ${r.files ? JSON.stringify(r.files) : ''}`,
+        `创建录制文件记录失败: ${r.recordingFiles ? JSON.stringify(r.recordingFiles) : ''}`,
         error instanceof Error ? error.stack : undefined,
       );
       return [];
