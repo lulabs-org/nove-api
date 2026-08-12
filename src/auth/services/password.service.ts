@@ -64,11 +64,13 @@ export class PasswordService {
     validatePassword(newPassword);
 
     const hashedPassword = await hashPassword(newPassword);
-    await this.userCommandRepo.updatePassword(user.id, hashedPassword);
 
     // 查出所有活跃 access token 的 jti，批量拉黑（立即踢掉其他设备的 access token）
-    const activeJtis =
-      await this.refreshTokenRepo.findActiveJtisByUserId(user.id);
+    // 先执行 Redis 拉黑与 refresh token 撤销，再更新密码：若 Redis 不可用则直接失败，
+    // 密码尚未变更，用户可用原密码重试，避免出现"密码已改但旧会话未吊销"的不一致状态。
+    const activeJtis = await this.refreshTokenRepo.findActiveJtisByUserId(
+      user.id,
+    );
     const accessTtlSec = this.tokenService.accessTokenTtlSec;
     if (activeJtis.length > 0) {
       await Promise.all(
@@ -84,6 +86,9 @@ export class PasswordService {
 
     // 吊销该用户所有现有 refresh token（踢掉其他设备 + 本设备旧 token）
     await this.refreshTokenRepo.revokeAllTokensByUserId(user.id);
+
+    // Redis 黑名单与 refresh token 撤销成功后再更新密码
+    await this.userCommandRepo.updatePassword(user.id, hashedPassword);
 
     // 为本设备签发新 token，实现无缝续会话
     const tokens = await this.tokenService.generateTokens(user.id, {

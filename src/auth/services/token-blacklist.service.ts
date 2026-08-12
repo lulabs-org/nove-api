@@ -9,16 +9,22 @@
  * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
  */
 
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { RedisService } from '@/redis/redis.service';
 import { TokenBlacklistScope } from '@/auth/types/jwt.types';
 
-// A lightweight in-memory blacklist with TTL
+// Blacklist store backed exclusively by Redis.
+// Fail-closed: when Redis is unavailable, all writes and reads throw
+// ServiceUnavailableException so callers cannot silently accept tokens
+// whose revocation state cannot be verified.
 @Injectable()
 export class TokenBlacklistService {
   private readonly logger = new Logger(TokenBlacklistService.name);
-  private readonly local = new Map<string, number>(); // scope+jti -> expiresAt(ms) (fallback)
 
   constructor(
     private readonly jwtService: JwtService,
@@ -40,6 +46,23 @@ export class TokenBlacklistService {
     return `jwt:blacklist:${scope}:${jti}`;
   }
 
+  // Fail-closed: refuse to proceed when Redis is not ready, so that
+  // revocation state is never silently missing.
+  private requireRedis(): NonNullable<ReturnType<RedisService['getClient']>> {
+    if (!this.redis.isReady()) {
+      throw new ServiceUnavailableException(
+        'Token blacklist store (Redis) is unavailable',
+      );
+    }
+    const client = this.redis.getClient();
+    if (!client) {
+      throw new ServiceUnavailableException(
+        'Token blacklist store (Redis) is unavailable',
+      );
+    }
+    return client;
+  }
+
   // Add a token's jti to blacklist until its expiry
   async add(
     token: string,
@@ -56,22 +79,16 @@ export class TokenBlacklistService {
 
     const ttlSec = Math.max(Math.floor(ttlMs / 1000), 1);
     const key = this.composeKey(scope, jti);
+    const client = this.requireRedis();
 
-    if (this.redis.isReady()) {
-      try {
-        // Wait for Redis operation to complete
-        await this.redis.getClient()!.set(key, '1', 'EX', ttlSec);
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err);
-        this.logger.error(`Redis set failed: ${msg}`);
-        // Fallback to in-memory map with scheduled cleanup
-        this.local.set(key, expiresAtMs);
-        setTimeout(() => this.local.delete(key), ttlMs).unref?.();
-      }
-    } else {
-      // Fallback to in-memory map with scheduled cleanup
-      this.local.set(key, expiresAtMs);
-      setTimeout(() => this.local.delete(key), ttlMs).unref?.();
+    try {
+      await client.set(key, '1', 'EX', ttlSec);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      this.logger.error(`Redis set failed: ${msg}`);
+      throw new ServiceUnavailableException(
+        'Token blacklist store (Redis) write failed',
+      );
     }
     return { jti, added: true };
   }
@@ -87,19 +104,16 @@ export class TokenBlacklistService {
 
     const key = this.composeKey(scope, jti);
     const ttl = Math.max(ttlSec, 1);
+    const client = this.requireRedis();
 
-    if (this.redis.isReady()) {
-      try {
-        await this.redis.getClient()!.set(key, '1', 'EX', ttl);
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err);
-        this.logger.error(`Redis set failed: ${msg}`);
-        this.local.set(key, Date.now() + ttl * 1000);
-        setTimeout(() => this.local.delete(key), ttl * 1000).unref?.();
-      }
-    } else {
-      this.local.set(key, Date.now() + ttl * 1000);
-      setTimeout(() => this.local.delete(key), ttl * 1000).unref?.();
+    try {
+      await client.set(key, '1', 'EX', ttl);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      this.logger.error(`Redis set failed: ${msg}`);
+      throw new ServiceUnavailableException(
+        'Token blacklist store (Redis) write failed',
+      );
     }
     return true;
   }
@@ -110,22 +124,17 @@ export class TokenBlacklistService {
     scope: TokenBlacklistScope = TokenBlacklistScope.AccessToken,
   ): Promise<boolean> {
     const key = this.composeKey(scope, jti);
-    if (this.redis.isReady()) {
-      try {
-        const exists = await this.redis.getClient()!.exists(key);
-        return exists === 1;
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err);
-        this.logger.error(`Redis exists failed: ${msg}`);
-        // Conservative fallback to local cache if present
-      }
+    const client = this.requireRedis();
+
+    try {
+      const exists = await client.exists(key);
+      return exists === 1;
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      this.logger.error(`Redis exists failed: ${msg}`);
+      throw new ServiceUnavailableException(
+        'Token blacklist store (Redis) read failed',
+      );
     }
-    const expiresAt: number | undefined = this.local.get(key);
-    if (!expiresAt) return false;
-    if (Date.now() > expiresAt) {
-      this.local.delete(key);
-      return false;
-    }
-    return true;
   }
 }
