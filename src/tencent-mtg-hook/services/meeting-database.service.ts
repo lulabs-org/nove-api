@@ -34,6 +34,17 @@ import {
 } from '@prisma/client';
 import { TranscriptSyncService } from './transcript-sync.service';
 
+type MeetingData = Omit<
+  Prisma.MeetingUncheckedCreateInput,
+  | 'id'
+  | 'createdAt'
+  | 'updatedAt'
+  | 'deletedAt'
+  | 'platform'
+  | 'meetingId'
+  | 'subMeetingId'
+>;
+
 /**
  * 会议数据库服务
  * 提供会议记录的创建和更新功能
@@ -47,7 +58,7 @@ export class MeetingDatabaseService {
     private readonly meetingSummaryRepo: MeetingSummaryRepository,
     private readonly transcriptRepo: TranscriptRepository,
     private readonly transcriptSyncService: TranscriptSyncService,
-  ) {}
+  ) { }
 
   /**
    * 创建或更新会议记录
@@ -70,17 +81,6 @@ export class MeetingDatabaseService {
 
     const creatorUser = await this.upsertPtUser(creator as Meetuser);
 
-    type MeetingData = Omit<
-      Prisma.MeetingUncheckedCreateInput,
-      | 'id'
-      | 'createdAt'
-      | 'updatedAt'
-      | 'deletedAt'
-      | 'platform'
-      | 'meetingId'
-      | 'subMeetingId'
-    >;
-
     const meetingData: Partial<MeetingData> = {
       title: meeting_info.subject,
       meetingCode: meeting_info.meeting_code,
@@ -99,12 +99,22 @@ export class MeetingDatabaseService {
       meetingData.endAt = new Date(operate_time);
     }
 
+    // 录制完成事件
+    if (event === 'recording.completed') {
+      meetingData.hasRecording = true;
+      meetingData.recordingStatus = RecordingStatus.COMPLETED;
+      meetingData.processingStatus = ProcessingStatus.COMPLETED;
+    }
+
+    // 提取子会议 ID，如果不存在（例如非周期性会议）则默认使用 '__ROOT__'
+    const subMeetingId = 'sub_meeting_id' in meeting_info
+      ? meeting_info.sub_meeting_id || '__ROOT__'
+      : '__ROOT__';
+
     return await this.meetingRepo.upsert(
       Platform.TENCENT_MEETING,
       meeting_info.meeting_id,
-      'sub_meeting_id' in meeting_info
-        ? meeting_info.sub_meeting_id || '__ROOT__'
-        : '__ROOT__',
+      subMeetingId,
       meetingData as MeetingData,
     );
   }
