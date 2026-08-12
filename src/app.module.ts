@@ -52,6 +52,7 @@ import { OrderModule } from './order/order.module';
 import { WebhookLogModule } from './webhook-log/webhook-log.module';
 import { OAuthModule } from './oauth/oauth.module';
 import { SystemConfigModule } from './admin/system-config/system-config.module';
+import { AdminUserModule } from './admin/user/user.module';
 
 @Module({
   imports: [
@@ -120,6 +121,7 @@ import { SystemConfigModule } from './admin/system-config/system-config.module';
     WebhookLogModule,
     OAuthModule,
     SystemConfigModule,
+    AdminUserModule,
   ],
   controllers: [AppController],
   providers: [

@@ -1,0 +1,214 @@
+import * as ExcelJS from 'exceljs';
+import { BadRequestException, ConflictException } from '@nestjs/common';
+import { AdminUserRepository, AdminUserRecord } from './user.repository';
+import { AdminUserService } from './user.service';
+
+const userRecord = (
+  overrides: Partial<AdminUserRecord> = {},
+): AdminUserRecord => ({
+  id: 'cm12345678901234567890123',
+  username: 'alice',
+  email: 'alice@example.com',
+  countryCode: '+86',
+  phone: '13800138000',
+  active: true,
+  emailVerifiedAt: null,
+  phoneVerifiedAt: null,
+  lastLoginAt: null,
+  createdAt: new Date('2026-01-01T00:00:00Z'),
+  updatedAt: new Date('2026-01-01T00:00:00Z'),
+  profile: {
+    displayName: 'Alice',
+    avatar: null,
+    bio: null,
+    firstName: null,
+    lastName: null,
+    dateOfBirth: null,
+    gender: null,
+    address: null,
+    city: null,
+    country: null,
+    zipCode: null,
+    website: null,
+  },
+  ...overrides,
+});
+
+describe('AdminUserService', () => {
+  let repository: jest.Mocked<AdminUserRepository>;
+  let service: AdminUserService;
+
+  beforeEach(() => {
+    repository = {
+      list: jest.fn(),
+      findById: jest.fn(),
+      findConflict: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      softDelete: jest.fn(),
+    } as unknown as jest.Mocked<AdminUserRepository>;
+    service = new AdminUserService(repository);
+  });
+
+  it('creates a normalized user without exposing verification timestamps', async () => {
+    repository.findConflict.mockResolvedValue(null);
+    repository.create.mockResolvedValue(userRecord());
+
+    const result = await service.create({
+      email: ' Alice@Example.COM ',
+      countryCode: '86',
+      phone: '138 0013 8000',
+      displayName: ' Alice ',
+    });
+
+    expect(repository.create.mock.calls[0][0]).toEqual({
+      email: 'alice@example.com',
+      countryCode: '+86',
+      phone: '13800138000',
+      displayName: 'Alice',
+    });
+    expect(result.emailVerified).toBe(false);
+    expect(result).not.toHaveProperty('emailVerifiedAt');
+  });
+
+  it('rejects users without a login identifier', async () => {
+    await expect(
+      service.create({ displayName: 'No identifier' }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('returns a conflict for a duplicate email', async () => {
+    repository.findConflict.mockResolvedValue({
+      id: 'other',
+      username: null,
+      email: 'alice@example.com',
+      countryCode: null,
+      phone: null,
+    });
+
+    await expect(
+      service.create({ email: 'alice@example.com' }),
+    ).rejects.toBeInstanceOf(ConflictException);
+  });
+
+  it('updates account and profile fields in one repository call', async () => {
+    repository.findById.mockResolvedValue(userRecord());
+    repository.findConflict.mockResolvedValue(null);
+    repository.update.mockResolvedValue(
+      userRecord({
+        profile: {
+          ...userRecord().profile!,
+          bio: '个人简介',
+          gender: 'FEMALE',
+          dateOfBirth: new Date('2000-01-02T00:00:00.000Z'),
+        },
+      }),
+    );
+
+    await service.update('cm12345678901234567890123', {
+      bio: ' 个人简介 ',
+      gender: 'FEMALE',
+      dateOfBirth: '2000-01-02',
+      city: ' 上海 ',
+    });
+
+    expect(repository.update.mock.calls[0][1]).toEqual({
+      bio: '个人简介',
+      gender: 'FEMALE',
+      dateOfBirth: new Date('2000-01-02T00:00:00.000Z'),
+      city: '上海',
+    });
+  });
+
+  it('imports CSV rows independently and reports masked failures', async () => {
+    repository.findConflict.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      id: 'existing',
+      username: null,
+      email: 'duplicate@example.com',
+      countryCode: null,
+      phone: null,
+    });
+    repository.create.mockResolvedValue(userRecord());
+    const csv = Buffer.from(
+      '邮箱,国家代码,手机号,显示名称,是否启用\nnew@example.com,+86,13800138001,新用户,是\nduplicate@example.com,,,,否\n',
+    );
+
+    const result = await service.importUsers({
+      originalname: 'users.csv',
+      mimetype: 'text/csv',
+      size: csv.length,
+      buffer: csv,
+    });
+
+    expect(result).toMatchObject({
+      total: 2,
+      successCount: 1,
+      failureCount: 1,
+    });
+    expect(result.failures[0]).toMatchObject({ row: 3, code: 'CONFLICT' });
+    expect(result.failures[0].identifier).toBe('du***@example.com');
+  });
+
+  it('imports the first worksheet from an XLSX file', async () => {
+    repository.findConflict.mockResolvedValue(null);
+    repository.create.mockResolvedValue(userRecord());
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('用户');
+    sheet.addRow(['username', 'email', 'active']);
+    sheet.addRow(['bob', 'bob@example.com', false]);
+    const buffer = Buffer.from(await workbook.xlsx.writeBuffer());
+
+    const result = await service.importUsers({
+      originalname: 'users.xlsx',
+      mimetype:
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      size: buffer.length,
+      buffer,
+    });
+
+    expect(result).toMatchObject({
+      total: 1,
+      successCount: 1,
+      failureCount: 0,
+    });
+    expect(repository.create.mock.calls[0][0]).toEqual(
+      expect.objectContaining({
+        username: 'bob',
+        email: 'bob@example.com',
+        active: false,
+      }),
+    );
+  });
+
+  it('reports invalid email syntax as a row failure', async () => {
+    const csv = Buffer.from('email\nnot-an-email\n');
+
+    const result = await service.importUsers({
+      originalname: 'users.csv',
+      mimetype: 'text/csv',
+      size: csv.length,
+      buffer: csv,
+    });
+
+    expect(result).toMatchObject({
+      total: 1,
+      successCount: 0,
+      failureCount: 1,
+    });
+    expect(result.failures[0].code).toBe('INVALID_DATA');
+    expect(repository.create.mock.calls).toHaveLength(0);
+  });
+
+  it('rejects malformed CSV files as a bad request', async () => {
+    const csv = Buffer.from('email\n"unterminated\n');
+
+    await expect(
+      service.importUsers({
+        originalname: 'users.csv',
+        mimetype: 'text/csv',
+        size: csv.length,
+        buffer: csv,
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+});
