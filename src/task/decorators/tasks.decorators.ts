@@ -101,6 +101,20 @@ export const ApiCreateOnceDocs = () =>
       type: CreateOnceDto,
       description: '一次性任务创建参数',
       examples: {
+        link_platform_users_by_phone_hash: {
+          summary: '通过手机号 Hash 关联平台用户',
+          description:
+            '将同一平台下 phoneHash 匹配的未关联平台用户关联到本地用户；platform 可省略以处理全部平台',
+          value: {
+            name: '关联平台用户',
+            handler: 'link_platform_users_by_phone_hash',
+            runAt: '2026-08-12T12:00:00.000+08:00',
+            payload: {
+              platform: 'TENCENT_MEETING',
+              batchSize: 500,
+            },
+          },
+        },
         migrate_phone_hashes: {
           summary: '手机号 Hash 迁移任务',
           description:

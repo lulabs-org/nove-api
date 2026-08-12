@@ -29,6 +29,7 @@ import { TASK_QUEUE_NAME } from './task.constants';
 import { TaskHandlerRegistry } from './handlers/task-handler.registry';
 import { HttpTaskHandler } from './handlers/http.handler';
 import { MigratePhoneHashesHandler } from './handlers/migrate-phone-hashes.handler';
+import { LinkPlatformUsersByPhoneHashHandler } from './handlers/link-platform-users-by-phone-hash.handler';
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { MigratePhoneHashesHandler } from './handlers/migrate-phone-hashes.handl
     TaskHandlerRegistry,
     HttpTaskHandler,
     MigratePhoneHashesHandler,
+    LinkPlatformUsersByPhoneHashHandler,
   ],
   exports: [TaskHandlerRegistry],
 })
