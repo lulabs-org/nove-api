@@ -29,7 +29,7 @@ export interface RecordingDataFile {
   paragraphs?: NewTranscriptParagraph[];
 }
 
-export interface RecordingData {
+export interface MeetingRecordingContext {
   /** 会议ID (meeting_id) */
   meetid?: string;
   /** 会议主题 (meeting_info.subject) */

@@ -16,7 +16,7 @@ import {
 } from '@/meeting/repositories';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Platform, Prisma, MeetingControlAction } from '@prisma/client';
-import type { RecordingData } from '../types';
+import type { MeetingRecordingContext } from '../types';
 import { ParticipantDetail } from '@/integrations/tencent-meeting/types';
 
 @Injectable()
@@ -39,7 +39,7 @@ export class MeetingParticipantService {
    * 4. 针对用户的每次进出动作，向 meet_user_action 表记录 JOIN 和 LEAVE 事件（使用 findFirst 保证幂等，避免重复写入）
    * 5. 最后，将聚合后的唯一记录（首次进入时间、最后离开时间、总时长等）更新到 meet_participant 表中
    */
-  async syncParticipants(r: RecordingData): Promise<void> {
+  async syncParticipants(r: MeetingRecordingContext): Promise<void> {
     // 1. 基础校验：如果没有参会者数据，直接返回
     if (!r.participants || r.participants.length === 0) {
       return;

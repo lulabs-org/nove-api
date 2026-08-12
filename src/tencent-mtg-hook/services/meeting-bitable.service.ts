@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { MeetingSessionInfo, Meetuser, RecordingData } from '../types';
+import { MeetingSessionInfo, Meetuser, MeetingRecordingContext } from '../types';
 import { TencentEventUtils } from '../utils/tencent-event.utils';
 import {
   MeetingBitableRepository,
@@ -313,7 +313,7 @@ export class MeetingBitableService {
    * @param r 录制数据
    * @returns 录制文件记录ID数组
    */
-  async upsertRecording(r: RecordingData): Promise<string[]> {
+  async upsertRecording(r: MeetingRecordingContext): Promise<string[]> {
     try {
       const recordingRecordIds: string[] = [];
 

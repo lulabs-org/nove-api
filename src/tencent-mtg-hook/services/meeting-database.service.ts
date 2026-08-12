@@ -10,7 +10,7 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import { Meetuser, EventPayload, RecordingData } from '../types';
+import { Meetuser, EventPayload, MeetingRecordingContext } from '../types';
 import { TencentEventUtils } from '../utils/tencent-event.utils';
 import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
 import { MeetingRepository } from '@/meeting/repositories/meeting.repository';
@@ -158,7 +158,7 @@ export class MeetingDatabaseService {
    * @param r 录制数据
    * @returns 录制记录
    */
-  async upsertRecording(r: RecordingData) {
+  async upsertRecording(r: MeetingRecordingContext) {
     const recordings: MeetingRecording[] = [];
 
     const meeting = await this.meetingRepo.findByPt(
@@ -194,7 +194,7 @@ export class MeetingDatabaseService {
    * @param r 录制数据
    * @returns 会议总结
    */
-  async upsertMeetingSummary(r: RecordingData) {
+  async upsertMeetingSummary(r: MeetingRecordingContext) {
     const meeting = await this.meetingRepo.findByPt(
       Platform.TENCENT_MEETING,
       r.meetid || '',
@@ -234,7 +234,7 @@ export class MeetingDatabaseService {
    * 创建或更新转写记录
    * @param r 录制数据
    */
-  async upsertTranscript(r: RecordingData) {
+  async upsertTranscript(r: MeetingRecordingContext) {
     const meeting = await this.meetingRepo.findByPt(
       Platform.TENCENT_MEETING,
       r.meetid || '',

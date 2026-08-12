@@ -12,7 +12,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Platform } from '@prisma/client';
 import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
-import { RecordingData } from '@/tencent-mtg-hook/types';
+import { MeetingRecordingContext } from '@/tencent-mtg-hook/types';
 import { MeetingRepository } from '@/meeting/repositories/meeting.repository';
 import { MeetingRecordingRepository } from '@/meeting/repositories';
 import { ParticipantSummaryService } from '@/meet-ai/services';
@@ -36,7 +36,7 @@ export class SummaryService {
     private readonly recordingFileBitable: RecordingFileBitableRepository,
   ) {}
 
-  async processSummary(r: RecordingData): Promise<void> {
+  async processSummary(r: MeetingRecordingContext): Promise<void> {
     const meeting = await this.meetingRepo.findByPt(
       Platform.TENCENT_MEETING,
       r.meetid || '',
