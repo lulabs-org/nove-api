@@ -2,6 +2,8 @@
 
 本项目已集成阿里云短信服务，用于发送验证码短信。以下是配置和使用指南。
 
+Nove 内部的模块职责和调用链见[短信模块](../../modules/sms/overview.md)。本页只说明阿里云侧的开通、凭据和模板配置。
+
 ## 前置条件
 
 1. 拥有阿里云账号
@@ -94,7 +96,7 @@ ALIYUN_SMS_TEMPLATE_RESET=SMS_271525576
 发送注册验证码：
 
 ```bash
-POST /api/auth/otp/send-phone-code
+POST /api/auth/otp/send
 Content-Type: application/json
 
 {
@@ -106,7 +108,7 @@ Content-Type: application/json
 发送登录验证码：
 
 ```bash
-POST /api/auth/otp/send-phone-code
+POST /api/auth/otp/send
 Content-Type: application/json
 
 {
@@ -118,7 +120,7 @@ Content-Type: application/json
 ### 验证码验证
 
 ```bash
-POST /api/auth/otp/verify-code
+POST /api/auth/otp/verify
 Content-Type: application/json
 
 {

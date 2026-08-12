@@ -1,8 +1,8 @@
-# 邮件发送API使用说明
+# 邮件模块
 
 ## 概述
 
-本项目基于NestJS框架提供了完整的邮件发送服务，支持发送文本和HTML格式的邮件，包括抄送和密送功能。邮件服务使用BullMQ队列系统处理异步邮件发送任务，确保高并发场景下的性能和可靠性。
+邮件模块位于 `src/mail/`，提供文本和 HTML 邮件发送、抄送、密送、SMTP 连接检查和 BullMQ 延迟任务。验证码与欢迎邮件由业务模块通过 `MailService` 调用。
 
 ## 技术架构
 
@@ -70,28 +70,19 @@ REDIS_PASSWORD=
 
 ```
 src/mail/
-├── controllers/
-│   └── mail.controller.ts    # HTTP请求处理
+├── mail.controller.ts            # HTTP 请求处理
+├── mail.module.ts                # 模块定义
+├── mail.processor.ts             # 队列任务处理器
 ├── services/
-│   └── mail.service.ts       # 业务逻辑
+│   ├── mail.service.ts       # 业务逻辑
+│   └── mailer.service.ts     # Nodemailer 封装
 ├── dto/
 │   └── send-email.dto.ts     # 数据传输对象
-├── decorators/
-│   └── mail.decorators.ts    # Swagger文档装饰器
-├── processors/
-│   └── mail.processor.ts     # 队列任务处理器
-└── mail.module.ts            # 模块定义
+└── decorators/
+    └── mail.decorators.ts    # Swagger 文档装饰器
 ```
 
-邮件集成模块位于 `src/integrations/email/` 目录下：
-
-```
-src/integrations/email/
-├── mailer.service.ts         # Nodemailer封装服务
-└── email.module.ts           # 邮件集成模块
-```
-
-配置文件位于 `src/configs/email.config.ts`。
+Nodemailer 封装位于 `src/mail/services/mailer.service.ts`，配置文件位于 `src/configs/email.config.ts`。
 
 ## API接口
 
@@ -357,7 +348,7 @@ const sendEmailLater = async () => {
 ### NestJS 中使用邮件服务
 
 ```typescript
-import { MailService } from '@/mail/mail.service';
+import { MailService } from '@/mail/services/mail.service';
 
 @Injectable()
 export class UserService {

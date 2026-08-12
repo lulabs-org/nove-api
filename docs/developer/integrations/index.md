@@ -11,7 +11,8 @@
 
 ## 通知与基础服务
 
-- [阿里云短信](./aliyun/sms-setup.md)
-- [邮件服务](./email/api.md)
+- [阿里云短信](./aliyun/sms-setup.md)：控制台、凭据、签名与模板配置。
+
+邮件和短信的 Nove 业务契约分别见[邮件模块](../modules/mail/overview.md)与[短信模块](../modules/sms/overview.md)。
 
 集成文档只描述仓库中的实现；第三方字段含义、厂商错误码和原始响应不在这里重复维护。

@@ -122,6 +122,20 @@ export default withMermaid(
                 { text: '全局配置', link: '/developer/modules/system-config/overview' },
               ],
             },
+            {
+              text: '邮件模块',
+              collapsed: true,
+              items: [
+                { text: '模块概述', link: '/developer/modules/mail/overview' },
+              ],
+            },
+            {
+              text: '短信模块',
+              collapsed: true,
+              items: [
+                { text: '模块概述', link: '/developer/modules/sms/overview' },
+              ],
+            },
           ],
         },
         {
@@ -164,7 +178,6 @@ export default withMermaid(
               collapsed: true,
               items: [
                 { text: '阿里云短信', link: '/developer/integrations/aliyun/sms-setup' },
-                { text: '邮件服务', link: '/developer/integrations/email/api' },
               ],
             },
           ],
