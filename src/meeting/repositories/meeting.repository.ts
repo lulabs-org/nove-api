@@ -48,6 +48,11 @@ const meetingResponseSelect = {
       updatedAt: true,
     },
   },
+  _count: {
+    select: {
+      participants: { where: { deletedAt: null } },
+    },
+  },
 } satisfies Prisma.MeetingSelect;
 
 type MeetingResponseRecord = Prisma.MeetingGetPayload<{
@@ -82,7 +87,7 @@ export class MeetingRepository {
       tags: record.tags,
       hostPlatformUserId: record.hostId,
       host: record.host,
-      participantCount: record.participantCount,
+      participantCount: record.participantCount ?? record._count?.participants,
       scheduledStartAt: record.scheduledStartAt,
       scheduledEndAt: record.scheduledEndAt,
       startAt: record.startAt,
@@ -300,6 +305,11 @@ export class MeetingRepository {
           host: {
             select: { id: true, displayName: true },
           },
+          _count: {
+            select: {
+              participants: { where: { deletedAt: null } },
+            },
+          },
         },
         orderBy: {
           createdAt: 'desc',
@@ -311,9 +321,10 @@ export class MeetingRepository {
     ]);
 
     const recordsWithRecordingFlag = records.map(
-      ({ recordings, hostId, ...record }) => ({
+      ({ recordings, hostId, _count, ...record }) => ({
         ...record,
         hostPlatformUserId: hostId,
+        participantCount: record.participantCount ?? _count?.participants,
         hasRecording: recordings.length > 0,
       }),
     );

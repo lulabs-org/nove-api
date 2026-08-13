@@ -12,7 +12,12 @@ import {
   Logger,
   BadRequestException,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
 import {
   ApiGetMeetingRecordsDocs,
@@ -32,6 +37,8 @@ import {
   CreateMeetingRecordDto,
   UpdateMeetingRecordDto,
   QueryMeetingStatsDto,
+  QueryMeetingParticipantsDto,
+  MeetingParticipantListResponseDto,
 } from '../dto';
 import { CuidPipe } from '@/common/pipes/cuid.pipe';
 
@@ -86,6 +93,21 @@ export class MeetingController {
 
     this.logger.log(`获取会议记录详情成功: ${record.id}`);
     return record;
+  }
+
+  @Get(':id/participants')
+  @RequirePermissions('meeting:read')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '获取会议参会成员列表' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    type: MeetingParticipantListResponseDto,
+  })
+  async getMeetingParticipants(
+    @Param('id', CuidPipe) id: string,
+    @Query() query: QueryMeetingParticipantsDto,
+  ): Promise<MeetingParticipantListResponseDto> {
+    return this.meetingService.findParticipants(id, query);
   }
 
   /**
