@@ -58,9 +58,12 @@ export class PeriodicReportGenerator {
       groups.get(key)!.push(source);
     }
 
-    await this.runBatched([...groups.values()], 5, (items) =>
-      this.generateOne(cadence, range, context.label, items),
-    );
+    const values = [...groups.values()];
+    for (let i = 0; i < values.length; i += 5) {
+      await Promise.all(
+        values.slice(i, i + 5).map((items) => this.generateOne(cadence, range, context.label, items)),
+      );
+    }
 
     return { ok: true, at: new Date().toISOString() };
   }
@@ -111,6 +114,7 @@ export class PeriodicReportGenerator {
     if (!sources.length) return;
 
     const [{ userName, subjectUserId, platformUserId }] = sources;
+
     const { systemPrompt, prompt } = generatePrompt('PERIOD_SUMMARY', {
       userName,
       ctxLabel: label,
@@ -145,11 +149,5 @@ export class PeriodicReportGenerator {
     );
 
     this.logger.log(`已生成 ${userName} 的 ${cadence} 长期追踪报告`);
-  }
-
-  private async runBatched<T>(items: T[], concurrency: number, fn: (item: T) => Promise<unknown>) {
-    for (let i = 0; i < items.length; i += concurrency) {
-      await Promise.all(items.slice(i, i + concurrency).map(fn));
-    }
   }
 }
