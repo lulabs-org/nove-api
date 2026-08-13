@@ -5,7 +5,7 @@ import {
   OnQueueEvent,
 } from '@nestjs/bullmq';
 import type { Job } from 'bullmq';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { TaskStatus, TaskType, ScheduledTask, Prisma } from '@prisma/client';
 import { TasksRepository } from '../repositories/tasks.repository';
 import { TaskExecutionLogsRepository } from '../repositories/task-execution-logs.repository';
@@ -13,8 +13,10 @@ import { TaskHandlerRegistry } from '../handlers/task-handler.registry';
 import { TASK_QUEUE_NAME } from '../task.constants';
 
 @Injectable()
-@Processor(TASK_QUEUE_NAME)
-export class TaskProcessor extends WorkerHost {
+@Processor(TASK_QUEUE_NAME, {
+  autorun: false,
+})
+export class TaskProcessor extends WorkerHost implements OnApplicationBootstrap {
   private readonly logger = new Logger(TaskProcessor.name);
 
   constructor(
@@ -23,6 +25,13 @@ export class TaskProcessor extends WorkerHost {
     private readonly registry: TaskHandlerRegistry,
   ) {
     super();
+  }
+
+  onApplicationBootstrap() {
+    this.logger.log('Starting BullMQ worker...');
+    this.worker.run().catch((err) => {
+      this.logger.error('BullMQ worker encountered an error', err);
+    });
   }
 
   private async findTaskFromJob(job: Job): Promise<ScheduledTask | null> {
