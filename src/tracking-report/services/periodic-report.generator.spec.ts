@@ -2,9 +2,9 @@ import { TrackingCadence, TrackingReportType } from '@prisma/client';
 import { LlmService } from '@/llm/llm.service';
 import { PrismaService } from '@/prisma/prisma.service';
 import { TrackingReportService } from './tracking-report.service';
-import { PeriodSummaryService } from './period-summary.service';
+import { PeriodicReportGenerator } from './periodic-report.generator';
 
-describe('PeriodSummaryService', () => {
+describe('PeriodicReportGenerator', () => {
   const prisma = {
     recordingParticipantSummary: { findMany: jest.fn() },
     userTrackingReport: { findMany: jest.fn() },
@@ -13,7 +13,7 @@ describe('PeriodSummaryService', () => {
   const llm = {
     createChatCompletion: jest.fn().mockResolvedValue('aggregate'),
   };
-  const service = new PeriodSummaryService(
+  const service = new PeriodicReportGenerator(
     prisma as unknown as PrismaService,
     trackingReportService as unknown as TrackingReportService,
     llm as unknown as LlmService,

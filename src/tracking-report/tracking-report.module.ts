@@ -3,7 +3,7 @@ import { PrismaModule } from '@/prisma/prisma.module';
 import { TrackingReportController } from './controllers/tracking-report.controller';
 import { TrackingReportRepository } from './repositories/tracking-report.repository';
 import { TrackingReportService } from './services/tracking-report.service';
-import { PeriodSummaryService } from './services/period-summary.service';
+import { PeriodicReportGenerator } from './services/periodic-report.generator';
 import { PeriodSummaryHandler } from './handlers/period-summary.handler';
 import { LlmModule } from '@/llm/llm.module';
 import { ConfigModule } from '@nestjs/config';
@@ -21,13 +21,13 @@ import { TasksModule } from '@/task/tasks.module';
   providers: [
     TrackingReportRepository, 
     TrackingReportService,
-    PeriodSummaryService,
+    PeriodicReportGenerator,
     PeriodSummaryHandler
   ],
   exports: [
     TrackingReportRepository, 
     TrackingReportService,
-    PeriodSummaryService
+    PeriodicReportGenerator
   ],
 })
 export class TrackingReportModule {}

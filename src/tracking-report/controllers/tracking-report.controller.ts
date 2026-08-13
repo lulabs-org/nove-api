@@ -18,7 +18,7 @@ import {
   UpdateTrackingReportDto,
 } from '../dto/tracking-report.dto';
 import { TrackingReportService } from '../services/tracking-report.service';
-import { PeriodSummaryService } from '../services/period-summary.service';
+import { PeriodicReportGenerator } from '../services/periodic-report.generator';
 import { TriggerSummaryDto } from '../dto/tracking-report.dto';
 import { HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiOperation } from '@nestjs/swagger';
@@ -29,7 +29,7 @@ import { ApiOperation } from '@nestjs/swagger';
 export class TrackingReportController {
   constructor(
     private readonly service: TrackingReportService,
-    private readonly periodSummaryService: PeriodSummaryService
+    private readonly periodicReportGenerator: PeriodicReportGenerator
   ) { }
   @Post() @RequirePermissions('tracking-report:create') create(
     @Body(new ValidationPipe()) dto: CreateTrackingReportDto,
@@ -63,6 +63,6 @@ export class TrackingReportController {
   @ApiOperation({ summary: '手动或由定时任务触发周期性总结' })
   @RequirePermissions('tracking-report:create')
   process(@Body(new ValidationPipe()) dto: TriggerSummaryDto) {
-    return this.periodSummaryService.generateSummaries(dto);
+    return this.periodicReportGenerator.generateSummaries(dto);
   }
 }

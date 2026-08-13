@@ -24,8 +24,8 @@ type Source = {
 };
 
 @Injectable()
-export class PeriodSummaryService {
-  private readonly logger = new Logger(PeriodSummaryService.name);
+export class PeriodicReportGenerator {
+  private readonly logger = new Logger(PeriodicReportGenerator.name);
   constructor(
     private readonly prisma: PrismaService,
     private readonly trackingReportService: TrackingReportService,
