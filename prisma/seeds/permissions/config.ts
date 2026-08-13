@@ -263,6 +263,36 @@ export const REAL_PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     action: 'toggle-status',
   },
 
+  // ========== 渠道管理 ==========
+  {
+    name: '查看渠道',
+    code: 'channel:read',
+    description: '查看渠道信息',
+    resource: 'channel',
+    action: 'read',
+  },
+  {
+    name: '创建渠道',
+    code: 'channel:create',
+    description: '创建新渠道',
+    resource: 'channel',
+    action: 'create',
+  },
+  {
+    name: '编辑渠道',
+    code: 'channel:update',
+    description: '编辑渠道信息和启用状态',
+    resource: 'channel',
+    action: 'update',
+  },
+  {
+    name: '删除渠道',
+    code: 'channel:delete',
+    description: '删除未被订单引用的渠道',
+    resource: 'channel',
+    action: 'delete',
+  },
+
   // ========== 订单管理 ==========
   {
     name: '查看订单',
@@ -711,6 +741,36 @@ export const PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     description: '产品上下架操作',
     resource: 'product',
     action: 'toggle-status',
+  },
+
+  // ========== 渠道管理 ==========
+  {
+    name: '查看渠道',
+    code: 'channel:read',
+    description: '查看渠道信息',
+    resource: 'channel',
+    action: 'read',
+  },
+  {
+    name: '创建渠道',
+    code: 'channel:create',
+    description: '创建新渠道',
+    resource: 'channel',
+    action: 'create',
+  },
+  {
+    name: '编辑渠道',
+    code: 'channel:update',
+    description: '编辑渠道信息和启用状态',
+    resource: 'channel',
+    action: 'update',
+  },
+  {
+    name: '删除渠道',
+    code: 'channel:delete',
+    description: '删除未被订单引用的渠道',
+    resource: 'channel',
+    action: 'delete',
   },
 
   // ========== 订单管理 ==========

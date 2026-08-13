@@ -54,6 +54,7 @@ import { OAuthModule } from './oauth/oauth.module';
 import { SystemConfigModule } from './admin/system-config/system-config.module';
 import { AdminUserModule } from './admin/user/user.module';
 import { ProductModule } from './product/product.module';
+import { ChannelModule } from './channel/channel.module';
 
 @Module({
   imports: [
@@ -124,6 +125,7 @@ import { ProductModule } from './product/product.module';
     SystemConfigModule,
     AdminUserModule,
     ProductModule,
+    ChannelModule,
   ],
   controllers: [AppController],
   providers: [

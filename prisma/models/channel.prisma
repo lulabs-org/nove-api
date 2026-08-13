@@ -4,7 +4,9 @@ model Channel {
   name        String   @db.VarChar(255) // 渠道名称
   code        String   @unique @db.VarChar(50) // 渠道编码
   description String?  @db.Text // 渠道描述
+  isActive    Boolean  @default(true) @map("is_active")
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   // 关联关系
   orders Order[] // 渠道的订单

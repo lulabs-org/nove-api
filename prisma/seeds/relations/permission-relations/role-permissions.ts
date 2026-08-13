@@ -14,6 +14,9 @@ const MANAGER_PERMISSIONS = [
   'product:read',
   'product:create',
   'product:update',
+  'channel:read',
+  'channel:create',
+  'channel:update',
   'order:read',
   'order:create',
   'order:update',
@@ -37,11 +40,17 @@ const CUSTOMER_SERVICE_PERMISSIONS = [
   'order:update',
   'order:status',
   'product:read',
+  'channel:read',
   'dashboard:read',
 ];
 
 // 普通用户角色权限列表
-const USER_PERMISSIONS = ['dashboard:read', 'product:read', 'order:read'];
+const USER_PERMISSIONS = [
+  'dashboard:read',
+  'product:read',
+  'channel:read',
+  'order:read',
+];
 
 /**
  * 为指定角色分配权限
