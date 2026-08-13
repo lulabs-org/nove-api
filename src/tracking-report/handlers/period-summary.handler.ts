@@ -34,9 +34,7 @@ export class PeriodSummaryHandler implements ITaskHandler, OnModuleInit {
       throw new Error('cadence is required for generating period summary');
     }
 
-    this.logger.log(
-      `Executing period summary task for cadence: ${cadence}`,
-    );
+    this.logger.log(`Executing period summary task for cadence: ${cadence}`);
 
     // Call the service directly
     const result = await this.periodicReportGenerator.generateSummaries({

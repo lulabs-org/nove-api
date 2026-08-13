@@ -245,4 +245,3 @@ export class RecordingParticipantSummaryRepository {
     });
   }
 }
-

@@ -9,7 +9,7 @@ import {
   Query,
   ValidationPipe,
   HttpCode,
-  HttpStatus
+  HttpStatus,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
@@ -18,7 +18,7 @@ import {
   CreateTrackingReportDto,
   QueryTrackingReportDto,
   UpdateTrackingReportDto,
-  TriggerSummaryDto
+  TriggerSummaryDto,
 } from '../dto/tracking-report.dto';
 import { TrackingReportService } from '../services/tracking-report.service';
 import { PeriodicReportGenerator } from '../services/periodic-report.generator';
@@ -30,12 +30,10 @@ export class TrackingReportController {
   constructor(
     private readonly service: TrackingReportService,
     private readonly periodicReportGenerator: PeriodicReportGenerator,
-  ) { }
+  ) {}
   @Post()
   @RequirePermissions('tracking-report:create')
-  create(
-    @Body(new ValidationPipe()) dto: CreateTrackingReportDto,
-  ) {
+  create(@Body(new ValidationPipe()) dto: CreateTrackingReportDto) {
     return this.service.create(dto);
   }
 
@@ -50,9 +48,7 @@ export class TrackingReportController {
 
   @Get(':id')
   @RequirePermissions('tracking-report:read')
-  get(
-    @Param('id', CuidPipe) id: string,
-  ) {
+  get(@Param('id', CuidPipe) id: string) {
     return this.service.get(id);
   }
 

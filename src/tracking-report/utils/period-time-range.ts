@@ -20,7 +20,7 @@ export interface PeriodContext {
 const CONTEXT: Partial<Record<TrackingCadence, PeriodContext>> = {
   [TrackingCadence.DAILY]: {
     sourceCadence: 'RECORDING',
-    label: '本日'
+    label: '本日',
   },
   [TrackingCadence.WEEKLY]: {
     sourceCadence: TrackingCadence.DAILY,

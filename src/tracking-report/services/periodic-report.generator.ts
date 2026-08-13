@@ -35,7 +35,7 @@ export class PeriodicReportGenerator {
     private readonly llmService: LlmService,
     @Inject(openaiConfig.KEY)
     private readonly config: ConfigType<typeof openaiConfig>,
-  ) { }
+  ) {}
 
   /**
    * 生成周期性总结
@@ -43,14 +43,27 @@ export class PeriodicReportGenerator {
    * @param baseDate 基准日期，默认为当前时间
    * @param platformUserIds 平台用户ID列表，默认为空（全部）
    * @param subjectUserIds 本地系统用户ID列表，默认为空（全部）
+   * @param trackingType 追踪报告类型，默认为 PERIODIC_MEETING_SUMMARY
    * @returns 包含生成状态和时间的响应对象
    */
-  async generateSummaries({ cadence, baseDate = new Date(), platformUserIds, subjectUserIds }: TriggerSummaryDto) {
+  async generateSummaries({
+    cadence,
+    baseDate = new Date(),
+    platformUserIds,
+    subjectUserIds,
+    trackingType = TrackingReportType.PERIODIC_MEETING_SUMMARY,
+  }: TriggerSummaryDto) {
     const context = getPeriodContext(cadence);
     if (!context) return { ok: false, at: new Date().toISOString() };
 
     const range = getdayRange(cadence, baseDate);
-    const sources = await this.findSources(context.sourceCadence, range, platformUserIds, subjectUserIds);
+    const sources = await this.findSources(
+      context.sourceCadence,
+      range,
+      platformUserIds,
+      subjectUserIds,
+      trackingType,
+    );
 
     const groups = new Map<string, Source[]>();
     for (const source of sources) {
@@ -62,7 +75,17 @@ export class PeriodicReportGenerator {
     const values = [...groups.values()];
     for (let i = 0; i < values.length; i += 5) {
       await Promise.all(
-        values.slice(i, i + 5).map((items) => this.generateOne(cadence, range, context.label, items)),
+        values
+          .slice(i, i + 5)
+          .map((items) =>
+            this.generateOne(
+              cadence,
+              range,
+              context.label,
+              items,
+              trackingType,
+            ),
+          ),
       );
     }
 
@@ -74,9 +97,14 @@ export class PeriodicReportGenerator {
     range: { periodStart: Date; periodEnd: Date },
     platformUserIds?: string[],
     subjectUserIds?: string[],
+    trackingType: TrackingReportType = TrackingReportType.PERIODIC_MEETING_SUMMARY,
   ): Promise<Source[]> {
     if (sourceCadence === 'RECORDING') {
-      const rows = await this.summaryRepo.findForPeriodicReport(range, platformUserIds, subjectUserIds);
+      const rows = await this.summaryRepo.findForPeriodicReport(
+        range,
+        platformUserIds,
+        subjectUserIds,
+      );
       return rows.map((row) => ({
         id: row.id,
         content: row.partSummary,
@@ -94,6 +122,7 @@ export class PeriodicReportGenerator {
       range,
       platformUserIds,
       subjectUserIds,
+      trackingType,
     );
 
     return rows.map((row) => ({
@@ -113,6 +142,7 @@ export class PeriodicReportGenerator {
     range: { periodStart: Date; periodEnd: Date },
     label: string,
     sources: Source[],
+    trackingType: TrackingReportType,
   ) {
     if (!sources.length) return;
 
@@ -139,14 +169,18 @@ export class PeriodicReportGenerator {
         subjectUserId: subjectUserId || undefined,
         platformUserId: platformUserId || undefined,
         subjectNameSnapshot: userName,
-        trackingType: TrackingReportType.PERIODIC_MEETING_SUMMARY,
+        trackingType,
         cadence,
         ...range,
         timezone: 'Asia/Shanghai',
         content: content || '',
         structuredData: {},
-        recordingSummaryIds: sources.filter((s) => s.kind === 'recording').map((s) => s.id),
-        sourceReportIds: sources.filter((s) => s.kind === 'report').map((s) => s.id),
+        recordingSummaryIds: sources
+          .filter((s) => s.kind === 'recording')
+          .map((s) => s.id),
+        sourceReportIds: sources
+          .filter((s) => s.kind === 'report')
+          .map((s) => s.id),
       },
       { generatedBy: GenerationMethod.AI, aiModel: this.config.model },
     );

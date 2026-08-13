@@ -151,10 +151,11 @@ export class TrackingReportRepository {
     range: { periodStart: Date; periodEnd: Date },
     platformUserIds?: string[],
     subjectUserIds?: string[],
+    trackingType: TrackingReportType = TrackingReportType.PERIODIC_MEETING_SUMMARY,
   ) {
     return this.prisma.userTrackingReport.findMany({
       where: {
-        trackingType: TrackingReportType.PERIODIC_MEETING_SUMMARY,
+        trackingType,
         cadence,
         platformUserId: platformUserIds?.length
           ? { in: platformUserIds }

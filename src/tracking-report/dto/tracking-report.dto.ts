@@ -114,4 +114,12 @@ export class TriggerSummaryDto {
   @IsArray({ message: 'subjectUserIds 必须是数组' })
   @IsString({ each: true, message: 'subjectUserIds 数组必须包含字符串' })
   subjectUserIds?: string[];
+
+  @ApiPropertyOptional({
+    description: '追踪报告类型，默认为 PERIODIC_MEETING_SUMMARY',
+    enum: TrackingReportType,
+  })
+  @IsOptional()
+  @IsEnum(TrackingReportType, { message: '无效的追踪报告类型' })
+  trackingType?: TrackingReportType;
 }
