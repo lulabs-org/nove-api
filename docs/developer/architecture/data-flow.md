@@ -47,11 +47,11 @@ URL 验证与事件请求均校验腾讯签名；POST 请求通过 Pipe 解密�
 
 ```mermaid
 flowchart LR
-  A[POST /meet-ai/summaries/participant] --> B[ParticipantSummaryService]
-  B --> C[ParticipantSummaryRepository]
+  A[POST /meet-ai/recordings/:id/participant-summaries/generate] --> B[ParticipantSummaryService]
+  B --> C[RecordingParticipantSummaryRepository]
   C --> D[(会议/录制/总结/转写上下文)]
   B --> E[LLM Module]
-  E --> F[(ParticipantSummary)]
+  E --> F[(RecordingParticipantSummary)]
 ```
 
 参会者总结仓储聚合最新会议关系和转写片段，Service 负责缺失数据判断、Prompt/LLM 编排及结果写入。周期总结由 `POST /meet-ai/summaries/period` 触发。

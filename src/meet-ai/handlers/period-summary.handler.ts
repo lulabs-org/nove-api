@@ -3,7 +3,7 @@ import { Job } from 'bullmq';
 import { ITaskHandler } from '@/task/handlers/task-handler.interface';
 import { TaskHandlerRegistry } from '@/task/handlers/task-handler.registry';
 import { PeriodSummaryService } from '../services/period-summary.service';
-import { PeriodType } from '@prisma/client';
+import { TrackingCadence } from '@prisma/client';
 
 @Injectable()
 export class PeriodSummaryHandler implements ITaskHandler, OnModuleInit {
@@ -21,10 +21,10 @@ export class PeriodSummaryHandler implements ITaskHandler, OnModuleInit {
 
   async handle(job: Job): Promise<unknown> {
     const jobData = job.data as {
-      periodType?: PeriodType;
-      payload?: { periodType?: PeriodType };
+      periodType?: TrackingCadence;
+      payload?: { periodType?: TrackingCadence };
     };
-    const periodType: PeriodType | undefined =
+    const periodType: TrackingCadence | undefined =
       jobData?.periodType || jobData?.payload?.periodType;
 
     if (!periodType) {

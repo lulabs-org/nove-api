@@ -42,6 +42,8 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:seed:real": "tsx prisma/seed.ts --real",
     "db:backup": "chmod +x scripts/shell/backup.sh && ./scripts/shell/backup.sh",
+    "audit:participant-summary-split": "tsx scripts/participant-summary-split-audit.ts",
+    "backfill:user-tracking-reports": "tsx scripts/backfill-user-tracking-reports.ts",
     "mcp:inspect": "npx @modelcontextprotocol/inspector node dist/main.js",
     "mcp:inspect:dev": "npx @modelcontextprotocol/inspector npx nest start",
     "mcp:inspect:sse": "npx @modelcontextprotocol/inspector --transport sse --server-url http://localhost:3000/sse",

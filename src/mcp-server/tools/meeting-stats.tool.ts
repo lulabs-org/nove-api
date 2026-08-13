@@ -5,15 +5,14 @@ import {
   MeetingStatsRepository,
   PlatformUserRepository,
 } from '../repositories';
-import { ParticipantSummaryRepository } from '@/meet-ai/repositories';
-import { PeriodType } from '@prisma/client';
+import { RecordingParticipantSummaryRepository } from '@/meet-ai/repositories';
 
 @Injectable()
 export class MeetingStatsTool {
   constructor(
     private readonly meetingRepo: MeetingStatsRepository,
     private readonly ptUserRepo: PlatformUserRepository,
-    private readonly participantSummaryRepo: ParticipantSummaryRepository,
+    private readonly participantSummaryRepo: RecordingParticipantSummaryRepository,
   ) {}
 
   private validateDateRange(startDate: Date, endDate: Date): void {
@@ -37,10 +36,6 @@ export class MeetingStatsTool {
       userId: z.string().describe('The ID of the user'),
       startDate: z.string().describe('Start date in ISO format (YYYY-MM-DD)'),
       endDate: z.string().describe('End date in ISO format (YYYY-MM-DD)'),
-      periodType: z
-        .enum(['SINGLE', 'DAILY', 'WEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY'])
-        .default('SINGLE')
-        .describe('The period type for statistics'),
     }),
   })
   @ToolScopes(['mcp-tool:meeting-stats'])
@@ -49,12 +44,10 @@ export class MeetingStatsTool {
       userId,
       startDate,
       endDate,
-      periodType,
     }: {
       userId: string;
       startDate: string;
       endDate: string;
-      periodType: PeriodType;
     },
     context: Context,
   ) {
@@ -77,7 +70,6 @@ export class MeetingStatsTool {
       platformUserIds,
       startDate: startDateObj,
       endDate: endDateObj,
-      periodType,
     });
 
     await context.reportProgress({ progress: 70, total: 100 });
@@ -120,7 +112,6 @@ export class MeetingStatsTool {
       summaries: summaries.map((s) => ({
         id: s.id,
         userName: s.userName,
-        periodType: s.periodType,
         summary: s.partSummary,
         keywords: s.keywords,
         createdAt: s.createdAt.toISOString(),

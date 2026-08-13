@@ -1,126 +1,144 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { GenerationMethod, Prisma } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
-import { GenerationMethod, PeriodType, Prisma } from '@prisma/client';
-import type { Meeting, ParticipantSummary } from '@prisma/client';
+import { retryVersionTransaction } from '@/common/utils/prisma-transaction-retry';
 
 @Injectable()
-export class ParticipantSummaryRepository {
-  private readonly logger = new Logger(ParticipantSummaryRepository.name);
-
+export class RecordingParticipantSummaryRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  // ==========================================
-  // WRITE OPERATIONS
-  // ==========================================
-
-  async create(data: Prisma.ParticipantSummaryUncheckedCreateInput) {
-    // Provide some application-level defaults if they are missing
-    if (!data.generatedBy) data.generatedBy = GenerationMethod.AI;
-    if (!data.aiModel) data.aiModel = 'tencent-meeting-ai';
-    if (!data.keywords) data.keywords = [];
-
-    return this.prisma.participantSummary.create({ data });
+  private groupKey(recordingId: string, platformUserId: string) {
+    return `recording:${recordingId}:user:${platformUserId}`;
   }
 
-  async update(id: string, data: Prisma.ParticipantSummaryUpdateInput) {
-    return this.prisma.participantSummary.update({
-      where: { id },
-      data,
+  async findById(meetingId: string, recordingId: string, id: string) {
+    return this.prisma.recordingParticipantSummary.findFirst({
+      where: {
+        id,
+        meetingId,
+        meetingRecordingId: recordingId,
+        deletedAt: null,
+      },
     });
   }
 
-  async findById(id: string) {
-    return this.prisma.participantSummary.findUnique({
-      where: { id, deletedAt: null },
-    });
-  }
-
-  async findMany(meetingId: string, skip: number, take: number) {
-    const [total, records] = await this.prisma.$transaction([
-      this.prisma.participantSummary.count({
-        where: { meetingId, deletedAt: null },
+  async recordingBelongsToMeeting(meetingId: string, recordingId: string) {
+    return Boolean(
+      await this.prisma.meetingRecording.findFirst({
+        where: { id: recordingId, meetingId, deletedAt: null },
+        select: { id: true },
       }),
-      this.prisma.participantSummary.findMany({
-        where: { meetingId, deletedAt: null },
+    );
+  }
+
+  async findMany(
+    meetingId: string,
+    recordingId: string,
+    skip: number,
+    take: number,
+  ) {
+    const where: Prisma.RecordingParticipantSummaryWhereInput = {
+      meetingId,
+      meetingRecordingId: recordingId,
+      isLatest: true,
+      deletedAt: null,
+    };
+    const [total, records] = await this.prisma.$transaction([
+      this.prisma.recordingParticipantSummary.count({ where }),
+      this.prisma.recordingParticipantSummary.findMany({
+        where,
         skip,
         take,
-        orderBy: { createdAt: 'desc' },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       }),
     ]);
     return { total, records };
   }
 
-  async delete(id: string) {
-    return this.prisma.participantSummary.update({
-      where: { id },
-      data: { deletedAt: new Date() },
-    });
-  }
-
-  async upsert(data: Prisma.ParticipantSummaryUncheckedCreateInput) {
-    const existingSummary = await this.prisma.participantSummary.findFirst({
-      where: {
-        platformUserId: data.platformUserId,
-        meetingId: data.meetingId,
-        meetingRecordingId: data.meetingRecordingId,
-        periodType: data.periodType,
-        isLatest: true,
-      },
-    });
-
-    if (existingSummary) {
-      return this.prisma.participantSummary.update({
-        where: { id: existingSummary.id },
-        data,
-      });
-    } else {
-      return this.create(data);
-    }
-  }
-
-  async saveNewVersion(params: Prisma.ParticipantSummaryUncheckedCreateInput) {
-    return this.prisma.$transaction(async (tx) => {
-      const existing = await tx.participantSummary.findFirst({
-        where: {
-          periodType: params.periodType,
-          platformUserId: params.platformUserId,
-          meetingId: params.meetingId,
-          meetingRecordingId: params.meetingRecordingId,
-          isLatest: true,
-          deletedAt: null,
+  async saveNewVersion(
+    params: Omit<
+      Prisma.RecordingParticipantSummaryUncheckedCreateInput,
+      'versionGroupKey' | 'version' | 'isLatest' | 'previousSummaryId'
+    >,
+  ) {
+    const versionGroupKey = this.groupKey(
+      params.meetingRecordingId,
+      params.platformUserId,
+    );
+    return retryVersionTransaction(() =>
+      this.prisma.$transaction(
+        async (tx) => {
+          const previous = await tx.recordingParticipantSummary.findFirst({
+            where: { versionGroupKey, isLatest: true, deletedAt: null },
+            orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
+          });
+          if (previous) {
+            await tx.recordingParticipantSummary.update({
+              where: { id: previous.id },
+              data: { isLatest: false },
+            });
+          }
+          return tx.recordingParticipantSummary.create({
+            data: {
+              ...params,
+              generatedBy: params.generatedBy ?? GenerationMethod.AI,
+              aiModel: params.aiModel ?? 'tencent-meeting-ai',
+              keywords: params.keywords ?? [],
+              versionGroupKey,
+              version: (previous?.version ?? 0) + 1,
+              previousSummaryId: previous?.id,
+              isLatest: true,
+            },
+          });
         },
-      });
-
-      if (existing) {
-        this.logger.warn(
-          `参会者: ${params.userName} 已存在最新总结，将弃用旧版本并创建新版本`,
-        );
-        await tx.participantSummary.update({
-          where: { id: existing.id },
-          data: { isLatest: false },
-        });
-      }
-
-      return tx.participantSummary.create({
-        data: {
-          ...params,
-          version: existing ? existing.version + 1 : 1,
-          isLatest: true,
-        },
-      });
-    });
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      ),
+    );
   }
 
-  // ==========================================
-  // READ OPERATIONS
-  // ==========================================
+  async softDelete(meetingId: string, recordingId: string, id: string) {
+    return retryVersionTransaction(() =>
+      this.prisma.$transaction(
+        async (tx) => {
+          const current = await tx.recordingParticipantSummary.findFirstOrThrow(
+            {
+              where: {
+                id,
+                meetingId,
+                meetingRecordingId: recordingId,
+                deletedAt: null,
+              },
+            },
+          );
+          await tx.recordingParticipantSummary.update({
+            where: { id },
+            data: { deletedAt: new Date(), isLatest: false },
+          });
+          if (current.isLatest) {
+            const predecessor = await tx.recordingParticipantSummary.findFirst({
+              where: {
+                versionGroupKey: current.versionGroupKey,
+                deletedAt: null,
+              },
+              orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
+            });
+            if (predecessor) {
+              await tx.recordingParticipantSummary.update({
+                where: { id: predecessor.id },
+                data: { isLatest: true },
+              });
+            }
+          }
+          return current;
+        },
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      ),
+    );
+  }
 
   async findGenerationContext(recordingId: string) {
     return this.prisma.meetingRecording.findFirst({
-      where: {
-        id: recordingId,
-        deletedAt: null,
-      },
+      where: { id: recordingId, deletedAt: null },
       select: {
         id: true,
         startAt: true,
@@ -132,11 +150,12 @@ export class ParticipantSummaryRepository {
             startAt: true,
             endAt: true,
             deletedAt: true,
+            participants: {
+              where: { deletedAt: null },
+              select: { id: true, ptUserId: true },
+            },
             summaries: {
-              where: {
-                isLatest: true,
-                deletedAt: null,
-              },
+              where: { isLatest: true, deletedAt: null },
               orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
               take: 1,
               select: {
@@ -151,31 +170,18 @@ export class ParticipantSummaryRepository {
           },
         },
         transcripts: {
-          where: {
-            deletedAt: null,
-          },
-          orderBy: {
-            createdAt: 'desc',
-          },
+          where: { deletedAt: null },
+          orderBy: { createdAt: 'desc' },
           take: 1,
           select: {
             segments: {
-              where: {
-                deletedAt: null,
-              },
-              orderBy: {
-                startTimeMs: 'asc',
-              },
+              where: { deletedAt: null },
+              orderBy: { startTimeMs: 'asc' },
               select: {
                 startTimeMs: true,
                 speakerName: true,
                 text: true,
-                speaker: {
-                  select: {
-                    id: true,
-                    displayName: true,
-                  },
-                },
+                speaker: { select: { id: true, displayName: true } },
               },
             },
           },
@@ -188,25 +194,13 @@ export class ParticipantSummaryRepository {
     platformUserIds: string[];
     startDate: Date;
     endDate: Date;
-    periodType: PeriodType;
-  }): Promise<
-    (ParticipantSummary & {
-      meeting: Pick<
-        Meeting,
-        'id' | 'title' | 'startAt' | 'endAt' | 'durationSeconds'
-      > | null;
-    })[]
-  > {
-    const { platformUserIds, startDate, endDate, periodType } = params;
-    return this.prisma.participantSummary.findMany({
+  }) {
+    return this.prisma.recordingParticipantSummary.findMany({
       where: {
-        platformUserId: { in: platformUserIds },
-        periodType,
-        createdAt: {
-          gte: startDate,
-          lte: endDate,
-        },
+        platformUserId: { in: params.platformUserIds },
+        isLatest: true,
         deletedAt: null,
+        createdAt: { gte: params.startDate, lte: params.endDate },
       },
       include: {
         meeting: {
@@ -221,60 +215,7 @@ export class ParticipantSummaryRepository {
       },
     });
   }
-
-  private getPeriodCondition(
-    start: Date,
-    end: Date,
-  ): Prisma.ParticipantSummaryWhereInput {
-    return {
-      OR: [
-        { periodStart: { gte: start, lte: end } },
-        { periodStart: null, createdAt: { gte: start, lte: end } },
-      ],
-    };
-  }
-
-  async findActiveUserIds(params: {
-    periodStart: Date;
-    periodEnd: Date;
-    parentPeriodType: PeriodType;
-    platformUserIds?: string[];
-  }) {
-    return this.prisma.participantSummary.findMany({
-      where: {
-        platformUserId: params.platformUserIds?.length
-          ? { in: params.platformUserIds }
-          : { not: null },
-        periodType: params.parentPeriodType,
-        ...this.getPeriodCondition(params.periodStart, params.periodEnd),
-      },
-      select: {
-        platformUserId: true,
-      },
-      distinct: ['platformUserId'],
-    });
-  }
-
-  async findByUserAndPeriod(params: {
-    parentPeriodType: PeriodType;
-    platformUserId: string;
-    periodStart: Date;
-    periodEnd: Date;
-  }) {
-    return this.prisma.participantSummary.findMany({
-      where: {
-        platformUserId: params.platformUserId,
-        periodType: params.parentPeriodType,
-        ...this.getPeriodCondition(params.periodStart, params.periodEnd),
-      },
-      select: {
-        id: true,
-        partSummary: true,
-        userName: true,
-        periodStart: true,
-        periodEnd: true,
-        platformUserId: true,
-      },
-    });
-  }
 }
+
+/** @deprecated Use RecordingParticipantSummaryRepository. */
+export { RecordingParticipantSummaryRepository as ParticipantSummaryRepository };

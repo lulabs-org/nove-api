@@ -10,11 +10,11 @@
  */
 
 import { Injectable, Logger, Inject, NotFoundException } from '@nestjs/common';
-import { GenerationMethod, PeriodType } from '@prisma/client';
+import { GenerationMethod } from '@prisma/client';
 import { ConfigType } from '@nestjs/config';
 import { formatToTimezone, formatTimeMs } from '@/common/utils/time.util';
 import { LlmService } from '@/llm/llm.service';
-import { ParticipantSummaryRepository } from '../repositories';
+import { RecordingParticipantSummaryRepository } from '../repositories';
 import { GenerateParticipantSummaryDto } from '../dto/meet-ai.dto';
 import { SummarySegment } from '../types';
 import { openaiConfig } from '@/configs/openai.config';
@@ -31,7 +31,7 @@ export class ParticipantSummaryService {
 
   constructor(
     private readonly llmService: LlmService,
-    private readonly partSummaryRepo: ParticipantSummaryRepository,
+    private readonly partSummaryRepo: RecordingParticipantSummaryRepository,
     @Inject(openaiConfig.KEY)
     private readonly config: ConfigType<typeof openaiConfig>,
   ) {}
@@ -39,7 +39,9 @@ export class ParticipantSummaryService {
   async generateSummaries({
     recordId,
     platformUserIds,
-  }: GenerateParticipantSummaryDto): Promise<Record<string, string>> {
+  }: GenerateParticipantSummaryDto & { recordId: string }): Promise<
+    Record<string, string>
+  > {
     // 1. 获取全局上下文数据
     const context = await this.fetchMeetingContext(recordId);
     const { transcript } = context;
@@ -130,16 +132,18 @@ export class ParticipantSummaryService {
 
     // 6. 结果持久化
     await this.partSummaryRepo.saveNewVersion({
-      periodType: PeriodType.SINGLE,
       platformUserId,
       meetingId: meeting.id,
       meetingRecordingId: recordId,
+      meetingParticipantId: meeting.participants?.find(
+        (participant) => participant.ptUserId === platformUserId,
+      )?.id,
       userName,
       partSummary: summary,
       generatedBy: GenerationMethod.AI,
       aiModel: this.config.model,
-      periodStart,
-      periodEnd,
+      observedStartAt: periodStart,
+      observedEndAt: periodEnd,
     });
 
     this.logger.log(`成功生成参会者: ${userName}总结`);

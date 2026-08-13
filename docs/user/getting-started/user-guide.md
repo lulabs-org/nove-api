@@ -50,8 +50,9 @@
 - `/recordings`：录制记录与转写读取。
 - `/transcripts`：转写资源。
 - `/meetings/:meetingId/summaries`：会议总结 CRUD。
-- `/meetings/:meetingId/participant-summaries`：参会者总结 CRUD。
-- `/meet-ai/summaries/participant`：生成参会者总结。
+- `/meetings/:meetingId/recordings/:recordingId/participant-summaries`：录制级参会者总结 CRUD。
+- `/meet-ai/recordings/:recordingId/participant-summaries/generate`：生成录制级参会者总结。
+- `/tracking-reports`：用户长期追踪报告 CRUD，支持周期会议总结、培养方案、项目进展和用户画像。
 - `/meet-ai/summaries/period`：触发周期总结。
 
 创建会议至少需要 `platform`、`platformMeetingId`、`title`、`type` 和 `hostUserName`。时间字段必须包含时区，建议使用 `Date.toISOString()` 生成 UTC ISO 8601 字符串。

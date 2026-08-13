@@ -13,7 +13,7 @@ import { Module } from '@nestjs/common';
 import { McpModule } from '@rekog/mcp-nest';
 import { RoleModule } from '@/admin/role/role.module';
 import { MeetAiModule } from '@/meet-ai/meet-ai.module';
-import { ParticipantSummaryRepository } from '@/meet-ai/repositories';
+import { RecordingParticipantSummaryRepository } from '@/meet-ai/repositories';
 
 import {
   GreetingTool,
@@ -50,7 +50,7 @@ import { SseController, StreamableHttpController } from './controllers';
     MeetingStatsTool,
     MeetingStatsRepository,
     PlatformUserRepository,
-    ParticipantSummaryRepository,
+    RecordingParticipantSummaryRepository,
   ],
 })
 export class McpServerModule {}

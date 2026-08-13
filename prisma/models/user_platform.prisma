@@ -34,7 +34,8 @@ model PlatformUser {
   actions              MeetingUserAction[]  @relation("UserActions")
   meetingRecordings    MeetingRecording[]   @relation("RecordingUser")
   meetingParticipants  MeetingParticipant[] @relation("ParticipantUser")
-  participantSummaries ParticipantSummary[] @relation("ParticipantSummaries") // 参与者总结
+  recordingParticipantSummaries RecordingParticipantSummary[] @relation("RecordingParticipantSummaries")
+  trackingReports UserTrackingReport[] @relation("UserTrackingReports")
 
   // 系统字段及时间
   createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)

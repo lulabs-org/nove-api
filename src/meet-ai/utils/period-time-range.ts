@@ -1,63 +1,67 @@
-/*
- * @Author: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @Date: 2026-01-28 21:34:04
- * @LastEditors: Mingxuan 159552597+Luckymingxuan@users.noreply.github.com
- * @LastEditTime: 2026-01-30 19:50:01
- * @FilePath: \nove-api\src\task\utils\period-time-range.ts
- * @Description:
- *
- * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
- */
-
-import { PeriodType } from '@prisma/client';
+import { TrackingCadence } from '@prisma/client';
 
 export interface PeriodContext {
-  parent: PeriodType;
+  sourceCadence: TrackingCadence | 'RECORDING';
   label: string;
 }
 
-const PERIOD_CONTEXT_MAP: Partial<Record<PeriodType, PeriodContext>> = {
-  [PeriodType.YEARLY]: { parent: PeriodType.MONTHLY, label: '本年' },
-  [PeriodType.QUARTERLY]: { parent: PeriodType.MONTHLY, label: '本季度' },
-  [PeriodType.MONTHLY]: { parent: PeriodType.DAILY, label: '本月' },
-  [PeriodType.WEEKLY]: { parent: PeriodType.DAILY, label: '本周' },
-  [PeriodType.DAILY]: { parent: PeriodType.SINGLE, label: '本日' },
+const CONTEXT: Partial<Record<TrackingCadence, PeriodContext>> = {
+  [TrackingCadence.DAILY]: { sourceCadence: 'RECORDING', label: '本日' },
+  [TrackingCadence.WEEKLY]: {
+    sourceCadence: TrackingCadence.DAILY,
+    label: '本周',
+  },
+  [TrackingCadence.MONTHLY]: {
+    sourceCadence: TrackingCadence.DAILY,
+    label: '本月',
+  },
+  [TrackingCadence.QUARTERLY]: {
+    sourceCadence: TrackingCadence.MONTHLY,
+    label: '本季度',
+  },
+  [TrackingCadence.YEARLY]: {
+    sourceCadence: TrackingCadence.MONTHLY,
+    label: '本年',
+  },
 };
 
-export const getPeriodContext = (
-  periodType: PeriodType,
-): PeriodContext | undefined => PERIOD_CONTEXT_MAP[periodType];
+export const getPeriodContext = (cadence: TrackingCadence) => CONTEXT[cadence];
 
-// 获取对应周期的起止时间（基于当前触发时间）
 export const getdayRange = (
-  periodType: PeriodType,
-  targetDate?: Date,
-): { periodStart: Date; periodEnd: Date } => {
-  const now = targetDate || new Date();
-  const [y, m, d] = [now.getFullYear(), now.getMonth(), now.getDate()];
-  let start: Date, end: Date;
-
-  switch (periodType) {
-    case PeriodType.YEARLY:
-      start = new Date(y, 0, 1, 0, 0, 0, 0);
-      end = new Date(y, 11, 31, 23, 59, 59, 999);
+  cadence: TrackingCadence,
+  targetDate = new Date(),
+) => {
+  const [y, m, d] = [
+    targetDate.getFullYear(),
+    targetDate.getMonth(),
+    targetDate.getDate(),
+  ];
+  let periodStart: Date;
+  let periodEnd: Date;
+  switch (cadence) {
+    case TrackingCadence.YEARLY:
+      periodStart = new Date(y, 0, 1);
+      periodEnd = new Date(y, 11, 31, 23, 59, 59, 999);
       break;
-    case PeriodType.MONTHLY:
-      start = new Date(y, m, 1, 0, 0, 0, 0);
-      end = new Date(y, m + 1, 0, 23, 59, 59, 999);
-      break;
-    case PeriodType.WEEKLY: {
-      const currentDay = now.getDay() === 0 ? 7 : now.getDay();
-      start = new Date(y, m, d - currentDay + 1, 0, 0, 0, 0);
-      end = new Date(y, m, d + (7 - currentDay), 23, 59, 59, 999);
+    case TrackingCadence.QUARTERLY: {
+      const quarterStart = Math.floor(m / 3) * 3;
+      periodStart = new Date(y, quarterStart, 1);
+      periodEnd = new Date(y, quarterStart + 3, 0, 23, 59, 59, 999);
       break;
     }
-    case PeriodType.DAILY:
-    default:
-      start = new Date(y, m, d, 0, 0, 0, 0);
-      end = new Date(y, m, d, 23, 59, 59, 999);
+    case TrackingCadence.MONTHLY:
+      periodStart = new Date(y, m, 1);
+      periodEnd = new Date(y, m + 1, 0, 23, 59, 59, 999);
       break;
+    case TrackingCadence.WEEKLY: {
+      const day = targetDate.getDay() || 7;
+      periodStart = new Date(y, m, d - day + 1);
+      periodEnd = new Date(y, m, d + 7 - day, 23, 59, 59, 999);
+      break;
+    }
+    default:
+      periodStart = new Date(y, m, d);
+      periodEnd = new Date(y, m, d, 23, 59, 59, 999);
   }
-
-  return { periodStart: start, periodEnd: end };
+  return { periodStart, periodEnd };
 };

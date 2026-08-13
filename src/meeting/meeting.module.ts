@@ -30,7 +30,7 @@ import { ParticipantSummaryController } from './controllers/participant-summary.
 import { TranscriptController } from './controllers/transcript.controller';
 import { MeetingRecordingController } from './controllers/meeting-recording.controller';
 import { ParticipantSummaryCrudService } from './services/participant-summary-crud.service';
-import { ParticipantSummaryRepository } from '@/meet-ai/repositories';
+import { RecordingParticipantSummaryRepository } from '@/meet-ai/repositories';
 
 @Module({
   imports: [HttpModule, PrismaModule],
@@ -53,7 +53,7 @@ import { ParticipantSummaryRepository } from '@/meet-ai/repositories';
     TranscriptRepository,
     MeetingParticipantRepository,
     ParticipantSummaryCrudService,
-    ParticipantSummaryRepository,
+    RecordingParticipantSummaryRepository,
   ],
   exports: [
     MeetingService,

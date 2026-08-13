@@ -56,6 +56,7 @@ import { AdminUserModule } from './admin/user/user.module';
 import { ProductModule } from './product/product.module';
 import { ChannelModule } from './channel/channel.module';
 import { OrderRefundModule } from './order-refund/order-refund.module';
+import { TrackingReportModule } from './tracking-report/tracking-report.module';
 
 @Module({
   imports: [
@@ -128,6 +129,7 @@ import { OrderRefundModule } from './order-refund/order-refund.module';
     ProductModule,
     ChannelModule,
     OrderRefundModule,
+    TrackingReportModule,
   ],
   controllers: [AppController],
   providers: [

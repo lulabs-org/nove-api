@@ -17,6 +17,7 @@ import {
   HttpCode,
   HttpStatus,
   Logger,
+  Param,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { NoPermissionRequired } from '@/admin/permission/decorators/permissions.decorator';
@@ -48,13 +49,19 @@ export class MeetAiController {
     };
   }
 
-  @Post('summaries/participant')
+  @Post('recordings/:recordingId/participant-summaries/generate')
   @HttpCode(HttpStatus.OK)
-  async generateSummaries(@Body() dto: GenerateParticipantSummaryDto) {
+  async generateSummaries(
+    @Param('recordingId') recordingId: string,
+    @Body() dto: GenerateParticipantSummaryDto,
+  ) {
     return {
       success: true,
       message: '参会者总结生成完成',
-      data: await this.participantSummaryService.generateSummaries(dto),
+      data: await this.participantSummaryService.generateSummaries({
+        recordId: recordingId,
+        ...dto,
+      }),
     };
   }
 

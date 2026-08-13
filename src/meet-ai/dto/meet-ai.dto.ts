@@ -19,7 +19,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { PeriodType } from '@prisma/client';
+import { TrackingCadence } from '@prisma/client';
 
 export class AnalyzeMeetingDto {
   @ApiProperty({ description: '会议ID' })
@@ -45,11 +45,11 @@ export class MeetingSummaryDto {
 export class TriggerSummaryDto {
   @ApiProperty({
     description: '总结周期类型 (例如 DAILY, WEEKLY)',
-    enum: PeriodType,
+    enum: TrackingCadence,
   })
-  @IsEnum(PeriodType, { message: '无效的周期类型' })
+  @IsEnum(TrackingCadence, { message: '无效的周期类型' })
   @IsNotEmpty({ message: 'periodType 不能为空' })
-  periodType!: PeriodType;
+  periodType!: TrackingCadence;
 
   @ApiPropertyOptional({ description: '目标日期' })
   @IsOptional()
@@ -68,11 +68,6 @@ export class TriggerSummaryDto {
 }
 
 export class GenerateParticipantSummaryDto {
-  @ApiProperty({ description: '记录ID' })
-  @IsString()
-  @IsNotEmpty()
-  recordId: string;
-
   @ApiPropertyOptional({
     description: '指定生成总结的部分平台用户ID (不传则生成所有发过言的用户)',
     type: [String],

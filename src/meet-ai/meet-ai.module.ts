@@ -12,10 +12,7 @@
 import { Module } from '@nestjs/common';
 import { MeetAiController } from './controllers/meet-ai.controller';
 import { ParticipantSummaryService } from './services';
-import {
-  ParticipantSummaryRepository,
-  SummaryRelationRepository,
-} from './repositories';
+import { RecordingParticipantSummaryRepository } from './repositories';
 import { PrismaModule } from '../prisma/prisma.module';
 import { LlmModule } from '@/llm/llm.module';
 import { UserPlatformModule } from '@/user-platform/user-platform.module';
@@ -26,6 +23,7 @@ import { ConfigModule } from '@nestjs/config';
 import { openaiConfig } from '@/configs/openai.config';
 import { TasksModule } from '@/task/tasks.module';
 import { PeriodSummaryHandler } from './handlers/period-summary.handler';
+import { TrackingReportModule } from '@/tracking-report/tracking-report.module';
 
 @Module({
   imports: [
@@ -35,18 +33,17 @@ import { PeriodSummaryHandler } from './handlers/period-summary.handler';
     UserPlatformModule,
     ConfigModule.forFeature(openaiConfig),
     TasksModule,
+    TrackingReportModule,
   ],
   controllers: [MeetAiController],
   providers: [
-    ParticipantSummaryRepository,
-    SummaryRelationRepository,
+    RecordingParticipantSummaryRepository,
     ParticipantSummaryService,
     PeriodSummaryService,
     PeriodSummaryHandler,
   ],
   exports: [
-    ParticipantSummaryRepository,
-    SummaryRelationRepository,
+    RecordingParticipantSummaryRepository,
     ParticipantSummaryService,
     PeriodSummaryService,
   ],
