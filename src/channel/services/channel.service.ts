@@ -1,9 +1,11 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { randomUUID } from 'node:crypto';
 import {
   ChannelDto,
   ChannelListResponseDto,
@@ -21,8 +23,7 @@ export class ChannelService {
   constructor(private readonly channelRepository: ChannelRepository) {}
 
   async create(dto: CreateChannelDto): Promise<ChannelDto> {
-    const code = this.normalizeCode(dto.code);
-    await this.ensureCodeAvailable(code);
+    const code = await this.generateUniqueCode();
     const channel = await this.channelRepository.create({
       name: dto.name.trim(),
       code,
@@ -76,15 +77,10 @@ export class ChannelService {
   }
 
   async update(id: number, dto: UpdateChannelDto): Promise<ChannelDto> {
-    const existing = await this.findChannel(id);
-    const code =
-      dto.code === undefined ? undefined : this.normalizeCode(dto.code);
-    if (code && code !== existing.code)
-      await this.ensureCodeAvailable(code, id);
+    await this.findChannel(id);
 
     const channel = await this.channelRepository.update(id, {
       name: dto.name?.trim(),
-      code,
       description: this.optionalNullableString(dto, 'description'),
       isActive: dto.isActive,
     });
@@ -112,18 +108,12 @@ export class ChannelService {
     return channel;
   }
 
-  private async ensureCodeAvailable(
-    code: string,
-    excludeId?: number,
-  ): Promise<void> {
-    const existing = await this.channelRepository.findByCode(code);
-    if (existing && existing.id !== excludeId) {
-      throw new BadRequestException('Channel code already exists');
+  private async generateUniqueCode(): Promise<string> {
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const code = `CH_${randomUUID().replaceAll('-', '').slice(0, 12).toUpperCase()}`;
+      if (!(await this.channelRepository.findByCode(code))) return code;
     }
-  }
-
-  private normalizeCode(code: string): string {
-    return code.trim().toUpperCase();
+    throw new InternalServerErrorException('Unable to generate channel code');
   }
 
   private nullableString(value?: string | null): string | null | undefined {

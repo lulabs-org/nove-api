@@ -12,12 +12,6 @@ export class CreateChannelDto {
   @Length(1, 255)
   name: string;
 
-  @ApiProperty({ description: '唯一渠道编码', example: 'WECHAT_MINIPROGRAM' })
-  @Transform(trim)
-  @IsString()
-  @Length(1, 50)
-  code: string;
-
   @ApiPropertyOptional({ description: '渠道描述' })
   @IsOptional()
   @Transform(trim)
