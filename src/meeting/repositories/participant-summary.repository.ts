@@ -242,5 +242,3 @@ export class RecordingParticipantSummaryRepository {
   }
 }
 
-/** @deprecated Use RecordingParticipantSummaryRepository. */
-export { RecordingParticipantSummaryRepository as ParticipantSummaryRepository };

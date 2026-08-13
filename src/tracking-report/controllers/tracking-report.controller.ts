@@ -8,20 +8,20 @@ import {
   Put,
   Query,
   ValidationPipe,
+  HttpCode,
+  HttpStatus
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
 import { CuidPipe } from '@/common/pipes/cuid.pipe';
 import {
   CreateTrackingReportDto,
   QueryTrackingReportDto,
   UpdateTrackingReportDto,
+  TriggerSummaryDto
 } from '../dto/tracking-report.dto';
 import { TrackingReportService } from '../services/tracking-report.service';
 import { PeriodicReportGenerator } from '../services/periodic-report.generator';
-import { TriggerSummaryDto } from '../dto/tracking-report.dto';
-import { HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiOperation } from '@nestjs/swagger';
 
 @ApiTags('User Tracking Reports')
 @ApiBearerAuth()

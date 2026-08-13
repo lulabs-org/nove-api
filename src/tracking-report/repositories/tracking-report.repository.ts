@@ -146,7 +146,7 @@ export class TrackingReportRepository {
     );
   }
 
-  findPeriodicMeetingSummaries(
+  findPeriodicSummaries(
     cadence: TrackingCadence,
     range: { periodStart: Date; periodEnd: Date },
     platformUserIds?: string[],

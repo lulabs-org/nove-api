@@ -6,7 +6,7 @@ import { TrackingReportRepository } from '../repositories/tracking-report.reposi
 import { RecordingParticipantSummaryRepository } from '@/meeting/repositories/participant-summary.repository';
 
 describe('PeriodicReportGenerator', () => {
-  const trackingReportRepository = { findPeriodicMeetingSummaries: jest.fn() };
+  const trackingReportRepository = { findPeriodicSummaries: jest.fn() };
   const recordingSummaryRepository = { findForPeriodicReport: jest.fn() };
   const trackingReportService = { create: jest.fn() };
   const llm = {
@@ -57,7 +57,7 @@ describe('PeriodicReportGenerator', () => {
   });
 
   it('creates a weekly report from daily report evidence', async () => {
-    trackingReportRepository.findPeriodicMeetingSummaries.mockResolvedValue([
+    trackingReportRepository.findPeriodicSummaries.mockResolvedValue([
       {
         id: 'daily-1',
         content: 'daily summary',

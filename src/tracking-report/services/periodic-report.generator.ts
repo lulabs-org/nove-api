@@ -29,9 +29,9 @@ type Source = {
 export class PeriodicReportGenerator {
   private readonly logger = new Logger(PeriodicReportGenerator.name);
   constructor(
-    private readonly trackingReportRepository: TrackingReportRepository,
-    private readonly recordingSummaryRepository: RecordingParticipantSummaryRepository,
-    private readonly trackingReportService: TrackingReportService,
+    private readonly reportRepo: TrackingReportRepository,
+    private readonly summaryRepo: RecordingParticipantSummaryRepository,
+    private readonly reportService: TrackingReportService,
     private readonly llmService: LlmService,
     @Inject(openaiConfig.KEY)
     private readonly config: ConfigType<typeof openaiConfig>,
@@ -71,7 +71,7 @@ export class PeriodicReportGenerator {
     platformUserIds?: string[],
   ): Promise<Source[]> {
     if (sourceCadence === 'RECORDING') {
-      const rows = await this.recordingSummaryRepository.findForPeriodicReport(range, platformUserIds);
+      const rows = await this.summaryRepo.findForPeriodicReport(range, platformUserIds);
       return rows.map((row) => ({
         id: row.id,
         content: row.partSummary,
@@ -84,7 +84,7 @@ export class PeriodicReportGenerator {
       }));
     }
 
-    const rows = await this.trackingReportRepository.findPeriodicMeetingSummaries(
+    const rows = await this.reportRepo.findPeriodicSummaries(
       sourceCadence,
       range,
       platformUserIds,
@@ -127,7 +127,7 @@ export class PeriodicReportGenerator {
       { role: 'user', content: prompt },
     ]);
 
-    await this.trackingReportService.create(
+    await this.reportService.create(
       {
         subjectUserId: subjectUserId || undefined,
         platformUserId: platformUserId || undefined,
