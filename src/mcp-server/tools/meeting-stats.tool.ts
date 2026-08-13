@@ -5,7 +5,7 @@ import {
   MeetingStatsRepository,
   PlatformUserRepository,
 } from '../repositories';
-import { RecordingParticipantSummaryRepository } from '@/meet-ai/repositories';
+import { RecordingParticipantSummaryRepository } from '@/meeting/repositories';
 
 @Injectable()
 export class MeetingStatsTool {

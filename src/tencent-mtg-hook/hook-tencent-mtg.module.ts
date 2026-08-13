@@ -17,7 +17,6 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { LarkModule } from '@/integrations/lark/lark.module';
 import { UserModule } from '@/user/user.module';
 import { UserPlatformModule } from '@/user-platform/user-platform.module';
-import { MeetAiModule } from '@/meet-ai/meet-ai.module';
 import { MeetingModule } from '@/meeting/meeting.module';
 import { TencentWebhookController } from './controllers/tencent-webhook.controller';
 import {
@@ -51,7 +50,6 @@ import {
     PrismaModule,
     UserModule,
     UserPlatformModule,
-    MeetAiModule,
     MeetingModule,
   ],
   controllers: [TencentWebhookController],

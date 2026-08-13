@@ -12,8 +12,8 @@
 import { Module } from '@nestjs/common';
 import { McpModule } from '@rekog/mcp-nest';
 import { RoleModule } from '@/admin/role/role.module';
-import { MeetAiModule } from '@/meet-ai/meet-ai.module';
-import { RecordingParticipantSummaryRepository } from '@/meet-ai/repositories';
+import { MeetingModule } from '@/meeting/meeting.module';
+import { RecordingParticipantSummaryRepository } from '@/meeting/repositories';
 
 import {
   GreetingTool,
@@ -39,7 +39,7 @@ import { SseController, StreamableHttpController } from './controllers';
       // guards: [McpAuthJwtGuard], // 保护所有 MCP 端点
     }),
     RoleModule,
-    MeetAiModule,
+    MeetingModule,
     UserModule,
   ],
   controllers: [SseController, StreamableHttpController],

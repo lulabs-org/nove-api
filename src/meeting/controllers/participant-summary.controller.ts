@@ -17,22 +17,27 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
+import { RequirePermissions, NoPermissionRequired } from '@/admin/permission/decorators/permissions.decorator';
 import { CuidPipe } from '@/common/pipes/cuid.pipe';
 import { ParticipantSummaryCrudService } from '../services/participant-summary-crud.service';
+import { ParticipantSummaryService } from '../services/participant-summary.service';
 import {
   CreateRecordingParticipantSummaryDto,
   QueryRecordingParticipantSummaryDto,
   RecordingParticipantSummaryDto,
   RecordingParticipantSummaryListResponseDto,
   UpdateRecordingParticipantSummaryDto,
+  GenerateParticipantSummaryDto,
 } from '../dto/participant-summary.dto';
 
 @ApiTags('Recording Participant Summary')
 @ApiBearerAuth()
 @Controller('meetings/:meetingId/recordings/:recordingId/participant-summaries')
 export class ParticipantSummaryController {
-  constructor(private readonly service: ParticipantSummaryCrudService) {}
+  constructor(
+    private readonly service: ParticipantSummaryCrudService,
+    private readonly aiService: ParticipantSummaryService,
+  ) {}
 
   @Get()
   @RequirePermissions('meeting:read')
@@ -96,5 +101,24 @@ export class ParticipantSummaryController {
     @Param('id', CuidPipe) id: string,
   ) {
     return this.service.delete(meetingId, recordingId, id);
+  }
+
+  @Post('generate')
+  @HttpCode(HttpStatus.OK)
+  @NoPermissionRequired()
+  @ApiOperation({ summary: '生成参会者总结' })
+  async generateSummaries(
+    @Param('meetingId', CuidPipe) meetingId: string,
+    @Param('recordingId') recordingId: string,
+    @Body() dto: GenerateParticipantSummaryDto,
+  ) {
+    return {
+      success: true,
+      message: '参会者总结生成完成',
+      data: await this.aiService.generateSummaries({
+        recordId: recordingId,
+        ...dto,
+      }),
+    };
   }
 }

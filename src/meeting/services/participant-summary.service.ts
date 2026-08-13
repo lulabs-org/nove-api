@@ -15,7 +15,7 @@ import { ConfigType } from '@nestjs/config';
 import { formatToTimezone, formatTimeMs } from '@/common/utils/time.util';
 import { LlmService } from '@/llm/llm.service';
 import { RecordingParticipantSummaryRepository } from '../repositories';
-import { GenerateParticipantSummaryDto } from '../dto/meet-ai.dto';
+import { GenerateParticipantSummaryDto } from '../dto/participant-summary.dto';
 import { SummarySegment } from '../types';
 import { openaiConfig } from '@/configs/openai.config';
 import { generatePrompt } from '@/common/utils';

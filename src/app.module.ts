@@ -46,7 +46,6 @@ import { RoleModule } from './admin/role/role.module';
 import { OrganizationModule } from './admin/org/organization.module';
 import { DepartmentModule } from './admin/dept/department.module';
 import { OrgMemberModule } from './admin/org-member/org-member.module';
-import { MeetAiModule } from './meet-ai/meet-ai.module';
 import { WechatShopModule } from './wechat-shop/wechat-shop.module';
 import { OrderModule } from './order/order.module';
 import { WebhookLogModule } from './webhook-log/webhook-log.module';
@@ -119,7 +118,6 @@ import { TrackingReportModule } from './tracking-report/tracking-report.module';
     OrganizationModule,
     DepartmentModule,
     OrgMemberModule,
-    MeetAiModule,
     WechatShopModule,
     OrderModule,
     WebhookLogModule,

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { GenerationMethod } from '@prisma/client';
-import { RecordingParticipantSummaryRepository } from '@/meet-ai/repositories';
+import { RecordingParticipantSummaryRepository } from '../repositories';
 import {
   CreateRecordingParticipantSummaryDto,
   UpdateRecordingParticipantSummaryDto,

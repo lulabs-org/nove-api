@@ -24,16 +24,25 @@ import { TranscriptRepository } from './repositories/transcript.repository';
 import { MeetingParticipantRepository } from './repositories/meeting-participant.repository';
 import { HttpModule } from '@nestjs/axios';
 import { PrismaModule } from '../prisma/prisma.module';
+import { LlmModule } from '@/llm/llm.module';
+import { ConfigModule } from '@nestjs/config';
+import { openaiConfig } from '@/configs/openai.config';
 
 import { MeetingSummaryController } from './controllers/meeting-summary.controller';
 import { ParticipantSummaryController } from './controllers/participant-summary.controller';
 import { TranscriptController } from './controllers/transcript.controller';
 import { MeetingRecordingController } from './controllers/meeting-recording.controller';
 import { ParticipantSummaryCrudService } from './services/participant-summary-crud.service';
-import { RecordingParticipantSummaryRepository } from '@/meet-ai/repositories';
+import { ParticipantSummaryService } from './services/participant-summary.service';
+import { RecordingParticipantSummaryRepository } from './repositories';
 
 @Module({
-  imports: [HttpModule, PrismaModule],
+  imports: [
+    HttpModule,
+    PrismaModule,
+    LlmModule,
+    ConfigModule.forFeature(openaiConfig),
+  ],
   controllers: [
     MeetingController,
     MeetingSummaryController,
@@ -53,6 +62,7 @@ import { RecordingParticipantSummaryRepository } from '@/meet-ai/repositories';
     TranscriptRepository,
     MeetingParticipantRepository,
     ParticipantSummaryCrudService,
+    ParticipantSummaryService,
     RecordingParticipantSummaryRepository,
   ],
   exports: [
@@ -67,6 +77,9 @@ import { RecordingParticipantSummaryRepository } from '@/meet-ai/repositories';
     TranscriptRepository,
     MeetingParticipantRepository,
     ParticipantSummaryCrudService,
+    ParticipantSummaryService,
+    RecordingParticipantSummaryRepository,
   ],
 })
 export class MeetingModule {}
+

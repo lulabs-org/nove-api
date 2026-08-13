@@ -77,3 +77,15 @@ export class RecordingParticipantSummaryListResponseDto {
   @ApiProperty() limit: number;
   @ApiProperty() totalPages: number;
 }
+
+export class GenerateParticipantSummaryDto {
+  @ApiPropertyOptional({
+    description: '指定生成总结的部分平台用户ID (不传则生成所有发过言的用户)',
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray({ message: 'platformUserIds 必须是数组' })
+  @IsString({ each: true, message: 'platformUserIds 数组必须包含字符串' })
+  platformUserIds?: string[];
+}
+
