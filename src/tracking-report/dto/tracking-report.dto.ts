@@ -105,4 +105,13 @@ export class TriggerSummaryDto {
   @IsArray({ message: 'platformUserIds 必须是数组' })
   @IsString({ each: true, message: 'platformUserIds 数组必须包含字符串' })
   platformUserIds?: string[];
+
+  @ApiPropertyOptional({
+    description: '指定生成总结的部分系统用户 (subjectUserId 列表)',
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray({ message: 'subjectUserIds 必须是数组' })
+  @IsString({ each: true, message: 'subjectUserIds 数组必须包含字符串' })
+  subjectUserIds?: string[];
 }

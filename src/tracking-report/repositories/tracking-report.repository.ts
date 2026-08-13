@@ -150,6 +150,7 @@ export class TrackingReportRepository {
     cadence: TrackingCadence,
     range: { periodStart: Date; periodEnd: Date },
     platformUserIds?: string[],
+    subjectUserIds?: string[],
   ) {
     return this.prisma.userTrackingReport.findMany({
       where: {
@@ -157,6 +158,9 @@ export class TrackingReportRepository {
         cadence,
         platformUserId: platformUserIds?.length
           ? { in: platformUserIds }
+          : undefined,
+        subjectUserId: subjectUserIds?.length
+          ? { in: subjectUserIds }
           : undefined,
         periodStart: { gte: range.periodStart },
         periodEnd: { lte: range.periodEnd },

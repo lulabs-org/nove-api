@@ -42,14 +42,15 @@ export class PeriodicReportGenerator {
    * @param cadence 周期类型
    * @param baseDate 基准日期，默认为当前时间
    * @param platformUserIds 平台用户ID列表，默认为空（全部）
+   * @param subjectUserIds 本地系统用户ID列表，默认为空（全部）
    * @returns 包含生成状态和时间的响应对象
    */
-  async generateSummaries({ cadence, baseDate = new Date(), platformUserIds }: TriggerSummaryDto) {
+  async generateSummaries({ cadence, baseDate = new Date(), platformUserIds, subjectUserIds }: TriggerSummaryDto) {
     const context = getPeriodContext(cadence);
     if (!context) return { ok: false, at: new Date().toISOString() };
 
     const range = getdayRange(cadence, baseDate);
-    const sources = await this.findSources(context.sourceCadence, range, platformUserIds);
+    const sources = await this.findSources(context.sourceCadence, range, platformUserIds, subjectUserIds);
 
     const groups = new Map<string, Source[]>();
     for (const source of sources) {
@@ -72,9 +73,10 @@ export class PeriodicReportGenerator {
     sourceCadence: TrackingCadence | 'RECORDING',
     range: { periodStart: Date; periodEnd: Date },
     platformUserIds?: string[],
+    subjectUserIds?: string[],
   ): Promise<Source[]> {
     if (sourceCadence === 'RECORDING') {
-      const rows = await this.summaryRepo.findForPeriodicReport(range, platformUserIds);
+      const rows = await this.summaryRepo.findForPeriodicReport(range, platformUserIds, subjectUserIds);
       return rows.map((row) => ({
         id: row.id,
         content: row.partSummary,
@@ -91,6 +93,7 @@ export class PeriodicReportGenerator {
       sourceCadence,
       range,
       platformUserIds,
+      subjectUserIds,
     );
 
     return rows.map((row) => ({
