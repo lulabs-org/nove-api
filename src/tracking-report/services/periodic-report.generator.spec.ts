@@ -52,7 +52,7 @@ describe('PeriodicReportGenerator', () => {
         recordingSummaryIds: ['summary-1'],
         sourceReportIds: [],
       }),
-      expect.objectContaining({ generatedBy: 'AI', aiModel: 'test-model' })
+      expect.objectContaining({ generatedBy: 'AI', aiModel: 'test-model' }),
     );
   });
 
@@ -81,7 +81,7 @@ describe('PeriodicReportGenerator', () => {
         recordingSummaryIds: [],
         sourceReportIds: ['daily-1'],
       }),
-      expect.objectContaining({ generatedBy: 'AI', aiModel: 'test-model' })
+      expect.objectContaining({ generatedBy: 'AI', aiModel: 'test-model' }),
     );
   });
 });

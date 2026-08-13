@@ -17,7 +17,10 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { RequirePermissions, NoPermissionRequired } from '@/admin/permission/decorators/permissions.decorator';
+import {
+  RequirePermissions,
+  NoPermissionRequired,
+} from '@/admin/permission/decorators/permissions.decorator';
 import { CuidPipe } from '@/common/pipes/cuid.pipe';
 import { ParticipantSummaryCrudService } from '../services/participant-summary-crud.service';
 import { ParticipantSummaryService } from '../services/participant-summary.service';

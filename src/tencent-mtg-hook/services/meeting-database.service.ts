@@ -58,7 +58,7 @@ export class MeetingDatabaseService {
     private readonly meetingSummaryRepo: MeetingSummaryRepository,
     private readonly transcriptRepo: TranscriptRepository,
     private readonly transcriptSyncService: TranscriptSyncService,
-  ) { }
+  ) {}
 
   /**
    * 创建或更新会议记录
@@ -107,9 +107,10 @@ export class MeetingDatabaseService {
     }
 
     // 提取子会议 ID，如果不存在（例如非周期性会议）则默认使用 '__ROOT__'
-    const subMeetingId = 'sub_meeting_id' in meeting_info
-      ? meeting_info.sub_meeting_id || '__ROOT__'
-      : '__ROOT__';
+    const subMeetingId =
+      'sub_meeting_id' in meeting_info
+        ? meeting_info.sub_meeting_id || '__ROOT__'
+        : '__ROOT__';
 
     return await this.meetingRepo.upsert(
       Platform.TENCENT_MEETING,

@@ -149,27 +149,30 @@ export class PeriodicReportGenerator {
         { role: 'system', content: systemPrompt },
         { role: 'user', content: prompt },
       ])) ?? '';
-    await this.trackingReportService.create({
-      subjectUserId: sources[0].subjectUserId || undefined,
-      platformUserId: sources[0].platformUserId || undefined,
-      subjectNameSnapshot: userName,
-      trackingType: TrackingReportType.PERIODIC_MEETING_SUMMARY,
-      cadence,
-      periodStart: range.periodStart,
-      periodEnd: range.periodEnd,
-      timezone: 'Asia/Shanghai',
-      content,
-      structuredData: {},
-      recordingSummaryIds: sources
-        .filter((source) => source.kind === 'recording')
-        .map((source) => source.id),
-      sourceReportIds: sources
-        .filter((source) => source.kind === 'report')
-        .map((source) => source.id),
-    }, {
-      generatedBy: GenerationMethod.AI,
-      aiModel: this.config.model,
-    });
+    await this.trackingReportService.create(
+      {
+        subjectUserId: sources[0].subjectUserId || undefined,
+        platformUserId: sources[0].platformUserId || undefined,
+        subjectNameSnapshot: userName,
+        trackingType: TrackingReportType.PERIODIC_MEETING_SUMMARY,
+        cadence,
+        periodStart: range.periodStart,
+        periodEnd: range.periodEnd,
+        timezone: 'Asia/Shanghai',
+        content,
+        structuredData: {},
+        recordingSummaryIds: sources
+          .filter((source) => source.kind === 'recording')
+          .map((source) => source.id),
+        sourceReportIds: sources
+          .filter((source) => source.kind === 'report')
+          .map((source) => source.id),
+      },
+      {
+        generatedBy: GenerationMethod.AI,
+        aiModel: this.config.model,
+      },
+    );
     this.logger.log(`已生成 ${userName} 的 ${cadence} 长期追踪报告`);
   }
 

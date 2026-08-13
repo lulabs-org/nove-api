@@ -29,8 +29,8 @@ import { ApiOperation } from '@nestjs/swagger';
 export class TrackingReportController {
   constructor(
     private readonly service: TrackingReportService,
-    private readonly periodicReportGenerator: PeriodicReportGenerator
-  ) { }
+    private readonly periodicReportGenerator: PeriodicReportGenerator,
+  ) {}
   @Post() @RequirePermissions('tracking-report:create') create(
     @Body(new ValidationPipe()) dto: CreateTrackingReportDto,
   ) {

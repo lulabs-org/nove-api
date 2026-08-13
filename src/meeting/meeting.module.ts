@@ -82,4 +82,3 @@ import { RecordingParticipantSummaryRepository } from './repositories';
   ],
 })
 export class MeetingModule {}
-

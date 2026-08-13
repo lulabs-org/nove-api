@@ -16,7 +16,10 @@ import { TASK_QUEUE_NAME } from '../task.constants';
 @Processor(TASK_QUEUE_NAME, {
   autorun: false,
 })
-export class TaskProcessor extends WorkerHost implements OnApplicationBootstrap {
+export class TaskProcessor
+  extends WorkerHost
+  implements OnApplicationBootstrap
+{
   private readonly logger = new Logger(TaskProcessor.name);
 
   constructor(

@@ -15,19 +15,19 @@ import { TasksModule } from '@/task/tasks.module';
     PrismaModule,
     LlmModule,
     ConfigModule.forFeature(openaiConfig),
-    TasksModule
+    TasksModule,
   ],
   controllers: [TrackingReportController],
   providers: [
-    TrackingReportRepository, 
+    TrackingReportRepository,
     TrackingReportService,
     PeriodicReportGenerator,
-    PeriodSummaryHandler
+    PeriodSummaryHandler,
   ],
   exports: [
-    TrackingReportRepository, 
+    TrackingReportRepository,
     TrackingReportService,
-    PeriodicReportGenerator
+    PeriodicReportGenerator,
   ],
 })
 export class TrackingReportModule {}

@@ -88,4 +88,3 @@ export class GenerateParticipantSummaryDto {
   @IsString({ each: true, message: 'platformUserIds 数组必须包含字符串' })
   platformUserIds?: string[];
 }
-
