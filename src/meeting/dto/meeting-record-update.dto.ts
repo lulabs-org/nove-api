@@ -3,12 +3,12 @@ import {
   IsOptional,
   IsEnum,
   IsDate,
-  IsNumber,
+  IsInt,
   Min,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { MeetingType, ProcessingStatus } from '@prisma/client';
-import { Transform, Type } from 'class-transformer';
+import { Type } from 'class-transformer';
 
 export class UpdateMeetingRecordDto {
   @ApiPropertyOptional({
@@ -45,14 +45,6 @@ export class UpdateMeetingRecordDto {
   hostUserId?: string;
 
   @ApiPropertyOptional({
-    description: '主持人用户名',
-    example: '李四',
-  })
-  @IsOptional()
-  @IsString({ message: '主持人用户名必须是字符串' })
-  hostUserName?: string;
-
-  @ApiPropertyOptional({
     description:
       '实际开始时间（务必传入包含时区信息的 ISO 8601 格式，例如前端通过 date.toISOString() 生成）',
     example: '2024-01-01T10:00:00.000Z',
@@ -73,15 +65,15 @@ export class UpdateMeetingRecordDto {
   endedAt?: Date;
 
   @ApiPropertyOptional({
-    description: '持续时间（分钟）',
-    example: 60,
+    description: '持续时间（秒）',
+    example: 3600,
     minimum: 0,
   })
   @IsOptional()
-  @Transform(({ value }) => (value ? parseInt(String(value)) : undefined))
-  @IsNumber({}, { message: '持续时间必须是数字' })
+  @Type(() => Number)
+  @IsInt({ message: '持续时间必须是整数' })
   @Min(0, { message: '持续时间不能小于0' })
-  duration?: number;
+  durationSeconds?: number;
 
   @ApiPropertyOptional({
     description: '录制状态',
@@ -107,17 +99,10 @@ export class UpdateMeetingRecordDto {
     minimum: 0,
   })
   @IsOptional()
-  @Transform(({ value }) => (value ? parseInt(String(value)) : undefined))
-  @IsNumber({}, { message: '参会人数必须是数字' })
+  @Type(() => Number)
+  @IsInt({ message: '参会人数必须是整数' })
   @Min(0, { message: '参会人数不能小于0' })
   participantCount?: number;
-
-  @ApiPropertyOptional({
-    description: '参会者列表',
-    example: [{ name: '张三', userId: 'user_123' }],
-  })
-  @IsOptional()
-  participantList?: any;
 
   @ApiPropertyOptional({
     description: '元数据',

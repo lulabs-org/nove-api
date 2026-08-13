@@ -3,6 +3,56 @@ import { PrismaService } from '../../prisma/prisma.service';
 import type { GetMeetingRecordsParams } from '@/meeting/types';
 
 import { MeetingPlatform, Prisma } from '@prisma/client';
+import type { MeetingStatsResponseDto } from '../dto';
+
+const meetingResponseSelect = {
+  id: true,
+  platform: true,
+  meetingId: true,
+  subMeetingId: true,
+  externalId: true,
+  title: true,
+  description: true,
+  meetingCode: true,
+  type: true,
+  language: true,
+  tags: true,
+  hostId: true,
+  participantCount: true,
+  scheduledStartAt: true,
+  scheduledEndAt: true,
+  startAt: true,
+  endAt: true,
+  durationSeconds: true,
+  timezone: true,
+  hasRecording: true,
+  recordingStatus: true,
+  processingStatus: true,
+  metadata: true,
+  createdAt: true,
+  updatedAt: true,
+  deletedAt: true,
+  host: {
+    select: { id: true, displayName: true },
+  },
+  recordings: {
+    where: { deletedAt: null },
+    select: {
+      id: true,
+      externalId: true,
+      source: true,
+      status: true,
+      startAt: true,
+      endAt: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  },
+} satisfies Prisma.MeetingSelect;
+
+type MeetingResponseRecord = Prisma.MeetingGetPayload<{
+  select: typeof meetingResponseSelect;
+}>;
 
 type UpdateMeetingRecordData = Prisma.MeetingUncheckedUpdateInput;
 type CreateMeetingRecordData = Omit<
@@ -14,20 +64,39 @@ type CreateMeetingRecordData = Omit<
 export class MeetingRepository {
   constructor(private prisma: PrismaService) {}
 
-  private toResponseRecord<
-    T extends {
-      hostId: string | null;
-      durationMs?: bigint | null;
-      host?: { id: string; displayName: string | null } | null;
-    },
-  >(record: T) {
-    const { hostId, durationMs, ...responseRecord } = record;
+  private toResponseRecord(
+    record: MeetingResponseRecord,
+    includeRecordings = true,
+  ) {
     return {
-      ...responseRecord,
-      ...(durationMs !== undefined && {
-        durationMs: durationMs ? Number(durationMs) : null,
-      }),
-      hostPlatformUserId: hostId,
+      id: record.id,
+      platform: record.platform,
+      meetingId: record.meetingId,
+      subMeetingId: record.subMeetingId,
+      externalId: record.externalId,
+      title: record.title,
+      description: record.description,
+      meetingCode: record.meetingCode,
+      type: record.type,
+      language: record.language,
+      tags: record.tags,
+      hostPlatformUserId: record.hostId,
+      host: record.host,
+      participantCount: record.participantCount,
+      scheduledStartAt: record.scheduledStartAt,
+      scheduledEndAt: record.scheduledEndAt,
+      startAt: record.startAt,
+      endAt: record.endAt,
+      durationSeconds: record.durationSeconds,
+      timezone: record.timezone,
+      hasRecording: record.recordings.length > 0,
+      recordingStatus: record.recordingStatus,
+      processingStatus: record.processingStatus,
+      metadata: record.metadata,
+      createdAt: record.createdAt,
+      updatedAt: record.updatedAt,
+      deletedAt: record.deletedAt,
+      ...(includeRecordings ? { recordings: record.recordings } : {}),
     };
   }
 
@@ -57,12 +126,7 @@ export class MeetingRepository {
   async findById(id: string) {
     const record = await this.prisma.meeting.findUnique({
       where: { id, deletedAt: null },
-      include: {
-        recordings: true,
-        host: {
-          select: { id: true, displayName: true },
-        },
-      },
+      select: meetingResponseSelect,
     });
 
     return record ? this.toResponseRecord(record) : null;
@@ -72,19 +136,23 @@ export class MeetingRepository {
    * Create meeting record
    */
   async create(data: CreateMeetingRecordData) {
-    return this.prisma.meeting.create({
+    const record = await this.prisma.meeting.create({
       data,
+      select: meetingResponseSelect,
     });
+    return this.toResponseRecord(record);
   }
 
   /**
    * Update meeting record
    */
   async update(id: string, data: UpdateMeetingRecordData) {
-    return this.prisma.meeting.update({
+    const record = await this.prisma.meeting.update({
       where: { id, deletedAt: null },
       data,
+      select: meetingResponseSelect,
     });
+    return this.toResponseRecord(record);
   }
 
   /**
@@ -131,12 +199,20 @@ export class MeetingRepository {
    * Soft delete meeting record
    */
   async softDelete(id: string) {
-    return this.prisma.meeting.update({
+    const record = await this.prisma.meeting.update({
       where: { id, deletedAt: null },
       data: {
         deletedAt: new Date(),
       },
+      select: meetingResponseSelect,
     });
+    if (!record.deletedAt) {
+      throw new Error(`Meeting ${id} was not marked as deleted`);
+    }
+    return {
+      ...this.toResponseRecord(record),
+      deletedAt: record.deletedAt,
+    };
   }
 
   /**
@@ -173,14 +249,7 @@ export class MeetingRepository {
     } = params;
     const skip = (page - 1) * limit;
 
-    const where: {
-      platform?: typeof platform;
-      processingStatus?: typeof status;
-      type?: typeof type;
-      startAt?: { gte?: Date; lte?: Date };
-      OR?: Array<{ title?: { contains?: string; mode?: 'insensitive' } }>;
-      deletedAt?: null;
-    } = {
+    const where: Prisma.MeetingWhereInput = {
       deletedAt: null,
     };
 
@@ -207,7 +276,14 @@ export class MeetingRepository {
     }
 
     if (search) {
-      where.OR = [{ title: { contains: search, mode: 'insensitive' } }];
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        {
+          host: {
+            displayName: { contains: search, mode: 'insensitive' },
+          },
+        },
+      ];
     }
 
     const [records, total] = await Promise.all([
@@ -235,8 +311,9 @@ export class MeetingRepository {
     ]);
 
     const recordsWithRecordingFlag = records.map(
-      ({ recordings, ...record }) => ({
-        ...this.toResponseRecord(record),
+      ({ recordings, hostId, ...record }) => ({
+        ...record,
+        hostPlatformUserId: hostId,
         hasRecording: recordings.length > 0,
       }),
     );
@@ -247,6 +324,71 @@ export class MeetingRepository {
       page,
       limit,
       totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async getStats(params: {
+    startDate?: Date;
+    endDate?: Date;
+  }): Promise<MeetingStatsResponseDto> {
+    const where: Prisma.MeetingWhereInput = {
+      deletedAt: null,
+      ...(params.startDate || params.endDate
+        ? {
+            startAt: {
+              ...(params.startDate ? { gte: params.startDate } : {}),
+              ...(params.endDate ? { lte: params.endDate } : {}),
+            },
+          }
+        : {}),
+    };
+
+    const [total, platformGroups, statusGroups, typeGroups, recentRecords] =
+      await Promise.all([
+        this.prisma.meeting.count({ where }),
+        this.prisma.meeting.groupBy({
+          by: ['platform'],
+          where,
+          _count: { _all: true },
+          orderBy: { platform: 'asc' },
+        }),
+        this.prisma.meeting.groupBy({
+          by: ['processingStatus'],
+          where,
+          _count: { _all: true },
+          orderBy: { processingStatus: 'asc' },
+        }),
+        this.prisma.meeting.groupBy({
+          by: ['type'],
+          where,
+          _count: { _all: true },
+          orderBy: { type: 'asc' },
+        }),
+        this.prisma.meeting.findMany({
+          where,
+          select: meetingResponseSelect,
+          orderBy: { startAt: { sort: 'desc', nulls: 'last' } },
+          take: 5,
+        }),
+      ]);
+
+    return {
+      total,
+      platformStats: platformGroups.map((group) => ({
+        platform: group.platform,
+        count: group._count._all,
+      })),
+      statusStats: statusGroups.map((group) => ({
+        status: group.processingStatus,
+        count: group._count._all,
+      })),
+      typeStats: typeGroups.map((group) => ({
+        type: group.type,
+        count: group._count._all,
+      })),
+      recentMeetings: recentRecords.map((record) =>
+        this.toResponseRecord(record, false),
+      ),
     };
   }
 }

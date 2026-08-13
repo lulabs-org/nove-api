@@ -17,6 +17,7 @@ describe('MeetingRepository', () => {
       delete: jest.Mock;
       findMany: jest.Mock;
       count: jest.Mock;
+      groupBy: jest.Mock;
       upsert: jest.Mock;
     };
   };
@@ -30,6 +31,7 @@ describe('MeetingRepository', () => {
         delete: jest.fn(),
         findMany: jest.fn(),
         count: jest.fn(),
+        groupBy: jest.fn(),
         upsert: jest.fn(),
       },
     };
@@ -306,6 +308,7 @@ describe('MeetingRepository', () => {
     it('should expose the host under the API contract field name', async () => {
       (prismaService.meeting.findUnique as jest.Mock).mockResolvedValue({
         id: 'meeting-with-host',
+        createdById: 'must-not-leak',
         hostId: 'platform-user-1',
         host: { id: 'platform-user-1', displayName: '杨仕明' },
         recordings: [],
@@ -313,11 +316,25 @@ describe('MeetingRepository', () => {
 
       const result = await repository.findById('meeting-with-host');
 
-      expect(result).toEqual({
-        id: 'meeting-with-host',
-        hostPlatformUserId: 'platform-user-1',
-        host: { id: 'platform-user-1', displayName: '杨仕明' },
-        recordings: [],
+      expect(result).toEqual(
+        expect.objectContaining({
+          id: 'meeting-with-host',
+          hostPlatformUserId: 'platform-user-1',
+          host: { id: 'platform-user-1', displayName: '杨仕明' },
+          hasRecording: false,
+          recordings: [],
+        }),
+      );
+      expect(result).not.toHaveProperty('createdById');
+      expect(prismaService.meeting.findUnique).toHaveBeenCalledWith({
+        where: { id: 'meeting-with-host', deletedAt: null },
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        select: expect.objectContaining({
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          recordings: expect.objectContaining({
+            where: { deletedAt: null },
+          }),
+        }),
       });
     });
 
@@ -367,6 +384,107 @@ describe('MeetingRepository', () => {
               select: { id: true, displayName: true },
             },
           },
+        }),
+      );
+    });
+
+    it('should search by title or host display name', async () => {
+      (prismaService.meeting.findMany as jest.Mock).mockResolvedValue([]);
+      (prismaService.meeting.count as jest.Mock).mockResolvedValue(0);
+
+      await repository.get({ search: '杨仕明' });
+
+      expect(prismaService.meeting.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          where: expect.objectContaining({
+            OR: [
+              { title: { contains: '杨仕明', mode: 'insensitive' } },
+              {
+                host: {
+                  displayName: {
+                    contains: '杨仕明',
+                    mode: 'insensitive',
+                  },
+                },
+              },
+            ],
+          }),
+        }),
+      );
+    });
+  });
+
+  describe('getStats', () => {
+    it('should aggregate real meeting statistics within the date range', async () => {
+      const startDate = new Date('2026-08-01T00:00:00.000Z');
+      const endDate = new Date('2026-08-31T23:59:59.999Z');
+      (prismaService.meeting.count as jest.Mock).mockResolvedValue(3);
+      (prismaService.meeting.groupBy as jest.Mock)
+        .mockResolvedValueOnce([
+          {
+            platform: MeetingPlatform.TENCENT_MEETING,
+            _count: { _all: 3 },
+          },
+        ])
+        .mockResolvedValueOnce([
+          {
+            processingStatus: ProcessingStatus.COMPLETED,
+            _count: { _all: 2 },
+          },
+        ])
+        .mockResolvedValueOnce([
+          { type: MeetingType.SCHEDULED, _count: { _all: 3 } },
+        ]);
+      (prismaService.meeting.findMany as jest.Mock).mockResolvedValue([]);
+
+      const result = await repository.getStats({ startDate, endDate });
+
+      expect(result).toEqual({
+        total: 3,
+        platformStats: [
+          { platform: MeetingPlatform.TENCENT_MEETING, count: 3 },
+        ],
+        statusStats: [{ status: ProcessingStatus.COMPLETED, count: 2 }],
+        typeStats: [{ type: MeetingType.SCHEDULED, count: 3 }],
+        recentMeetings: [],
+      });
+      expect(prismaService.meeting.count).toHaveBeenCalledWith({
+        where: {
+          deletedAt: null,
+          startAt: { gte: startDate, lte: endDate },
+        },
+      });
+      expect(prismaService.meeting.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          take: 5,
+          orderBy: { startAt: { sort: 'desc', nulls: 'last' } },
+        }),
+      );
+    });
+  });
+
+  describe('softDelete', () => {
+    it('returns the record with the timestamp persisted by Prisma', async () => {
+      const deletedAt = new Date('2026-08-13T01:00:00.000Z');
+      (prismaService.meeting.update as jest.Mock).mockResolvedValue({
+        id: 'meeting-1',
+        hostId: null,
+        host: null,
+        recordings: [],
+        deletedAt,
+      });
+
+      const result = await repository.softDelete('meeting-1');
+
+      expect(result).toEqual(
+        expect.objectContaining({ id: 'meeting-1', deletedAt }),
+      );
+      expect(prismaService.meeting.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'meeting-1', deletedAt: null },
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          select: expect.any(Object),
         }),
       );
     });

@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call */
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
@@ -84,8 +84,7 @@ describe('MeetingController (e2e)', () => {
           platform: MeetingPlatform.TENCENT_MEETING,
           platformMeetingId: 'test_meeting_' + Date.now(),
           type: MeetingType.SCHEDULED,
-          hostUserName: 'Test User',
-          duration: 60,
+          durationSeconds: 3600,
           actualStartAt: new Date().toISOString(),
           endedAt: new Date(Date.now() + 3600000).toISOString(),
         });
@@ -99,6 +98,7 @@ describe('MeetingController (e2e)', () => {
 
       expect(response.body).toHaveProperty('id');
       expect(response.body.title).toBe('E2E Test Meeting');
+      expect(response.body.durationSeconds).toBe(3600);
       createdMeetingId = response.body.id;
     });
 
@@ -139,6 +139,8 @@ describe('MeetingController (e2e)', () => {
 
       expect(response.body.id).toBe(createdMeetingId);
       expect(response.body.title).toBe('E2E Test Meeting');
+      expect(response.body).not.toHaveProperty('createdById');
+      expect(response.body).toHaveProperty('recordings');
     });
 
     it('should return 404 for non-existent meeting', async () => {
@@ -150,18 +152,22 @@ describe('MeetingController (e2e)', () => {
     });
   });
 
-  describe('/meetings/:id (PUT)', () => {
+  describe('/meetings/:id (PATCH)', () => {
     it('should update a meeting record', async () => {
       const response = await request(app.getHttpServer())
-        .put(`/meetings/${createdMeetingId}`)
+        .patch(`/meetings/${createdMeetingId}`)
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           title: 'Updated E2E Test Meeting',
+          durationSeconds: 0,
+          participantCount: 0,
         })
         .expect(200);
 
       expect(response.body.id).toBe(createdMeetingId);
       expect(response.body.title).toBe('Updated E2E Test Meeting');
+      expect(response.body.durationSeconds).toBe(0);
+      expect(response.body.participantCount).toBe(0);
     });
   });
 
@@ -175,6 +181,23 @@ describe('MeetingController (e2e)', () => {
       expect(response.body).toHaveProperty('total');
       expect(response.body).toHaveProperty('platformStats');
     });
+
+    it('should reject invalid and inverted date ranges', async () => {
+      await request(app.getHttpServer())
+        .get('/meetings/stats/summary')
+        .set('Authorization', `Bearer ${authToken}`)
+        .query({ startDate: 'not-a-date' })
+        .expect(400);
+
+      await request(app.getHttpServer())
+        .get('/meetings/stats/summary')
+        .set('Authorization', `Bearer ${authToken}`)
+        .query({
+          startDate: '2026-08-31T23:59:59.999+08:00',
+          endDate: '2026-08-01T00:00:00.000+08:00',
+        })
+        .expect(400);
+    });
   });
 
   describe('/meetings/:id (DELETE)', () => {
@@ -185,6 +208,7 @@ describe('MeetingController (e2e)', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
+      expect(response.body.data.deletedAt).toBe(response.body.deletedAt);
     });
   });
 });

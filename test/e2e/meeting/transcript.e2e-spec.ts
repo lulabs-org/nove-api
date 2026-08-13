@@ -72,8 +72,7 @@ describe('TranscriptController (e2e)', () => {
         platform: MeetingPlatform.TENCENT_MEETING,
         platformMeetingId: 'test_meeting_ts_' + Date.now(),
         type: MeetingType.SCHEDULED,
-        hostUserName: 'Test User',
-        duration: 60,
+        durationSeconds: 3600,
       });
     createdMeetingId = meetingRes.body.id;
 

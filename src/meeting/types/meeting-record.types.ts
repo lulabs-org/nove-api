@@ -17,15 +17,13 @@ import { MeetingPlatform, MeetingType, ProcessingStatus } from '@prisma/client';
 export interface CreateMeetingRecordParams {
   platform: MeetingPlatform;
   platformMeetingId: string;
-  platformRecordingId: string;
   title: string;
   meetingCode: string;
   type: MeetingType;
   hostUserId: string;
-  hostUserName: string;
   actualStartAt: Date;
   endedAt: Date;
-  duration: number;
+  durationSeconds: number;
   hasRecording: boolean;
   recordingStatus: ProcessingStatus;
   processingStatus: ProcessingStatus;
@@ -41,7 +39,6 @@ export interface UpdateMeetingRecordParams {
   transcript?: string;
   summary?: string;
   participantCount?: number;
-  participantList?: any;
 }
 
 /**

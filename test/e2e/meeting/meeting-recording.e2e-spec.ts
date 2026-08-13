@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-call */
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
@@ -72,8 +72,7 @@ describe('MeetingRecordingController (e2e)', () => {
         platform: MeetingPlatform.TENCENT_MEETING,
         platformMeetingId: 'test_meeting_' + Date.now(),
         type: MeetingType.SCHEDULED,
-        hostUserName: 'Test User',
-        duration: 60,
+        durationSeconds: 3600,
       });
     createdMeetingId = meetingRes.body.id;
   });

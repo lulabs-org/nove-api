@@ -14,6 +14,8 @@ import {
   HealthCheckResponseDto,
   TranscriptByRecordingIdResponseDto,
   MeetingRecordResponseDto,
+  CreateMeetingRecordDto,
+  UpdateMeetingRecordDto,
 } from '../dto';
 
 /**
@@ -90,13 +92,13 @@ export const ApiGetMeetingRecordByIdDocs = () =>
   applyDecorators(
     ApiOperation({
       summary: '获取会议记录详情',
-      description: '根据会议记录ID获取详细信息，包括文件列表和参会者信息',
+      description: '根据会议记录ID获取详细信息，包括主持人和未删除的录制摘要',
     }),
     ApiParam({
       name: 'id',
-      description: '会议记录ID',
+      description: '会议记录 CUID',
       type: 'string',
-      format: 'uuid',
+      example: 'cmsq2d41m0eusmc01mheff0jp',
     }),
     ApiResponse({
       status: 200,
@@ -118,6 +120,7 @@ export const ApiCreateMeetingRecordDocs = () =>
     }),
     ApiBody({
       description: '会议记录创建参数',
+      type: CreateMeetingRecordDto,
     }),
     ApiResponse({
       status: 201,
@@ -138,17 +141,18 @@ export const ApiCreateMeetingRecordDocs = () =>
 export const ApiUpdateMeetingRecordDocs = () =>
   applyDecorators(
     ApiOperation({
-      summary: '更新会议记录',
-      description: '更新会议记录信息',
+      summary: '局部更新会议记录',
+      description: '仅更新请求体中提供的会议记录字段',
     }),
     ApiParam({
       name: 'id',
-      description: '会议记录ID',
+      description: '会议记录 CUID',
       type: 'string',
-      format: 'uuid',
+      example: 'cmsq2d41m0eusmc01mheff0jp',
     }),
     ApiBody({
       description: '会议记录更新参数',
+      type: UpdateMeetingRecordDto,
     }),
     ApiResponse({
       status: 200,
@@ -170,9 +174,9 @@ export const ApiDeleteMeetingRecordDocs = () =>
     }),
     ApiParam({
       name: 'id',
-      description: '会议记录ID',
+      description: '会议记录 CUID',
       type: 'string',
-      format: 'uuid',
+      example: 'cmsq2d41m0eusmc01mheff0jp',
     }),
     ApiResponse({
       status: 200,
@@ -196,19 +200,20 @@ export const ApiGetMeetingStatsDocs = () =>
       name: 'startDate',
       type: String,
       required: false,
-      description: '统计开始日期 (YYYY-MM-DD)',
+      description: '统计开始时间（包含时区的 ISO 8601 时间）',
     }),
     ApiQuery({
       name: 'endDate',
       type: String,
       required: false,
-      description: '统计结束日期 (YYYY-MM-DD)',
+      description: '统计结束时间（包含时区的 ISO 8601 时间）',
     }),
     ApiResponse({
       status: 200,
       description: '获取成功',
       type: MeetingStatsResponseDto,
     }),
+    ApiResponse({ status: 400, description: '日期格式或日期范围错误' }),
     ApiResponse({ status: 500, description: '服务器内部错误' }),
   );
 
