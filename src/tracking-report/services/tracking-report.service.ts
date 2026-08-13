@@ -53,10 +53,6 @@ export class TrackingReportService {
   }
 
   async list(query: QueryTrackingReportDto) {
-    if (!query.subjectUserId && !query.platformUserId)
-      throw new BadRequestException(
-        'subjectUserId 或 platformUserId 至少提供一个',
-      );
     const where: Prisma.UserTrackingReportWhereInput = {
       subjectUserId: query.subjectUserId,
       platformUserId: query.platformUserId,
