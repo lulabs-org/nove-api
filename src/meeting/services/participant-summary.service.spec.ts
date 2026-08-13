@@ -6,7 +6,7 @@ import {
 } from '@/meeting/exceptions/meeting.exceptions';
 import { generatePrompt } from '@/common/utils';
 import { LlmService } from '@/llm/llm.service';
-import { ParticipantSummaryRepository } from '../repositories';
+import { RecordingParticipantSummaryRepository } from '../repositories';
 import { ParticipantSummaryService } from './participant-summary.service';
 
 jest.mock('@/common/utils', () => ({
@@ -66,7 +66,7 @@ describe('ParticipantSummaryService', () => {
     };
     service = new ParticipantSummaryService(
       llmService as unknown as LlmService,
-      repository as unknown as ParticipantSummaryRepository,
+      repository as unknown as RecordingParticipantSummaryRepository,
       {
         apiKey: { ark: '', openai: '' },
         baseURL: 'https://example.com',

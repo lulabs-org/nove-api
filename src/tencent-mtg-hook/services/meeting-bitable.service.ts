@@ -1,5 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { MeetingSessionInfo, Meetuser, MeetingRecordingContext } from '../types';
+import {
+  MeetingSessionInfo,
+  Meetuser,
+  MeetingRecordingContext,
+} from '../types';
 import { TencentEventUtils } from '../utils/tencent-event.utils';
 import {
   MeetingBitableRepository,

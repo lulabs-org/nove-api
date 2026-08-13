@@ -54,3 +54,10 @@ export interface GetMeetingRecordsParams {
   limit?: number;
   search?: string;
 }
+
+export type SummarySegment = {
+  startTimeMs: bigint;
+  speakerName: string | null;
+  text: string;
+  speaker: { id: string; displayName: string | null } | null;
+};

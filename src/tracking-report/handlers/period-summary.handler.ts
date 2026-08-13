@@ -2,8 +2,8 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { ITaskHandler } from '@/task/handlers/task-handler.interface';
 import { TaskHandlerRegistry } from '@/task/handlers/task-handler.registry';
-import { PeriodSummaryService } from '../services/period-summary.service';
-import { PeriodType } from '@prisma/client';
+import { PeriodicReportGenerator } from '../services/periodic-report.generator';
+import { TrackingCadence } from '@prisma/client';
 
 @Injectable()
 export class PeriodSummaryHandler implements ITaskHandler, OnModuleInit {
@@ -11,7 +11,7 @@ export class PeriodSummaryHandler implements ITaskHandler, OnModuleInit {
   readonly name = 'generate_period_summary';
 
   constructor(
-    private readonly summaryService: PeriodSummaryService,
+    private readonly periodicReportGenerator: PeriodicReportGenerator,
     private readonly registry: TaskHandlerRegistry,
   ) {}
 
@@ -21,10 +21,10 @@ export class PeriodSummaryHandler implements ITaskHandler, OnModuleInit {
 
   async handle(job: Job): Promise<unknown> {
     const jobData = job.data as {
-      periodType?: PeriodType;
-      payload?: { periodType?: PeriodType };
+      periodType?: TrackingCadence;
+      payload?: { periodType?: TrackingCadence };
     };
-    const periodType: PeriodType | undefined =
+    const periodType: TrackingCadence | undefined =
       jobData?.periodType || jobData?.payload?.periodType;
 
     if (!periodType) {
@@ -39,7 +39,7 @@ export class PeriodSummaryHandler implements ITaskHandler, OnModuleInit {
     );
 
     // Call the service directly
-    const result = await this.summaryService.generateSummaries({
+    const result = await this.periodicReportGenerator.generateSummaries({
       periodType: periodType,
     });
     this.logger.log(`[定时任务] ${periodType} 总结任务执行完成:`, result);

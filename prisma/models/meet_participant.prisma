@@ -8,6 +8,7 @@ model MeetingParticipant {
     // 参会人员
     ptUserId String?       @map("pt_user_id")
     ptUser   PlatformUser? @relation("ParticipantUser", fields: [ptUserId], references: [id], onDelete: SetNull)
+    recordingSummaries RecordingParticipantSummary[] @relation("RecordingParticipantSummaries")
 
     // 参会行为数据
     firstJoinTime        DateTime? @map("first_join_time") @db.Timestamptz(6) // 首次加入时间

@@ -1,61 +1,62 @@
 import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Delete,
   Body,
-  Param,
-  Query,
+  Controller,
+  Delete,
+  Get,
   HttpCode,
   HttpStatus,
-  Logger,
+  Param,
+  Post,
+  Put,
+  Query,
   ValidationPipe,
 } from '@nestjs/common';
 import {
-  ApiTags,
   ApiBearerAuth,
   ApiOperation,
   ApiResponse,
-  ApiParam,
+  ApiTags,
 } from '@nestjs/swagger';
-import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
-import { ParticipantSummaryCrudService } from '../services/participant-summary-crud.service';
 import {
-  QueryParticipantSummaryDto,
-  CreateParticipantSummaryDto,
-  UpdateParticipantSummaryDto,
-  ParticipantSummaryDto,
-  ParticipantSummaryListResponseDto,
-} from '../dto/participant-summary.dto';
+  RequirePermissions,
+  NoPermissionRequired,
+} from '@/admin/permission/decorators/permissions.decorator';
 import { CuidPipe } from '@/common/pipes/cuid.pipe';
+import { ParticipantSummaryCrudService } from '../services/participant-summary-crud.service';
+import { ParticipantSummaryService } from '../services/participant-summary.service';
+import {
+  CreateRecordingParticipantSummaryDto,
+  QueryRecordingParticipantSummaryDto,
+  RecordingParticipantSummaryDto,
+  RecordingParticipantSummaryListResponseDto,
+  UpdateRecordingParticipantSummaryDto,
+  GenerateParticipantSummaryDto,
+} from '../dto/participant-summary.dto';
 
-@ApiTags('Meet Participant Summary')
-@Controller('meetings/:meetingId/participant-summaries')
+@ApiTags('Recording Participant Summary')
 @ApiBearerAuth()
+@Controller('meetings/:meetingId/recordings/:recordingId/participant-summaries')
 export class ParticipantSummaryController {
-  private readonly logger = new Logger(ParticipantSummaryController.name);
-
   constructor(
-    private readonly participantSummaryCrudService: ParticipantSummaryCrudService,
+    private readonly service: ParticipantSummaryCrudService,
+    private readonly aiService: ParticipantSummaryService,
   ) {}
 
   @Get()
   @RequirePermissions('meeting:read')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: '获取参会者总结列表' })
   @ApiResponse({
     status: HttpStatus.OK,
-    type: ParticipantSummaryListResponseDto,
+    type: RecordingParticipantSummaryListResponseDto,
   })
-  async getSummaries(
+  list(
     @Param('meetingId', CuidPipe) meetingId: string,
+    @Param('recordingId', CuidPipe) recordingId: string,
     @Query(new ValidationPipe({ transform: true }))
-    query: QueryParticipantSummaryDto,
+    query: QueryRecordingParticipantSummaryDto,
   ) {
-    this.logger.log(`获取参会者总结列表: ${meetingId}`, { query });
-    return this.participantSummaryCrudService.findMany(
+    return this.service.findMany(
       meetingId,
+      recordingId,
       query.page,
       query.limit,
     );
@@ -63,50 +64,64 @@ export class ParticipantSummaryController {
 
   @Get(':id')
   @RequirePermissions('meeting:read')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: '获取参会者总结详情' })
-  @ApiParam({ name: 'meetingId', type: 'string', description: '会议ID' })
-  @ApiResponse({ status: HttpStatus.OK, type: ParticipantSummaryDto })
-  async getSummaryById(@Param('id', CuidPipe) id: string) {
-    this.logger.log(`获取参会者总结详情: ${id}`);
-    return this.participantSummaryCrudService.findById(id);
+  @ApiResponse({ status: HttpStatus.OK, type: RecordingParticipantSummaryDto })
+  get(
+    @Param('meetingId', CuidPipe) meetingId: string,
+    @Param('recordingId', CuidPipe) recordingId: string,
+    @Param('id', CuidPipe) id: string,
+  ) {
+    return this.service.findById(meetingId, recordingId, id);
   }
 
   @Post()
   @RequirePermissions('meeting:create')
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: '创建参会者总结' })
-  @ApiResponse({ status: HttpStatus.CREATED, type: ParticipantSummaryDto })
-  async createSummary(
+  @ApiOperation({ summary: '为录制中的参会者创建新总结版本' })
+  create(
     @Param('meetingId', CuidPipe) meetingId: string,
-    @Body(new ValidationPipe()) createParams: CreateParticipantSummaryDto,
+    @Param('recordingId', CuidPipe) recordingId: string,
+    @Body(new ValidationPipe()) dto: CreateRecordingParticipantSummaryDto,
   ) {
-    this.logger.log(`创建参会者总结: ${meetingId}`);
-    return this.participantSummaryCrudService.create(meetingId, createParams);
+    return this.service.create(meetingId, recordingId, dto);
   }
 
   @Put(':id')
   @RequirePermissions('meeting:update')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: '更新参会者总结' })
-  @ApiParam({ name: 'meetingId', type: 'string', description: '会议ID' })
-  @ApiResponse({ status: HttpStatus.OK, type: ParticipantSummaryDto })
-  async updateSummary(
+  update(
+    @Param('meetingId', CuidPipe) meetingId: string,
+    @Param('recordingId', CuidPipe) recordingId: string,
     @Param('id', CuidPipe) id: string,
-    @Body(new ValidationPipe()) updateParams: UpdateParticipantSummaryDto,
+    @Body(new ValidationPipe()) dto: UpdateRecordingParticipantSummaryDto,
   ) {
-    this.logger.log(`更新参会者总结: ${id}`);
-    return this.participantSummaryCrudService.update(id, updateParams);
+    return this.service.update(meetingId, recordingId, id, dto);
   }
 
   @Delete(':id')
   @RequirePermissions('meeting:delete')
+  delete(
+    @Param('meetingId', CuidPipe) meetingId: string,
+    @Param('recordingId', CuidPipe) recordingId: string,
+    @Param('id', CuidPipe) id: string,
+  ) {
+    return this.service.delete(meetingId, recordingId, id);
+  }
+
+  @Post('generate')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: '删除参会者总结' })
-  @ApiParam({ name: 'meetingId', type: 'string', description: '会议ID' })
-  @ApiResponse({ status: HttpStatus.OK, type: ParticipantSummaryDto })
-  async deleteSummary(@Param('id', CuidPipe) id: string) {
-    this.logger.log(`删除参会者总结: ${id}`);
-    return this.participantSummaryCrudService.delete(id);
+  @NoPermissionRequired()
+  @ApiOperation({ summary: '生成参会者总结' })
+  async generateSummaries(
+    @Param('meetingId', CuidPipe) meetingId: string,
+    @Param('recordingId') recordingId: string,
+    @Body() dto: GenerateParticipantSummaryDto,
+  ) {
+    return {
+      success: true,
+      message: '参会者总结生成完成',
+      data: await this.aiService.generateSummaries({
+        recordId: recordingId,
+        ...dto,
+      }),
+    };
   }
 }

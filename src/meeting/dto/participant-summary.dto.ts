@@ -1,132 +1,90 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
-  IsString,
-  IsOptional,
   IsArray,
-  IsEnum,
-  IsDate,
   IsInt,
+  IsOptional,
+  IsString,
+  Max,
   Min,
 } from 'class-validator';
-import { Type, Transform } from 'class-transformer';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { PeriodType } from '@prisma/client';
 
-export class CreateParticipantSummaryDto {
-  @ApiProperty({ description: '总结周期类型', enum: PeriodType })
-  @IsEnum(PeriodType)
-  periodType: PeriodType;
-
-  @ApiPropertyOptional({ description: '平台用户ID' })
-  @IsOptional()
+export class CreateRecordingParticipantSummaryDto {
+  @ApiProperty({ description: '平台用户 ID' })
   @IsString()
-  platformUserId?: string;
+  platformUserId: string;
 
-  @ApiProperty({ description: '参会人名称' })
+  @ApiProperty({ description: '参会人姓名快照' })
   @IsString()
   userName: string;
 
-  @ApiProperty({ description: '总结内容' })
+  @ApiProperty({ description: '总结正文' })
   @IsString()
   partSummary: string;
 
-  @ApiPropertyOptional({ description: '关键词' })
+  @ApiPropertyOptional({ type: [String] })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
   keywords?: string[];
-
-  @ApiPropertyOptional({ description: '总结时间段开始' })
-  @IsOptional()
-  @IsDate()
-  @Type(() => Date)
-  periodStart?: Date;
-
-  @ApiPropertyOptional({ description: '总结时间段结束' })
-  @IsOptional()
-  @IsDate()
-  @Type(() => Date)
-  periodEnd?: Date;
 }
 
-export class UpdateParticipantSummaryDto extends CreateParticipantSummaryDto {}
+export class UpdateRecordingParticipantSummaryDto {
+  @ApiPropertyOptional() @IsOptional() @IsString() userName?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() partSummary?: string;
+  @ApiPropertyOptional({ type: [String] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  keywords?: string[];
+}
 
-export class QueryParticipantSummaryDto {
+export class QueryRecordingParticipantSummaryDto {
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page = 1;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit = 20;
+}
+
+export class RecordingParticipantSummaryDto {
+  @ApiProperty() id: string;
+  @ApiProperty() meetingId: string;
+  @ApiProperty() meetingRecordingId: string;
+  @ApiProperty() platformUserId: string;
+  @ApiPropertyOptional({ nullable: true }) meetingParticipantId: string | null;
+  @ApiProperty() userName: string;
+  @ApiProperty() partSummary: string;
+  @ApiProperty({ type: [String] }) keywords: string[];
+  @ApiProperty() version: number;
+  @ApiProperty() isLatest: boolean;
+  @ApiProperty() createdAt: Date;
+  @ApiProperty() updatedAt: Date;
+}
+
+export class RecordingParticipantSummaryListResponseDto {
+  @ApiProperty({ type: [RecordingParticipantSummaryDto] })
+  data: RecordingParticipantSummaryDto[];
+  @ApiProperty() total: number;
+  @ApiProperty() page: number;
+  @ApiProperty() limit: number;
+  @ApiProperty() totalPages: number;
+}
+
+export class GenerateParticipantSummaryDto {
   @ApiPropertyOptional({
-    description: '页码（从 1 开始）',
-    example: 1,
-    minimum: 1,
+    description: '指定生成总结的部分平台用户ID (不传则生成所有发过言的用户)',
+    type: [String],
   })
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  page?: number = 1;
-
-  @ApiPropertyOptional({ description: '每页数量', example: 10, minimum: 1 })
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  limit?: number = 10;
-
-  @ApiPropertyOptional({ description: '周期类型', enum: PeriodType })
-  @IsOptional()
-  @Transform(({ value }) => (value === '' ? undefined : (value as string)))
-  @IsEnum(PeriodType)
-  periodType?: PeriodType;
-
-  @ApiPropertyOptional({ description: '平台用户ID' })
-  @IsOptional()
-  @Transform(({ value }) => (value === '' ? undefined : (value as string)))
-  @IsString()
-  platformUserId?: string;
-}
-
-export class ParticipantSummaryDto {
-  @ApiProperty({ description: '总结ID' })
-  id: string;
-
-  @ApiProperty({ description: '总结周期类型', enum: PeriodType })
-  periodType: PeriodType;
-
-  @ApiPropertyOptional({ description: '平台用户ID' })
-  platformUserId?: string;
-
-  @ApiPropertyOptional({ description: '关联的会议ID' })
-  meetingId?: string;
-
-  @ApiPropertyOptional({ description: '关联的录制ID' })
-  meetingRecordingId?: string;
-
-  @ApiProperty({ description: '参会人名称' })
-  userName: string;
-
-  @ApiProperty({ description: '总结内容' })
-  partSummary: string;
-
-  @ApiPropertyOptional({ description: '关键词' })
-  keywords?: string[];
-
-  @ApiProperty({ description: '创建时间' })
-  createdAt: Date;
-
-  @ApiProperty({ description: '更新时间' })
-  updatedAt: Date;
-}
-
-export class ParticipantSummaryListResponseDto {
-  @ApiProperty({ type: [ParticipantSummaryDto], description: '参会者总结列表' })
-  data: ParticipantSummaryDto[];
-
-  @ApiProperty({ description: '总条数' })
-  total: number;
-
-  @ApiProperty({ description: '当前页码' })
-  page: number;
-
-  @ApiProperty({ description: '每页条数' })
-  limit: number;
-
-  @ApiProperty({ description: '总页数' })
-  totalPages: number;
+  @IsArray({ message: 'platformUserIds 必须是数组' })
+  @IsString({ each: true, message: 'platformUserIds 数组必须包含字符串' })
+  platformUserIds?: string[];
 }

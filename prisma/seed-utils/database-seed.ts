@@ -139,6 +139,8 @@ async function seedMockDatabase(prisma: PrismaClient): Promise<void> {
   const participantSummaries = await seedFunctions.createParticipantSummaries(
     prisma,
     meetings,
+    meetingRecording,
+    platformUsers,
   );
 
   const meetingCount = Object.keys(meetings).length;

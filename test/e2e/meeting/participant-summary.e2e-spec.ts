@@ -4,16 +4,27 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from '../../../src/app.module';
 import { PrismaService } from '../../../src/prisma/prisma.service';
-import { PermService } from '../../../src/permission/services/permission.service';
+import { PermService } from '../../../src/admin/permission/services/permission.service';
 import { JwtService } from '@nestjs/jwt';
-import { MeetingPlatform, MeetingType, PeriodType } from '@prisma/client';
+import { ParticipantSummaryService } from '../../../src/meet-ai/services';
+import {
+  MeetingPlatform,
+  MeetingType,
+  Platform,
+  RecordingSource,
+} from '@prisma/client';
 
 describe('ParticipantSummaryController (e2e)', () => {
+  const generateSummaries = jest.fn().mockResolvedValue([]);
   let app: INestApplication;
   let prisma: PrismaService;
   let jwtService: JwtService;
   let createdMeetingId: string;
   let createdSummaryId: string;
+  let updatedSummaryId: string;
+  let createdRecordingId: string;
+  let otherRecordingId: string;
+  let platformUserId: string;
   let authToken: string;
   const testUserId = 'test_user_id_' + Date.now();
 
@@ -21,6 +32,8 @@ describe('ParticipantSummaryController (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
+      .overrideProvider(ParticipantSummaryService)
+      .useValue({ generateSummaries })
       .overrideProvider(PermService)
       .useValue({
         hasAnyPermission: () => true,
@@ -69,12 +82,37 @@ describe('ParticipantSummaryController (e2e)', () => {
         durationSeconds: 3600,
       });
     createdMeetingId = meetingRes.body.id;
+    const platformUser = await prisma.platformUser.create({
+      data: {
+        platform: Platform.TENCENT_MEETING,
+        ptUnionId: `e2e-union-${Date.now()}`,
+        displayName: 'Test Participant',
+      },
+    });
+    platformUserId = platformUser.id;
+    const recording = await prisma.meetingRecording.create({
+      data: {
+        meetingId: createdMeetingId,
+        source: RecordingSource.USER_MANUAL,
+      },
+    });
+    createdRecordingId = recording.id;
+    otherRecordingId = (
+      await prisma.meetingRecording.create({
+        data: {
+          meetingId: createdMeetingId,
+          source: RecordingSource.USER_MANUAL,
+        },
+      })
+    ).id;
   });
 
   afterAll(async () => {
     if (createdSummaryId) {
-      await prisma.participantSummary.deleteMany({
-        where: { id: createdSummaryId },
+      await prisma.recordingParticipantSummary.deleteMany({
+        where: {
+          versionGroupKey: `recording:${createdRecordingId}:user:${platformUserId}`,
+        },
       });
     }
     if (createdMeetingId) {
@@ -85,16 +123,19 @@ describe('ParticipantSummaryController (e2e)', () => {
     await prisma.user.deleteMany({
       where: { id: testUserId },
     });
+    await prisma.platformUser.deleteMany({ where: { id: platformUserId } });
     await app.close();
   });
 
-  describe('/meetings/:meetingId/participant-summaries (POST)', () => {
+  describe('/meetings/:meetingId/recordings/:recordingId/participant-summaries (POST)', () => {
     it('should create a participant summary', async () => {
       const response = await request(app.getHttpServer())
-        .post(`/meetings/${createdMeetingId}/participant-summaries`)
+        .post(
+          `/meetings/${createdMeetingId}/recordings/${createdRecordingId}/participant-summaries`,
+        )
         .set('Authorization', `Bearer ${authToken}`)
         .send({
-          periodType: PeriodType.SINGLE,
+          platformUserId,
           userName: 'Test Participant',
           partSummary: 'Participant summary content.',
           keywords: ['participant', 'test'],
@@ -114,10 +155,34 @@ describe('ParticipantSummaryController (e2e)', () => {
     });
   });
 
-  describe('/meetings/:meetingId/participant-summaries (GET)', () => {
+  describe('/meet-ai/recordings/:recordingId/participant-summaries/generate (POST)', () => {
+    it('passes the recording scope to participant summary generation', async () => {
+      await request(app.getHttpServer())
+        .post(
+          `/meet-ai/recordings/${createdRecordingId}/participant-summaries/generate`,
+        )
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ platformUserIds: [platformUserId] })
+        .expect(200)
+        .expect({
+          success: true,
+          message: '参会者总结生成完成',
+          data: [],
+        });
+
+      expect(generateSummaries).toHaveBeenCalledWith({
+        recordId: createdRecordingId,
+        platformUserIds: [platformUserId],
+      });
+    });
+  });
+
+  describe('/meetings/:meetingId/recordings/:recordingId/participant-summaries (GET)', () => {
     it('should get participant summaries list', async () => {
       const response = await request(app.getHttpServer())
-        .get(`/meetings/${createdMeetingId}/participant-summaries`)
+        .get(
+          `/meetings/${createdMeetingId}/recordings/${createdRecordingId}/participant-summaries`,
+        )
         .set('Authorization', `Bearer ${authToken}`)
         .query({ limit: 10, page: 1 })
         .expect(200);
@@ -130,11 +195,11 @@ describe('ParticipantSummaryController (e2e)', () => {
     });
   });
 
-  describe('/meetings/:meetingId/participant-summaries/:id (GET)', () => {
+  describe('/meetings/:meetingId/recordings/:recordingId/participant-summaries/:id (GET)', () => {
     it('should get a specific participant summary', async () => {
       const response = await request(app.getHttpServer())
         .get(
-          `/meetings/${createdMeetingId}/participant-summaries/${createdSummaryId}`,
+          `/meetings/${createdMeetingId}/recordings/${createdRecordingId}/participant-summaries/${createdSummaryId}`,
         )
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
@@ -142,34 +207,43 @@ describe('ParticipantSummaryController (e2e)', () => {
       expect(response.body.id).toBe(createdSummaryId);
       expect(response.body.meetingId).toBe(createdMeetingId);
     });
+
+    it('rejects a summary through another recording boundary', async () => {
+      await request(app.getHttpServer())
+        .get(
+          `/meetings/${createdMeetingId}/recordings/${otherRecordingId}/participant-summaries/${createdSummaryId}`,
+        )
+        .set('Authorization', `Bearer ${authToken}`)
+        .expect(404);
+    });
   });
 
-  describe('/meetings/:meetingId/participant-summaries/:id (PUT)', () => {
+  describe('/meetings/:meetingId/recordings/:recordingId/participant-summaries/:id (PUT)', () => {
     it('should update a participant summary', async () => {
       const response = await request(app.getHttpServer())
         .put(
-          `/meetings/${createdMeetingId}/participant-summaries/${createdSummaryId}`,
+          `/meetings/${createdMeetingId}/recordings/${createdRecordingId}/participant-summaries/${createdSummaryId}`,
         )
         .set('Authorization', `Bearer ${authToken}`)
         .send({
-          periodType: PeriodType.SINGLE,
-          userName: 'Test Participant',
           partSummary: 'Updated participant summary content.',
         })
         .expect(200);
 
-      expect(response.body.id).toBe(createdSummaryId);
+      expect(response.body.id).not.toBe(createdSummaryId);
+      expect(response.body.version).toBe(2);
+      updatedSummaryId = response.body.id;
       expect(response.body.partSummary).toBe(
         'Updated participant summary content.',
       );
     });
   });
 
-  describe('/meetings/:meetingId/participant-summaries/:id (DELETE)', () => {
+  describe('/meetings/:meetingId/recordings/:recordingId/participant-summaries/:id (DELETE)', () => {
     it('should delete a participant summary', async () => {
       const response = await request(app.getHttpServer())
         .delete(
-          `/meetings/${createdMeetingId}/participant-summaries/${createdSummaryId}`,
+          `/meetings/${createdMeetingId}/recordings/${createdRecordingId}/participant-summaries/${updatedSummaryId}`,
         )
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
@@ -177,7 +251,7 @@ describe('ParticipantSummaryController (e2e)', () => {
       // Verify deletion
       await request(app.getHttpServer())
         .get(
-          `/meetings/${createdMeetingId}/participant-summaries/${createdSummaryId}`,
+          `/meetings/${createdMeetingId}/recordings/${createdRecordingId}/participant-summaries/${updatedSummaryId}`,
         )
         .set('Authorization', `Bearer ${authToken}`)
         .expect(404);

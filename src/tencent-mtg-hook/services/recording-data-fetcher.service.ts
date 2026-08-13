@@ -16,10 +16,7 @@ import {
   ParticipantService,
 } from '@/integrations/tencent-meeting/services';
 import { SpeakerService } from './index';
-import {
-  NewSpeakerInfo,
-  RecordingDataFile,
-} from '@/tencent-mtg-hook/types';
+import { NewSpeakerInfo, RecordingDataFile } from '@/tencent-mtg-hook/types';
 import {
   SpeakerInfo,
   ParticipantDetail,
@@ -93,9 +90,11 @@ export class RecordingDataFetcherService {
       );
     }
 
-    const processedFiles: RecordingDataFile[] = (recordingFiles || []).map((f) => ({
-      id: f.id,
-    }));
+    const processedFiles: RecordingDataFile[] = (recordingFiles || []).map(
+      (f) => ({
+        id: f.id,
+      }),
+    );
 
     if (!processedFiles.length) {
       this.logger.warn('没有录制文件');

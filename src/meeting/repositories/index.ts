@@ -5,3 +5,4 @@ export { MeetingRecordingRepository } from './meeting-recording.repository';
 export { TranscriptRepository } from './transcript.repository';
 
 export { MeetingParticipantRepository } from './meeting-participant.repository';
+export { RecordingParticipantSummaryRepository } from './participant-summary.repository';

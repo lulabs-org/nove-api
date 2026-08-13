@@ -15,6 +15,7 @@ model Project {
 
   // 关联关系
   curriculums Curriculum[] // 项目的课程
+  trackingReports UserTrackingReport[] @relation("ProjectTrackingReports")
 
   @@index([category])
   @@index([slug])

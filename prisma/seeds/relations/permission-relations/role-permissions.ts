@@ -26,6 +26,10 @@ const MANAGER_PERMISSIONS = [
   'order-refund:update',
   'order-refund:settle',
   'dashboard:read',
+  'tracking-report:read',
+  'tracking-report:create',
+  'tracking-report:update',
+  'tracking-report:delete',
 ];
 
 // 财务角色权限列表

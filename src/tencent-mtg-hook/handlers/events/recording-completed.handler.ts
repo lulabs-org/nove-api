@@ -11,7 +11,10 @@
 
 import { Injectable } from '@nestjs/common';
 import { BaseEventHandler } from '../base/base-event.handler';
-import { RecordingCompletedPayload, MeetingRecordingContext } from '../../types';
+import {
+  RecordingCompletedPayload,
+  MeetingRecordingContext,
+} from '../../types';
 import {
   MeetingParticipantService,
   MeetingBitableService,
@@ -59,7 +62,9 @@ export class RecordingCompletedHandler extends BaseEventHandler {
       meetid: meeting_id,
       cid: creator.userid || '',
       subid: sub_meeting_id,
-      recordingFiles: recording_files.map((file) => ({ id: file.record_file_id })),
+      recordingFiles: recording_files.map((file) => ({
+        id: file.record_file_id,
+      })),
     });
 
     const r: MeetingRecordingContext = {

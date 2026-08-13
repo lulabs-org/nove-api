@@ -15,7 +15,7 @@ import { PlatformUserRepository } from '@/user-platform/repositories/platform-us
 import { MeetingRecordingContext } from '@/tencent-mtg-hook/types';
 import { MeetingRepository } from '@/meeting/repositories/meeting.repository';
 import { MeetingRecordingRepository } from '@/meeting/repositories';
-import { ParticipantSummaryService } from '@/meet-ai/services';
+import { ParticipantSummaryService } from '@/meeting/services';
 import { MeetingBitableService } from '../services';
 import {
   NumberRecordBitableRepository,

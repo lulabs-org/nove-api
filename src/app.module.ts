@@ -46,7 +46,6 @@ import { RoleModule } from './admin/role/role.module';
 import { OrganizationModule } from './admin/org/organization.module';
 import { DepartmentModule } from './admin/dept/department.module';
 import { OrgMemberModule } from './admin/org-member/org-member.module';
-import { MeetAiModule } from './meet-ai/meet-ai.module';
 import { WechatShopModule } from './wechat-shop/wechat-shop.module';
 import { OrderModule } from './order/order.module';
 import { WebhookLogModule } from './webhook-log/webhook-log.module';
@@ -56,6 +55,7 @@ import { AdminUserModule } from './admin/user/user.module';
 import { ProductModule } from './product/product.module';
 import { ChannelModule } from './channel/channel.module';
 import { OrderRefundModule } from './order-refund/order-refund.module';
+import { TrackingReportModule } from './tracking-report/tracking-report.module';
 
 @Module({
   imports: [
@@ -118,7 +118,6 @@ import { OrderRefundModule } from './order-refund/order-refund.module';
     OrganizationModule,
     DepartmentModule,
     OrgMemberModule,
-    MeetAiModule,
     WechatShopModule,
     OrderModule,
     WebhookLogModule,
@@ -128,6 +127,7 @@ import { OrderRefundModule } from './order-refund/order-refund.module';
     ProductModule,
     ChannelModule,
     OrderRefundModule,
+    TrackingReportModule,
   ],
   controllers: [AppController],
   providers: [

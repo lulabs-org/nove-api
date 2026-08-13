@@ -1,55 +1,86 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { ParticipantSummaryRepository } from '@/meet-ai/repositories';
+import { GenerationMethod } from '@prisma/client';
+import { RecordingParticipantSummaryRepository } from '../repositories';
 import {
-  CreateParticipantSummaryDto,
-  UpdateParticipantSummaryDto,
+  CreateRecordingParticipantSummaryDto,
+  UpdateRecordingParticipantSummaryDto,
 } from '../dto/participant-summary.dto';
 
 @Injectable()
 export class ParticipantSummaryCrudService {
   constructor(
-    private readonly participantSummaryRepo: ParticipantSummaryRepository,
+    private readonly summaries: RecordingParticipantSummaryRepository,
   ) {}
 
-  async findById(id: string) {
-    const summary = await this.participantSummaryRepo.findById(id);
-    if (!summary) {
-      throw new NotFoundException(`ParticipantSummary with ID ${id} not found`);
-    }
+  async findById(meetingId: string, recordingId: string, id: string) {
+    const summary = await this.summaries.findById(meetingId, recordingId, id);
+    if (!summary)
+      throw new NotFoundException(
+        `Recording participant summary ${id} not found`,
+      );
     return summary;
   }
 
-  async findMany(meetingId: string, page: number = 1, limit: number = 10) {
-    const skip = (page - 1) * limit;
-    const { total, records } = await this.participantSummaryRepo.findMany(
+  async findMany(meetingId: string, recordingId: string, page = 1, limit = 20) {
+    const result = await this.summaries.findMany(
       meetingId,
-      skip,
+      recordingId,
+      (page - 1) * limit,
       limit,
     );
     return {
-      data: records,
-      total,
+      data: result.records,
+      total: result.total,
       page,
       limit,
-      totalPages: Math.ceil(total / limit),
+      totalPages: Math.ceil(result.total / limit),
     };
   }
 
-  async create(meetingId: string, data: CreateParticipantSummaryDto) {
-    return this.participantSummaryRepo.create({
+  async create(
+    meetingId: string,
+    recordingId: string,
+    data: CreateRecordingParticipantSummaryDto,
+  ) {
+    if (
+      !(await this.summaries.recordingBelongsToMeeting(meetingId, recordingId))
+    ) {
+      throw new NotFoundException(
+        `Recording ${recordingId} not found in meeting ${meetingId}`,
+      );
+    }
+    return this.summaries.saveNewVersion({
       ...data,
       meetingId,
+      meetingRecordingId: recordingId,
+      generatedBy: GenerationMethod.MANUAL,
     });
   }
 
-  async update(id: string, data: UpdateParticipantSummaryDto) {
-    await this.findById(id); // Ensure exists
-    return this.participantSummaryRepo.update(id, data);
+  async update(
+    meetingId: string,
+    recordingId: string,
+    id: string,
+    data: UpdateRecordingParticipantSummaryDto,
+  ) {
+    const current = await this.findById(meetingId, recordingId, id);
+    return this.summaries.saveNewVersion({
+      meetingId,
+      meetingRecordingId: recordingId,
+      platformUserId: current.platformUserId,
+      userName: data.userName ?? current.userName,
+      partSummary: data.partSummary ?? current.partSummary,
+      keywords: data.keywords ?? current.keywords,
+      generatedBy: GenerationMethod.MANUAL,
+      meetingParticipantId: current.meetingParticipantId,
+      observedStartAt: current.observedStartAt,
+      observedEndAt: current.observedEndAt,
+    });
   }
 
-  async delete(id: string) {
-    const summary = await this.findById(id);
-    await this.participantSummaryRepo.delete(id);
-    return { success: true, data: summary, deletedAt: new Date() };
+  async delete(meetingId: string, recordingId: string, id: string) {
+    await this.findById(meetingId, recordingId, id);
+    const data = await this.summaries.softDelete(meetingId, recordingId, id);
+    return { success: true, data };
   }
 }
