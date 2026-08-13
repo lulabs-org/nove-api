@@ -7,6 +7,7 @@ describe('MeetingController', () => {
   const meetingService = {
     delete: jest.fn(),
     getStats: jest.fn(),
+    findParticipants: jest.fn(),
   };
   let controller: MeetingController;
 
@@ -46,6 +47,19 @@ describe('MeetingController', () => {
       success: true,
       data: deletedRecord,
       deletedAt,
+    });
+  });
+
+  it('returns participants from the meeting service', async () => {
+    const result = { data: [], total: 0, page: 1, limit: 50, totalPages: 0 };
+    meetingService.findParticipants.mockResolvedValue(result);
+
+    await expect(
+      controller.getMeetingParticipants('meeting-1', { page: 1, limit: 50 }),
+    ).resolves.toBe(result);
+    expect(meetingService.findParticipants).toHaveBeenCalledWith('meeting-1', {
+      page: 1,
+      limit: 50,
     });
   });
 });

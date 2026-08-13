@@ -3,6 +3,7 @@ export * from './meeting-record-response.dto';
 export * from './meeting-record-stats.dto';
 export * from './meeting-summary.dto';
 export * from './participant-summary.dto';
+export * from './meeting-participant.dto';
 export * from './meeting-record-delete.dto';
 export * from './meeting-record-create.dto';
 export * from './meeting-record-update.dto';

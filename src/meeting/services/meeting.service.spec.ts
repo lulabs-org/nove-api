@@ -1,5 +1,6 @@
 import { MeetingPlatform, MeetingType, ProcessingStatus } from '@prisma/client';
 import { MeetingRepository } from '../repositories/meeting.repository';
+import { MeetingParticipantRepository } from '../repositories/meeting-participant.repository';
 import { MeetingService } from './meeting.service';
 
 describe('MeetingService', () => {
@@ -12,11 +13,17 @@ describe('MeetingService', () => {
     get: jest.fn(),
     getStats: jest.fn(),
   };
+  const participantRepository = {
+    findMany: jest.fn(),
+  };
   let service: MeetingService;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new MeetingService(repository as unknown as MeetingRepository);
+    service = new MeetingService(
+      repository as unknown as MeetingRepository,
+      participantRepository as unknown as MeetingParticipantRepository,
+    );
   });
 
   it('uses the database root sub-meeting ID and seconds when creating', async () => {
@@ -65,5 +72,32 @@ describe('MeetingService', () => {
     repository.getStats.mockResolvedValue(stats);
 
     await expect(service.getStats({})).resolves.toBe(stats);
+  });
+
+  it('returns a paginated participant list after checking the meeting', async () => {
+    repository.findById.mockResolvedValue({ id: 'meeting-1' });
+    participantRepository.findMany.mockResolvedValue({
+      records: [{ id: 'participant-1' }],
+      total: 1,
+    });
+
+    await expect(
+      service.findParticipants('meeting-1', {
+        page: 2,
+        limit: 20,
+        search: '杨',
+      }),
+    ).resolves.toEqual({
+      data: [{ id: 'participant-1' }],
+      total: 1,
+      page: 2,
+      limit: 20,
+      totalPages: 1,
+    });
+    expect(participantRepository.findMany).toHaveBeenCalledWith('meeting-1', {
+      skip: 20,
+      take: 20,
+      search: '杨',
+    });
   });
 });

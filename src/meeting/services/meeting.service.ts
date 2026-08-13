@@ -1,12 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { ProcessingStatus, Prisma } from '@prisma/client';
 import { MeetingRepository } from '../repositories/meeting.repository';
+import { MeetingParticipantRepository } from '../repositories/meeting-participant.repository';
 import { GetMeetingRecordsParams } from '../types';
 import {
   MeetingRecordResponseDto,
   MeetingStatsResponseDto,
   CreateMeetingRecordDto,
   UpdateMeetingRecordDto,
+  QueryMeetingParticipantsDto,
+  MeetingParticipantListResponseDto,
 } from '../dto';
 import {
   MeetingRecordNotFoundException,
@@ -21,7 +24,10 @@ const ROOT_SUB_MEETING_ID = '__ROOT__';
  */
 @Injectable()
 export class MeetingService {
-  constructor(private readonly meetingRepository: MeetingRepository) {}
+  constructor(
+    private readonly meetingRepository: MeetingRepository,
+    private readonly meetingParticipantRepository: MeetingParticipantRepository,
+  ) {}
 
   /**
    * 获取会议记录列表
@@ -45,6 +51,31 @@ export class MeetingService {
       throw new MeetingRecordNotFoundException(id);
     }
     return record;
+  }
+
+  async findParticipants(
+    id: string,
+    query: QueryMeetingParticipantsDto,
+  ): Promise<MeetingParticipantListResponseDto> {
+    await this.findById(id);
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 50;
+    const { records, total } = await this.meetingParticipantRepository.findMany(
+      id,
+      {
+        skip: (page - 1) * limit,
+        take: limit,
+        search: query.search,
+      },
+    );
+
+    return {
+      data: records,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   /**

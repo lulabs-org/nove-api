@@ -346,6 +346,8 @@ describe('MeetingRepository', () => {
           host: { id: 'platform-user-1', displayName: '杨仕明' },
           hasRecording: false,
           recordings: [{ id: 'recording-1' }],
+          participantCount: null,
+          _count: { participants: 3 },
         },
         {
           id: 'meeting-without-recording',
@@ -353,6 +355,8 @@ describe('MeetingRepository', () => {
           host: null,
           hasRecording: true,
           recordings: [],
+          participantCount: 8,
+          _count: { participants: 2 },
         },
       ]);
       (prismaService.meeting.count as jest.Mock).mockResolvedValue(2);
@@ -364,12 +368,14 @@ describe('MeetingRepository', () => {
           id: 'meeting-with-recording',
           hostPlatformUserId: 'platform-user-1',
           host: { id: 'platform-user-1', displayName: '杨仕明' },
+          participantCount: 3,
           hasRecording: true,
         },
         {
           id: 'meeting-without-recording',
           host: null,
           hostPlatformUserId: null,
+          participantCount: 8,
           hasRecording: false,
         },
       ]);
@@ -382,6 +388,11 @@ describe('MeetingRepository', () => {
             },
             host: {
               select: { id: true, displayName: true },
+            },
+            _count: {
+              select: {
+                participants: { where: { deletedAt: null } },
+              },
             },
           },
         }),

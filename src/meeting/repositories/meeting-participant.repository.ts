@@ -41,4 +41,66 @@ export class MeetingParticipantRepository {
       },
     });
   }
+
+  async findMany(
+    meetingId: string,
+    options: { skip: number; take: number; search?: string },
+  ) {
+    const search = options.search?.trim();
+    const where: Prisma.MeetingParticipantWhereInput = {
+      meetingId,
+      deletedAt: null,
+      ...(search
+        ? {
+            ptUser: {
+              deletedAt: null,
+              OR: [
+                { displayName: { contains: search, mode: 'insensitive' } },
+                { email: { contains: search, mode: 'insensitive' } },
+                { phone: { contains: search, mode: 'insensitive' } },
+                { ptUserId: { contains: search, mode: 'insensitive' } },
+              ],
+            },
+          }
+        : {}),
+    };
+
+    const [records, total] = await Promise.all([
+      this.prisma.meetingParticipant.findMany({
+        where,
+        skip: options.skip,
+        take: options.take,
+        orderBy: [{ firstJoinTime: 'asc' }, { createdAt: 'asc' }],
+        select: {
+          id: true,
+          meetingId: true,
+          ptUserId: true,
+          firstJoinTime: true,
+          lastLeaveTime: true,
+          totalDurationSeconds: true,
+          ptUser: {
+            select: {
+              id: true,
+              platform: true,
+              ptUserId: true,
+              displayName: true,
+              avatarUrl: true,
+              email: true,
+              countryCode: true,
+              phone: true,
+            },
+          },
+        },
+      }),
+      this.prisma.meetingParticipant.count({ where }),
+    ]);
+
+    return {
+      records: records.map(({ ptUser, ...record }) => ({
+        ...record,
+        user: ptUser,
+      })),
+      total,
+    };
+  }
 }
