@@ -30,34 +30,47 @@ export class TrackingReportController {
   constructor(
     private readonly service: TrackingReportService,
     private readonly periodicReportGenerator: PeriodicReportGenerator,
-  ) {}
-  @Post() @RequirePermissions('tracking-report:create') create(
+  ) { }
+  @Post()
+  @RequirePermissions('tracking-report:create')
+  create(
     @Body(new ValidationPipe()) dto: CreateTrackingReportDto,
   ) {
     return this.service.create(dto);
   }
-  @Get() @RequirePermissions('tracking-report:read') list(
+
+  @Get()
+  @RequirePermissions('tracking-report:read')
+  list(
     @Query(new ValidationPipe({ transform: true }))
     query: QueryTrackingReportDto,
   ) {
     return this.service.list(query);
   }
-  @Get(':id') @RequirePermissions('tracking-report:read') get(
+
+  @Get(':id')
+  @RequirePermissions('tracking-report:read')
+  get(
     @Param('id', CuidPipe) id: string,
   ) {
     return this.service.get(id);
   }
-  @Put(':id') @RequirePermissions('tracking-report:update') update(
+
+  @Put(':id')
+  @RequirePermissions('tracking-report:update')
+  update(
     @Param('id', CuidPipe) id: string,
     @Body(new ValidationPipe()) dto: UpdateTrackingReportDto,
   ) {
     return this.service.update(id, dto);
   }
+
   @Delete(':id') @RequirePermissions('tracking-report:delete') delete(
     @Param('id', CuidPipe) id: string,
   ) {
     return this.service.delete(id);
   }
+
   @Post('generate')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '手动或由定时任务触发周期性总结' })

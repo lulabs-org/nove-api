@@ -88,14 +88,14 @@ export class TriggerSummaryDto {
     enum: TrackingCadence,
   })
   @IsEnum(TrackingCadence, { message: '无效的周期类型' })
-  @IsNotEmpty({ message: 'periodType 不能为空' })
-  periodType!: TrackingCadence;
+  @IsNotEmpty({ message: 'cadence 不能为空' })
+  cadence!: TrackingCadence;
 
-  @ApiPropertyOptional({ description: '目标日期' })
+  @ApiPropertyOptional({ description: '基准日期' })
   @IsOptional()
   @IsDate({ message: '无效的日期格式' })
   @Type(() => Date)
-  targetDate?: Date;
+  baseDate?: Date;
 
   @ApiPropertyOptional({
     description: '指定生成总结的部分用户 (platformUserId 列表)',

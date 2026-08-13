@@ -9,6 +9,7 @@ import { LlmModule } from '@/llm/llm.module';
 import { ConfigModule } from '@nestjs/config';
 import { openaiConfig } from '@/configs/openai.config';
 import { TasksModule } from '@/task/tasks.module';
+import { MeetingModule } from '@/meeting/meeting.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { TasksModule } from '@/task/tasks.module';
     LlmModule,
     ConfigModule.forFeature(openaiConfig),
     TasksModule,
+    MeetingModule,
   ],
   controllers: [TrackingReportController],
   providers: [

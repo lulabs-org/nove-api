@@ -21,28 +21,28 @@ export class PeriodSummaryHandler implements ITaskHandler, OnModuleInit {
 
   async handle(job: Job): Promise<unknown> {
     const jobData = job.data as {
-      periodType?: TrackingCadence;
-      payload?: { periodType?: TrackingCadence };
+      cadence?: TrackingCadence;
+      payload?: { cadence?: TrackingCadence };
     };
-    const periodType: TrackingCadence | undefined =
-      jobData?.periodType || jobData?.payload?.periodType;
+    const cadence: TrackingCadence | undefined =
+      jobData?.cadence || jobData?.payload?.cadence;
 
-    if (!periodType) {
+    if (!cadence) {
       this.logger.warn(
-        'generate_period_summary: periodType is missing in job data',
+        'generate_period_summary: cadence is missing in job data',
       );
-      throw new Error('periodType is required for generating period summary');
+      throw new Error('cadence is required for generating period summary');
     }
 
     this.logger.log(
-      `Executing period summary task for periodType: ${periodType}`,
+      `Executing period summary task for cadence: ${cadence}`,
     );
 
     // Call the service directly
     const result = await this.periodicReportGenerator.generateSummaries({
-      periodType: periodType,
+      cadence: cadence,
     });
-    this.logger.log(`[定时任务] ${periodType} 总结任务执行完成:`, result);
+    this.logger.log(`[定时任务] ${cadence} 总结任务执行完成:`, result);
 
     return { ok: true, data: result };
   }

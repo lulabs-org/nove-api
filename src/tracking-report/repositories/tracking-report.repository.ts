@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, TrackingCadence, TrackingReportType } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { retryVersionTransaction } from '@/common/utils/prisma-transaction-retry';
 
@@ -144,5 +144,25 @@ export class TrackingReportRepository {
         { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
       ),
     );
+  }
+
+  findPeriodicMeetingSummaries(
+    cadence: TrackingCadence,
+    range: { periodStart: Date; periodEnd: Date },
+    platformUserIds?: string[],
+  ) {
+    return this.prisma.userTrackingReport.findMany({
+      where: {
+        trackingType: TrackingReportType.PERIODIC_MEETING_SUMMARY,
+        cadence,
+        platformUserId: platformUserIds?.length
+          ? { in: platformUserIds }
+          : undefined,
+        periodStart: { gte: range.periodStart },
+        periodEnd: { lte: range.periodEnd },
+        isLatest: true,
+        deletedAt: null,
+      },
+    });
   }
 }
