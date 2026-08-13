@@ -55,6 +55,7 @@ import { SystemConfigModule } from './admin/system-config/system-config.module';
 import { AdminUserModule } from './admin/user/user.module';
 import { ProductModule } from './product/product.module';
 import { ChannelModule } from './channel/channel.module';
+import { OrderRefundModule } from './order-refund/order-refund.module';
 
 @Module({
   imports: [
@@ -126,6 +127,7 @@ import { ChannelModule } from './channel/channel.module';
     AdminUserModule,
     ProductModule,
     ChannelModule,
+    OrderRefundModule,
   ],
   controllers: [AppController],
   providers: [

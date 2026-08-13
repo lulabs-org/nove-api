@@ -21,6 +21,10 @@ const MANAGER_PERMISSIONS = [
   'order:create',
   'order:update',
   'order:status',
+  'order-refund:read',
+  'order-refund:create',
+  'order-refund:update',
+  'order-refund:settle',
   'dashboard:read',
 ];
 
@@ -30,6 +34,9 @@ const FINANCE_PERMISSIONS = [
   'finance:export',
   'finance:audit',
   'order:read',
+  'order-refund:read',
+  'order-refund:update',
+  'order-refund:settle',
   'dashboard:read',
 ];
 
@@ -39,6 +46,9 @@ const CUSTOMER_SERVICE_PERMISSIONS = [
   'order:read',
   'order:update',
   'order:status',
+  'order-refund:read',
+  'order-refund:create',
+  'order-refund:update',
   'product:read',
   'channel:read',
   'dashboard:read',
