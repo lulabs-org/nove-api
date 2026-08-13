@@ -8,8 +8,8 @@ import {
   CreateTrackingReportDto,
   QueryTrackingReportDto,
   UpdateTrackingReportDto,
-} from './dto/tracking-report.dto';
-import { TrackingReportRepository } from './tracking-report.repository';
+} from '../dto/tracking-report.dto';
+import { TrackingReportRepository } from '../repositories/tracking-report.repository';
 
 @Injectable()
 export class TrackingReportService {
@@ -34,11 +34,15 @@ export class TrackingReportService {
       throw new BadRequestException('仅 PROJECT_PROGRESS 可以提供 projectId');
   }
 
-  create(dto: CreateTrackingReportDto) {
+  create(
+    dto: CreateTrackingReportDto,
+    overrides?: Partial<Prisma.UserTrackingReportUncheckedCreateInput>,
+  ) {
     this.validate(dto);
     return this.reports.saveNewVersion({
       ...dto,
       structuredData: dto.structuredData as Prisma.InputJsonValue | undefined,
+      ...overrides,
     });
   }
 

@@ -8,6 +8,7 @@ import {
   IsEnum,
   IsInt,
   IsObject,
+  IsNotEmpty,
   IsOptional,
   IsString,
   Max,
@@ -79,4 +80,29 @@ export class QueryTrackingReportDto {
   @IsOptional() @Type(() => Boolean) @IsBoolean() isLatest = true;
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) page = 1;
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(100) limit = 20;
+}
+
+export class TriggerSummaryDto {
+  @ApiProperty({
+    description: '总结周期类型 (例如 DAILY, WEEKLY)',
+    enum: TrackingCadence,
+  })
+  @IsEnum(TrackingCadence, { message: '无效的周期类型' })
+  @IsNotEmpty({ message: 'periodType 不能为空' })
+  periodType!: TrackingCadence;
+
+  @ApiPropertyOptional({ description: '目标日期' })
+  @IsOptional()
+  @IsDate({ message: '无效的日期格式' })
+  @Type(() => Date)
+  targetDate?: Date;
+
+  @ApiPropertyOptional({
+    description: '指定生成总结的部分用户 (platformUserId 列表)',
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray({ message: 'platformUserIds 必须是数组' })
+  @IsString({ each: true, message: 'platformUserIds 数组必须包含字符串' })
+  platformUserIds?: string[];
 }

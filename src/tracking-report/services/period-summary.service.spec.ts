@@ -1,7 +1,7 @@
 import { TrackingCadence, TrackingReportType } from '@prisma/client';
 import { LlmService } from '@/llm/llm.service';
 import { PrismaService } from '@/prisma/prisma.service';
-import { TrackingReportRepository } from '@/tracking-report/tracking-report.repository';
+import { TrackingReportService } from './tracking-report.service';
 import { PeriodSummaryService } from './period-summary.service';
 
 describe('PeriodSummaryService', () => {
@@ -9,13 +9,13 @@ describe('PeriodSummaryService', () => {
     recordingParticipantSummary: { findMany: jest.fn() },
     userTrackingReport: { findMany: jest.fn() },
   };
-  const reports = { saveNewVersion: jest.fn() };
+  const trackingReportService = { create: jest.fn() };
   const llm = {
     createChatCompletion: jest.fn().mockResolvedValue('aggregate'),
   };
   const service = new PeriodSummaryService(
     prisma as unknown as PrismaService,
-    reports as unknown as TrackingReportRepository,
+    trackingReportService as unknown as TrackingReportService,
     llm as unknown as LlmService,
     { model: 'test-model' } as never,
   );
@@ -23,7 +23,7 @@ describe('PeriodSummaryService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     llm.createChatCompletion.mockResolvedValue('aggregate');
-    reports.saveNewVersion.mockResolvedValue({ id: 'created' });
+    trackingReportService.create.mockResolvedValue({ id: 'created' });
   });
 
   it('creates a daily report with recording evidence and local-user identity', async () => {
@@ -44,7 +44,7 @@ describe('PeriodSummaryService', () => {
       targetDate: new Date('2026-08-13T12:00:00Z'),
     });
 
-    expect(reports.saveNewVersion).toHaveBeenCalledWith(
+    expect(trackingReportService.create).toHaveBeenCalledWith(
       expect.objectContaining({
         subjectUserId: 'user-1',
         trackingType: TrackingReportType.PERIODIC_MEETING_SUMMARY,
@@ -52,6 +52,7 @@ describe('PeriodSummaryService', () => {
         recordingSummaryIds: ['summary-1'],
         sourceReportIds: [],
       }),
+      expect.objectContaining({ generatedBy: 'AI', aiModel: 'test-model' })
     );
   });
 
@@ -73,13 +74,14 @@ describe('PeriodSummaryService', () => {
       targetDate: new Date('2026-08-13T12:00:00Z'),
     });
 
-    expect(reports.saveNewVersion).toHaveBeenCalledWith(
+    expect(trackingReportService.create).toHaveBeenCalledWith(
       expect.objectContaining({
         platformUserId: 'platform-1',
         cadence: TrackingCadence.WEEKLY,
         recordingSummaryIds: [],
         sourceReportIds: ['daily-1'],
       }),
+      expect.objectContaining({ generatedBy: 'AI', aiModel: 'test-model' })
     );
   });
 });

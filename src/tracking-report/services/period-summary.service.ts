@@ -9,7 +9,7 @@ import { generatePrompt } from '@/common/utils';
 import { openaiConfig } from '@/configs/openai.config';
 import { LlmService } from '@/llm/llm.service';
 import { PrismaService } from '@/prisma/prisma.service';
-import { TrackingReportRepository } from '@/tracking-report/tracking-report.repository';
+import { TrackingReportService } from './tracking-report.service';
 import { getdayRange, getPeriodContext } from '../utils/period-time-range';
 
 type Source = {
@@ -28,7 +28,7 @@ export class PeriodSummaryService {
   private readonly logger = new Logger(PeriodSummaryService.name);
   constructor(
     private readonly prisma: PrismaService,
-    private readonly reports: TrackingReportRepository,
+    private readonly trackingReportService: TrackingReportService,
     private readonly llmService: LlmService,
     @Inject(openaiConfig.KEY)
     private readonly config: ConfigType<typeof openaiConfig>,
@@ -149,9 +149,9 @@ export class PeriodSummaryService {
         { role: 'system', content: systemPrompt },
         { role: 'user', content: prompt },
       ])) ?? '';
-    await this.reports.saveNewVersion({
-      subjectUserId: sources[0].subjectUserId,
-      platformUserId: sources[0].platformUserId,
+    await this.trackingReportService.create({
+      subjectUserId: sources[0].subjectUserId || undefined,
+      platformUserId: sources[0].platformUserId || undefined,
       subjectNameSnapshot: userName,
       trackingType: TrackingReportType.PERIODIC_MEETING_SUMMARY,
       cadence,
@@ -160,15 +160,15 @@ export class PeriodSummaryService {
       timezone: 'Asia/Shanghai',
       content,
       structuredData: {},
-      schemaVersion: 1,
-      generatedBy: GenerationMethod.AI,
-      aiModel: this.config.model,
       recordingSummaryIds: sources
         .filter((source) => source.kind === 'recording')
         .map((source) => source.id),
       sourceReportIds: sources
         .filter((source) => source.kind === 'report')
         .map((source) => source.id),
+    }, {
+      generatedBy: GenerationMethod.AI,
+      aiModel: this.config.model,
     });
     this.logger.log(`已生成 ${userName} 的 ${cadence} 长期追踪报告`);
   }

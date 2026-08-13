@@ -42,30 +42,6 @@ export class MeetingSummaryDto {
   actionItems: string[];
 }
 
-export class TriggerSummaryDto {
-  @ApiProperty({
-    description: '总结周期类型 (例如 DAILY, WEEKLY)',
-    enum: TrackingCadence,
-  })
-  @IsEnum(TrackingCadence, { message: '无效的周期类型' })
-  @IsNotEmpty({ message: 'periodType 不能为空' })
-  periodType!: TrackingCadence;
-
-  @ApiPropertyOptional({ description: '目标日期' })
-  @IsOptional()
-  @IsDate({ message: '无效的日期格式' })
-  @Type(() => Date)
-  targetDate?: Date;
-
-  @ApiPropertyOptional({
-    description: '指定生成总结的部分用户 (platformUserId 列表)',
-    type: [String],
-  })
-  @IsOptional()
-  @IsArray({ message: 'platformUserIds 必须是数组' })
-  @IsString({ each: true, message: 'platformUserIds 数组必须包含字符串' })
-  platformUserIds?: string[];
-}
 
 export class GenerateParticipantSummaryDto {
   @ApiPropertyOptional({

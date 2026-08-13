@@ -21,9 +21,8 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { NoPermissionRequired } from '@/admin/permission/decorators/permissions.decorator';
-import { PeriodSummaryService, ParticipantSummaryService } from '../services';
+import { ParticipantSummaryService } from '../services';
 import {
-  TriggerSummaryDto,
   GenerateParticipantSummaryDto,
 } from '../dto/meet-ai.dto';
 
@@ -36,7 +35,6 @@ export class MeetAiController {
 
   constructor(
     private readonly participantSummaryService: ParticipantSummaryService,
-    private readonly periodSummaryService: PeriodSummaryService,
   ) {}
 
   @Get('health')
@@ -63,12 +61,5 @@ export class MeetAiController {
         ...dto,
       }),
     };
-  }
-
-  @Post('summaries/period')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: '手动或由定时任务触发周期性总结' })
-  process(@Body() dto: TriggerSummaryDto) {
-    return this.periodSummaryService.generateSummaries(dto);
   }
 }

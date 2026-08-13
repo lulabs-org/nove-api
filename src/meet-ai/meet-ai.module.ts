@@ -17,13 +17,10 @@ import { PrismaModule } from '../prisma/prisma.module';
 import { LlmModule } from '@/llm/llm.module';
 import { UserPlatformModule } from '@/user-platform/user-platform.module';
 import { MeetingModule } from '@/meeting/meeting.module';
-import { PeriodSummaryService } from './services/period-summary.service';
 
 import { ConfigModule } from '@nestjs/config';
 import { openaiConfig } from '@/configs/openai.config';
 import { TasksModule } from '@/task/tasks.module';
-import { PeriodSummaryHandler } from './handlers/period-summary.handler';
-import { TrackingReportModule } from '@/tracking-report/tracking-report.module';
 
 @Module({
   imports: [
@@ -33,19 +30,15 @@ import { TrackingReportModule } from '@/tracking-report/tracking-report.module';
     UserPlatformModule,
     ConfigModule.forFeature(openaiConfig),
     TasksModule,
-    TrackingReportModule,
-  ],
+    ],
   controllers: [MeetAiController],
   providers: [
     RecordingParticipantSummaryRepository,
     ParticipantSummaryService,
-    PeriodSummaryService,
-    PeriodSummaryHandler,
-  ],
+    ],
   exports: [
     RecordingParticipantSummaryRepository,
     ParticipantSummaryService,
-    PeriodSummaryService,
-  ],
+    ],
 })
 export class MeetAiModule {}

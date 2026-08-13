@@ -516,6 +516,36 @@ export const REAL_PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     resource: 'api-key',
     action: 'rotate',
   },
+
+  // ========== 长期追踪报告管理 ==========
+  {
+    name: '查看长期追踪报告',
+    code: 'tracking-report:read',
+    description: '查看长期追踪报告',
+    resource: 'tracking-report',
+    action: 'read',
+  },
+  {
+    name: '创建长期追踪报告',
+    code: 'tracking-report:create',
+    description: '创建长期追踪报告',
+    resource: 'tracking-report',
+    action: 'create',
+  },
+  {
+    name: '编辑长期追踪报告',
+    code: 'tracking-report:update',
+    description: '编辑长期追踪报告',
+    resource: 'tracking-report',
+    action: 'update',
+  },
+  {
+    name: '删除长期追踪报告',
+    code: 'tracking-report:delete',
+    description: '删除长期追踪报告',
+    resource: 'tracking-report',
+    action: 'delete',
+  },
 ] as const satisfies readonly Prisma.PermissionCreateInput[];
 
 export const PERMISSION_CONFIGS: readonly PermissionConfig[] = [
@@ -1032,5 +1062,35 @@ export const PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     description: '轮换 API Key',
     resource: 'api-key',
     action: 'rotate',
+  },
+
+  // ========== 长期追踪报告管理 ==========
+  {
+    name: '查看长期追踪报告',
+    code: 'tracking-report:read',
+    description: '查看长期追踪报告',
+    resource: 'tracking-report',
+    action: 'read',
+  },
+  {
+    name: '创建长期追踪报告',
+    code: 'tracking-report:create',
+    description: '创建长期追踪报告',
+    resource: 'tracking-report',
+    action: 'create',
+  },
+  {
+    name: '编辑长期追踪报告',
+    code: 'tracking-report:update',
+    description: '编辑长期追踪报告',
+    resource: 'tracking-report',
+    action: 'update',
+  },
+  {
+    name: '删除长期追踪报告',
+    code: 'tracking-report:delete',
+    description: '删除长期追踪报告',
+    resource: 'tracking-report',
+    action: 'delete',
   },
 ] as const satisfies readonly Prisma.PermissionCreateInput[];

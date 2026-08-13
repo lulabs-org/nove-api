@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { TrackingCadence, TrackingReportType } from '@prisma/client';
-import { TrackingReportRepository } from './tracking-report.repository';
+import { TrackingReportRepository } from '../repositories/tracking-report.repository';
 import { TrackingReportService } from './tracking-report.service';
 
 describe('TrackingReportService', () => {
