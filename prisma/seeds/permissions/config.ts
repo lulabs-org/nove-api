@@ -330,6 +330,43 @@ export const REAL_PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     action: 'status',
   },
 
+  // ========== 订单售后管理 ==========
+  {
+    name: '查看订单售后',
+    code: 'order-refund:read',
+    description: '查看退款售后记录',
+    resource: 'order-refund',
+    action: 'read',
+  },
+  {
+    name: '登记订单售后',
+    code: 'order-refund:create',
+    description: '登记退款售后记录',
+    resource: 'order-refund',
+    action: 'create',
+  },
+  {
+    name: '编辑订单售后',
+    code: 'order-refund:update',
+    description: '编辑退款售后信息',
+    resource: 'order-refund',
+    action: 'update',
+  },
+  {
+    name: '结算订单退款',
+    code: 'order-refund:settle',
+    description: '更新退款和财务结算状态',
+    resource: 'order-refund',
+    action: 'settle',
+  },
+  {
+    name: '删除订单售后',
+    code: 'order-refund:delete',
+    description: '删除退款售后记录',
+    resource: 'order-refund',
+    action: 'delete',
+  },
+
   // ========== 财务管理 ==========
   {
     name: '查看财务报表',
@@ -808,6 +845,43 @@ export const PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     description: '管理订单状态',
     resource: 'order',
     action: 'status',
+  },
+
+  // ========== 订单售后管理 ==========
+  {
+    name: '查看订单售后',
+    code: 'order-refund:read',
+    description: '查看退款售后记录',
+    resource: 'order-refund',
+    action: 'read',
+  },
+  {
+    name: '登记订单售后',
+    code: 'order-refund:create',
+    description: '登记退款售后记录',
+    resource: 'order-refund',
+    action: 'create',
+  },
+  {
+    name: '编辑订单售后',
+    code: 'order-refund:update',
+    description: '编辑退款售后信息',
+    resource: 'order-refund',
+    action: 'update',
+  },
+  {
+    name: '结算订单退款',
+    code: 'order-refund:settle',
+    description: '更新退款和财务结算状态',
+    resource: 'order-refund',
+    action: 'settle',
+  },
+  {
+    name: '删除订单售后',
+    code: 'order-refund:delete',
+    description: '删除退款售后记录',
+    resource: 'order-refund',
+    action: 'delete',
   },
 
   // ========== 财务管理 ==========
