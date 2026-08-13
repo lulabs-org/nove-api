@@ -1,5 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { MeetingPlatform, MeetingType, ProcessingStatus } from '@prisma/client';
+import {
+  MeetingPlatform,
+  MeetingType,
+  ProcessingStatus,
+  RecordingSource,
+  RecordingStatus,
+} from '@prisma/client';
 
 export class MeetingHostResponseDto {
   @ApiProperty({ description: '平台用户 ID' })
@@ -7,6 +13,32 @@ export class MeetingHostResponseDto {
 
   @ApiPropertyOptional({ description: '主持人显示名称', nullable: true })
   displayName?: string | null;
+}
+
+export class MeetingRecordingSummaryResponseDto {
+  @ApiProperty({ description: '录制记录 ID' })
+  id: string;
+
+  @ApiPropertyOptional({ description: '平台录制 ID', nullable: true })
+  externalId?: string | null;
+
+  @ApiProperty({ description: '录制来源', enum: RecordingSource })
+  source: RecordingSource;
+
+  @ApiProperty({ description: '录制状态', enum: RecordingStatus })
+  status: RecordingStatus;
+
+  @ApiPropertyOptional({ description: '录制开始时间', nullable: true })
+  startAt?: Date | null;
+
+  @ApiPropertyOptional({ description: '录制结束时间', nullable: true })
+  endAt?: Date | null;
+
+  @ApiProperty({ description: '创建时间' })
+  createdAt: Date;
+
+  @ApiProperty({ description: '更新时间' })
+  updatedAt: Date;
 }
 
 export class MeetingRecordResponseDto {
@@ -52,6 +84,12 @@ export class MeetingRecordResponseDto {
     nullable: true,
   })
   host?: MeetingHostResponseDto | null;
+
+  @ApiPropertyOptional({
+    description: '未删除的录制记录摘要（仅详情接口返回）',
+    type: [MeetingRecordingSummaryResponseDto],
+  })
+  recordings?: MeetingRecordingSummaryResponseDto[];
 
   @ApiPropertyOptional({ description: '参会人数' })
   participantCount?: number | null;

@@ -4,7 +4,7 @@ import {
   IsEnum,
   IsOptional,
   IsDate,
-  IsNumber,
+  IsInt,
   Min,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -28,14 +28,6 @@ export class CreateMeetingRecordDto {
   @IsNotEmpty({ message: '平台会议ID不能为空' })
   @IsString({ message: '平台会议ID必须是字符串' })
   platformMeetingId: string;
-
-  @ApiPropertyOptional({
-    description: '平台录制ID',
-    example: 'recording_123456',
-  })
-  @IsOptional()
-  @IsString({ message: '平台录制ID必须是字符串' })
-  platformRecordingId?: string;
 
   @ApiProperty({
     description: '会议标题',
@@ -70,14 +62,6 @@ export class CreateMeetingRecordDto {
   @IsString({ message: '主持人用户ID必须是字符串' })
   hostUserId?: string;
 
-  @ApiProperty({
-    description: '主持人用户名',
-    example: '张三',
-  })
-  @IsNotEmpty({ message: '主持人用户名不能为空' })
-  @IsString({ message: '主持人用户名必须是字符串' })
-  hostUserName: string;
-
   @ApiPropertyOptional({
     description:
       '实际开始时间（务必传入包含时区信息的 ISO 8601 格式，例如前端通过 date.toISOString() 生成）',
@@ -99,15 +83,15 @@ export class CreateMeetingRecordDto {
   endedAt?: Date;
 
   @ApiPropertyOptional({
-    description: '持续时间（分钟）',
-    example: 60,
+    description: '持续时间（秒）',
+    example: 3600,
     minimum: 0,
   })
   @IsOptional()
-  @Transform(({ value }) => parseInt(String(value)))
-  @IsNumber({}, { message: '持续时间必须是数字' })
+  @Type(() => Number)
+  @IsInt({ message: '持续时间必须是整数' })
   @Min(0, { message: '持续时间不能小于0' })
-  duration?: number;
+  durationSeconds?: number;
 
   @ApiPropertyOptional({
     description: '是否有录制',

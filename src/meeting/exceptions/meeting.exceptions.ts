@@ -28,9 +28,9 @@ export class MeetingRecordNotFoundException extends MeetingException {
  * 会议记录已存在异常
  */
 export class MeetingRecordAlreadyExistsException extends MeetingException {
-  constructor(platformMeetingId: string, platformRecordingId: string) {
+  constructor(platformMeetingId: string, subMeetingId: string) {
     super(
-      `会议记录已存在: 会议ID=${platformMeetingId}, 录制ID=${platformRecordingId}`,
+      `会议记录已存在: 会议ID=${platformMeetingId}, 子会议ID=${subMeetingId}`,
       HttpStatus.CONFLICT,
     );
   }
