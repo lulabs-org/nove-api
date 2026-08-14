@@ -46,10 +46,13 @@ describe('PeriodicReportGenerator', () => {
       },
     ]);
 
-    await service.generateSummaries({
-      cadence: TrackingCadence.DAILY,
-      baseDate: new Date('2026-08-13T12:00:00Z'),
-    });
+    await service.generateSummariesWithProgress(
+      {
+        cadence: TrackingCadence.DAILY,
+        baseDate: new Date('2026-08-13T12:00:00Z'),
+      },
+      jest.fn(),
+    );
 
     expect(trackingReportService.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -76,10 +79,13 @@ describe('PeriodicReportGenerator', () => {
       },
     ]);
 
-    await service.generateSummaries({
-      cadence: TrackingCadence.WEEKLY,
-      baseDate: new Date('2026-08-13T12:00:00Z'),
-    });
+    await service.generateSummariesWithProgress(
+      {
+        cadence: TrackingCadence.WEEKLY,
+        baseDate: new Date('2026-08-13T12:00:00Z'),
+      },
+      jest.fn(),
+    );
 
     expect(trackingReportService.create).toHaveBeenCalledWith(
       expect.objectContaining({
