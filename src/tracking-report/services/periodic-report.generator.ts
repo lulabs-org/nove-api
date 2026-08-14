@@ -14,27 +14,7 @@ import { TrackingReportRepository } from '../repositories/tracking-report.reposi
 import { TrackingReportService } from './tracking-report.service';
 import { TriggerSummaryDto } from '../dto/tracking-report.dto';
 import { getdayRange, getPeriodContext } from '../utils/period-time-range';
-import type { UserPair } from '../queue/report-generation.processor';
-
-type Source = {
-  id: string;
-  content: string;
-  userName: string;
-  periodStart: Date | null;
-  periodEnd: Date | null;
-  subjectUserId: string | null;
-  platformUserId: string | null;
-  kind: 'recording' | 'report';
-};
-
-export type GenerateProgressEvent =
-  | { type: 'start'; totalUsers: number }
-  | { type: 'success'; platformUserId: string | null }
-  | { type: 'failure'; platformUserId: string | null; error: string };
-
-export type GenerateProgressCallback = (
-  event: GenerateProgressEvent,
-) => void | Promise<void>;
+import type { GenerateProgressCallback, Source, UserPair } from '../types';
 
 @Injectable()
 export class PeriodicReportGenerator {

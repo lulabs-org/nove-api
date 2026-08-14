@@ -19,8 +19,7 @@ import type {
   ReportGenerationJobProgress,
   ReportGenerationJobResult,
   UserPair,
-} from './report-generation.processor';
-import { TrackingReportRepository } from '../repositories/tracking-report.repository';
+} from '../types';
 import { getdayRange } from '../utils/period-time-range';
 
 /** 不支持通过本接口触发的报告类型 */
@@ -38,7 +37,6 @@ export class ReportGenerationQueueService {
       ReportGenerationJobData,
       ReportGenerationJobResult
     >,
-    private readonly trackingReportRepo: TrackingReportRepository,
     private readonly prisma: PrismaService,
   ) {}
 
