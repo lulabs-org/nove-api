@@ -8,6 +8,7 @@ import {
 import { generatePrompt } from '@/common/utils';
 import { openaiConfig } from '@/configs/openai.config';
 import { LlmService } from '@/llm/llm.service';
+import { PrismaService } from '@/prisma/prisma.service';
 import { RecordingParticipantSummaryRepository } from '@/meeting/repositories/participant-summary.repository';
 import { TrackingReportRepository } from '../repositories/tracking-report.repository';
 import { TrackingReportService } from './tracking-report.service';
@@ -25,10 +26,20 @@ type Source = {
   kind: 'recording' | 'report';
 };
 
+export type GenerateProgressEvent =
+  | { type: 'start'; totalUsers: number }
+  | { type: 'success'; platformUserId: string | null }
+  | { type: 'failure'; platformUserId: string | null; error: string };
+
+export type GenerateProgressCallback = (
+  event: GenerateProgressEvent,
+) => void | Promise<void>;
+
 @Injectable()
 export class PeriodicReportGenerator {
   private readonly logger = new Logger(PeriodicReportGenerator.name);
   constructor(
+    private readonly prisma: PrismaService,
     private readonly reportRepo: TrackingReportRepository,
     private readonly summaryRepo: RecordingParticipantSummaryRepository,
     private readonly reportService: TrackingReportService,
@@ -53,6 +64,38 @@ export class PeriodicReportGenerator {
     subjectUserIds,
     trackingType = TrackingReportType.PERIODIC_MEETING_SUMMARY,
   }: TriggerSummaryDto) {
+    let targetPlatformUserIds = platformUserIds;
+
+    // 1 & 2. 补全和互相查询 platformUserIds 和 subjectUserIds
+    if (platformUserIds?.length || subjectUserIds?.length) {
+      const pIdSet = new Set(platformUserIds || []);
+
+      if (subjectUserIds?.length) {
+        const usersBySubject = await this.prisma.platformUser.findMany({
+          where: { localUserId: { in: subjectUserIds } },
+          select: { id: true },
+        });
+        usersBySubject.forEach((u) => pIdSet.add(u.id));
+      }
+
+      if (pIdSet.size > 0) {
+        const usersByPlatform = await this.prisma.platformUser.findMany({
+          where: { id: { in: [...pIdSet] } },
+          select: { id: true, localUserId: true },
+        });
+
+        // 3. 形成不重复的组合数据列表
+        const userPairs = usersByPlatform.map((u) => ({
+          subjectUserId: u.localUserId,
+          platformUserId: u.id,
+        }));
+        this.logger.debug(`用户映射组合: ${JSON.stringify(userPairs)}`);
+
+        // 4. 根据所有的 platformUserId 进行后续步骤
+        targetPlatformUserIds = [...pIdSet];
+      }
+    }
+
     const context = getPeriodContext(cadence);
     if (!context) return { ok: false, at: new Date().toISOString() };
 
@@ -60,8 +103,7 @@ export class PeriodicReportGenerator {
     const sources = await this.findSources(
       context.sourceCadence,
       range,
-      platformUserIds,
-      subjectUserIds,
+      targetPlatformUserIds,
       trackingType,
     );
 
@@ -92,18 +134,114 @@ export class PeriodicReportGenerator {
     return { ok: true, at: new Date().toISOString() };
   }
 
+  /**
+   * 带逐用户进度回调的周期性总结生成（供 BullMQ processor 调用）
+   * 单个用户失败不影响其他用户，失败信息通过 onProgress 回传。
+   */
+  async generateSummariesWithProgress(
+    dto: TriggerSummaryDto,
+    onProgress: GenerateProgressCallback,
+  ): Promise<{ successCount: number; failedCount: number; failedUsers: string[]; skippedCount: number; skippedUsers: string[] }> {
+    const {
+      cadence,
+      baseDate = new Date(),
+      platformUserIds,
+      subjectUserIds,
+      trackingType = TrackingReportType.PERIODIC_MEETING_SUMMARY,
+    } = dto;
+
+    let targetPlatformUserIds = platformUserIds;
+
+    // 用户 ID 互查
+    if (platformUserIds?.length || subjectUserIds?.length) {
+      const pIdSet = new Set(platformUserIds || []);
+      if (subjectUserIds?.length) {
+        const usersBySubject = await this.prisma.platformUser.findMany({
+          where: { localUserId: { in: subjectUserIds } },
+          select: { id: true },
+        });
+        usersBySubject.forEach((u) => pIdSet.add(u.id));
+      }
+      if (pIdSet.size > 0) {
+        targetPlatformUserIds = [...pIdSet];
+      }
+    }
+
+    const context = getPeriodContext(cadence);
+    if (!context) {
+      return { successCount: 0, failedCount: 0, failedUsers: [], skippedCount: 0, skippedUsers: [] };
+    }
+
+    const range = getdayRange(cadence, baseDate);
+    const sources = await this.findSources(
+      context.sourceCadence,
+      range,
+      targetPlatformUserIds,
+      trackingType,
+    );
+
+    const groups = new Map<string, Source[]>();
+    for (const source of sources) {
+      const key = source.platformUserId || source.subjectUserId || 'unknown';
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(source);
+    }
+
+    // Fix 3: 计算被跳过的用户（在筛选范围内但该周期无数据）
+    const usersWithData = new Set(groups.keys());
+    const skippedUsers =
+      targetPlatformUserIds?.filter((id) => !usersWithData.has(id)) ?? [];
+
+    const allUserGroups = [...groups.values()];
+    await onProgress({ type: 'start', totalUsers: allUserGroups.length });
+
+    if (allUserGroups.length === 0) {
+      this.logger.warn(
+        `[PeriodicReportGenerator] cadence=${cadence} 范围内无源数据，跳过生成。跳过用户数=${skippedUsers.length}`,
+      );
+      return { successCount: 0, failedCount: 0, failedUsers: [], skippedCount: skippedUsers.length, skippedUsers };
+    }
+
+    let successCount = 0;
+    let failedCount = 0;
+    const failedUsers: string[] = [];
+
+    // 每批 5 个并发，与原有逻辑保持一致
+    for (let i = 0; i < allUserGroups.length; i += 5) {
+      await Promise.all(
+        allUserGroups.slice(i, i + 5).map(async (items) => {
+          const platformUserId = items[0]?.platformUserId ?? null;
+          try {
+            await this.generateOne(cadence, range, context.label, items, trackingType);
+            successCount++;
+            await onProgress({ type: 'success', platformUserId });
+          } catch (err: unknown) {
+            const errorMessage =
+              err instanceof Error ? err.message : String(err);
+            failedCount++;
+            if (platformUserId) failedUsers.push(platformUserId);
+            this.logger.error(
+              `生成用户 ${platformUserId} 的 ${cadence} 报告失败: ${errorMessage}`,
+            );
+            await onProgress({ type: 'failure', platformUserId, error: errorMessage });
+          }
+        }),
+      );
+    }
+
+    return { successCount, failedCount, failedUsers, skippedCount: skippedUsers.length, skippedUsers };
+  }
+
   private async findSources(
     sourceCadence: TrackingCadence | 'RECORDING',
     range: { periodStart: Date; periodEnd: Date },
     platformUserIds?: string[],
-    subjectUserIds?: string[],
     trackingType: TrackingReportType = TrackingReportType.PERIODIC_MEETING_SUMMARY,
   ): Promise<Source[]> {
     if (sourceCadence === 'RECORDING') {
       const rows = await this.summaryRepo.findForPeriodicReport(
         range,
         platformUserIds,
-        subjectUserIds,
       );
       return rows.map((row) => ({
         id: row.id,
@@ -121,7 +259,6 @@ export class PeriodicReportGenerator {
       sourceCadence,
       range,
       platformUserIds,
-      subjectUserIds,
       trackingType,
     );
 
@@ -172,6 +309,8 @@ export class PeriodicReportGenerator {
         trackingType,
         cadence,
         ...range,
+        // 注意：周期边界基于 UTC 计算，与 Asia/Shanghai 时区存在 −8h 偏移。
+        // 因此 DAILY 边界是 UTC 00:00，对应上海时间 08:00。2026-09进行全局周期边界一致性重构。
         timezone: 'Asia/Shanghai',
         content: content || '',
         structuredData: {},

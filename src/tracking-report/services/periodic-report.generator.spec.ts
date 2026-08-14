@@ -4,6 +4,7 @@ import { TrackingReportService } from './tracking-report.service';
 import { PeriodicReportGenerator } from './periodic-report.generator';
 import { TrackingReportRepository } from '../repositories/tracking-report.repository';
 import { RecordingParticipantSummaryRepository } from '@/meeting/repositories/participant-summary.repository';
+import { PrismaService } from '@/prisma/prisma.service';
 
 describe('PeriodicReportGenerator', () => {
   const trackingReportRepository = { findPeriodicSummaries: jest.fn() };
@@ -12,7 +13,13 @@ describe('PeriodicReportGenerator', () => {
   const llm = {
     createChatCompletion: jest.fn().mockResolvedValue('aggregate'),
   };
+  const prisma = {
+    platformUser: {
+      findMany: jest.fn().mockResolvedValue([]),
+    },
+  };
   const service = new PeriodicReportGenerator(
+    prisma as unknown as PrismaService,
     trackingReportRepository as unknown as TrackingReportRepository,
     recordingSummaryRepository as unknown as RecordingParticipantSummaryRepository,
     trackingReportService as unknown as TrackingReportService,

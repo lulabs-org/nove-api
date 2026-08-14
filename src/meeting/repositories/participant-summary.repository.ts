@@ -139,15 +139,11 @@ export class RecordingParticipantSummaryRepository {
   findForPeriodicReport(
     range: { periodStart: Date; periodEnd: Date },
     platformUserIds?: string[],
-    subjectUserIds?: string[],
   ) {
     return this.prisma.recordingParticipantSummary.findMany({
       where: {
         platformUserId: platformUserIds?.length
           ? { in: platformUserIds }
-          : undefined,
-        platformUser: subjectUserIds?.length
-          ? { localUserId: { in: subjectUserIds } }
           : undefined,
         isLatest: true,
         deletedAt: null,

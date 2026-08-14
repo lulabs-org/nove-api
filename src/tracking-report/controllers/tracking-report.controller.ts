@@ -3,25 +3,37 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Post,
   Put,
   Query,
   ValidationPipe,
-  HttpCode,
-  HttpStatus,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiConflictResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
+
 import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
 import { CuidPipe } from '@/common/pipes/cuid.pipe';
 import {
   CreateTrackingReportDto,
   QueryTrackingReportDto,
-  UpdateTrackingReportDto,
   TriggerSummaryDto,
+  UpdateTrackingReportDto,
 } from '../dto/tracking-report.dto';
+import {
+  ConflictResponseDto,
+  JobStatusResponseDto,
+  TriggerResponseDto,
+} from '../dto/generate-job.dto';
 import { TrackingReportService } from '../services/tracking-report.service';
-import { PeriodicReportGenerator } from '../services/periodic-report.generator';
+import { ReportGenerationQueueService } from '../queue/report-generation.queue.service';
 
 @ApiTags('User Tracking Reports')
 @ApiBearerAuth()
@@ -29,8 +41,9 @@ import { PeriodicReportGenerator } from '../services/periodic-report.generator';
 export class TrackingReportController {
   constructor(
     private readonly service: TrackingReportService,
-    private readonly periodicReportGenerator: PeriodicReportGenerator,
+    private readonly reportGenerationQueue: ReportGenerationQueueService,
   ) {}
+
   @Post()
   @RequirePermissions('tracking-report:create')
   create(@Body(new ValidationPipe()) dto: CreateTrackingReportDto) {
@@ -45,6 +58,19 @@ export class TrackingReportController {
   ) {
     return this.service.list(query);
   }
+
+  @Get('generate/:jobId/status')
+  @RequirePermissions('tracking-report:create')
+  @ApiOperation({
+    summary: '查询异步生成任务的执行状态',
+    description:
+      '通过 POST /generate 返回的 jobId 查询任务进度和结果。Job 不存在或已过期时返回 { status: "expired" }，不会 404。',
+  })
+  @ApiOkResponse({ type: JobStatusResponseDto })
+  getGenerateStatus(@Param('jobId') jobId: string): Promise<JobStatusResponseDto> {
+    return this.reportGenerationQueue.getJobStatus(jobId);
+  }
+
 
   @Get(':id')
   @RequirePermissions('tracking-report:read')
@@ -61,17 +87,26 @@ export class TrackingReportController {
     return this.service.update(id, dto);
   }
 
-  @Delete(':id') @RequirePermissions('tracking-report:delete') delete(
-    @Param('id', CuidPipe) id: string,
-  ) {
+  @Delete(':id')
+  @RequirePermissions('tracking-report:delete')
+  delete(@Param('id', CuidPipe) id: string) {
     return this.service.delete(id);
   }
 
   @Post('generate')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: '手动或由定时任务触发周期性总结' })
+  @HttpCode(HttpStatus.ACCEPTED)
   @RequirePermissions('tracking-report:create')
-  process(@Body(new ValidationPipe()) dto: TriggerSummaryDto) {
-    return this.periodicReportGenerator.generateSummaries(dto);
+  @ApiOperation({
+    summary: '异步触发周期性总结生成',
+    description:
+      '将报告生成任务推入后台队列，立即返回 jobId。同一 cadence 同时只允许一个任务运行，重复触发返回 409。',
+  })
+  @ApiOkResponse({ type: TriggerResponseDto, description: '入队成功，返回 jobId' })
+  @ApiConflictResponse({
+    type: ConflictResponseDto,
+    description: '相同 cadence 已有任务在运行',
+  })
+  generate(@Body(new ValidationPipe()) dto: TriggerSummaryDto): Promise<TriggerResponseDto> {
+    return this.reportGenerationQueue.enqueue(dto);
   }
 }

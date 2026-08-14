@@ -15,6 +15,7 @@ import {
   Min,
 } from 'class-validator';
 
+
 export class CreateTrackingReportDto {
   @ApiPropertyOptional() @IsOptional() @IsString() subjectUserId?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() platformUserId?: string;
@@ -122,4 +123,13 @@ export class TriggerSummaryDto {
   @IsOptional()
   @IsEnum(TrackingReportType, { message: '无效的追踪报告类型' })
   trackingType?: TrackingReportType;
+
+  @ApiPropertyOptional({
+    description:
+      '强制重新生成，即使该周期已有报告（默认 false）。用于补跑或纠错场景。',
+    default: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  force?: boolean;
 }
