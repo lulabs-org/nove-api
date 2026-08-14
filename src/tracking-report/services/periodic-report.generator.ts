@@ -14,6 +14,7 @@ import { TrackingReportRepository } from '../repositories/tracking-report.reposi
 import { TrackingReportService } from './tracking-report.service';
 import { TriggerSummaryDto } from '../dto/tracking-report.dto';
 import { getdayRange, getPeriodContext } from '../utils/period-time-range';
+import type { UserPair } from '../queue/report-generation.processor';
 
 type Source = {
   id: string;
@@ -51,99 +52,164 @@ export class PeriodicReportGenerator {
   /**
    * 带逐用户进度回调的周期性总结生成（供 BullMQ processor 调用）
    * 单个用户失败不影响其他用户，失败信息通过 onProgress 回传。
+   *
+   * @param dto - 触发参数
+   * @param userPairs - 双向解析后的用户 ID 组合对列表（入队前已解析）
+   * @param onProgress - 进度回调
    */
   async generateSummariesWithProgress(
     dto: TriggerSummaryDto,
+    userPairs: UserPair[] | undefined,
     onProgress: GenerateProgressCallback,
-  ): Promise<{ successCount: number; failedCount: number; failedUsers: string[]; skippedCount: number; skippedUsers: string[] }> {
+  ): Promise<{
+    successCount: number;
+    failedCount: number;
+    failedUsers: string[];
+    skippedCount: number;
+    skippedUsers: string[];
+  }> {
     const {
       cadence,
       baseDate = new Date(),
-      platformUserIds,
-      subjectUserIds,
       trackingType = TrackingReportType.PERIODIC_MEETING_SUMMARY,
     } = dto;
 
-    let targetPlatformUserIds = platformUserIds;
-
-    // 用户 ID 互查
-    if (platformUserIds?.length || subjectUserIds?.length) {
-      const pIdSet = new Set(platformUserIds || []);
-      if (subjectUserIds?.length) {
-        const usersBySubject = await this.prisma.platformUser.findMany({
-          where: { localUserId: { in: subjectUserIds } },
-          select: { id: true },
-        });
-        usersBySubject.forEach((u) => pIdSet.add(u.id));
-      }
-      if (pIdSet.size > 0) {
-        targetPlatformUserIds = [...pIdSet];
-      }
-    }
-
     const context = getPeriodContext(cadence);
     if (!context) {
-      return { successCount: 0, failedCount: 0, failedUsers: [], skippedCount: 0, skippedUsers: [] };
+      return {
+        successCount: 0,
+        failedCount: 0,
+        failedUsers: [],
+        skippedCount: 0,
+        skippedUsers: [],
+      };
     }
 
     const range = getdayRange(cadence, baseDate);
-    const sources = await this.findSources(
-      context.sourceCadence,
-      range,
-      targetPlatformUserIds,
-      trackingType,
-    );
 
-    const groups = new Map<string, Source[]>();
-    for (const source of sources) {
-      const key = source.platformUserId || source.subjectUserId || 'unknown';
-      if (!groups.has(key)) groups.set(key, []);
-      groups.get(key)!.push(source);
-    }
+    // 若已传入 userPairs，则按 pair 逐对处理；否则回退到旧逻辑（全量查询）
+    const pairs = userPairs?.length
+      ? userPairs
+      : await this.resolveLegacyPairs(dto);
 
-    // Fix 3: 计算被跳过的用户（在筛选范围内但该周期无数据）
-    const usersWithData = new Set(groups.keys());
-    const skippedUsers =
-      targetPlatformUserIds?.filter((id) => !usersWithData.has(id)) ?? [];
-
-    const allUserGroups = [...groups.values()];
-    await onProgress({ type: 'start', totalUsers: allUserGroups.length });
-
-    if (allUserGroups.length === 0) {
+    if (pairs.length === 0) {
       this.logger.warn(
-        `[PeriodicReportGenerator] cadence=${cadence} 范围内无源数据，跳过生成。跳过用户数=${skippedUsers.length}`,
+        `[PeriodicReportGenerator] cadence=${cadence} 无可用用户对，跳过生成。`,
       );
-      return { successCount: 0, failedCount: 0, failedUsers: [], skippedCount: skippedUsers.length, skippedUsers };
+      return {
+        successCount: 0,
+        failedCount: 0,
+        failedUsers: [],
+        skippedCount: 0,
+        skippedUsers: [],
+      };
     }
+
+    await onProgress({ type: 'start', totalUsers: pairs.length });
 
     let successCount = 0;
     let failedCount = 0;
     const failedUsers: string[] = [];
+    const skippedUsers: string[] = [];
 
-    // 每批 5 个并发，与原有逻辑保持一致
-    for (let i = 0; i < allUserGroups.length; i += 5) {
+    // 逐对处理：每个 pair 独立查询源数据并生成报告
+    for (let i = 0; i < pairs.length; i += 5) {
       await Promise.all(
-        allUserGroups.slice(i, i + 5).map(async (items) => {
-          const platformUserId = items[0]?.platformUserId ?? null;
+        pairs.slice(i, i + 5).map(async (pair) => {
+          const { platformUserId } = pair;
           try {
-            await this.generateOne(cadence, range, context.label, items, trackingType);
+            const sources = await this.findSources(
+              context.sourceCadence,
+              range,
+              [platformUserId],
+              trackingType,
+            );
+
+            if (sources.length === 0) {
+              skippedUsers.push(platformUserId);
+              await onProgress({
+                type: 'failure',
+                platformUserId,
+                error: '该周期无源数据',
+              });
+              return;
+            }
+
+            await this.generateOne(
+              cadence,
+              range,
+              context.label,
+              sources,
+              trackingType,
+            );
             successCount++;
             await onProgress({ type: 'success', platformUserId });
           } catch (err: unknown) {
             const errorMessage =
               err instanceof Error ? err.message : String(err);
             failedCount++;
-            if (platformUserId) failedUsers.push(platformUserId);
+            failedUsers.push(platformUserId);
             this.logger.error(
               `生成用户 ${platformUserId} 的 ${cadence} 报告失败: ${errorMessage}`,
             );
-            await onProgress({ type: 'failure', platformUserId, error: errorMessage });
+            await onProgress({
+              type: 'failure',
+              platformUserId,
+              error: errorMessage,
+            });
           }
         }),
       );
     }
 
-    return { successCount, failedCount, failedUsers, skippedCount: skippedUsers.length, skippedUsers };
+    return {
+      successCount,
+      failedCount,
+      failedUsers,
+      skippedCount: skippedUsers.length,
+      skippedUsers,
+    };
+  }
+
+  /**
+   * 旧版兼容逻辑：根据 dto 中的 subjectUserIds/platformUserIds 单向解析用户对。
+   * 当 userPairs 未传入时使用。
+   */
+  private async resolveLegacyPairs(
+    dto: TriggerSummaryDto,
+  ): Promise<UserPair[]> {
+    const { platformUserIds, subjectUserIds } = dto;
+    let targetPlatformUserIds = platformUserIds;
+
+    if (platformUserIds?.length || subjectUserIds?.length) {
+      const pIdSet = new Set(platformUserIds || []);
+      if (subjectUserIds?.length) {
+        const usersBySubject = await this.prisma.platformUser.findMany({
+          where: { localUserId: { in: subjectUserIds }, deletedAt: null },
+          select: { id: true, localUserId: true },
+        });
+        usersBySubject.forEach((u) => {
+          pIdSet.add(u.id);
+        });
+      }
+      if (pIdSet.size > 0) {
+        targetPlatformUserIds = [...pIdSet];
+      }
+    }
+
+    if (!targetPlatformUserIds?.length) return [];
+
+    const platformUsers = await this.prisma.platformUser.findMany({
+      where: { id: { in: targetPlatformUserIds }, deletedAt: null },
+      select: { id: true, localUserId: true },
+    });
+
+    return platformUsers
+      .filter((u) => u.localUserId)
+      .map((u) => ({
+        subjectUserId: u.localUserId!,
+        platformUserId: u.id,
+      }));
   }
 
   private async findSources(

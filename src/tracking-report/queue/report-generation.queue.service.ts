@@ -1,29 +1,32 @@
-import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  Logger,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import type { Queue } from 'bullmq';
 import { TrackingCadence, TrackingReportType } from '@prisma/client';
+import { PrismaService } from '@/prisma/prisma.service';
 import { TriggerSummaryDto } from '../dto/tracking-report.dto';
 import {
   JobStatusResponseDto,
   TriggerResponseDto,
   GenerateJobStatus,
 } from '../dto/job.dto';
-import { REPORT_GENERATION_JOB, REPORT_GEN_JOB_ID_PREFIX, REPORT_GENERATION_QUEUE } from './report-generation.constants';
+import {
+  REPORT_GENERATION_JOB,
+  REPORT_GEN_JOB_ID_PREFIX,
+  REPORT_GENERATION_QUEUE,
+} from './report-generation.constants';
 import type {
   ReportGenerationJobData,
   ReportGenerationJobProgress,
   ReportGenerationJobResult,
+  UserPair,
 } from './report-generation.processor';
 import { TrackingReportRepository } from '../repositories/tracking-report.repository';
 import { getdayRange } from '../utils/period-time-range';
 
 /** 不支持通过本接口触发的报告类型 */
-const UNSUPPORTED_TRACKING_TYPES: readonly TrackingReportType[] = [TrackingReportType.PROJECT_PROGRESS];
+const UNSUPPORTED_TRACKING_TYPES: readonly TrackingReportType[] = [
+  TrackingReportType.PROJECT_PROGRESS,
+];
 
 @Injectable()
 export class ReportGenerationQueueService {
@@ -31,20 +34,26 @@ export class ReportGenerationQueueService {
 
   constructor(
     @InjectQueue(REPORT_GENERATION_QUEUE)
-    private readonly queue: Queue<ReportGenerationJobData, ReportGenerationJobResult>,
+    private readonly queue: Queue<
+      ReportGenerationJobData,
+      ReportGenerationJobResult
+    >,
     private readonly trackingReportRepo: TrackingReportRepository,
+    private readonly prisma: PrismaService,
   ) {}
 
   // ─── Entry point ─────────────────────────────────────────────────────────────
 
   /**
    * 触发异步生成任务。
+   * - 先做双向用户 ID 解析，形成 (subjectUserId, platformUserId) 组合对
    * - BullMQ 的 jobId 自动去重，同一周期不会重复入队
-   * - 非 force 模式下检查 DB 是否已有报告，已有则拦截
+   * - 已有报告时追加新版本，不再拒绝
    * - 周期未结束时附加 dataWarning 提示
    */
   async enqueue(dto: TriggerSummaryDto): Promise<TriggerResponseDto> {
-    const trackingType = dto.trackingType ?? TrackingReportType.PERIODIC_MEETING_SUMMARY;
+    const trackingType =
+      dto.trackingType ?? TrackingReportType.PERIODIC_MEETING_SUMMARY;
     if (UNSUPPORTED_TRACKING_TYPES.includes(trackingType)) {
       throw new BadRequestException(
         `trackingType=${trackingType} 不支持通过此接口触发。PROJECT_PROGRESS 类型需指定 projectId，请使用项目专属接口。`,
@@ -54,6 +63,9 @@ export class ReportGenerationQueueService {
     const baseDate = dto.baseDate ?? new Date();
     const range = getdayRange(dto.cadence, baseDate);
     const { periodStart, periodEnd } = range;
+
+    // 双向用户 ID 解析，形成不重合的 (subjectUserId, platformUserId) 组合对
+    const userPairs = await this.resolveUserPairs(dto);
 
     const jobId = this.buildJobId(dto.cadence, periodStart);
 
@@ -68,32 +80,12 @@ export class ReportGenerationQueueService {
       this.logger.warn(`[ReportGeneration] ⚠️ ${dataWarning}`);
     }
 
-    // 非 force 模式下检查 DB 是否已有该周期的报告
-    if (!dto.force) {
-      const existingCount = await this.trackingReportRepo.countByPeriod({
-        cadence: dto.cadence,
-        periodStart,
-        periodEnd,
-        trackingType,
-        platformUserIds: dto.platformUserIds,
-      });
-
-      if (existingCount > 0) {
-        throw new ConflictException({
-          message: `该 ${dto.cadence} 周期已生成过 ${existingCount} 条报告，如需重新生成请传入 force=true`,
-          existingCount,
-          periodStart: periodStart.toISOString(),
-          periodEnd: periodEnd.toISOString(),
-          hint: '若为补跑或纠错，请设置 force=true',
-        });
-      }
-    }
-
     const jobData: ReportGenerationJobData = {
       cadence: dto.cadence,
       baseDate: baseDate.toISOString(),
       platformUserIds: dto.platformUserIds,
       subjectUserIds: dto.subjectUserIds,
+      userPairs,
       trackingType,
       force: dto.force,
       dataWarning,
@@ -107,7 +99,7 @@ export class ReportGenerationQueueService {
     });
 
     this.logger.log(
-      `[ReportGeneration] 入队成功: cadence=${dto.cadence} period=${periodStart.toISOString()}~${periodEnd.toISOString()} jobId=${jobId}`,
+      `[ReportGeneration] 入队成功: cadence=${dto.cadence} period=${periodStart.toISOString()}~${periodEnd.toISOString()} jobId=${jobId} pairs=${userPairs.length}`,
     );
 
     return {
@@ -134,17 +126,24 @@ export class ReportGenerationQueueService {
 
     const state = await job.getState();
     const status = this.mapState(state);
-    const progress = job.progress as number | ReportGenerationJobProgress | undefined;
+    const progress = job.progress as
+      | number
+      | ReportGenerationJobProgress
+      | undefined;
     const result = job.returnvalue as ReportGenerationJobResult | undefined;
 
     const response: JobStatusResponseDto = {
       jobId,
       status,
-      cadence: (job.data as ReportGenerationJobData).cadence,
+      cadence: job.data.cadence,
       enqueuedAt: new Date(job.timestamp).toISOString(),
-      startedAt: job.processedOn ? new Date(job.processedOn).toISOString() : undefined,
-      completedAt: job.finishedOn ? new Date(job.finishedOn).toISOString() : undefined,
-      dataWarning: (job.data as ReportGenerationJobData).dataWarning,
+      startedAt: job.processedOn
+        ? new Date(job.processedOn).toISOString()
+        : undefined,
+      completedAt: job.finishedOn
+        ? new Date(job.finishedOn).toISOString()
+        : undefined,
+      dataWarning: job.data.dataWarning,
     };
 
     if (typeof progress === 'number') {
@@ -173,6 +172,85 @@ export class ReportGenerationQueueService {
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+  /**
+   * 双向用户 ID 解析，形成不重合的 (subjectUserId, platformUserId) 组合对列表。
+   *
+   * 规则：
+   * - 若 subjectUserIds 不为空：先找 platformUserIds → 再反查这些 platformUserIds 关联的所有 subjectUserIds → 形成 pair
+   * - 若 subjectUserIds 为空：从 platformUserIds 找到所有关联的 subjectUserIds → 形成 pair
+   * - 最终返回去重的 {subjectUserId, platformUserId} 组合列表
+   */
+  private async resolveUserPairs(dto: TriggerSummaryDto): Promise<UserPair[]> {
+    const { subjectUserIds, platformUserIds } = dto;
+
+    // 无任何用户指定时，返回空列表
+    if (!subjectUserIds?.length && !platformUserIds?.length) {
+      return [];
+    }
+
+    let resolvedSubjectIds: string[] = [];
+    let resolvedPlatformIds: string[] = [];
+
+    if (subjectUserIds?.length) {
+      // 方向 1: subjectUserIds → platformUserIds
+      const platformUsers = await this.prisma.platformUser.findMany({
+        where: { localUserId: { in: subjectUserIds }, deletedAt: null },
+        select: { id: true, localUserId: true },
+      });
+      resolvedPlatformIds = [...new Set(platformUsers.map((u) => u.id))];
+
+      // 方向 2: 反查这些 platformUserIds 关联的所有 subjectUserIds
+      const reverseUsers = await this.prisma.platformUser.findMany({
+        where: { id: { in: resolvedPlatformIds }, deletedAt: null },
+        select: { id: true, localUserId: true },
+      });
+      resolvedSubjectIds = [
+        ...new Set(
+          reverseUsers.map((u) => u.localUserId).filter(Boolean) as string[],
+        ),
+      ];
+    } else {
+      // subjectUserIds 为空，从 platformUserIds 找所有关联的 subjectUserIds
+      resolvedPlatformIds = platformUserIds ?? [];
+
+      const platformUsers = await this.prisma.platformUser.findMany({
+        where: { id: { in: resolvedPlatformIds }, deletedAt: null },
+        select: { id: true, localUserId: true },
+      });
+      resolvedSubjectIds = [
+        ...new Set(
+          platformUsers.map((u) => u.localUserId).filter(Boolean) as string[],
+        ),
+      ];
+    }
+
+    // 最终查询：获取所有 (subjectUserId, platformUserId) 组合对
+    const allPlatformUsers = await this.prisma.platformUser.findMany({
+      where: {
+        localUserId: { in: resolvedSubjectIds },
+        id: { in: resolvedPlatformIds },
+        deletedAt: null,
+      },
+      select: { id: true, localUserId: true },
+    });
+
+    const pairs: UserPair[] = allPlatformUsers
+      .filter((u) => u.localUserId)
+      .map((u) => ({
+        subjectUserId: u.localUserId!,
+        platformUserId: u.id,
+      }));
+
+    // 去重
+    const seen = new Set<string>();
+    return pairs.filter((p) => {
+      const key = `${p.subjectUserId}:${p.platformUserId}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
 
   private buildJobId(cadence: TrackingCadence, periodStart: Date): string {
     return `${REPORT_GEN_JOB_ID_PREFIX}:${cadence}:${periodStart.getTime()}`;

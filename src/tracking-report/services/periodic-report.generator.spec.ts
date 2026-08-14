@@ -51,6 +51,7 @@ describe('PeriodicReportGenerator', () => {
         cadence: TrackingCadence.DAILY,
         baseDate: new Date('2026-08-13T12:00:00Z'),
       },
+      [{ subjectUserId: 'user-1', platformUserId: 'platform-1' }],
       jest.fn(),
     );
 
@@ -84,6 +85,7 @@ describe('PeriodicReportGenerator', () => {
         cadence: TrackingCadence.WEEKLY,
         baseDate: new Date('2026-08-13T12:00:00Z'),
       },
+      [{ subjectUserId: 'user-1', platformUserId: 'platform-1' }],
       jest.fn(),
     );
 

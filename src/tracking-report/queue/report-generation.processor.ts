@@ -6,6 +6,12 @@ import { PeriodicReportGenerator } from '../services/periodic-report.generator';
 import { TriggerSummaryDto } from '../dto/tracking-report.dto';
 import { REPORT_GENERATION_QUEUE } from './report-generation.constants';
 
+/** 用户 ID 组合对 */
+export interface UserPair {
+  subjectUserId: string;
+  platformUserId: string;
+}
+
 /**
  * Redis 中存储的 job 数据——Date 会被序列化为字符串，故 baseDate 是 string。
  * 不继承 TriggerSummaryDto 以避免 Date vs string 的类型冲突。
@@ -16,6 +22,8 @@ export interface ReportGenerationJobData {
   baseDate?: string;
   platformUserIds?: string[];
   subjectUserIds?: string[];
+  /** 双向解析后的用户 ID 组合对列表 */
+  userPairs?: UserPair[];
   trackingType?: TrackingReportType;
   force?: boolean;
   /** 数据完整性警告（当周期尚未结束时设置） */
@@ -46,9 +54,7 @@ export interface ReportGenerationJobProgress {
 export class ReportGenerationProcessor extends WorkerHost {
   private readonly logger = new Logger(ReportGenerationProcessor.name);
 
-  constructor(
-    private readonly generator: PeriodicReportGenerator,
-  ) {
+  constructor(private readonly generator: PeriodicReportGenerator) {
     super();
   }
 
@@ -72,6 +78,7 @@ export class ReportGenerationProcessor extends WorkerHost {
 
     const result = await this.generator.generateSummariesWithProgress(
       dto,
+      job.data.userPairs,
       async (event) => {
         if (event.type === 'start') {
           totalUsers = event.totalUsers;
@@ -91,7 +98,9 @@ export class ReportGenerationProcessor extends WorkerHost {
           } catch (progressErr: unknown) {
             this.logger.warn(
               `[ReportGeneration] job=${job.id} updateProgress 失败（已忽略）: ${
-                progressErr instanceof Error ? progressErr.message : String(progressErr)
+                progressErr instanceof Error
+                  ? progressErr.message
+                  : String(progressErr)
               }`,
             );
           }
