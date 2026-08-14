@@ -24,13 +24,6 @@ export class TriggerResponseDto {
   dataWarning?: string;
 }
 
-export class JobProgressDto {
-  @ApiProperty() totalUsers: number;
-  @ApiProperty() processedUsers: number;
-  @ApiProperty() successCount: number;
-  @ApiProperty() failedCount: number;
-}
-
 export class JobStatusResponseDto {
   @ApiProperty({ description: 'BullMQ Job ID' })
   jobId: string;

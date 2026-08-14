@@ -12,7 +12,7 @@ import {
   JobStatusResponseDto,
   TriggerResponseDto,
   GenerateJobStatus,
-} from '../dto/generate-job.dto';
+} from '../dto/job.dto';
 import { REPORT_GENERATION_JOB, REPORT_GEN_JOB_ID_PREFIX, REPORT_GENERATION_QUEUE } from './report-generation.constants';
 import type {
   ReportGenerationJobData,

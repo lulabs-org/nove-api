@@ -33,7 +33,7 @@ import {
   ConflictResponseDto,
   JobStatusResponseDto,
   TriggerResponseDto,
-} from '../dto/generate-job.dto';
+} from '../dto/job.dto';
 import { TrackingReportService } from '../services/tracking-report.service';
 import { ReportGenerationQueueService } from '../queue/report-generation.queue.service';
 
