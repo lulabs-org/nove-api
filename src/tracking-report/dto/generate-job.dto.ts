@@ -17,6 +17,11 @@ export class TriggerResponseDto {
 
   @ApiProperty({ enum: TrackingCadence, description: '触发的周期类型' })
   cadence: TrackingCadence;
+
+  @ApiPropertyOptional({
+    description: '数据完整性警告（如周期未结束时生成）',
+  })
+  dataWarning?: string;
 }
 
 export class JobProgressDto {
@@ -88,7 +93,16 @@ export class JobStatusResponseDto {
 
 export class ConflictResponseDto {
   @ApiProperty({ example: 409 }) statusCode: number;
-  @ApiProperty({ example: '相同 cadence 的任务正在运行，请稍后再试' })
+  @ApiProperty({ example: '相同 cadence + 周期的任务正在运行，请稍后再试' })
   message: string;
-  @ApiProperty({ description: '正在运行的 job ID' }) runningJobId: string;
+  @ApiPropertyOptional({ description: '正在运行的 job ID（并发冲突时）' })
+  runningJobId?: string;
+  @ApiPropertyOptional({ description: '该周期已存在的报告数量（已有报告冲突时）' })
+  existingCount?: number;
+  @ApiPropertyOptional({ description: '周期起始时间 ISO 8601（已有报告冲突时）' })
+  periodStart?: string;
+  @ApiPropertyOptional({ description: '周期结束时间 ISO 8601（已有报告冲突时）' })
+  periodEnd?: string;
+  @ApiPropertyOptional({ description: '操作提示' })
+  hint?: string;
 }
