@@ -37,7 +37,8 @@ jobs:
           config.fallback_models: '["openai/${{ secrets.OPENAI_MODEL }}"]'
           # deepseek-v4-flash 不在 PR-Agent 内置 MAX_TOKENS 表，必须显式声明（原生 1M 上下文，128K 足够单次调用）
           config.custom_model_max_tokens: "128000"
-
+          config.response_language: "zh-CN"
+          pr_code_suggestions.num_code_suggestions: "6"
           # ===== 自动触发 describe + review + improve =====
           github_action_config.auto_review: "true"
           github_action_config.auto_describe: "true"
