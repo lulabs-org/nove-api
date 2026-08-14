@@ -1,11 +1,10 @@
-import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
+import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Injectable, Logger } from '@nestjs/common';
 import type { Job } from 'bullmq';
 import { TrackingCadence, TrackingReportType } from '@prisma/client';
 import { PeriodicReportGenerator } from '../services/periodic-report.generator';
 import { TriggerSummaryDto } from '../dto/tracking-report.dto';
 import { REPORT_GENERATION_QUEUE } from './report-generation.constants';
-import { ReportGenerationQueueService } from './report-generation.queue.service';
 
 /**
  * Redis 中存储的 job 数据——Date 会被序列化为字符串，故 baseDate 是 string。
@@ -19,8 +18,6 @@ export interface ReportGenerationJobData {
   subjectUserIds?: string[];
   trackingType?: TrackingReportType;
   force?: boolean;
-  /** 完整的锁 key（含周期时间戳），供 Processor 精确释放 */
-  periodLockKey: string;
   /** 数据完整性警告（当周期尚未结束时设置） */
   dataWarning?: string;
 }
@@ -51,7 +48,6 @@ export class ReportGenerationProcessor extends WorkerHost {
 
   constructor(
     private readonly generator: PeriodicReportGenerator,
-    private readonly queueService: ReportGenerationQueueService,
   ) {
     super();
   }
@@ -118,33 +114,5 @@ export class ReportGenerationProcessor extends WorkerHost {
     );
 
     return jobResult;
-  }
-
-  /** 任务正常完成后释放分布式锁 */
-  @OnWorkerEvent('completed')
-  async onCompleted(job: Job<ReportGenerationJobData>): Promise<void> {
-    await this.releaseLockSafely(job);
-  }
-
-  /** 任务失败后释放分布式锁（避免锁永久占用） */
-  @OnWorkerEvent('failed')
-  async onFailed(job: Job<ReportGenerationJobData>, err: Error): Promise<void> {
-    this.logger.error(
-      `[ReportGeneration] job=${job.id} cadence=${job.data.cadence} 执行失败: ${err.message}`,
-    );
-    await this.releaseLockSafely(job);
-  }
-
-  private async releaseLockSafely(job: Job<ReportGenerationJobData>): Promise<void> {
-    try {
-      // 使用 job 数据中携带的精确 lockKey 释放（含周期时间戳）
-      await this.queueService.releaseLockByKey(job.data.periodLockKey);
-    } catch (err: unknown) {
-      this.logger.warn(
-        `[ReportGeneration] releaseLock 失败（锁将在 TTL 后自动过期）: ${
-          err instanceof Error ? err.message : String(err)
-        }`,
-      );
-    }
   }
 }
