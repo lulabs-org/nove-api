@@ -15,7 +15,6 @@ import {
   Min,
 } from 'class-validator';
 
-
 export class CreateTrackingReportDto {
   @ApiPropertyOptional() @IsOptional() @IsString() subjectUserId?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() platformUserId?: string;

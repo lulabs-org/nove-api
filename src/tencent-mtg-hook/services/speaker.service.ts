@@ -11,8 +11,7 @@
 
 import { Injectable, Logger } from '@nestjs/common';
 import { NewSpeakerInfo } from '@/tencent-mtg-hook/types';
-import { Platform, PlatformUser, User } from '@prisma/client';
-import { UserQueryRepository } from '@/user/repositories/user-query.repository';
+import { Platform, PlatformUser } from '@prisma/client';
 import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
 import {
   SpeakerInfo,
@@ -26,9 +25,8 @@ export class SpeakerService {
 
   constructor(
     private readonly ptUserRepo: PlatformUserRepository,
-    private readonly userRepo: UserQueryRepository,
     private readonly prisma: PrismaService,
-  ) { }
+  ) {}
 
   /**
    * Enriches speaker information by matching it against meeting participants or platform users.
