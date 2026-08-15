@@ -58,7 +58,7 @@ export class MeetingDatabaseService {
     private readonly meetingSummaryRepo: MeetingSummaryRepository,
     private readonly transcriptRepo: TranscriptRepository,
     private readonly transcriptSyncService: TranscriptSyncService,
-  ) {}
+  ) { }
 
   /**
    * 创建或更新会议记录
@@ -66,7 +66,7 @@ export class MeetingDatabaseService {
    * @param event 事件类型
    * @returns 会议记录
    */
-  async upsert(payload: EventPayload, event: string): Promise<Meeting> {
+  async upsertmeet(payload: EventPayload, event: string): Promise<Meeting> {
     const { meeting_info, operate_time } = payload;
 
     if (!meeting_info) {

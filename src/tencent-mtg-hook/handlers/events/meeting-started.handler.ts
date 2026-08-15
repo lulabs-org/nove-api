@@ -49,7 +49,7 @@ export class MeetingStartedHandler extends BaseEventHandler {
         meeting_info,
         operator,
       ),
-      this.meetingDatabaseService.upsert(payload, this.SUPPORTED_EVENT),
+      this.meetingDatabaseService.upsertmeet(payload, this.SUPPORTED_EVENT),
       this.meetingDatabaseService.upsertPtUser(operator),
     ];
 
