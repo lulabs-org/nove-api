@@ -69,10 +69,11 @@ export class TrackingReportController {
       '通过 POST /generate 返回的 jobId 查询任务进度和结果。Job 不存在或已过期时返回 { status: "expired" }，不会 404。',
   })
   @ApiOkResponse({ type: JobStatusResponseDto, description: '查询成功' })
-  getGenerateStatus(@Param('jobId') jobId: string): Promise<JobStatusResponseDto> {
+  getGenerateStatus(
+    @Param('jobId') jobId: string,
+  ): Promise<JobStatusResponseDto> {
     return this.reportGenerationQueue.getJobStatus(jobId);
   }
-
 
   @Get(':id')
   @RequirePermissions('tracking-report:read')
@@ -103,13 +104,20 @@ export class TrackingReportController {
     description:
       '将报告生成任务推入后台队列，立即返回 jobId。同一 cadence 同时只允许一个任务运行，重复触发返回 409。',
   })
-  @ApiAcceptedResponse({ type: TriggerResponseDto, description: '入队成功，返回 jobId' })
-  @ApiBadRequestResponse({ description: '不支持的 trackingType（如 PROJECT_PROGRESS）' })
+  @ApiAcceptedResponse({
+    type: TriggerResponseDto,
+    description: '入队成功，返回 jobId',
+  })
+  @ApiBadRequestResponse({
+    description: '不支持的 trackingType（如 PROJECT_PROGRESS）',
+  })
   @ApiConflictResponse({
     type: ConflictResponseDto,
     description: '相同 cadence 已有任务在运行，或该周期已有已生成的报告',
   })
-  generate(@Body(new ValidationPipe()) dto: TriggerSummaryDto): Promise<TriggerResponseDto> {
+  generate(
+    @Body(new ValidationPipe()) dto: TriggerSummaryDto,
+  ): Promise<TriggerResponseDto> {
     return this.reportGenerationQueue.enqueue(dto);
   }
 }

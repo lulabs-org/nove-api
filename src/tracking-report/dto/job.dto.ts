@@ -1,8 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { TrackingCadence } from '@prisma/client';
 
-export type GenerateJobStatus = 'queued' | 'active' | 'completed' | 'failed' | 'unknown' | 'expired';
-
+export type GenerateJobStatus =
+  | 'queued'
+  | 'active'
+  | 'completed'
+  | 'failed'
+  | 'unknown'
+  | 'expired';
 
 export class TriggerResponseDto {
   @ApiProperty({ description: 'BullMQ Job ID，用于后续查询状态' })
@@ -90,11 +95,17 @@ export class ConflictResponseDto {
   message: string;
   @ApiPropertyOptional({ description: '正在运行的 job ID（并发冲突时）' })
   runningJobId?: string;
-  @ApiPropertyOptional({ description: '该周期已存在的报告数量（已有报告冲突时）' })
+  @ApiPropertyOptional({
+    description: '该周期已存在的报告数量（已有报告冲突时）',
+  })
   existingCount?: number;
-  @ApiPropertyOptional({ description: '周期起始时间 ISO 8601（已有报告冲突时）' })
+  @ApiPropertyOptional({
+    description: '周期起始时间 ISO 8601（已有报告冲突时）',
+  })
   periodStart?: string;
-  @ApiPropertyOptional({ description: '周期结束时间 ISO 8601（已有报告冲突时）' })
+  @ApiPropertyOptional({
+    description: '周期结束时间 ISO 8601（已有报告冲突时）',
+  })
   periodEnd?: string;
   @ApiPropertyOptional({ description: '操作提示' })
   hint?: string;
