@@ -1,12 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
+import { UserPhoneHashRepository } from '@/user/repositories/user-phone-hash.repository';
 import { Platform } from '@prisma/client';
 
 @Injectable()
 export class TencentMtgUserLinkService {
   private readonly logger = new Logger(TencentMtgUserLinkService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly userPhoneHashRepo: UserPhoneHashRepository,
+  ) {}
 
   /**
    * 通过手机号哈希值将腾讯会议平台用户（PlatformUser）关联到本地用户（User）。
@@ -53,16 +57,10 @@ export class TencentMtgUserLinkService {
       .filter(Boolean);
 
     // 2. 批量查询 UserPhoneHash 表，找出匹配的本地用户映射
-    const phoneHashMappings = await this.prisma.userPhoneHash.findMany({
-      where: {
-        hashValue: { in: phoneHashes },
-        platform: Platform.TENCENT_MEETING,
-      },
-      select: {
-        hashValue: true,
-        userId: true,
-      },
-    });
+    const phoneHashMappings = await this.userPhoneHashRepo.findManyByHashes(
+      phoneHashes,
+      Platform.TENCENT_MEETING,
+    );
 
     // 构建 hashValue -> userId 的映射表（O(1) 查找）
     const hashToUserId = new Map<string, string>(

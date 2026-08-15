@@ -17,7 +17,7 @@ import {
   SpeakerInfo,
   ParticipantDetail,
 } from '@/integrations/tencent-meeting/types';
-import { PrismaService } from '@/prisma/prisma.service';
+import { UserPhoneHashRepository } from '@/user/repositories/user-phone-hash.repository';
 
 @Injectable()
 export class SpeakerService {
@@ -25,7 +25,7 @@ export class SpeakerService {
 
   constructor(
     private readonly ptUserRepo: PlatformUserRepository,
-    private readonly prisma: PrismaService,
+    private readonly userPhoneHashRepo: UserPhoneHashRepository,
   ) {}
 
   /**
@@ -194,11 +194,9 @@ export class SpeakerService {
         let localUserId: string | undefined;
 
         if (participant.phone && participant.userid === '') {
-          const userPhoneHash = await this.prisma.userPhoneHash.findUnique({
-            where: {
-              hashValue: participant.phone,
-            },
-          });
+          const userPhoneHash = await this.userPhoneHashRepo.findByHash(
+            participant.phone,
+          );
 
           if (userPhoneHash) {
             localUserId = userPhoneHash.userId;

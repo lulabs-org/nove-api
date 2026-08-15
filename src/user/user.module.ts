@@ -14,12 +14,23 @@ import { UserController } from './user.controller';
 import { ProfileService } from './services/profile.service';
 import { UserQueryRepository } from './repositories/user-query.repository';
 import { UserCommandRepository } from './repositories/user-command.repository';
+import { UserPhoneHashRepository } from './repositories/user-phone-hash.repository';
 import { PrismaModule } from '@/prisma/prisma.module';
 
 @Module({
   imports: [PrismaModule],
   controllers: [UserController],
-  providers: [ProfileService, UserQueryRepository, UserCommandRepository],
-  exports: [ProfileService, UserQueryRepository, UserCommandRepository],
+  providers: [
+    ProfileService,
+    UserQueryRepository,
+    UserCommandRepository,
+    UserPhoneHashRepository,
+  ],
+  exports: [
+    ProfileService,
+    UserQueryRepository,
+    UserCommandRepository,
+    UserPhoneHashRepository,
+  ],
 })
 export class UserModule {}
