@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma, TrackingCadence, TrackingReportType } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { retryVersionTransaction } from '@/common/utils/prisma-transaction-retry';
 
@@ -144,5 +144,53 @@ export class TrackingReportRepository {
         { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
       ),
     );
+  }
+
+  findPeriodicSummaries(
+    cadence: TrackingCadence,
+    range: { periodStart: Date; periodEnd: Date },
+    platformUserIds?: string[],
+    trackingType: TrackingReportType = TrackingReportType.PERIODIC_MEETING_SUMMARY,
+  ) {
+    return this.prisma.userTrackingReport.findMany({
+      where: {
+        trackingType,
+        cadence,
+        platformUserId: platformUserIds?.length
+          ? { in: platformUserIds }
+          : undefined,
+        periodStart: { gte: range.periodStart },
+        periodEnd: { lte: range.periodEnd },
+        isLatest: true,
+        deletedAt: null,
+      },
+    });
+  }
+
+  /**
+   * 检查指定周期内是否已有 isLatest=true 的报告（用于业务层防重）。
+   * - 若 platformUserIds 指定，只检查这些用户
+   * - 若不指定，检查任意用户是否存在该周期报告
+   */
+  async countByPeriod(params: {
+    cadence: TrackingCadence;
+    periodStart: Date;
+    periodEnd: Date;
+    trackingType: TrackingReportType;
+    platformUserIds?: string[];
+  }): Promise<number> {
+    return this.prisma.userTrackingReport.count({
+      where: {
+        cadence: params.cadence,
+        trackingType: params.trackingType,
+        periodStart: params.periodStart,
+        periodEnd: params.periodEnd,
+        isLatest: true,
+        deletedAt: null,
+        ...(params.platformUserIds?.length
+          ? { platformUserId: { in: params.platformUserIds } }
+          : {}),
+      },
+    });
   }
 }

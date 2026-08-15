@@ -1,20 +1,27 @@
 import { TrackingCadence, TrackingReportType } from '@prisma/client';
 import { LlmService } from '@/llm/llm.service';
-import { PrismaService } from '@/prisma/prisma.service';
 import { TrackingReportService } from './tracking-report.service';
 import { PeriodicReportGenerator } from './periodic-report.generator';
+import { TrackingReportRepository } from '../repositories/tracking-report.repository';
+import { RecordingParticipantSummaryRepository } from '@/meeting/repositories/participant-summary.repository';
+import { PrismaService } from '@/prisma/prisma.service';
 
 describe('PeriodicReportGenerator', () => {
-  const prisma = {
-    recordingParticipantSummary: { findMany: jest.fn() },
-    userTrackingReport: { findMany: jest.fn() },
-  };
+  const trackingReportRepository = { findPeriodicSummaries: jest.fn() };
+  const recordingSummaryRepository = { findForPeriodicReport: jest.fn() };
   const trackingReportService = { create: jest.fn() };
   const llm = {
     createChatCompletion: jest.fn().mockResolvedValue('aggregate'),
   };
+  const prisma = {
+    platformUser: {
+      findMany: jest.fn().mockResolvedValue([]),
+    },
+  };
   const service = new PeriodicReportGenerator(
     prisma as unknown as PrismaService,
+    trackingReportRepository as unknown as TrackingReportRepository,
+    recordingSummaryRepository as unknown as RecordingParticipantSummaryRepository,
     trackingReportService as unknown as TrackingReportService,
     llm as unknown as LlmService,
     { model: 'test-model' } as never,
@@ -27,7 +34,7 @@ describe('PeriodicReportGenerator', () => {
   });
 
   it('creates a daily report with recording evidence and local-user identity', async () => {
-    prisma.recordingParticipantSummary.findMany.mockResolvedValue([
+    recordingSummaryRepository.findForPeriodicReport.mockResolvedValue([
       {
         id: 'summary-1',
         partSummary: 'meeting summary',
@@ -39,10 +46,14 @@ describe('PeriodicReportGenerator', () => {
       },
     ]);
 
-    await service.generateSummaries({
-      periodType: TrackingCadence.DAILY,
-      targetDate: new Date('2026-08-13T12:00:00Z'),
-    });
+    await service.generateSummariesWithProgress(
+      {
+        cadence: TrackingCadence.DAILY,
+        baseDate: new Date('2026-08-13T12:00:00Z'),
+      },
+      [{ subjectUserId: 'user-1', platformUserId: 'platform-1' }],
+      jest.fn(),
+    );
 
     expect(trackingReportService.create).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -57,7 +68,7 @@ describe('PeriodicReportGenerator', () => {
   });
 
   it('creates a weekly report from daily report evidence', async () => {
-    prisma.userTrackingReport.findMany.mockResolvedValue([
+    trackingReportRepository.findPeriodicSummaries.mockResolvedValue([
       {
         id: 'daily-1',
         content: 'daily summary',
@@ -69,10 +80,14 @@ describe('PeriodicReportGenerator', () => {
       },
     ]);
 
-    await service.generateSummaries({
-      periodType: TrackingCadence.WEEKLY,
-      targetDate: new Date('2026-08-13T12:00:00Z'),
-    });
+    await service.generateSummariesWithProgress(
+      {
+        cadence: TrackingCadence.WEEKLY,
+        baseDate: new Date('2026-08-13T12:00:00Z'),
+      },
+      [{ subjectUserId: 'user-1', platformUserId: 'platform-1' }],
+      jest.fn(),
+    );
 
     expect(trackingReportService.create).toHaveBeenCalledWith(
       expect.objectContaining({

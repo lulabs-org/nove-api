@@ -136,6 +136,31 @@ export class RecordingParticipantSummaryRepository {
     );
   }
 
+  findForPeriodicReport(
+    range: { periodStart: Date; periodEnd: Date },
+    platformUserIds?: string[],
+  ) {
+    return this.prisma.recordingParticipantSummary.findMany({
+      where: {
+        platformUserId: platformUserIds?.length
+          ? { in: platformUserIds }
+          : undefined,
+        isLatest: true,
+        deletedAt: null,
+        OR: [
+          {
+            observedStartAt: { gte: range.periodStart, lte: range.periodEnd },
+          },
+          {
+            observedStartAt: null,
+            createdAt: { gte: range.periodStart, lte: range.periodEnd },
+          },
+        ],
+      },
+      include: { platformUser: { select: { localUserId: true } } },
+    });
+  }
+
   async findGenerationContext(recordingId: string) {
     return this.prisma.meetingRecording.findFirst({
       where: { id: recordingId, deletedAt: null },
@@ -216,6 +241,3 @@ export class RecordingParticipantSummaryRepository {
     });
   }
 }
-
-/** @deprecated Use RecordingParticipantSummaryRepository. */
-export { RecordingParticipantSummaryRepository as ParticipantSummaryRepository };

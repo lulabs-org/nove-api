@@ -15,6 +15,7 @@ import {
   Min,
 } from 'class-validator';
 
+
 export class CreateTrackingReportDto {
   @ApiPropertyOptional() @IsOptional() @IsString() subjectUserId?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() platformUserId?: string;
@@ -88,14 +89,14 @@ export class TriggerSummaryDto {
     enum: TrackingCadence,
   })
   @IsEnum(TrackingCadence, { message: '无效的周期类型' })
-  @IsNotEmpty({ message: 'periodType 不能为空' })
-  periodType!: TrackingCadence;
+  @IsNotEmpty({ message: 'cadence 不能为空' })
+  cadence!: TrackingCadence;
 
-  @ApiPropertyOptional({ description: '目标日期' })
+  @ApiPropertyOptional({ description: '基准日期' })
   @IsOptional()
   @IsDate({ message: '无效的日期格式' })
   @Type(() => Date)
-  targetDate?: Date;
+  baseDate?: Date;
 
   @ApiPropertyOptional({
     description: '指定生成总结的部分用户 (platformUserId 列表)',
@@ -105,4 +106,30 @@ export class TriggerSummaryDto {
   @IsArray({ message: 'platformUserIds 必须是数组' })
   @IsString({ each: true, message: 'platformUserIds 数组必须包含字符串' })
   platformUserIds?: string[];
+
+  @ApiPropertyOptional({
+    description: '指定生成总结的部分系统用户 (subjectUserId 列表)',
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray({ message: 'subjectUserIds 必须是数组' })
+  @IsString({ each: true, message: 'subjectUserIds 数组必须包含字符串' })
+  subjectUserIds?: string[];
+
+  @ApiPropertyOptional({
+    description: '追踪报告类型，默认为 PERIODIC_MEETING_SUMMARY',
+    enum: TrackingReportType,
+  })
+  @IsOptional()
+  @IsEnum(TrackingReportType, { message: '无效的追踪报告类型' })
+  trackingType?: TrackingReportType;
+
+  @ApiPropertyOptional({
+    description:
+      '强制重新生成，即使该周期已有报告（默认 false）。用于补跑或纠错场景。',
+    default: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  force?: boolean;
 }
