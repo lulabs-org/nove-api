@@ -67,7 +67,7 @@ export class RecordingCompletedHandler extends BaseEventHandler {
       })),
     });
 
-    const r: MeetingRecordingContext = {
+    const context: MeetingRecordingContext = {
       meetid: meeting_id,
       subject: meeting_info.subject || '',
       start_time: meeting_info.start_time || 0,
@@ -79,19 +79,19 @@ export class RecordingCompletedHandler extends BaseEventHandler {
       recordingFiles: fetchResult.recordingFiles,
     };
 
-    if (!r.deduplicated) {
+    if (!context.deduplicated) {
       this.logger.warn('获取参会者列表失败');
       return;
     }
 
-    await this.speakerSvc.syncPtUsers(r.deduplicated);
-    await this.participantSvc.syncParticipants(r);
-    await this.bitableService.safeUpsertMeetingUserRecords(r.deduplicated);
-    await this.bitableService.upsertRecording(r);
+    await this.speakerSvc.syncPtUsers(context.deduplicated);
+    await this.participantSvc.syncParticipants(context);
+    await this.bitableService.safeUpsertMeetingUserRecords(context.deduplicated);
+    await this.bitableService.upsertRecording(context);
     await this.databaseSvc.upsert(payload, this.SUPPORTED_EVENT);
-    await this.databaseSvc.upsertRecording(r);
-    await this.databaseSvc.upsertMeetingSummary(r);
-    await this.databaseSvc.upsertTranscript(r);
-    await this.summarySvc.processSummary(r);
+    await this.databaseSvc.upsertRecording(context);
+    await this.databaseSvc.upsertMeetingSummary(context);
+    await this.databaseSvc.upsertTranscript(context);
+    await this.summarySvc.processSummary(context);
   }
 }
