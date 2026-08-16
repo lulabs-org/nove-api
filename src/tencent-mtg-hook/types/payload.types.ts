@@ -11,12 +11,19 @@
 
 import { MeetingEndType } from '../enums/tencent-mtg.enum';
 import { PayloadBase } from './meet-base.types';
-import { Meetuser } from './user.types';
 import {
   MeetingSessionInfo,
   SmartFullSummaryMeetingInfo,
   SmartTranscriptsMeetingInfo,
 } from './meeting-info.types';
+
+export interface Meetuser {
+  userid: string;
+  user_name: string;
+  uuid: string;
+  instance_id: string;
+  ms_open_id: string;
+}
 
 export interface StartedPayload extends PayloadBase {
   operator: Meetuser;

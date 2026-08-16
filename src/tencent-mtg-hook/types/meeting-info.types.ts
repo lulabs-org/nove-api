@@ -14,7 +14,7 @@ import {
   MeetingCreateFrom,
 } from '../enums/tencent-mtg.enum';
 import { MeetingInfoBase } from './meet-base.types';
-import { Meetuser } from './user.types';
+import { Meetuser } from './payload.types';
 
 export interface MeetingSessionInfo extends MeetingInfoBase {
   creator: Meetuser;
