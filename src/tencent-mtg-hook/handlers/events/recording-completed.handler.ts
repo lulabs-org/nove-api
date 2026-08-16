@@ -74,22 +74,22 @@ export class RecordingCompletedHandler extends BaseEventHandler {
       end_time: meeting_info.end_time || 0,
       subid: sub_meeting_id,
       cid: creator.userid || '',
-      deduplicated: fetchResult.deduplicated,
-      participants: fetchResult.participants,
+      uniqueParticipants: fetchResult.uniqueParticipants,
+      rawParticipants: fetchResult.rawParticipants,
       recordingFiles: fetchResult.recordingFiles,
     };
 
-    if (!context.deduplicated) {
+    if (!context.uniqueParticipants) {
       this.logger.warn('获取参会者列表失败');
       return;
     }
 
     await this.participantSvc.syncParticipants(context);
     await this.bitableService.safeUpsertMeetingUserRecords(
-      context.deduplicated,
+      context.uniqueParticipants,
     );
     await this.bitableService.upsertRecording(context);
-    await this.speakerSvc.syncPtUsers(context.deduplicated);
+    await this.speakerSvc.syncPtUsers(context.uniqueParticipants);
     await this.databaseSvc.upsertmeet(payload, this.SUPPORTED_EVENT);
     await this.databaseSvc.upsertRecording(context);
     await this.databaseSvc.upsertMeetingSummary(context);

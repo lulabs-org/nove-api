@@ -152,7 +152,7 @@ export class TencentMtgTranscriptSyncService {
       await this.meetingParticipantSvc.syncParticipants({
         meetid,
         subid,
-        participants: participantResult.original,
+        rawParticipants: participantResult.original,
       });
     }
 

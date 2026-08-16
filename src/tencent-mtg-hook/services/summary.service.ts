@@ -50,7 +50,7 @@ export class SummaryService {
     for (let index = 0; index < (r.recordingFiles?.length || 0); index++) {
       const file = r.recordingFiles![index];
 
-      for (const u of r.deduplicated || []) {
+      for (const u of r.uniqueParticipants || []) {
         if (file.speakerlist?.find((uInfo) => uInfo.username === u.user_name)) {
           const ptByUnionId = await this.ptUserRepo.findByUnionId(
             Platform.TENCENT_MEETING,
