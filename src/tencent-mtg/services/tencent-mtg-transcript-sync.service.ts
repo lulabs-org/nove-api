@@ -1,12 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { TencentApiService } from '@/integrations/tencent-meeting/services/api.service';
 import { TranscriptRepository } from '@/meeting/repositories/transcript.repository';
-import { TranscriptSyncService } from '@/tencent-mtg-hook/services/transcript-sync.service';
+import { TranscriptSyncService } from '@/tencent-mtg/services/transcript-sync.service';
 import { ParticipantService } from '@/integrations/tencent-meeting/services';
-import { SpeakerService } from '@/tencent-mtg-hook/services/speaker.service';
-import { MeetingParticipantService } from '@/tencent-mtg-hook/services/meeting-participant.service';
+import { SpeakerService } from '@/tencent-mtg/services/speaker.service';
+import { MeetingParticipantService } from '@/tencent-mtg/services/meeting-participant.service';
 import type { ParticipantDetail } from '@/integrations/tencent-meeting/types';
-import { NewTranscriptParagraph } from '@/tencent-mtg-hook/types/transcript.types';
+import { NewTranscriptParagraph } from '@/tencent-mtg/types/transcript.types';
 
 @Injectable()
 export class TencentMtgTranscriptSyncService {

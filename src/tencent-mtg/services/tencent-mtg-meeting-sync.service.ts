@@ -14,7 +14,7 @@ import {
   convertMeetingType,
   mapRecordingState,
   mapRecordingFileStatus,
-} from '../tencent-mtg-record.mapper';
+} from '../mappers/tencent-mtg-record.mapper';
 
 @Injectable()
 export class TencentMtgMeetingSyncService {
