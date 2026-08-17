@@ -33,7 +33,7 @@ export class RecordingCompletedHandler extends BaseEventHandler {
   private readonly SUPPORTED_EVENT = 'recording.completed';
 
   constructor(
-    private readonly bitableService: MeetingBitableService,
+    // private readonly bitableService: MeetingBitableService,
     private readonly speakerSvc: SpeakerService,
 
     private readonly meetingCoreSvc: TencentMtgMeetingCoreService,
@@ -107,9 +107,12 @@ export class RecordingCompletedHandler extends BaseEventHandler {
     // 2. 基础数据同步：同步参会者行为与本地平台用户表
     // 将参会者的 JOIN/LEAVE 行为落库，并更新他们的总参会时长
     await this.participantSvc.syncParticipants(meeting, rawParticipants!);
+
     // 确保参会者在我们的用户表中存在，并推送到飞书的人员表格中
     // await this.bitableService.safeUpsertMeetingUserRecords(uniqueParticipants);
-    // await this.speakerSvc.syncPtUsers(uniqueParticipants);
+
+
+    await this.speakerSvc.syncPtUsers(uniqueParticipants);
 
     // 3. 循环处理每一个录音文件 (一场会议可能会被分段录制出多个文件)
     for (const file of recording_files) {
@@ -131,17 +134,33 @@ export class RecordingCompletedHandler extends BaseEventHandler {
 
       // 3.3 核心业务同步：从腾讯 API 拉取“完整逐字稿(Transcript)”
       // 这里会完成说话人的匹配，并将大段文本切分为数据库内的 segments。
-      await this.transcriptCoreSvc.syncFromApi(
-        meeting_id,
-        sub_meeting_id || '__ROOT__',
-        recording.id,
-        file.record_file_id,
-        creator.userid || '',
-        meeting_info.start_time || 0,
-        meeting_info.end_time || 0,
-        false,
-        false,
-      );
+      const { shouldSync, transcriptId: existingTranscriptId } =
+        await this.transcriptCoreSvc.checkAndPrepareTranscript(
+          recording.id,
+          false,
+        );
+
+      if (shouldSync) {
+        const paragraphs =
+          await this.transcriptCoreSvc.fetchTranscriptParagraphs(
+            file.record_file_id,
+            creator.userid || '',
+            uniqueParticipants,
+          );
+
+        if (paragraphs.length > 0) {
+          const transcriptId =
+            existingTranscriptId ||
+            (await this.transcriptCoreSvc.createTranscript(
+              recording.id,
+              file.record_file_id,
+            ));
+          await this.transcriptCoreSvc.batchInsertSegments(
+            paragraphs,
+            transcriptId,
+          );
+        }
+      }
 
       // 4. 将上述已经落库（Prisma）的最新的纪要和转写数据，组装并推送到飞书 Bitable
       // 注意：此处的服务已改造为直接查数据库，所以必须放在 summaryCoreSvc 和 transcriptCoreSvc 之后

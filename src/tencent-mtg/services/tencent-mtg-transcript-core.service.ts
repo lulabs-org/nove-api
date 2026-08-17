@@ -39,25 +39,11 @@ export class TencentMtgTranscriptCoreService {
     forceReSyncTranscript: boolean = false,
     syncParticipants: boolean = true,
   ) {
-    let transcriptId: string | undefined;
+    const { shouldSync, transcriptId: existingTranscriptId } =
+      await this.checkAndPrepareTranscript(recordingId, forceReSyncTranscript);
+    if (!shouldSync) return;
 
-    // 步骤 1: 检查数据库中是否已经存在该录制文件的主转写记录 (Transcript)
-    const existingTranscript =
-      await this.transcriptRepo.findByRecordingId(recordingId);
-
-    if (existingTranscript) {
-      if (forceReSyncTranscript) {
-        // 如果要求强制重新同步，先删除旧的所有转写片段 (Segments)，准备覆盖
-        await this.transcriptRepo.deleteSegments(existingTranscript.id);
-      } else {
-        // 如果不强制同步，且数据库中已经存在分段，则判定为已同步过，直接跳过，避免重复拉取
-        const segmentCount = await this.transcriptRepo.countSegments(
-          existingTranscript.id,
-        );
-        if (segmentCount > 0) return;
-      }
-      transcriptId = existingTranscript.id;
-    }
+    let transcriptId = existingTranscriptId;
 
     // 步骤 2: 准备参会者数据 (去重后的明细)，主要用于后续给每一段话匹配对应的“说话人(Speaker)”
     const deduplicated = await this.syncParticipantsForTranscript(
@@ -79,17 +65,46 @@ export class TencentMtgTranscriptCoreService {
     // 步骤 4: 如果拉取到了转写文本，将其批量写入我们的数据库
     if (allParagraphs.length > 0) {
       if (!transcriptId) {
-        // 如果此前不存在主转写记录，先创建一条 Transcript 主记录
-        const transcript = await this.transcriptRepo.create({
-          source: `tencent-meeting:${recordFileId}`,
-          status: 2,
-          recordingId,
-        });
-        transcriptId = transcript.id;
+        transcriptId = await this.createTranscript(recordingId, recordFileId);
       }
       // 批量将拼装好的段落 (Segments) 写入数据库中
       await this.batchInsertSegments(allParagraphs, transcriptId);
     }
+  }
+
+  async checkAndPrepareTranscript(
+    recordingId: string,
+    forceReSyncTranscript: boolean = false,
+  ): Promise<{ shouldSync: boolean; transcriptId?: string }> {
+    const existingTranscript =
+      await this.transcriptRepo.findByRecordingId(recordingId);
+
+    if (existingTranscript) {
+      if (forceReSyncTranscript) {
+        await this.transcriptRepo.deleteSegments(existingTranscript.id);
+      } else {
+        const segmentCount = await this.transcriptRepo.countSegments(
+          existingTranscript.id,
+        );
+        if (segmentCount > 0) {
+          return { shouldSync: false, transcriptId: existingTranscript.id };
+        }
+      }
+      return { shouldSync: true, transcriptId: existingTranscript.id };
+    }
+    return { shouldSync: true, transcriptId: undefined };
+  }
+
+  async createTranscript(
+    recordingId: string,
+    recordFileId: string,
+  ): Promise<string> {
+    const transcript = await this.transcriptRepo.create({
+      source: `tencent-meeting:${recordFileId}`,
+      status: 2,
+      recordingId,
+    });
+    return transcript.id;
   }
 
   // ==========================================
@@ -114,7 +129,7 @@ export class TencentMtgTranscriptCoreService {
   // ==========================================
   // 核心批量插入方法
   // ==========================================
-  private async batchInsertSegments(
+  public async batchInsertSegments(
     paragraphs: NewTranscriptParagraph[],
     transcriptId: string,
   ): Promise<void> {
@@ -241,7 +256,7 @@ export class TencentMtgTranscriptCoreService {
     return deduplicated;
   }
 
-  private async fetchTranscriptParagraphs(
+  public async fetchTranscriptParagraphs(
     recordFileId: string,
     operatorId: string,
     deduplicated: ParticipantDetail[],
