@@ -21,8 +21,10 @@ import {
   MeetingBitableService,
   SpeakerService,
   RecordingDataFetcherService,
-  SummaryService,
-  MeetingDatabaseService,
+  ParticipantSummaryBitableService,
+  TencentMtgMeetingCoreService,
+  TencentMtgSummaryCoreService,
+  TencentMtgTranscriptCoreService,
 } from '../../services';
 import { ParticipantService } from '@/integrations/tencent-meeting/services';
 import { ParticipantDetail } from '@/integrations/tencent-meeting/types';
@@ -39,8 +41,10 @@ export class RecordingCompletedHandler extends BaseEventHandler {
     private readonly bitableService: MeetingBitableService,
     private readonly speakerSvc: SpeakerService,
     private readonly dataFetcher: RecordingDataFetcherService,
-    private readonly databaseSvc: MeetingDatabaseService,
-    private readonly summarySvc: SummaryService,
+    private readonly meetingCoreSvc: TencentMtgMeetingCoreService,
+    private readonly summaryCoreSvc: TencentMtgSummaryCoreService,
+    private readonly transcriptCoreSvc: TencentMtgTranscriptCoreService,
+    private readonly participantSummaryBitableSvc: ParticipantSummaryBitableService,
     private readonly participantSvc: MeetingParticipantService,
     private readonly tencentParticipantSvc: ParticipantService,
   ) {
@@ -119,10 +123,36 @@ export class RecordingCompletedHandler extends BaseEventHandler {
     );
     await this.bitableService.upsertRecording(context);
     await this.speakerSvc.syncPtUsers(context.uniqueParticipants);
-    await this.databaseSvc.upsertmeet(payload, this.SUPPORTED_EVENT);
-    await this.databaseSvc.upsertRecording(context);
-    await this.databaseSvc.upsertMeetingSummary(context);
-    await this.databaseSvc.upsertTranscript(context);
-    await this.summarySvc.processSummary(context);
+
+    const meeting = await this.meetingCoreSvc.upsertMeetingFromWebhook(
+      payload,
+      this.SUPPORTED_EVENT,
+    );
+
+    for (const file of context.recordingFiles || []) {
+      if (!file.id) continue;
+      const recording = await this.meetingCoreSvc.upsertRecordingFromWebhook(
+        context.meetid || '',
+        context.subid || '__ROOT__',
+        file.id,
+      );
+
+      await this.summaryCoreSvc.upsertSummaryFromWebhook(
+        meeting.id,
+        recording.id,
+        file.fullsummary || '',
+        file.aiminutes,
+        file.todo,
+      );
+
+      if (file.paragraphs && file.paragraphs.length > 0) {
+        await this.transcriptCoreSvc.syncFromWebhook(
+          recording.id,
+          file.id,
+          file.paragraphs,
+        );
+      }
+    }
+    await this.participantSummaryBitableSvc.processSummary(context);
   }
 }

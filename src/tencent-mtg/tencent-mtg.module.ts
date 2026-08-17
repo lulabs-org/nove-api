@@ -17,18 +17,16 @@ import { TencentWebhookController } from './controllers/tencent-webhook.controll
 import { TencentMtgSyncProcessor } from './processors/tencent-mtg-sync.processor';
 
 import { TencentMtgSyncService } from './services/tencent-mtg-sync.service';
-import { TencentMtgMeetingSyncService } from './services/tencent-mtg-meeting-sync.service';
-import { TencentMtgTranscriptSyncService } from './services/tencent-mtg-transcript-sync.service';
-import { TencentMtgSummarySyncService } from './services/tencent-mtg-summary-sync.service';
 import { TencentMtgUserLinkService } from './services/tencent-mtg-user-link.service';
 
 import {
   RecordingDataFetcherService,
   TencentEventHandlerService,
-  TranscriptSyncService,
-  MeetingDatabaseService,
   MeetingBitableService,
-  SummaryService,
+  TencentMtgMeetingCoreService,
+  TencentMtgSummaryCoreService,
+  TencentMtgTranscriptCoreService,
+  ParticipantSummaryBitableService,
   SpeakerService,
   MeetingParticipantService,
 } from './services';
@@ -67,21 +65,20 @@ import {
   providers: [
     // Sync Services
     TencentMtgSyncService,
-    TencentMtgMeetingSyncService,
-    TencentMtgTranscriptSyncService,
-    TencentMtgSummarySyncService,
+    TencentMtgMeetingCoreService,
+    TencentMtgSummaryCoreService,
+    TencentMtgTranscriptCoreService,
     TencentMtgUserLinkService,
     TencentMtgSyncProcessor,
 
-    // Webhook Services
+    // Webhook & Shared Services
     TencentEventHandlerService,
     EventHandlerFactory,
     MeetingBitableService,
-    MeetingDatabaseService,
+
     SpeakerService,
-    TranscriptSyncService,
     RecordingDataFetcherService,
-    SummaryService,
+    ParticipantSummaryBitableService,
     MeetingParticipantService,
 
     // Handlers
@@ -130,7 +127,9 @@ import {
   ],
   exports: [
     TencentMtgSyncService,
-    TranscriptSyncService,
+    TencentMtgMeetingCoreService,
+    TencentMtgSummaryCoreService,
+    TencentMtgTranscriptCoreService,
     SpeakerService,
     MeetingParticipantService,
   ],

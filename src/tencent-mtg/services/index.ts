@@ -1,19 +1,12 @@
-/*
- * @Author: 杨仕明 shiming.y@qq.com
- * @Date: 2025-12-24
- * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-30 19:13:04
- * @FilePath: /nove_api/src/tencent-mtg/services/index.ts
- * @Description: Services index file for hook-tencent-mtg module
- *
- * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
- */
+export { RecordingDataFetcherService } from './recording-data-fetcher.service';
+export { ParticipantSummaryBitableService } from './participant-summary-bitable.service';
+export { MeetingParticipantService } from './meeting-participant.service';
 
 export { TencentEventHandlerService } from './event-handler.service';
 export { MeetingBitableService } from './meeting-bitable.service';
-export { MeetingDatabaseService } from './meeting-database.service';
 export { SpeakerService } from './speaker.service';
-export { TranscriptSyncService } from './transcript-sync.service';
-export { RecordingDataFetcherService } from './recording-data-fetcher.service';
-export { SummaryService } from './summary.service';
-export { MeetingParticipantService } from './meeting-participant.service';
+
+// Core Services
+export { TencentMtgMeetingCoreService } from './tencent-mtg-meeting-core.service';
+export { TencentMtgSummaryCoreService } from './tencent-mtg-summary-core.service';
+export { TencentMtgTranscriptCoreService } from './tencent-mtg-transcript-core.service';

@@ -13,7 +13,7 @@ import { Injectable } from '@nestjs/common';
 import { BaseEventHandler } from '../base/base-event.handler';
 import { ParticipantJoinedPayload } from '../../types';
 import { MeetingBitableService } from '../../services/meeting-bitable.service';
-import { MeetingDatabaseService } from '../../services/meeting-database.service';
+import { TencentMtgMeetingCoreService } from '../../services/tencent-mtg-meeting-core.service';
 
 /**
  * Meeting participant joined event handler
@@ -25,7 +25,7 @@ export class MeetingParticipantJoinedHandler extends BaseEventHandler {
 
   constructor(
     private readonly meetingBitableService: MeetingBitableService,
-    private readonly meetingDatabaseService: MeetingDatabaseService,
+    private readonly meetingCoreSvc: TencentMtgMeetingCoreService,
   ) {
     super();
   }
@@ -48,7 +48,7 @@ export class MeetingParticipantJoinedHandler extends BaseEventHandler {
     }
 
     await Promise.allSettled([
-      this.meetingDatabaseService.upsertPtUser(operator),
+      this.meetingCoreSvc.upsertPtUser(operator),
       this.meetingBitableService.upsertMeetingUserRecord(meeting_info.creator),
       this.meetingBitableService.upsertMeetingUserRecord(operator),
       this.meetingBitableService.updateMeetingParticipants(

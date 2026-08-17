@@ -13,7 +13,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MeetingParticipantJoinedHandler } from './meeting-participant-joined.handler';
 import { MeetingBitableService } from '../../services/meeting-bitable.service';
-import { MeetingDatabaseService } from '../../services/meeting-database.service';
+import { TencentMtgMeetingCoreService } from '../../services/tencent-mtg-meeting-core.service';
 import { ParticipantJoinedPayload } from '../../types';
 
 describe('MeetingParticipantJoinedHandler', () => {
@@ -32,7 +32,7 @@ describe('MeetingParticipantJoinedHandler', () => {
           },
         },
         {
-          provide: MeetingDatabaseService,
+          provide: TencentMtgMeetingCoreService,
           useValue: {
             upsertPtUser: jest.fn().mockImplementation(() => {}),
           },

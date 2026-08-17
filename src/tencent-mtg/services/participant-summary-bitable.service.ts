@@ -23,8 +23,8 @@ import {
 } from '@/integrations/lark/repositories';
 
 @Injectable()
-export class SummaryService {
-  private readonly logger = new Logger(SummaryService.name);
+export class ParticipantSummaryBitableService {
+  private readonly logger = new Logger(ParticipantSummaryBitableService.name);
 
   constructor(
     private readonly ptUserRepo: PlatformUserRepository,

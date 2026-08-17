@@ -1,21 +1,46 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { SummaryService } from '@/integrations/tencent-meeting/services/meeting-summary.service';
 import { MeetingSummaryService } from '@/meeting/services/meeting-summary.service';
 import { GenerationMethod, ProcessingStatus } from '@prisma/client';
+import { SummaryService as ApiSummaryService } from '@/integrations/tencent-meeting/services/meeting-summary.service';
 
 @Injectable()
-export class TencentMtgSummarySyncService {
-  private readonly logger = new Logger(TencentMtgSummarySyncService.name);
+export class TencentMtgSummaryCoreService {
+  private readonly logger = new Logger(TencentMtgSummaryCoreService.name);
 
   constructor(
-    private readonly summaryService: SummaryService,
     private readonly meetingSummaryService: MeetingSummaryService,
+    private readonly apiSummaryService: ApiSummaryService,
   ) {}
 
-  /**
-   * 拉取并保存腾讯会议的 AI 智能总结、纪要、待办事项等
-   */
-  async upsertSummaryFromFile(
+  // ==========================================
+  // 从 Webhook 录制数据入库
+  // ==========================================
+  async upsertSummaryFromWebhook(
+    meetingId: string,
+    recordingId: string,
+    fullSummary: string,
+    aiMinutes?: string,
+    actionItems?: string,
+  ) {
+    return await this.meetingSummaryService.upsert({
+      meetingId,
+      recordingId,
+      content: fullSummary || '',
+      aiMinutes: aiMinutes ? { content: aiMinutes } : undefined,
+      actionItems: actionItems ? { items: actionItems } : undefined,
+      generatedBy: GenerationMethod.AI,
+      aiModel: 'tencent-meeting-ai',
+      status: ProcessingStatus.COMPLETED,
+      language: 'zh-CN',
+      version: 1,
+      isLatest: true,
+    });
+  }
+
+  // ==========================================
+  // 从 API 数据中拉取处理智能总结入库
+  // ==========================================
+  async upsertSummaryFromApi(
     meetingId: string,
     recordingId: string,
     fileId: string,
@@ -25,7 +50,7 @@ export class TencentMtgSummarySyncService {
       `Syncing summary for meeting ${meetingId}, recording ${recordingId}, file ${fileId}`,
     );
 
-    const content = await this.summaryService.getContent(fileId, operatorId);
+    const content = await this.apiSummaryService.getContent(fileId, operatorId);
 
     // 如果没有任何内容，直接跳过保存
     if (!content.fullSummary && !content.aiMinutes && !content.todo) {

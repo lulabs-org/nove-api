@@ -9,9 +9,9 @@ import type {
   RecordMeeting,
   RecordFile,
 } from '@/integrations/tencent-meeting/types';
-import { TencentMtgMeetingSyncService } from './tencent-mtg-meeting-sync.service';
-import { TencentMtgTranscriptSyncService } from './tencent-mtg-transcript-sync.service';
-import { TencentMtgSummarySyncService } from './tencent-mtg-summary-sync.service';
+import { TencentMtgMeetingCoreService } from './tencent-mtg-meeting-core.service';
+import { TencentMtgTranscriptCoreService } from './tencent-mtg-transcript-core.service';
+import { TencentMtgSummaryCoreService } from './tencent-mtg-summary-core.service';
 
 @Injectable()
 export class TencentMtgSyncService {
@@ -20,9 +20,9 @@ export class TencentMtgSyncService {
   constructor(
     @InjectQueue('tencent-mtg-sync') private readonly syncQueue: Queue,
     private readonly tencentApi: TencentApiService,
-    private readonly meetingSyncService: TencentMtgMeetingSyncService,
-    private readonly transcriptSyncService: TencentMtgTranscriptSyncService,
-    private readonly summarySyncService: TencentMtgSummarySyncService,
+    private readonly meetingCoreService: TencentMtgMeetingCoreService,
+    private readonly transcriptCoreService: TencentMtgTranscriptCoreService,
+    private readonly summaryCoreService: TencentMtgSummaryCoreService,
     @Inject(tencentMeetingConfig.KEY)
     private config: ConfigType<typeof tencentMeetingConfig>,
   ) {}
@@ -113,11 +113,12 @@ export class TencentMtgSyncService {
   ): Promise<number> {
     try {
       // Step 2.2: 同步录制文件信息
-      const recording = await this.meetingSyncService.upsertRecordingFromFile(
-        meeting.id,
-        file,
-        record.state,
-      );
+      const recording =
+        await this.meetingCoreService.upsertRecordingFromApiFile(
+          meeting.id,
+          file,
+          record.state,
+        );
 
       const startTime = meeting.scheduledStartAt
         ? Math.floor(meeting.scheduledStartAt.getTime() / 1000)
@@ -129,7 +130,7 @@ export class TencentMtgSyncService {
 
       // 如果需要同步参会者，但转写不需要同步，则独立触发参会者同步
       if (syncParticipants && !syncTranscripts) {
-        await this.transcriptSyncService.syncParticipantsForTranscript(
+        await this.transcriptCoreService.syncParticipantsForTranscript(
           record.meeting_id,
           subMeetingId,
           operatorId,
@@ -144,7 +145,7 @@ export class TencentMtgSyncService {
         if (syncTranscripts) {
           try {
             // Step 2.3: 同步转写文本及其相关参会人信息
-            await this.transcriptSyncService.upsertTranscriptFromFile(
+            await this.transcriptCoreService.syncFromApi(
               record.meeting_id,
               subMeetingId,
               recording.id,
@@ -167,7 +168,7 @@ export class TencentMtgSyncService {
         if (syncSummaries) {
           try {
             // Step 2.4: 同步录制文件的智能摘要、纪要和待办
-            await this.summarySyncService.upsertSummaryFromFile(
+            await this.summaryCoreService.upsertSummaryFromApi(
               meeting.id,
               recording.id,
               file.record_file_id,
@@ -207,7 +208,7 @@ export class TencentMtgSyncService {
   ): Promise<{ meetingsUpserted: number; recordingsUpserted: number }> {
     try {
       // Step 2.1: 同步会议基本信息
-      const meeting = await this.meetingSyncService.upsertMeetingFromRecord(
+      const meeting = await this.meetingCoreService.upsertMeetingFromApiRecord(
         record,
         operatorId,
       );

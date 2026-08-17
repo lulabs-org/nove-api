@@ -1,7 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { TencentApiService } from '@/integrations/tencent-meeting/services/api.service';
+import { Platform, PlatformUser } from '@prisma/client';
+import { PrismaService } from '@/prisma/prisma.service';
+import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
 import { TranscriptRepository } from '@/meeting/repositories/transcript.repository';
-import { TranscriptSyncService } from '@/tencent-mtg/services/transcript-sync.service';
+import { TencentApiService } from '@/integrations/tencent-meeting/services/api.service';
 import { ParticipantService } from '@/integrations/tencent-meeting/services';
 import { SpeakerService } from '@/tencent-mtg/services/speaker.service';
 import { MeetingParticipantService } from '@/tencent-mtg/services/meeting-participant.service';
@@ -9,27 +11,24 @@ import type { ParticipantDetail } from '@/integrations/tencent-meeting/types';
 import { NewTranscriptParagraph } from '@/tencent-mtg/types/transcript.types';
 
 @Injectable()
-export class TencentMtgTranscriptSyncService {
-  private readonly logger = new Logger(TencentMtgTranscriptSyncService.name);
+export class TencentMtgTranscriptCoreService {
+  private readonly logger = new Logger(TencentMtgTranscriptCoreService.name);
+  private readonly PARAGRAPH_BATCH_SIZE = 100;
 
   constructor(
-    private readonly tencentApi: TencentApiService,
+    private readonly prisma: PrismaService,
+    private readonly ptUserRepo: PlatformUserRepository,
     private readonly transcriptRepo: TranscriptRepository,
-    private readonly transcriptSyncService: TranscriptSyncService,
+    private readonly tencentApi: TencentApiService,
     private readonly participantSvc: ParticipantService,
     private readonly speakerSvc: SpeakerService,
     private readonly meetingParticipantSvc: MeetingParticipantService,
   ) {}
 
-  /**
-   * 获取并同步录制文件的转写记录（包含发言人识别）。
-   * 流程：
-   * 1. 检查是否已处理过该转写记录。
-   * 2. 拉取会议参会者列表并同步，用于后续关联匹配说话人身份。
-   * 3. 拉取转写段落数据，使用参会者信息丰富各个段落里的 speaker_info。
-   * 4. 批量插入处理好的转写段落到数据库中。
-   */
-  async upsertTranscriptFromFile(
+  // ==========================================
+  // 从 API 数据中拉取处理转写入库
+  // ==========================================
+  async syncFromApi(
     meetid: string,
     subid: string,
     recordingId: string,
@@ -52,14 +51,11 @@ export class TencentMtgTranscriptSyncService {
         const segmentCount = await this.transcriptRepo.countSegments(
           existingTranscript.id,
         );
-        if (segmentCount > 0) {
-          return; // Already processed and has segments
-        }
+        if (segmentCount > 0) return;
       }
       transcriptId = existingTranscript.id;
     }
 
-    // 获取参会者列表，用于后续丰富说话人信息
     const deduplicated = await this.syncParticipantsForTranscript(
       meetid,
       subid,
@@ -69,14 +65,12 @@ export class TencentMtgTranscriptSyncService {
       syncParticipants,
     );
 
-    // 拉取所有转写段落数据
     const allParagraphs = await this.fetchTranscriptParagraphs(
       recordFileId,
       operatorId,
       deduplicated,
     );
 
-    // 如果有段落，则处理并存入数据库
     if (allParagraphs.length > 0) {
       if (!transcriptId) {
         const transcript = await this.transcriptRepo.create({
@@ -86,12 +80,85 @@ export class TencentMtgTranscriptSyncService {
         });
         transcriptId = transcript.id;
       }
-
-      await this.transcriptSyncService.sync(allParagraphs, transcriptId);
+      await this.batchInsertSegments(allParagraphs, transcriptId);
     }
   }
 
-  async syncParticipantsForTranscript(
+  // ==========================================
+  // 从 Webhook 数据处理转写入库
+  // ==========================================
+  async syncFromWebhook(
+    recordingId: string,
+    recordFileId: string,
+    paragraphs: NewTranscriptParagraph[],
+  ) {
+    let transcript = await this.transcriptRepo.findByRecordingId(recordingId);
+    if (!transcript) {
+      transcript = await this.transcriptRepo.create({
+        source: `tencent-meeting:${recordFileId}`,
+        status: 2,
+        recordingId: recordingId,
+      });
+      await this.batchInsertSegments(paragraphs, transcript.id);
+    }
+  }
+
+  // ==========================================
+  // 核心批量插入方法
+  // ==========================================
+  private async batchInsertSegments(
+    paragraphs: NewTranscriptParagraph[],
+    transcriptId: string,
+  ): Promise<void> {
+    for (let i = 0; i < paragraphs.length; i += this.PARAGRAPH_BATCH_SIZE) {
+      const batch = paragraphs.slice(i, i + this.PARAGRAPH_BATCH_SIZE);
+      await this.prisma.$transaction(async (tx) => {
+        const segmentsToCreate: any[] = [];
+        for (const paragraph of batch) {
+          const speakerInfo = paragraph.speaker_info;
+          const ptUnionId = speakerInfo.uuid;
+          let platformUser: PlatformUser | null = null;
+          if (ptUnionId) {
+            platformUser = await this.ptUserRepo.upsert(
+              { platform: Platform.TENCENT_MEETING, ptUnionId },
+              {
+                displayName: speakerInfo.username,
+                ptUserId: speakerInfo.userid,
+                phoneHash: speakerInfo.phone,
+              },
+            );
+          }
+          const speakerId = platformUser?.id;
+          for (const sentence of paragraph.sentences) {
+            const text = sentence.words.map((w) => w.text).join('');
+            const wordsDetail = sentence.words.map((w) => ({
+              word: w.text,
+              start: Number(w.start_time),
+              end: Number(w.end_time),
+            }));
+            segmentsToCreate.push({
+              transcriptId,
+              speakerId,
+              speakerName: speakerInfo.username || null,
+              startTimeMs: BigInt(sentence.start_time),
+              endTimeMs: BigInt(sentence.end_time),
+              text,
+              confidence: null,
+              wordsDetail,
+            });
+          }
+        }
+        if (segmentsToCreate.length > 0) {
+          await tx.transcriptSegment.createMany({ data: segmentsToCreate });
+        }
+      });
+    }
+  }
+
+  // ==========================================
+  // 私有辅助方法：拉取参会者与匹配
+  // ==========================================
+  public async syncParticipantsForTranscript(
     meetid: string,
     subid: string,
     operatorId: string,
@@ -113,7 +180,6 @@ export class TencentMtgTranscriptSyncService {
         endTime,
       );
     } catch (e) {
-      // Check if subMeetingId is illegal and retry without it
       const errMsg = e instanceof Error ? e.message : String(e);
       if (actualSubid && errMsg.includes('subMeetingId is illegal')) {
         this.logger.warn(
@@ -127,9 +193,9 @@ export class TencentMtgTranscriptSyncService {
             startTime,
             endTime,
           );
-        } catch (retryError) {
+        } catch (retryError: any) {
           this.logger.warn(
-            `Failed to fetch participants on retry for meeting ${meetid}: ${retryError instanceof Error ? retryError.message : String(retryError)}`,
+            `Failed to fetch participants on retry for meeting ${meetid}`,
           );
         }
       } else {
@@ -159,7 +225,7 @@ export class TencentMtgTranscriptSyncService {
     return deduplicated;
   }
 
-  async fetchTranscriptParagraphs(
+  private async fetchTranscriptParagraphs(
     recordFileId: string,
     operatorId: string,
     deduplicated: ParticipantDetail[],
@@ -176,9 +242,7 @@ export class TencentMtgTranscriptSyncService {
           1,
           currentPid,
         );
-
         if (res.minutes?.paragraphs && res.minutes.paragraphs.length > 0) {
-          // 使用 SpeakerService 匹配并丰富说话人信息
           const mappedParagraphs = await Promise.all(
             res.minutes.paragraphs.map(async (p) => ({
               ...p,
@@ -189,22 +253,18 @@ export class TencentMtgTranscriptSyncService {
             })),
           );
           allParagraphs.push(...mappedParagraphs);
-
-          // 获取下一页的 pid
           const lastParagraph =
             res.minutes.paragraphs[res.minutes.paragraphs.length - 1];
           currentPid = lastParagraph.pid;
         }
-
         hasMore = res.more === true;
-      } catch (err) {
+      } catch (err: any) {
         this.logger.warn(
-          `Failed to fetch transcript page for recording ${recordFileId} (pid: ${currentPid}): ${err instanceof Error ? err.message : String(err)}`,
+          `Failed to fetch transcript page for recording ${recordFileId} (pid: ${currentPid})`,
         );
-        break; // Stop fetching on error
+        break;
       }
     }
-
     return allParagraphs;
   }
 }

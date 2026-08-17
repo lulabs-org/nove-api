@@ -13,7 +13,7 @@ import { Injectable } from '@nestjs/common';
 import { BaseEventHandler } from '../base/base-event.handler';
 import { MeetingEndPayload } from '../../types';
 import { MeetingBitableService } from '../../services/meeting-bitable.service';
-import { MeetingDatabaseService } from '../../services/meeting-database.service';
+import { TencentMtgMeetingCoreService } from '../../services/tencent-mtg-meeting-core.service';
 
 /**
  * 会议结束事件处理器
@@ -24,7 +24,7 @@ export class MeetingEndedHandler extends BaseEventHandler {
 
   constructor(
     private readonly meetingBitableService: MeetingBitableService,
-    private readonly meetingDatabaseService: MeetingDatabaseService,
+    private readonly meetingCoreSvc: TencentMtgMeetingCoreService,
   ) {
     super();
   }
@@ -49,7 +49,10 @@ export class MeetingEndedHandler extends BaseEventHandler {
         meeting_info,
         operator,
       ),
-      this.meetingDatabaseService.upsertmeet(payload, this.SUPPORTED_EVENT),
+      this.meetingCoreSvc.upsertMeetingFromWebhook(
+        payload,
+        this.SUPPORTED_EVENT,
+      ),
     ];
 
     if (operator.uuid !== meeting_info.creator.uuid) {
