@@ -10,13 +10,14 @@
  */
 
 import { Injectable, Logger } from '@nestjs/common';
-import {
-  MeetingParticipantRepository,
-  MeetingRepository,
-} from '@/meeting/repositories';
+import { MeetingParticipantRepository } from '@/meeting/repositories';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Platform, Prisma, MeetingControlAction } from '@prisma/client';
-import type { MeetingRecordingContext } from '../types';
+import {
+  Platform,
+  Prisma,
+  MeetingControlAction,
+  Meeting,
+} from '@prisma/client';
 import { ParticipantDetail } from '@/integrations/tencent-meeting/types';
 
 @Injectable()
@@ -25,7 +26,6 @@ export class MeetingParticipantService {
 
   constructor(
     private readonly participantRepo: MeetingParticipantRepository,
-    private readonly meetingRepo: MeetingRepository,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -39,50 +39,53 @@ export class MeetingParticipantService {
    * 4. 针对用户的每次进出动作，向 meet_user_action 表记录 JOIN 和 LEAVE 事件（使用 findFirst 保证幂等，避免重复写入）
    * 5. 最后，将聚合后的唯一记录（首次进入时间、最后离开时间、总时长等）更新到 meet_participant 表中
    */
-  async syncParticipants(r: MeetingRecordingContext): Promise<void> {
+  async syncParticipants(
+    meeting: Meeting,
+    rawParticipants: ParticipantDetail[],
+  ): Promise<void> {
     // 1. 基础校验：如果没有参会者数据，直接返回
-    if (!r.rawParticipants || r.rawParticipants.length === 0) {
+    if (!rawParticipants || rawParticipants.length === 0) {
       return;
     }
 
-    // 2. 查找对应的本地会议记录
-    const meeting = await this.meetingRepo.findByPt(
-      Platform.TENCENT_MEETING,
-      r.meetid || '',
-      r.subid || '__ROOT__',
+    // 2. 按用户 uuid 将多条参会片段进行分组
+    const segmentsByUuid = new Map<string, ParticipantDetail[]>();
+    for (const p of rawParticipants) {
+      if (!p.uuid) continue; // 过滤掉没有 uuid 的非法/匿名记录
+      const segments = segmentsByUuid.get(p.uuid) || [];
+      segments.push(p);
+      segmentsByUuid.set(p.uuid, segments);
+    }
+
+    const uuids = Array.from(segmentsByUuid.keys());
+    if (uuids.length === 0) return;
+
+    // 3. 批量查询我们系统内的平台用户，避免在循环中逐个发 SQL
+    const ptUsers = await this.prisma.platformUser.findMany({
+      where: {
+        platform: Platform.TENCENT_MEETING,
+        ptUnionId: { in: uuids },
+      },
+    });
+    const ptUserMap = new Map(ptUsers.map((u) => [u.ptUnionId, u]));
+
+    // 4. 批量查询该会议下已有的行为日志，建立内存 Set 保证幂等过滤
+    const existingActions = await this.prisma.meetingUserAction.findMany({
+      where: { meetingId: meeting.id },
+      select: { ptUserId: true, action: true, actionAt: true },
+    });
+    const existingActionSet = new Set(
+      existingActions.map(
+        (a) => `${a.ptUserId}-${a.action}-${a.actionAt.getTime()}`,
+      ),
     );
 
-    if (!meeting) {
-      this.logger.warn(
-        `Meeting not found for meetid: ${r.meetid}, subid: ${r.subid}`,
-      );
-      return; // 找不到本地会议，拒绝同步以避免产生孤儿数据
-    }
+    const actionsToCreate: Prisma.MeetingUserActionCreateManyInput[] = [];
+    const upsertPromises: Promise<any>[] = [];
 
-    // 3. 按用户 uuid 将多条参会片段进行分组
-    // segmentsByUuid 的结构: { '用户uuid': [片段1, 片段2, ...] }
-    const segmentsByUuid = new Map<string, ParticipantDetail[]>();
-    for (const p of r.rawParticipants) {
-      if (!p.uuid) continue; // 过滤掉没有 uuid 的非法/匿名记录
-
-      let segments = segmentsByUuid.get(p.uuid);
-      if (!segments) {
-        segments = [];
-        segmentsByUuid.set(p.uuid, segments);
-      }
-      segments.push(p);
-    }
-
-    // 4. 遍历每一个用户，处理其聚合状态并写入行为日志
+    // 5. 遍历每一个用户，处理其聚合状态并构建日志记录
     for (const [uuid, segments] of segmentsByUuid.entries()) {
-      // 通过 uuid 查找我们系统内的平台用户（应已在 speakerSvc.syncPtUsers 阶段提前落库）
-      const ptUser = await this.prisma.platformUser.findFirst({
-        where: {
-          platform: Platform.TENCENT_MEETING,
-          ptUnionId: uuid,
-        },
-      });
-
+      const ptUser = ptUserMap.get(uuid);
       if (!ptUser) {
         this.logger.warn(`PlatformUser not found for uuid: ${uuid}`);
         continue;
@@ -101,93 +104,81 @@ export class MeetingParticipantService {
           ? parseInt(segment.left_time, 10)
           : 0;
 
-        // 更新最早加入时间
-        if (joinTimeNum > 0) {
+        // 更新最早加入时间与最晚离开时间
+        if (joinTimeNum > 0)
           minJoinTimeNum = Math.min(minJoinTimeNum, joinTimeNum);
-        }
-        // 更新最晚离开时间
-        if (leftTimeNum > 0) {
+        if (leftTimeNum > 0)
           maxLeftTimeNum = Math.max(maxLeftTimeNum, leftTimeNum);
-        }
 
         // 累加本次片段的参会时长
         if (joinTimeNum > 0 && leftTimeNum > 0 && leftTimeNum >= joinTimeNum) {
           totalDurationSeconds += leftTimeNum - joinTimeNum;
         }
 
-        // 记录具体的加入 (JOIN) 行为事件
+        // 收集具体的加入 (JOIN) 行为事件
         if (joinTimeNum > 0) {
           const actionAt = new Date(joinTimeNum * 1000);
-          const existing = await this.prisma.meetingUserAction.findFirst({
-            where: {
+          const key = `${ptUser.id}-${MeetingControlAction.JOIN_MEETING}-${actionAt.getTime()}`;
+          if (!existingActionSet.has(key)) {
+            existingActionSet.add(key);
+            actionsToCreate.push({
               meetingId: meeting.id,
               ptUserId: ptUser.id,
               action: MeetingControlAction.JOIN_MEETING,
               actionAt,
-            },
-          });
-          // 幂等性：如果该时间点的事件未记录，才创建新的操作记录
-          if (!existing) {
-            await this.prisma.meetingUserAction.create({
-              data: {
-                meetingId: meeting.id,
-                ptUserId: ptUser.id,
-                action: MeetingControlAction.JOIN_MEETING,
-                actionAt,
-                targetType: 'PARTICIPANT',
-                targetId: null,
-                metadata: segment as unknown as Prisma.InputJsonValue,
-              },
+              targetType: 'PARTICIPANT',
+              metadata: segment as unknown as Prisma.InputJsonValue,
             });
           }
         }
 
-        // 记录具体的离开 (LEAVE) 行为事件
+        // 收集具体的离开 (LEAVE) 行为事件
         if (leftTimeNum > 0) {
           const actionAt = new Date(leftTimeNum * 1000);
-          const existing = await this.prisma.meetingUserAction.findFirst({
-            where: {
+          const key = `${ptUser.id}-${MeetingControlAction.LEAVE_MEETING}-${actionAt.getTime()}`;
+          if (!existingActionSet.has(key)) {
+            existingActionSet.add(key);
+            actionsToCreate.push({
               meetingId: meeting.id,
               ptUserId: ptUser.id,
               action: MeetingControlAction.LEAVE_MEETING,
               actionAt,
-            },
-          });
-          // 幂等性检测
-          if (!existing) {
-            await this.prisma.meetingUserAction.create({
-              data: {
-                meetingId: meeting.id,
-                ptUserId: ptUser.id,
-                action: MeetingControlAction.LEAVE_MEETING,
-                actionAt,
-                targetType: 'PARTICIPANT',
-                targetId: null,
-                metadata: segment as unknown as Prisma.InputJsonValue,
-              },
+              targetType: 'PARTICIPANT',
+              metadata: segment as unknown as Prisma.InputJsonValue,
             });
           }
         }
       }
 
-      // 5. 数据聚合完毕，准备写入 meet_participant 结果表
+      // 准备该用户最新的聚合结果
       const firstJoinTime =
         minJoinTimeNum !== Infinity ? new Date(minJoinTimeNum * 1000) : null;
       const lastLeaveTime =
         maxLeftTimeNum !== -Infinity ? new Date(maxLeftTimeNum * 1000) : null;
-
-      // 使用该用户最后一个分段的原始数据作为 metadata 模板（其中包含设备信息、版本号等）
       const metadata = segments[
         segments.length - 1
       ] as unknown as Prisma.InputJsonValue;
 
-      // 使用 upsert，确保每位用户在这场会议中只保留这一条最新的聚合结果
-      await this.participantRepo.upsert(meeting.id, ptUser.id, {
-        firstJoinTime,
-        lastLeaveTime,
-        totalDurationSeconds,
-        metadata,
-      });
+      // 压入并发队列
+      upsertPromises.push(
+        this.participantRepo.upsert(meeting.id, ptUser.id, {
+          firstJoinTime,
+          lastLeaveTime,
+          totalDurationSeconds,
+          metadata,
+        }),
+      );
     }
+
+    // 6. 并发执行：批量保存所有用户的聚合结果，以及批量创建日志
+    await Promise.all([
+      ...upsertPromises,
+      actionsToCreate.length > 0
+        ? this.prisma.meetingUserAction.createMany({
+            data: actionsToCreate,
+            skipDuplicates: true,
+          })
+        : Promise.resolve(),
+    ]);
   }
 }

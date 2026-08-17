@@ -1,9 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import {
-  MeetingSessionInfo,
-  Meetuser,
-  MeetingRecordingContext,
-} from '../types';
+import { MeetingSessionInfo, Meetuser } from '../types';
 import { TencentEventUtils } from '../utils/tencent-event.utils';
 import {
   MeetingBitableRepository,
@@ -11,6 +7,7 @@ import {
   RecordingFileBitableRepository,
 } from '@/integrations/lark/repositories';
 import { ParticipantDetail } from '@/integrations/tencent-meeting/types';
+import { PrismaService } from '@/prisma/prisma.service';
 
 /**
  * 会议记录服务
@@ -21,6 +18,7 @@ export class MeetingBitableService {
   private readonly logger = new Logger(MeetingBitableService.name);
 
   constructor(
+    private readonly prisma: PrismaService,
     private readonly meetingBitable: MeetingBitableRepository,
     private readonly meetingUserBitable: MeetingUserBitableRepository,
     private readonly recordingFileBitable: RecordingFileBitableRepository,
@@ -317,15 +315,21 @@ export class MeetingBitableService {
    * @param r 录制数据
    * @returns 录制文件记录ID数组
    */
-  async upsertRecording(r: MeetingRecordingContext): Promise<string[]> {
+  async upsertRecording(
+    meetingId: string,
+    subject: string,
+    subId: string,
+    startTime: number,
+    endTime: number,
+    internalRecordingId: string,
+    externalFileId: string,
+  ): Promise<string | undefined> {
     try {
-      const recordingRecordIds: string[] = [];
-
       const meetingResult = await this.meetingBitable.upsertMeetingRecord({
         platform: '腾讯会议',
-        subject: r.subject,
-        meeting_id: r.meetid || '',
-        sub_meeting_id: r.subid,
+        subject: subject,
+        meeting_id: meetingId,
+        sub_meeting_id: subId,
       });
 
       let recordId: string | undefined;
@@ -336,38 +340,83 @@ export class MeetingBitableService {
 
       const meetIds: string[] = recordId ? [recordId] : [];
 
-      for (let index = 0; index < (r.recordingFiles?.length || 0); index++) {
-        const file = r.recordingFiles![index];
+      // Fetch from Database
+      const summary = await this.prisma.meetingSummary.findFirst({
+        where: { recordingId: internalRecordingId },
+        orderBy: { version: 'desc' },
+      });
 
-        const res = await this.recordingFileBitable.upsertRecordingFileRecord({
-          record_file_id: file.id || '',
-          meet: meetIds,
-          start_time: r.start_time! * 1000,
-          end_time: r.end_time! * 1000,
-          fullsummary: file.fullsummary || '',
-          todo: file.todo || '',
-          ai_minutes: file.aiminutes || '',
-          participants:
-            file.speakerlist?.map((u) => u.username).join(',') || '',
-          ai_meeting_transcripts: file.formattedtext || '',
-        });
+      const transcript = await this.prisma.transcript.findFirst({
+        where: { recordingId: internalRecordingId },
+        include: {
+          segments: {
+            include: { speaker: true },
+          },
+        },
+      });
 
-        if (res.data?.record) {
-          const recordingRecordId = res.data.record.record_id;
-          recordingRecordIds.push(recordingRecordId);
-          this.logger.log(
-            `录制文件记录已创建/更新: ${file.id || ''} (记录ID: ${recordingRecordId})`,
-          );
-        }
+      let fullsummary = '';
+      let todo = '';
+      let ai_minutes = '';
+      if (summary) {
+        fullsummary = summary.content || '';
+        todo = summary.actionItems
+          ? JSON.stringify(
+              (summary.actionItems as { items?: unknown })?.items || [],
+            )
+          : '';
+        ai_minutes = summary.aiMinutes
+          ? JSON.stringify(
+              (summary.aiMinutes as { content?: unknown })?.content || [],
+            )
+          : '';
       }
 
-      return recordingRecordIds;
+      let participants = '';
+      let ai_meeting_transcripts = '';
+      if (transcript && transcript.segments.length > 0) {
+        const uniqueSpeakerNames = new Set<string>();
+        transcript.segments.forEach((s) => {
+          if (s.speaker?.displayName)
+            uniqueSpeakerNames.add(s.speaker.displayName);
+        });
+        participants = Array.from(uniqueSpeakerNames).join(',');
+
+        // Formatted text
+        ai_meeting_transcripts = transcript.segments
+          .map(
+            (s) =>
+              `[${new Date(Number(s.startTimeMs)).toISOString().substr(11, 8)} - ${new Date(Number(s.endTimeMs)).toISOString().substr(11, 8)}] ${s.speaker?.displayName || '未知'}: ${s.text}`,
+          )
+          .join('\n\n');
+      }
+
+      const res = await this.recordingFileBitable.upsertRecordingFileRecord({
+        record_file_id: externalFileId,
+        meet: meetIds,
+        start_time: startTime * 1000,
+        end_time: endTime * 1000,
+        fullsummary,
+        todo,
+        ai_minutes,
+        participants,
+        ai_meeting_transcripts,
+      });
+
+      if (res.data?.record) {
+        const recordingRecordId = res.data.record.record_id;
+        this.logger.log(
+          `录制文件记录已创建/更新: ${externalFileId} (记录ID: ${recordingRecordId})`,
+        );
+        return recordingRecordId;
+      }
+      return undefined;
     } catch (error: unknown) {
       this.logger.error(
-        `创建录制文件记录失败: ${r.recordingFiles ? JSON.stringify(r.recordingFiles) : ''}`,
+        `创建录制文件记录失败: ${externalFileId}`,
         error instanceof Error ? error.stack : undefined,
       );
-      return [];
+      return undefined;
     }
   }
 }

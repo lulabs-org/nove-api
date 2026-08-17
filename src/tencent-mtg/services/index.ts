@@ -1,4 +1,3 @@
-export { RecordingDataFetcherService } from './recording-data-fetcher.service';
 export { ParticipantSummaryBitableService } from './participant-summary-bitable.service';
 export { MeetingParticipantService } from './meeting-participant.service';
 

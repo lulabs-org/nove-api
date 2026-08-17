@@ -193,7 +193,7 @@ export class TencentMtgTranscriptCoreService {
             startTime,
             endTime,
           );
-        } catch (retryError: any) {
+        } catch {
           this.logger.warn(
             `Failed to fetch participants on retry for meeting ${meetid}`,
           );
@@ -215,11 +215,19 @@ export class TencentMtgTranscriptCoreService {
       participantResult.original &&
       participantResult.original.length > 0
     ) {
-      await this.meetingParticipantSvc.syncParticipants({
-        meetid,
-        subid,
-        rawParticipants: participantResult.original,
+      const meeting = await this.prisma.meeting.findFirst({
+        where: {
+          platform: Platform.TENCENT_MEETING,
+          meetingId: meetid,
+          subMeetingId: actualSubid || '__ROOT__',
+        },
       });
+      if (meeting) {
+        await this.meetingParticipantSvc.syncParticipants(
+          meeting,
+          participantResult.original,
+        );
+      }
     }
 
     return deduplicated;
@@ -258,7 +266,7 @@ export class TencentMtgTranscriptCoreService {
           currentPid = lastParagraph.pid;
         }
         hasMore = res.more === true;
-      } catch (err: any) {
+      } catch {
         this.logger.warn(
           `Failed to fetch transcript page for recording ${recordFileId} (pid: ${currentPid})`,
         );

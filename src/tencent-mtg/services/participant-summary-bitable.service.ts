@@ -11,8 +11,9 @@
 
 import { Injectable, Logger } from '@nestjs/common';
 import { Platform } from '@prisma/client';
+import { PrismaService } from '@/prisma/prisma.service';
 import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
-import { MeetingRecordingContext } from '@/tencent-mtg/types';
+import { ParticipantDetail } from '@/integrations/tencent-meeting/types';
 import { MeetingRepository } from '@/meeting/repositories/meeting.repository';
 import { MeetingRecordingRepository } from '@/meeting/repositories';
 import { ParticipantSummaryService } from '@/meeting/services';
@@ -27,6 +28,7 @@ export class ParticipantSummaryBitableService {
   private readonly logger = new Logger(ParticipantSummaryBitableService.name);
 
   constructor(
+    private readonly prisma: PrismaService,
     private readonly ptUserRepo: PlatformUserRepository,
     private readonly recordingRepo: MeetingRecordingRepository,
     private readonly meetingRepo: MeetingRepository,
@@ -36,48 +38,46 @@ export class ParticipantSummaryBitableService {
     private readonly recordingFileBitable: RecordingFileBitableRepository,
   ) {}
 
-  async processSummary(r: MeetingRecordingContext): Promise<void> {
-    const meeting = await this.meetingRepo.findByPt(
-      Platform.TENCENT_MEETING,
-      r.meetid || '',
-      r.subid || '__ROOT__',
+  async processSummary(
+    meetingId: string,
+    recordingId: string,
+    fileId: string,
+    uniqueParticipants: ParticipantDetail[],
+  ): Promise<void> {
+    const distinctSpeakers = await this.prisma.transcriptSegment.findMany({
+      where: { transcript: { recordingId: recordingId } },
+      select: { speakerId: true },
+      distinct: ['speakerId'],
+    });
+    const validSpeakerIds = new Set(
+      distinctSpeakers.map((s) => s.speakerId).filter(Boolean),
     );
 
-    if (!meeting) {
-      throw new Error('Meeting not found');
-    }
+    for (const u of uniqueParticipants) {
+      const ptByUnionId = await this.ptUserRepo.findByUnionId(
+        Platform.TENCENT_MEETING,
+        u.uuid,
+      );
+      if (!ptByUnionId) continue;
 
-    for (let index = 0; index < (r.recordingFiles?.length || 0); index++) {
-      const file = r.recordingFiles![index];
+      if (validSpeakerIds.has(ptByUnionId.id)) {
+        const summaries = await this.participantSummarySvc.generateSummaries({
+          recordId: recordingId,
+          platformUserIds: [ptByUnionId.id],
+        });
+        const summary = summaries[ptByUnionId.id];
 
-      for (const u of r.uniqueParticipants || []) {
-        if (file.speakerlist?.find((uInfo) => uInfo.username === u.user_name)) {
-          const ptByUnionId = await this.ptUserRepo.findByUnionId(
-            Platform.TENCENT_MEETING,
-            u.uuid,
-          );
+        const uId = await this.bitableService.safeUpsertMeetingUserRecord(u);
+        const recordingFile =
+          await this.recordingFileBitable.searchRecordingFileById(fileId);
 
-          const recording = await this.recordingRepo.find(meeting.id, file.id);
+        const rid = recordingFile.data?.items?.[0]?.record_id || '';
 
-          const summaries = await this.participantSummarySvc.generateSummaries({
-            recordId: recording?.id || '',
-            platformUserIds: [ptByUnionId?.id || ''],
-          });
-          const summary = summaries[ptByUnionId?.id || ''];
-
-          const uId = await this.bitableService.safeUpsertMeetingUserRecord(u);
-          const recordingFile =
-            await this.recordingFileBitable.searchRecordingFileById(file.id);
-
-          const rid = recordingFile.data?.items?.[0]?.record_id || '';
-
-          // 保存参会者总结到number_record表，填入记录id
-          await this.numberRecordBitable.upsertNumberRecord({
-            meet_participant: [uId],
-            participant_summary: summary || '',
-            record_file: [rid],
-          });
-        }
+        await this.numberRecordBitable.upsertNumberRecord({
+          meet_participant: [uId],
+          participant_summary: summary || '',
+          record_file: [rid],
+        });
       }
     }
   }

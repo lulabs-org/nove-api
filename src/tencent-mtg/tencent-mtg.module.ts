@@ -20,7 +20,6 @@ import { TencentMtgSyncService } from './services/tencent-mtg-sync.service';
 import { TencentMtgUserLinkService } from './services/tencent-mtg-user-link.service';
 
 import {
-  RecordingDataFetcherService,
   TencentEventHandlerService,
   MeetingBitableService,
   TencentMtgMeetingCoreService,
@@ -77,7 +76,6 @@ import {
     MeetingBitableService,
 
     SpeakerService,
-    RecordingDataFetcherService,
     ParticipantSummaryBitableService,
     MeetingParticipantService,
 
