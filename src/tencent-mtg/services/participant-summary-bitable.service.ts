@@ -15,7 +15,7 @@ import { PrismaService } from '@/prisma/prisma.service';
 import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
 import { ParticipantDetail } from '@/integrations/tencent-meeting/types';
 import { ParticipantSummaryService } from '@/meeting/services';
-import { MeetingBitableService } from '../services';
+import { MeetingBitableService } from './meeting-bitable.service';
 import {
   NumberRecordBitableRepository,
   RecordingFileBitableRepository,
@@ -32,7 +32,7 @@ export class ParticipantSummaryBitableService {
     private readonly bitableService: MeetingBitableService,
     private readonly numberRecordBitable: NumberRecordBitableRepository,
     private readonly recordingFileBitable: RecordingFileBitableRepository,
-  ) { }
+  ) {}
 
   async processSummary(
     recordingId: string,

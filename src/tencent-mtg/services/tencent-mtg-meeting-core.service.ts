@@ -195,19 +195,9 @@ export class TencentMtgMeetingCoreService {
   // 从 Webhook 录制数据入库
   // ==========================================
   async upsertRecordingFromWebhook(
-    meetid: string,
-    subid: string,
+    meeting: Meeting,
     externalId: string,
   ): Promise<MeetingRecording> {
-    const meeting = await this.meetingRepo.findByPt(
-      Platform.TENCENT_MEETING,
-      meetid,
-      subid || '__ROOT__',
-    );
-    if (!meeting) {
-      throw new Error('Meeting not found');
-    }
-
     return await this.recordingRepo.upsert({
       meetingId: meeting.id,
       externalId,

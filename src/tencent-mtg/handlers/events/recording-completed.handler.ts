@@ -59,7 +59,7 @@ export class RecordingCompletedHandler extends BaseEventHandler {
     // 延迟 2 分钟：由于腾讯会议的录制转写完成 webhook 触发时，
     // 其接口的数据有时还处于最终落盘中，直接请求可能获取不到最完整的纪要/转写或参会人，
     // 因此这里特意延迟 120 秒，以保证后续接口调用能够拿到全量数据。
-    await new Promise((resolve) => setTimeout(resolve, 120000));
+    // await new Promise((resolve) => setTimeout(resolve, 120000));
 
     const { meeting_info, recording_files = [] } = payload;
     const { meeting_id, sub_meeting_id, creator } = meeting_info;
@@ -69,10 +69,18 @@ export class RecordingCompletedHandler extends BaseEventHandler {
       return;
     }
 
+    // 0. 优先获取本地 Meeting 记录（如果不存在则新建）
+    // 这一步必须最先执行，因为后续的所有关联操作（记录行为、拉取转写、推飞书）
+    // 都需要一个确定的本地 meeting.id 作为外键。
+    const meeting = await this.meetingCoreSvc.upsertMeetingFromWebhook(
+      payload,
+      this.SUPPORTED_EVENT,
+    );
+
     let uniqueParticipants: ParticipantDetail[] | undefined;
     let rawParticipants: ParticipantDetail[] | undefined;
 
-    // 0. 提前向腾讯会议拉取本场会议的参会者明细
+    // 1. 提前向腾讯会议拉取本场会议的参会者明细
     // 我们需要这两份数据：
     // - deduplicated: 用于匹配说话人、生成个人总结以及绑定飞书记录。
     // - original: 保留了每次进出的时间戳，用于写入用户的行为日志 (JOIN/LEAVE)。
@@ -96,14 +104,6 @@ export class RecordingCompletedHandler extends BaseEventHandler {
       return;
     }
 
-    // 1. 优先获取本地 Meeting 记录（如果不存在则新建）
-    // 这一步必须最先执行，因为后续的所有关联操作（记录行为、拉取转写、推飞书）
-    // 都需要一个确定的本地 meeting.id 作为外键。
-    const meeting = await this.meetingCoreSvc.upsertMeetingFromWebhook(
-      payload,
-      this.SUPPORTED_EVENT,
-    );
-
     // 2. 基础数据同步：同步参会者行为与本地平台用户表
     // 将参会者的 JOIN/LEAVE 行为落库，并更新他们的总参会时长
     await this.participantSvc.syncParticipants(meeting, rawParticipants!);
@@ -117,8 +117,7 @@ export class RecordingCompletedHandler extends BaseEventHandler {
 
       // 3.1 确保录制文件本身在数据库中存在记录
       const recording = await this.meetingCoreSvc.upsertRecordingFromWebhook(
-        meeting_id,
-        sub_meeting_id || '__ROOT__',
+        meeting,
         file.record_file_id,
       );
 
@@ -146,23 +145,23 @@ export class RecordingCompletedHandler extends BaseEventHandler {
 
       // 4. 将上述已经落库（Prisma）的最新的纪要和转写数据，组装并推送到飞书 Bitable
       // 注意：此处的服务已改造为直接查数据库，所以必须放在 summaryCoreSvc 和 transcriptCoreSvc 之后
-      await this.bitableService.upsertRecording(
-        meeting.id,
-        meeting_info.subject || '',
-        sub_meeting_id || '__ROOT__',
-        meeting_info.start_time || 0,
-        meeting_info.end_time || 0,
-        recording.id,
-        file.record_file_id,
-      );
+      // await this.bitableService.upsertRecording(
+      //   meeting.id,
+      //   meeting_info.subject || '',
+      //   sub_meeting_id || '__ROOT__',
+      //   meeting_info.start_time || 0,
+      //   meeting_info.end_time || 0,
+      //   recording.id,
+      //   file.record_file_id,
+      // );
 
       // 5. 生成个人专属总结，并推送到飞书
       // 遍历 uniqueParticipants，如果是发言人，则调用大模型为他们生成个人总结
-      await this.participantSummaryBitableSvc.processSummary(
-        recording.id,
-        file.record_file_id,
-        uniqueParticipants,
-      );
+      // await this.participantSummaryBitableSvc.processSummary(
+      //   recording.id,
+      //   file.record_file_id,
+      //   uniqueParticipants,
+      // );
     }
   }
 }
