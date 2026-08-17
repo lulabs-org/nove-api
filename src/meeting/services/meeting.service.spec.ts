@@ -2,6 +2,7 @@ import { MeetingPlatform, MeetingType, ProcessingStatus } from '@prisma/client';
 import { MeetingRepository } from '../repositories/meeting.repository';
 import { MeetingParticipantRepository } from '../repositories/meeting-participant.repository';
 import { MeetingService } from './meeting.service';
+import { MeetingRecordNotFoundException } from '../exceptions/meeting.exceptions';
 
 describe('MeetingService', () => {
   const repository = {
@@ -12,6 +13,7 @@ describe('MeetingService', () => {
     softDelete: jest.fn(),
     get: jest.fn(),
     getStats: jest.fn(),
+    exists: jest.fn(),
   };
   const participantRepository = {
     findMany: jest.fn(),
@@ -75,7 +77,7 @@ describe('MeetingService', () => {
   });
 
   it('returns a paginated participant list after checking the meeting', async () => {
-    repository.findById.mockResolvedValue({ id: 'meeting-1' });
+    repository.exists.mockResolvedValue(true);
     participantRepository.findMany.mockResolvedValue({
       records: [{ id: 'participant-1' }],
       total: 1,
@@ -99,5 +101,14 @@ describe('MeetingService', () => {
       take: 20,
       search: '杨',
     });
+  });
+
+  it('rejects a participant query for a missing meeting', async () => {
+    repository.exists.mockResolvedValue(false);
+
+    await expect(
+      service.findParticipants('missing-meeting', { page: 1, limit: 50 }),
+    ).rejects.toBeInstanceOf(MeetingRecordNotFoundException);
+    expect(participantRepository.findMany).not.toHaveBeenCalled();
   });
 });
