@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Transform, Type } from 'class-transformer';
+import { Transform } from 'class-transformer';
 import {
   IsBoolean,
   IsEmail,
@@ -17,23 +17,53 @@ import {
 } from 'class-validator';
 import { Gender } from '@prisma/client';
 
-const trim = ({ value }: { value: unknown }) =>
-  typeof value === 'string' ? value.trim() : value;
+const trimToNull = ({ value }: { value: unknown }) => {
+  if (typeof value !== 'string') return value;
+  const trimmed = value.trim();
+  return trimmed === '' ? null : trimmed;
+};
 
-const trimLowercase = ({ value }: { value: unknown }) =>
-  typeof value === 'string' ? value.trim().toLowerCase() : value;
+const trimLowercaseToNull = ({ value }: { value: unknown }) => {
+  const trimmed = trimToNull({ value });
+  return typeof trimmed === 'string' ? trimmed.toLowerCase() : trimmed;
+};
+
+const trimToUndefined = ({ value }: { value: unknown }) => {
+  if (typeof value !== 'string') return value;
+  const trimmed = value.trim();
+  return trimmed === '' ? undefined : trimmed;
+};
+
+const queryNumber =
+  (defaultValue: number) =>
+  ({ value }: { value: unknown }) => {
+    const normalized = trimToUndefined({ value });
+    return normalized === undefined ? defaultValue : Number(normalized);
+  };
+
+const queryBoolean = ({ value }: { value: unknown }) => {
+  const normalized = trimToUndefined({ value });
+  if (normalized === 'true') return true;
+  if (normalized === 'false') return false;
+  return normalized;
+};
+
+const defaultQueryValue =
+  <T>(defaultValue: T) =>
+  ({ value }: { value: unknown }) =>
+    trimToUndefined({ value }) ?? defaultValue;
 
 export class QueryUsersDto {
   @ApiPropertyOptional({ default: 1 })
   @IsOptional()
-  @Type(() => Number)
+  @Transform(queryNumber(1))
   @IsInt()
   @Min(1)
   page = 1;
 
   @ApiPropertyOptional({ default: 20, maximum: 100 })
   @IsOptional()
-  @Type(() => Number)
+  @Transform(queryNumber(20))
   @IsInt()
   @Min(1)
   @Max(100)
@@ -41,15 +71,13 @@ export class QueryUsersDto {
 
   @ApiPropertyOptional({ description: '搜索用户名、邮箱、手机号或显示名称' })
   @IsOptional()
-  @Transform(trim)
+  @Transform(trimToUndefined)
   @IsString()
   keyword?: string;
 
   @ApiPropertyOptional({ description: '是否启用' })
   @IsOptional()
-  @Transform(({ value }: { value: unknown }) =>
-    value === 'true' ? true : value === 'false' ? false : value,
-  )
+  @Transform(queryBoolean)
   @IsBoolean()
   active?: boolean;
 
@@ -58,12 +86,14 @@ export class QueryUsersDto {
     enum: ['createdAt', 'updatedAt', 'lastLoginAt', 'username', 'email'],
   })
   @IsOptional()
+  @Transform(defaultQueryValue('createdAt'))
   @IsIn(['createdAt', 'updatedAt', 'lastLoginAt', 'username', 'email'])
   sortBy: 'createdAt' | 'updatedAt' | 'lastLoginAt' | 'username' | 'email' =
     'createdAt';
 
   @ApiPropertyOptional({ enum: ['asc', 'desc'], default: 'desc' })
   @IsOptional()
+  @Transform(defaultQueryValue('desc'))
   @IsIn(['asc', 'desc'])
   sortOrder: 'asc' | 'desc' = 'desc';
 }
@@ -75,7 +105,7 @@ export class CreateAdminUserDto {
     nullable: true,
   })
   @IsOptional()
-  @Transform(trim)
+  @Transform(trimToNull)
   @IsString()
   @MaxLength(50)
   @Matches(/^[a-zA-Z0-9_]+$/, { message: '用户名只能包含字母、数字和下划线' })
@@ -87,7 +117,7 @@ export class CreateAdminUserDto {
     nullable: true,
   })
   @IsOptional()
-  @Transform(trimLowercase)
+  @Transform(trimLowercaseToNull)
   @IsEmail()
   @MaxLength(255)
   email?: string | null;
@@ -99,7 +129,7 @@ export class CreateAdminUserDto {
     nullable: true,
   })
   @IsOptional()
-  @Transform(trim)
+  @Transform(trimToNull)
   @Matches(/^\+?\d{1,4}$/, { message: '国家代码格式不正确' })
   countryCode?: string | null;
 
@@ -109,7 +139,7 @@ export class CreateAdminUserDto {
     nullable: true,
   })
   @IsOptional()
-  @Transform(trim)
+  @Transform(trimToNull)
   @Matches(/^[\d\s()-]+$/, { message: '手机号格式不正确' })
   @MaxLength(30)
   phone?: string | null;
@@ -120,7 +150,7 @@ export class CreateAdminUserDto {
     nullable: true,
   })
   @IsOptional()
-  @Transform(trim)
+  @Transform(trimToNull)
   @IsString()
   @MaxLength(100)
   displayName?: string | null;
@@ -131,7 +161,7 @@ export class CreateAdminUserDto {
     nullable: true,
   })
   @IsOptional()
-  @Transform(trim)
+  @Transform(trimToNull)
   @IsUrl({}, { message: '头像 URL 格式不正确' })
   @MaxLength(500)
   avatar?: string | null;
@@ -142,21 +172,21 @@ export class CreateAdminUserDto {
     nullable: true,
   })
   @IsOptional()
-  @Transform(trim)
+  @Transform(trimToNull)
   @IsString()
   @MaxLength(500)
   bio?: string | null;
 
   @ApiPropertyOptional({ description: '名', type: String, nullable: true })
   @IsOptional()
-  @Transform(trim)
+  @Transform(trimToNull)
   @IsString()
   @MaxLength(100)
   firstName?: string | null;
 
   @ApiPropertyOptional({ description: '姓', type: String, nullable: true })
   @IsOptional()
-  @Transform(trim)
+  @Transform(trimToNull)
   @IsString()
   @MaxLength(100)
   lastName?: string | null;
@@ -168,11 +198,13 @@ export class CreateAdminUserDto {
     nullable: true,
   })
   @IsOptional()
+  @Transform(trimToNull)
   @IsISO8601({ strict: true }, { message: '出生日期格式不正确' })
   dateOfBirth?: string | null;
 
   @ApiPropertyOptional({ enum: Gender, nullable: true, description: '性别' })
   @IsOptional()
+  @Transform(trimToNull)
   @IsEnum(Gender)
   gender?: Gender | null;
 
@@ -182,21 +214,21 @@ export class CreateAdminUserDto {
     nullable: true,
   })
   @IsOptional()
-  @Transform(trim)
+  @Transform(trimToNull)
   @IsString()
   @MaxLength(500)
   address?: string | null;
 
   @ApiPropertyOptional({ description: '城市', type: String, nullable: true })
   @IsOptional()
-  @Transform(trim)
+  @Transform(trimToNull)
   @IsString()
   @MaxLength(100)
   city?: string | null;
 
   @ApiPropertyOptional({ description: '国家', type: String, nullable: true })
   @IsOptional()
-  @Transform(trim)
+  @Transform(trimToNull)
   @IsString()
   @MaxLength(100)
   country?: string | null;
@@ -207,7 +239,7 @@ export class CreateAdminUserDto {
     nullable: true,
   })
   @IsOptional()
-  @Transform(trim)
+  @Transform(trimToNull)
   @IsString()
   @MaxLength(20)
   zipCode?: string | null;
@@ -218,13 +250,14 @@ export class CreateAdminUserDto {
     nullable: true,
   })
   @IsOptional()
-  @Transform(trim)
+  @Transform(trimToNull)
   @IsUrl({}, { message: '个人网站 URL 格式不正确' })
   @MaxLength(255)
   website?: string | null;
 
   @ApiPropertyOptional({ default: true })
   @IsOptional()
+  @Transform(trimToUndefined)
   @IsBoolean()
   active?: boolean;
 }
@@ -307,9 +340,47 @@ export class AdminUserDto {
   profile: AdminUserProfileDto | null;
 }
 
+export class AdminUserListItemDto {
+  @ApiProperty()
+  id: string;
+
+  @ApiPropertyOptional({ nullable: true, type: String })
+  username: string | null;
+
+  @ApiPropertyOptional({ nullable: true, type: String })
+  email: string | null;
+
+  @ApiPropertyOptional({ nullable: true, type: String })
+  countryCode: string | null;
+
+  @ApiPropertyOptional({ nullable: true, type: String })
+  phone: string | null;
+
+  @ApiPropertyOptional({ nullable: true, type: String })
+  displayName: string | null;
+
+  @ApiPropertyOptional({ nullable: true, type: String })
+  avatar: string | null;
+
+  @ApiProperty()
+  active: boolean;
+
+  @ApiProperty()
+  emailVerified: boolean;
+
+  @ApiProperty()
+  phoneVerified: boolean;
+
+  @ApiPropertyOptional({ nullable: true, type: String, format: 'date-time' })
+  lastLoginAt: Date | null;
+
+  @ApiProperty({ type: String, format: 'date-time' })
+  createdAt: Date;
+}
+
 export class AdminUserListResponseDto {
-  @ApiProperty({ type: [AdminUserDto] })
-  items: AdminUserDto[];
+  @ApiProperty({ type: [AdminUserListItemDto] })
+  items: AdminUserListItemDto[];
 
   @ApiProperty()
   total: number;
