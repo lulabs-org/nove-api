@@ -3,7 +3,10 @@ import { PrismaService } from '../../prisma/prisma.service';
 import type { GetMeetingRecordsParams } from '@/meeting/types';
 
 import { MeetingPlatform, Prisma } from '@prisma/client';
-import type { MeetingStatsResponseDto } from '../dto';
+import type {
+  MeetingListItemResponseDto,
+  MeetingStatsResponseDto,
+} from '../dto';
 
 const meetingResponseSelect = {
   id: true,
@@ -17,7 +20,6 @@ const meetingResponseSelect = {
   type: true,
   language: true,
   tags: true,
-  hostId: true,
   participantCount: true,
   scheduledStartAt: true,
   scheduledEndAt: true,
@@ -55,8 +57,30 @@ const meetingResponseSelect = {
   },
 } satisfies Prisma.MeetingSelect;
 
+const meetingListSelect = {
+  id: true,
+  title: true,
+  platform: true,
+  startAt: true,
+  endAt: true,
+  participantCount: true,
+  host: {
+    select: { id: true, displayName: true },
+  },
+  _count: {
+    select: {
+      participants: { where: { deletedAt: null } },
+      recordings: { where: { deletedAt: null } },
+    },
+  },
+} satisfies Prisma.MeetingSelect;
+
 type MeetingResponseRecord = Prisma.MeetingGetPayload<{
   select: typeof meetingResponseSelect;
+}>;
+
+type MeetingListRecord = Prisma.MeetingGetPayload<{
+  select: typeof meetingListSelect;
 }>;
 
 type UpdateMeetingRecordData = Prisma.MeetingUncheckedUpdateInput;
@@ -101,6 +125,19 @@ export class MeetingRepository {
       updatedAt: record.updatedAt,
       deletedAt: record.deletedAt,
       ...(includeRecordings ? { recordings: record.recordings } : {}),
+    };
+  }
+
+  private toListRecord(record: MeetingListRecord): MeetingListItemResponseDto {
+    return {
+      id: record.id,
+      title: record.title,
+      platform: record.platform,
+      startAt: record.startAt,
+      endAt: record.endAt,
+      host: record.host,
+      participantCount: record.participantCount ?? record._count.participants,
+      hasRecording: record._count.recordings > 0,
     };
   }
 
@@ -235,7 +272,7 @@ export class MeetingRepository {
    * Get meeting records list
    */
   async get(params: GetMeetingRecordsParams): Promise<{
-    records: any[];
+    records: MeetingListItemResponseDto[];
     total: number;
     page: number;
     limit: number;
@@ -293,23 +330,7 @@ export class MeetingRepository {
     const [records, total] = await Promise.all([
       this.prisma.meeting.findMany({
         where,
-        omit: {
-          metadata: true,
-        },
-        include: {
-          recordings: {
-            where: { deletedAt: null },
-            select: { id: true },
-          },
-          host: {
-            select: { id: true, displayName: true },
-          },
-          _count: {
-            select: {
-              participants: { where: { deletedAt: null } },
-            },
-          },
-        },
+        select: meetingListSelect,
         orderBy: {
           createdAt: 'desc',
         },
@@ -319,17 +340,10 @@ export class MeetingRepository {
       this.prisma.meeting.count({ where }),
     ]);
 
-    const recordsWithRecordingFlag = records.map(
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      ({ recordings, hostId, _count, ...record }) => ({
-        ...record,
-        participantCount: record.participantCount ?? _count?.participants,
-        hasRecording: recordings.length > 0,
-      }),
-    );
+    const listRecords = records.map((record) => this.toListRecord(record));
 
     return {
-      records: recordsWithRecordingFlag,
+      records: listRecords,
       total,
       page,
       limit,

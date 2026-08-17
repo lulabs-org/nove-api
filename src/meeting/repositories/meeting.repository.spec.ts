@@ -338,24 +338,30 @@ describe('MeetingRepository', () => {
     });
 
     it('should derive hasRecording from active recording records', async () => {
+      const startAt = new Date('2026-08-01T10:00:00.000Z');
+      const endAt = new Date('2026-08-01T11:00:00.000Z');
       (prismaService.meeting.findMany as jest.Mock).mockResolvedValue([
         {
           id: 'meeting-with-recording',
-          hostId: 'platform-user-1',
+          title: 'Meeting with recording',
+          platform: MeetingPlatform.TENCENT_MEETING,
+          startAt,
+          endAt,
           host: { id: 'platform-user-1', displayName: '杨仕明' },
-          hasRecording: false,
-          recordings: [{ id: 'recording-1' }],
           participantCount: null,
-          _count: { participants: 3 },
+          _count: { participants: 3, recordings: 1 },
+          description: 'must-not-leak-from-list',
         },
         {
           id: 'meeting-without-recording',
-          hostId: null,
+          title: 'Meeting without recording',
+          platform: MeetingPlatform.FEISHU,
+          startAt: null,
+          endAt: null,
           host: null,
-          hasRecording: true,
-          recordings: [],
           participantCount: 8,
-          _count: { participants: 2 },
+          _count: { participants: 2, recordings: 0 },
+          metadata: { mustNotLeak: true },
         },
       ]);
       (prismaService.meeting.count as jest.Mock).mockResolvedValue(2);
@@ -365,12 +371,20 @@ describe('MeetingRepository', () => {
       expect(result.records).toEqual([
         {
           id: 'meeting-with-recording',
+          title: 'Meeting with recording',
+          platform: MeetingPlatform.TENCENT_MEETING,
+          startAt,
+          endAt,
           host: { id: 'platform-user-1', displayName: '杨仕明' },
           participantCount: 3,
           hasRecording: true,
         },
         {
           id: 'meeting-without-recording',
+          title: 'Meeting without recording',
+          platform: MeetingPlatform.FEISHU,
+          startAt: null,
+          endAt: null,
           host: null,
           participantCount: 8,
           hasRecording: false,
@@ -378,22 +392,27 @@ describe('MeetingRepository', () => {
       ]);
       expect(prismaService.meeting.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          include: {
-            recordings: {
-              where: { deletedAt: null },
-              select: { id: true },
-            },
+          select: {
+            id: true,
+            title: true,
+            platform: true,
+            startAt: true,
+            endAt: true,
+            participantCount: true,
             host: {
               select: { id: true, displayName: true },
             },
             _count: {
               select: {
                 participants: { where: { deletedAt: null } },
+                recordings: { where: { deletedAt: null } },
               },
             },
           },
         }),
       );
+      expect(result.records[0]).not.toHaveProperty('description');
+      expect(result.records[1]).not.toHaveProperty('metadata');
     });
 
     it('should search by title or host display name', async () => {

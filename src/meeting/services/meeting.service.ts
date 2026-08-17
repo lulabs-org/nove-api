@@ -5,6 +5,7 @@ import { MeetingParticipantRepository } from '../repositories/meeting-participan
 import { GetMeetingRecordsParams } from '../types';
 import {
   MeetingRecordResponseDto,
+  MeetingListItemResponseDto,
   MeetingStatsResponseDto,
   CreateMeetingRecordDto,
   UpdateMeetingRecordDto,
@@ -33,7 +34,7 @@ export class MeetingService {
    * 获取会议记录列表
    */
   async findMany(params: GetMeetingRecordsParams): Promise<{
-    records: MeetingRecordResponseDto[];
+    records: MeetingListItemResponseDto[];
     total: number;
     page: number;
     limit: number;
