@@ -285,17 +285,21 @@ describe('Tencent Meeting Real API Integration Tests', () => {
           const meetingDetail: MeetingDetailResponse =
             await apiService.getMeetingDetail(meetingId, userId || '');
 
-          const meetingInfo =
-            meetingDetail.meeting_info_list?.[0] || meetingDetail;
+          const meetingInfo = meetingDetail.meeting_info_list?.[0];
+
+          expect(meetingInfo).toBeDefined();
+          if (!meetingInfo) {
+            throw new Error(
+              'Meeting detail response did not include meeting information',
+            );
+          }
 
           console.log('🏢 会议详情:', {
             meeting_id: meetingInfo.meeting_id,
             subject: meetingInfo.subject,
             start_time: meetingInfo.start_time,
-            creator: meetingDetail.creator,
           });
 
-          expect(meetingDetail).toBeDefined();
           expect(meetingInfo.meeting_id).toBe(meetingId);
           expect(meetingInfo.subject).toBeDefined();
         } else {

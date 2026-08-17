@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { SummaryService } from '@/integrations/tencent-meeting/services/meeting-summary.service';
-import { MeetingSummaryRepository } from '@/meeting/repositories/meeting-summary.repository';
+import { MeetingSummaryService } from '@/meeting/services/meeting-summary.service';
 import { GenerationMethod, ProcessingStatus } from '@prisma/client';
 
 @Injectable()
@@ -9,7 +9,7 @@ export class TencentMtgSummarySyncService {
 
   constructor(
     private readonly summaryService: SummaryService,
-    private readonly meetingSummaryRepo: MeetingSummaryRepository,
+    private readonly meetingSummaryService: MeetingSummaryService,
   ) {}
 
   /**
@@ -33,7 +33,7 @@ export class TencentMtgSummarySyncService {
       return;
     }
 
-    await this.meetingSummaryRepo.upsert({
+    await this.meetingSummaryService.upsert({
       meetingId: meetingId,
       recordingId: recordingId,
       content: content.fullSummary || '',

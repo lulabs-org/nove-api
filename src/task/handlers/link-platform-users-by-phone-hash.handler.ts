@@ -4,6 +4,7 @@ import { Job } from 'bullmq';
 import { PrismaService } from '@/prisma/prisma.service';
 import { ITaskHandler } from './task-handler.interface';
 import { TaskHandlerRegistry } from './task-handler.registry';
+import { UserPhoneHashRepository } from '@/user/repositories/user-phone-hash.repository';
 
 const DEFAULT_BATCH_SIZE = 500;
 const MAX_BATCH_SIZE = 2000;
@@ -24,6 +25,7 @@ export class LinkPlatformUsersByPhoneHashHandler
 
   constructor(
     private readonly prisma: PrismaService,
+    private readonly userPhoneHashRepo: UserPhoneHashRepository,
     private readonly registry: TaskHandlerRegistry,
   ) {}
 
@@ -76,7 +78,7 @@ export class LinkPlatformUsersByPhoneHashHandler
         hashesByPlatform.set(platformUser.platform, hashes);
       }
 
-      const phoneHashMappings = await this.prisma.userPhoneHash.findMany({
+      const phoneHashMappings = await this.userPhoneHashRepo.findMany({
         where: {
           OR: [...hashesByPlatform.entries()].map(
             ([mappingPlatform, hashes]) => ({

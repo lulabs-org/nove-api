@@ -35,19 +35,23 @@ export class TranscriptService {
 
   /**
    * 获取录音转写内容
+   * @param meetingId 会议ID
    * @param fileId 录制文件ID
    * @param userId 用户ID
    * @returns 包含原始响应、唯一用户名、格式化转写和关键词的结果
    */
-  async fetch(fileId: string, userId: string): Promise<TranscriptResult> {
+  async fetch(
+    meetingId: string,
+    fileId: string,
+    userId: string,
+  ): Promise<TranscriptResult> {
     const startTime = Date.now();
     const context = { fileId, userId };
 
     this.logger.log('开始获取录音转写', context);
 
     try {
-      // 获取转写数据
-      const res = await this.api.getTranscript(fileId, userId);
+      const res = await this.api.getTranscript(fileId, userId, 1, meetingId);
 
       if (!res?.minutes?.paragraphs) {
         return this.emptyResult;

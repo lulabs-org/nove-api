@@ -14,6 +14,7 @@ import { BaseEventHandler } from '../base/base-event.handler';
 import {
   RecordingCompletedPayload,
   MeetingRecordingContext,
+  RecordingDataFile,
 } from '../../types';
 import {
   MeetingParticipantService,
@@ -23,6 +24,8 @@ import {
   SummaryService,
   MeetingDatabaseService,
 } from '../../services';
+import { ParticipantService } from '@/integrations/tencent-meeting/services';
+import { ParticipantDetail } from '@/integrations/tencent-meeting/types';
 
 /**
  * 录制完成事件处理器
@@ -39,6 +42,7 @@ export class RecordingCompletedHandler extends BaseEventHandler {
     private readonly databaseSvc: MeetingDatabaseService,
     private readonly summarySvc: SummaryService,
     private readonly participantSvc: MeetingParticipantService,
+    private readonly tencentParticipantSvc: ParticipantService,
   ) {
     super();
   }
@@ -58,40 +62,67 @@ export class RecordingCompletedHandler extends BaseEventHandler {
     const { meeting_info, recording_files = [] } = payload;
     const { meeting_id, sub_meeting_id, creator } = meeting_info;
 
-    const fetchResult = await this.dataFetcher.fetch({
-      meetid: meeting_id,
-      cid: creator.userid || '',
-      subid: sub_meeting_id,
-      recordingFiles: recording_files.map((file) => ({
-        id: file.record_file_id,
-      })),
-    });
+    if (!meeting_id || !creator.userid) {
+      this.logger.warn('缺少必要参数: meetid 或 cid');
+      return;
+    }
 
-    const r: MeetingRecordingContext = {
+    let uniqueParticipants: ParticipantDetail[] | undefined;
+    let rawParticipants: ParticipantDetail[] | undefined;
+
+    try {
+      const res = await this.tencentParticipantSvc.list(
+        meeting_id,
+        creator.userid,
+        sub_meeting_id,
+      );
+      uniqueParticipants = res.deduplicated;
+      rawParticipants = res.original;
+      this.logger.log(`获取去重参会者成功: ${uniqueParticipants.length} 人`);
+    } catch (error) {
+      this.logger.error(
+        `获取去重参会者失败: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+
+    const processedFiles: RecordingDataFile[] = recording_files.map((file) => ({
+      id: file.record_file_id,
+    }));
+
+    await this.dataFetcher.processFiles(
+      processedFiles,
+      creator.userid,
+      meeting_id,
+      uniqueParticipants,
+    );
+
+    const context: MeetingRecordingContext = {
       meetid: meeting_id,
       subject: meeting_info.subject || '',
       start_time: meeting_info.start_time || 0,
       end_time: meeting_info.end_time || 0,
       subid: sub_meeting_id,
       cid: creator.userid || '',
-      deduplicated: fetchResult.deduplicated,
-      participants: fetchResult.participants,
-      recordingFiles: fetchResult.recordingFiles,
+      uniqueParticipants: uniqueParticipants,
+      rawParticipants: rawParticipants,
+      recordingFiles: processedFiles,
     };
 
-    if (!r.deduplicated) {
+    if (!context.uniqueParticipants) {
       this.logger.warn('获取参会者列表失败');
       return;
     }
 
-    await this.speakerSvc.syncPtUsers(r.deduplicated);
-    await this.participantSvc.syncParticipants(r);
-    await this.bitableService.safeUpsertMeetingUserRecords(r.deduplicated);
-    await this.bitableService.upsertRecording(r);
-    await this.databaseSvc.upsert(payload, this.SUPPORTED_EVENT);
-    await this.databaseSvc.upsertRecording(r);
-    await this.databaseSvc.upsertMeetingSummary(r);
-    await this.databaseSvc.upsertTranscript(r);
-    await this.summarySvc.processSummary(r);
+    await this.participantSvc.syncParticipants(context);
+    await this.bitableService.safeUpsertMeetingUserRecords(
+      context.uniqueParticipants,
+    );
+    await this.bitableService.upsertRecording(context);
+    await this.speakerSvc.syncPtUsers(context.uniqueParticipants);
+    await this.databaseSvc.upsertmeet(payload, this.SUPPORTED_EVENT);
+    await this.databaseSvc.upsertRecording(context);
+    await this.databaseSvc.upsertMeetingSummary(context);
+    await this.databaseSvc.upsertTranscript(context);
+    await this.summarySvc.processSummary(context);
   }
 }

@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { MeetingSummaryRepository } from '../repositories/meeting-summary.repository';
 import { MeetingSummaryNotFoundException } from '../exceptions/meeting.exceptions';
 import {
@@ -11,6 +12,10 @@ export class MeetingSummaryService {
   constructor(
     private readonly meetingSummaryRepository: MeetingSummaryRepository,
   ) {}
+
+  async upsert(data: Prisma.MeetingSummaryUncheckedCreateInput) {
+    return this.meetingSummaryRepository.upsert(data);
+  }
 
   async getByMeetingId(meetingId: string) {
     const summary =

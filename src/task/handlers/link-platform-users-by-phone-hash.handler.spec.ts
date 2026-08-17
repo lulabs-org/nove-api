@@ -5,6 +5,7 @@ import { Job } from 'bullmq';
 import { PrismaService } from '@/prisma/prisma.service';
 import { LinkPlatformUsersByPhoneHashHandler } from './link-platform-users-by-phone-hash.handler';
 import { TaskHandlerRegistry } from './task-handler.registry';
+import { UserPhoneHashRepository } from '@/user/repositories/user-phone-hash.repository';
 
 describe('LinkPlatformUsersByPhoneHashHandler', () => {
   let handler: LinkPlatformUsersByPhoneHashHandler;
@@ -13,11 +14,9 @@ describe('LinkPlatformUsersByPhoneHashHandler', () => {
       findMany: jest.Mock;
       updateMany: jest.Mock;
     };
-    userPhoneHash: {
-      findMany: jest.Mock;
-    };
     $transaction: jest.Mock;
   };
+  let userPhoneHashRepo: { findMany: jest.Mock };
   let registry: jest.Mocked<TaskHandlerRegistry>;
 
   beforeEach(async () => {
@@ -26,12 +25,12 @@ describe('LinkPlatformUsersByPhoneHashHandler', () => {
         findMany: jest.fn(),
         updateMany: jest.fn(),
       },
-      userPhoneHash: {
-        findMany: jest.fn(),
-      },
       $transaction: jest.fn(async (operations: Promise<unknown>[]) =>
         Promise.all(operations),
       ),
+    };
+    userPhoneHashRepo = {
+      findMany: jest.fn(),
     };
     registry = {
       register: jest.fn(),
@@ -41,6 +40,7 @@ describe('LinkPlatformUsersByPhoneHashHandler', () => {
       providers: [
         LinkPlatformUsersByPhoneHashHandler,
         { provide: PrismaService, useValue: prisma },
+        { provide: UserPhoneHashRepository, useValue: userPhoneHashRepo },
         { provide: TaskHandlerRegistry, useValue: registry },
       ],
     }).compile();
@@ -70,7 +70,7 @@ describe('LinkPlatformUsersByPhoneHashHandler', () => {
         },
       ])
       .mockResolvedValueOnce([]);
-    prisma.userPhoneHash.findMany.mockResolvedValue([
+    userPhoneHashRepo.findMany.mockResolvedValue([
       {
         platform: Platform.TENCENT_MEETING,
         hashValue: 'shared-hash',
@@ -111,7 +111,7 @@ describe('LinkPlatformUsersByPhoneHashHandler', () => {
         },
       ])
       .mockResolvedValueOnce([]);
-    prisma.userPhoneHash.findMany.mockResolvedValue([
+    userPhoneHashRepo.findMany.mockResolvedValue([
       {
         platform: Platform.FEISHU,
         hashValue: 'hash-1',

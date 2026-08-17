@@ -1,4 +1,5 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { UserPhoneHashRepository } from '@/user/repositories/user-phone-hash.repository';
 import { Job } from 'bullmq';
 import * as crypto from 'crypto';
 import { Platform } from '@prisma/client';
@@ -13,6 +14,7 @@ export class MigratePhoneHashesHandler implements ITaskHandler, OnModuleInit {
 
   constructor(
     private readonly prisma: PrismaService,
+    private readonly userPhoneHashRepo: UserPhoneHashRepository,
     private readonly registry: TaskHandlerRegistry,
   ) {}
 
@@ -58,22 +60,11 @@ export class MigratePhoneHashesHandler implements ITaskHandler, OnModuleInit {
       try {
         const hashValue = this.encryptPhone(user.phone);
 
-        await this.prisma.userPhoneHash.upsert({
-          where: {
-            userId_platform: {
-              userId: user.id,
-              platform: Platform.TENCENT_MEETING,
-            },
-          },
-          create: {
-            userId: user.id,
-            hashValue: hashValue,
-            platform: Platform.TENCENT_MEETING,
-          },
-          update: {
-            hashValue: hashValue,
-          },
-        });
+        await this.userPhoneHashRepo.upsertHash(
+          user.id,
+          Platform.TENCENT_MEETING,
+          hashValue,
+        );
 
         successCount++;
       } catch (error: unknown) {

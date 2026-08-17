@@ -46,12 +46,12 @@ export interface MeetingRecordingContext {
    * 经过去重处理后的参会者列表（用于生成有序的全局时间轴和统计）
    * 确保顺序反映实际发言时间，用于关联发言片段和生成准确的发言时间轴
    */
-  deduplicated?: ParticipantDetail[];
+  uniqueParticipants?: ParticipantDetail[];
   /**
    * 未经去重处理的参会者列表（用于记录所有进出记录，可能包含重复进出者）
    * 顺序不保证严格反映发言时间，主要用于简单的日志记录和进出事件统计
    */
-  participants?: ParticipantDetail[];
+  rawParticipants?: ParticipantDetail[];
   /** 录制文件数据集合 */
   recordingFiles?: RecordingDataFile[];
 }

@@ -11,14 +11,13 @@
 
 import { Injectable, Logger } from '@nestjs/common';
 import { NewSpeakerInfo } from '@/tencent-mtg-hook/types';
-import { Platform, PlatformUser, User } from '@prisma/client';
-import { UserQueryRepository } from '@/user/repositories/user-query.repository';
+import { Platform, PlatformUser } from '@prisma/client';
 import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
 import {
   SpeakerInfo,
   ParticipantDetail,
 } from '@/integrations/tencent-meeting/types';
-import { PrismaService } from '@/prisma/prisma.service';
+import { UserPhoneHashRepository } from '@/user/repositories/user-phone-hash.repository';
 
 @Injectable()
 export class SpeakerService {
@@ -26,8 +25,7 @@ export class SpeakerService {
 
   constructor(
     private readonly ptUserRepo: PlatformUserRepository,
-    private readonly userRepo: UserQueryRepository,
-    private readonly prisma: PrismaService,
+    private readonly userPhoneHashRepo: UserPhoneHashRepository,
   ) {}
 
   /**
@@ -186,162 +184,19 @@ export class SpeakerService {
 
   /**
    * Synchronizes Tencent Meeting participants to the local platform user database.
-   * Handles various scenarios of merging and linking platform users (Tencent Meeting users)
-   * with local registered users based on phone numbers and platform union IDs.
+   * Uses the UserPhoneHash table to directly link platform users to local users.
    *
    * @param uniqueParticipants Array of unique participant details from the meeting
    */
   async syncPtUsers(uniqueParticipants: ParticipantDetail[]): Promise<void> {
-    const countryCode = '+86';
-
-    try {
-      for (const participant of uniqueParticipants) {
-        if (participant.phone && participant.userid === '') {
-          // 1. Check for an existing unlinked platform user by phone hash
-          const ptByPhone =
-            await this.ptUserRepo.findByPhoneHashWithoutLocalUser(
-              Platform.TENCENT_MEETING,
-              countryCode,
-              participant.phone,
-            );
-
-          let userByPhone: User | null = null;
-
-          // 2. If we found an unlinked platform user with a decrypted phone, find the corresponding local user
-          if (ptByPhone?.phone) {
-            userByPhone = await this.userRepo.byPhone(
-              countryCode,
-              ptByPhone.phone,
-            );
-          }
-
-          // 3. Find platform user by their unique Tencent Meeting union ID (uuid)
-          const ptByUnionId = await this.ptUserRepo.findByUnionId(
-            Platform.TENCENT_MEETING,
-            participant.uuid,
-          );
-
-          // Scenario A: Found an unlinked phone record and a local user, but no union ID record exists yet.
-          // Action: Update the phone record with the new union ID (ptUserId) and link it to the local user.
-          if (ptByPhone && !ptByUnionId && userByPhone) {
-            await this.ptUserRepo.update(ptByPhone.id, {
-              ptUserId: participant.userid,
-              displayName: participant.user_name,
-              phoneHash: participant.phone,
-              phone: ptByPhone.phone,
-              localUserId: userByPhone.id,
-            });
-          }
-
-          // Scenario B: Found both an unlinked phone record and a union ID record, plus a local user.
-          // Action: Merge them by updating the union ID record with the phone/user info, and delete the redundant phone record.
-          if (ptByPhone && ptByUnionId && userByPhone) {
-            const updatedPtByUnionId = await this.ptUserRepo.update(
-              ptByUnionId.id,
-              {
-                ptUserId: participant.userid,
-                displayName: participant.user_name,
-                phoneHash: participant.phone,
-                countryCode,
-                phone: ptByPhone.phone,
-                localUserId: userByPhone.id,
-              },
-            );
-
-            if (updatedPtByUnionId) {
-              await this.ptUserRepo.deleteById(ptByPhone.id);
-            }
-          }
-
-          // Scenario C: No existing records found for this phone or union ID.
-          // Action: Create a new platform user record with the available info.
-          if (!ptByPhone && !ptByUnionId) {
-            await this.ptUserRepo.upsert(
-              {
-                platform: Platform.TENCENT_MEETING,
-                ptUnionId: participant.uuid,
-              },
-              {
-                ptUserId: participant.userid,
-                displayName: participant.user_name,
-                phoneHash: participant.phone,
-              },
-            );
-          }
-
-          // Scenario D: Found a union ID record, but the unlinked phone check didn't yield results (ptByPhone is null).
-          // Action: Check if there's a platform record for this phone that is *already linked* to a user.
-          // If found, and it belongs to a local user, update our union ID record to link to that same local user.
-          if (!ptByPhone && ptByUnionId && !userByPhone) {
-            const ptByPhoneHasUser = await this.ptUserRepo.findByPhoneHash(
-              Platform.TENCENT_MEETING,
-              countryCode,
-              participant.phone,
-            );
-
-            // If the record we found is already the one we are processing, do nothing
-            if (ptByPhoneHasUser?.ptUnionId === participant.uuid) {
-              continue;
-            }
-
-            if (ptByPhoneHasUser?.phone) {
-              const userByPhoneHasUser = await this.userRepo.byPhone(
-                countryCode,
-                ptByPhoneHasUser.phone,
-              );
-
-              if (userByPhoneHasUser) {
-                await this.ptUserRepo.update(ptByUnionId.id, {
-                  ptUserId: participant.userid,
-                  displayName: participant.user_name,
-                  phoneHash: participant.phone,
-                  countryCode,
-                  phone: ptByPhoneHasUser.phone,
-                  localUserId: userByPhoneHasUser.id,
-                });
-              }
-            }
-          }
-        }
-
-        // Scenario E: Participant does not need complex phone mapping
-        // Action: Upsert their platform user record using only their union ID and basic info.
-        if (!(participant.phone && participant.userid === '')) {
-          await this.ptUserRepo.upsert(
-            {
-              platform: Platform.TENCENT_MEETING,
-              ptUnionId: participant.uuid,
-            },
-            {
-              ptUserId: participant.userid,
-              displayName: participant.user_name,
-              phoneHash: participant.phone,
-            },
-          );
-        }
-      }
-    } catch (error) {
-      this.logger.error('Error processing unique participants:', error);
-    }
-  }
-
-  /**
-   * Synchronizes Tencent Meeting participants to the local platform user database (Simplified version).
-   * Uses the new UserPhoneHash table to directly link platform users to local users.
-   *
-   * @param uniqueParticipants Array of unique participant details from the meeting
-   */
-  async syncPtUsersV2(uniqueParticipants: ParticipantDetail[]): Promise<void> {
     try {
       for (const participant of uniqueParticipants) {
         let localUserId: string | undefined;
 
         if (participant.phone && participant.userid === '') {
-          const userPhoneHash = await this.prisma.userPhoneHash.findUnique({
-            where: {
-              hashValue: participant.phone,
-            },
-          });
+          const userPhoneHash = await this.userPhoneHashRepo.findByHash(
+            participant.phone,
+          );
 
           if (userPhoneHash) {
             localUserId = userPhoneHash.userId;
@@ -362,7 +217,7 @@ export class SpeakerService {
         );
       }
     } catch (error) {
-      this.logger.error('Error processing unique participants in V2:', error);
+      this.logger.error('Error processing unique participants:', error);
     }
   }
 }

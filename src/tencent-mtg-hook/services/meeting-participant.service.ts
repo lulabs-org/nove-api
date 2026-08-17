@@ -41,7 +41,7 @@ export class MeetingParticipantService {
    */
   async syncParticipants(r: MeetingRecordingContext): Promise<void> {
     // 1. 基础校验：如果没有参会者数据，直接返回
-    if (!r.participants || r.participants.length === 0) {
+    if (!r.rawParticipants || r.rawParticipants.length === 0) {
       return;
     }
 
@@ -62,7 +62,7 @@ export class MeetingParticipantService {
     // 3. 按用户 uuid 将多条参会片段进行分组
     // segmentsByUuid 的结构: { '用户uuid': [片段1, 片段2, ...] }
     const segmentsByUuid = new Map<string, ParticipantDetail[]>();
-    for (const p of r.participants) {
+    for (const p of r.rawParticipants) {
       if (!p.uuid) continue; // 过滤掉没有 uuid 的非法/匿名记录
 
       let segments = segmentsByUuid.get(p.uuid);
