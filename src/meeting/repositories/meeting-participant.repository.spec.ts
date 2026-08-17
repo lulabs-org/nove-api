@@ -32,7 +32,21 @@ describe('MeetingParticipantRepository', () => {
         firstJoinTime: null,
         lastLeaveTime: null,
         totalDurationSeconds: 600,
-        ptUser: { id: 'platform-user-1', displayName: '杨仕明' },
+        ptUser: {
+          id: 'platform-user-1',
+          platform: 'TENCENT_MEETING',
+          ptUserId: 'tencent-user-1',
+          displayName: '平台昵称',
+          avatarUrl: null,
+          user: {
+            id: 'user-1',
+            username: 'yangshiming',
+            email: 'user@example.com',
+            countryCode: '+86',
+            phone: '13800138000',
+            profile: { displayName: '杨仕明', avatar: 'avatar.png' },
+          },
+        },
       },
     ]);
     prisma.meetingParticipant.count.mockResolvedValue(1);
@@ -58,10 +72,54 @@ describe('MeetingParticipantRepository', () => {
       records: [
         expect.objectContaining({
           id: 'participant-1',
-          user: { id: 'platform-user-1', displayName: '杨仕明' },
+          platformUser: expect.objectContaining({
+            id: 'platform-user-1',
+            displayName: '平台昵称',
+          }),
+          user: expect.objectContaining({
+            id: 'user-1',
+            profile: { displayName: '杨仕明', avatar: 'avatar.png' },
+          }),
         }),
       ],
       total: 1,
     });
+    expect(result.records[0]).not.toHaveProperty('ptUserId');
+    expect(result.records[0]).not.toHaveProperty('platformUserId');
+    expect(result.records[0].platformUser).not.toHaveProperty('ptUserId');
+  });
+
+  it('returns platform identity when no local user is linked', async () => {
+    prisma.meetingParticipant.findMany.mockResolvedValue([
+      {
+        id: 'participant-1',
+        meetingId: 'meeting-1',
+        ptUserId: 'platform-user-1',
+        firstJoinTime: null,
+        lastLeaveTime: null,
+        totalDurationSeconds: 60,
+        ptUser: {
+          id: 'platform-user-1',
+          platform: 'TENCENT_MEETING',
+          ptUserId: 'tencent-user-1',
+          displayName: '未绑定用户',
+          avatarUrl: null,
+          user: null,
+        },
+      },
+    ]);
+    prisma.meetingParticipant.count.mockResolvedValue(1);
+
+    const result = await repository.findMany('meeting-1', {
+      skip: 0,
+      take: 50,
+    });
+
+    expect(result.records[0]).toEqual(
+      expect.objectContaining({
+        platformUser: expect.objectContaining({ id: 'platform-user-1' }),
+        user: null,
+      }),
+    );
   });
 });

@@ -57,6 +57,18 @@ describe('MeetingRepository', () => {
     expect(repository).toBeDefined();
   });
 
+  it('checks meeting existence without loading meeting details', async () => {
+    (prismaService.meeting.findUnique as jest.Mock).mockResolvedValue({
+      id: 'meeting-1',
+    });
+
+    await expect(repository.exists('meeting-1')).resolves.toBe(true);
+    expect(prismaService.meeting.findUnique).toHaveBeenCalledWith({
+      where: { id: 'meeting-1', deletedAt: null },
+      select: { id: true },
+    });
+  });
+
   describe('upsertMeetingRecord', () => {
     const platform = MeetingPlatform.TENCENT_MEETING;
     const platformMeetingId = 'test-meeting-123';

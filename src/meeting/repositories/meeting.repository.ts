@@ -196,6 +196,15 @@ export class MeetingRepository {
     return record ? this.toResponseRecord(record) : null;
   }
 
+  async exists(id: string): Promise<boolean> {
+    const record = await this.prisma.meeting.findUnique({
+      where: { id, deletedAt: null },
+      select: { id: true },
+    });
+
+    return record !== null;
+  }
+
   /**
    * Create meeting record
    */

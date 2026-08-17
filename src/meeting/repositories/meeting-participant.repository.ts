@@ -59,6 +59,24 @@ export class MeetingParticipantRepository {
                 { email: { contains: search, mode: 'insensitive' } },
                 { phone: { contains: search, mode: 'insensitive' } },
                 { ptUserId: { contains: search, mode: 'insensitive' } },
+                {
+                  user: {
+                    deletedAt: null,
+                    OR: [
+                      { username: { contains: search, mode: 'insensitive' } },
+                      { email: { contains: search, mode: 'insensitive' } },
+                      { phone: { contains: search, mode: 'insensitive' } },
+                      {
+                        profile: {
+                          displayName: {
+                            contains: search,
+                            mode: 'insensitive',
+                          },
+                        },
+                      },
+                    ],
+                  },
+                },
               ],
             },
           }
@@ -74,7 +92,6 @@ export class MeetingParticipantRepository {
         select: {
           id: true,
           meetingId: true,
-          ptUserId: true,
           firstJoinTime: true,
           lastLeaveTime: true,
           totalDurationSeconds: true,
@@ -82,12 +99,23 @@ export class MeetingParticipantRepository {
             select: {
               id: true,
               platform: true,
-              ptUserId: true,
               displayName: true,
               avatarUrl: true,
-              email: true,
-              countryCode: true,
-              phone: true,
+              user: {
+                select: {
+                  id: true,
+                  username: true,
+                  email: true,
+                  countryCode: true,
+                  phone: true,
+                  profile: {
+                    select: {
+                      displayName: true,
+                      avatar: true,
+                    },
+                  },
+                },
+              },
             },
           },
         },
@@ -96,10 +124,22 @@ export class MeetingParticipantRepository {
     ]);
 
     return {
-      records: records.map(({ ptUser, ...record }) => ({
-        ...record,
-        user: ptUser,
-      })),
+      records: records.map((record) => {
+        const commonFields = {
+          id: record.id,
+          meetingId: record.meetingId,
+          firstJoinTime: record.firstJoinTime,
+          lastLeaveTime: record.lastLeaveTime,
+          totalDurationSeconds: record.totalDurationSeconds,
+        };
+        const { ptUser } = record;
+        if (!ptUser) {
+          return { ...commonFields, platformUser: null, user: null };
+        }
+
+        const { user, ...platformUser } = ptUser;
+        return { ...commonFields, platformUser, user };
+      }),
       total,
     };
   }

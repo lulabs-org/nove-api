@@ -58,7 +58,9 @@ export class MeetingService {
     id: string,
     query: QueryMeetingParticipantsDto,
   ): Promise<MeetingParticipantListResponseDto> {
-    await this.findById(id);
+    if (!(await this.meetingRepository.exists(id))) {
+      throw new MeetingRecordNotFoundException(id);
+    }
     const page = query.page ?? 1;
     const limit = query.limit ?? 50;
     const { records, total } = await this.meetingParticipantRepository.findMany(

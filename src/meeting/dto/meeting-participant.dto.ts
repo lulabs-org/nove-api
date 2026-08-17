@@ -27,21 +27,34 @@ export class QueryMeetingParticipantsDto {
   search?: string;
 }
 
-export class MeetingParticipantUserDto {
-  @ApiProperty({ description: '平台用户 ID' })
+export class MeetingParticipantPlatformUserDto {
+  @ApiProperty({ description: '平台用户记录 ID（本系统主键）' })
   id: string;
 
   @ApiProperty({ description: '平台', enum: Platform })
   platform: Platform;
-
-  @ApiPropertyOptional({ description: '平台侧用户 ID', nullable: true })
-  ptUserId: string | null;
 
   @ApiPropertyOptional({ description: '显示名称', nullable: true })
   displayName: string | null;
 
   @ApiPropertyOptional({ description: '头像', nullable: true })
   avatarUrl: string | null;
+}
+
+export class MeetingParticipantUserProfileDto {
+  @ApiPropertyOptional({ description: '用户资料显示名', nullable: true })
+  displayName: string | null;
+
+  @ApiPropertyOptional({ description: '用户资料头像', nullable: true })
+  avatar: string | null;
+}
+
+export class MeetingParticipantUserDto {
+  @ApiProperty({ description: '本地用户 ID（users.id）' })
+  id: string;
+
+  @ApiPropertyOptional({ description: '登录用户名', nullable: true })
+  username: string | null;
 
   @ApiPropertyOptional({ description: '邮箱', nullable: true })
   email: string | null;
@@ -51,6 +64,12 @@ export class MeetingParticipantUserDto {
 
   @ApiPropertyOptional({ description: '手机号', nullable: true })
   phone: string | null;
+
+  @ApiPropertyOptional({
+    type: MeetingParticipantUserProfileDto,
+    nullable: true,
+  })
+  profile: MeetingParticipantUserProfileDto | null;
 }
 
 export class MeetingParticipantDto {
@@ -59,9 +78,6 @@ export class MeetingParticipantDto {
 
   @ApiProperty({ description: '会议 ID' })
   meetingId: string;
-
-  @ApiPropertyOptional({ description: '平台用户记录 ID', nullable: true })
-  ptUserId: string | null;
 
   @ApiPropertyOptional({ description: '首次入会时间', nullable: true })
   firstJoinTime: Date | null;
@@ -72,7 +88,17 @@ export class MeetingParticipantDto {
   @ApiPropertyOptional({ description: '累计参会时长（秒）', nullable: true })
   totalDurationSeconds: number | null;
 
-  @ApiPropertyOptional({ type: MeetingParticipantUserDto, nullable: true })
+  @ApiPropertyOptional({
+    type: MeetingParticipantPlatformUserDto,
+    nullable: true,
+  })
+  platformUser: MeetingParticipantPlatformUserDto | null;
+
+  @ApiPropertyOptional({
+    description: '关联的本地用户，平台用户未绑定时为 null',
+    type: MeetingParticipantUserDto,
+    nullable: true,
+  })
   user: MeetingParticipantUserDto | null;
 }
 
