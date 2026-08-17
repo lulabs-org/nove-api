@@ -108,8 +108,8 @@ export class RecordingCompletedHandler extends BaseEventHandler {
     // 将参会者的 JOIN/LEAVE 行为落库，并更新他们的总参会时长
     await this.participantSvc.syncParticipants(meeting, rawParticipants!);
     // 确保参会者在我们的用户表中存在，并推送到飞书的人员表格中
-    await this.bitableService.safeUpsertMeetingUserRecords(uniqueParticipants);
-    await this.speakerSvc.syncPtUsers(uniqueParticipants);
+    // await this.bitableService.safeUpsertMeetingUserRecords(uniqueParticipants);
+    // await this.speakerSvc.syncPtUsers(uniqueParticipants);
 
     // 3. 循环处理每一个录音文件 (一场会议可能会被分段录制出多个文件)
     for (const file of recording_files) {
@@ -159,7 +159,6 @@ export class RecordingCompletedHandler extends BaseEventHandler {
       // 5. 生成个人专属总结，并推送到飞书
       // 遍历 uniqueParticipants，如果是发言人，则调用大模型为他们生成个人总结
       await this.participantSummaryBitableSvc.processSummary(
-        meeting.id,
         recording.id,
         file.record_file_id,
         uniqueParticipants,

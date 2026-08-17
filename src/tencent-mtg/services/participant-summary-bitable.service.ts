@@ -14,8 +14,6 @@ import { Platform } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
 import { ParticipantDetail } from '@/integrations/tencent-meeting/types';
-import { MeetingRepository } from '@/meeting/repositories/meeting.repository';
-import { MeetingRecordingRepository } from '@/meeting/repositories';
 import { ParticipantSummaryService } from '@/meeting/services';
 import { MeetingBitableService } from '../services';
 import {
@@ -30,16 +28,13 @@ export class ParticipantSummaryBitableService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly ptUserRepo: PlatformUserRepository,
-    private readonly recordingRepo: MeetingRecordingRepository,
-    private readonly meetingRepo: MeetingRepository,
     private readonly participantSummarySvc: ParticipantSummaryService,
     private readonly bitableService: MeetingBitableService,
     private readonly numberRecordBitable: NumberRecordBitableRepository,
     private readonly recordingFileBitable: RecordingFileBitableRepository,
-  ) {}
+  ) { }
 
   async processSummary(
-    meetingId: string,
     recordingId: string,
     fileId: string,
     uniqueParticipants: ParticipantDetail[],
