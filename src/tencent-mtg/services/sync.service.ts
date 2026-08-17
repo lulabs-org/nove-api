@@ -9,9 +9,9 @@ import type {
   RecordMeeting,
   RecordFile,
 } from '@/integrations/tencent-meeting/types';
-import { TencentMtgMeetingCoreService } from './tencent-mtg-meeting-core.service';
-import { TencentMtgTranscriptCoreService } from './tencent-mtg-transcript-core.service';
-import { TencentMtgSummaryCoreService } from './tencent-mtg-summary-core.service';
+import { TencentMtgMeetingCoreService } from './meeting-core.service';
+import { TencentMtgTranscriptCoreService } from './transcript-core.service';
+import { TencentMtgSummaryCoreService } from './summary-core.service';
 
 @Injectable()
 export class TencentMtgSyncService {

@@ -16,8 +16,8 @@ import { TencentWebhookController } from './controllers/tencent-webhook.controll
 
 import { TencentMtgSyncProcessor } from './processors/tencent-mtg-sync.processor';
 
-import { TencentMtgSyncService } from './services/tencent-mtg-sync.service';
-import { TencentMtgUserLinkService } from './services/tencent-mtg-user-link.service';
+import { TencentMtgSyncService } from './services/sync.service';
+import { TencentMtgUserLinkService } from './services/user-link.service';
 
 import {
   TencentEventHandlerService,

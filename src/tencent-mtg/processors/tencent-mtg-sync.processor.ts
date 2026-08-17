@@ -1,7 +1,7 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
-import { TencentMtgSyncService } from '../services/tencent-mtg-sync.service';
+import { TencentMtgSyncService } from '../services/sync.service';
 
 interface SyncJobData {
   startTime: number;

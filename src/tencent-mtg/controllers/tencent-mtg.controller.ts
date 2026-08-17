@@ -14,8 +14,8 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
-import { TencentMtgSyncService } from '../services/tencent-mtg-sync.service';
-import { TencentMtgUserLinkService } from '../services/tencent-mtg-user-link.service';
+import { TencentMtgSyncService } from '../services/sync.service';
+import { TencentMtgUserLinkService } from '../services/user-link.service';
 import { SyncRecordingsDto } from '../dto/sync-recordings.dto';
 
 /**

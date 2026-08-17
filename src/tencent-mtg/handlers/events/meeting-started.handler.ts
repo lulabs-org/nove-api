@@ -13,7 +13,7 @@ import { Injectable } from '@nestjs/common';
 import { BaseEventHandler } from '../base/base-event.handler';
 import { StartedPayload } from '../../types';
 import { MeetingBitableService } from '../../services/meeting-bitable.service';
-import { TencentMtgMeetingCoreService } from '../../services/tencent-mtg-meeting-core.service';
+import { TencentMtgMeetingCoreService } from '../../services/meeting-core.service';
 
 /**
  * 会议开始事件处理器

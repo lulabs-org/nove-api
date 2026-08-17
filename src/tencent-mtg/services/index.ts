@@ -6,6 +6,6 @@ export { MeetingBitableService } from './meeting-bitable.service';
 export { SpeakerService } from './speaker.service';
 
 // Core Services
-export { TencentMtgMeetingCoreService } from './tencent-mtg-meeting-core.service';
-export { TencentMtgSummaryCoreService } from './tencent-mtg-summary-core.service';
-export { TencentMtgTranscriptCoreService } from './tencent-mtg-transcript-core.service';
+export { TencentMtgMeetingCoreService } from './meeting-core.service';
+export { TencentMtgSummaryCoreService } from './summary-core.service';
+export { TencentMtgTranscriptCoreService } from './transcript-core.service';

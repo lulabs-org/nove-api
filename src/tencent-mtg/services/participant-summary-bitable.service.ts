@@ -3,7 +3,7 @@
  * @Date: 2026-03-29
  * @LastEditors: 杨仕明 shiming.y@qq.com
  * @LastEditTime: 2026-03-30 05:09:43
- * @FilePath: /nove_api/src/tencent-mtg/services/summary.service.ts
+ * @FilePath: /nove_api/src/tencent-mtg/services/participant-summary-bitable.service.ts
  * @Description: 参会者总结服务
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.

@@ -13,7 +13,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MeetingParticipantJoinedHandler } from './meeting-participant-joined.handler';
 import { MeetingBitableService } from '../../services/meeting-bitable.service';
-import { TencentMtgMeetingCoreService } from '../../services/tencent-mtg-meeting-core.service';
+import { TencentMtgMeetingCoreService } from '../../services/meeting-core.service';
 import { ParticipantJoinedPayload } from '../../types';
 
 describe('MeetingParticipantJoinedHandler', () => {
