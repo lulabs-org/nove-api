@@ -31,10 +31,7 @@ export class TencentMtgMeetingSyncService {
   async upsertMeetingFromRecord(record: RecordMeeting, operatorId: string) {
     const detail = await this.tencentApi.getMeetingDetail(
       record.meeting_id,
-      undefined,
-      1,
       operatorId,
-      1,
     );
 
     const meetingInfo = detail.meeting_info_list?.[0];

@@ -45,6 +45,12 @@ export interface LiveConfig {
   allow_participant_start_live: boolean;
 }
 
+export interface Guest {
+  guest_name?: string;
+  area?: string;
+  phone_number?: string;
+}
+
 export interface MeetingDetailResponse {
   meeting_number?: number;
   meeting_info_list?: Array<{
@@ -72,41 +78,17 @@ export interface MeetingDetailResponse {
     enable_live?: boolean;
     live_config?: LiveConfig;
     enable_doc_upload_permission?: boolean;
-    guest_modify_permission?: boolean;
-    allow_anonymous_user?: boolean;
-    allow_anonymous_start_meeting?: boolean;
+    guests?: Guest[];
+    has_vote?: boolean;
+    enable_enroll?: boolean;
+    enable_host_key?: boolean;
+    host_key?: string;
+    sync_to_wework?: boolean;
     time_zone?: string;
+    location?: string;
+    media_set_type?: number;
+    allow_enterprise_intranet_only?: boolean;
   }>;
-  meeting_id?: string;
-  meeting_code?: string;
-  subject?: string;
-  description?: string;
-  start_time?: string;
-  end_time?: string;
-  creator?: User;
-  meeting_type?: number;
-  sub_meeting_id?: string;
-  password?: string;
-  need_password?: boolean;
-  status?: string;
-  type?: number;
-  join_url?: string;
-  hosts?: User[];
-  current_hosts?: User[];
-  current_co_hosts?: User[];
-  participants?: User[];
-  settings?: Setting;
-  recurring_rule?: RecurringRule;
-  sub_meetings?: SubMeeting[];
-  has_more_sub_meeting?: number;
-  remain_sub_meetings?: number;
-  current_sub_meeting_id?: string;
-  enable_live?: boolean;
-  live_config?: LiveConfig;
-  enable_doc_upload_permission?: boolean;
-  guest_modify_permission?: boolean;
-  allow_anonymous_user?: boolean;
-  allow_anonymous_start_meeting?: boolean;
   error_info?: {
     error_code: number;
     new_error_code?: number;

@@ -204,41 +204,28 @@ export class TencentApiService {
 
   /**
    * Retrieves detailed information about a specific meeting
-   * https://cloud.tencent.com/document/product/1095/93432#9bc6b875-6415-4cda-931e-0d987e4da5bf
+   * https://cloud.tencent.com/document/product/1095/93432#a30942f2-df7d-4e00-8ab3-aba782396e90
    * @param meetingId - Unique meeting identifier
-   * @param userId - User ID making the request (required if operatorId is not provided)
-   * @param instanceId - Meeting instance ID (default: 1)
-   * @param operatorId - Operator ID (optional, if provided takes precedence over userId)
+   * @param operatorId - Operator ID
    * @param operatorIdType - Operator ID type (default: 1 for userid)
-   * @param subMeetingId - Sub-meeting ID for recurring meetings (optional)
+   * @param instanceId - Meeting instance ID (default: 1)
    * @returns Promise resolving to meeting details
    */
   async getMeetingDetail(
     meetingId: string,
-    userId?: string,
-    instanceId: number = 1,
-    operatorId?: string,
+    operatorId: string,
     operatorIdType: number = 1,
-    subMeetingId?: string,
+    instanceId: number = 1,
   ): Promise<MeetingDetailResponse> {
+    if (!operatorId) {
+      throw new Error('operatorId must be provided');
+    }
+
     const queryParams: Record<string, unknown> = {
       instanceid: instanceId,
+      operator_id: operatorId,
+      operator_id_type: operatorIdType,
     };
-
-    // 根据文档，operator_id和userid二者必填一项，若两者都填，以operator_id字段为准
-    if (operatorId) {
-      queryParams.operator_id = operatorId;
-      queryParams.operator_id_type = operatorIdType;
-    } else if (userId) {
-      queryParams.userid = userId;
-    } else {
-      throw new Error('Either operatorId or userId must be provided');
-    }
-
-    // 添加子会议ID（用于周期性会议）
-    if (subMeetingId) {
-      queryParams.sub_meeting_id = subMeetingId;
-    }
 
     return this.sendRequest<MeetingDetailResponse>(
       'GET',
