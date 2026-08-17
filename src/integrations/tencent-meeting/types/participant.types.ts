@@ -41,3 +41,8 @@ export interface MeetingParticipantsResponse {
     message: string;
   };
 }
+
+export interface ParticipantsList {
+  deduplicated: ParticipantDetail[];
+  original: ParticipantDetail[];
+}
