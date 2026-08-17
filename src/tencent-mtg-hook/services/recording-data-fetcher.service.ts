@@ -76,7 +76,9 @@ export class RecordingDataFetcherService {
             await this.enrichFileSpeakers(file, uniqueParticipants);
           }
         } else {
-          this.logger.warn(`获取录音转写失败: ${file.id}, ${transcript.reason}`);
+          this.logger.warn(
+            `获取录音转写失败: ${file.id}, ${transcript.reason}`,
+          );
         }
       }),
     );
