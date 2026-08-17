@@ -29,4 +29,3 @@ export * from './speaker.types';
 
 // 录制数据类型定义
 export * from './recording-data.types';
-

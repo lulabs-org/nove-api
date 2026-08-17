@@ -10,7 +10,12 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import { Meetuser, EventPayload, MeetingRecordingContext, MeetingSessionInfo } from '../types';
+import {
+  Meetuser,
+  EventPayload,
+  MeetingRecordingContext,
+  MeetingSessionInfo,
+} from '../types';
 import { TencentEventUtils } from '../utils/tencent-event.utils';
 import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
 import { MeetingRepository } from '@/meeting/repositories/meeting.repository';
@@ -58,7 +63,7 @@ export class MeetingDatabaseService {
     private readonly meetingSummaryRepo: MeetingSummaryRepository,
     private readonly transcriptRepo: TranscriptRepository,
     private readonly transcriptSyncService: TranscriptSyncService,
-  ) { }
+  ) {}
 
   /**
    * 创建或更新会议记录
@@ -107,8 +112,8 @@ export class MeetingDatabaseService {
     }
 
     // 提取子会议 ID，如果不存在（例如非周期性会议）则默认使用 '__ROOT__'
-    const subMeetingId = (meeting_info as MeetingSessionInfo).sub_meeting_id || '__ROOT__';
-
+    const subMeetingId =
+      (meeting_info as MeetingSessionInfo).sub_meeting_id || '__ROOT__';
 
     return await this.meetingRepo.upsert(
       Platform.TENCENT_MEETING,

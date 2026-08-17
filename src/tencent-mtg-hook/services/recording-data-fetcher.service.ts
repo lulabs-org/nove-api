@@ -13,7 +13,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import {
   SummaryService,
   TranscriptService,
-  ParticipantService,
 } from '@/integrations/tencent-meeting/services';
 import { SpeakerService } from './index';
 import { NewSpeakerInfo, RecordingDataFile } from '@/tencent-mtg-hook/types';
@@ -21,32 +20,6 @@ import {
   SpeakerInfo,
   ParticipantDetail,
 } from '@/integrations/tencent-meeting/types';
-
-/**
- * 录制数据拉取服务参数
- */
-export interface FetchRecordingParams {
-  /** 会议唯一标识符 */
-  meetid: string;
-  /** 会议创建者的用户ID */
-  cid: string;
-  /** 子会议ID（周期性会议会有此字段） */
-  subid?: string;
-  /** 需要处理的录制文件基本信息列表 */
-  recordingFiles: Array<{ id: string }>;
-}
-
-/**
- * 录制数据拉取服务返回结果
- */
-export interface FetchRecordingResult {
-  /** 经过去重的参会者列表（用于准确匹配说话人） */
-  uniqueParticipants?: ParticipantDetail[];
-  /** 包含重复进出记录的原始参会者列表 */
-  rawParticipants?: ParticipantDetail[];
-  /** 经过处理并填充了总结、转写和说话人信息的录制文件列表 */
-  recordingFiles: RecordingDataFile[];
-}
 
 /**
  * 录制数据获取服务
@@ -57,93 +30,56 @@ export class RecordingDataFetcherService {
   private readonly logger = new Logger(RecordingDataFetcherService.name);
 
   constructor(
-    private readonly participantSvc: ParticipantService,
     private readonly summarySvc: SummaryService,
     private readonly transcriptSvc: TranscriptService,
     private readonly speakerSvc: SpeakerService,
   ) {}
 
   /**
-   * 核心业务方法：根据基础会议信息拉取各项周边数据（参会者、总结、转写）
-   * @param params 包含会议基础标识及待处理文件的参数对象
-   * @returns 补充完整后的会议衍生数据集合
-   */
-  async fetch(params: FetchRecordingParams): Promise<FetchRecordingResult> {
-    const { meetid, cid, subid, recordingFiles } = params;
-
-    if (!meetid || !cid) {
-      this.logger.warn('缺少必要参数: meetid 或 cid');
-      return { recordingFiles: [] };
-    }
-
-    let uniqueParticipants: ParticipantDetail[] | undefined;
-    let rawParticipants: ParticipantDetail[] | undefined;
-
-    try {
-      const res = await this.participantSvc.list(meetid, cid, subid);
-      uniqueParticipants = res.deduplicated;
-      rawParticipants = res.original;
-      this.logger.log(`获取去重参会者成功: ${uniqueParticipants.length} 人`);
-    } catch (error) {
-      this.logger.error(
-        `获取去重参会者失败: ${error instanceof Error ? error.message : String(error)}`,
-      );
-    }
-
-    const processedFiles: RecordingDataFile[] = (recordingFiles || []).map(
-      (f) => ({
-        id: f.id,
-      }),
-    );
-
-    if (!processedFiles.length) {
-      this.logger.warn('没有录制文件');
-      return { uniqueParticipants, rawParticipants, recordingFiles: processedFiles };
-    }
-
-    // 并发处理所有文件
-    await Promise.all(
-      processedFiles.map((file) => this.processFile(file, cid, uniqueParticipants)),
-    );
-
-    return { uniqueParticipants, rawParticipants, recordingFiles: processedFiles };
-  }
-
-  /**
-   * 并发处理单个录制文件
-   * 负责拉取该文件的纪要（Summary）和转写（Transcript），并触发说话人信息补充
-   * @param file 待处理的录制文件对象（会被直接填充内容）
+   * 批量并发处理录制文件，丰富纪要与转写数据
+   * @param files 录制文件对象列表
    * @param cid 会议创建者ID
-   * @param uniqueParticipants 去重后的参会者列表，用于精准匹配说话人
+   * @param meetingId 会议ID
+   * @param uniqueParticipants 去重参会者列表
    */
-  private async processFile(
-    file: RecordingDataFile,
+  async processFiles(
+    files: RecordingDataFile[],
     cid: string,
+    meetingId: string,
     uniqueParticipants?: ParticipantDetail[],
   ): Promise<void> {
-    const [content, transcript] = await Promise.allSettled([
-      this.summarySvc.getContent(file.id, cid),
-      this.transcriptSvc.fetch(file.id, cid),
-    ]);
-
-    if (content.status === 'fulfilled') {
-      file.fullsummary = content.value.fullSummary;
-      file.aiminutes = content.value.aiMinutes;
-    } else {
-      this.logger.warn(`获取会议内容失败: ${file.id}, ${content.reason}`);
+    if (!files || !files.length) {
+      this.logger.warn('没有录制文件');
+      return;
     }
 
-    if (transcript.status === 'fulfilled') {
-      file.formattedtext = transcript.value.formattedText;
-      file.speakerlist = transcript.value.uniqueSpeakerInfos;
-      file.paragraphs = transcript.value.paragraphs;
+    await Promise.all(
+      files.map(async (file) => {
+        const [content, transcript] = await Promise.allSettled([
+          this.summarySvc.getContent(file.id, cid),
+          this.transcriptSvc.fetch(meetingId, file.id, cid),
+        ]);
 
-      if (uniqueParticipants && file.speakerlist?.length) {
-        await this.enrichFileSpeakers(file, uniqueParticipants);
-      }
-    } else {
-      this.logger.warn(`获取录音转写失败: ${file.id}, ${transcript.reason}`);
-    }
+        if (content.status === 'fulfilled') {
+          file.fullsummary = content.value.fullSummary;
+          file.aiminutes = content.value.aiMinutes;
+        } else {
+          this.logger.warn(`获取会议内容失败: ${file.id}, ${content.reason}`);
+        }
+
+        if (transcript.status === 'fulfilled') {
+          file.formattedtext = transcript.value.formattedText;
+          file.speakerlist = transcript.value.uniqueSpeakerInfos;
+          file.paragraphs = transcript.value.paragraphs;
+
+          if (uniqueParticipants && file.speakerlist?.length) {
+            await this.enrichFileSpeakers(file, uniqueParticipants);
+          }
+        } else {
+          this.logger.warn(`获取录音转写失败: ${file.id}, ${transcript.reason}`);
+        }
+      }),
+    );
   }
 
   /**

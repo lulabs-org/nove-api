@@ -414,15 +414,19 @@ export class TencentApiService {
    * @param recordFileId - Unique identifier of the recording file
    * @param operatorId - Operator ID making the request
    * @param operatorIdType - Operator ID type (1: userid, 2: openid)
-   * @param page - Page number for pagination
-   * @param pageSize - Number of transcript entries per page
+   * @param pid - Paragraph ID from which to start querying
+   * @param limit - Number of paragraphs to query
    * @param pwd - Optional password for accessing the recording file
+   * @param meetingId - Optional meeting ID
+   * @param transcriptsType - Optional transcript type (0: original, 1: smart optimized)
    * @returns Promise resolving to recording transcript details
    */
   async getTranscript(
     recordFileId: string,
     operatorId: string,
     operatorIdType: number = 1,
+    meetingId?: string,
+    transcriptsType?: number,
     pid?: string,
     limit?: number,
     pwd?: string,
@@ -442,6 +446,12 @@ export class TencentApiService {
     }
     if (pwd) {
       queryParams.pwd = pwd;
+    }
+    if (meetingId) {
+      queryParams.meeting_id = meetingId;
+    }
+    if (transcriptsType !== undefined) {
+      queryParams.transcripts_type = transcriptsType;
     }
 
     return this.sendRequest<TranscriptResponse>(
