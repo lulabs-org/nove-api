@@ -6,6 +6,7 @@ import { Platform } from '@prisma/client';
 import { MigratePhoneHashesHandler } from './migrate-phone-hashes.handler';
 import { TaskHandlerRegistry } from './task-handler.registry';
 import { PrismaService } from '../../prisma/prisma.service';
+import { UserPhoneHashRepository } from '@/user/repositories/user-phone-hash.repository';
 
 describe('MigratePhoneHashesHandler', () => {
   let handler: MigratePhoneHashesHandler;
@@ -13,10 +14,8 @@ describe('MigratePhoneHashesHandler', () => {
     user: {
       findMany: jest.Mock;
     };
-    userPhoneHash: {
-      upsert: jest.Mock;
-    };
   };
+  let userPhoneHashRepo: { upsertHash: jest.Mock };
   let registry: jest.Mocked<TaskHandlerRegistry>;
 
   const originalEnv = process.env;
@@ -31,9 +30,9 @@ describe('MigratePhoneHashesHandler', () => {
       user: {
         findMany: jest.fn(),
       },
-      userPhoneHash: {
-        upsert: jest.fn(),
-      },
+    };
+    userPhoneHashRepo = {
+      upsertHash: jest.fn(),
     };
 
     const mockRegistry = {
@@ -44,6 +43,7 @@ describe('MigratePhoneHashesHandler', () => {
       providers: [
         MigratePhoneHashesHandler,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: UserPhoneHashRepository, useValue: userPhoneHashRepo },
         { provide: TaskHandlerRegistry, useValue: mockRegistry },
       ],
     }).compile();
@@ -71,7 +71,7 @@ describe('MigratePhoneHashesHandler', () => {
         { id: 'user-2', phone: '13900000000' },
       ];
       prisma.user.findMany.mockResolvedValue(mockUsers);
-      prisma.userPhoneHash.upsert.mockResolvedValue({} as any);
+      userPhoneHashRepo.upsertHash.mockResolvedValue({});
 
       const job = {} as Job;
       const result = await handler.handle(job);
@@ -90,39 +90,19 @@ describe('MigratePhoneHashesHandler', () => {
         .update('13900000000/mock-secret-id')
         .digest('hex');
 
-      expect(prisma.userPhoneHash.upsert).toHaveBeenNthCalledWith(1, {
-        where: {
-          userId_platform: {
-            userId: 'user-1',
-            platform: Platform.TENCENT_MEETING,
-          },
-        },
-        create: {
-          userId: 'user-1',
-          hashValue: hash1,
-          platform: Platform.TENCENT_MEETING,
-        },
-        update: {
-          hashValue: hash1,
-        },
-      });
+      expect(userPhoneHashRepo.upsertHash).toHaveBeenNthCalledWith(
+        1,
+        'user-1',
+        Platform.TENCENT_MEETING,
+        hash1,
+      );
 
-      expect(prisma.userPhoneHash.upsert).toHaveBeenNthCalledWith(2, {
-        where: {
-          userId_platform: {
-            userId: 'user-2',
-            platform: Platform.TENCENT_MEETING,
-          },
-        },
-        create: {
-          userId: 'user-2',
-          hashValue: hash2,
-          platform: Platform.TENCENT_MEETING,
-        },
-        update: {
-          hashValue: hash2,
-        },
-      });
+      expect(userPhoneHashRepo.upsertHash).toHaveBeenNthCalledWith(
+        2,
+        'user-2',
+        Platform.TENCENT_MEETING,
+        hash2,
+      );
 
       expect(result).toEqual({
         success: true,
@@ -141,7 +121,7 @@ describe('MigratePhoneHashesHandler', () => {
       const job = {} as Job;
       const result = await handler.handle(job);
 
-      expect(prisma.userPhoneHash.upsert).not.toHaveBeenCalled();
+      expect(userPhoneHashRepo.upsertHash).not.toHaveBeenCalled();
       expect(result).toEqual({
         success: true,
         migrated: 0,
@@ -155,9 +135,9 @@ describe('MigratePhoneHashesHandler', () => {
         { id: 'user-2', phone: '13900000000' },
       ];
       prisma.user.findMany.mockResolvedValue(mockUsers);
-      prisma.userPhoneHash.upsert
+      userPhoneHashRepo.upsertHash
         .mockRejectedValueOnce(new Error('DB Error'))
-        .mockResolvedValueOnce({} as any);
+        .mockResolvedValueOnce({});
 
       const job = {} as Job;
       const result = await handler.handle(job);
