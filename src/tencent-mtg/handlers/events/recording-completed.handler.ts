@@ -14,13 +14,14 @@ import { BaseEventHandler } from '../base/base-event.handler';
 import { RecordingCompletedPayload } from '../../types';
 import {
   MeetingParticipantService,
-  MeetingBitableService,
+  // MeetingBitableService,
   SpeakerService,
-  ParticipantSummaryBitableService,
+  // ParticipantSummaryBitableService,
   TencentMtgMeetingCoreService,
   TencentMtgSummaryCoreService,
   TencentMtgTranscriptCoreService,
 } from '../../services';
+import { TranscriptRepository } from '@/meeting/repositories/transcript.repository';
 import { ParticipantService } from '@/integrations/tencent-meeting/services';
 import { ParticipantDetail } from '@/integrations/tencent-meeting/types';
 
@@ -39,9 +40,10 @@ export class RecordingCompletedHandler extends BaseEventHandler {
     private readonly meetingCoreSvc: TencentMtgMeetingCoreService,
     private readonly summaryCoreSvc: TencentMtgSummaryCoreService,
     private readonly transcriptCoreSvc: TencentMtgTranscriptCoreService,
-    private readonly participantSummaryBitableSvc: ParticipantSummaryBitableService,
+    // private readonly participantSummaryBitableSvc: ParticipantSummaryBitableService,
     private readonly participantSvc: MeetingParticipantService,
     private readonly tencentParticipantSvc: ParticipantService,
+    private readonly transcriptRepo: TranscriptRepository,
   ) {
     super();
   }
@@ -112,7 +114,7 @@ export class RecordingCompletedHandler extends BaseEventHandler {
     // await this.bitableService.safeUpsertMeetingUserRecords(uniqueParticipants);
 
 
-    await this.speakerSvc.syncPtUsers(uniqueParticipants);
+
 
     // 3. 循环处理每一个录音文件 (一场会议可能会被分段录制出多个文件)
     for (const file of recording_files) {
@@ -134,11 +136,21 @@ export class RecordingCompletedHandler extends BaseEventHandler {
 
       // 3.3 核心业务同步：从腾讯 API 拉取“完整逐字稿(Transcript)”
       // 这里会完成说话人的匹配，并将大段文本切分为数据库内的 segments。
-      const { shouldSync, transcriptId: existingTranscriptId } =
-        await this.transcriptCoreSvc.checkAndPrepareTranscript(
-          recording.id,
-          false,
+      let shouldSync = true;
+      let existingTranscriptId: string | undefined;
+
+      const existingTranscript =
+        await this.transcriptRepo.findByRecordingId(recording.id);
+
+      if (existingTranscript) {
+        existingTranscriptId = existingTranscript.id;
+        const segmentCount = await this.transcriptRepo.countSegments(
+          existingTranscript.id,
         );
+        if (segmentCount > 0) {
+          shouldSync = false;
+        }
+      }
 
       if (shouldSync) {
         const paragraphs =
@@ -146,6 +158,7 @@ export class RecordingCompletedHandler extends BaseEventHandler {
             file.record_file_id,
             creator.userid || '',
             uniqueParticipants,
+            meeting_id
           );
 
         if (paragraphs.length > 0) {

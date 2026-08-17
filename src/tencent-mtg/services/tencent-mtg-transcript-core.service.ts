@@ -23,7 +23,7 @@ export class TencentMtgTranscriptCoreService {
     private readonly participantSvc: ParticipantService,
     private readonly speakerSvc: SpeakerService,
     private readonly meetingParticipantSvc: MeetingParticipantService,
-  ) {}
+  ) { }
 
   // ==========================================
   // 从 API 数据中拉取处理转写入库
@@ -39,8 +39,26 @@ export class TencentMtgTranscriptCoreService {
     forceReSyncTranscript: boolean = false,
     syncParticipants: boolean = true,
   ) {
-    const { shouldSync, transcriptId: existingTranscriptId } =
-      await this.checkAndPrepareTranscript(recordingId, forceReSyncTranscript);
+    let shouldSync = true;
+    let existingTranscriptId: string | undefined;
+
+    const existingTranscript =
+      await this.transcriptRepo.findByRecordingId(recordingId);
+
+    if (existingTranscript) {
+      existingTranscriptId = existingTranscript.id;
+      if (forceReSyncTranscript) {
+        await this.transcriptRepo.deleteSegments(existingTranscript.id);
+      } else {
+        const segmentCount = await this.transcriptRepo.countSegments(
+          existingTranscript.id,
+        );
+        if (segmentCount > 0) {
+          shouldSync = false;
+        }
+      }
+    }
+
     if (!shouldSync) return;
 
     let transcriptId = existingTranscriptId;
@@ -60,6 +78,7 @@ export class TencentMtgTranscriptCoreService {
       recordFileId,
       operatorId,
       deduplicated,
+      meetid
     );
 
     // 步骤 4: 如果拉取到了转写文本，将其批量写入我们的数据库
@@ -72,28 +91,6 @@ export class TencentMtgTranscriptCoreService {
     }
   }
 
-  async checkAndPrepareTranscript(
-    recordingId: string,
-    forceReSyncTranscript: boolean = false,
-  ): Promise<{ shouldSync: boolean; transcriptId?: string }> {
-    const existingTranscript =
-      await this.transcriptRepo.findByRecordingId(recordingId);
-
-    if (existingTranscript) {
-      if (forceReSyncTranscript) {
-        await this.transcriptRepo.deleteSegments(existingTranscript.id);
-      } else {
-        const segmentCount = await this.transcriptRepo.countSegments(
-          existingTranscript.id,
-        );
-        if (segmentCount > 0) {
-          return { shouldSync: false, transcriptId: existingTranscript.id };
-        }
-      }
-      return { shouldSync: true, transcriptId: existingTranscript.id };
-    }
-    return { shouldSync: true, transcriptId: undefined };
-  }
 
   async createTranscript(
     recordingId: string,
@@ -134,9 +131,13 @@ export class TencentMtgTranscriptCoreService {
     transcriptId: string,
   ): Promise<void> {
     for (let i = 0; i < paragraphs.length; i += this.PARAGRAPH_BATCH_SIZE) {
+
       const batch = paragraphs.slice(i, i + this.PARAGRAPH_BATCH_SIZE);
+
       await this.prisma.$transaction(async (tx) => {
+
         const segmentsToCreate: any[] = [];
+
         for (const paragraph of batch) {
           const speakerInfo = paragraph.speaker_info;
           const ptUnionId = speakerInfo.uuid;
@@ -151,7 +152,9 @@ export class TencentMtgTranscriptCoreService {
               },
             );
           }
+
           const speakerId = platformUser?.id;
+
           for (const sentence of paragraph.sentences) {
             const text = sentence.words.map((w) => w.text).join('');
             const wordsDetail = sentence.words.map((w) => ({
@@ -159,6 +162,7 @@ export class TencentMtgTranscriptCoreService {
               start: Number(w.start_time),
               end: Number(w.end_time),
             }));
+
             segmentsToCreate.push({
               transcriptId,
               speakerId,
@@ -171,6 +175,7 @@ export class TencentMtgTranscriptCoreService {
             });
           }
         }
+
         if (segmentsToCreate.length > 0) {
           await tx.transcriptSegment.createMany({ data: segmentsToCreate });
         }
@@ -260,6 +265,7 @@ export class TencentMtgTranscriptCoreService {
     recordFileId: string,
     operatorId: string,
     deduplicated: ParticipantDetail[],
+    meetId: string
   ): Promise<NewTranscriptParagraph[]> {
     const allParagraphs: NewTranscriptParagraph[] = [];
     let hasMore = true;
@@ -267,12 +273,13 @@ export class TencentMtgTranscriptCoreService {
 
     while (hasMore) {
       try {
-        const res = await this.tencentApi.getTranscript(
+        const res = await this.tencentApi.getTranscript({
           recordFileId,
           operatorId,
-          1,
-          currentPid,
-        );
+          operatorIdType: 1,
+          meetingId: meetId,
+          pid: currentPid,
+        });
         if (res.minutes?.paragraphs && res.minutes.paragraphs.length > 0) {
           const mappedParagraphs = await Promise.all(
             res.minutes.paragraphs.map(async (p) => ({

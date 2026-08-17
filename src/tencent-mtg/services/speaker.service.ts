@@ -26,7 +26,7 @@ export class SpeakerService {
   constructor(
     private readonly ptUserRepo: PlatformUserRepository,
     private readonly userPhoneHashRepo: UserPhoneHashRepository,
-  ) {}
+  ) { }
 
   /**
    * Enriches speaker information by matching it against meeting participants or platform users.
@@ -91,8 +91,8 @@ export class SpeakerService {
     return participants.find(
       (p) =>
         (speakerInfo.userid && p.userid === speakerInfo.userid) ||
-        (speakerInfo.openId && p.open_id === speakerInfo.openId) ||
-        (speakerInfo.ms_open_id && p.ms_open_id === speakerInfo.ms_open_id),
+        (speakerInfo.ms_open_id && p.ms_open_id === speakerInfo.ms_open_id) ||
+        (speakerInfo.openId && p.open_id === speakerInfo.openId),
     );
   }
 
