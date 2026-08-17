@@ -26,7 +26,7 @@ export class SpeakerService {
   constructor(
     private readonly ptUserRepo: PlatformUserRepository,
     private readonly userPhoneHashRepo: UserPhoneHashRepository,
-  ) { }
+  ) {}
 
   /**
    * Enriches speaker information by matching it against meeting participants or platform users.
