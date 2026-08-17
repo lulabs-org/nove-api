@@ -68,10 +68,16 @@ describe('Meeting response OpenAPI contract', () => {
       nullable: true,
     });
     const host = property('MeetingRecordResponseDto', 'host');
+    expect(host.properties?.platformUserId).toMatchObject({ type: 'string' });
     expect(host.properties?.displayName).toMatchObject({
       type: 'string',
       nullable: true,
     });
+    expect(host.properties?.userId).toMatchObject({
+      type: 'string',
+      nullable: true,
+    });
+    expect(schemas.MeetingRecordResponseDto.required).toContain('host');
   });
 
   it('uses a dedicated minimal schema for list items', () => {

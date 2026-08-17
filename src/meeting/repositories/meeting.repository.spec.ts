@@ -310,7 +310,11 @@ describe('MeetingRepository', () => {
         id: 'meeting-with-host',
         createdById: 'must-not-leak',
         hostId: 'platform-user-1',
-        host: { id: 'platform-user-1', displayName: '杨仕明' },
+        host: {
+          id: 'platform-user-1',
+          displayName: '杨仕明',
+          localUserId: 'local-user-1',
+        },
         recordings: [],
       });
 
@@ -319,7 +323,11 @@ describe('MeetingRepository', () => {
       expect(result).toEqual(
         expect.objectContaining({
           id: 'meeting-with-host',
-          host: { id: 'platform-user-1', displayName: '杨仕明' },
+          host: {
+            platformUserId: 'platform-user-1',
+            displayName: '杨仕明',
+            userId: 'local-user-1',
+          },
           hasRecording: false,
           recordings: [],
         }),
@@ -347,7 +355,11 @@ describe('MeetingRepository', () => {
           platform: MeetingPlatform.TENCENT_MEETING,
           startAt,
           endAt,
-          host: { id: 'platform-user-1', displayName: '杨仕明' },
+          host: {
+            id: 'platform-user-1',
+            displayName: '杨仕明',
+            localUserId: null,
+          },
           participantCount: null,
           _count: { participants: 3, recordings: 1 },
           description: 'must-not-leak-from-list',
@@ -375,7 +387,11 @@ describe('MeetingRepository', () => {
           platform: MeetingPlatform.TENCENT_MEETING,
           startAt,
           endAt,
-          host: { id: 'platform-user-1', displayName: '杨仕明' },
+          host: {
+            platformUserId: 'platform-user-1',
+            displayName: '杨仕明',
+            userId: null,
+          },
           participantCount: 3,
           hasRecording: true,
         },
@@ -400,7 +416,7 @@ describe('MeetingRepository', () => {
             endAt: true,
             participantCount: true,
             host: {
-              select: { id: true, displayName: true },
+              select: { id: true, displayName: true, localUserId: true },
             },
             _count: {
               select: {

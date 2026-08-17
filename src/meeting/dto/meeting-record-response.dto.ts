@@ -9,14 +9,21 @@ import {
 
 export class MeetingHostResponseDto {
   @ApiProperty({ description: '平台用户 ID' })
-  id: string;
+  platformUserId: string;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     description: '主持人显示名称',
     type: String,
     nullable: true,
   })
-  displayName?: string | null;
+  displayName: string | null;
+
+  @ApiProperty({
+    description: '已绑定的本地用户 ID',
+    type: String,
+    nullable: true,
+  })
+  userId: string | null;
 }
 
 export class MeetingRecordingSummaryResponseDto {
@@ -109,21 +116,25 @@ export class MeetingRecordResponseDto {
   @ApiProperty({ description: '标签', type: [String] })
   tags: string[];
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     description: '主持人信息',
     type: 'object',
     nullable: true,
-    required: ['id'],
     properties: {
-      id: { type: 'string', description: '平台用户 ID' },
+      platformUserId: { type: 'string', description: '平台用户 ID' },
       displayName: {
         type: 'string',
         description: '主持人显示名称',
         nullable: true,
       },
+      userId: {
+        type: 'string',
+        description: '已绑定的本地用户 ID',
+        nullable: true,
+      },
     },
   })
-  host?: MeetingHostResponseDto | null;
+  host: MeetingHostResponseDto | null;
 
   @ApiPropertyOptional({
     description: '未删除的录制记录摘要（仅详情接口返回）',
@@ -237,21 +248,25 @@ export class MeetingListItemResponseDto {
   })
   endAt?: Date | null;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     description: '主持人信息',
     type: 'object',
     nullable: true,
-    required: ['id'],
     properties: {
-      id: { type: 'string', description: '平台用户 ID' },
+      platformUserId: { type: 'string', description: '平台用户 ID' },
       displayName: {
         type: 'string',
         description: '主持人显示名称',
         nullable: true,
       },
+      userId: {
+        type: 'string',
+        description: '已绑定的本地用户 ID',
+        nullable: true,
+      },
     },
   })
-  host?: MeetingHostResponseDto | null;
+  host: MeetingHostResponseDto | null;
 
   @ApiPropertyOptional({
     description: '参会人数',

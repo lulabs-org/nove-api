@@ -4,9 +4,16 @@ import type { GetMeetingRecordsParams } from '@/meeting/types';
 
 import { MeetingPlatform, Prisma } from '@prisma/client';
 import type {
+  MeetingHostResponseDto,
   MeetingListItemResponseDto,
   MeetingStatsResponseDto,
 } from '../dto';
+
+const meetingHostSelect = {
+  id: true,
+  displayName: true,
+  localUserId: true,
+} satisfies Prisma.PlatformUserSelect;
 
 const meetingResponseSelect = {
   id: true,
@@ -35,7 +42,7 @@ const meetingResponseSelect = {
   updatedAt: true,
   deletedAt: true,
   host: {
-    select: { id: true, displayName: true },
+    select: meetingHostSelect,
   },
   recordings: {
     where: { deletedAt: null },
@@ -65,7 +72,7 @@ const meetingListSelect = {
   endAt: true,
   participantCount: true,
   host: {
-    select: { id: true, displayName: true },
+    select: meetingHostSelect,
   },
   _count: {
     select: {
@@ -83,6 +90,10 @@ type MeetingListRecord = Prisma.MeetingGetPayload<{
   select: typeof meetingListSelect;
 }>;
 
+type MeetingHostRecord = Prisma.PlatformUserGetPayload<{
+  select: typeof meetingHostSelect;
+}>;
+
 type UpdateMeetingRecordData = Prisma.MeetingUncheckedUpdateInput;
 type CreateMeetingRecordData = Omit<
   Prisma.MeetingUncheckedCreateInput,
@@ -92,6 +103,18 @@ type CreateMeetingRecordData = Omit<
 @Injectable()
 export class MeetingRepository {
   constructor(private prisma: PrismaService) {}
+
+  private toHostResponse(
+    host: MeetingHostRecord | null,
+  ): MeetingHostResponseDto | null {
+    if (!host) return null;
+
+    return {
+      platformUserId: host.id,
+      displayName: host.displayName ?? null,
+      userId: host.localUserId ?? null,
+    };
+  }
 
   private toResponseRecord(
     record: MeetingResponseRecord,
@@ -109,7 +132,7 @@ export class MeetingRepository {
       type: record.type,
       language: record.language,
       tags: record.tags,
-      host: record.host,
+      host: this.toHostResponse(record.host),
       participantCount: record.participantCount ?? record._count?.participants,
       scheduledStartAt: record.scheduledStartAt,
       scheduledEndAt: record.scheduledEndAt,
@@ -135,7 +158,7 @@ export class MeetingRepository {
       platform: record.platform,
       startAt: record.startAt,
       endAt: record.endAt,
-      host: record.host,
+      host: this.toHostResponse(record.host),
       participantCount: record.participantCount ?? record._count.participants,
       hasRecording: record._count.recordings > 0,
     };
