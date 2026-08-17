@@ -1,6 +1,11 @@
 import * as ExcelJS from 'exceljs';
 import { BadRequestException, ConflictException } from '@nestjs/common';
-import { AdminUserRepository, AdminUserRecord } from './user.repository';
+import {
+  adminUserListSelect,
+  AdminUserListRecord,
+  AdminUserRepository,
+  AdminUserRecord,
+} from './user.repository';
 import { AdminUserService } from './user.service';
 
 const userRecord = (
@@ -34,6 +39,26 @@ const userRecord = (
   ...overrides,
 });
 
+const userListRecord = (
+  overrides: Partial<AdminUserListRecord> = {},
+): AdminUserListRecord => ({
+  id: 'cm12345678901234567890123',
+  username: 'alice',
+  email: 'alice@example.com',
+  countryCode: '+86',
+  phone: '13800138000',
+  active: true,
+  emailVerifiedAt: new Date('2026-01-01T00:00:00Z'),
+  phoneVerifiedAt: null,
+  lastLoginAt: new Date('2026-01-02T00:00:00Z'),
+  createdAt: new Date('2026-01-01T00:00:00Z'),
+  profile: {
+    displayName: 'Alice',
+    avatar: 'https://example.com/avatar.png',
+  },
+  ...overrides,
+});
+
 describe('AdminUserService', () => {
   let repository: jest.Mocked<AdminUserRepository>;
   let service: AdminUserService;
@@ -48,6 +73,58 @@ describe('AdminUserService', () => {
       softDelete: jest.fn(),
     } as unknown as jest.Mocked<AdminUserRepository>;
     service = new AdminUserService(repository);
+  });
+
+  it('returns only fields required by the user list', async () => {
+    repository.list.mockResolvedValue({ items: [userListRecord()], total: 1 });
+
+    const result = await service.list({
+      page: 1,
+      pageSize: 20,
+      sortBy: 'createdAt',
+      sortOrder: 'desc',
+    });
+
+    expect(result.items[0]).toEqual({
+      id: 'cm12345678901234567890123',
+      username: 'alice',
+      email: 'alice@example.com',
+      countryCode: '+86',
+      phone: '13800138000',
+      displayName: 'Alice',
+      avatar: 'https://example.com/avatar.png',
+      active: true,
+      emailVerified: true,
+      phoneVerified: false,
+      lastLoginAt: new Date('2026-01-02T00:00:00Z'),
+      createdAt: new Date('2026-01-01T00:00:00Z'),
+    });
+    expect(result.items[0]).not.toHaveProperty('profile');
+    expect(result.items[0]).not.toHaveProperty('updatedAt');
+  });
+
+  it('does not select detailed profile fields for the user list', () => {
+    expect(adminUserListSelect.profile.select).toEqual({
+      displayName: true,
+      avatar: true,
+    });
+  });
+
+  it('keeps the complete profile on the user detail endpoint', async () => {
+    const record = userRecord({
+      profile: {
+        ...userRecord().profile!,
+        bio: '个人简介',
+        dateOfBirth: new Date('2000-01-02T00:00:00.000Z'),
+        address: '上海市',
+      },
+    });
+    repository.findById.mockResolvedValue(record);
+
+    const result = await service.getById(record.id);
+
+    expect(result.profile).toEqual(record.profile);
+    expect(result.updatedAt).toEqual(record.updatedAt);
   });
 
   it('creates a normalized user without exposing verification timestamps', async () => {

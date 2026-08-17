@@ -32,8 +32,31 @@ export const adminUserSelect = {
   },
 } satisfies Prisma.UserSelect;
 
+export const adminUserListSelect = {
+  id: true,
+  username: true,
+  email: true,
+  countryCode: true,
+  phone: true,
+  active: true,
+  emailVerifiedAt: true,
+  phoneVerifiedAt: true,
+  lastLoginAt: true,
+  createdAt: true,
+  profile: {
+    select: {
+      displayName: true,
+      avatar: true,
+    },
+  },
+} satisfies Prisma.UserSelect;
+
 export type AdminUserRecord = Prisma.UserGetPayload<{
   select: typeof adminUserSelect;
+}>;
+
+export type AdminUserListRecord = Prisma.UserGetPayload<{
+  select: typeof adminUserListSelect;
 }>;
 
 export interface AdminUserWriteData {
@@ -65,9 +88,9 @@ export class AdminUserRepository {
     skip: number;
     take: number;
     orderBy: Prisma.UserOrderByWithRelationInput;
-  }): Promise<{ items: AdminUserRecord[]; total: number }> {
+  }): Promise<{ items: AdminUserListRecord[]; total: number }> {
     const [items, total] = await this.prisma.$transaction([
-      this.prisma.user.findMany({ ...args, select: adminUserSelect }),
+      this.prisma.user.findMany({ ...args, select: adminUserListSelect }),
       this.prisma.user.count({ where: args.where }),
     ]);
     return { items, total };

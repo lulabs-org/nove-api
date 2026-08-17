@@ -12,6 +12,7 @@ import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import {
   AdminUserDto,
+  AdminUserListItemDto,
   AdminUserListResponseDto,
   CreateAdminUserDto,
   QueryUsersDto,
@@ -21,6 +22,7 @@ import {
 } from './dto';
 import {
   AdminUserRecord,
+  AdminUserListRecord,
   AdminUserRepository,
   AdminUserWriteData,
 } from './user.repository';
@@ -131,7 +133,7 @@ export class AdminUserService {
       orderBy: { [dto.sortBy ?? 'createdAt']: dto.sortOrder ?? 'desc' },
     });
     return {
-      items: items.map((item) => this.toDto(item)),
+      items: items.map((item) => this.toListItemDto(item)),
       total,
       page,
       pageSize,
@@ -509,6 +511,23 @@ export class AdminUserService {
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
       profile: user.profile,
+    };
+  }
+
+  private toListItemDto(user: AdminUserListRecord): AdminUserListItemDto {
+    return {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      countryCode: user.countryCode,
+      phone: user.phone,
+      displayName: user.profile?.displayName ?? null,
+      avatar: user.profile?.avatar ?? null,
+      active: user.active,
+      emailVerified: Boolean(user.emailVerifiedAt),
+      phoneVerified: Boolean(user.phoneVerifiedAt),
+      lastLoginAt: user.lastLoginAt,
+      createdAt: user.createdAt,
     };
   }
 }
