@@ -75,9 +75,6 @@ export class MeetingRecordResponseDto {
   @ApiPropertyOptional({ description: '标签' })
   tags?: string[];
 
-  @ApiPropertyOptional({ description: '主持人平台用户ID' })
-  hostPlatformUserId?: string | null;
-
   @ApiPropertyOptional({
     description: '主持人信息',
     type: MeetingHostResponseDto,

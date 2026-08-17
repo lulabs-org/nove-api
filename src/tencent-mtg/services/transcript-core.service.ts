@@ -23,7 +23,7 @@ export class TencentMtgTranscriptCoreService {
     private readonly participantSvc: ParticipantService,
     private readonly speakerSvc: SpeakerService,
     private readonly meetingParticipantSvc: MeetingParticipantService,
-  ) { }
+  ) {}
 
   // ==========================================
   // 从 API 数据中拉取处理转写入库
@@ -78,7 +78,7 @@ export class TencentMtgTranscriptCoreService {
       recordFileId,
       operatorId,
       deduplicated,
-      meetid
+      meetid,
     );
 
     // 步骤 4: 如果拉取到了转写文本，将其批量写入我们的数据库
@@ -90,7 +90,6 @@ export class TencentMtgTranscriptCoreService {
       await this.batchInsertSegments(allParagraphs, transcriptId);
     }
   }
-
 
   async createTranscript(
     recordingId: string,
@@ -131,11 +130,9 @@ export class TencentMtgTranscriptCoreService {
     transcriptId: string,
   ): Promise<void> {
     for (let i = 0; i < paragraphs.length; i += this.PARAGRAPH_BATCH_SIZE) {
-
       const batch = paragraphs.slice(i, i + this.PARAGRAPH_BATCH_SIZE);
 
       await this.prisma.$transaction(async (tx) => {
-
         const segmentsToCreate: any[] = [];
 
         for (const paragraph of batch) {
@@ -265,7 +262,7 @@ export class TencentMtgTranscriptCoreService {
     recordFileId: string,
     operatorId: string,
     deduplicated: ParticipantDetail[],
-    meetId: string
+    meetId: string,
   ): Promise<NewTranscriptParagraph[]> {
     const allParagraphs: NewTranscriptParagraph[] = [];
     let hasMore = true;

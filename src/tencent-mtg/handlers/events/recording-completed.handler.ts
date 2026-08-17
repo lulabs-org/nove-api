@@ -139,8 +139,9 @@ export class RecordingCompletedHandler extends BaseEventHandler {
       let shouldSync = true;
       let existingTranscriptId: string | undefined;
 
-      const existingTranscript =
-        await this.transcriptRepo.findByRecordingId(recording.id);
+      const existingTranscript = await this.transcriptRepo.findByRecordingId(
+        recording.id,
+      );
 
       if (existingTranscript) {
         existingTranscriptId = existingTranscript.id;
@@ -158,7 +159,7 @@ export class RecordingCompletedHandler extends BaseEventHandler {
             file.record_file_id,
             creator.userid || '',
             uniqueParticipants,
-            meeting_id
+            meeting_id,
           );
 
         if (paragraphs.length > 0) {

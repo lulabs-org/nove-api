@@ -319,7 +319,6 @@ describe('MeetingRepository', () => {
       expect(result).toEqual(
         expect.objectContaining({
           id: 'meeting-with-host',
-          hostPlatformUserId: 'platform-user-1',
           host: { id: 'platform-user-1', displayName: '杨仕明' },
           hasRecording: false,
           recordings: [],
@@ -366,7 +365,6 @@ describe('MeetingRepository', () => {
       expect(result.records).toEqual([
         {
           id: 'meeting-with-recording',
-          hostPlatformUserId: 'platform-user-1',
           host: { id: 'platform-user-1', displayName: '杨仕明' },
           participantCount: 3,
           hasRecording: true,
@@ -374,7 +372,6 @@ describe('MeetingRepository', () => {
         {
           id: 'meeting-without-recording',
           host: null,
-          hostPlatformUserId: null,
           participantCount: 8,
           hasRecording: false,
         },

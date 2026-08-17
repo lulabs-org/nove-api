@@ -85,7 +85,6 @@ export class MeetingRepository {
       type: record.type,
       language: record.language,
       tags: record.tags,
-      hostPlatformUserId: record.hostId,
       host: record.host,
       participantCount: record.participantCount ?? record._count?.participants,
       scheduledStartAt: record.scheduledStartAt,
@@ -321,9 +320,9 @@ export class MeetingRepository {
     ]);
 
     const recordsWithRecordingFlag = records.map(
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       ({ recordings, hostId, _count, ...record }) => ({
         ...record,
-        hostPlatformUserId: hostId,
         participantCount: record.participantCount ?? _count?.participants,
         hasRecording: recordings.length > 0,
       }),
