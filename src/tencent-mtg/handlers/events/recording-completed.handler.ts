@@ -106,15 +106,15 @@ export class RecordingCompletedHandler extends BaseEventHandler {
       return;
     }
 
+    // 先确保参会者在我们的用户表中存在，因为 syncParticipants 依赖于平台用户表
+    await this.speakerSvc.syncPtUsers(uniqueParticipants);
+
     // 2. 基础数据同步：同步参会者行为与本地平台用户表
     // 将参会者的 JOIN/LEAVE 行为落库，并更新他们的总参会时长
     await this.participantSvc.syncParticipants(meeting, rawParticipants!);
 
     // 确保参会者在我们的用户表中存在，并推送到飞书的人员表格中
     // await this.bitableService.safeUpsertMeetingUserRecords(uniqueParticipants);
-
-
-
 
     // 3. 循环处理每一个录音文件 (一场会议可能会被分段录制出多个文件)
     for (const file of recording_files) {
