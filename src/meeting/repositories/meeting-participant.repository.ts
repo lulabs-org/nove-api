@@ -137,7 +137,13 @@ export class MeetingParticipantRepository {
           return { ...commonFields, platformUser: null, user: null };
         }
 
-        const { user, ...platformUser } = ptUser;
+        const platformUser = {
+          id: ptUser.id,
+          platform: ptUser.platform,
+          displayName: ptUser.displayName,
+          avatarUrl: ptUser.avatarUrl,
+        };
+        const { user } = ptUser;
         return { ...commonFields, platformUser, user };
       }),
       total,
