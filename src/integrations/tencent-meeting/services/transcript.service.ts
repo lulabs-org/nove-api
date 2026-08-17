@@ -51,7 +51,12 @@ export class TranscriptService {
     this.logger.log('开始获取录音转写', context);
 
     try {
-      const res = await this.api.getTranscript(fileId, userId, 1, meetingId);
+      const res = await this.api.getTranscript({
+        recordFileId: fileId,
+        operatorId: userId,
+        operatorIdType: 1,
+        meetingId: meetingId,
+      });
 
       if (!res?.minutes?.paragraphs) {
         return this.emptyResult;

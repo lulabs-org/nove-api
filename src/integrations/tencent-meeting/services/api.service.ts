@@ -408,37 +408,33 @@ export class TencentApiService {
    * @param transcriptsType - Optional transcript type (0: original, 1: smart optimized)
    * @returns Promise resolving to recording transcript details
    */
-  async getTranscript(
-    recordFileId: string,
-    operatorId: string,
-    operatorIdType: number = 1,
-    meetingId?: string,
-    transcriptsType?: number,
-    pid?: string,
-    limit?: number,
-    pwd?: string,
-  ): Promise<TranscriptResponse> {
+  async getTranscript(params: {
+    recordFileId: string;
+    operatorId: string;
+    operatorIdType?: number;
+    meetingId?: string;
+    transcriptsType?: number;
+    pid?: string;
+    limit?: number;
+  }): Promise<TranscriptResponse> {
     const queryParams: Record<string, unknown> = {
-      record_file_id: recordFileId,
-      operator_id: operatorId,
-      operator_id_type: operatorIdType,
+      record_file_id: params.recordFileId,
+      operator_id: params.operatorId,
+      operator_id_type: params.operatorIdType ?? 1,
     };
 
     // Add optional parameters if provided
-    if (pid !== undefined) {
-      queryParams.pid = pid;
+    if (params.pid !== undefined) {
+      queryParams.pid = params.pid;
     }
-    if (limit !== undefined) {
-      queryParams.limit = limit;
+    if (params.limit !== undefined) {
+      queryParams.limit = params.limit;
     }
-    if (pwd) {
-      queryParams.pwd = pwd;
+    if (params.meetingId) {
+      queryParams.meeting_id = params.meetingId;
     }
-    if (meetingId) {
-      queryParams.meeting_id = meetingId;
-    }
-    if (transcriptsType !== undefined) {
-      queryParams.transcripts_type = transcriptsType;
+    if (params.transcriptsType !== undefined) {
+      queryParams.transcripts_type = params.transcriptsType;
     }
 
     return this.sendRequest<TranscriptResponse>(

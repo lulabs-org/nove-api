@@ -33,7 +33,12 @@ async function bootstrap() {
 
   try {
     console.log("=== Testing getTranscript with limit=200 ===");
-    const res = await tencentApi.getTranscript(recordFileId, operatorId, 1, undefined, 200);
+    const res = await tencentApi.getTranscript({
+      recordFileId,
+      operatorId,
+      operatorIdType: 1,
+      limit: 200,
+    });
     console.log("Transcript paragraphs count:", res.minutes?.paragraphs?.length || 0);
   } catch (e) {
     console.error("Error:", e.message);

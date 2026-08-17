@@ -22,6 +22,7 @@ import { LlmModule } from '../llm/llm.module';
 import { HttpModule } from '@nestjs/axios';
 import { TasksRepository } from './repositories/tasks.repository';
 import { TaskExecutionLogsRepository } from './repositories/task-execution-logs.repository';
+import { UserModule } from '../user/user.module';
 
 import { ConfigModule } from '@nestjs/config';
 import { openaiConfig } from '../configs/openai.config';
@@ -44,6 +45,7 @@ import { LinkOrdersToUsersByPhoneHandler } from './handlers/link-orders-to-users
     LlmModule,
     ConfigModule.forFeature(openaiConfig),
     HttpModule,
+    UserModule,
   ],
   controllers: [TasksController],
   providers: [

@@ -21,7 +21,7 @@ import { ParticipantDetail, ParticipantsList } from '../types';
 export class ParticipantService {
   private readonly logger = new Logger(ParticipantService.name);
 
-  constructor(private readonly api: TencentApiService) {}
+  constructor(private readonly api: TencentApiService) { }
 
   /**
    * 获取唯一的会议参与者列表
@@ -44,8 +44,8 @@ export class ParticipantService {
         subMeetingId,
         undefined,
         undefined,
-        startTime,
-        endTime,
+        startTime ? startTime - 3600 : undefined,
+        endTime ? endTime + 3600 : undefined,
       );
 
       const decodeBase64Name = (participant: ParticipantDetail) => ({

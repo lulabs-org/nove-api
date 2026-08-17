@@ -3,7 +3,7 @@
  * @Date: 2026-01-03 08:11:41
  * @LastEditors: 杨仕明 shiming.y@qq.com
  * @LastEditTime: 2026-03-29 19:35:27
- * @FilePath: /nove_api/src/tencent-mtg-hook/repositories/meeting-summary.repository.ts
+ * @FilePath: /nove_api/src/tencent-mtg/repositories/meeting-summary.repository.ts
  * @Description:
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.

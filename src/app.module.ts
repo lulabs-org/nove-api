@@ -24,7 +24,7 @@ import { ScopeGuard } from '@/auth/guards/scope.guard';
 import { PermissionGuard } from '@/admin/permission/guards/permission.guard';
 import { PrismaModule } from './prisma/prisma.module';
 import { MeetingModule } from './meeting/meeting.module';
-import { HookTencentMtgModule } from './tencent-mtg-hook/hook-tencent-mtg.module';
+
 import { TencentMtgModule } from './tencent-mtg/tencent-mtg.module';
 import { LarkMeetingModule } from './lark-meeting/lark-meeting.module';
 import { VerificationModule } from '@/verification/verification.module';
@@ -106,7 +106,7 @@ import { TrackingReportModule } from './tracking-report/tracking-report.module';
     AuthModule,
     UserModule,
     MeetingModule,
-    HookTencentMtgModule,
+
     TencentMtgModule,
     LarkMeetingModule,
     VerificationModule,
