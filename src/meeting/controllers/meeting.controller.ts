@@ -95,6 +95,9 @@ export class MeetingController {
     return record;
   }
 
+  /**
+   * 获取会议参会成员列表
+   */
   @Get(':id/participants')
   @RequirePermissions('meeting:read')
   @HttpCode(HttpStatus.OK)

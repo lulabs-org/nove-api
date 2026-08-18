@@ -546,6 +546,89 @@ export const REAL_PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     resource: 'tracking-report',
     action: 'delete',
   },
+
+  // ========== 系统配置权限细化 ==========
+  {
+    name: '查看系统配置',
+    code: 'system:config:read',
+    description: '查看系统配置信息',
+    resource: 'system',
+    action: 'config:read',
+  },
+  {
+    name: '修改系统配置',
+    code: 'system:config:write',
+    description: '修改系统配置信息',
+    resource: 'system',
+    action: 'config:write',
+  },
+
+  // ========== 会议管理 ==========
+  {
+    name: '查看会议',
+    code: 'meeting:read',
+    description: '查看会议记录及相关信息',
+    resource: 'meeting',
+    action: 'read',
+  },
+  {
+    name: '创建会议',
+    code: 'meeting:create',
+    description: '创建新会议记录',
+    resource: 'meeting',
+    action: 'create',
+  },
+  {
+    name: '编辑会议',
+    code: 'meeting:update',
+    description: '编辑会议记录',
+    resource: 'meeting',
+    action: 'update',
+  },
+  {
+    name: '删除会议',
+    code: 'meeting:delete',
+    description: '删除会议记录',
+    resource: 'meeting',
+    action: 'delete',
+  },
+  {
+    name: '查看会议统计',
+    code: 'meeting:stats_view',
+    description: '查看会议统计数据',
+    resource: 'meeting',
+    action: 'stats_view',
+  },
+
+  // ========== 平台用户管理 ==========
+  {
+    name: '查看平台用户',
+    code: 'platform-user:read',
+    description: '查看平台用户信息',
+    resource: 'platform-user',
+    action: 'read',
+  },
+  {
+    name: '创建平台用户',
+    code: 'platform-user:create',
+    description: '创建新平台用户',
+    resource: 'platform-user',
+    action: 'create',
+  },
+  {
+    name: '编辑平台用户',
+    code: 'platform-user:update',
+    description: '编辑平台用户信息',
+    resource: 'platform-user',
+    action: 'update',
+  },
+  {
+    name: '删除平台用户',
+    code: 'platform-user:delete',
+    description: '删除平台用户',
+    resource: 'platform-user',
+    action: 'delete',
+  },
 ] as const satisfies readonly Prisma.PermissionCreateInput[];
 
 export const PERMISSION_CONFIGS: readonly PermissionConfig[] = [
@@ -1091,6 +1174,89 @@ export const PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     code: 'tracking-report:delete',
     description: '删除长期追踪报告',
     resource: 'tracking-report',
+    action: 'delete',
+  },
+
+  // ========== 系统配置权限细化 ==========
+  {
+    name: '查看系统配置',
+    code: 'system:config:read',
+    description: '查看系统配置信息',
+    resource: 'system',
+    action: 'config:read',
+  },
+  {
+    name: '修改系统配置',
+    code: 'system:config:write',
+    description: '修改系统配置信息',
+    resource: 'system',
+    action: 'config:write',
+  },
+
+  // ========== 会议管理 ==========
+  {
+    name: '查看会议',
+    code: 'meeting:read',
+    description: '查看会议记录及相关信息',
+    resource: 'meeting',
+    action: 'read',
+  },
+  {
+    name: '创建会议',
+    code: 'meeting:create',
+    description: '创建新会议记录',
+    resource: 'meeting',
+    action: 'create',
+  },
+  {
+    name: '编辑会议',
+    code: 'meeting:update',
+    description: '编辑会议记录',
+    resource: 'meeting',
+    action: 'update',
+  },
+  {
+    name: '删除会议',
+    code: 'meeting:delete',
+    description: '删除会议记录',
+    resource: 'meeting',
+    action: 'delete',
+  },
+  {
+    name: '查看会议统计',
+    code: 'meeting:stats_view',
+    description: '查看会议统计数据',
+    resource: 'meeting',
+    action: 'stats_view',
+  },
+
+  // ========== 平台用户管理 ==========
+  {
+    name: '查看平台用户',
+    code: 'platform-user:read',
+    description: '查看平台用户信息',
+    resource: 'platform-user',
+    action: 'read',
+  },
+  {
+    name: '创建平台用户',
+    code: 'platform-user:create',
+    description: '创建新平台用户',
+    resource: 'platform-user',
+    action: 'create',
+  },
+  {
+    name: '编辑平台用户',
+    code: 'platform-user:update',
+    description: '编辑平台用户信息',
+    resource: 'platform-user',
+    action: 'update',
+  },
+  {
+    name: '删除平台用户',
+    code: 'platform-user:delete',
+    description: '删除平台用户',
+    resource: 'platform-user',
     action: 'delete',
   },
 ] as const satisfies readonly Prisma.PermissionCreateInput[];
