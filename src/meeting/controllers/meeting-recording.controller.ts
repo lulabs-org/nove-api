@@ -42,7 +42,7 @@ export class MeetingRecordingController {
   constructor(
     private readonly recordingService: MeetingRecordingService,
     private readonly transcriptService: TranscriptService,
-  ) {}
+  ) { }
 
   /**
    * 创建录音
@@ -50,7 +50,7 @@ export class MeetingRecordingController {
   @Post()
   @RequirePermissions('meeting:create')
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: '创建录音记录' })
+  @ApiOperation({ summary: '创建录制记录' })
   @ApiResponse({
     status: HttpStatus.CREATED,
     description: '创建成功',
@@ -59,7 +59,7 @@ export class MeetingRecordingController {
   async createRecording(
     @Body(new ValidationPipe()) createParams: CreateMeetingRecordingDto,
   ) {
-    this.logger.log(`创建录音记录: ${createParams.meetingId}`);
+    this.logger.log(`创建录制记录: ${createParams.meetingId}`);
     return this.recordingService.create(createParams);
   }
 
@@ -83,7 +83,7 @@ export class MeetingRecordingController {
   @Get(':id')
   @RequirePermissions('meeting:read')
   @ApiOperation({ summary: '获取录音详情' })
-  @ApiParam({ name: 'id', description: '录音记录ID', type: 'string' })
+  @ApiParam({ name: 'id', description: '录制记录ID', type: 'string' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: '获取成功',
@@ -94,7 +94,7 @@ export class MeetingRecordingController {
   }
 
   /**
-   * 获取录音关联的转录文本
+   * 获取录制转写文本
    */
   @Get(':id/transcript')
   @RequirePermissions('meeting:read')
@@ -104,7 +104,7 @@ export class MeetingRecordingController {
     @Param('id', CuidPipe) recordingId: string,
     @Query('format') format?: 'text' | 'json',
   ): Promise<any> {
-    this.logger.log(`获取转录文本: ${recordingId}, format: ${format}`);
+    this.logger.log(`获取转写文本: ${recordingId}, format: ${format}`);
 
     try {
       if (format === 'json') {
@@ -128,11 +128,11 @@ export class MeetingRecordingController {
   }
 
   /**
-   * 更新录音记录
+   * 更新录制记录
    */
   @Patch(':id')
   @RequirePermissions('meeting:update')
-  @ApiOperation({ summary: '更新录音记录' })
+  @ApiOperation({ summary: '更新录制记录' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: '更新成功',
@@ -146,11 +146,11 @@ export class MeetingRecordingController {
   }
 
   /**
-   * 删除录音记录
+   * 删除录制记录
    */
   @Delete(':id')
   @RequirePermissions('meeting:delete')
-  @ApiOperation({ summary: '删除录音记录' })
+  @ApiOperation({ summary: '删除录制记录' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: '删除成功',
