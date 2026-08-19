@@ -17,9 +17,21 @@ import {
   Min,
   IsEnum,
   IsBoolean,
+  Max,
+  IsIn,
 } from 'class-validator';
 import { MemberType, MemberStatus } from '@prisma/client';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
+
+const blankStringToUndefined = ({ value }: { value: unknown }) =>
+  typeof value === 'string' && value.trim() === '' ? undefined : value;
+
+const queryBoolean = ({ value }: { value: unknown }) => {
+  if (value === undefined || value === null || value === '') return undefined;
+  if (value === true || value === 'true') return true;
+  if (value === false || value === 'false') return false;
+  return value;
+};
 
 export class PaginationDto {
   @ApiPropertyOptional({
@@ -40,12 +52,14 @@ export class PaginationDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
+  @Max(100)
   pageSize?: number;
 
   @ApiPropertyOptional({
     description: '搜索关键字（姓名、工号、邮箱）',
     example: '张三',
   })
+  @Transform(blankStringToUndefined)
   @IsOptional()
   @IsString()
   keyword?: string;
@@ -54,6 +68,7 @@ export class PaginationDto {
     description: '部门 ID 筛选',
     example: 'clx0987654321fedcba',
   })
+  @Transform(blankStringToUndefined)
   @IsOptional()
   @IsString()
   deptId?: string;
@@ -63,6 +78,7 @@ export class PaginationDto {
     enum: MemberType,
     example: MemberType.INTERNAL,
   })
+  @Transform(blankStringToUndefined)
   @IsOptional()
   @IsEnum(MemberType)
   type?: MemberType;
@@ -72,6 +88,7 @@ export class PaginationDto {
     enum: MemberStatus,
     example: MemberStatus.ACTIVE,
   })
+  @Transform(blankStringToUndefined)
   @IsOptional()
   @IsEnum(MemberStatus)
   status?: MemberStatus;
@@ -80,8 +97,43 @@ export class PaginationDto {
     description: '是否包含子部门成员',
     example: false,
   })
+  @Transform(queryBoolean)
   @IsOptional()
-  @Type(() => Boolean)
   @IsBoolean()
   includeChildren?: boolean;
+}
+
+export class MemberRoleOptionQueryDto {
+  @ApiPropertyOptional({ description: '页码', example: 1 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @ApiPropertyOptional({ description: '每页数量', example: 20 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  pageSize?: number;
+
+  @ApiPropertyOptional({ description: '姓名或邮箱关键字' })
+  @Transform(blankStringToUndefined)
+  @IsOptional()
+  @IsString()
+  keyword?: string;
+
+  @ApiPropertyOptional({ description: '角色 ID' })
+  @Transform(blankStringToUndefined)
+  @IsOptional()
+  @IsString()
+  roleId?: string;
+
+  @ApiPropertyOptional({ enum: ['assigned', 'unassigned'] })
+  @Transform(blankStringToUndefined)
+  @IsOptional()
+  @IsIn(['assigned', 'unassigned'])
+  assignment?: 'assigned' | 'unassigned';
 }

@@ -177,6 +177,70 @@ export class OrgMemberDto {
   primaryDept?: OrgMemberPrimaryDeptInfo | null;
 }
 
+export class OrgMemberListUserProfileInfo {
+  @ApiPropertyOptional({ type: String, nullable: true }) displayName:
+    | string
+    | null;
+  @ApiPropertyOptional({ type: String, nullable: true }) avatar: string | null;
+}
+
+export class OrgMemberListUserInfo {
+  @ApiPropertyOptional({ type: String, nullable: true }) username:
+    | string
+    | null;
+  @ApiPropertyOptional({ type: String, nullable: true }) email: string | null;
+  @ApiPropertyOptional({ type: String, nullable: true }) countryCode:
+    | string
+    | null;
+  @ApiPropertyOptional({ type: String, nullable: true }) phone: string | null;
+  @ApiPropertyOptional({ type: OrgMemberListUserProfileInfo, nullable: true })
+  profile: OrgMemberListUserProfileInfo | null;
+}
+
+export class OrgMemberListPrimaryDeptInfo {
+  @ApiProperty() id: string;
+  @ApiProperty() name: string;
+}
+
+export class OrgMemberListItemDto {
+  @ApiProperty() id: string;
+  @ApiProperty() userId: string;
+  @ApiProperty({ enum: MemberType }) type: MemberType;
+  @ApiProperty({ enum: MemberStatus }) status: MemberStatus;
+  @ApiPropertyOptional({ type: String, nullable: true }) orgDisplayName:
+    | string
+    | null;
+  @ApiPropertyOptional({ type: String, nullable: true }) employeeNo:
+    | string
+    | null;
+  @ApiPropertyOptional({ type: String, nullable: true }) title: string | null;
+  @ApiProperty() joinedAt: Date;
+  @ApiPropertyOptional({ type: OrgMemberListUserInfo, nullable: true })
+  user: OrgMemberListUserInfo | null;
+  @ApiPropertyOptional({ type: OrgMemberListPrimaryDeptInfo, nullable: true })
+  primaryDept: OrgMemberListPrimaryDeptInfo | null;
+}
+
+export class MemberRoleOptionDto {
+  @ApiProperty() id: string;
+  @ApiProperty() userId: string;
+  @ApiPropertyOptional({ type: String, nullable: true }) displayName:
+    | string
+    | null;
+  @ApiPropertyOptional({ type: String, nullable: true }) email: string | null;
+  @ApiPropertyOptional({ type: String, nullable: true }) avatar: string | null;
+  @ApiProperty({ type: [String] }) departmentNames: string[];
+  @ApiProperty({ type: [String] }) roleIds: string[];
+}
+
+export class MemberRoleOptionListResponse {
+  @ApiProperty({ type: [MemberRoleOptionDto] }) items: MemberRoleOptionDto[];
+  @ApiProperty() total: number;
+  @ApiProperty() page: number;
+  @ApiProperty() pageSize: number;
+  @ApiProperty() totalPages: number;
+}
+
 export class OrgMemberDepartmentInfo {
   @ApiProperty({
     description: '部门 ID',
@@ -240,9 +304,9 @@ export class OrgMemberDetailDto extends OrgMemberDto {
 export class OrgMemberListResponse {
   @ApiProperty({
     description: '成员列表',
-    type: [OrgMemberDto],
+    type: [OrgMemberListItemDto],
   })
-  items: OrgMemberDto[];
+  items: OrgMemberListItemDto[];
 
   @ApiProperty({
     description: '总数',

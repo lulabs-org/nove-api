@@ -318,3 +318,111 @@ describe('OrgMemberService.batchImportMembers', () => {
     });
   });
 });
+
+describe('OrgMemberService.listMembers', () => {
+  const repository = {
+    findList: jest.fn(),
+    getDepartmentIds: jest.fn(),
+    findMemberRoleOptions: jest.fn(),
+  };
+  const service = new OrgMemberService(
+    repository as unknown as OrgMemberRepository,
+    {} as PrismaService,
+  );
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    repository.findList.mockResolvedValue({ items: [], total: 0 });
+  });
+
+  it('combines organization, department, keyword, type and status filters', async () => {
+    repository.getDepartmentIds.mockResolvedValue(['dept-1', 'dept-2']);
+
+    await service.listMembers('org-1', {
+      page: 2,
+      pageSize: 20,
+      keyword: 'Alice',
+      deptId: 'dept-1',
+      includeChildren: true,
+      type: 'INTERNAL',
+      status: 'ACTIVE',
+    });
+
+    expect(repository.getDepartmentIds).toHaveBeenCalledWith(
+      'org-1',
+      'dept-1',
+      true,
+    );
+    expect(repository.findList).toHaveBeenCalledWith({
+      skip: 20,
+      take: 20,
+      where: expect.objectContaining({
+        orgId: 'org-1',
+        deletedAt: null,
+        type: 'INTERNAL',
+        status: 'ACTIVE',
+        OR: expect.any(Array),
+        memberDepartments: {
+          some: {
+            orgId: 'org-1',
+            deptId: { in: ['dept-1', 'dept-2'] },
+            deletedAt: null,
+          },
+        },
+      }),
+    });
+  });
+
+  it('returns lightweight role options without detail lookups', async () => {
+    repository.findMemberRoleOptions.mockResolvedValue({
+      total: 1,
+      items: [
+        {
+          id: 'member-1',
+          userId: 'user-1',
+          orgDisplayName: null,
+          user: {
+            username: 'alice',
+            email: 'alice@example.com',
+            profile: { displayName: 'Alice', avatar: null },
+          },
+          primaryDept: { name: '研发部' },
+          memberDepartments: [{ dept: { name: '研发部' } }],
+          memberRoles: [{ roleId: 'role-1' }],
+        },
+      ],
+    });
+
+    await expect(
+      service.listMemberRoleOptions('org-1', {
+        roleId: 'role-1',
+        assignment: 'assigned',
+      }),
+    ).resolves.toEqual(
+      expect.objectContaining({
+        items: [
+          expect.objectContaining({
+            id: 'member-1',
+            displayName: 'Alice',
+            departmentNames: ['研发部'],
+            roleIds: ['role-1'],
+          }),
+        ],
+      }),
+    );
+    expect(repository.findMemberRoleOptions).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          orgId: 'org-1',
+          memberRoles: {
+            some: {
+              roleId: 'role-1',
+              deletedAt: null,
+              role: { orgId: 'org-1', deletedAt: null },
+            },
+          },
+        }),
+      }),
+    );
+  });
+});

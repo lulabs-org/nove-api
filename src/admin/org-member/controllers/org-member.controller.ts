@@ -30,6 +30,8 @@ import {
   PaginationDto,
   OrgMemberDetailDto,
   OrgMemberListResponse,
+  MemberRoleOptionQueryDto,
+  MemberRoleOptionListResponse,
   BatchImportResponse,
 } from '../dto';
 
@@ -100,6 +102,21 @@ export class OrgMemberController {
     @Query() pagination: PaginationDto,
   ): Promise<OrgMemberListResponse> {
     return this.orgMemberService.listMembers(orgId, pagination);
+  }
+
+  @Get('orgs/:orgId/member-role-options')
+  @ApiOperation({
+    summary: '角色成员选项',
+    description: '分页获取角色管理所需的轻量成员与角色关联数据',
+  })
+  @ApiParam({ name: 'orgId', description: '组织 ID' })
+  @ApiResponse({ status: 200, type: MemberRoleOptionListResponse })
+  @RequirePermissions('org-member:read')
+  async listMemberRoleOptions(
+    @Param('orgId') orgId: string,
+    @Query() query: MemberRoleOptionQueryDto,
+  ): Promise<MemberRoleOptionListResponse> {
+    return this.orgMemberService.listMemberRoleOptions(orgId, query);
   }
 
   @Post('orgs/:orgId/members/batch')
