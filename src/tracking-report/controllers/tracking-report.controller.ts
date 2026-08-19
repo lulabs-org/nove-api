@@ -30,6 +30,11 @@ import {
   UpdateTrackingReportDto,
 } from '../dto/tracking-report.dto';
 import {
+  TrackingReportDetailDto,
+  TrackingReportListResponseDto,
+  TrackingReportSubjectDto,
+} from '../dto/tracking-report-response.dto';
+import {
   ConflictResponseDto,
   JobStatusResponseDto,
   TriggerResponseDto,
@@ -37,7 +42,7 @@ import {
 import { TrackingReportService } from '../services/tracking-report.service';
 import { ReportGenerationQueueService } from '../queue/report-generation.queue.service';
 
-@ApiTags('User Tracking Reports')
+@ApiTags('用户跟踪报告')
 @ApiBearerAuth()
 @Controller('tracking-reports')
 export class TrackingReportController {
@@ -48,12 +53,15 @@ export class TrackingReportController {
 
   @Post()
   @RequirePermissions('tracking-report:create')
+  @ApiOperation({ summary: '创建跟踪报告' })
   create(@Body(new ValidationPipe()) dto: CreateTrackingReportDto) {
     return this.service.create(dto);
   }
 
   @Get()
   @RequirePermissions('tracking-report:read')
+  @ApiOperation({ summary: '获取跟踪报告列表' })
+  @ApiOkResponse({ type: TrackingReportListResponseDto })
   list(
     @Query(new ValidationPipe({ transform: true }))
     query: QueryTrackingReportDto,
@@ -75,14 +83,25 @@ export class TrackingReportController {
     return this.reportGenerationQueue.getJobStatus(jobId);
   }
 
+  @Get(':id/subject')
+  @RequirePermissions('tracking-report:read')
+  @ApiOperation({ summary: '按需获取跟踪报告对象的完整身份信息' })
+  @ApiOkResponse({ type: TrackingReportSubjectDto })
+  getSubject(@Param('id', CuidPipe) id: string) {
+    return this.service.getSubject(id);
+  }
+
   @Get(':id')
   @RequirePermissions('tracking-report:read')
+  @ApiOperation({ summary: '获取指定跟踪报告详情' })
+  @ApiOkResponse({ type: TrackingReportDetailDto })
   get(@Param('id', CuidPipe) id: string) {
     return this.service.get(id);
   }
 
   @Put(':id')
   @RequirePermissions('tracking-report:update')
+  @ApiOperation({ summary: '更新跟踪报告' })
   update(
     @Param('id', CuidPipe) id: string,
     @Body(new ValidationPipe()) dto: UpdateTrackingReportDto,
@@ -92,6 +111,7 @@ export class TrackingReportController {
 
   @Delete(':id')
   @RequirePermissions('tracking-report:delete')
+  @ApiOperation({ summary: '删除跟踪报告' })
   delete(@Param('id', CuidPipe) id: string) {
     return this.service.delete(id);
   }
