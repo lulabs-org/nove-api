@@ -52,22 +52,39 @@ export type MemberRoleOptionRecord = Prisma.OrgMemberGetPayload<{
   select: typeof memberRoleOptionSelect;
 }>;
 
+/**
+ * 组织成员仓储类
+ * 负责处理组织成员相关的数据持久化与查询操作
+ */
 @Injectable()
 export class OrgMemberRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  /**
+   * 创建组织成员
+   * @param data 成员创建数据
+   */
   async create(data: Prisma.OrgMemberCreateInput): Promise<OrgMember> {
     return this.prisma.orgMember.create({
       data,
     });
   }
 
+  /**
+   * 根据 ID 查询组织成员
+   * @param id 成员 ID
+   */
   async findById(id: string): Promise<OrgMember | null> {
     return this.prisma.orgMember.findUnique({
       where: { id },
     });
   }
 
+  /**
+   * 根据组织 ID 和用户 ID 查询成员
+   * @param orgId 组织 ID
+   * @param userId 用户 ID
+   */
   async findByOrgAndUser(
     orgId: string,
     userId: string,
@@ -82,6 +99,11 @@ export class OrgMemberRepository {
     });
   }
 
+  /**
+   * 根据工号查询组织成员
+   * @param orgId 组织 ID
+   * @param employeeNo 工号
+   */
   async findByEmployeeNo(
     orgId: string,
     employeeNo: string,
@@ -95,6 +117,10 @@ export class OrgMemberRepository {
     });
   }
 
+  /**
+   * 分页查询组织成员列表
+   * @param options 查询条件与分页参数
+   */
   async findList(options: {
     skip?: number;
     take?: number;
@@ -116,6 +142,10 @@ export class OrgMemberRepository {
     return { items, total };
   }
 
+  /**
+   * 分页查询角色成员选项（用于分配角色时的成员列表）
+   * @param options 查询条件与分页参数
+   */
   async findMemberRoleOptions(options: {
     skip: number;
     take: number;
@@ -134,6 +164,10 @@ export class OrgMemberRepository {
     return { items, total };
   }
 
+  /**
+   * 获取成员详细信息（包含用户资料、主部门、所属部门、角色等关联数据）
+   * @param id 成员 ID
+   */
   async findDetailById(id: string): Promise<OrgMember | null> {
     return this.prisma.orgMember.findUnique({
       where: { id },
@@ -188,6 +222,12 @@ export class OrgMemberRepository {
     });
   }
 
+  /**
+   * 获取指定部门及其子部门（可选）的 ID 集合
+   * @param orgId 组织 ID
+   * @param parentId 部门 ID
+   * @param includeChildren 是否包含所有子代部门
+   */
   async getDepartmentIds(
     orgId: string,
     parentId: string,
@@ -202,6 +242,11 @@ export class OrgMemberRepository {
     return [parentId, ...(await this.getChildDepartmentIds(orgId, parentId))];
   }
 
+  /**
+   * 递归获取所有子代部门的 ID（内部使用，存在性能瓶颈，建议优化为内存树或 CTE）
+   * @param orgId 组织 ID
+   * @param parentId 父部门 ID
+   */
   private async getChildDepartmentIds(
     orgId: string,
     parentId: string,
@@ -226,6 +271,11 @@ export class OrgMemberRepository {
     return ids;
   }
 
+  /**
+   * 更新成员基本信息
+   * @param id 成员 ID
+   * @param data 更新数据
+   */
   async update(
     id: string,
     data: Prisma.OrgMemberUpdateInput,
@@ -236,6 +286,11 @@ export class OrgMemberRepository {
     });
   }
 
+  /**
+   * 更新成员状态
+   * @param id 成员 ID
+   * @param status 新状态
+   */
   async updateStatus(
     id: string,
     status: 'INVITED' | 'ACTIVE' | 'SUSPENDED' | 'LEFT',
@@ -246,12 +301,20 @@ export class OrgMemberRepository {
     });
   }
 
+  /**
+   * 硬删除组织成员
+   * @param id 成员 ID
+   */
   async delete(id: string): Promise<OrgMember> {
     return this.prisma.orgMember.delete({
       where: { id },
     });
   }
 
+  /**
+   * 软删除组织成员（设置 deletedAt）
+   * @param id 成员 ID
+   */
   async softDelete(id: string): Promise<OrgMember> {
     return this.prisma.orgMember.update({
       where: { id },
@@ -259,6 +322,10 @@ export class OrgMemberRepository {
     });
   }
 
+  /**
+   * 统计组织下的有效成员总数
+   * @param orgId 组织 ID
+   */
   async countByOrgId(orgId: string): Promise<number> {
     return this.prisma.orgMember.count({
       where: {
@@ -268,6 +335,11 @@ export class OrgMemberRepository {
     });
   }
 
+  /**
+   * 按照状态统计组织成员数量
+   * @param orgId 组织 ID
+   * @param status 成员状态
+   */
   async countByStatus(
     orgId: string,
     status: 'INVITED' | 'ACTIVE' | 'SUSPENDED' | 'LEFT',
@@ -281,6 +353,11 @@ export class OrgMemberRepository {
     });
   }
 
+  /**
+   * 按照类型统计组织成员数量
+   * @param orgId 组织 ID
+   * @param type 成员类型
+   */
   async countByType(
     orgId: string,
     type: 'INTERNAL' | 'EXTERNAL',

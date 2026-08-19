@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { ArrayMinSize, IsArray, ValidateNested } from 'class-validator';
 import { CreateOrgMemberDto } from './create-org-member.dto';
@@ -25,4 +25,56 @@ export class BatchImportMemberDto {
   @ValidateNested({ each: true })
   @Type(() => BatchImportMemberItemDto)
   members: BatchImportMemberItemDto[];
+}
+
+export class BatchImportFailure {
+  @ApiProperty({
+    description: '成员在批量请求中的序号（从 0 开始）',
+    example: 0,
+  })
+  index: number;
+
+  @ApiPropertyOptional({
+    description: '脱敏邮箱',
+    example: 'zh***@example.com',
+  })
+  email?: string;
+
+  @ApiPropertyOptional({
+    description: '脱敏手机号',
+    example: '138****8000',
+  })
+  phone?: string;
+
+  @ApiProperty({
+    description: '稳定错误码',
+    example: 'CONFLICT',
+  })
+  code: string;
+
+  @ApiProperty({
+    description: '失败原因',
+    example: 'User is already a member of this organization',
+  })
+  reason: string;
+}
+
+export class BatchImportResponse {
+  @ApiProperty({
+    description: '成功导入的成员数量',
+    example: 8,
+  })
+  successCount: number;
+
+  @ApiProperty({
+    description: '失败的成员数量',
+    example: 2,
+  })
+  failureCount: number;
+
+  @ApiProperty({
+    description: '失败的成员列表',
+    type: [BatchImportFailure],
+  })
+  failures: BatchImportFailure[];
 }

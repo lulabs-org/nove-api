@@ -14,8 +14,8 @@ import {
   UpdateMemberStatusDto,
   UpdateMemberDepartmentsDto,
   BatchImportMemberDto,
-  PaginationDto,
-  MemberRoleOptionQueryDto,
+  QueryOrgMemberDto,
+  QueryMemberRoleOptionDto,
   OrgMemberListItemDto,
   OrgMemberDetailDto,
   OrgMemberListResponse,
@@ -45,7 +45,7 @@ export class OrgMemberService {
 
   async listMembers(
     orgId: string,
-    pagination?: PaginationDto,
+    pagination?: QueryOrgMemberDto,
   ): Promise<OrgMemberListResponse> {
     const page = pagination?.page || 1;
     const pageSize = pagination?.pageSize || 10;
@@ -110,7 +110,7 @@ export class OrgMemberService {
 
   async listMemberRoleOptions(
     orgId: string,
-    query: MemberRoleOptionQueryDto,
+    query: QueryMemberRoleOptionDto,
   ): Promise<MemberRoleOptionListResponse> {
     const page = query.page || 1;
     const pageSize = query.pageSize || 20;

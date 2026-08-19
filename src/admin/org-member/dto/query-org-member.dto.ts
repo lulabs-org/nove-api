@@ -33,7 +33,7 @@ const queryBoolean = ({ value }: { value: unknown }) => {
   return value;
 };
 
-export class PaginationDto {
+export class QueryOrgMemberDto {
   @ApiPropertyOptional({
     description: '页码',
     example: 1,
@@ -103,37 +103,3 @@ export class PaginationDto {
   includeChildren?: boolean;
 }
 
-export class MemberRoleOptionQueryDto {
-  @ApiPropertyOptional({ description: '页码', example: 1 })
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  page?: number;
-
-  @ApiPropertyOptional({ description: '每页数量', example: 20 })
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @Max(100)
-  pageSize?: number;
-
-  @ApiPropertyOptional({ description: '姓名或邮箱关键字' })
-  @Transform(blankStringToUndefined)
-  @IsOptional()
-  @IsString()
-  keyword?: string;
-
-  @ApiPropertyOptional({ description: '角色 ID' })
-  @Transform(blankStringToUndefined)
-  @IsOptional()
-  @IsString()
-  roleId?: string;
-
-  @ApiPropertyOptional({ enum: ['assigned', 'unassigned'] })
-  @Transform(blankStringToUndefined)
-  @IsOptional()
-  @IsIn(['assigned', 'unassigned'])
-  assignment?: 'assigned' | 'unassigned';
-}

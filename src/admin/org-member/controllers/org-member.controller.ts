@@ -11,13 +11,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-  ApiParam,
-} from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
 
 import { OrgMemberService } from '../services/org-member.service';
@@ -27,48 +21,33 @@ import {
   UpdateMemberStatusDto,
   UpdateMemberDepartmentsDto,
   BatchImportMemberDto,
-  PaginationDto,
+  QueryOrgMemberDto,
   OrgMemberDetailDto,
   OrgMemberListResponse,
-  MemberRoleOptionQueryDto,
+  QueryMemberRoleOptionDto,
   MemberRoleOptionListResponse,
   BatchImportResponse,
 } from '../dto';
+import {
+  ApiCreateMember,
+  ApiListMembers,
+  ApiListMemberRoleOptions,
+  ApiBatchImportMembers,
+  ApiGetMember,
+  ApiUpdateMember,
+  ApiUpdateMemberStatus,
+  ApiDeleteMember,
+  ApiUpdateMemberDepartments,
+} from '../decorators/org-member.decorators';
 
 @ApiTags('Admin / OrgMembers')
 @Controller('admin')
 @ApiBearerAuth()
 export class OrgMemberController {
-  constructor(private readonly orgMemberService: OrgMemberService) {}
+  constructor(private readonly orgMemberService: OrgMemberService) { }
 
   @Post('orgs/:orgId/members')
-  @ApiOperation({
-    summary: '新增成员',
-    description:
-      '通过手机号或邮箱在指定组织下新增成员；已有用户直接关联，否则创建待验证用户',
-  })
-  @ApiParam({
-    name: 'orgId',
-    description: '组织 ID',
-    example: 'clx1234567890abcdef',
-  })
-  @ApiResponse({
-    status: 201,
-    description: '成员创建成功',
-    type: OrgMemberDetailDto,
-  })
-  @ApiResponse({
-    status: 400,
-    description: '请求参数无效',
-  })
-  @ApiResponse({
-    status: 401,
-    description: '未授权',
-  })
-  @ApiResponse({
-    status: 409,
-    description: '联系方式冲突、成员已存在或工号已存在',
-  })
+  @ApiCreateMember()
   @RequirePermissions('org-member:create')
   async createMember(
     @Param('orgId') orgId: string,
@@ -78,70 +57,27 @@ export class OrgMemberController {
   }
 
   @Get('orgs/:orgId/members')
-  @ApiOperation({
-    summary: '成员列表',
-    description: '获取指定组织的成员列表（支持分页、关键字、部门、状态筛选）',
-  })
-  @ApiParam({
-    name: 'orgId',
-    description: '组织 ID',
-    example: 'clx1234567890abcdef',
-  })
-  @ApiResponse({
-    status: 200,
-    description: '成员列表',
-    type: OrgMemberListResponse,
-  })
-  @ApiResponse({
-    status: 401,
-    description: '未授权',
-  })
+  @ApiListMembers()
   @RequirePermissions('org-member:read')
   async listMembers(
     @Param('orgId') orgId: string,
-    @Query() pagination: PaginationDto,
+    @Query() pagination: QueryOrgMemberDto,
   ): Promise<OrgMemberListResponse> {
     return this.orgMemberService.listMembers(orgId, pagination);
   }
 
   @Get('orgs/:orgId/member-role-options')
-  @ApiOperation({
-    summary: '角色成员选项',
-    description: '分页获取角色管理所需的轻量成员与角色关联数据',
-  })
-  @ApiParam({ name: 'orgId', description: '组织 ID' })
-  @ApiResponse({ status: 200, type: MemberRoleOptionListResponse })
+  @ApiListMemberRoleOptions()
   @RequirePermissions('org-member:read')
   async listMemberRoleOptions(
     @Param('orgId') orgId: string,
-    @Query() query: MemberRoleOptionQueryDto,
+    @Query() query: QueryMemberRoleOptionDto,
   ): Promise<MemberRoleOptionListResponse> {
     return this.orgMemberService.listMemberRoleOptions(orgId, query);
   }
 
   @Post('orgs/:orgId/members/batch')
-  @ApiOperation({
-    summary: '批量导入成员',
-    description: '批量导入成员到组织',
-  })
-  @ApiParam({
-    name: 'orgId',
-    description: '组织 ID',
-    example: 'clx1234567890abcdef',
-  })
-  @ApiResponse({
-    status: 200,
-    description: '批量导入结果',
-    type: BatchImportResponse,
-  })
-  @ApiResponse({
-    status: 400,
-    description: '请求参数无效',
-  })
-  @ApiResponse({
-    status: 401,
-    description: '未授权',
-  })
+  @ApiBatchImportMembers()
   @RequirePermissions('org-member:create')
   async batchImportMembers(
     @Param('orgId') orgId: string,
@@ -151,28 +87,7 @@ export class OrgMemberController {
   }
 
   @Get('members/:memberId')
-  @ApiOperation({
-    summary: '成员详情',
-    description: '根据成员 ID 获取成员详细信息',
-  })
-  @ApiParam({
-    name: 'memberId',
-    description: '成员 ID',
-    example: 'clx1234567890abcdef',
-  })
-  @ApiResponse({
-    status: 200,
-    description: '成员详情',
-    type: OrgMemberDetailDto,
-  })
-  @ApiResponse({
-    status: 401,
-    description: '未授权',
-  })
-  @ApiResponse({
-    status: 404,
-    description: '成员不存在',
-  })
+  @ApiGetMember()
   @RequirePermissions('org-member:read')
   async getMember(
     @Param('memberId') memberId: string,
@@ -181,32 +96,7 @@ export class OrgMemberController {
   }
 
   @Put('members/:memberId')
-  @ApiOperation({
-    summary: '更新成员信息',
-    description: '更新成员信息（工号、岗位、上级、入职日期等）',
-  })
-  @ApiParam({
-    name: 'memberId',
-    description: '成员 ID',
-    example: 'clx1234567890abcdef',
-  })
-  @ApiResponse({
-    status: 200,
-    description: '成员更新成功',
-    type: OrgMemberDetailDto,
-  })
-  @ApiResponse({
-    status: 400,
-    description: '请求参数无效',
-  })
-  @ApiResponse({
-    status: 401,
-    description: '未授权',
-  })
-  @ApiResponse({
-    status: 404,
-    description: '成员不存在',
-  })
+  @ApiUpdateMember()
   @RequirePermissions('org-member:update')
   async updateMember(
     @Param('memberId') memberId: string,
@@ -216,32 +106,7 @@ export class OrgMemberController {
   }
 
   @Patch('members/:memberId/status')
-  @ApiOperation({
-    summary: '更新成员状态',
-    description: '启用/停用/离职成员',
-  })
-  @ApiParam({
-    name: 'memberId',
-    description: '成员 ID',
-    example: 'clx1234567890abcdef',
-  })
-  @ApiResponse({
-    status: 200,
-    description: '状态更新成功',
-    type: OrgMemberDetailDto,
-  })
-  @ApiResponse({
-    status: 400,
-    description: '请求参数无效',
-  })
-  @ApiResponse({
-    status: 401,
-    description: '未授权',
-  })
-  @ApiResponse({
-    status: 404,
-    description: '成员不存在',
-  })
+  @ApiUpdateMemberStatus()
   @RequirePermissions('org-member:update')
   async updateMemberStatus(
     @Param('memberId') memberId: string,
@@ -252,59 +117,14 @@ export class OrgMemberController {
 
   @Delete('members/:memberId')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({
-    summary: '删除成员',
-    description: '删除/移除成员（软删除）',
-  })
-  @ApiParam({
-    name: 'memberId',
-    description: '成员 ID',
-    example: 'clx1234567890abcdef',
-  })
-  @ApiResponse({
-    status: 204,
-    description: '成员删除成功',
-  })
-  @ApiResponse({
-    status: 401,
-    description: '未授权',
-  })
-  @ApiResponse({
-    status: 404,
-    description: '成员不存在',
-  })
+  @ApiDeleteMember()
   @RequirePermissions('org-member:delete')
   async deleteMember(@Param('memberId') memberId: string): Promise<void> {
     await this.orgMemberService.deleteMember(memberId);
   }
 
   @Patch('members/:memberId/departments')
-  @ApiOperation({
-    summary: '调整成员所属部门',
-    description: '调整成员所属部门（主部门/兼职部门）',
-  })
-  @ApiParam({
-    name: 'memberId',
-    description: '成员 ID',
-    example: 'clx1234567890abcdef',
-  })
-  @ApiResponse({
-    status: 200,
-    description: '部门调整成功',
-    type: OrgMemberDetailDto,
-  })
-  @ApiResponse({
-    status: 400,
-    description: '请求参数无效',
-  })
-  @ApiResponse({
-    status: 401,
-    description: '未授权',
-  })
-  @ApiResponse({
-    status: 404,
-    description: '成员不存在',
-  })
+  @ApiUpdateMemberDepartments()
   @RequirePermissions('org-member:update')
   async updateMemberDepartments(
     @Param('memberId') memberId: string,
