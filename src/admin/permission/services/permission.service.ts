@@ -210,6 +210,15 @@ export class PermService {
 
     const where: Record<string, any> = {};
 
+    if (query.keyword) {
+      where.OR = [
+        { name: { contains: query.keyword } },
+        { code: { contains: query.keyword } },
+        { resource: { contains: query.keyword } },
+        { action: { contains: query.keyword } },
+      ];
+    }
+
     if (query.name) {
       where.name = { contains: query.name };
     }
