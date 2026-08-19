@@ -221,7 +221,6 @@ export class OrgMemberListItemDto {
   primaryDept: OrgMemberListPrimaryDeptInfo | null;
 }
 
-
 export class OrgMemberDepartmentInfo {
   @ApiProperty({
     description: '部门 ID',
@@ -313,4 +312,3 @@ export class OrgMemberListResponse {
   })
   totalPages: number;
 }
-

@@ -11,17 +11,25 @@ export function ApiCreateMember() {
   return applyDecorators(
     ApiOperation({
       summary: '新增成员',
-      description: '通过手机号或邮箱在指定组织下新增成员；已有用户直接关联，否则创建待验证用户',
+      description:
+        '通过手机号或邮箱在指定组织下新增成员；已有用户直接关联，否则创建待验证用户',
     }),
     ApiParam({
       name: 'orgId',
       description: '组织 ID',
       example: 'clx1234567890abcdef',
     }),
-    ApiResponse({ status: 201, description: '成员创建成功', type: OrgMemberDetailDto }),
+    ApiResponse({
+      status: 201,
+      description: '成员创建成功',
+      type: OrgMemberDetailDto,
+    }),
     ApiResponse({ status: 400, description: '请求参数无效' }),
     ApiResponse({ status: 401, description: '未授权' }),
-    ApiResponse({ status: 409, description: '联系方式冲突、成员已存在或工号已存在' }),
+    ApiResponse({
+      status: 409,
+      description: '联系方式冲突、成员已存在或工号已存在',
+    }),
   );
 }
 
@@ -36,7 +44,11 @@ export function ApiListMembers() {
       description: '组织 ID',
       example: 'clx1234567890abcdef',
     }),
-    ApiResponse({ status: 200, description: '成员列表', type: OrgMemberListResponse }),
+    ApiResponse({
+      status: 200,
+      description: '成员列表',
+      type: OrgMemberListResponse,
+    }),
     ApiResponse({ status: 401, description: '未授权' }),
   );
 }
@@ -63,7 +75,11 @@ export function ApiBatchImportMembers() {
       description: '组织 ID',
       example: 'clx1234567890abcdef',
     }),
-    ApiResponse({ status: 200, description: '批量导入结果', type: BatchImportResponse }),
+    ApiResponse({
+      status: 200,
+      description: '批量导入结果',
+      type: BatchImportResponse,
+    }),
     ApiResponse({ status: 400, description: '请求参数无效' }),
     ApiResponse({ status: 401, description: '未授权' }),
   );
@@ -80,7 +96,11 @@ export function ApiGetMember() {
       description: '成员 ID',
       example: 'clx1234567890abcdef',
     }),
-    ApiResponse({ status: 200, description: '成员详情', type: OrgMemberDetailDto }),
+    ApiResponse({
+      status: 200,
+      description: '成员详情',
+      type: OrgMemberDetailDto,
+    }),
     ApiResponse({ status: 401, description: '未授权' }),
     ApiResponse({ status: 404, description: '成员不存在' }),
   );
@@ -97,7 +117,11 @@ export function ApiUpdateMember() {
       description: '成员 ID',
       example: 'clx1234567890abcdef',
     }),
-    ApiResponse({ status: 200, description: '成员更新成功', type: OrgMemberDetailDto }),
+    ApiResponse({
+      status: 200,
+      description: '成员更新成功',
+      type: OrgMemberDetailDto,
+    }),
     ApiResponse({ status: 400, description: '请求参数无效' }),
     ApiResponse({ status: 401, description: '未授权' }),
     ApiResponse({ status: 404, description: '成员不存在' }),
@@ -115,7 +139,11 @@ export function ApiUpdateMemberStatus() {
       description: '成员 ID',
       example: 'clx1234567890abcdef',
     }),
-    ApiResponse({ status: 200, description: '状态更新成功', type: OrgMemberDetailDto }),
+    ApiResponse({
+      status: 200,
+      description: '状态更新成功',
+      type: OrgMemberDetailDto,
+    }),
     ApiResponse({ status: 400, description: '请求参数无效' }),
     ApiResponse({ status: 401, description: '未授权' }),
     ApiResponse({ status: 404, description: '成员不存在' }),
@@ -150,7 +178,11 @@ export function ApiUpdateMemberDepartments() {
       description: '成员 ID',
       example: 'clx1234567890abcdef',
     }),
-    ApiResponse({ status: 200, description: '部门调整成功', type: OrgMemberDetailDto }),
+    ApiResponse({
+      status: 200,
+      description: '部门调整成功',
+      type: OrgMemberDetailDto,
+    }),
     ApiResponse({ status: 400, description: '请求参数无效' }),
     ApiResponse({ status: 401, description: '未授权' }),
     ApiResponse({ status: 404, description: '成员不存在' }),

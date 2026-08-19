@@ -18,7 +18,6 @@ import {
   IsEnum,
   IsBoolean,
   Max,
-  IsIn,
 } from 'class-validator';
 import { MemberType, MemberStatus } from '@prisma/client';
 import { Transform, Type } from 'class-transformer';
@@ -102,4 +101,3 @@ export class QueryOrgMemberDto {
   @IsBoolean()
   includeChildren?: boolean;
 }
-

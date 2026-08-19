@@ -42,7 +42,7 @@ export class MeetingRecordingController {
   constructor(
     private readonly recordingService: MeetingRecordingService,
     private readonly transcriptService: TranscriptService,
-  ) { }
+  ) {}
 
   /**
    * 创建录音

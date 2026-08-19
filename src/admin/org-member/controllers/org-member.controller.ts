@@ -44,7 +44,7 @@ import {
 @Controller('admin')
 @ApiBearerAuth()
 export class OrgMemberController {
-  constructor(private readonly orgMemberService: OrgMemberService) { }
+  constructor(private readonly orgMemberService: OrgMemberService) {}
 
   @Post('orgs/:orgId/members')
   @ApiCreateMember()

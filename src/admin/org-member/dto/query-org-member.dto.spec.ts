@@ -1,6 +1,7 @@
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
-import { QueryMemberRoleOptionDto, QueryOrgMemberDto } from './query-org-member.dto';
+import { QueryOrgMemberDto } from './query-org-member.dto';
+import { QueryMemberRoleOptionDto } from './member-role-option.dto';
 
 describe('organization member pagination DTOs', () => {
   it('treats blank member filters as omitted query parameters', async () => {
@@ -32,7 +33,9 @@ describe('organization member pagination DTOs', () => {
     ['true', true],
     ['false', false],
   ])('parses includeChildren=%s as %s', async (value, expected) => {
-    const input = plainToInstance(QueryOrgMemberDto, { includeChildren: value });
+    const input = plainToInstance(QueryOrgMemberDto, {
+      includeChildren: value,
+    });
 
     await expect(validate(input)).resolves.toEqual([]);
     expect(input.includeChildren).toBe(expected);
