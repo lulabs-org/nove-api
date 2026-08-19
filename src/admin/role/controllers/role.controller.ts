@@ -32,7 +32,7 @@ import {
 } from '../dto';
 import { PermissionDto } from '@/admin/permission/dto';
 
-@ApiTags('Admin - Roles')
+@ApiTags('Admin / Roles')
 @Controller('admin/roles')
 @ApiBearerAuth()
 export class RoleController {

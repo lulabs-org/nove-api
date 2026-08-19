@@ -31,7 +31,7 @@ import {
   OrganizationStatsDto,
 } from '../dto';
 
-@ApiTags('Admin - Organizations')
+@ApiTags('Admin / Organizations')
 @Controller('admin/orgs')
 @ApiBearerAuth()
 export class OrganizationController {

@@ -35,7 +35,7 @@ import {
   DepartmentAncestorsResponse,
 } from '../dto';
 
-@ApiTags('Admin - Departments')
+@ApiTags('Admin / Departments')
 @Controller('admin')
 @ApiBearerAuth()
 export class DepartmentController {

@@ -36,7 +36,7 @@ import {
  * API Key 管理控制器（管理端）
  * 需要 JWT 认证和 api_keys:manage 权限
  */
-@ApiTags('Admin - API Keys')
+@ApiTags('Admin / API Keys')
 @Controller('admin/api-keys')
 @RequireAuth('jwt')
 @ApiBearerAuth()

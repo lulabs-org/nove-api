@@ -28,7 +28,7 @@ import {
   DataPermissionRuleListResponse,
 } from '../dto';
 
-@ApiTags('Admin - Data Permission Rules')
+@ApiTags('Admin / Data Permission Rules')
 @Controller('admin/data-permission-rules')
 @ApiBearerAuth()
 export class DataPermRuleController {
