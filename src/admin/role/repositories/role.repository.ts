@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import { RoleType } from '@prisma/client';
+import { Prisma, RoleType } from '@prisma/client';
 
 @Injectable()
 export class RoleRepository {
@@ -55,11 +55,9 @@ export class RoleRepository {
       type?: RoleType;
       active?: boolean;
     };
-    orderBy?: {
-      createdAt?: 'asc' | 'desc';
-      name?: 'asc' | 'desc';
-      level?: 'asc' | 'desc';
-    };
+    orderBy?:
+      | Prisma.RoleOrderByWithRelationInput
+      | Prisma.RoleOrderByWithRelationInput[];
   }) {
     const { skip, take, where, orderBy } = options || {};
 
@@ -68,7 +66,11 @@ export class RoleRepository {
         where,
         skip,
         take,
-        orderBy: orderBy || { createdAt: 'desc' },
+        orderBy: orderBy || [
+          { level: 'asc' },
+          { createdAt: 'asc' },
+          { id: 'asc' },
+        ],
         include: {
           permissions: {
             include: {
