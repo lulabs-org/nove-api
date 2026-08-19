@@ -269,8 +269,31 @@ export class PlatformUserRepository {
       ...(keyword
         ? {
             OR: [
+              { id: keyword },
               { displayName: { contains: keyword, mode: 'insensitive' } },
               { phone: { contains: keyword } },
+              { ptUserId: { contains: keyword, mode: 'insensitive' } },
+              { ptUnionId: { contains: keyword, mode: 'insensitive' } },
+              {
+                user: {
+                  is: {
+                    OR: [
+                      { id: keyword },
+                      { username: { contains: keyword, mode: 'insensitive' } },
+                      { email: { contains: keyword, mode: 'insensitive' } },
+                      { phone: { contains: keyword } },
+                      {
+                        profile: {
+                          displayName: {
+                            contains: keyword,
+                            mode: 'insensitive',
+                          },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
             ],
           }
         : {}),
@@ -294,6 +317,7 @@ export class PlatformUserRepository {
       where: {
         deletedAt: null,
         OR: [
+          { id: keyword },
           { username: { contains: keyword, mode: 'insensitive' } },
           { email: { contains: keyword, mode: 'insensitive' } },
           { phone: { contains: keyword } },

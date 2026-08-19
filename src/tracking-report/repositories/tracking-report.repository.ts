@@ -8,6 +8,100 @@ export type TrackingReportCreate = Omit<
   'versionGroupKey' | 'version' | 'isLatest' | 'previousReportId'
 > & { recordingSummaryIds?: string[]; sourceReportIds?: string[] };
 
+const trackingReportSubjectSummarySelect = {
+  subjectUser: {
+    select: {
+      profile: {
+        select: {
+          displayName: true,
+          avatar: true,
+        },
+      },
+    },
+  },
+  platformUser: {
+    select: {
+      displayName: true,
+    },
+  },
+  project: {
+    select: {
+      title: true,
+      image: true,
+    },
+  },
+} satisfies Prisma.UserTrackingReportSelect;
+
+const trackingReportSubjectDetailSelect = {
+  subjectUser: {
+    select: {
+      id: true,
+      username: true,
+      email: true,
+      countryCode: true,
+      phone: true,
+      profile: {
+        select: {
+          displayName: true,
+          avatar: true,
+        },
+      },
+    },
+  },
+  platformUser: {
+    select: {
+      id: true,
+      platform: true,
+      ptUserId: true,
+      ptUnionId: true,
+      displayName: true,
+    },
+  },
+  project: {
+    select: {
+      id: true,
+      title: true,
+      subtitle: true,
+      category: true,
+      image: true,
+    },
+  },
+} satisfies Prisma.UserTrackingReportSelect;
+
+export const trackingReportListSelect = {
+  id: true,
+  subjectUserId: true,
+  platformUserId: true,
+  projectId: true,
+  subjectNameSnapshot: true,
+  trackingType: true,
+  cadence: true,
+  periodStart: true,
+  periodEnd: true,
+  isLatest: true,
+  version: true,
+  createdAt: true,
+  ...trackingReportSubjectSummarySelect,
+} satisfies Prisma.UserTrackingReportSelect;
+
+export type TrackingReportListRecord = Prisma.UserTrackingReportGetPayload<{
+  select: typeof trackingReportListSelect;
+}>;
+
+const trackingReportSubjectDetailRecordSelect = {
+  subjectUserId: true,
+  platformUserId: true,
+  projectId: true,
+  subjectNameSnapshot: true,
+  trackingType: true,
+  ...trackingReportSubjectDetailSelect,
+} satisfies Prisma.UserTrackingReportSelect;
+
+export type TrackingReportSubjectDetailRecord =
+  Prisma.UserTrackingReportGetPayload<{
+    select: typeof trackingReportSubjectDetailRecordSelect;
+  }>;
+
 @Injectable()
 export class TrackingReportRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -93,7 +187,18 @@ export class TrackingReportRepository {
   findById(id: string) {
     return this.prisma.userTrackingReport.findFirst({
       where: { id, deletedAt: null },
-      include: { recordingSummarySources: true, sourceReports: true },
+      include: {
+        recordingSummarySources: true,
+        sourceReports: true,
+        ...trackingReportSubjectDetailSelect,
+      },
+    });
+  }
+
+  findSubjectByReportId(id: string) {
+    return this.prisma.userTrackingReport.findFirst({
+      where: { id, deletedAt: null },
+      select: trackingReportSubjectDetailRecordSelect,
     });
   }
 
@@ -109,6 +214,7 @@ export class TrackingReportRepository {
         skip,
         take,
         orderBy: [{ periodStart: 'desc' }, { createdAt: 'desc' }],
+        select: trackingReportListSelect,
       }),
     ]);
     return { total, data };
