@@ -1,10 +1,11 @@
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
-import { MemberRoleOptionQueryDto, PaginationDto } from './pagination.dto';
+import { QueryOrgMemberDto } from './query-org-member.dto';
+import { QueryMemberRoleOptionDto } from './member-role-option.dto';
 
 describe('organization member pagination DTOs', () => {
   it('treats blank member filters as omitted query parameters', async () => {
-    const input = plainToInstance(PaginationDto, {
+    const input = plainToInstance(QueryOrgMemberDto, {
       page: '1',
       pageSize: '100',
       keyword: '',
@@ -32,14 +33,16 @@ describe('organization member pagination DTOs', () => {
     ['true', true],
     ['false', false],
   ])('parses includeChildren=%s as %s', async (value, expected) => {
-    const input = plainToInstance(PaginationDto, { includeChildren: value });
+    const input = plainToInstance(QueryOrgMemberDto, {
+      includeChildren: value,
+    });
 
     await expect(validate(input)).resolves.toEqual([]);
     expect(input.includeChildren).toBe(expected);
   });
 
   it('treats blank member role option filters as omitted', async () => {
-    const input = plainToInstance(MemberRoleOptionQueryDto, {
+    const input = plainToInstance(QueryMemberRoleOptionDto, {
       keyword: '',
       roleId: ' ',
       assignment: '',
@@ -55,7 +58,7 @@ describe('organization member pagination DTOs', () => {
     );
   });
 
-  it.each([PaginationDto, MemberRoleOptionQueryDto])(
+  it.each([QueryOrgMemberDto, QueryMemberRoleOptionDto])(
     'rejects page sizes above 100 for %p',
     async (Dto) => {
       const input = plainToInstance(Dto, { pageSize: 101 });
