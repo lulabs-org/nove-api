@@ -15,12 +15,15 @@ import {
   UpdateMemberDepartmentsDto,
   BatchImportMemberDto,
   PaginationDto,
-  OrgMemberDto,
+  MemberRoleOptionQueryDto,
+  OrgMemberListItemDto,
   OrgMemberDetailDto,
   OrgMemberListResponse,
+  MemberRoleOptionListResponse,
   BatchImportResponse,
 } from '../dto';
 import { DesensitizationUtil } from '@/common/utils/desensitization.util';
+import type { OrgMemberListRecord } from '../repositories/org-member.repository';
 
 @Injectable()
 export class OrgMemberService {
@@ -48,41 +51,119 @@ export class OrgMemberService {
     const pageSize = pagination?.pageSize || 10;
     const skip = (page - 1) * pageSize;
 
-    let result: { items: OrgMember[]; total: number };
-
+    const where: Prisma.OrgMemberWhereInput = { orgId, deletedAt: null };
+    if (pagination?.type) where.type = pagination.type;
+    if (pagination?.status) where.status = pagination.status;
     if (pagination?.keyword) {
-      result = await this.orgMemberRepository.searchByKeyword(
-        orgId,
-        pagination.keyword,
-        { skip, take: pageSize },
-      );
-    } else if (pagination?.deptId) {
-      const includeChildren = pagination?.includeChildren || false;
-      result = await this.orgMemberRepository.findByDepartmentId(
-        pagination.deptId,
-        includeChildren,
-        { skip, take: pageSize },
-      );
-    } else {
-      const where: Prisma.OrgMemberWhereInput = {};
-
-      if (pagination?.type) {
-        where.type = pagination.type;
-      }
-
-      if (pagination?.status) {
-        where.status = pagination.status;
-      }
-
-      result = await this.orgMemberRepository.findByOrgId(orgId, {
-        skip,
-        take: pageSize,
-        where,
-      });
+      where.OR = [
+        {
+          orgDisplayName: { contains: pagination.keyword, mode: 'insensitive' },
+        },
+        { employeeNo: { contains: pagination.keyword, mode: 'insensitive' } },
+        {
+          user: {
+            username: { contains: pagination.keyword, mode: 'insensitive' },
+          },
+        },
+        {
+          user: {
+            email: { contains: pagination.keyword, mode: 'insensitive' },
+          },
+        },
+        {
+          user: {
+            profile: {
+              displayName: {
+                contains: pagination.keyword,
+                mode: 'insensitive',
+              },
+            },
+          },
+        },
+      ];
     }
+    if (pagination?.deptId) {
+      const departmentIds = await this.orgMemberRepository.getDepartmentIds(
+        orgId,
+        pagination.deptId,
+        pagination.includeChildren || false,
+      );
+      where.memberDepartments = {
+        some: { orgId, deptId: { in: departmentIds }, deletedAt: null },
+      };
+    }
+
+    const result = await this.orgMemberRepository.findList({
+      skip,
+      take: pageSize,
+      where,
+    });
 
     return {
       items: result.items.map((item) => this.toDto(item)),
+      total: result.total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(result.total / pageSize),
+    };
+  }
+
+  async listMemberRoleOptions(
+    orgId: string,
+    query: MemberRoleOptionQueryDto,
+  ): Promise<MemberRoleOptionListResponse> {
+    const page = query.page || 1;
+    const pageSize = query.pageSize || 20;
+    const where: Prisma.OrgMemberWhereInput = { orgId, deletedAt: null };
+    if (query.keyword) {
+      where.OR = [
+        { orgDisplayName: { contains: query.keyword, mode: 'insensitive' } },
+        {
+          user: { username: { contains: query.keyword, mode: 'insensitive' } },
+        },
+        { user: { email: { contains: query.keyword, mode: 'insensitive' } } },
+        {
+          user: {
+            profile: {
+              displayName: { contains: query.keyword, mode: 'insensitive' },
+            },
+          },
+        },
+      ];
+    }
+    if (query.roleId && query.assignment) {
+      where.memberRoles = {
+        [query.assignment === 'assigned' ? 'some' : 'none']: {
+          roleId: query.roleId,
+          deletedAt: null,
+          role: { orgId, deletedAt: null },
+        },
+      };
+    }
+    const result = await this.orgMemberRepository.findMemberRoleOptions({
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      where,
+    });
+    return {
+      items: result.items.map((member) => ({
+        id: member.id,
+        userId: member.userId,
+        displayName:
+          member.orgDisplayName ||
+          member.user.profile?.displayName ||
+          member.user.username ||
+          member.user.email,
+        email: member.user.email,
+        avatar: member.user.profile?.avatar || null,
+        departmentNames: [
+          ...new Set([
+            ...(member.primaryDept?.name ? [member.primaryDept.name] : []),
+            ...member.memberDepartments.map((item) => item.dept.name),
+          ]),
+        ],
+        roleIds: member.memberRoles.map((item) => item.roleId),
+      })),
       total: result.total,
       page,
       pageSize,
@@ -561,41 +642,16 @@ export class OrgMemberService {
     return 'INTERNAL_ERROR';
   }
 
-  private toDto(
-    member: OrgMember & {
-      user?: {
-        id: string;
-        username: string | null;
-        email: string | null;
-        countryCode: string | null;
-        phone: string | null;
-        profile?: {
-          displayName: string | null;
-          avatar: string | null;
-        } | null;
-      };
-      primaryDept?: {
-        id: string;
-        name: string;
-        code: string;
-      } | null;
-    },
-  ): OrgMemberDto {
+  private toDto(member: OrgMemberListRecord): OrgMemberListItemDto {
     return {
       id: member.id,
-      orgId: member.orgId,
       userId: member.userId,
       type: member.type,
       status: member.status,
       orgDisplayName: member.orgDisplayName,
       employeeNo: member.employeeNo,
-      primaryDeptId: member.primaryDeptId,
-      externalCompany: member.externalCompany,
       title: member.title,
       joinedAt: member.joinedAt,
-      createdAt: member.createdAt,
-      updatedAt: member.updatedAt,
-      deletedAt: member.deletedAt,
       user: member.user,
       primaryDept: member.primaryDept,
     };
@@ -637,7 +693,20 @@ export class OrgMemberService {
     },
   ): OrgMemberDetailDto {
     return {
-      ...this.toDto(member),
+      id: member.id,
+      orgId: member.orgId,
+      userId: member.userId,
+      type: member.type,
+      status: member.status,
+      orgDisplayName: member.orgDisplayName,
+      employeeNo: member.employeeNo,
+      primaryDeptId: member.primaryDeptId,
+      externalCompany: member.externalCompany,
+      title: member.title,
+      joinedAt: member.joinedAt,
+      createdAt: member.createdAt,
+      updatedAt: member.updatedAt,
+      deletedAt: member.deletedAt,
       user: member.user || {
         id: '',
         username: null,

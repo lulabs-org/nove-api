@@ -2,6 +2,56 @@ import { Injectable } from '@nestjs/common';
 import { OrgMember, Prisma } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 
+const orgMemberListSelect = {
+  id: true,
+  userId: true,
+  type: true,
+  status: true,
+  orgDisplayName: true,
+  employeeNo: true,
+  title: true,
+  joinedAt: true,
+  user: {
+    select: {
+      username: true,
+      email: true,
+      countryCode: true,
+      phone: true,
+      profile: { select: { displayName: true, avatar: true } },
+    },
+  },
+  primaryDept: { select: { id: true, name: true } },
+} satisfies Prisma.OrgMemberSelect;
+
+const memberRoleOptionSelect = {
+  id: true,
+  userId: true,
+  orgDisplayName: true,
+  user: {
+    select: {
+      username: true,
+      email: true,
+      profile: { select: { displayName: true, avatar: true } },
+    },
+  },
+  primaryDept: { select: { name: true } },
+  memberDepartments: {
+    where: { deletedAt: null },
+    select: { dept: { select: { name: true } } },
+  },
+  memberRoles: {
+    where: { deletedAt: null },
+    select: { roleId: true },
+  },
+} satisfies Prisma.OrgMemberSelect;
+
+export type OrgMemberListRecord = Prisma.OrgMemberGetPayload<{
+  select: typeof orgMemberListSelect;
+}>;
+export type MemberRoleOptionRecord = Prisma.OrgMemberGetPayload<{
+  select: typeof memberRoleOptionSelect;
+}>;
+
 @Injectable()
 export class OrgMemberRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -45,57 +95,42 @@ export class OrgMemberRepository {
     });
   }
 
-  async findByOrgId(
-    orgId: string,
-    options?: {
-      skip?: number;
-      take?: number;
-      orderBy?: Prisma.OrgMemberOrderByWithRelationInput;
-      where?: Prisma.OrgMemberWhereInput;
-    },
-  ): Promise<{ items: OrgMember[]; total: number }> {
-    const { skip, take, orderBy, where } = options || {};
-
-    const baseWhere: Prisma.OrgMemberWhereInput = {
-      orgId,
-      deletedAt: null,
-      ...where,
-    };
-
+  async findList(options: {
+    skip?: number;
+    take?: number;
+    orderBy?: Prisma.OrgMemberOrderByWithRelationInput;
+    where: Prisma.OrgMemberWhereInput;
+  }): Promise<{ items: OrgMemberListRecord[]; total: number }> {
+    const { skip, take, orderBy, where } = options;
     const [items, total] = await Promise.all([
       this.prisma.orgMember.findMany({
-        where: baseWhere,
+        where,
         skip,
         take,
         orderBy: orderBy || { createdAt: 'desc' },
-        include: {
-          user: {
-            select: {
-              id: true,
-              username: true,
-              email: true,
-              countryCode: true,
-              phone: true,
-              profile: {
-                select: {
-                  displayName: true,
-                  avatar: true,
-                },
-              },
-            },
-          },
-          primaryDept: {
-            select: {
-              id: true,
-              name: true,
-              code: true,
-            },
-          },
-        },
+        select: orgMemberListSelect,
       }),
-      this.prisma.orgMember.count({ where: baseWhere }),
+      this.prisma.orgMember.count({ where }),
     ]);
 
+    return { items, total };
+  }
+
+  async findMemberRoleOptions(options: {
+    skip: number;
+    take: number;
+    where: Prisma.OrgMemberWhereInput;
+  }): Promise<{ items: MemberRoleOptionRecord[]; total: number }> {
+    const [items, total] = await Promise.all([
+      this.prisma.orgMember.findMany({
+        where: options.where,
+        skip: options.skip,
+        take: options.take,
+        orderBy: { createdAt: 'desc' },
+        select: memberRoleOptionSelect,
+      }),
+      this.prisma.orgMember.count({ where: options.where }),
+    ]);
     return { items, total };
   }
 
@@ -153,73 +188,28 @@ export class OrgMemberRepository {
     });
   }
 
-  async findByDepartmentId(
-    deptId: string,
-    includeChildren: boolean = false,
-    options?: {
-      skip?: number;
-      take?: number;
-    },
-  ): Promise<{ items: OrgMember[]; total: number }> {
-    const { skip, take } = options || {};
-
-    let departmentIds: string[] = [deptId];
-
-    if (includeChildren) {
-      departmentIds = await this.getAllChildDepartmentIds(deptId);
-    }
-
-    const where: Prisma.OrgMemberWhereInput = {
-      memberDepartments: {
-        some: {
-          deptId: { in: departmentIds },
-          deletedAt: null,
-        },
-      },
-      deletedAt: null,
-    };
-
-    const [items, total] = await Promise.all([
-      this.prisma.orgMember.findMany({
-        where,
-        skip,
-        take,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          user: {
-            select: {
-              id: true,
-              username: true,
-              email: true,
-              countryCode: true,
-              phone: true,
-              profile: {
-                select: {
-                  displayName: true,
-                  avatar: true,
-                },
-              },
-            },
-          },
-          primaryDept: {
-            select: {
-              id: true,
-              name: true,
-              code: true,
-            },
-          },
-        },
-      }),
-      this.prisma.orgMember.count({ where }),
-    ]);
-
-    return { items, total };
+  async getDepartmentIds(
+    orgId: string,
+    parentId: string,
+    includeChildren: boolean,
+  ): Promise<string[]> {
+    const parent = await this.prisma.dept.findFirst({
+      where: { id: parentId, orgId, deletedAt: null },
+      select: { id: true },
+    });
+    if (!parent) return [];
+    if (!includeChildren) return [parentId];
+    return [parentId, ...(await this.getChildDepartmentIds(orgId, parentId))];
   }
 
-  private async getAllChildDepartmentIds(parentId: string): Promise<string[]> {
-    const ids: string[] = [parentId];
+  private async getChildDepartmentIds(
+    orgId: string,
+    parentId: string,
+  ): Promise<string[]> {
+    const ids: string[] = [];
     const children = await this.prisma.dept.findMany({
       where: {
+        orgId,
         parentId,
         deletedAt: null,
       },
@@ -227,75 +217,13 @@ export class OrgMemberRepository {
     });
 
     for (const child of children) {
-      ids.push(...(await this.getAllChildDepartmentIds(child.id)));
+      ids.push(
+        child.id,
+        ...(await this.getChildDepartmentIds(orgId, child.id)),
+      );
     }
 
     return ids;
-  }
-
-  async searchByKeyword(
-    orgId: string,
-    keyword: string,
-    options?: {
-      skip?: number;
-      take?: number;
-    },
-  ): Promise<{ items: OrgMember[]; total: number }> {
-    const { skip, take } = options || {};
-
-    const where: Prisma.OrgMemberWhereInput = {
-      orgId,
-      deletedAt: null,
-      OR: [
-        { orgDisplayName: { contains: keyword, mode: 'insensitive' } },
-        { employeeNo: { contains: keyword, mode: 'insensitive' } },
-        { user: { username: { contains: keyword, mode: 'insensitive' } } },
-        { user: { email: { contains: keyword, mode: 'insensitive' } } },
-        {
-          user: {
-            profile: {
-              displayName: { contains: keyword, mode: 'insensitive' },
-            },
-          },
-        },
-      ],
-    };
-
-    const [items, total] = await Promise.all([
-      this.prisma.orgMember.findMany({
-        where,
-        skip,
-        take,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          user: {
-            select: {
-              id: true,
-              username: true,
-              email: true,
-              countryCode: true,
-              phone: true,
-              profile: {
-                select: {
-                  displayName: true,
-                  avatar: true,
-                },
-              },
-            },
-          },
-          primaryDept: {
-            select: {
-              id: true,
-              name: true,
-              code: true,
-            },
-          },
-        },
-      }),
-      this.prisma.orgMember.count({ where }),
-    ]);
-
-    return { items, total };
   }
 
   async update(
