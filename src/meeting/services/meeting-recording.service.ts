@@ -1,16 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { MeetingRecordingRepository } from '../repositories/meeting-recording.repository';
+import { MeetingSummaryRepository } from '../repositories/meeting-summary.repository';
 import { RecordingNotFoundException } from '../exceptions/meeting.exceptions';
+import { MeetingSummaryNotFoundException } from '../exceptions/meeting.exceptions';
 import {
   QueryMeetingRecordingDto,
   UpdateMeetingRecordingDto,
   CreateMeetingRecordingDto,
+  CreateRecordingSummaryDto,
 } from '../dto/meeting-recording.dto';
 
 @Injectable()
 export class MeetingRecordingService {
   constructor(
     private readonly meetingRecordingRepository: MeetingRecordingRepository,
+    private readonly meetingSummaryRepository: MeetingSummaryRepository,
   ) {}
 
   /**
@@ -48,6 +52,24 @@ export class MeetingRecordingService {
 
   async create(data: CreateMeetingRecordingDto) {
     return this.meetingRecordingRepository.create(data);
+  }
+
+  async getSummary(id: string) {
+    await this.getById(id);
+    const summary = await this.meetingSummaryRepository.findByRecordingId(id);
+    if (!summary) {
+      throw new MeetingSummaryNotFoundException(id);
+    }
+    return summary;
+  }
+
+  async createSummary(id: string, data: CreateRecordingSummaryDto) {
+    const recording = await this.getById(id);
+    return this.meetingSummaryRepository.createExternalForRecording(
+      recording.meetingId,
+      id,
+      data,
+    );
   }
 
   async update(id: string, updateData: UpdateMeetingRecordingDto) {

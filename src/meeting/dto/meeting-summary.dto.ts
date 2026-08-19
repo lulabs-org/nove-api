@@ -9,7 +9,7 @@ import {
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ProcessingStatus } from '@prisma/client';
+import { GenerationMethod, ProcessingStatus } from '@prisma/client';
 
 export class CreateMeetingSummaryDto {
   @ApiPropertyOptional({ description: '总结标题' })
@@ -132,6 +132,33 @@ export class MeetingSummaryDto {
 
   @ApiPropertyOptional({ description: '状态', enum: ProcessingStatus })
   status?: ProcessingStatus;
+
+  @ApiProperty({ description: '会议ID' })
+  meetingId: string;
+
+  @ApiPropertyOptional({ description: '录制ID' })
+  recordingId?: string;
+
+  @ApiPropertyOptional({ description: 'AI模型名称或版本' })
+  aiModel?: string;
+
+  @ApiPropertyOptional({ description: '生成方式', enum: GenerationMethod })
+  generatedBy?: GenerationMethod;
+
+  @ApiPropertyOptional({ description: '置信度' })
+  confidence?: number;
+
+  @ApiPropertyOptional({ description: '总结语言' })
+  language?: string;
+
+  @ApiProperty({ description: '版本号' })
+  version: number;
+
+  @ApiProperty({ description: '是否为最新版本' })
+  isLatest: boolean;
+
+  @ApiPropertyOptional({ description: '处理耗时（毫秒）' })
+  processingTime?: number;
 
   @ApiProperty({ description: '创建时间' })
   createdAt: Date;

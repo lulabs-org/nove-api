@@ -8,9 +8,13 @@ import {
   Min,
   Max,
   IsObject,
+  IsNotEmpty,
+  IsInt,
+  IsArray,
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { RecordingSource, RecordingStatus } from '@prisma/client';
+import { CreateMeetingSummaryDto } from './meeting-summary.dto';
 
 export class QueryMeetingRecordingDto {
   @ApiPropertyOptional({ description: '会议ID' })
@@ -93,6 +97,58 @@ export class CreateMeetingRecordingDto {
 export class UpdateMeetingRecordingDto extends PartialType(
   CreateMeetingRecordingDto,
 ) {}
+
+export class CreateRecordingSummaryDto extends CreateMeetingSummaryDto {
+  @ApiProperty({ description: '外部 AI 生成的录制总结内容' })
+  @IsString()
+  @IsNotEmpty()
+  declare content: string;
+
+  @ApiPropertyOptional({
+    description: '外部 AI 模型名称或版本',
+    example: 'gpt-5',
+  })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  aiModel?: string;
+
+  @ApiPropertyOptional({ description: '总结语言', default: 'zh-CN' })
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  language?: string;
+
+  @ApiPropertyOptional({
+    description: '外部 AI 处理耗时（毫秒）',
+    minimum: 0,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  processingTime?: number;
+
+  @ApiPropertyOptional({ description: '参与者总结' })
+  @IsOptional()
+  @IsArray()
+  speakerInsights?: Record<string, unknown>[];
+
+  @ApiPropertyOptional({ description: '会议金句' })
+  @IsOptional()
+  @IsArray()
+  goldenQuotes?: Record<string, unknown>[];
+
+  @ApiPropertyOptional({
+    description: '外部 AI 返回的置信度',
+    minimum: 0,
+    maximum: 1,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(1)
+  confidence?: number;
+}
 
 export class MeetingRecordingDto {
   @ApiProperty({ description: '录音ID' })
