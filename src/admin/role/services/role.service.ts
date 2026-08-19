@@ -98,7 +98,7 @@ export class RoleService {
       skip,
       take: pageSize,
       where,
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ level: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }],
     });
 
     return {
