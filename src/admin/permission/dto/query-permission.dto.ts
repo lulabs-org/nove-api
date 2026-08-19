@@ -14,6 +14,14 @@ import { PermissionType } from '@prisma/client';
 import { Type, Transform } from 'class-transformer';
 
 export class QueryPermissionDto {
+  @ApiPropertyOptional({
+    description: '统一搜索关键词（匹配权限名称、编码、资源或动作）',
+    example: 'user',
+  })
+  @IsString()
+  @IsOptional()
+  keyword?: string;
+
   @ApiPropertyOptional({ description: '权限名称（模糊搜索）', example: 'user' })
   @IsString()
   @IsOptional()
