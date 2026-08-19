@@ -31,7 +31,9 @@ import {
   MeetingRecordingListResponseDto,
   MeetingRecordingDto,
   MeetingRecordingDeleteResponseDto,
+  CreateRecordingSummaryDto,
 } from '../dto/meeting-recording.dto';
+import { MeetingSummaryDto } from '../dto/meeting-summary.dto';
 
 @ApiTags('Meet Recording')
 @Controller('recordings')
@@ -45,10 +47,10 @@ export class MeetingRecordingController {
   ) {}
 
   /**
-   * 创建录音
+   * 创建录制
    */
   @Post()
-  @RequirePermissions('meeting:create')
+  @RequirePermissions('meeting-recording:create')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '创建录制记录' })
   @ApiResponse({
@@ -64,11 +66,11 @@ export class MeetingRecordingController {
   }
 
   /**
-   * 获取录音列表
+   * 获取录制列表
    */
   @Get()
-  @RequirePermissions('meeting:read')
-  @ApiOperation({ summary: '获取录音列表' })
+  @RequirePermissions('meeting-recording:read')
+  @ApiOperation({ summary: '获取录制列表' })
   @ApiResponse({ status: 200, type: MeetingRecordingListResponseDto })
   async getRecordings(
     @Query(new ValidationPipe({ transform: true }))
@@ -78,11 +80,11 @@ export class MeetingRecordingController {
   }
 
   /**
-   * 获取录音详情
+   * 获取录制详情
    */
   @Get(':id')
-  @RequirePermissions('meeting:read')
-  @ApiOperation({ summary: '获取录音详情' })
+  @RequirePermissions('meeting-recording:read')
+  @ApiOperation({ summary: '获取录制详情' })
   @ApiParam({ name: 'id', description: '录制记录ID', type: 'string' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -94,10 +96,10 @@ export class MeetingRecordingController {
   }
 
   /**
-   * 获取录制转写文本
+   * 获取录制转写
    */
   @Get(':id/transcript')
-  @RequirePermissions('meeting:read')
+  @RequirePermissions('meeting-recording:read')
   @HttpCode(HttpStatus.OK)
   @ApiGetTranscriptByRecordingIdDocs()
   async getTranscript(
@@ -128,10 +130,47 @@ export class MeetingRecordingController {
   }
 
   /**
+   * 获取录制总结
+   */
+  @Get(':id/summary')
+  @RequirePermissions('meeting-recording:read')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '获取录制总结' })
+  @ApiParam({ name: 'id', description: '录制记录ID', type: 'string' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: '获取成功',
+    type: MeetingSummaryDto,
+  })
+  async getRecordingSummary(@Param('id', CuidPipe) id: string) {
+    return this.recordingService.getSummary(id);
+  }
+
+  /**
+   * 写入外部 AI 生成的录制总结
+   */
+  @Post(':id/summary')
+  @RequirePermissions('meeting-recording:create')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: '写入外部 AI 生成的录制总结' })
+  @ApiParam({ name: 'id', description: '录制记录ID', type: 'string' })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: '创建成功',
+    type: MeetingSummaryDto,
+  })
+  async createRecordingSummary(
+    @Param('id', CuidPipe) id: string,
+    @Body(new ValidationPipe()) createParams: CreateRecordingSummaryDto,
+  ) {
+    return this.recordingService.createSummary(id, createParams);
+  }
+
+  /**
    * 更新录制记录
    */
   @Patch(':id')
-  @RequirePermissions('meeting:update')
+  @RequirePermissions('meeting-recording:update')
   @ApiOperation({ summary: '更新录制记录' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -149,7 +188,7 @@ export class MeetingRecordingController {
    * 删除录制记录
    */
   @Delete(':id')
-  @RequirePermissions('meeting:delete')
+  @RequirePermissions('meeting-recording:delete')
   @ApiOperation({ summary: '删除录制记录' })
   @ApiResponse({
     status: HttpStatus.OK,

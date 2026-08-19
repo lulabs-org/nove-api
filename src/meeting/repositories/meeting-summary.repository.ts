@@ -12,6 +12,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { GenerationMethod, ProcessingStatus, Prisma } from '@prisma/client';
+import { retryVersionTransaction } from '@/common/utils/prisma-transaction-retry';
+import { CreateRecordingSummaryDto } from '../dto/meeting-recording.dto';
 
 type CreateInput = Prisma.MeetingSummaryUncheckedCreateInput;
 
@@ -86,8 +88,67 @@ export class MeetingSummaryRepository {
       where: {
         recordingId,
         isLatest: true,
+        deletedAt: null,
       },
+      orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
     });
+  }
+
+  async createExternalForRecording(
+    meetingId: string,
+    recordingId: string,
+    data: CreateRecordingSummaryDto,
+  ) {
+    return retryVersionTransaction(() =>
+      this.prisma.$transaction(
+        async (tx) => {
+          const previous = await tx.meetingSummary.findFirst({
+            where: { recordingId, isLatest: true, deletedAt: null },
+            orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
+          });
+
+          if (previous) {
+            await tx.meetingSummary.update({
+              where: { id: previous.id },
+              data: { isLatest: false },
+            });
+          }
+
+          return tx.meetingSummary.create({
+            data: {
+              meetingId,
+              recordingId,
+              title: data.title,
+              content: data.content,
+              keywords: data.keywords ?? [],
+              aiMinutes: data.aiMinutes as Prisma.InputJsonValue | undefined,
+              keyPoints: data.keyPoints as Prisma.InputJsonValue | undefined,
+              actionItems: data.actionItems as
+                | Prisma.InputJsonValue
+                | undefined,
+              decisions: data.decisions as Prisma.InputJsonValue | undefined,
+              speakerInsights: data.speakerInsights as
+                | Prisma.InputJsonValue
+                | undefined,
+              goldenQuotes: data.goldenQuotes as
+                | Prisma.InputJsonValue
+                | undefined,
+              metadata: data.metadata as Prisma.InputJsonValue | undefined,
+              generatedBy: GenerationMethod.AI,
+              aiModel: data.aiModel ?? 'external-ai',
+              confidence: data.confidence,
+              language: data.language ?? 'zh-CN',
+              processingTime: data.processingTime,
+              status: ProcessingStatus.COMPLETED,
+              version: (previous?.version ?? 0) + 1,
+              isLatest: true,
+              parentSummaryId: previous?.id,
+            },
+          });
+        },
+        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+      ),
+    );
   }
 
   async findById(id: string) {
