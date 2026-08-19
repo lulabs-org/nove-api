@@ -33,7 +33,7 @@ import {
   BatchImportResponse,
 } from '../dto';
 
-@ApiTags('Admin - OrgMembers')
+@ApiTags('Admin / OrgMembers')
 @Controller('admin')
 @ApiBearerAuth()
 export class OrgMemberController {

@@ -29,7 +29,7 @@ import {
   PermissionListResponse,
 } from '../dto';
 
-@ApiTags('Admin - Permissions')
+@ApiTags('Admin / Permissions')
 @Controller('admin/permissions')
 @ApiBearerAuth()
 export class PermController {
