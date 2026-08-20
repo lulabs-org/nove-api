@@ -10,7 +10,6 @@ import {
   Minute,
   RecordingSource,
   RecordingStatus,
-  ProcessingStatus,
 } from '@prisma/client';
 import { Meetuser, EventPayload, MeetingSessionInfo } from '../types';
 import { TencentEventUtils } from '../utils/tencent-event.utils';
@@ -24,7 +23,6 @@ import {
   computeSubMeetingId,
   mergeDateTime,
   convertMeetingType,
-  mapRecordingState,
   mapRecordingFileStatus,
 } from '../mappers/tencent-mtg-record.mapper';
 
@@ -114,9 +112,6 @@ export class TencentMtgMeetingCoreService {
         ? computeSubMeetingId(record.media_start_time, meetingInfo.start_time)
         : '__ROOT__';
 
-    const hasRecording =
-      record.state === 3 && (record.record_files?.length ?? 0) > 0;
-    const recordingStatus = mapRecordingState(record.state);
     const systemMeetingType = convertMeetingType(meetingType);
 
     const scheduledStartAt = isRecurring

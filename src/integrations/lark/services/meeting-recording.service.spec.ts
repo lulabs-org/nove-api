@@ -10,10 +10,7 @@
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-  MinuteService,
-  GetMinuteResponse,
-} from './meeting-recording.service';
+import { MinuteService, GetMinuteResponse } from './meeting-recording.service';
 import { LarkClient } from '../lark.client';
 
 describe('MinuteService', () => {
@@ -23,25 +20,21 @@ describe('MinuteService', () => {
   beforeEach(async () => {
     // 创建 LarkClient 的 mock 对象
     // 这里只模拟 vc.v1.minute.get 方法，返回固定的录制文件数据
-    type MinuteGet = (args: {
-      path: { meeting_id: string };
-    }) => Promise<{
+    type MinuteGet = (args: { path: { meeting_id: string } }) => Promise<{
       data: GetMinuteResponse;
     }>;
 
-    const getMock: jest.MockedFunction<MinuteGet> = jest.fn(
-      async (args) => {
-        void args;
-        return Promise.resolve({
-          data: {
-            recording: {
-              url: 'https://example.com/recording.mp4',
-              duration: '3600',
-            },
+    const getMock: jest.MockedFunction<MinuteGet> = jest.fn(async (args) => {
+      void args;
+      return Promise.resolve({
+        data: {
+          recording: {
+            url: 'https://example.com/recording.mp4',
+            duration: '3600',
           },
-        });
-      },
-    );
+        },
+      });
+    });
 
     mockLarkClient = {
       vc: {

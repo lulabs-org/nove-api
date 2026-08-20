@@ -215,8 +215,7 @@ export class MinuteParticipantSummaryService {
     const minuteSummary = meeting.minuteSummaries[0];
 
     if (!minuteSummary) throw new MinuteSummaryNotFoundException(meeting.id);
-    if (!transcript)
-      throw new NotFoundException(`转录记录不存在: ${minuteId}`);
+    if (!transcript) throw new NotFoundException(`转录记录不存在: ${minuteId}`);
 
     return { recording, meeting, minuteSummary, transcript };
   }

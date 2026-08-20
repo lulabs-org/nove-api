@@ -93,7 +93,6 @@ export class CreateMeetingRecordDto {
   @Min(0, { message: '持续时间不能小于0' })
   durationSeconds?: number;
 
-
   @ApiPropertyOptional({
     description: '元数据',
     example: { source: 'api' },

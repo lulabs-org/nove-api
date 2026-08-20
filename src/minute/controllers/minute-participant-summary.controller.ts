@@ -54,12 +54,7 @@ export class MinuteParticipantSummaryController {
     @Query(new ValidationPipe({ transform: true }))
     query: QueryMinuteParticipantSummaryDto,
   ) {
-    return this.service.findMany(
-      meetingId,
-      minuteId,
-      query.page,
-      query.limit,
-    );
+    return this.service.findMany(meetingId, minuteId, query.page, query.limit);
   }
 
   @Get(':id')

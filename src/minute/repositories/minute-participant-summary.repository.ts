@@ -100,16 +100,14 @@ export class MinuteParticipantSummaryRepository {
     return retryVersionTransaction(() =>
       this.prisma.$transaction(
         async (tx) => {
-          const current = await tx.minuteParticipantSummary.findFirstOrThrow(
-            {
-              where: {
-                id,
-                meetingId,
-                minuteId,
-                deletedAt: null,
-              },
+          const current = await tx.minuteParticipantSummary.findFirstOrThrow({
+            where: {
+              id,
+              meetingId,
+              minuteId,
+              deletedAt: null,
             },
-          );
+          });
           await tx.minuteParticipantSummary.update({
             where: { id },
             data: { deletedAt: new Date(), isLatest: false },

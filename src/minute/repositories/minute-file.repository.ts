@@ -10,10 +10,7 @@
  */
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import type {
-  CreateMeetingFileData,
-  UpdateMeetingFileData,
-} from '../types';
+import type { CreateMeetingFileData, UpdateMeetingFileData } from '../types';
 
 @Injectable()
 export class MinuteFileRepository {

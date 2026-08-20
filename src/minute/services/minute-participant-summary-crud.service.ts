@@ -8,9 +8,7 @@ import {
 
 @Injectable()
 export class MinuteParticipantSummaryCrudService {
-  constructor(
-    private readonly summaries: MinuteParticipantSummaryRepository,
-  ) {}
+  constructor(private readonly summaries: MinuteParticipantSummaryRepository) {}
 
   async findById(meetingId: string, minuteId: string, id: string) {
     const summary = await this.summaries.findById(meetingId, minuteId, id);

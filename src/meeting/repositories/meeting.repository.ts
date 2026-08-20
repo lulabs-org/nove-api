@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { GetMeetingRecordsParams } from '@/meeting/types';
 
-import { MeetingPlatform, Prisma } from '@prisma/client';
+import { MeetingPlatform, Prisma, ProcessingStatus } from '@prisma/client';
 import type {
   MeetingHostResponseDto,
   MeetingListItemResponseDto,
@@ -408,7 +408,9 @@ export class MeetingRepository {
           orderBy: { platform: 'asc' },
         }),
         // Processing Status stats removed from Meeting group by, we can get it from Minute later if needed
-        Promise.resolve([{ _count: { _all: 0 }, processingStatus: 'PENDING' } as any]),
+        Promise.resolve([
+          { _count: { _all: 0 }, processingStatus: ProcessingStatus.PENDING },
+        ]),
         this.prisma.meeting.groupBy({
           by: ['type'],
           where,

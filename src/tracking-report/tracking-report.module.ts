@@ -49,4 +49,4 @@ import { ReportGenerationQueueService } from './queue/report-generation.queue.se
     PeriodicReportGenerator,
   ],
 })
-export class TrackingReportModule { }
+export class TrackingReportModule {}

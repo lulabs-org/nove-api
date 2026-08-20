@@ -94,9 +94,7 @@ export class CreateMinuteDto {
   metadata?: any;
 }
 
-export class UpdateMinuteDto extends PartialType(
-  CreateMinuteDto,
-) {}
+export class UpdateMinuteDto extends PartialType(CreateMinuteDto) {}
 
 export class CreateRecordingSummaryDto extends CreateMinuteSummaryDto {
   @ApiProperty({ description: '外部 AI 生成的录制总结内容' })

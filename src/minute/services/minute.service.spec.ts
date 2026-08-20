@@ -77,7 +77,11 @@ describe('MinuteService', () => {
     expect(summaries.createExternalForRecording).toHaveBeenCalledWith(
       'meeting-1',
       'recording-1',
-      { content: 'External summary', aiModel: 'external-model', minuteId: 'recording-1' },
+      {
+        content: 'External summary',
+        aiModel: 'external-model',
+        minuteId: 'recording-1',
+      },
     );
   });
 });

@@ -1,8 +1,4 @@
-import type {
-  Meeting,
-  MeetingParticipant,
-  Minute,
-} from '@prisma/client';
+import type { Meeting, MeetingParticipant, Minute } from '@prisma/client';
 
 export type MeetingDetailsResult = Meeting & {
   createdBy: {

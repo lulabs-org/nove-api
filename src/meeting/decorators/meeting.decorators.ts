@@ -229,4 +229,3 @@ export const ApiHealthCheckDocs = () =>
     }),
     ApiResponse({ status: 500, description: '服务器内部错误' }),
   );
-

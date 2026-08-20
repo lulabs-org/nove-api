@@ -57,4 +57,4 @@ import { HttpModule } from '@nestjs/axios';
     TranscriptRepository,
   ],
 })
-export class MinuteModule { }
+export class MinuteModule {}

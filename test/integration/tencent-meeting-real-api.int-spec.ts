@@ -366,13 +366,11 @@ describe('Tencent Meeting Real API Integration Tests', () => {
       if (testFileId && testFileId !== 'test-recording-file-id') {
         try {
           const transcriptDetail: TranscriptResponse =
-            await apiService.getTranscript(
-              {
-                recordFileId: testFileId,
-                operatorId: userId || '',
-                operatorIdType: 1,
-              }
-            );
+            await apiService.getTranscript({
+              recordFileId: testFileId,
+              operatorId: userId || '',
+              operatorIdType: 1,
+            });
 
           console.log('📝 转录文本详情:', {
             has_minutes: !!transcriptDetail.minutes,

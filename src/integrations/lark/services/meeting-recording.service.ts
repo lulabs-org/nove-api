@@ -26,9 +26,7 @@ export class MinuteService {
    * 获取飞书会议录制文件信息
    * @param meetingId 会议ID
    */
-  async getMinuteInfo(
-    meetingId: string,
-  ): Promise<GetMinuteResponse> {
+  async getMinuteInfo(meetingId: string): Promise<GetMinuteResponse> {
     try {
       // 直接调用 VC 接口，SDK 自动管理 token
       const response = await this.larkClient.vc.v1.meetingRecording.get({

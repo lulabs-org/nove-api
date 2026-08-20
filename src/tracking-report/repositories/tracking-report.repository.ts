@@ -159,12 +159,10 @@ export class TrackingReportRepository {
           });
           if (minuteSummaryIds.length) {
             await tx.trackingReportMinuteSummarySource.createMany({
-              data: [...new Set(minuteSummaryIds)].map(
-                (minuteSummaryId) => ({
-                  reportId: created.id,
-                  minuteSummaryId,
-                }),
-              ),
+              data: [...new Set(minuteSummaryIds)].map((minuteSummaryId) => ({
+                reportId: created.id,
+                minuteSummaryId,
+              })),
               skipDuplicates: true,
             });
           }
