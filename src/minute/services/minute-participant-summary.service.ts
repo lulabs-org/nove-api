@@ -15,8 +15,8 @@ import { ConfigType } from '@nestjs/config';
 import { formatToTimezone, formatTimeMs } from '@/common/utils/time.util';
 import { LlmService } from '@/llm/llm.service';
 import { MinuteParticipantSummaryRepository } from '../repositories';
-import { GenerateParticipantSummaryDto } from '../dto/participant-summary.dto';
-import { SummarySegment } from '../types';
+import { GenerateParticipantSummaryDto } from '../dto/minute-participant-summary.dto';
+import { SummarySegment } from '@/meeting/types';
 import { openaiConfig } from '@/configs/openai.config';
 import { generatePrompt } from '@/common/utils';
 import {
@@ -26,8 +26,8 @@ import {
 } from '@/meeting/exceptions/meeting.exceptions';
 
 @Injectable()
-export class ParticipantSummaryService {
-  private readonly logger = new Logger(ParticipantSummaryService.name);
+export class MinuteParticipantSummaryService {
+  private readonly logger = new Logger(MinuteParticipantSummaryService.name);
 
   constructor(
     private readonly llmService: LlmService,

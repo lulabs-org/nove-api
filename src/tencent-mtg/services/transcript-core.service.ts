@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Platform, PlatformUser } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
-import { TranscriptRepository } from '@/meeting/repositories/transcript.repository';
+import { TranscriptRepository } from '@/minute/repositories';
 import { TencentApiService } from '@/integrations/tencent-meeting/services/api.service';
 import { ParticipantService } from '@/integrations/tencent-meeting/services';
 import { SpeakerService } from '@/tencent-mtg/services/speaker.service';

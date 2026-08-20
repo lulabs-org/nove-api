@@ -14,7 +14,7 @@ import {
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { RecordingSource, RecordingStatus } from '@prisma/client';
-import { CreateMinuteSummaryDto } from './meeting-summary.dto';
+import { CreateMinuteSummaryDto } from './minute-summary.dto';
 
 export class QueryMinuteDto {
   @ApiPropertyOptional({ description: '会议ID' })

@@ -6,7 +6,7 @@ import { AppModule } from '../../../src/app.module';
 import { PrismaService } from '../../../src/prisma/prisma.service';
 import { PermService } from '../../../src/admin/permission/services/permission.service';
 import { JwtService } from '@nestjs/jwt';
-import { ParticipantSummaryService } from '../../../src/meeting/services/participant-summary.service';
+import { MinuteParticipantSummaryService } from '../../../src/minute/services';
 import {
   MeetingPlatform,
   MeetingType,
@@ -32,7 +32,7 @@ describe('ParticipantSummaryController (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
-      .overrideProvider(ParticipantSummaryService)
+      .overrideProvider(MinuteParticipantSummaryService)
       .useValue({ generateSummaries })
       .overrideProvider(PermService)
       .useValue({

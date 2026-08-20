@@ -5,7 +5,7 @@ import {
   MeetingStatsRepository,
   PlatformUserRepository,
 } from '../repositories';
-import { MinuteParticipantSummaryRepository } from '@/meeting/repositories';
+import { MinuteParticipantSummaryRepository } from '@/minute/repositories';
 
 @Injectable()
 export class MeetingStatsTool {

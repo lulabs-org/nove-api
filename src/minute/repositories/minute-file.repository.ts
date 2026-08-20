@@ -13,10 +13,10 @@ import { PrismaService } from '../../prisma/prisma.service';
 import type {
   CreateMeetingFileData,
   UpdateMeetingFileData,
-} from '@/meeting/types';
+} from '../types';
 
 @Injectable()
-export class MeetingFileRepository {
+export class MinuteFileRepository {
   constructor(private prisma: PrismaService) {}
 
   /**

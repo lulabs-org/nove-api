@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
 import { MeetingRepository } from '@/meeting/repositories/meeting.repository';
-import { MinuteRepository } from '@/meeting/repositories/meeting-recording.repository';
+import { MinuteRepository } from '@/minute/repositories';
 import {
   Platform,
   PlatformUser,

@@ -7,7 +7,7 @@ import {
 import { generatePrompt } from '@/common/utils';
 import { LlmService } from '@/llm/llm.service';
 import { MinuteParticipantSummaryRepository } from '../repositories';
-import { ParticipantSummaryService } from './participant-summary.service';
+import { MinuteParticipantSummaryService } from './minute-participant-summary.service';
 
 jest.mock('@/common/utils', () => ({
   generatePrompt: jest.fn(() => ({
@@ -16,7 +16,7 @@ jest.mock('@/common/utils', () => ({
   })),
 }));
 
-describe('ParticipantSummaryService', () => {
+describe('MinuteParticipantSummaryService', () => {
   const minuteSummary = {
     aiMinutes: { sections: [] },
     keyPoints: [],
@@ -56,7 +56,7 @@ describe('ParticipantSummaryService', () => {
     findGenerationContext: jest.Mock;
     saveNewVersion: jest.Mock;
   };
-  let service: ParticipantSummaryService;
+  let service: MinuteParticipantSummaryService;
 
   beforeEach(() => {
     llmService = { ask: jest.fn().mockResolvedValue('generated summary') };
@@ -64,7 +64,7 @@ describe('ParticipantSummaryService', () => {
       findGenerationContext: jest.fn().mockResolvedValue(context),
       saveNewVersion: jest.fn().mockResolvedValue(undefined),
     };
-    service = new ParticipantSummaryService(
+    service = new MinuteParticipantSummaryService(
       llmService as unknown as LlmService,
       repository as unknown as MinuteParticipantSummaryRepository,
       {

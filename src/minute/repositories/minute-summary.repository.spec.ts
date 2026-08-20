@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { GenerationMethod, Prisma, ProcessingStatus } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
-import { MinuteSummaryRepository } from './meeting-summary.repository';
+import { MinuteSummaryRepository } from './minute-summary.repository';
 
 describe('MinuteSummaryRepository', () => {
   it('only returns the latest non-deleted recording summary', async () => {

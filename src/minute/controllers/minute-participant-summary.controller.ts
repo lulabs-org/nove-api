@@ -22,8 +22,8 @@ import {
   NoPermissionRequired,
 } from '@/admin/permission/decorators/permissions.decorator';
 import { CuidPipe } from '@/common/pipes/cuid.pipe';
-import { ParticipantSummaryCrudService } from '../services/participant-summary-crud.service';
-import { ParticipantSummaryService } from '../services/participant-summary.service';
+import { MinuteParticipantSummaryCrudService } from '../services/minute-participant-summary-crud.service';
+import { MinuteParticipantSummaryService } from '../services/minute-participant-summary.service';
 import {
   CreateMinuteParticipantSummaryDto,
   QueryMinuteParticipantSummaryDto,
@@ -31,15 +31,15 @@ import {
   MinuteParticipantSummaryListResponseDto,
   UpdateMinuteParticipantSummaryDto,
   GenerateParticipantSummaryDto,
-} from '../dto/participant-summary.dto';
+} from '../dto/minute-participant-summary.dto';
 
 @ApiTags('Recording Participant Summary')
 @ApiBearerAuth()
-@Controller('meetings/:meetingId/recordings/:minuteId/participant-summaries')
-export class ParticipantSummaryController {
+@Controller('meetings/:meetingId/minutes/:minuteId/participant-summaries')
+export class MinuteParticipantSummaryController {
   constructor(
-    private readonly service: ParticipantSummaryCrudService,
-    private readonly aiService: ParticipantSummaryService,
+    private readonly service: MinuteParticipantSummaryCrudService,
+    private readonly aiService: MinuteParticipantSummaryService,
   ) {}
 
   @Get()

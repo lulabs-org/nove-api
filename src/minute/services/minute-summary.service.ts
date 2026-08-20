@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { MinuteSummaryRepository } from '../repositories/meeting-summary.repository';
-import { MinuteSummaryNotFoundException } from '../exceptions/meeting.exceptions';
+import { MinuteSummaryRepository } from '../repositories/minute-summary.repository';
+import { MinuteSummaryNotFoundException } from '@/meeting/exceptions/meeting.exceptions';
 import {
   CreateMinuteSummaryDto,
   UpdateMinuteSummaryDto,
-} from '../dto/meeting-summary.dto';
+} from '../dto/minute-summary.dto';
 
 @Injectable()
 export class MinuteSummaryService {

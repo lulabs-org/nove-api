@@ -3,7 +3,7 @@ import { LlmService } from '@/llm/llm.service';
 import { TrackingReportService } from './tracking-report.service';
 import { PeriodicReportGenerator } from './periodic-report.generator';
 import { TrackingReportRepository } from '../repositories/tracking-report.repository';
-import { MinuteParticipantSummaryRepository } from '@/meeting/repositories/participant-summary.repository';
+import { MinuteParticipantSummaryRepository } from '@/minute/repositories';
 import { PrismaService } from '@/prisma/prisma.service';
 
 describe('PeriodicReportGenerator', () => {

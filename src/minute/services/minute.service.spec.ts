@@ -1,8 +1,8 @@
 import { Test } from '@nestjs/testing';
-import { MinuteSummaryNotFoundException } from '../exceptions/meeting.exceptions';
-import { MinuteRepository } from '../repositories/meeting-recording.repository';
-import { MinuteSummaryRepository } from '../repositories/meeting-summary.repository';
-import { MinuteService } from './meeting-recording.service';
+import { MinuteSummaryNotFoundException } from '@/meeting/exceptions/meeting.exceptions';
+import { MinuteRepository } from '../repositories/minute.repository';
+import { MinuteSummaryRepository } from '../repositories/minute-summary.repository';
+import { MinuteService } from './minute.service';
 
 describe('MinuteService', () => {
   let service: MinuteService;

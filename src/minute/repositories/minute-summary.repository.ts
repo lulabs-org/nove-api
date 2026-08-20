@@ -13,7 +13,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { GenerationMethod, ProcessingStatus, Prisma } from '@prisma/client';
 import { retryVersionTransaction } from '@/common/utils/prisma-transaction-retry';
-import { CreateRecordingSummaryDto } from '../dto/meeting-recording.dto';
+import { CreateRecordingSummaryDto } from '../dto/minute.dto';
 
 type CreateInput = Prisma.MinuteSummaryUncheckedCreateInput;
 

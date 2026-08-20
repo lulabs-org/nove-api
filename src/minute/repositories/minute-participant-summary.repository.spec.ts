@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { MinuteParticipantSummaryRepository } from './participant-summary.repository';
+import { MinuteParticipantSummaryRepository } from './minute-participant-summary.repository';
 import { PrismaService } from '@/prisma/prisma.service';
 
 describe('MinuteParticipantSummaryRepository', () => {

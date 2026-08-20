@@ -20,10 +20,10 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
-import { MinuteService } from '../services/meeting-recording.service';
+import { MinuteService } from '../services/minute.service';
 import { TranscriptService } from '../services/transcript.service';
 import { CuidPipe } from '@/common/pipes/cuid.pipe';
-import { ApiGetTranscriptByRecordingIdDocs } from '../decorators/meeting-record.decorators';
+import { ApiGetTranscriptByRecordingIdDocs } from '../decorators/minute.decorators';
 import {
   CreateMinuteDto,
   UpdateMinuteDto,
@@ -32,8 +32,8 @@ import {
   MinuteDto,
   MinuteDeleteResponseDto,
   CreateRecordingSummaryDto,
-} from '../dto/meeting-recording.dto';
-import { MinuteSummaryDto } from '../dto/meeting-summary.dto';
+} from '../dto/minute.dto';
+import { MinuteSummaryDto } from '../dto/minute-summary.dto';
 
 @ApiTags('Meet Recording')
 @Controller('recordings')

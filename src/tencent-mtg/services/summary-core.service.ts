@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { MinuteSummaryService } from '@/meeting/services/meeting-summary.service';
+import { MinuteSummaryService } from '@/minute/services';
 import { GenerationMethod, ProcessingStatus } from '@prisma/client';
 import { SummaryService as ApiSummaryService } from '@/integrations/tencent-meeting/services/meeting-summary.service';
 

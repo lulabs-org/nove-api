@@ -9,7 +9,7 @@ import { generatePrompt } from '@/common/utils';
 import { openaiConfig } from '@/configs/openai.config';
 import { LlmService } from '@/llm/llm.service';
 import { PrismaService } from '@/prisma/prisma.service';
-import { MinuteParticipantSummaryRepository } from '@/meeting/repositories/participant-summary.repository';
+import { MinuteParticipantSummaryRepository } from '@/minute/repositories';
 import { TrackingReportRepository } from '../repositories/tracking-report.repository';
 import { TrackingReportService } from './tracking-report.service';
 import { TriggerSummaryDto } from '../dto/tracking-report.dto';

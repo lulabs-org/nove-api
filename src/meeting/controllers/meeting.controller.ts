@@ -26,7 +26,7 @@ import {
   ApiUpdateMeetingRecordDocs,
   ApiDeleteMeetingRecordDocs,
   ApiGetMeetingStatsDocs,
-} from '../decorators/meeting-record.decorators';
+} from '../decorators/meeting.decorators';
 import { MeetingService } from '../services/meeting.service';
 import {
   QueryMeetingRecordsDto,

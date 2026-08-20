@@ -19,14 +19,14 @@ import {
   ApiResponse,
 } from '@nestjs/swagger';
 import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
-import { MinuteSummaryService } from '../services/meeting-summary.service';
+import { MinuteSummaryService } from '../services/minute-summary.service';
 import {
   QueryMinuteSummaryDto,
   CreateMinuteSummaryDto,
   UpdateMinuteSummaryDto,
   MinuteSummaryDto,
   MinuteSummaryListResponseDto,
-} from '../dto/meeting-summary.dto';
+} from '../dto/minute-summary.dto';
 import { CuidPipe } from '@/common/pipes/cuid.pipe';
 
 @ApiTags('Meet Summary')

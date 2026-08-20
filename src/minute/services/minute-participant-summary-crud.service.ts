@@ -4,10 +4,10 @@ import { MinuteParticipantSummaryRepository } from '../repositories';
 import {
   CreateMinuteParticipantSummaryDto,
   UpdateMinuteParticipantSummaryDto,
-} from '../dto/participant-summary.dto';
+} from '../dto/minute-participant-summary.dto';
 
 @Injectable()
-export class ParticipantSummaryCrudService {
+export class MinuteParticipantSummaryCrudService {
   constructor(
     private readonly summaries: MinuteParticipantSummaryRepository,
   ) {}

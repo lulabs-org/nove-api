@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { MinuteRepository } from '../repositories/meeting-recording.repository';
-import { MinuteSummaryRepository } from '../repositories/meeting-summary.repository';
-import { RecordingNotFoundException } from '../exceptions/meeting.exceptions';
-import { MinuteSummaryNotFoundException } from '../exceptions/meeting.exceptions';
+import { MinuteRepository } from '../repositories/minute.repository';
+import { MinuteSummaryRepository } from '../repositories/minute-summary.repository';
+import { RecordingNotFoundException } from '@/meeting/exceptions/meeting.exceptions';
+import { MinuteSummaryNotFoundException } from '@/meeting/exceptions/meeting.exceptions';
 import {
   QueryMinuteDto,
   UpdateMinuteDto,
   CreateMinuteDto,
   CreateRecordingSummaryDto,
-} from '../dto/meeting-recording.dto';
+} from '../dto/minute.dto';
 
 @Injectable()
 export class MinuteService {
