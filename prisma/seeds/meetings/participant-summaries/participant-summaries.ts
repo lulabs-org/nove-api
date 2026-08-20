@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
-import { PrismaClient, PeriodType, GenerationMethod } from '@prisma/client';
+import { PrismaClient, PeriodType, GenerationMethod } from '@/generated/prisma/client';
 import { PARTICIPANT_SUMMARY_CONFIGS } from './config';
 import type { ParticipantSummary } from './type';
 

@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ApiKeyController } from './api-key.controller';
 import { ApiKeyService } from '../services/api-key.service';
 import { UserOrgService } from '../services/user-organization.service';
-import { ApiKeyStatus } from '@prisma/client';
+import { ApiKeyStatus } from '@/generated/prisma/client';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 describe('ApiKeyController', () => {

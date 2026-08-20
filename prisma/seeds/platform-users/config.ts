@@ -1,4 +1,4 @@
-import { Platform } from '@prisma/client';
+import { Platform } from '@/generated/prisma/client';
 import type { PlatformUserConfig } from './type';
 
 export const PLATFORM_USER_CONFIGS: Record<string, PlatformUserConfig> = {

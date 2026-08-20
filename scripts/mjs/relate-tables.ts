@@ -1,10 +1,15 @@
-import { PrismaClient, Prisma } from "@prisma/client";
+// @ts-nocheck
+import { PrismaClient, Prisma } from "@/generated/prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import "dotenv/config";
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
+});
 
 /**
  * 用法:
- *   node scripts/relate-tables.mjs --sourceModel=PlatformUser --targetModel=User --sourceField=email --targetField=email --foreignKey=localUserId --batch=1000 --dryRun=true
+ *   tsx scripts/mjs/relate-tables.ts --sourceModel=PlatformUser --targetModel=User --sourceField=email --targetField=email --foreignKey=localUserId --batch=1000 --dryRun=true
  *
  * 说明:
  *   - --sourceModel 必填: 源模型名称（需要更新外键的模型）

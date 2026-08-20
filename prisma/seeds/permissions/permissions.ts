@@ -9,7 +9,7 @@
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
-import { PrismaClient, Permission } from '@prisma/client';
+import { PrismaClient, Permission } from '@/generated/prisma/client';
 import { PERMISSION_CONFIGS, REAL_PERMISSION_CONFIGS } from './config';
 
 export async function createPermissions(

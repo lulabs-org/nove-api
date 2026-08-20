@@ -10,7 +10,7 @@
  */
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import { PeriodType } from '@prisma/client';
+import { PeriodType } from '@/generated/prisma/client';
 
 @Injectable()
 export class PeriodSummaryRepository {

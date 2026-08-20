@@ -1,15 +1,20 @@
+// @ts-nocheck
 import fs from "fs";
 import { parse } from "csv-parse";
-import { PrismaClient, Prisma } from "@prisma/client";
+import { PrismaClient, Prisma } from "@/generated/prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
+import "dotenv/config";
 import cuid from 'cuid';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
+});
 
 /**
  * 用法:
- *   node scripts/import-csv-prisma.mjs --model=User --file=./data.csv --batch=1000 --skipDuplicates=true
- *   node scripts/import-csv-prisma.mjs --model=User --file=scripts/csv_data/user.csv --batch=1000 --skipDuplicates=true
- *   node scripts/import-csv-prisma.mjs --model=PlatformUser --file=scripts/csv_data/data.csv --batch=1000 --skipDuplicates=true
+ *   tsx scripts/mjs/import-csv-prisma.ts --model=User --file=./data.csv --batch=1000 --skipDuplicates=true
+ *   tsx scripts/mjs/import-csv-prisma.ts --model=User --file=scripts/csv_data/user.csv --batch=1000 --skipDuplicates=true
+ *   tsx scripts/mjs/import-csv-prisma.ts --model=PlatformUser --file=scripts/csv_data/data.csv --batch=1000 --skipDuplicates=true
  *
  * 说明:
  *   - --model 必填: Prisma 的 Model 名（区分大小写，如 User / Post）

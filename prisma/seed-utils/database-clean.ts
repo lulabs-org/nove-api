@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@/generated/prisma/client';
 import * as readline from 'readline';
 import type { DatabaseOperationOptions } from './types';
 import {

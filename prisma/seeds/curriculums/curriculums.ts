@@ -1,4 +1,4 @@
-import { PrismaClient, Curriculum, Project, Prisma } from '@prisma/client';
+import { PrismaClient, Curriculum, Project, Prisma } from '@/generated/prisma/client';
 import { CURRICULUM_CONFIGS } from './config';
 import type { CreateCurriculumsParams, CreatedCurriculums } from './type';
 

@@ -3,7 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { Prisma, OrgMember } from '@prisma/client';
+import { Prisma, OrgMember } from '@/generated/prisma/client';
 import { OrgMemberRepository } from '../repositories/org-member.repository';
 import {
   CreateOrgMemberDto,

@@ -1,5 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { MeetingPlatform, MeetingType, ProcessingStatus } from '@prisma/client';
+import {
+  MeetingPlatform,
+  MeetingType,
+  ProcessingStatus,
+} from '@/generated/prisma/client';
 import { MeetingRecordResponseDto } from './meeting-record-response.dto';
 
 export class PlatformStatsDto {

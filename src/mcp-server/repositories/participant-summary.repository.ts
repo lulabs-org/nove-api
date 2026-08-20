@@ -11,8 +11,8 @@
 
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import { PeriodType } from '@prisma/client';
-import type { Meeting, ParticipantSummary } from '@prisma/client';
+import { PeriodType } from '@/generated/prisma/client';
+import type { Meeting, ParticipantSummary } from '@/generated/prisma/client';
 
 @Injectable()
 export class ParticipantSummaryRepository {

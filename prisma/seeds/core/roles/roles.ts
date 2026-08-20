@@ -9,7 +9,7 @@
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
-import { PrismaClient, Role } from '@prisma/client';
+import { PrismaClient, Role } from '@/generated/prisma/client';
 import { ROLE_CONFIGS, REAL_ROLE_CONFIGS } from './config';
 import { RoleConfig } from './type';
 

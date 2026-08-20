@@ -6,7 +6,7 @@ import {
   ParticipantSummaryRepository,
   PlatformUserRepository,
 } from '../repositories';
-import { PeriodType } from '@prisma/client';
+import { PeriodType } from '@/generated/prisma/client';
 
 @Injectable()
 export class MeetingStatsTool {

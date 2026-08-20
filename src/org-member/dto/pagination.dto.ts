@@ -18,7 +18,7 @@ import {
   IsEnum,
   IsBoolean,
 } from 'class-validator';
-import { MemberType, MemberStatus } from '@prisma/client';
+import { MemberType, MemberStatus } from '@/generated/prisma/client';
 import { Type } from 'class-transformer';
 
 export class PaginationDto {

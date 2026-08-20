@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@/generated/prisma/client';
 import type { TableDependencies } from './types';
 
 export async function getAllTables(prisma: PrismaClient): Promise<string[]> {

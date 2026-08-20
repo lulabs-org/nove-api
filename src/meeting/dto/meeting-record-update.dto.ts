@@ -7,7 +7,7 @@ import {
   Min,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { MeetingType, ProcessingStatus } from '@prisma/client';
+import { MeetingType, ProcessingStatus } from '@/generated/prisma/client';
 import { Transform } from 'class-transformer';
 
 export class UpdateMeetingRecordDto {

@@ -7,7 +7,7 @@ import {
 import { ApiKeyService } from './api-key.service';
 import { ApiKeyRepository } from '../repositories/api-key.repository';
 import { apiKeyConfig } from '@/configs/api-key.config';
-import { ApiKeyStatus } from '@prisma/client';
+import { ApiKeyStatus } from '@/generated/prisma/client';
 import { CreateApiKeyDto, UpdateApiKeyDto } from '../dto';
 import { computeKeyHash } from '../utils/crypto.util';
 import { PermService } from '@/permission/services/permission.service';

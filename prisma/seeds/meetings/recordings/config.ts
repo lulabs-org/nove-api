@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
-import { StorageProvider, RecordingFileType } from '@prisma/client';
+import { StorageProvider, RecordingFileType } from '@/generated/prisma/client';
 
 export const RECORDING_FILE_CONFIGS = {
   recording: {

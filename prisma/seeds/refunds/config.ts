@@ -1,4 +1,4 @@
-import { RefundChannel, RefundStatus } from '@prisma/client';
+import { RefundChannel, RefundStatus } from '@/generated/prisma/client';
 import { RefundConfig } from './type';
 
 export const REFUND_CONFIGS: RefundConfig[] = [

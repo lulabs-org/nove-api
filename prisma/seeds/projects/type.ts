@@ -1,4 +1,4 @@
-import { Project } from '@prisma/client';
+import { Project } from '@/generated/prisma/client';
 
 export interface ProjectConfig {
   id: string;

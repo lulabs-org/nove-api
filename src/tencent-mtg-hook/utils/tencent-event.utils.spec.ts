@@ -10,7 +10,7 @@
  */
 
 import { TencentEventUtils } from './tencent-event.utils';
-import { MeetingType } from '@prisma/client';
+import { MeetingType } from '@/generated/prisma/client';
 import { MeetingType as TencentMeetingType } from '../enums/tencent-mtg.enum';
 
 describe('TencentEventUtils', () => {

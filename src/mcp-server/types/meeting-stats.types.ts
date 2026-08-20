@@ -2,7 +2,7 @@ import type {
   Meeting,
   MeetingParticipant,
   MeetingRecording,
-} from '@prisma/client';
+} from '@/generated/prisma/client';
 
 export type MeetingDetailsResult = Meeting & {
   createdBy: {

@@ -11,7 +11,7 @@
 // import type { Job } from 'bullmq';
 import { PeriodSummaryTool } from './period-summary-tool';
 import { Injectable, Logger } from '@nestjs/common';
-import { PeriodType } from '@prisma/client';
+import { PeriodType } from '@/generated/prisma/client';
 
 @Injectable()
 export class PeriodSummary {

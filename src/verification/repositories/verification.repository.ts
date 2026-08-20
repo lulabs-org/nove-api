@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import { VerificationCodeType } from '@prisma/client';
+import { VerificationCodeType } from '@/generated/prisma/client';
 
 @Injectable()
 export class VerificationRepository {

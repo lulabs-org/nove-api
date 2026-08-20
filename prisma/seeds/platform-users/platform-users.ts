@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@/generated/prisma/client';
 import { PLATFORM_USER_CONFIGS } from './config';
 
 export async function createPlatformUsers(prisma: PrismaClient) {

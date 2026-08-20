@@ -17,7 +17,7 @@ import {
   IsBoolean,
   IsInt,
 } from 'class-validator';
-import { RoleType } from '@prisma/client';
+import { RoleType } from '@/generated/prisma/client';
 import { Type, Transform } from 'class-transformer';
 
 export class QueryRoleDto {

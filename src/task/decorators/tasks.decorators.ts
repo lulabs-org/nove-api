@@ -15,7 +15,7 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
-import { TaskStatus, TaskType } from '@prisma/client';
+import { TaskStatus, TaskType } from '@/generated/prisma/client';
 import { CreateOnceDto } from '../dtos/create-once.dto';
 import { CreateCronDto } from '../dtos/create-cron.dto';
 import { UpdateTaskDto } from '../dtos/update-task.dto';

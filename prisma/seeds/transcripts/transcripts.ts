@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@/generated/prisma/client';
 import { TRANSCRIPT_DIALOGUE } from './config';
 
 export async function createSimulatedTranscript(

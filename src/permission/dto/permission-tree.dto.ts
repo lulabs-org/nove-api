@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { PermissionType } from '@prisma/client';
+import { PermissionType } from '@/generated/prisma/client';
 
 export class PermissionTreeDto {
   @ApiProperty({ description: '权限ID' })

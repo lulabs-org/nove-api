@@ -35,7 +35,7 @@
 ## 技术栈
 
 - **框架**：NestJS 11 + TypeScript 5.7
-- **数据库**：Prisma ORM 6 + PostgreSQL
+- **数据库**：Prisma ORM 6/7（`prisma-client` generator + `@prisma/adapter-pg` driver adapter）+ PostgreSQL
 - **缓存/队列**：Redis + BullMQ + IORedis
 - **认证**：Passport + JWT + bcryptjs
 - **API 协议**：RESTful + GraphQL (Apollo Server)
@@ -118,6 +118,33 @@ test/
 
 ## 快速开始
 
+### 0) 环境依赖（关键）
+
+运行本项目前，请确保以下服务已就绪，否则会报连接错误：
+
+| 依赖 | 用途 | 是否必需 | 默认地址 |
+|------|------|---------|---------|
+| Node.js 18+ | 运行时 | 必需 | — |
+| pnpm | 包管理 | 必需 | — |
+| PostgreSQL 14+ | 主数据库（Prisma ORM） | 必需 | `localhost:5432` |
+| Redis 6+ | 缓存 / BullMQ 队列 / Token 黑名单 | 必需 | `localhost:6379` |
+| Docker（可选） | 一键启动 PostgreSQL + Redis | 推荐 | — |
+
+> ⚠️ 若执行 `pnpm db:push` / `pnpm db:migrate` 报
+> `P1001: Can't reach database server at localhost:5432`，
+> 说明本机 **PostgreSQL 未启动**。请按下面任一方式先启动数据库：
+
+**方式 A：Docker（推荐，同时启动 PostgreSQL 与 Redis）**
+
+```bash
+docker compose up -d postgres redis
+```
+
+**方式 B：本机原生安装 PostgreSQL**
+
+- 下载并安装 [PostgreSQL](https://www.postgresql.org/download/windows/)，确认服务已启动；
+- 创建数据库 `lulab`，并将 `.env` 的 `DATABASE_URL` 改为实际连接串。
+
 1) 安装依赖
 
 ```bash
@@ -128,10 +155,17 @@ pnpm install
 
 复制 `.env.example` 为 `.env`，并按环境补充：
 
+> 注意：`.env` 中的 `DATABASE_URL` 请直接写明文连接串
+> （如 `postgresql://user:pass@localhost:5432/lulab?schema=public`），
+> 不要使用 `${VAR}` 插值——Prisma 不会展开它。
+
 3) 初始化数据库
 
+> `pnpm install` 会通过 `postinstall` 自动执行 `prisma generate`，
+> 将 Prisma Client 生成到 `src/generated/prisma`（该目录已 gitignore）。
+> 手动重新生成可运行 `pnpm db:generate`。
+
 ```bash
-pnpm db:generate
 pnpm db:push      # 或 pnpm db:migrate
 pnpm db:seed      # 可选
 ```

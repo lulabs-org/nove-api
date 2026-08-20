@@ -11,7 +11,11 @@
 
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import { GenerationMethod, ProcessingStatus, Prisma } from '@prisma/client';
+import {
+  GenerationMethod,
+  ProcessingStatus,
+  Prisma,
+} from '@/generated/prisma/client';
 
 type CreateInput = Prisma.MeetingSummaryUncheckedCreateInput;
 

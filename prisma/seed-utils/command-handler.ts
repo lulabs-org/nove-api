@@ -12,7 +12,7 @@ import type { ParsedCommandLineArgs, DatabaseCommand, SeedMode } from './types';
 import { cleanDatabase, dropAllTables } from './database-clean';
 import { seedDatabase } from './database-seed';
 import { analyzeDatabaseStructure } from './table-dependencies';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@/generated/prisma/client';
 
 async function resetDatabase(
   prisma: PrismaClient,

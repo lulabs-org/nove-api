@@ -11,7 +11,7 @@
 
 // src/tasks/dtos/update-task.dto.ts
 import { IsEnum, IsObject, IsOptional, IsString } from 'class-validator';
-import { TaskStatus } from '@prisma/client';
+import { TaskStatus } from '@/generated/prisma/client';
 
 export class UpdateTaskDto {
   @IsOptional()

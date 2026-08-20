@@ -1,4 +1,4 @@
-import { Gender } from '@prisma/client';
+import { Gender } from '@/generated/prisma/client';
 
 export interface UserProfileCreateInput {
   displayName?: string;

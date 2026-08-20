@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { PermissionType, Permission } from '@prisma/client';
+import { PermissionType, Permission } from '@/generated/prisma/client';
 
 interface PermissionWithChildren extends Permission {
   parent: Permission | null;

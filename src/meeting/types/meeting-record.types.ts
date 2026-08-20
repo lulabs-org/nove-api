@@ -9,7 +9,11 @@
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
-import { MeetingPlatform, MeetingType, ProcessingStatus } from '@prisma/client';
+import {
+  MeetingPlatform,
+  MeetingType,
+  ProcessingStatus,
+} from '@/generated/prisma/client';
 
 /**
  * 会议记录创建参数

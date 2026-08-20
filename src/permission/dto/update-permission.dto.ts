@@ -6,7 +6,7 @@ import {
   IsInt,
   IsBoolean,
 } from 'class-validator';
-import { PermissionType } from '@prisma/client';
+import { PermissionType } from '@/generated/prisma/client';
 import { Transform } from 'class-transformer';
 
 export class UpdatePermissionDto {

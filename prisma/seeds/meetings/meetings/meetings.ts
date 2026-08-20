@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@/generated/prisma/client';
 import { MEETING_CONFIGS } from './config';
 
 export async function createMeetings(prisma: PrismaClient) {

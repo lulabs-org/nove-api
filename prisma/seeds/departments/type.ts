@@ -9,7 +9,7 @@
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
-import { Dept } from '@prisma/client';
+import { Dept } from '@/generated/prisma/client';
 
 export interface DepartmentConfig {
   code: string;

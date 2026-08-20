@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import type { PlatformUser, Platform, Prisma } from '@prisma/client';
+import type { PlatformUser, Platform, Prisma } from '@/generated/prisma/client';
 
 type PlatformUserCreateInput = Prisma.PlatformUserUncheckedCreateInput;
 type PlatformUserUpdateInput = Prisma.PlatformUserUncheckedUpdateInput;

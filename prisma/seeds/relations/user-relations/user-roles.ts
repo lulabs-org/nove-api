@@ -9,7 +9,7 @@
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
-import { PrismaClient, User, Role } from '@prisma/client';
+import { PrismaClient, User, Role } from '@/generated/prisma/client';
 
 export async function assignRolesToUsers(
   prisma: PrismaClient,

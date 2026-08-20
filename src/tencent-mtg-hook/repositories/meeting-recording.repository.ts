@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import { RecordingSource, RecordingStatus, PrismaClient } from '@prisma/client';
+import {
+  RecordingSource,
+  RecordingStatus,
+  PrismaClient,
+} from '@/generated/prisma/client';
 
 type PrismaTransaction = Omit<
   PrismaClient,

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import type { Meeting } from '@prisma/client';
+import type { Meeting } from '@/generated/prisma/client';
 import type { MeetingDetailsResult } from '../types/meeting-stats.types';
 
 @Injectable()

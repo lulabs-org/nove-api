@@ -9,7 +9,7 @@ import {
   MeetingSessionInfo as MeetInfo,
   Meetuser,
 } from '../types';
-import { MeetingType } from '@prisma/client';
+import { MeetingType } from '@/generated/prisma/client';
 
 // 类型工具函数
 export class TencentEventUtils {

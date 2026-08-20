@@ -11,7 +11,7 @@
 import { OpenaiService } from '../../integrations/openai/openai.service';
 import { PeriodSummaryRepository } from '../repositories/period-summary.repository';
 import { Injectable, Logger, Inject } from '@nestjs/common';
-import { PeriodType } from '@prisma/client';
+import { PeriodType } from '@/generated/prisma/client';
 import { PeriodTimeRange } from '../utils/period-time-range';
 
 import { openaiConfig } from '../../configs/openai.config';

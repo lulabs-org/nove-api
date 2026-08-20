@@ -9,7 +9,7 @@
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
-import { PrismaClient, User } from '@prisma/client';
+import { PrismaClient, User } from '@/generated/prisma/client';
 import bcrypt from 'bcryptjs';
 import { COUNTRY_CODE, USERS_MOCK, USERS_REAL } from './config';
 import { UserConfig, UserProfileCreateInput } from './type';

@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ApiKeyStatus } from '@prisma/client';
+import { ApiKeyStatus } from '@/generated/prisma/client';
 
 /**
  * API Key 响应 DTO

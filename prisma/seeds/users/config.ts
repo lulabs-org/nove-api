@@ -9,7 +9,7 @@
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
-import { $Enums } from '@prisma/client';
+import { $Enums } from '@/generated/prisma/client';
 
 export const PASSWORDS = {
   ADMIN: 'admin123',

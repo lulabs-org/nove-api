@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
-import { PrismaClient, RecordingStatus, Prisma } from '@prisma/client';
+import { PrismaClient, RecordingStatus, Prisma } from '@/generated/prisma/client';
 import { RECORDING_FILE_CONFIGS } from './config';
 import type { CreatedMeetingRecordings } from './type';
 

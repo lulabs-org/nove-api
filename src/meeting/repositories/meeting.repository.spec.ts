@@ -5,7 +5,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MeetingRepository } from './meeting.repository';
 import { PrismaService } from '../../prisma/prisma.service';
-import { MeetingPlatform, MeetingType, ProcessingStatus } from '@prisma/client';
+import {
+  MeetingPlatform,
+  MeetingType,
+  ProcessingStatus,
+} from '@/generated/prisma/client';
 
 describe('MeetingRepository', () => {
   let repository: MeetingRepository;

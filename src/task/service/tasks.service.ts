@@ -7,7 +7,7 @@ import { CreateOnceDto } from '../dtos/create-once.dto';
 import { CreateCronDto } from '../dtos/create-cron.dto';
 import { UpdateTaskDto } from '../dtos/update-task.dto';
 import { QueryDto } from '../dtos/query.dto';
-import { ScheduledTask, TaskStatus, TaskType } from '@prisma/client';
+import { ScheduledTask, TaskStatus, TaskType } from '@/generated/prisma/client';
 
 @Injectable()
 export class TasksService {

@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
-import { PrismaClient, Product, ProductStatus, Currency } from '@prisma/client';
+import { PrismaClient, Product, ProductStatus, Currency } from '@/generated/prisma/client';
 import { ProductConfig } from './type';
 import { PRODUCT_CONFIGS } from './config';
 

@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
-import { ProcessingStatus, GenerationMethod } from '@prisma/client';
+import { ProcessingStatus, GenerationMethod } from '@/generated/prisma/client';
 import type { MeetingSummaryConfig } from './type';
 
 export const MEETING_SUMMARY_CONFIGS: {

@@ -6,7 +6,7 @@ import {
   IsEnum,
   IsArray,
 } from 'class-validator';
-import { MemberType } from '@prisma/client';
+import { MemberType } from '@/generated/prisma/client';
 
 export class CreateOrgMemberDto {
   @ApiProperty({

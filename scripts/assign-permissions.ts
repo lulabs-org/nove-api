@@ -8,10 +8,14 @@
  * 
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved. 
  */
-import { PrismaClient } from '@prisma/client';
+import 'dotenv/config';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient } from '@/generated/prisma/client';
 import { assignPermissionsToRole } from '../prisma/seeds/relations/permission-relations/role-permissions';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
+});
 
 interface CommandLineArgs {
   roleId: string;

@@ -14,7 +14,7 @@ import {
   CreateRoleBindingDto,
   RoleBindingDto,
 } from '../dto';
-import { Role, RoleType, Permission } from '@prisma/client';
+import { Role, RoleType, Permission } from '@/generated/prisma/client';
 import { PermissionDto } from '@/permission/dto';
 
 interface RoleWithPermissions extends Role {

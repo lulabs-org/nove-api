@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
-import { User, UserProfile } from '@prisma/client';
+import { User, UserProfile } from '@/generated/prisma/client';
 import { AuthUserMinimalDto } from '@/auth/dto/auth-user-minimal.dto';
 
 export function formatAuthUserResponse(

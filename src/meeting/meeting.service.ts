@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ProcessingStatus, Prisma } from '@prisma/client';
+import { ProcessingStatus, Prisma } from '@/generated/prisma/client';
 import { MeetingRepository } from './repositories/meeting.repository';
 import { GetMeetingRecordsParams } from './types';
 import {

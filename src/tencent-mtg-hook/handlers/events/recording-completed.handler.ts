@@ -18,7 +18,7 @@ import {
   GenerationMethod,
   ProcessingStatus,
   MeetingPlatform,
-} from '@prisma/client';
+} from '@/generated/prisma/client';
 
 import { BaseEventHandler } from '../base/base-event.handler';
 import {

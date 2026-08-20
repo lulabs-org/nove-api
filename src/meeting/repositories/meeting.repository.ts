@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { GetMeetingRecordsParams } from '@/meeting/types';
 
-import { MeetingPlatform, Prisma } from '@prisma/client';
+import { MeetingPlatform, Prisma } from '@/generated/prisma/client';
 
 type UpdateMeetingRecordData = Prisma.MeetingUncheckedUpdateInput;
 type CreateMeetingRecordData = Omit<

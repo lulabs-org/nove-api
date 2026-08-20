@@ -14,7 +14,7 @@ import { Meetuser, EventPayload } from '../types';
 import { TencentEventUtils } from '../utils/tencent-event.utils';
 import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
 import { MeetingRepository } from '@/meeting/repositories/meeting.repository';
-import { Platform, PlatformUser, Prisma } from '@prisma/client';
+import { Platform, PlatformUser, Prisma } from '@/generated/prisma/client';
 
 /**
  * 会议数据库服务

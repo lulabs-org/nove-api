@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
-import { PrismaClient, ProcessingStatus, Prisma } from '@prisma/client';
+import { PrismaClient, ProcessingStatus, Prisma } from '@/generated/prisma/client';
 import { MEETING_SUMMARY_CONFIGS } from './config';
 import type { CreatedMeetingSummaries } from './type';
 

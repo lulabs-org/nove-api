@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
-import { PeriodType } from '@prisma/client';
+import { PeriodType } from '@/generated/prisma/client';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()

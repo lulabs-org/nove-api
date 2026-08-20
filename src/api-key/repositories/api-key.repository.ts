@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ApiKey, ApiKeyStatus, Prisma } from '@prisma/client';
+import { ApiKey, ApiKeyStatus, Prisma } from '@/generated/prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 
 /**

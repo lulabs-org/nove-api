@@ -1,4 +1,4 @@
-import { Curriculum, Project } from '@prisma/client';
+import { Curriculum, Project } from '@/generated/prisma/client';
 
 export interface CurriculumConfig {
   id: string;

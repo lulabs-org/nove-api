@@ -19,7 +19,7 @@ import {
 import type { Job } from 'bullmq';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Injectable, Logger } from '@nestjs/common';
-import { TaskStatus, PeriodType } from '@prisma/client';
+import { TaskStatus, PeriodType } from '@/generated/prisma/client';
 
 import { PeriodSummary } from '../service/period-summary.service';
 

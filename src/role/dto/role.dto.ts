@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { RoleType } from '@prisma/client';
+import { RoleType } from '@/generated/prisma/client';
 
 export class RoleDto {
   @ApiProperty({

@@ -9,7 +9,7 @@
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
-import { MeetingPlatform, MeetingType, ProcessingStatus } from '@prisma/client';
+import { MeetingPlatform, MeetingType, ProcessingStatus } from '@/generated/prisma/client';
 import type { MeetingConfig } from './type';
 
 const createTime = (hoursAgo: number): Date => {

@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { MemberType, MemberStatus } from '@prisma/client';
+import { MemberType, MemberStatus } from '@/generated/prisma/client';
 
 export class OrgMemberDto {
   @ApiProperty({
