@@ -1,20 +1,20 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { GenerationMethod, Prisma, ProcessingStatus } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
-import { MeetingSummaryRepository } from './meeting-summary.repository';
+import { MinuteSummaryRepository } from './meeting-summary.repository';
 
-describe('MeetingSummaryRepository', () => {
+describe('MinuteSummaryRepository', () => {
   it('only returns the latest non-deleted recording summary', async () => {
     const findFirst = jest.fn().mockResolvedValue({ id: 'summary-1' });
-    const repository = new MeetingSummaryRepository({
-      meetingSummary: { findFirst },
+    const repository = new MinuteSummaryRepository({
+      minuteSummary: { findFirst },
     } as unknown as PrismaService);
 
     await repository.findByRecordingId('recording-1');
 
     expect(findFirst).toHaveBeenCalledWith({
       where: {
-        recordingId: 'recording-1',
+        minuteId: 'recording-1',
         isLatest: true,
         deletedAt: null,
       },
@@ -36,10 +36,10 @@ describe('MeetingSummaryRepository', () => {
       .fn()
       .mockImplementation((callback: (tx: unknown) => unknown) =>
         Promise.resolve(
-          callback({ meetingSummary: { findFirst, update, create } }),
+          callback({ minuteSummary: { findFirst, update, create } }),
         ),
       );
-    const repository = new MeetingSummaryRepository({
+    const repository = new MinuteSummaryRepository({
       $transaction: transaction,
     } as unknown as PrismaService);
 
@@ -47,9 +47,10 @@ describe('MeetingSummaryRepository', () => {
       'meeting-1',
       'recording-1',
       {
-        content: 'External summary',
-        aiModel: 'external-model',
-        keywords: ['external'],
+        content: 'New content',
+        aiModel: 'GPT-4',
+        keywords: ['tech'],
+        minuteId: 'recording-1',
       },
     );
 
@@ -60,7 +61,7 @@ describe('MeetingSummaryRepository', () => {
     expect(create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         meetingId: 'meeting-1',
-        recordingId: 'recording-1',
+        minuteId: 'recording-1',
         content: 'External summary',
         keywords: ['external'],
         generatedBy: GenerationMethod.AI,

@@ -1,12 +1,12 @@
 import { NotFoundException } from '@nestjs/common';
 import {
   MeetingRecordNotFoundException,
-  MeetingSummaryNotFoundException,
+  MinuteSummaryNotFoundException,
   RecordingNotFoundException,
 } from '@/meeting/exceptions/meeting.exceptions';
 import { generatePrompt } from '@/common/utils';
 import { LlmService } from '@/llm/llm.service';
-import { RecordingParticipantSummaryRepository } from '../repositories';
+import { MinuteParticipantSummaryRepository } from '../repositories';
 import { ParticipantSummaryService } from './participant-summary.service';
 
 jest.mock('@/common/utils', () => ({
@@ -17,7 +17,7 @@ jest.mock('@/common/utils', () => ({
 }));
 
 describe('ParticipantSummaryService', () => {
-  const meetingSummary = {
+  const minuteSummary = {
     aiMinutes: { sections: [] },
     keyPoints: [],
     actionItems: [],
@@ -35,7 +35,7 @@ describe('ParticipantSummaryService', () => {
       startAt: new Date('2026-03-30T01:00:00Z'),
       endAt: new Date('2026-03-30T02:00:00Z'),
       deletedAt: null,
-      summaries: [meetingSummary],
+      summaries: [minuteSummary],
     },
     transcripts: [
       {
@@ -66,7 +66,7 @@ describe('ParticipantSummaryService', () => {
     };
     service = new ParticipantSummaryService(
       llmService as unknown as LlmService,
-      repository as unknown as RecordingParticipantSummaryRepository,
+      repository as unknown as MinuteParticipantSummaryRepository,
       {
         apiKey: { ark: '', openai: '' },
         baseURL: 'https://example.com',
@@ -108,7 +108,7 @@ describe('ParticipantSummaryService', () => {
       expect.objectContaining({
         platformUserId: 'platform-user-1',
         meetingId: 'meeting-1',
-        meetingRecordingId: 'recording-1',
+        minuteId: 'recording-1',
         userName: 'Alice',
         partSummary: 'generated summary',
         aiModel: 'test-model',
@@ -152,7 +152,7 @@ describe('ParticipantSummaryService', () => {
         recordId: 'recording-1',
         platformUserIds: ['platform-user-1'],
       }),
-    ).rejects.toBeInstanceOf(MeetingSummaryNotFoundException);
+    ).rejects.toBeInstanceOf(MinuteSummaryNotFoundException);
   });
 
   it('throws when the transcript does not exist', async () => {

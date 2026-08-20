@@ -11,7 +11,7 @@
 import { Prisma } from '@prisma/client';
 
 export interface CreatedMeetingRecordings {
-  meetingRecording: Prisma.MeetingRecordingGetPayload<Record<string, never>>;
-  recordingFile: Prisma.MeetingRecordingFileGetPayload<Record<string, never>>;
+  minute: Prisma.MinuteGetPayload<Record<string, never>>;
+  minuteFile: Prisma.MinuteFileGetPayload<Record<string, never>>;
   storageObject: Prisma.StorageObjectGetPayload<Record<string, never>>;
 }

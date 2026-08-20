@@ -289,10 +289,10 @@ export class TrackingReportService {
       structuredData:
         dto.structuredData ??
         (current.structuredData as Record<string, unknown>),
-      recordingSummaryIds:
-        dto.recordingSummaryIds ??
-        current.recordingSummarySources.map(
-          (source) => source.recordingSummaryId,
+      minuteSummaryIds:
+        dto.minuteSummaryIds ??
+        current.minuteSummarySources.map(
+          (source) => source.minuteSummaryId,
         ),
       sourceReportIds:
         dto.sourceReportIds ??

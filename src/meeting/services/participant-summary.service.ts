@@ -14,14 +14,14 @@ import { GenerationMethod } from '@prisma/client';
 import { ConfigType } from '@nestjs/config';
 import { formatToTimezone, formatTimeMs } from '@/common/utils/time.util';
 import { LlmService } from '@/llm/llm.service';
-import { RecordingParticipantSummaryRepository } from '../repositories';
+import { MinuteParticipantSummaryRepository } from '../repositories';
 import { GenerateParticipantSummaryDto } from '../dto/participant-summary.dto';
 import { SummarySegment } from '../types';
 import { openaiConfig } from '@/configs/openai.config';
 import { generatePrompt } from '@/common/utils';
 import {
   MeetingRecordNotFoundException,
-  MeetingSummaryNotFoundException,
+  MinuteSummaryNotFoundException,
   RecordingNotFoundException,
 } from '@/meeting/exceptions/meeting.exceptions';
 
@@ -31,7 +31,7 @@ export class ParticipantSummaryService {
 
   constructor(
     private readonly llmService: LlmService,
-    private readonly partSummaryRepo: RecordingParticipantSummaryRepository,
+    private readonly partSummaryRepo: MinuteParticipantSummaryRepository,
     @Inject(openaiConfig.KEY)
     private readonly config: ConfigType<typeof openaiConfig>,
   ) {}
@@ -92,7 +92,7 @@ export class ParticipantSummaryService {
     recordId: string,
     context: Awaited<ReturnType<typeof this.fetchMeetingContext>>,
   ): Promise<string> {
-    const { recording, meeting, meetingSummary, transcript } = context;
+    const { recording, meeting, minuteSummary, transcript } = context;
 
     // 2. 校验参会者发言记录并获取姓名
     const userName = this.getParticipantName(
@@ -110,20 +110,20 @@ export class ParticipantSummaryService {
     const segments = this.formatSegments(relevantSegments);
 
     // 4. 构建大模型 Prompt
-    const periodStart = recording.startAt ?? meeting.startAt;
-    const periodEnd = recording.endAt ?? meeting.endAt;
+    const periodStart = recording.startAt ?? meeting?.startAt;
+    const periodEnd = recording.endAt ?? meeting?.endAt;
     const { systemPrompt, prompt } = generatePrompt('PARTICIPANT_SUMMARY', {
       userName,
-      meetingId: meeting.id,
-      meetingTitle: meeting.title,
+      meetingId: meeting?.id ?? '',
+      meetingTitle: meeting?.title ?? '未知',
       startTime: periodStart ? formatToTimezone(periodStart, 8) : '未知',
       endTime: periodEnd ? formatToTimezone(periodEnd, 8) : '未知',
-      minutes: meetingSummary.aiMinutes,
-      keyPoints: meetingSummary.keyPoints,
-      actionItems: meetingSummary.actionItems,
-      decisions: meetingSummary.decisions,
-      goldenQuotes: meetingSummary.goldenQuotes,
-      keywords: meetingSummary.keywords?.join(', '),
+      minutes: minuteSummary.aiMinutes,
+      keyPoints: minuteSummary.keyPoints,
+      actionItems: minuteSummary.actionItems,
+      decisions: minuteSummary.decisions,
+      goldenQuotes: minuteSummary.goldenQuotes,
+      keywords: minuteSummary.keywords?.join(', '),
       segments,
     });
 
@@ -133,9 +133,9 @@ export class ParticipantSummaryService {
     // 6. 结果持久化
     await this.partSummaryRepo.saveNewVersion({
       platformUserId,
-      meetingId: meeting.id,
-      meetingRecordingId: recordId,
-      meetingParticipantId: meeting.participants?.find(
+      meetingId: meeting?.id,
+      minuteId: recordId,
+      meetingParticipantId: meeting?.participants?.find(
         (participant) => participant.ptUserId === platformUserId,
       )?.id,
       userName,
@@ -202,20 +202,22 @@ export class ParticipantSummaryService {
     ]);
   }
 
-  private async fetchMeetingContext(recordingId: string) {
+  private async fetchMeetingContext(minuteId: string) {
     const recording =
-      await this.partSummaryRepo.findGenerationContext(recordingId);
-    if (!recording) throw new RecordingNotFoundException(recordingId);
+      await this.partSummaryRepo.findGenerationContext(minuteId);
+    if (!recording) throw new RecordingNotFoundException(minuteId);
 
     const meeting = recording.meeting;
-    const transcript = recording.transcripts[0];
-    const meetingSummary = meeting.summaries[0];
-
+    if (!meeting) throw new MeetingRecordNotFoundException(minuteId);
     if (meeting.deletedAt) throw new MeetingRecordNotFoundException(meeting.id);
-    if (!meetingSummary) throw new MeetingSummaryNotFoundException(meeting.id);
-    if (!transcript)
-      throw new NotFoundException(`转录记录不存在: ${recordingId}`);
 
-    return { recording, meeting, meetingSummary, transcript };
+    const transcript = recording.transcripts[0];
+    const minuteSummary = meeting.minuteSummaries[0];
+
+    if (!minuteSummary) throw new MinuteSummaryNotFoundException(meeting.id);
+    if (!transcript)
+      throw new NotFoundException(`转录记录不存在: ${minuteId}`);
+
+    return { recording, meeting, minuteSummary, transcript };
   }
 }

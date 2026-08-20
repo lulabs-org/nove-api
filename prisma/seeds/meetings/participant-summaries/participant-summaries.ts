@@ -10,7 +10,7 @@ import type { ParticipantSummary } from './type';
 export async function createParticipantSummaries(
   prisma: PrismaClient,
   meetings: { meetings: Array<{ meeting: { id: string } }> },
-  meetingRecording: { id: string },
+  minute: { id: string },
   platformUsers: {
     platformUsers: Array<{
       platformUser: { id: string; localUserId: string | null };
@@ -27,24 +27,24 @@ export async function createParticipantSummaries(
   const summaries = await Promise.all(
     users.map(({ platformUser }, index) => {
       const config = PARTICIPANT_SUMMARY_CONFIGS[index];
-      return prisma.recordingParticipantSummary.upsert({
+      return prisma.minuteParticipantSummary.upsert({
         where: {
           versionGroupKey_version: {
-            versionGroupKey: `recording:${meetingRecording.id}:user:${platformUser.id}`,
+            versionGroupKey: `minute:${minute.id}:user:${platformUser.id}`,
             version: 1,
           },
         },
         update: { partSummary: config.partSummary, keywords: config.keywords },
         create: {
           meetingId: meeting.id,
-          meetingRecordingId: meetingRecording.id,
+          minuteId: minute.id,
           platformUserId: platformUser.id,
           userName: config.userName,
           partSummary: config.partSummary,
           keywords: config.keywords,
           generatedBy: GenerationMethod.AI,
           aiModel: 'seed-model',
-          versionGroupKey: `recording:${meetingRecording.id}:user:${platformUser.id}`,
+          versionGroupKey: `minute:${minute.id}:user:${platformUser.id}`,
           observedStartAt,
           observedEndAt: now,
         },
@@ -90,8 +90,8 @@ export async function createParticipantSummaries(
           periodEnd,
           content: `【每日总结】${summary.partSummary}`,
           versionGroupKey: `${identity}:PERIODIC_MEETING_SUMMARY:DAILY:${periodStart.getTime()}:${periodEnd.getTime()}:-`,
-          recordingSummarySources: {
-            create: { recordingSummaryId: summary.id },
+          minuteSummarySources: {
+            create: { minuteSummaryId: summary.id },
           },
         },
       });

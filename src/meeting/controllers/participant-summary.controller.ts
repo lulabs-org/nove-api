@@ -25,17 +25,17 @@ import { CuidPipe } from '@/common/pipes/cuid.pipe';
 import { ParticipantSummaryCrudService } from '../services/participant-summary-crud.service';
 import { ParticipantSummaryService } from '../services/participant-summary.service';
 import {
-  CreateRecordingParticipantSummaryDto,
-  QueryRecordingParticipantSummaryDto,
-  RecordingParticipantSummaryDto,
-  RecordingParticipantSummaryListResponseDto,
-  UpdateRecordingParticipantSummaryDto,
+  CreateMinuteParticipantSummaryDto,
+  QueryMinuteParticipantSummaryDto,
+  MinuteParticipantSummaryDto,
+  MinuteParticipantSummaryListResponseDto,
+  UpdateMinuteParticipantSummaryDto,
   GenerateParticipantSummaryDto,
 } from '../dto/participant-summary.dto';
 
 @ApiTags('Recording Participant Summary')
 @ApiBearerAuth()
-@Controller('meetings/:meetingId/recordings/:recordingId/participant-summaries')
+@Controller('meetings/:meetingId/recordings/:minuteId/participant-summaries')
 export class ParticipantSummaryController {
   constructor(
     private readonly service: ParticipantSummaryCrudService,
@@ -46,17 +46,17 @@ export class ParticipantSummaryController {
   @RequirePermissions('meeting:read')
   @ApiResponse({
     status: HttpStatus.OK,
-    type: RecordingParticipantSummaryListResponseDto,
+    type: MinuteParticipantSummaryListResponseDto,
   })
   list(
     @Param('meetingId', CuidPipe) meetingId: string,
-    @Param('recordingId', CuidPipe) recordingId: string,
+    @Param('minuteId', CuidPipe) minuteId: string,
     @Query(new ValidationPipe({ transform: true }))
-    query: QueryRecordingParticipantSummaryDto,
+    query: QueryMinuteParticipantSummaryDto,
   ) {
     return this.service.findMany(
       meetingId,
-      recordingId,
+      minuteId,
       query.page,
       query.limit,
     );
@@ -64,13 +64,13 @@ export class ParticipantSummaryController {
 
   @Get(':id')
   @RequirePermissions('meeting:read')
-  @ApiResponse({ status: HttpStatus.OK, type: RecordingParticipantSummaryDto })
+  @ApiResponse({ status: HttpStatus.OK, type: MinuteParticipantSummaryDto })
   get(
     @Param('meetingId', CuidPipe) meetingId: string,
-    @Param('recordingId', CuidPipe) recordingId: string,
+    @Param('minuteId', CuidPipe) minuteId: string,
     @Param('id', CuidPipe) id: string,
   ) {
-    return this.service.findById(meetingId, recordingId, id);
+    return this.service.findById(meetingId, minuteId, id);
   }
 
   @Post()
@@ -79,31 +79,31 @@ export class ParticipantSummaryController {
   @ApiOperation({ summary: '为录制中的参会者创建新总结版本' })
   create(
     @Param('meetingId', CuidPipe) meetingId: string,
-    @Param('recordingId', CuidPipe) recordingId: string,
-    @Body(new ValidationPipe()) dto: CreateRecordingParticipantSummaryDto,
+    @Param('minuteId', CuidPipe) minuteId: string,
+    @Body(new ValidationPipe()) dto: CreateMinuteParticipantSummaryDto,
   ) {
-    return this.service.create(meetingId, recordingId, dto);
+    return this.service.create(meetingId, minuteId, dto);
   }
 
   @Put(':id')
   @RequirePermissions('meeting:update')
   update(
     @Param('meetingId', CuidPipe) meetingId: string,
-    @Param('recordingId', CuidPipe) recordingId: string,
+    @Param('minuteId', CuidPipe) minuteId: string,
     @Param('id', CuidPipe) id: string,
-    @Body(new ValidationPipe()) dto: UpdateRecordingParticipantSummaryDto,
+    @Body(new ValidationPipe()) dto: UpdateMinuteParticipantSummaryDto,
   ) {
-    return this.service.update(meetingId, recordingId, id, dto);
+    return this.service.update(meetingId, minuteId, id, dto);
   }
 
   @Delete(':id')
   @RequirePermissions('meeting:delete')
   delete(
     @Param('meetingId', CuidPipe) meetingId: string,
-    @Param('recordingId', CuidPipe) recordingId: string,
+    @Param('minuteId', CuidPipe) minuteId: string,
     @Param('id', CuidPipe) id: string,
   ) {
-    return this.service.delete(meetingId, recordingId, id);
+    return this.service.delete(meetingId, minuteId, id);
   }
 
   @Post('generate')
@@ -112,14 +112,14 @@ export class ParticipantSummaryController {
   @ApiOperation({ summary: '生成参会者总结' })
   async generateSummaries(
     @Param('meetingId', CuidPipe) meetingId: string,
-    @Param('recordingId') recordingId: string,
+    @Param('minuteId') minuteId: string,
     @Body() dto: GenerateParticipantSummaryDto,
   ) {
     return {
       success: true,
       message: '参会者总结生成完成',
       data: await this.aiService.generateSummaries({
-        recordId: recordingId,
+        recordId: minuteId,
         ...dto,
       }),
     };

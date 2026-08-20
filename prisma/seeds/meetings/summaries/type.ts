@@ -10,11 +10,12 @@
  */
 import { Prisma } from '@prisma/client';
 
-export type MeetingSummaryConfig = Omit<
-  Prisma.MeetingSummaryUncheckedCreateInput,
-  'id' | 'meetingId' | 'createdAt' | 'updatedAt' | 'deletedAt'
+export type MinuteSummaryConfig = Omit<
+  Prisma.MinuteSummaryUncheckedCreateInput,
+  'id' | 'meetingId' | 'minuteId' | 'createdAt' | 'updatedAt' | 'deletedAt'
 >;
 
-export interface CreatedMeetingSummaries {
-  teamSummary: Prisma.MeetingSummaryGetPayload<Record<string, never>>;
+export interface CreatedMinuteSummaries {
+  config: Prisma.MinuteSummaryUncheckedCreateInput;
+  teamSummary: Prisma.MinuteSummaryGetPayload<Record<string, never>>;
 }

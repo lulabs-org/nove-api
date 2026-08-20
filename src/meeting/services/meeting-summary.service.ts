@@ -1,19 +1,19 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { MeetingSummaryRepository } from '../repositories/meeting-summary.repository';
-import { MeetingSummaryNotFoundException } from '../exceptions/meeting.exceptions';
+import { MinuteSummaryRepository } from '../repositories/meeting-summary.repository';
+import { MinuteSummaryNotFoundException } from '../exceptions/meeting.exceptions';
 import {
-  CreateMeetingSummaryDto,
-  UpdateMeetingSummaryDto,
+  CreateMinuteSummaryDto,
+  UpdateMinuteSummaryDto,
 } from '../dto/meeting-summary.dto';
 
 @Injectable()
-export class MeetingSummaryService {
+export class MinuteSummaryService {
   constructor(
-    private readonly meetingSummaryRepository: MeetingSummaryRepository,
+    private readonly meetingSummaryRepository: MinuteSummaryRepository,
   ) {}
 
-  async upsert(data: Prisma.MeetingSummaryUncheckedCreateInput) {
+  async upsert(data: Prisma.MinuteSummaryUncheckedCreateInput) {
     return this.meetingSummaryRepository.upsert(data);
   }
 
@@ -21,7 +21,7 @@ export class MeetingSummaryService {
     const summary =
       await this.meetingSummaryRepository.findByMeetingId(meetingId);
     if (!summary) {
-      throw new MeetingSummaryNotFoundException(meetingId);
+      throw new MinuteSummaryNotFoundException(meetingId);
     }
     return summary;
   }
@@ -29,7 +29,7 @@ export class MeetingSummaryService {
   async findById(id: string) {
     const summary = await this.meetingSummaryRepository.findById(id);
     if (!summary) {
-      throw new MeetingSummaryNotFoundException(id);
+      throw new MinuteSummaryNotFoundException(id);
     }
     return summary;
   }
@@ -50,14 +50,14 @@ export class MeetingSummaryService {
     };
   }
 
-  async create(meetingId: string, data: CreateMeetingSummaryDto) {
+  async create(meetingId: string, data: CreateMinuteSummaryDto) {
     return this.meetingSummaryRepository.create({
       meetingId,
       ...data,
     });
   }
 
-  async update(id: string, data: UpdateMeetingSummaryDto) {
+  async update(id: string, data: UpdateMinuteSummaryDto) {
     await this.findById(id); // Ensure exists
     return this.meetingSummaryRepository.update(id, data);
   }

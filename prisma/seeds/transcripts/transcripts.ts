@@ -10,7 +10,7 @@ export async function createSimulatedTranscript(
 
   const transcript = await prisma.transcript.create({
     data: {
-      recordingId: meetingRecordingId,
+      minuteId: meetingRecordingId,
       language: 'zh-CN',
       status: 1,
     },

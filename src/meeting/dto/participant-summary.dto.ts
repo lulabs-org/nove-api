@@ -9,7 +9,7 @@ import {
   Min,
 } from 'class-validator';
 
-export class CreateRecordingParticipantSummaryDto {
+export class CreateMinuteParticipantSummaryDto {
   @ApiProperty({ description: '平台用户 ID' })
   @IsString()
   platformUserId: string;
@@ -29,7 +29,7 @@ export class CreateRecordingParticipantSummaryDto {
   keywords?: string[];
 }
 
-export class UpdateRecordingParticipantSummaryDto {
+export class UpdateMinuteParticipantSummaryDto {
   @ApiPropertyOptional() @IsOptional() @IsString() userName?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() partSummary?: string;
   @ApiPropertyOptional({ type: [String] })
@@ -39,7 +39,7 @@ export class UpdateRecordingParticipantSummaryDto {
   keywords?: string[];
 }
 
-export class QueryRecordingParticipantSummaryDto {
+export class QueryMinuteParticipantSummaryDto {
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -54,10 +54,10 @@ export class QueryRecordingParticipantSummaryDto {
   limit = 20;
 }
 
-export class RecordingParticipantSummaryDto {
+export class MinuteParticipantSummaryDto {
   @ApiProperty() id: string;
   @ApiProperty() meetingId: string;
-  @ApiProperty() meetingRecordingId: string;
+  @ApiProperty() minuteId: string;
   @ApiProperty() platformUserId: string;
   @ApiPropertyOptional({ nullable: true }) meetingParticipantId: string | null;
   @ApiProperty() userName: string;
@@ -69,9 +69,9 @@ export class RecordingParticipantSummaryDto {
   @ApiProperty() updatedAt: Date;
 }
 
-export class RecordingParticipantSummaryListResponseDto {
-  @ApiProperty({ type: [RecordingParticipantSummaryDto] })
-  data: RecordingParticipantSummaryDto[];
+export class MinuteParticipantSummaryListResponseDto {
+  @ApiProperty({ type: [MinuteParticipantSummaryDto] })
+  data: MinuteParticipantSummaryDto[];
   @ApiProperty() total: number;
   @ApiProperty() page: number;
   @ApiProperty() limit: number;

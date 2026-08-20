@@ -10,7 +10,7 @@
  */
 import { PrismaClient, ProcessingStatus, Prisma } from '@prisma/client';
 import { MEETING_SUMMARY_CONFIGS } from './config';
-import type { CreatedMeetingSummaries } from './type';
+import type { CreatedMinuteSummaries } from './type';
 
 export async function createMeetingSummary(
   prisma: PrismaClient,
@@ -25,10 +25,12 @@ export async function createMeetingSummary(
       platformUser: Prisma.PlatformUserGetPayload<Record<string, never>>;
     }>;
   },
-): Promise<CreatedMeetingSummaries['teamSummary']> {
-  return prisma.meetingSummary.create({
+  minute: { id: string },
+): Promise<CreatedMinuteSummaries['teamSummary']> {
+  return prisma.minuteSummary.create({
     data: {
       meetingId: meetings.meetings[1].meeting.id,
+      minuteId: minute.id,
       ...MEETING_SUMMARY_CONFIGS.teamSummary,
       createdId: platformUsers.platformUsers[1].platformUser.id,
       processingTime: 30000,

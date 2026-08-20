@@ -3,7 +3,7 @@ import { LlmService } from '@/llm/llm.service';
 import { TrackingReportService } from './tracking-report.service';
 import { PeriodicReportGenerator } from './periodic-report.generator';
 import { TrackingReportRepository } from '../repositories/tracking-report.repository';
-import { RecordingParticipantSummaryRepository } from '@/meeting/repositories/participant-summary.repository';
+import { MinuteParticipantSummaryRepository } from '@/meeting/repositories/participant-summary.repository';
 import { PrismaService } from '@/prisma/prisma.service';
 
 describe('PeriodicReportGenerator', () => {
@@ -21,7 +21,7 @@ describe('PeriodicReportGenerator', () => {
   const service = new PeriodicReportGenerator(
     prisma as unknown as PrismaService,
     trackingReportRepository as unknown as TrackingReportRepository,
-    recordingSummaryRepository as unknown as RecordingParticipantSummaryRepository,
+    recordingSummaryRepository as unknown as MinuteParticipantSummaryRepository,
     trackingReportService as unknown as TrackingReportService,
     llm as unknown as LlmService,
     { model: 'test-model' } as never,
@@ -60,7 +60,7 @@ describe('PeriodicReportGenerator', () => {
         subjectUserId: 'user-1',
         trackingType: TrackingReportType.PERIODIC_MEETING_SUMMARY,
         cadence: TrackingCadence.DAILY,
-        recordingSummaryIds: ['summary-1'],
+        minuteSummaryIds: ['summary-1'],
         sourceReportIds: [],
       }),
       expect.objectContaining({ generatedBy: 'AI', aiModel: 'test-model' }),
@@ -93,7 +93,7 @@ describe('PeriodicReportGenerator', () => {
       expect.objectContaining({
         platformUserId: 'platform-1',
         cadence: TrackingCadence.WEEKLY,
-        recordingSummaryIds: [],
+        minuteSummaryIds: [],
         sourceReportIds: ['daily-1'],
       }),
       expect.objectContaining({ generatedBy: 'AI', aiModel: 'test-model' }),

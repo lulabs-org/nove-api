@@ -15,14 +15,14 @@ import { GenerationMethod, ProcessingStatus, Prisma } from '@prisma/client';
 import { retryVersionTransaction } from '@/common/utils/prisma-transaction-retry';
 import { CreateRecordingSummaryDto } from '../dto/meeting-recording.dto';
 
-type CreateInput = Prisma.MeetingSummaryUncheckedCreateInput;
+type CreateInput = Prisma.MinuteSummaryUncheckedCreateInput;
 
 @Injectable()
-export class MeetingSummaryRepository {
+export class MinuteSummaryRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(data: CreateInput) {
-    return this.prisma.meetingSummary.create({
+    return this.prisma.minuteSummary.create({
       data: {
         ...data,
         generatedBy: data.generatedBy || GenerationMethod.AI,
@@ -36,16 +36,16 @@ export class MeetingSummaryRepository {
   }
 
   async upsert(data: CreateInput) {
-    const existingSummary = await this.prisma.meetingSummary.findFirst({
+    const existingSummary = await this.prisma.minuteSummary.findFirst({
       where: {
         meetingId: data.meetingId,
-        recordingId: data.recordingId,
+        minuteId: data.minuteId,
         isLatest: true,
       },
     });
 
     if (existingSummary) {
-      return this.prisma.meetingSummary.update({
+      return this.prisma.minuteSummary.update({
         where: { id: existingSummary.id },
         data: {
           content: data.content,
@@ -60,7 +60,7 @@ export class MeetingSummaryRepository {
         },
       });
     } else {
-      return this.prisma.meetingSummary.create({
+      return this.prisma.minuteSummary.create({
         data: {
           ...data,
           generatedBy: data.generatedBy || GenerationMethod.AI,
@@ -75,7 +75,7 @@ export class MeetingSummaryRepository {
   }
 
   async findByMeetingId(meetingId: string) {
-    return this.prisma.meetingSummary.findFirst({
+    return this.prisma.minuteSummary.findFirst({
       where: {
         meetingId,
         isLatest: true,
@@ -83,10 +83,10 @@ export class MeetingSummaryRepository {
     });
   }
 
-  async findByRecordingId(recordingId: string) {
-    return this.prisma.meetingSummary.findFirst({
+  async findByRecordingId(minuteId: string) {
+    return this.prisma.minuteSummary.findFirst({
       where: {
-        recordingId,
+        minuteId,
         isLatest: true,
         deletedAt: null,
       },
@@ -95,29 +95,29 @@ export class MeetingSummaryRepository {
   }
 
   async createExternalForRecording(
-    meetingId: string,
-    recordingId: string,
+    meetingId: string | null,
+    minuteId: string,
     data: CreateRecordingSummaryDto,
   ) {
     return retryVersionTransaction(() =>
       this.prisma.$transaction(
         async (tx) => {
-          const previous = await tx.meetingSummary.findFirst({
-            where: { recordingId, isLatest: true, deletedAt: null },
+          const previous = await tx.minuteSummary.findFirst({
+            where: { minuteId, isLatest: true, deletedAt: null },
             orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
           });
 
           if (previous) {
-            await tx.meetingSummary.update({
+            await tx.minuteSummary.update({
               where: { id: previous.id },
               data: { isLatest: false },
             });
           }
 
-          return tx.meetingSummary.create({
+          return tx.minuteSummary.create({
             data: {
               meetingId,
-              recordingId,
+              minuteId,
               title: data.title,
               content: data.content,
               keywords: data.keywords ?? [],
@@ -152,17 +152,17 @@ export class MeetingSummaryRepository {
   }
 
   async findById(id: string) {
-    return this.prisma.meetingSummary.findUnique({
+    return this.prisma.minuteSummary.findUnique({
       where: { id, deletedAt: null },
     });
   }
 
   async findMany(meetingId: string, skip: number, take: number) {
     const [total, records] = await this.prisma.$transaction([
-      this.prisma.meetingSummary.count({
+      this.prisma.minuteSummary.count({
         where: { meetingId, deletedAt: null },
       }),
-      this.prisma.meetingSummary.findMany({
+      this.prisma.minuteSummary.findMany({
         where: { meetingId, deletedAt: null },
         skip,
         take,
@@ -172,8 +172,8 @@ export class MeetingSummaryRepository {
     return { total, records };
   }
 
-  async update(id: string, data: Prisma.MeetingSummaryUpdateInput) {
-    return this.prisma.meetingSummary.update({
+  async update(id: string, data: Prisma.MinuteSummaryUpdateInput) {
+    return this.prisma.minuteSummary.update({
       where: { id },
       data: {
         ...data,
@@ -183,7 +183,7 @@ export class MeetingSummaryRepository {
   }
 
   async delete(id: string) {
-    return this.prisma.meetingSummary.update({
+    return this.prisma.minuteSummary.update({
       where: { id },
       data: {
         deletedAt: new Date(),

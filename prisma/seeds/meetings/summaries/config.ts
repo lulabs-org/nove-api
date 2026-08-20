@@ -9,10 +9,10 @@
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 import { ProcessingStatus, GenerationMethod } from '@prisma/client';
-import type { MeetingSummaryConfig } from './type';
+import type { MinuteSummaryConfig } from './type';
 
 export const MEETING_SUMMARY_CONFIGS: {
-  teamSummary: MeetingSummaryConfig;
+  teamSummary: MinuteSummaryConfig;
 } = {
   teamSummary: {
     title: '周例会总结 - 2024年12月第3周',

@@ -14,9 +14,9 @@ import {
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { RecordingSource, RecordingStatus } from '@prisma/client';
-import { CreateMeetingSummaryDto } from './meeting-summary.dto';
+import { CreateMinuteSummaryDto } from './meeting-summary.dto';
 
-export class QueryMeetingRecordingDto {
+export class QueryMinuteDto {
   @ApiPropertyOptional({ description: '会议ID' })
   @IsOptional()
   @Transform(({ value }) => (value === '' ? undefined : (value as string)))
@@ -51,7 +51,7 @@ export class QueryMeetingRecordingDto {
   limit?: number = 10;
 }
 
-export class CreateMeetingRecordingDto {
+export class CreateMinuteDto {
   @ApiProperty({ description: '会议ID' })
   @IsString()
   meetingId: string;
@@ -94,11 +94,11 @@ export class CreateMeetingRecordingDto {
   metadata?: any;
 }
 
-export class UpdateMeetingRecordingDto extends PartialType(
-  CreateMeetingRecordingDto,
+export class UpdateMinuteDto extends PartialType(
+  CreateMinuteDto,
 ) {}
 
-export class CreateRecordingSummaryDto extends CreateMeetingSummaryDto {
+export class CreateRecordingSummaryDto extends CreateMinuteSummaryDto {
   @ApiProperty({ description: '外部 AI 生成的录制总结内容' })
   @IsString()
   @IsNotEmpty()
@@ -150,7 +150,7 @@ export class CreateRecordingSummaryDto extends CreateMeetingSummaryDto {
   confidence?: number;
 }
 
-export class MeetingRecordingDto {
+export class MinuteDto {
   @ApiProperty({ description: '录音ID' })
   id: string;
 
@@ -188,8 +188,8 @@ export class MeetingRecordingDto {
   deletedAt?: Date;
 }
 
-export class MeetingRecordingListResponseDto {
-  @ApiProperty({ description: '列表数据', type: [MeetingRecordingDto] })
+export class MinuteListResponseDto {
+  @ApiProperty({ description: '列表数据', type: [MinuteDto] })
   data: any[];
 
   @ApiProperty({ description: '总数' })
@@ -205,12 +205,12 @@ export class MeetingRecordingListResponseDto {
   totalPages: number;
 }
 
-export class MeetingRecordingDeleteResponseDto {
+export class MinuteDeleteResponseDto {
   @ApiProperty({ description: '是否成功' })
   success: boolean;
 
-  @ApiProperty({ description: '被删除的数据', type: MeetingRecordingDto })
-  data: MeetingRecordingDto;
+  @ApiProperty({ description: '被删除的数据', type: MinuteDto })
+  data: MinuteDto;
 
   @ApiProperty({ description: '删除时间' })
   deletedAt: Date;

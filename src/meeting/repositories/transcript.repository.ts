@@ -26,7 +26,7 @@ export class TranscriptRepository {
     status: number;
     startedAt?: Date;
     finishedAt?: Date;
-    recordingId: string;
+    minuteId: string;
   }) {
     return this.prisma.transcript.create({
       data,
@@ -41,7 +41,7 @@ export class TranscriptRepository {
       status: number;
       startedAt?: Date;
       finishedAt?: Date;
-      recordingId: string;
+      minuteId: string;
     },
   ) {
     return tx.transcript.create({
@@ -55,9 +55,9 @@ export class TranscriptRepository {
     status: number;
     startedAt?: Date;
     finishedAt?: Date;
-    recordingId: string;
+    minuteId: string;
   }) {
-    const existingTranscript = await this.findByRecordingId(data.recordingId);
+    const existingTranscript = await this.findByRecordingId(data.minuteId);
 
     if (existingTranscript) {
       return this.prisma.transcript.update({
@@ -78,7 +78,7 @@ export class TranscriptRepository {
           status: data.status,
           startedAt: data.startedAt,
           finishedAt: data.finishedAt,
-          recordingId: data.recordingId,
+          minuteId: data.minuteId,
         },
       });
     }
@@ -118,10 +118,10 @@ export class TranscriptRepository {
     });
   }
 
-  async findMany(skip: number = 0, take: number = 10, recordingId?: string) {
+  async findMany(skip: number = 0, take: number = 10, minuteId?: string) {
     const where = {
       deletedAt: null,
-      ...(recordingId ? { recordingId } : {}),
+      ...(minuteId ? { minuteId } : {}),
     };
 
     const [total, records] = await this.prisma.$transaction([
@@ -137,16 +137,16 @@ export class TranscriptRepository {
     return { total, records };
   }
 
-  async findByRecordingId(recordingId: string) {
+  async findByRecordingId(minuteId: string) {
     return this.prisma.transcript.findFirst({
-      where: { recordingId },
+      where: { minuteId },
       omit: { deletedAt: true },
     });
   }
 
-  async findDetails(recordingId: string) {
+  async findDetails(minuteId: string) {
     return this.prisma.transcript.findFirst({
-      where: { recordingId, deletedAt: null },
+      where: { minuteId, deletedAt: null },
       include: {
         segments: {
           orderBy: {

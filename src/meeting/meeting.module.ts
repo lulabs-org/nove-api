@@ -12,13 +12,13 @@
 import { Module } from '@nestjs/common';
 import { MeetingController } from './controllers/meeting.controller';
 import { MeetingService } from './services/meeting.service';
-import { MeetingRecordingService } from './services/meeting-recording.service';
-import { MeetingSummaryService } from './services/meeting-summary.service';
+import { MinuteService } from './services/meeting-recording.service';
+import { MinuteSummaryService } from './services/meeting-summary.service';
 import { TranscriptService } from './services/transcript.service';
 import { MeetingRepository } from './repositories/meeting.repository';
 import { MeetingFileRepository } from './repositories/meeting-file.repository';
-import { MeetingSummaryRepository } from './repositories/meeting-summary.repository';
-import { MeetingRecordingRepository } from './repositories/meeting-recording.repository';
+import { MinuteSummaryRepository } from './repositories/meeting-summary.repository';
+import { MinuteRepository } from './repositories/meeting-recording.repository';
 import { TranscriptRepository } from './repositories/transcript.repository';
 
 import { MeetingParticipantRepository } from './repositories/meeting-participant.repository';
@@ -28,13 +28,13 @@ import { LlmModule } from '@/llm/llm.module';
 import { ConfigModule } from '@nestjs/config';
 import { openaiConfig } from '@/configs/openai.config';
 
-import { MeetingSummaryController } from './controllers/meeting-summary.controller';
+import { MinuteSummaryController } from './controllers/meeting-summary.controller';
 import { ParticipantSummaryController } from './controllers/participant-summary.controller';
 import { TranscriptController } from './controllers/transcript.controller';
-import { MeetingRecordingController } from './controllers/meeting-recording.controller';
+import { MinuteController } from './controllers/meeting-recording.controller';
 import { ParticipantSummaryCrudService } from './services/participant-summary-crud.service';
 import { ParticipantSummaryService } from './services/participant-summary.service';
-import { RecordingParticipantSummaryRepository } from './repositories';
+import { MinuteParticipantSummaryRepository } from './repositories';
 
 @Module({
   imports: [
@@ -45,40 +45,40 @@ import { RecordingParticipantSummaryRepository } from './repositories';
   ],
   controllers: [
     MeetingController,
-    MeetingSummaryController,
+    MinuteSummaryController,
     ParticipantSummaryController,
     TranscriptController,
-    MeetingRecordingController,
+    MinuteController,
   ],
   providers: [
     MeetingService,
-    MeetingRecordingService,
-    MeetingSummaryService,
+    MinuteService,
+    MinuteSummaryService,
     TranscriptService,
     MeetingRepository,
     MeetingFileRepository,
-    MeetingSummaryRepository,
-    MeetingRecordingRepository,
+    MinuteSummaryRepository,
+    MinuteRepository,
     TranscriptRepository,
     MeetingParticipantRepository,
     ParticipantSummaryCrudService,
     ParticipantSummaryService,
-    RecordingParticipantSummaryRepository,
+    MinuteParticipantSummaryRepository,
   ],
   exports: [
     MeetingService,
-    MeetingRecordingService,
-    MeetingSummaryService,
+    MinuteService,
+    MinuteSummaryService,
     TranscriptService,
     MeetingRepository,
     MeetingFileRepository,
-    MeetingSummaryRepository,
-    MeetingRecordingRepository,
+    MinuteSummaryRepository,
+    MinuteRepository,
     TranscriptRepository,
     MeetingParticipantRepository,
     ParticipantSummaryCrudService,
     ParticipantSummaryService,
-    RecordingParticipantSummaryRepository,
+    MinuteParticipantSummaryRepository,
   ],
 })
 export class MeetingModule {}

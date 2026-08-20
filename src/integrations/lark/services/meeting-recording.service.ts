@@ -4,7 +4,7 @@ import { LarkClient } from '../lark.client'; // 你自己的 LarkClient
 /**
  * 飞书会议录制文件信息接口
  */
-export interface MeetingRecordingFile {
+export interface MinuteFile {
   url?: string;
   duration?: string;
 }
@@ -12,13 +12,13 @@ export interface MeetingRecordingFile {
 /**
  * 获取会议录制文件响应接口
  */
-export interface GetMeetingRecordingResponse {
-  recording?: MeetingRecordingFile;
+export interface GetMinuteResponse {
+  recording?: MinuteFile;
 }
 
 @Injectable()
-export class MeetingRecordingService {
-  private readonly logger = new Logger(MeetingRecordingService.name);
+export class MinuteService {
+  private readonly logger = new Logger(MinuteService.name);
 
   constructor(private readonly larkClient: LarkClient) {}
 
@@ -26,9 +26,9 @@ export class MeetingRecordingService {
    * 获取飞书会议录制文件信息
    * @param meetingId 会议ID
    */
-  async getMeetingRecordingInfo(
+  async getMinuteInfo(
     meetingId: string,
-  ): Promise<GetMeetingRecordingResponse> {
+  ): Promise<GetMinuteResponse> {
     try {
       // 直接调用 VC 接口，SDK 自动管理 token
       const response = await this.larkClient.vc.v1.meetingRecording.get({

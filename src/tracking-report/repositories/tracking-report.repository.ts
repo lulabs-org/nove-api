@@ -6,7 +6,7 @@ import { retryVersionTransaction } from '@/common/utils/prisma-transaction-retry
 export type TrackingReportCreate = Omit<
   Prisma.UserTrackingReportUncheckedCreateInput,
   'versionGroupKey' | 'version' | 'isLatest' | 'previousReportId'
-> & { recordingSummaryIds?: string[]; sourceReportIds?: string[] };
+> & { minuteSummaryIds?: string[]; sourceReportIds?: string[] };
 
 const trackingReportSubjectSummarySelect = {
   subjectUser: {
@@ -132,7 +132,7 @@ export class TrackingReportRepository {
   }
 
   async saveNewVersion(data: TrackingReportCreate) {
-    const { recordingSummaryIds = [], sourceReportIds = [], ...report } = data;
+    const { minuteSummaryIds = [], sourceReportIds = [], ...report } = data;
     const versionGroupKey = this.groupKey(data);
     return retryVersionTransaction(() =>
       this.prisma.$transaction(
@@ -157,12 +157,12 @@ export class TrackingReportRepository {
               isLatest: true,
             },
           });
-          if (recordingSummaryIds.length) {
-            await tx.trackingReportRecordingSummarySource.createMany({
-              data: [...new Set(recordingSummaryIds)].map(
-                (recordingSummaryId) => ({
+          if (minuteSummaryIds.length) {
+            await tx.trackingReportMinuteSummarySource.createMany({
+              data: [...new Set(minuteSummaryIds)].map(
+                (minuteSummaryId) => ({
                   reportId: created.id,
-                  recordingSummaryId,
+                  minuteSummaryId,
                 }),
               ),
               skipDuplicates: true,
@@ -188,7 +188,7 @@ export class TrackingReportRepository {
     return this.prisma.userTrackingReport.findFirst({
       where: { id, deletedAt: null },
       include: {
-        recordingSummarySources: true,
+        minuteSummarySources: true,
         sourceReports: true,
         ...trackingReportSubjectDetailSelect,
       },

@@ -1,7 +1,7 @@
 import type {
   Meeting,
   MeetingParticipant,
-  MeetingRecording,
+  Minute,
 } from '@prisma/client';
 
 export type MeetingDetailsResult = Meeting & {
@@ -20,8 +20,8 @@ export type MeetingDetailsResult = Meeting & {
       } | null;
     }
   >;
-  recordings: Array<
-    MeetingRecording & {
+  minutes: Array<
+    Minute & {
       files: Array<{
         durationMs: bigint | null;
       }>;

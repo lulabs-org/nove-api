@@ -16,7 +16,7 @@ export class CreateTranscriptDto {
   @ApiProperty({ description: '关联的会议录制ID' })
   @IsString()
   @IsNotEmpty()
-  recordingId: string;
+  minuteId: string;
 
   @ApiPropertyOptional({ description: '原始文件的存储链接' })
   @IsString()
@@ -47,7 +47,7 @@ export class TranscriptDto {
   source?: string;
 
   @ApiPropertyOptional({ description: '关联的会议录制ID' })
-  recordingId?: string;
+  minuteId?: string;
 
   @ApiPropertyOptional({ description: '原始文件的存储链接' })
   rawFileUrl?: string;

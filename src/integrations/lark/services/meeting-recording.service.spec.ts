@@ -11,25 +11,25 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import {
-  MeetingRecordingService,
-  GetMeetingRecordingResponse,
+  MinuteService,
+  GetMinuteResponse,
 } from './meeting-recording.service';
 import { LarkClient } from '../lark.client';
 
-describe('MeetingRecordingService', () => {
-  let service: MeetingRecordingService; // 测试的服务实例
+describe('MinuteService', () => {
+  let service: MinuteService; // 测试的服务实例
   let mockLarkClient: Partial<LarkClient>; // 用于模拟 LarkClient 的部分方法
 
   beforeEach(async () => {
     // 创建 LarkClient 的 mock 对象
-    // 这里只模拟 vc.v1.meetingRecording.get 方法，返回固定的录制文件数据
-    type MeetingRecordingGet = (args: {
+    // 这里只模拟 vc.v1.minute.get 方法，返回固定的录制文件数据
+    type MinuteGet = (args: {
       path: { meeting_id: string };
     }) => Promise<{
-      data: GetMeetingRecordingResponse;
+      data: GetMinuteResponse;
     }>;
 
-    const getMock: jest.MockedFunction<MeetingRecordingGet> = jest.fn(
+    const getMock: jest.MockedFunction<MinuteGet> = jest.fn(
       async (args) => {
         void args;
         return Promise.resolve({
@@ -57,13 +57,13 @@ describe('MeetingRecordingService', () => {
     // 使用 mockLarkClient 替代真实的 LarkClient
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        MeetingRecordingService,
+        MinuteService,
         { provide: LarkClient, useValue: mockLarkClient },
       ],
     }).compile();
 
     // 从测试模块中获取服务实例
-    service = module.get<MeetingRecordingService>(MeetingRecordingService);
+    service = module.get<MinuteService>(MinuteService);
   });
 
   // 基础测试：服务实例是否被正确创建
@@ -71,11 +71,11 @@ describe('MeetingRecordingService', () => {
     expect(service).toBeDefined();
   });
 
-  // 功能测试：getMeetingRecording 方法是否正确返回录制文件信息
+  // 功能测试：getMinute 方法是否正确返回录制文件信息
   it('should get meeting recording successfully', async () => {
     // 调用服务方法，模拟传入会议ID
-    const result: GetMeetingRecordingResponse =
-      await service.getMeetingRecordingInfo('test-meeting-id');
+    const result: GetMinuteResponse =
+      await service.getMinuteInfo('test-meeting-id');
 
     // 验证返回的录制文件信息是否正确
     expect(result.recording?.url).toBe('https://example.com/recording.mp4');

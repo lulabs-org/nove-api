@@ -35,8 +35,8 @@ async function main() {
       source: true,         // 转写数据来源
       status: true,         // 转写状态
       createdAt: true,      // 创建时间
-      recordingId: true,    // 关联的录音 ID
-      recording: {
+      minuteId: true,    // 关联的录音 ID
+      minute: {
         // 级联查询：获取关联录音的 externalId
         select: {
           externalId: true  // 录音在外部系统（如腾讯会议）的 ID
@@ -54,7 +54,7 @@ async function main() {
   // 如果查询结果不为空，则开始生成 CSV 文件
   if (allEmptyTranscripts.length > 0) {
     // 1. 构造 CSV 的表头（首行）
-    const headers = ['id', 'source', 'status', 'createdAt', 'recordingId', 'externalId'];
+    const headers = ['id', 'source', 'status', 'createdAt', 'minuteId', 'externalId'];
     const csvLines = [headers.join(',')];
 
     // 2. 遍历查询到的记录，逐行构造 CSV 数据
@@ -65,8 +65,8 @@ async function main() {
         t.source || '',                // 如果 source 为空则转为空字符串
         t.status,
         t.createdAt.toISOString(),     // 将日期格式化为 ISO 字符串以便在 CSV 中统一显示
-        t.recordingId || '',           // 如果 recordingId 为空则转为空字符串
-        t.recording?.externalId || ''  // 可选链处理 recording 和 externalId，为空则转为空字符串
+        t.minuteId || '',           // 如果 minuteId 为空则转为空字符串
+        t.minute?.externalId || ''  // 可选链处理 minute 和 externalId，为空则转为空字符串
       ].map(field => {
         // 将字段统一转换为字符串
         const str = String(field);

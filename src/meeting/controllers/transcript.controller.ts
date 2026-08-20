@@ -45,7 +45,7 @@ export class TranscriptController {
   async createTranscript(
     @Body(new ValidationPipe()) createParams: CreateTranscriptDto,
   ) {
-    this.logger.log(`创建转录记录: ${createParams.recordingId}`);
+    this.logger.log(`创建转录记录: ${createParams.minuteId}`);
     return this.transcriptService.create(createParams);
   }
 
@@ -59,10 +59,10 @@ export class TranscriptController {
   async getTranscripts(
     @Query('page') page: number = 1,
     @Query('limit') limit: number = 10,
-    @Query('recordingId') recordingId?: string,
+    @Query('minuteId') minuteId?: string,
   ) {
     return this.transcriptService.findMany(
-      recordingId,
+      minuteId,
       Number(page),
       Number(limit),
     );

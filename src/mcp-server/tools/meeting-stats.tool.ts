@@ -5,14 +5,14 @@ import {
   MeetingStatsRepository,
   PlatformUserRepository,
 } from '../repositories';
-import { RecordingParticipantSummaryRepository } from '@/meeting/repositories';
+import { MinuteParticipantSummaryRepository } from '@/meeting/repositories';
 
 @Injectable()
 export class MeetingStatsTool {
   constructor(
     private readonly meetingRepo: MeetingStatsRepository,
     private readonly ptUserRepo: PlatformUserRepository,
-    private readonly participantSummaryRepo: RecordingParticipantSummaryRepository,
+    private readonly participantSummaryRepo: MinuteParticipantSummaryRepository,
   ) {}
 
   private validateDateRange(startDate: Date, endDate: Date): void {
@@ -160,7 +160,7 @@ export class MeetingStatsTool {
       duration: p.totalDurationSeconds,
     }));
 
-    const recording = meeting.recordings[0];
+    const recording = meeting.minutes[0];
     const recordingFile = recording?.files[0];
 
     return {
@@ -184,7 +184,9 @@ export class MeetingStatsTool {
         endTime: meeting.endAt?.toISOString(),
         duration: meeting.durationSeconds,
         participants,
-        status: meeting.processingStatus,
+        hasRecording: meeting.minutes.length > 0,
+        recordingStatus: meeting.minutes[0]?.status || 'PENDING',
+        processingStatus: meeting.minutes[0]?.processingStatus || 'PENDING',
         recording: recordingFile
           ? {
               available: true,

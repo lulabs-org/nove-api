@@ -9,7 +9,7 @@ import { generatePrompt } from '@/common/utils';
 import { openaiConfig } from '@/configs/openai.config';
 import { LlmService } from '@/llm/llm.service';
 import { PrismaService } from '@/prisma/prisma.service';
-import { RecordingParticipantSummaryRepository } from '@/meeting/repositories/participant-summary.repository';
+import { MinuteParticipantSummaryRepository } from '@/meeting/repositories/participant-summary.repository';
 import { TrackingReportRepository } from '../repositories/tracking-report.repository';
 import { TrackingReportService } from './tracking-report.service';
 import { TriggerSummaryDto } from '../dto/tracking-report.dto';
@@ -22,7 +22,7 @@ export class PeriodicReportGenerator {
   constructor(
     private readonly prisma: PrismaService,
     private readonly reportRepo: TrackingReportRepository,
-    private readonly summaryRepo: RecordingParticipantSummaryRepository,
+    private readonly summaryRepo: MinuteParticipantSummaryRepository,
     private readonly reportService: TrackingReportService,
     private readonly llmService: LlmService,
     @Inject(openaiConfig.KEY)
@@ -274,7 +274,7 @@ export class PeriodicReportGenerator {
         timezone: 'Asia/Shanghai',
         content: content || '',
         structuredData: {},
-        recordingSummaryIds: sources
+        minuteSummaryIds: sources
           .filter((s) => s.kind === 'recording')
           .map((s) => s.id),
         sourceReportIds: sources

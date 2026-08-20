@@ -8,7 +8,7 @@ import { PermService } from '../../../src/admin/permission/services/permission.s
 import { JwtService } from '@nestjs/jwt';
 import { MeetingPlatform, MeetingType } from '@prisma/client';
 
-describe('MeetingSummaryController (e2e)', () => {
+describe('MinuteSummaryController (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let jwtService: JwtService;
@@ -73,7 +73,7 @@ describe('MeetingSummaryController (e2e)', () => {
 
   afterAll(async () => {
     if (createdSummaryId) {
-      await prisma.meetingSummary.deleteMany({
+      await prisma.minuteSummary.deleteMany({
         where: { id: createdSummaryId },
       });
     }

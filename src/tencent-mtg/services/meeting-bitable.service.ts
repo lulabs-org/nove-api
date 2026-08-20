@@ -341,13 +341,13 @@ export class MeetingBitableService {
       const meetIds: string[] = recordId ? [recordId] : [];
 
       // Fetch from Database
-      const summary = await this.prisma.meetingSummary.findFirst({
-        where: { recordingId: internalRecordingId },
+      const summary = await this.prisma.minuteSummary.findFirst({
+        where: { minuteId: internalRecordingId },
         orderBy: { version: 'desc' },
       });
 
       const transcript = await this.prisma.transcript.findFirst({
-        where: { recordingId: internalRecordingId },
+        where: { minuteId: internalRecordingId },
         include: {
           segments: {
             include: { speaker: true },

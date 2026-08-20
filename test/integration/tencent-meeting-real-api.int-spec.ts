@@ -367,9 +367,11 @@ describe('Tencent Meeting Real API Integration Tests', () => {
         try {
           const transcriptDetail: TranscriptResponse =
             await apiService.getTranscript(
-              testFileId,
-              userId || '',
-              1, // operatorIdType
+              {
+                recordFileId: testFileId,
+                operatorId: userId || '',
+                operatorIdType: 1,
+              }
             );
 
           console.log('📝 转录文本详情:', {

@@ -4,28 +4,28 @@ import { PrismaService } from '@/prisma/prisma.service';
 import { retryVersionTransaction } from '@/common/utils/prisma-transaction-retry';
 
 @Injectable()
-export class RecordingParticipantSummaryRepository {
+export class MinuteParticipantSummaryRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  private groupKey(recordingId: string, platformUserId: string) {
-    return `recording:${recordingId}:user:${platformUserId}`;
+  private groupKey(minuteId: string, platformUserId: string) {
+    return `recording:${minuteId}:user:${platformUserId}`;
   }
 
-  async findById(meetingId: string, recordingId: string, id: string) {
-    return this.prisma.recordingParticipantSummary.findFirst({
+  async findById(meetingId: string, minuteId: string, id: string) {
+    return this.prisma.minuteParticipantSummary.findFirst({
       where: {
         id,
         meetingId,
-        meetingRecordingId: recordingId,
+        minuteId,
         deletedAt: null,
       },
     });
   }
 
-  async recordingBelongsToMeeting(meetingId: string, recordingId: string) {
+  async recordingBelongsToMeeting(meetingId: string, minuteId: string) {
     return Boolean(
-      await this.prisma.meetingRecording.findFirst({
-        where: { id: recordingId, meetingId, deletedAt: null },
+      await this.prisma.minute.findFirst({
+        where: { id: minuteId, meetingId, deletedAt: null },
         select: { id: true },
       }),
     );
@@ -33,19 +33,19 @@ export class RecordingParticipantSummaryRepository {
 
   async findMany(
     meetingId: string,
-    recordingId: string,
+    minuteId: string,
     skip: number,
     take: number,
   ) {
-    const where: Prisma.RecordingParticipantSummaryWhereInput = {
+    const where: Prisma.MinuteParticipantSummaryWhereInput = {
       meetingId,
-      meetingRecordingId: recordingId,
+      minuteId,
       isLatest: true,
       deletedAt: null,
     };
     const [total, records] = await this.prisma.$transaction([
-      this.prisma.recordingParticipantSummary.count({ where }),
-      this.prisma.recordingParticipantSummary.findMany({
+      this.prisma.minuteParticipantSummary.count({ where }),
+      this.prisma.minuteParticipantSummary.findMany({
         where,
         skip,
         take,
@@ -57,28 +57,28 @@ export class RecordingParticipantSummaryRepository {
 
   async saveNewVersion(
     params: Omit<
-      Prisma.RecordingParticipantSummaryUncheckedCreateInput,
+      Prisma.MinuteParticipantSummaryUncheckedCreateInput,
       'versionGroupKey' | 'version' | 'isLatest' | 'previousSummaryId'
     >,
   ) {
     const versionGroupKey = this.groupKey(
-      params.meetingRecordingId,
+      params.minuteId,
       params.platformUserId,
     );
     return retryVersionTransaction(() =>
       this.prisma.$transaction(
         async (tx) => {
-          const previous = await tx.recordingParticipantSummary.findFirst({
+          const previous = await tx.minuteParticipantSummary.findFirst({
             where: { versionGroupKey, isLatest: true, deletedAt: null },
             orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
           });
           if (previous) {
-            await tx.recordingParticipantSummary.update({
+            await tx.minuteParticipantSummary.update({
               where: { id: previous.id },
               data: { isLatest: false },
             });
           }
-          return tx.recordingParticipantSummary.create({
+          return tx.minuteParticipantSummary.create({
             data: {
               ...params,
               generatedBy: params.generatedBy ?? GenerationMethod.AI,
@@ -86,7 +86,7 @@ export class RecordingParticipantSummaryRepository {
               keywords: params.keywords ?? [],
               versionGroupKey,
               version: (previous?.version ?? 0) + 1,
-              previousSummaryId: previous?.id,
+              previousSummaryId: previous?.id ?? null,
               isLatest: true,
             },
           });
@@ -96,26 +96,26 @@ export class RecordingParticipantSummaryRepository {
     );
   }
 
-  async softDelete(meetingId: string, recordingId: string, id: string) {
+  async softDelete(meetingId: string, minuteId: string, id: string) {
     return retryVersionTransaction(() =>
       this.prisma.$transaction(
         async (tx) => {
-          const current = await tx.recordingParticipantSummary.findFirstOrThrow(
+          const current = await tx.minuteParticipantSummary.findFirstOrThrow(
             {
               where: {
                 id,
                 meetingId,
-                meetingRecordingId: recordingId,
+                minuteId,
                 deletedAt: null,
               },
             },
           );
-          await tx.recordingParticipantSummary.update({
+          await tx.minuteParticipantSummary.update({
             where: { id },
             data: { deletedAt: new Date(), isLatest: false },
           });
           if (current.isLatest) {
-            const predecessor = await tx.recordingParticipantSummary.findFirst({
+            const predecessor = await tx.minuteParticipantSummary.findFirst({
               where: {
                 versionGroupKey: current.versionGroupKey,
                 deletedAt: null,
@@ -123,7 +123,7 @@ export class RecordingParticipantSummaryRepository {
               orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
             });
             if (predecessor) {
-              await tx.recordingParticipantSummary.update({
+              await tx.minuteParticipantSummary.update({
                 where: { id: predecessor.id },
                 data: { isLatest: true },
               });
@@ -140,7 +140,7 @@ export class RecordingParticipantSummaryRepository {
     range: { periodStart: Date; periodEnd: Date },
     platformUserIds?: string[],
   ) {
-    return this.prisma.recordingParticipantSummary.findMany({
+    return this.prisma.minuteParticipantSummary.findMany({
       where: {
         platformUserId: platformUserIds?.length
           ? { in: platformUserIds }
@@ -161,9 +161,9 @@ export class RecordingParticipantSummaryRepository {
     });
   }
 
-  async findGenerationContext(recordingId: string) {
-    return this.prisma.meetingRecording.findFirst({
-      where: { id: recordingId, deletedAt: null },
+  async findGenerationContext(minuteId: string) {
+    return this.prisma.minute.findFirst({
+      where: { id: minuteId, deletedAt: null },
       select: {
         id: true,
         startAt: true,
@@ -179,7 +179,7 @@ export class RecordingParticipantSummaryRepository {
               where: { deletedAt: null },
               select: { id: true, ptUserId: true },
             },
-            summaries: {
+            minuteSummaries: {
               where: { isLatest: true, deletedAt: null },
               orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
               take: 1,
@@ -220,7 +220,7 @@ export class RecordingParticipantSummaryRepository {
     startDate: Date;
     endDate: Date;
   }) {
-    return this.prisma.recordingParticipantSummary.findMany({
+    return this.prisma.minuteParticipantSummary.findMany({
       where: {
         platformUserId: { in: params.platformUserIds },
         isLatest: true,

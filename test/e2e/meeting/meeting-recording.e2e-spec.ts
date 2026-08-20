@@ -13,7 +13,7 @@ import {
   RecordingStatus,
 } from '@prisma/client';
 
-describe('MeetingRecordingController (e2e)', () => {
+describe('MinuteController (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let jwtService: JwtService;
@@ -79,7 +79,7 @@ describe('MeetingRecordingController (e2e)', () => {
 
   afterAll(async () => {
     if (createdRecordingId) {
-      await prisma.meetingRecording.deleteMany({
+      await prisma.minute.deleteMany({
         where: { id: createdRecordingId },
       });
     }

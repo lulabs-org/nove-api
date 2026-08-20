@@ -49,15 +49,15 @@ export async function createMeetingRecording(
   const meetingId = meetings.meetings[0].meeting.id;
   const recorderUserId = platformUsers.platformUsers[0].platformUser.id;
 
-  let meetingRecording = await prisma.meetingRecording.findFirst({
+  let minute = await prisma.minute.findFirst({
     where: {
       meetingId: meetingId,
       recorderUserId: recorderUserId,
     },
   });
 
-  if (!meetingRecording) {
-    meetingRecording = await prisma.meetingRecording.create({
+  if (!minute) {
+    minute = await prisma.minute.create({
       data: {
         meetingId,
         startAt: new Date(),
@@ -68,17 +68,17 @@ export async function createMeetingRecording(
     });
   }
 
-  let recordingFile = await prisma.meetingRecordingFile.findFirst({
+  let minuteFile = await prisma.minuteFile.findFirst({
     where: {
-      recordingId: meetingRecording.id,
+      minuteId: minute.id,
       fileObjectId: storageObject.id,
     },
   });
 
-  if (!recordingFile) {
-    recordingFile = await prisma.meetingRecordingFile.create({
+  if (!minuteFile) {
+    minuteFile = await prisma.minuteFile.create({
       data: {
-        recordingId: meetingRecording.id,
+        minuteId: minute.id,
         fileObjectId: storageObject.id,
         fileType: fileConfig.fileType,
         durationMs: fileConfig.durationMs,
@@ -87,5 +87,5 @@ export async function createMeetingRecording(
     });
   }
 
-  return { meetingRecording, recordingFile, storageObject };
+  return { minute, minuteFile, storageObject };
 }

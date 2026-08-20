@@ -13,10 +13,10 @@ export class TranscriptService {
   /**
    * 获取转写原始记录（含 segments）
    */
-  async getDetails(recordingId: string) {
-    const transcript = await this.transcriptRepository.findDetails(recordingId);
+  async getDetails(minuteId: string) {
+    const transcript = await this.transcriptRepository.findDetails(minuteId);
     if (!transcript) {
-      throw new NotFoundException(`转录记录不存在: ${recordingId}`);
+      throw new NotFoundException(`转录记录不存在: ${minuteId}`);
     }
     return transcript;
   }
@@ -28,16 +28,16 @@ export class TranscriptService {
       status: data.status ?? 0,
       startedAt: data.startedAt,
       finishedAt: data.finishedAt,
-      recordingId: data.recordingId,
+      minuteId: data.minuteId,
     });
   }
 
-  async findMany(recordingId?: string, page: number = 1, limit: number = 10) {
+  async findMany(minuteId?: string, page: number = 1, limit: number = 10) {
     const skip = (page - 1) * limit;
     const { total, records } = await this.transcriptRepository.findMany(
       skip,
       limit,
-      recordingId,
+      minuteId,
     );
     return {
       data: records,
@@ -72,10 +72,10 @@ export class TranscriptService {
   /**
    * 基于段落（Segment）获取录制的转写文本
    */
-  async getText(recordingId: string): Promise<string> {
-    const transcript = await this.transcriptRepository.findDetails(recordingId);
+  async getText(minuteId: string): Promise<string> {
+    const transcript = await this.transcriptRepository.findDetails(minuteId);
     if (!transcript) {
-      throw new NotFoundException(`转录记录不存在: ${recordingId}`);
+      throw new NotFoundException(`转录记录不存在: ${minuteId}`);
     }
     if (!transcript.segments) {
       return '';
@@ -105,10 +105,10 @@ export class TranscriptService {
   /**
    * 基于段落（Segment）获取录制的转写 JSON
    */
-  async getJson(recordingId: string): Promise<any[]> {
-    const transcript = await this.transcriptRepository.findDetails(recordingId);
+  async getJson(minuteId: string): Promise<any[]> {
+    const transcript = await this.transcriptRepository.findDetails(minuteId);
     if (!transcript) {
-      throw new NotFoundException(`转录记录不存在: ${recordingId}`);
+      throw new NotFoundException(`转录记录不存在: ${minuteId}`);
     }
     if (!transcript.segments) {
       return [];

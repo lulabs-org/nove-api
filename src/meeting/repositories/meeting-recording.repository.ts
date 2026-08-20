@@ -13,11 +13,11 @@ type PrismaTransaction = Omit<
 >;
 
 @Injectable()
-export class MeetingRecordingRepository {
+export class MinuteRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async find(meetingId: string, externalId: string) {
-    return this.prisma.meetingRecording.findFirst({
+    return this.prisma.minute.findFirst({
       where: {
         meetingId,
         externalId,
@@ -26,7 +26,7 @@ export class MeetingRecordingRepository {
   }
 
   async findById(id: string) {
-    return this.prisma.meetingRecording.findUnique({
+    return this.prisma.minute.findUnique({
       where: { id, deletedAt: null },
       omit: { deletedAt: true },
     });
@@ -42,7 +42,7 @@ export class MeetingRecordingRepository {
     recorderUserId?: string;
     metadata?: any;
   }) {
-    return this.prisma.meetingRecording.create({
+    return this.prisma.minute.create({
       data: {
         ...data,
         source: data.source || RecordingSource.PLATFORM_AUTO,
@@ -67,8 +67,8 @@ export class MeetingRecordingRepository {
     };
 
     const [total, records] = await this.prisma.$transaction([
-      this.prisma.meetingRecording.count({ where }),
-      this.prisma.meetingRecording.findMany({
+      this.prisma.minute.count({ where }),
+      this.prisma.minute.findMany({
         where,
         skip: query.skip,
         take: query.take,
@@ -79,15 +79,15 @@ export class MeetingRecordingRepository {
     return { total, records };
   }
 
-  async update(id: string, data: Prisma.MeetingRecordingUpdateInput) {
-    return this.prisma.meetingRecording.update({
+  async update(id: string, data: Prisma.MinuteUpdateInput) {
+    return this.prisma.minute.update({
       where: { id },
       data,
     });
   }
 
   async delete(id: string) {
-    return this.prisma.meetingRecording.update({
+    return this.prisma.minute.update({
       where: { id },
       data: { deletedAt: new Date() },
     });
@@ -104,7 +104,7 @@ export class MeetingRecordingRepository {
     const existingRecording = await this.find(data.meetingId, data.externalId);
 
     if (existingRecording) {
-      return this.prisma.meetingRecording.update({
+      return this.prisma.minute.update({
         where: { id: existingRecording.id },
         data: {
           source: data.source,
@@ -114,7 +114,7 @@ export class MeetingRecordingRepository {
         },
       });
     } else {
-      return this.prisma.meetingRecording.create({
+      return this.prisma.minute.create({
         data: {
           meetingId: data.meetingId,
           externalId: data.externalId,
@@ -133,7 +133,7 @@ export class MeetingRecordingRepository {
     meetingId?: string,
     subMeetingId?: string,
   ): Promise<string> {
-    const recording = await tx.meetingRecording.findFirst({
+    const recording = await tx.minute.findFirst({
       where: {
         externalId: recordFileId,
       },
@@ -165,7 +165,7 @@ export class MeetingRecordingRepository {
 
     const existingMeetingId = meeting.id;
 
-    const newRecording = await tx.meetingRecording.create({
+    const newRecording = await tx.minute.create({
       data: {
         externalId: recordFileId,
         source: RecordingSource.PLATFORM_AUTO,

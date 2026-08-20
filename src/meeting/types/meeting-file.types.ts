@@ -14,7 +14,7 @@ import { RecordingFileType } from '@prisma/client';
  * 会议文件创建参数
  */
 export interface CreateMeetingFileParams {
-  recordingId: string;
+  minuteId: string;
   fileObjectId: string;
   fileType: RecordingFileType;
   durationMs?: number | bigint;

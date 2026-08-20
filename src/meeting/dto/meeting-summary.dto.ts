@@ -11,7 +11,10 @@ import { Type, Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { GenerationMethod, ProcessingStatus } from '@prisma/client';
 
-export class CreateMeetingSummaryDto {
+export class CreateMinuteSummaryDto {
+  @ApiProperty({ description: '关联的录制ID' })
+  @IsString()
+  minuteId: string;
   @ApiPropertyOptional({ description: '总结标题' })
   @IsOptional()
   @IsString()
@@ -53,14 +56,14 @@ export class CreateMeetingSummaryDto {
   metadata?: any;
 }
 
-export class UpdateMeetingSummaryDto extends CreateMeetingSummaryDto {
+export class UpdateMinuteSummaryDto extends CreateMinuteSummaryDto {
   @ApiPropertyOptional({ description: '处理状态', enum: ProcessingStatus })
   @IsOptional()
   @IsEnum(ProcessingStatus)
   status?: ProcessingStatus;
 }
 
-export class QueryMeetingSummaryDto {
+export class QueryMinuteSummaryDto {
   @ApiPropertyOptional({
     description: '页码（从 1 开始）',
     example: 1,
@@ -96,7 +99,7 @@ export class QueryMeetingSummaryDto {
   status?: ProcessingStatus;
 }
 
-export class MeetingSummaryDto {
+export class MinuteSummaryDto {
   @ApiProperty({ description: '总结ID' })
   id: string;
 
@@ -137,7 +140,7 @@ export class MeetingSummaryDto {
   meetingId: string;
 
   @ApiPropertyOptional({ description: '录制ID' })
-  recordingId?: string;
+  minuteId?: string;
 
   @ApiPropertyOptional({ description: 'AI模型名称或版本' })
   aiModel?: string;
@@ -167,9 +170,9 @@ export class MeetingSummaryDto {
   updatedAt: Date;
 }
 
-export class MeetingSummaryListResponseDto {
-  @ApiProperty({ type: [MeetingSummaryDto], description: '总结列表' })
-  data: MeetingSummaryDto[];
+export class MinuteSummaryListResponseDto {
+  @ApiProperty({ type: [MinuteSummaryDto], description: '总结列表' })
+  data: MinuteSummaryDto[];
 
   @ApiProperty({ description: '总条数' })
   total: number;

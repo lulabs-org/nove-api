@@ -20,29 +20,29 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
-import { MeetingRecordingService } from '../services/meeting-recording.service';
+import { MinuteService } from '../services/meeting-recording.service';
 import { TranscriptService } from '../services/transcript.service';
 import { CuidPipe } from '@/common/pipes/cuid.pipe';
 import { ApiGetTranscriptByRecordingIdDocs } from '../decorators/meeting-record.decorators';
 import {
-  CreateMeetingRecordingDto,
-  UpdateMeetingRecordingDto,
-  QueryMeetingRecordingDto,
-  MeetingRecordingListResponseDto,
-  MeetingRecordingDto,
-  MeetingRecordingDeleteResponseDto,
+  CreateMinuteDto,
+  UpdateMinuteDto,
+  QueryMinuteDto,
+  MinuteListResponseDto,
+  MinuteDto,
+  MinuteDeleteResponseDto,
   CreateRecordingSummaryDto,
 } from '../dto/meeting-recording.dto';
-import { MeetingSummaryDto } from '../dto/meeting-summary.dto';
+import { MinuteSummaryDto } from '../dto/meeting-summary.dto';
 
 @ApiTags('Meet Recording')
 @Controller('recordings')
 @ApiBearerAuth()
-export class MeetingRecordingController {
-  private readonly logger = new Logger(MeetingRecordingController.name);
+export class MinuteController {
+  private readonly logger = new Logger(MinuteController.name);
 
   constructor(
-    private readonly recordingService: MeetingRecordingService,
+    private readonly recordingService: MinuteService,
     private readonly transcriptService: TranscriptService,
   ) {}
 
@@ -56,10 +56,10 @@ export class MeetingRecordingController {
   @ApiResponse({
     status: HttpStatus.CREATED,
     description: '创建成功',
-    type: MeetingRecordingDto,
+    type: MinuteDto,
   })
   async createRecording(
-    @Body(new ValidationPipe()) createParams: CreateMeetingRecordingDto,
+    @Body(new ValidationPipe()) createParams: CreateMinuteDto,
   ) {
     this.logger.log(`创建录制记录: ${createParams.meetingId}`);
     return this.recordingService.create(createParams);
@@ -71,10 +71,10 @@ export class MeetingRecordingController {
   @Get()
   @RequirePermissions('meeting-recording:read')
   @ApiOperation({ summary: '获取录制列表' })
-  @ApiResponse({ status: 200, type: MeetingRecordingListResponseDto })
+  @ApiResponse({ status: 200, type: MinuteListResponseDto })
   async getRecordings(
     @Query(new ValidationPipe({ transform: true }))
-    query: QueryMeetingRecordingDto,
+    query: QueryMinuteDto,
   ) {
     return this.recordingService.findMany(query);
   }
@@ -89,7 +89,7 @@ export class MeetingRecordingController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: '获取成功',
-    type: MeetingRecordingDto,
+    type: MinuteDto,
   })
   async getRecordingById(@Param('id', CuidPipe) id: string) {
     return this.recordingService.getById(id);
@@ -103,26 +103,26 @@ export class MeetingRecordingController {
   @HttpCode(HttpStatus.OK)
   @ApiGetTranscriptByRecordingIdDocs()
   async getTranscript(
-    @Param('id', CuidPipe) recordingId: string,
+    @Param('id', CuidPipe) minuteId: string,
     @Query('format') format?: 'text' | 'json',
   ): Promise<any> {
-    this.logger.log(`获取转写文本: ${recordingId}, format: ${format}`);
+    this.logger.log(`获取转写文本: ${minuteId}, format: ${format}`);
 
     try {
       if (format === 'json') {
-        const data = await this.transcriptService.getJson(recordingId);
+        const data = await this.transcriptService.getJson(minuteId);
 
-        this.logger.log(`获取录制的转写 JSON 成功: ${recordingId}`);
+        this.logger.log(`获取录制的转写 JSON 成功: ${minuteId}`);
         return { data };
       }
 
-      const text = await this.transcriptService.getText(recordingId);
+      const text = await this.transcriptService.getText(minuteId);
 
-      this.logger.log(`获取录制的转写文本成功: ${recordingId}`);
+      this.logger.log(`获取录制的转写文本成功: ${minuteId}`);
       return { text };
     } catch (error: unknown) {
       this.logger.error(
-        `获取录制的转写文本失败: ${recordingId}`,
+        `获取录制的转写文本失败: ${minuteId}`,
         (error as Error).stack,
       );
       throw error;
@@ -140,7 +140,7 @@ export class MeetingRecordingController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: '获取成功',
-    type: MeetingSummaryDto,
+    type: MinuteSummaryDto,
   })
   async getRecordingSummary(@Param('id', CuidPipe) id: string) {
     return this.recordingService.getSummary(id);
@@ -157,7 +157,7 @@ export class MeetingRecordingController {
   @ApiResponse({
     status: HttpStatus.CREATED,
     description: '创建成功',
-    type: MeetingSummaryDto,
+    type: MinuteSummaryDto,
   })
   async createRecordingSummary(
     @Param('id', CuidPipe) id: string,
@@ -175,11 +175,11 @@ export class MeetingRecordingController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: '更新成功',
-    type: MeetingRecordingDto,
+    type: MinuteDto,
   })
   async updateRecording(
     @Param('id', CuidPipe) id: string,
-    @Body(new ValidationPipe()) updateParams: UpdateMeetingRecordingDto,
+    @Body(new ValidationPipe()) updateParams: UpdateMinuteDto,
   ) {
     return this.recordingService.update(id, updateParams);
   }
@@ -193,7 +193,7 @@ export class MeetingRecordingController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: '删除成功',
-    type: MeetingRecordingDeleteResponseDto,
+    type: MinuteDeleteResponseDto,
   })
   async deleteRecording(@Param('id', CuidPipe) id: string) {
     return this.recordingService.delete(id);

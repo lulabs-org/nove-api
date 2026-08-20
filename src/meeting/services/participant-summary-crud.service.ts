@@ -1,19 +1,19 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { GenerationMethod } from '@prisma/client';
-import { RecordingParticipantSummaryRepository } from '../repositories';
+import { MinuteParticipantSummaryRepository } from '../repositories';
 import {
-  CreateRecordingParticipantSummaryDto,
-  UpdateRecordingParticipantSummaryDto,
+  CreateMinuteParticipantSummaryDto,
+  UpdateMinuteParticipantSummaryDto,
 } from '../dto/participant-summary.dto';
 
 @Injectable()
 export class ParticipantSummaryCrudService {
   constructor(
-    private readonly summaries: RecordingParticipantSummaryRepository,
+    private readonly summaries: MinuteParticipantSummaryRepository,
   ) {}
 
-  async findById(meetingId: string, recordingId: string, id: string) {
-    const summary = await this.summaries.findById(meetingId, recordingId, id);
+  async findById(meetingId: string, minuteId: string, id: string) {
+    const summary = await this.summaries.findById(meetingId, minuteId, id);
     if (!summary)
       throw new NotFoundException(
         `Recording participant summary ${id} not found`,
@@ -21,10 +21,10 @@ export class ParticipantSummaryCrudService {
     return summary;
   }
 
-  async findMany(meetingId: string, recordingId: string, page = 1, limit = 20) {
+  async findMany(meetingId: string, minuteId: string, page = 1, limit = 20) {
     const result = await this.summaries.findMany(
       meetingId,
-      recordingId,
+      minuteId,
       (page - 1) * limit,
       limit,
     );
@@ -39,34 +39,34 @@ export class ParticipantSummaryCrudService {
 
   async create(
     meetingId: string,
-    recordingId: string,
-    data: CreateRecordingParticipantSummaryDto,
+    minuteId: string,
+    data: CreateMinuteParticipantSummaryDto,
   ) {
     if (
-      !(await this.summaries.recordingBelongsToMeeting(meetingId, recordingId))
+      !(await this.summaries.recordingBelongsToMeeting(meetingId, minuteId))
     ) {
       throw new NotFoundException(
-        `Recording ${recordingId} not found in meeting ${meetingId}`,
+        `Recording ${minuteId} not found in meeting ${meetingId}`,
       );
     }
     return this.summaries.saveNewVersion({
       ...data,
       meetingId,
-      meetingRecordingId: recordingId,
+      minuteId: minuteId,
       generatedBy: GenerationMethod.MANUAL,
     });
   }
 
   async update(
     meetingId: string,
-    recordingId: string,
+    minuteId: string,
     id: string,
-    data: UpdateRecordingParticipantSummaryDto,
+    data: UpdateMinuteParticipantSummaryDto,
   ) {
-    const current = await this.findById(meetingId, recordingId, id);
+    const current = await this.findById(meetingId, minuteId, id);
     return this.summaries.saveNewVersion({
       meetingId,
-      meetingRecordingId: recordingId,
+      minuteId: minuteId,
       platformUserId: current.platformUserId,
       userName: data.userName ?? current.userName,
       partSummary: data.partSummary ?? current.partSummary,
@@ -78,9 +78,9 @@ export class ParticipantSummaryCrudService {
     });
   }
 
-  async delete(meetingId: string, recordingId: string, id: string) {
-    await this.findById(meetingId, recordingId, id);
-    const data = await this.summaries.softDelete(meetingId, recordingId, id);
+  async delete(meetingId: string, minuteId: string, id: string) {
+    await this.findById(meetingId, minuteId, id);
+    const data = await this.summaries.softDelete(meetingId, minuteId, id);
     return { success: true, data };
   }
 }

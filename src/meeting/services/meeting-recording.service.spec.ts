@@ -1,11 +1,11 @@
 import { Test } from '@nestjs/testing';
-import { MeetingSummaryNotFoundException } from '../exceptions/meeting.exceptions';
-import { MeetingRecordingRepository } from '../repositories/meeting-recording.repository';
-import { MeetingSummaryRepository } from '../repositories/meeting-summary.repository';
-import { MeetingRecordingService } from './meeting-recording.service';
+import { MinuteSummaryNotFoundException } from '../exceptions/meeting.exceptions';
+import { MinuteRepository } from '../repositories/meeting-recording.repository';
+import { MinuteSummaryRepository } from '../repositories/meeting-summary.repository';
+import { MinuteService } from './meeting-recording.service';
 
-describe('MeetingRecordingService', () => {
-  let service: MeetingRecordingService;
+describe('MinuteService', () => {
+  let service: MinuteService;
   let recordings: {
     findById: jest.Mock;
   };
@@ -23,13 +23,13 @@ describe('MeetingRecordingService', () => {
 
     const moduleRef = await Test.createTestingModule({
       providers: [
-        MeetingRecordingService,
-        { provide: MeetingRecordingRepository, useValue: recordings },
-        { provide: MeetingSummaryRepository, useValue: summaries },
+        MinuteService,
+        { provide: MinuteRepository, useValue: recordings },
+        { provide: MinuteSummaryRepository, useValue: summaries },
       ],
     }).compile();
 
-    service = moduleRef.get(MeetingRecordingService);
+    service = moduleRef.get(MinuteService);
   });
 
   it('returns the latest summary for an existing recording', async () => {
@@ -53,7 +53,7 @@ describe('MeetingRecordingService', () => {
     summaries.findByRecordingId.mockResolvedValue(null);
 
     await expect(service.getSummary('recording-1')).rejects.toBeInstanceOf(
-      MeetingSummaryNotFoundException,
+      MinuteSummaryNotFoundException,
     );
   });
 
@@ -71,12 +71,13 @@ describe('MeetingRecordingService', () => {
       service.createSummary('recording-1', {
         content: 'External summary',
         aiModel: 'external-model',
+        minuteId: 'recording-1',
       }),
     ).resolves.toEqual({ id: 'summary-1', content: 'External summary' });
     expect(summaries.createExternalForRecording).toHaveBeenCalledWith(
       'meeting-1',
       'recording-1',
-      { content: 'External summary', aiModel: 'external-model' },
+      { content: 'External summary', aiModel: 'external-model', minuteId: 'recording-1' },
     );
   });
 });

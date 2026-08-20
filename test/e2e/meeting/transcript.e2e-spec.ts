@@ -94,7 +94,7 @@ describe('TranscriptController (e2e)', () => {
       });
     }
     if (createdRecordingId) {
-      await prisma.meetingRecording.deleteMany({
+      await prisma.minute.deleteMany({
         where: { id: createdRecordingId },
       });
     }
@@ -115,7 +115,7 @@ describe('TranscriptController (e2e)', () => {
         .post('/transcripts')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
-          recordingId: createdRecordingId,
+          minuteId: createdRecordingId,
           source: 'System Generated',
           status: 1,
         });
@@ -127,7 +127,7 @@ describe('TranscriptController (e2e)', () => {
       }
       expect(response.status).toBe(201);
       expect(response.body).toHaveProperty('id');
-      expect(response.body.recordingId).toBe(createdRecordingId);
+      expect(response.body.minuteId).toBe(createdRecordingId);
       createdTranscriptId = response.body.id;
     });
   });
@@ -137,7 +137,7 @@ describe('TranscriptController (e2e)', () => {
       const response = await request(app.getHttpServer())
         .get('/transcripts')
         .set('Authorization', `Bearer ${authToken}`)
-        .query({ limit: 10, page: 1, recordingId: createdRecordingId })
+        .query({ limit: 10, page: 1, minuteId: createdRecordingId })
         .expect(200);
 
       expect(response.body).toHaveProperty('data');
@@ -156,7 +156,7 @@ describe('TranscriptController (e2e)', () => {
         .expect(200);
 
       expect(response.body.id).toBe(createdTranscriptId);
-      expect(response.body.recordingId).toBe(createdRecordingId);
+      expect(response.body.minuteId).toBe(createdRecordingId);
     });
   });
 

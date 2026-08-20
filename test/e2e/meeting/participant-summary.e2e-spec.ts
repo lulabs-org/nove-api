@@ -6,7 +6,7 @@ import { AppModule } from '../../../src/app.module';
 import { PrismaService } from '../../../src/prisma/prisma.service';
 import { PermService } from '../../../src/admin/permission/services/permission.service';
 import { JwtService } from '@nestjs/jwt';
-import { ParticipantSummaryService } from '../../../src/meet-ai/services';
+import { ParticipantSummaryService } from '../../../src/meeting/services/participant-summary.service';
 import {
   MeetingPlatform,
   MeetingType,
@@ -90,7 +90,7 @@ describe('ParticipantSummaryController (e2e)', () => {
       },
     });
     platformUserId = platformUser.id;
-    const recording = await prisma.meetingRecording.create({
+    const recording = await prisma.minute.create({
       data: {
         meetingId: createdMeetingId,
         source: RecordingSource.USER_MANUAL,
@@ -98,7 +98,7 @@ describe('ParticipantSummaryController (e2e)', () => {
     });
     createdRecordingId = recording.id;
     otherRecordingId = (
-      await prisma.meetingRecording.create({
+      await prisma.minute.create({
         data: {
           meetingId: createdMeetingId,
           source: RecordingSource.USER_MANUAL,
@@ -109,7 +109,7 @@ describe('ParticipantSummaryController (e2e)', () => {
 
   afterAll(async () => {
     if (createdSummaryId) {
-      await prisma.recordingParticipantSummary.deleteMany({
+      await prisma.minuteParticipantSummary.deleteMany({
         where: {
           versionGroupKey: `recording:${createdRecordingId}:user:${platformUserId}`,
         },
@@ -127,7 +127,7 @@ describe('ParticipantSummaryController (e2e)', () => {
     await app.close();
   });
 
-  describe('/meetings/:meetingId/recordings/:recordingId/participant-summaries (POST)', () => {
+  describe('/meetings/:meetingId/recordings/:minuteId/participant-summaries (POST)', () => {
     it('should create a participant summary', async () => {
       const response = await request(app.getHttpServer())
         .post(
@@ -155,7 +155,7 @@ describe('ParticipantSummaryController (e2e)', () => {
     });
   });
 
-  describe('/meet-ai/recordings/:recordingId/participant-summaries/generate (POST)', () => {
+  describe('/meet-ai/recordings/:minuteId/participant-summaries/generate (POST)', () => {
     it('passes the recording scope to participant summary generation', async () => {
       await request(app.getHttpServer())
         .post(
@@ -177,7 +177,7 @@ describe('ParticipantSummaryController (e2e)', () => {
     });
   });
 
-  describe('/meetings/:meetingId/recordings/:recordingId/participant-summaries (GET)', () => {
+  describe('/meetings/:meetingId/recordings/:minuteId/participant-summaries (GET)', () => {
     it('should get participant summaries list', async () => {
       const response = await request(app.getHttpServer())
         .get(
@@ -195,7 +195,7 @@ describe('ParticipantSummaryController (e2e)', () => {
     });
   });
 
-  describe('/meetings/:meetingId/recordings/:recordingId/participant-summaries/:id (GET)', () => {
+  describe('/meetings/:meetingId/recordings/:minuteId/participant-summaries/:id (GET)', () => {
     it('should get a specific participant summary', async () => {
       const response = await request(app.getHttpServer())
         .get(
@@ -218,7 +218,7 @@ describe('ParticipantSummaryController (e2e)', () => {
     });
   });
 
-  describe('/meetings/:meetingId/recordings/:recordingId/participant-summaries/:id (PUT)', () => {
+  describe('/meetings/:meetingId/recordings/:minuteId/participant-summaries/:id (PUT)', () => {
     it('should update a participant summary', async () => {
       const response = await request(app.getHttpServer())
         .put(
@@ -239,7 +239,7 @@ describe('ParticipantSummaryController (e2e)', () => {
     });
   });
 
-  describe('/meetings/:meetingId/recordings/:recordingId/participant-summaries/:id (DELETE)', () => {
+  describe('/meetings/:meetingId/recordings/:minuteId/participant-summaries/:id (DELETE)', () => {
     it('should delete a participant summary', async () => {
       const response = await request(app.getHttpServer())
         .delete(

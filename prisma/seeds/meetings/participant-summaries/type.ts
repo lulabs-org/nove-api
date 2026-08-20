@@ -13,6 +13,6 @@ export type ParticipantSummaryConfig = {
   keywords: string[];
 };
 
-export type ParticipantSummary = Prisma.RecordingParticipantSummaryGetPayload<
+export type ParticipantSummary = Prisma.MinuteParticipantSummaryGetPayload<
   Record<string, never>
 >;

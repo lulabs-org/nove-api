@@ -35,12 +35,12 @@ export class ParticipantSummaryBitableService {
   ) {}
 
   async processSummary(
-    recordingId: string,
+    minuteId: string,
     fileId: string,
     uniqueParticipants: ParticipantDetail[],
   ): Promise<void> {
     const distinctSpeakers = await this.prisma.transcriptSegment.findMany({
-      where: { transcript: { recordingId: recordingId } },
+      where: { transcript: { minuteId: minuteId } },
       select: { speakerId: true },
       distinct: ['speakerId'],
     });
@@ -57,7 +57,7 @@ export class ParticipantSummaryBitableService {
 
       if (validSpeakerIds.has(ptByUnionId.id)) {
         const summaries = await this.participantSummarySvc.generateSummaries({
-          recordId: recordingId,
+          recordId: minuteId,
           platformUserIds: [ptByUnionId.id],
         });
         const summary = summaries[ptByUnionId.id];

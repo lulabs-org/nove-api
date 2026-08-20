@@ -23,7 +23,7 @@ export class MeetingFileRepository {
    * 创建会议文件
    */
   async create(data: CreateMeetingFileData) {
-    return this.prisma.meetingRecordingFile.create({
+    return this.prisma.minuteFile.create({
       data,
     });
   }
@@ -32,7 +32,7 @@ export class MeetingFileRepository {
    * 更新会议文件
    */
   async update(id: string, data: UpdateMeetingFileData) {
-    return this.prisma.meetingRecordingFile.update({
+    return this.prisma.minuteFile.update({
       where: { id },
       data,
     });

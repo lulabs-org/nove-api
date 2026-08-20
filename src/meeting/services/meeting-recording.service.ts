@@ -1,20 +1,20 @@
 import { Injectable } from '@nestjs/common';
-import { MeetingRecordingRepository } from '../repositories/meeting-recording.repository';
-import { MeetingSummaryRepository } from '../repositories/meeting-summary.repository';
+import { MinuteRepository } from '../repositories/meeting-recording.repository';
+import { MinuteSummaryRepository } from '../repositories/meeting-summary.repository';
 import { RecordingNotFoundException } from '../exceptions/meeting.exceptions';
-import { MeetingSummaryNotFoundException } from '../exceptions/meeting.exceptions';
+import { MinuteSummaryNotFoundException } from '../exceptions/meeting.exceptions';
 import {
-  QueryMeetingRecordingDto,
-  UpdateMeetingRecordingDto,
-  CreateMeetingRecordingDto,
+  QueryMinuteDto,
+  UpdateMinuteDto,
+  CreateMinuteDto,
   CreateRecordingSummaryDto,
 } from '../dto/meeting-recording.dto';
 
 @Injectable()
-export class MeetingRecordingService {
+export class MinuteService {
   constructor(
-    private readonly meetingRecordingRepository: MeetingRecordingRepository,
-    private readonly meetingSummaryRepository: MeetingSummaryRepository,
+    private readonly meetingRecordingRepository: MinuteRepository,
+    private readonly meetingSummaryRepository: MinuteSummaryRepository,
   ) {}
 
   /**
@@ -28,7 +28,7 @@ export class MeetingRecordingService {
     return recording;
   }
 
-  async findMany(query: QueryMeetingRecordingDto) {
+  async findMany(query: QueryMinuteDto) {
     const page = query.page || 1;
     const limit = query.limit || 10;
     const skip = (page - 1) * limit;
@@ -50,7 +50,7 @@ export class MeetingRecordingService {
     };
   }
 
-  async create(data: CreateMeetingRecordingDto) {
+  async create(data: CreateMinuteDto) {
     return this.meetingRecordingRepository.create(data);
   }
 
@@ -58,7 +58,7 @@ export class MeetingRecordingService {
     await this.getById(id);
     const summary = await this.meetingSummaryRepository.findByRecordingId(id);
     if (!summary) {
-      throw new MeetingSummaryNotFoundException(id);
+      throw new MinuteSummaryNotFoundException(id);
     }
     return summary;
   }
@@ -68,11 +68,11 @@ export class MeetingRecordingService {
     return this.meetingSummaryRepository.createExternalForRecording(
       recording.meetingId,
       id,
-      data,
+      { ...data, minuteId: id },
     );
   }
 
-  async update(id: string, updateData: UpdateMeetingRecordingDto) {
+  async update(id: string, updateData: UpdateMinuteDto) {
     await this.getById(id);
     return this.meetingRecordingRepository.update(id, updateData);
   }

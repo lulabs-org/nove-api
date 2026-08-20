@@ -18,17 +18,17 @@ async function bootstrap() {
   const tencentApi = moduleRef.get(TencentApiService);
   const prisma = new PrismaClient();
 
-  const recordings = await prisma.meetingRecording.findMany({
+  const minutes = await prisma.minute.findMany({
     orderBy: { createdAt: 'desc' },
     take: 1
   });
 
-  if (recordings.length === 0 || !recordings[0].externalId) {
+  if (minutes.length === 0 || !minutes[0].externalId) {
     console.log("No recordings found or missing externalId");
     return;
   }
 
-  const recordFileId = recordings[0].externalId;
+  const recordFileId = minutes[0].externalId;
   const operatorId = 'woaJARCQAA65b_BO6kq2pTSG-yvvjc_g';
 
   try {
