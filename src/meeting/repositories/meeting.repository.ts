@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { GetMeetingRecordsParams } from '@/meeting/types';
 
-import { MeetingPlatform, Prisma } from '@prisma/client';
+import { MeetingPlatform, Prisma, ProcessingStatus } from '@prisma/client';
 import type {
   MeetingHostResponseDto,
   MeetingListItemResponseDto,
@@ -34,9 +34,7 @@ const meetingResponseSelect = {
   endAt: true,
   durationSeconds: true,
   timezone: true,
-  hasRecording: true,
-  recordingStatus: true,
-  processingStatus: true,
+
   metadata: true,
   createdAt: true,
   updatedAt: true,
@@ -44,13 +42,14 @@ const meetingResponseSelect = {
   host: {
     select: meetingHostSelect,
   },
-  recordings: {
+  minutes: {
     where: { deletedAt: null },
     select: {
       id: true,
       externalId: true,
       source: true,
       status: true,
+      processingStatus: true,
       startAt: true,
       endAt: true,
       createdAt: true,
@@ -77,7 +76,7 @@ const meetingListSelect = {
   _count: {
     select: {
       participants: { where: { deletedAt: null } },
-      recordings: { where: { deletedAt: null } },
+      minutes: { where: { deletedAt: null } },
     },
   },
 } satisfies Prisma.MeetingSelect;
@@ -140,14 +139,14 @@ export class MeetingRepository {
       endAt: record.endAt,
       durationSeconds: record.durationSeconds,
       timezone: record.timezone,
-      hasRecording: record.recordings.length > 0,
-      recordingStatus: record.recordingStatus,
-      processingStatus: record.processingStatus,
+      hasRecording: record.minutes.length > 0,
+      recordingStatus: record.minutes[0]?.status,
+      processingStatus: record.minutes[0]?.processingStatus,
       metadata: record.metadata,
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,
       deletedAt: record.deletedAt,
-      ...(includeRecordings ? { recordings: record.recordings } : {}),
+      ...(includeRecordings ? { minutes: record.minutes } : {}),
     };
   }
 
@@ -160,7 +159,7 @@ export class MeetingRepository {
       endAt: record.endAt,
       host: this.toHostResponse(record.host),
       participantCount: record.participantCount ?? record._count.participants,
-      hasRecording: record._count.recordings > 0,
+      hasRecording: record._count.minutes > 0,
     };
   }
 
@@ -331,7 +330,7 @@ export class MeetingRepository {
     }
 
     if (status) {
-      where.processingStatus = status;
+      where.minutes = { some: { processingStatus: status } };
     }
 
     if (type) {
@@ -408,12 +407,10 @@ export class MeetingRepository {
           _count: { _all: true },
           orderBy: { platform: 'asc' },
         }),
-        this.prisma.meeting.groupBy({
-          by: ['processingStatus'],
-          where,
-          _count: { _all: true },
-          orderBy: { processingStatus: 'asc' },
-        }),
+        // Processing Status stats removed from Meeting group by, we can get it from Minute later if needed
+        Promise.resolve([
+          { _count: { _all: 0 }, processingStatus: ProcessingStatus.PENDING },
+        ]),
         this.prisma.meeting.groupBy({
           by: ['type'],
           where,

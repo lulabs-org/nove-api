@@ -26,7 +26,7 @@ export class MeetingHostResponseDto {
   userId: string | null;
 }
 
-export class MeetingRecordingSummaryResponseDto {
+export class MinuteSummaryResponseDto {
   @ApiProperty({ description: '录制记录 ID' })
   id: string;
 
@@ -138,9 +138,9 @@ export class MeetingRecordResponseDto {
 
   @ApiPropertyOptional({
     description: '未删除的录制记录摘要（仅详情接口返回）',
-    type: [MeetingRecordingSummaryResponseDto],
+    type: [MinuteSummaryResponseDto],
   })
-  recordings?: MeetingRecordingSummaryResponseDto[];
+  minutes?: MinuteSummaryResponseDto[];
 
   @ApiPropertyOptional({
     description: '参会人数',
@@ -198,8 +198,8 @@ export class MeetingRecordResponseDto {
   @ApiProperty({ description: '是否有录制' })
   hasRecording: boolean;
 
-  @ApiProperty({ description: '录制状态', enum: ProcessingStatus })
-  recordingStatus: ProcessingStatus;
+  @ApiProperty({ description: '录制状态', enum: RecordingStatus })
+  recordingStatus: RecordingStatus;
 
   @ApiProperty({ description: '处理状态', enum: ProcessingStatus })
   processingStatus: ProcessingStatus;

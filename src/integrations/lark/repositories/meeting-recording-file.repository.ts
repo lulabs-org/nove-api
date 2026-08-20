@@ -188,7 +188,7 @@ export class RecordingFileBitableRepository {
   /**
    * Search recording file records by meeting summary content
    */
-  async searchRecordingFileBySummary(meetingSummary: string): Promise<any> {
+  async searchRecordingFileBySummary(minuteSummary: string): Promise<any> {
     const searchConditions: Array<{
       field_name: string;
       operator: 'contains';
@@ -197,7 +197,7 @@ export class RecordingFileBitableRepository {
       {
         field_name: 'meeting_summary',
         operator: 'contains',
-        value: [String(meetingSummary)],
+        value: [String(minuteSummary)],
       },
     ];
 
@@ -208,7 +208,7 @@ export class RecordingFileBitableRepository {
 
     try {
       this.logger.log(
-        `Searching recording file by meeting summary: ${meetingSummary}`,
+        `Searching recording file by meeting summary: ${minuteSummary}`,
       );
       return await this.bitableService.searchRecords(
         this.appToken,

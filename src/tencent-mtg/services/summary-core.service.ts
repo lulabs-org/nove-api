@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { MeetingSummaryService } from '@/meeting/services/meeting-summary.service';
+import { MinuteSummaryService } from '@/minute/services';
 import { GenerationMethod, ProcessingStatus } from '@prisma/client';
 import { SummaryService as ApiSummaryService } from '@/integrations/tencent-meeting/services/meeting-summary.service';
 
@@ -8,7 +8,7 @@ export class TencentMtgSummaryCoreService {
   private readonly logger = new Logger(TencentMtgSummaryCoreService.name);
 
   constructor(
-    private readonly meetingSummaryService: MeetingSummaryService,
+    private readonly meetingSummaryService: MinuteSummaryService,
     private readonly apiSummaryService: ApiSummaryService,
   ) {}
 
@@ -17,14 +17,14 @@ export class TencentMtgSummaryCoreService {
   // ==========================================
   async upsertSummaryFromWebhook(
     meetingId: string,
-    recordingId: string,
+    minuteId: string,
     fullSummary: string,
     aiMinutes?: string,
     actionItems?: string,
   ) {
     return await this.meetingSummaryService.upsert({
       meetingId,
-      recordingId,
+      minuteId,
       content: fullSummary || '',
       aiMinutes: aiMinutes ? { content: aiMinutes } : undefined,
       actionItems: actionItems ? { items: actionItems } : undefined,
@@ -42,12 +42,12 @@ export class TencentMtgSummaryCoreService {
   // ==========================================
   async upsertSummaryFromApi(
     meetingId: string,
-    recordingId: string,
+    minuteId: string,
     fileId: string,
     operatorId: string,
   ) {
     this.logger.log(
-      `Syncing summary for meeting ${meetingId}, recording ${recordingId}, file ${fileId}`,
+      `Syncing summary for meeting ${meetingId}, recording ${minuteId}, file ${fileId}`,
     );
 
     const content = await this.apiSummaryService.getContent(fileId, operatorId);
@@ -60,7 +60,7 @@ export class TencentMtgSummaryCoreService {
 
     await this.meetingSummaryService.upsert({
       meetingId: meetingId,
-      recordingId: recordingId,
+      minuteId: minuteId,
       content: content.fullSummary || '',
       aiMinutes: content.aiMinutes ? { content: content.aiMinutes } : undefined,
       actionItems: content.todo ? { items: content.todo } : undefined,

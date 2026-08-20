@@ -14,7 +14,7 @@ import { Platform } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
 import { ParticipantDetail } from '@/integrations/tencent-meeting/types';
-import { ParticipantSummaryService } from '@/meeting/services';
+import { MinuteParticipantSummaryService } from '@/minute/services';
 import { MeetingBitableService } from './meeting-bitable.service';
 import {
   NumberRecordBitableRepository,
@@ -28,19 +28,19 @@ export class ParticipantSummaryBitableService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly ptUserRepo: PlatformUserRepository,
-    private readonly participantSummarySvc: ParticipantSummaryService,
+    private readonly participantSummarySvc: MinuteParticipantSummaryService,
     private readonly bitableService: MeetingBitableService,
     private readonly numberRecordBitable: NumberRecordBitableRepository,
     private readonly recordingFileBitable: RecordingFileBitableRepository,
   ) {}
 
   async processSummary(
-    recordingId: string,
+    minuteId: string,
     fileId: string,
     uniqueParticipants: ParticipantDetail[],
   ): Promise<void> {
     const distinctSpeakers = await this.prisma.transcriptSegment.findMany({
-      where: { transcript: { recordingId: recordingId } },
+      where: { transcript: { minuteId: minuteId } },
       select: { speakerId: true },
       distinct: ['speakerId'],
     });
@@ -57,7 +57,7 @@ export class ParticipantSummaryBitableService {
 
       if (validSpeakerIds.has(ptByUnionId.id)) {
         const summaries = await this.participantSummarySvc.generateSummaries({
-          recordId: recordingId,
+          recordId: minuteId,
           platformUserIds: [ptByUnionId.id],
         });
         const summary = summaries[ptByUnionId.id];

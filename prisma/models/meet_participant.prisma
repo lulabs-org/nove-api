@@ -1,36 +1,36 @@
 model MeetingParticipant {
-    id String @id @default(cuid())
+  id String @id @default(cuid())
 
-    // 关联会议和用户
-    meetingId String  @map("meeting_id")
-    meeting   Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  // 关联会议和用户
+  meetingId String  @map("meeting_id")
+  meeting   Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
 
-    // 参会人员
-    ptUserId String?       @map("pt_user_id")
-    ptUser   PlatformUser? @relation("ParticipantUser", fields: [ptUserId], references: [id], onDelete: SetNull)
-    recordingSummaries RecordingParticipantSummary[] @relation("RecordingParticipantSummaries")
+  // 参会人员
+  ptUserId        String?                    @map("pt_user_id")
+  ptUser          PlatformUser?              @relation("ParticipantUser", fields: [ptUserId], references: [id], onDelete: SetNull)
+  minuteSummaries MinuteParticipantSummary[] @relation("MinuteParticipantSummaries")
 
-    // 参会行为数据
-    firstJoinTime        DateTime? @map("first_join_time") @db.Timestamptz(6) // 首次加入时间
-    lastLeaveTime        DateTime? @map("last_leave_time") @db.Timestamptz(6) // 最后离开时间
-    totalDurationSeconds Int?      @map("total_duration_seconds") // 累计参与时长（秒）
+  // 参会行为数据
+  firstJoinTime        DateTime? @map("first_join_time") @db.Timestamptz(6) // 首次加入时间
+  lastLeaveTime        DateTime? @map("last_leave_time") @db.Timestamptz(6) // 最后离开时间
+  totalDurationSeconds Int?      @map("total_duration_seconds") // 累计参与时长（秒）
 
-    // 元数据
-    metadata Json @default("{}") @map("metadata") @db.JsonB // 扩展元数据
+  // 元数据
+  metadata Json @default("{}") @map("metadata") @db.JsonB // 扩展元数据
 
-    // 系统字段及时间
-    createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-    updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
-    deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6) // 软删除时间戳
+  // 系统字段及时间
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6) // 软删除时间戳
 
-    @@index([meetingId])
-    @@index([ptUserId])
-    @@index([firstJoinTime]) // 按首次加入时间查询
-    @@index([lastLeaveTime]) // 按最后离开时间查询
-    @@index([deletedAt]) // 软删除查询索引
-    @@index([meetingId, ptUserId]) // 查询会议的特定参与者
-    @@index([meetingId, firstJoinTime]) // 查询会议参与者加入时间
-    @@index([meetingId, deletedAt]) // 查询会议的有效参与者
-    @@index([ptUserId, firstJoinTime]) // 查询用户的参会历史
-    @@map("meet_participants")
+  @@index([meetingId])
+  @@index([ptUserId])
+  @@index([firstJoinTime]) // 按首次加入时间查询
+  @@index([lastLeaveTime]) // 按最后离开时间查询
+  @@index([deletedAt]) // 软删除查询索引
+  @@index([meetingId, ptUserId]) // 查询会议的特定参与者
+  @@index([meetingId, firstJoinTime]) // 查询会议参与者加入时间
+  @@index([meetingId, deletedAt]) // 查询会议的有效参与者
+  @@index([ptUserId, firstJoinTime]) // 查询用户的参会历史
+  @@map("meet_participants")
 }

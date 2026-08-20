@@ -41,7 +41,7 @@ export class CreateTrackingReportDto {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  recordingSummaryIds?: string[];
+  minuteSummaryIds?: string[];
   @ApiPropertyOptional({ type: [String] })
   @IsOptional()
   @IsArray()
@@ -61,7 +61,7 @@ export class UpdateTrackingReportDto {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  recordingSummaryIds?: string[];
+  minuteSummaryIds?: string[];
   @ApiPropertyOptional({ type: [String] })
   @IsOptional()
   @IsArray()

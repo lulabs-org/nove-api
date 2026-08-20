@@ -327,7 +327,7 @@ describe('MeetingRepository', () => {
           displayName: '杨仕明',
           localUserId: 'local-user-1',
         },
-        recordings: [],
+        minutes: [],
       });
 
       const result = await repository.findById('meeting-with-host');
@@ -341,7 +341,7 @@ describe('MeetingRepository', () => {
             userId: 'local-user-1',
           },
           hasRecording: false,
-          recordings: [],
+          minutes: [],
         }),
       );
       expect(result).not.toHaveProperty('createdById');
@@ -350,7 +350,7 @@ describe('MeetingRepository', () => {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         select: expect.objectContaining({
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          recordings: expect.objectContaining({
+          minutes: expect.objectContaining({
             where: { deletedAt: null },
           }),
         }),
@@ -373,7 +373,7 @@ describe('MeetingRepository', () => {
             localUserId: null,
           },
           participantCount: null,
-          _count: { participants: 3, recordings: 1 },
+          _count: { participants: 3, minutes: 1 },
           description: 'must-not-leak-from-list',
         },
         {
@@ -384,7 +384,7 @@ describe('MeetingRepository', () => {
           endAt: null,
           host: null,
           participantCount: 8,
-          _count: { participants: 2, recordings: 0 },
+          _count: { participants: 2, minutes: 0 },
           metadata: { mustNotLeak: true },
         },
       ]);
@@ -433,7 +433,7 @@ describe('MeetingRepository', () => {
             _count: {
               select: {
                 participants: { where: { deletedAt: null } },
-                recordings: { where: { deletedAt: null } },
+                minutes: { where: { deletedAt: null } },
               },
             },
           },
@@ -483,12 +483,6 @@ describe('MeetingRepository', () => {
           },
         ])
         .mockResolvedValueOnce([
-          {
-            processingStatus: ProcessingStatus.COMPLETED,
-            _count: { _all: 2 },
-          },
-        ])
-        .mockResolvedValueOnce([
           { type: MeetingType.SCHEDULED, _count: { _all: 3 } },
         ]);
       (prismaService.meeting.findMany as jest.Mock).mockResolvedValue([]);
@@ -500,7 +494,7 @@ describe('MeetingRepository', () => {
         platformStats: [
           { platform: MeetingPlatform.TENCENT_MEETING, count: 3 },
         ],
-        statusStats: [{ status: ProcessingStatus.COMPLETED, count: 2 }],
+        statusStats: [{ status: ProcessingStatus.PENDING, count: 0 }],
         typeStats: [{ type: MeetingType.SCHEDULED, count: 3 }],
         recentMeetings: [],
       });
@@ -526,7 +520,7 @@ describe('MeetingRepository', () => {
         id: 'meeting-1',
         hostId: null,
         host: null,
-        recordings: [],
+        minutes: [],
         deletedAt,
       });
 

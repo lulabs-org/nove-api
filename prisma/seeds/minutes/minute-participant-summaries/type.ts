@@ -1,0 +1,19 @@
+/*
+ * @Author: 杨仕明 shiming.y@qq.com
+ * @Date: 2026-01-24
+ * @Description: 参与者会议总结类型定义
+ * @FilePath: /nove_api/prisma/seeds/mock/minutes/minute-participant-summaries/type.ts
+ *
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
+ */
+import { Prisma } from '@prisma/client';
+
+export type ParticipantSummaryConfig = {
+  userName: string;
+  partSummary: string;
+  keywords: string[];
+};
+
+export type ParticipantSummary = Prisma.MinuteParticipantSummaryGetPayload<
+  Record<string, never>
+>;

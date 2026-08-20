@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Platform, PlatformUser } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
-import { TranscriptRepository } from '@/meeting/repositories/transcript.repository';
+import { TranscriptRepository } from '@/minute/repositories';
 import { TencentApiService } from '@/integrations/tencent-meeting/services/api.service';
 import { ParticipantService } from '@/integrations/tencent-meeting/services';
 import { SpeakerService } from '@/tencent-mtg/services/speaker.service';
@@ -31,7 +31,7 @@ export class TencentMtgTranscriptCoreService {
   async syncFromApi(
     meetid: string,
     subid: string,
-    recordingId: string,
+    minuteId: string,
     recordFileId: string,
     operatorId: string,
     startTime?: number,
@@ -43,7 +43,7 @@ export class TencentMtgTranscriptCoreService {
     let existingTranscriptId: string | undefined;
 
     const existingTranscript =
-      await this.transcriptRepo.findByRecordingId(recordingId);
+      await this.transcriptRepo.findByRecordingId(minuteId);
 
     if (existingTranscript) {
       existingTranscriptId = existingTranscript.id;
@@ -84,7 +84,7 @@ export class TencentMtgTranscriptCoreService {
     // 步骤 4: 如果拉取到了转写文本，将其批量写入我们的数据库
     if (allParagraphs.length > 0) {
       if (!transcriptId) {
-        transcriptId = await this.createTranscript(recordingId, recordFileId);
+        transcriptId = await this.createTranscript(minuteId, recordFileId);
       }
       // 批量将拼装好的段落 (Segments) 写入数据库中
       await this.batchInsertSegments(allParagraphs, transcriptId);
@@ -92,13 +92,13 @@ export class TencentMtgTranscriptCoreService {
   }
 
   async createTranscript(
-    recordingId: string,
+    minuteId: string,
     recordFileId: string,
   ): Promise<string> {
     const transcript = await this.transcriptRepo.create({
       source: `tencent-meeting:${recordFileId}`,
       status: 2,
-      recordingId,
+      minuteId,
     });
     return transcript.id;
   }
@@ -107,16 +107,16 @@ export class TencentMtgTranscriptCoreService {
   // 从 Webhook 数据处理转写入库
   // ==========================================
   async syncFromWebhook(
-    recordingId: string,
+    minuteId: string,
     recordFileId: string,
     paragraphs: NewTranscriptParagraph[],
   ) {
-    let transcript = await this.transcriptRepo.findByRecordingId(recordingId);
+    let transcript = await this.transcriptRepo.findByRecordingId(minuteId);
     if (!transcript) {
       transcript = await this.transcriptRepo.create({
         source: `tencent-meeting:${recordFileId}`,
         status: 2,
-        recordingId: recordingId,
+        minuteId: minuteId,
       });
       await this.batchInsertSegments(paragraphs, transcript.id);
     }

@@ -21,7 +21,7 @@ import {
   TencentMtgSummaryCoreService,
   TencentMtgTranscriptCoreService,
 } from '../../services';
-import { TranscriptRepository } from '@/meeting/repositories/transcript.repository';
+import { TranscriptRepository } from '@/minute/repositories';
 import { ParticipantService } from '@/integrations/tencent-meeting/services';
 import { ParticipantDetail } from '@/integrations/tencent-meeting/types';
 

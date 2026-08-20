@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ProcessingStatus, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { MeetingRepository } from '../repositories/meeting.repository';
 import { MeetingParticipantRepository } from '../repositories/meeting-participant.repository';
 import { GetMeetingRecordsParams } from '../types';
@@ -116,9 +116,6 @@ export class MeetingService {
       startAt: params.actualStartAt ? params.actualStartAt : new Date(),
       endAt: params.endedAt ? params.endedAt : new Date(),
       durationSeconds: params.durationSeconds ?? 0,
-      hasRecording: params.hasRecording || false,
-      recordingStatus: params.recordingStatus || ProcessingStatus.PENDING,
-      processingStatus: params.processingStatus || ProcessingStatus.PENDING,
       metadata: params.metadata as Prisma.InputJsonValue,
     };
 
@@ -139,10 +136,6 @@ export class MeetingService {
 
     // 转换DTO到repository数据格式
     const updateData: Record<string, unknown> = {};
-    if (params.recordingStatus !== undefined)
-      updateData.recordingStatus = params.recordingStatus;
-    if (params.processingStatus !== undefined)
-      updateData.processingStatus = params.processingStatus;
     if (params.participantCount !== undefined)
       updateData.participantCount = params.participantCount;
 

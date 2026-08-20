@@ -15,7 +15,7 @@ model StorageObject {
   uploader  User?   @relation(fields: [createdBy], references: [id], onDelete: SetNull)
 
   // 反向关联
-  recordingFiles MeetingRecordingFile[]
+  minuteFiles MinuteFile[]
 
   @@unique([provider, bucket, objectKey])
   @@map("storage_objects")

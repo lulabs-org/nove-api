@@ -1,16 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
 import { MeetingRepository } from '@/meeting/repositories/meeting.repository';
-import { MeetingRecordingRepository } from '@/meeting/repositories/meeting-recording.repository';
+import { MinuteRepository } from '@/minute/repositories';
 import {
   Platform,
   PlatformUser,
   Prisma,
   Meeting,
-  MeetingRecording,
+  Minute,
   RecordingSource,
   RecordingStatus,
-  ProcessingStatus,
 } from '@prisma/client';
 import { Meetuser, EventPayload, MeetingSessionInfo } from '../types';
 import { TencentEventUtils } from '../utils/tencent-event.utils';
@@ -24,7 +23,6 @@ import {
   computeSubMeetingId,
   mergeDateTime,
   convertMeetingType,
-  mapRecordingState,
   mapRecordingFileStatus,
 } from '../mappers/tencent-mtg-record.mapper';
 
@@ -46,7 +44,7 @@ export class TencentMtgMeetingCoreService {
   constructor(
     private readonly ptUserRepo: PlatformUserRepository,
     private readonly meetingRepo: MeetingRepository,
-    private readonly recordingRepo: MeetingRecordingRepository,
+    private readonly recordingRepo: MinuteRepository,
     private readonly tencentApi: TencentApiService,
   ) {}
 
@@ -83,9 +81,7 @@ export class TencentMtgMeetingCoreService {
     if (event === 'meeting.end') meetingData.endAt = new Date(operate_time);
 
     if (event === 'recording.completed') {
-      meetingData.hasRecording = true;
-      meetingData.recordingStatus = RecordingStatus.COMPLETED;
-      meetingData.processingStatus = ProcessingStatus.COMPLETED;
+      // Recording state is now managed on the Minute model instead of Meeting.
     }
 
     const subMeetingId =
@@ -116,9 +112,6 @@ export class TencentMtgMeetingCoreService {
         ? computeSubMeetingId(record.media_start_time, meetingInfo.start_time)
         : '__ROOT__';
 
-    const hasRecording =
-      record.state === 3 && (record.record_files?.length ?? 0) > 0;
-    const recordingStatus = mapRecordingState(record.state);
     const systemMeetingType = convertMeetingType(meetingType);
 
     const scheduledStartAt = isRecurring
@@ -147,8 +140,6 @@ export class TencentMtgMeetingCoreService {
         scheduledStartAt,
         timezone,
         scheduledEndAt,
-        hasRecording,
-        recordingStatus,
         metadata: {
           meeting_record_id: record.meeting_record_id,
           userid: record.userid,
@@ -197,7 +188,7 @@ export class TencentMtgMeetingCoreService {
   async upsertRecordingFromWebhook(
     meeting: Meeting,
     externalId: string,
-  ): Promise<MeetingRecording> {
+  ): Promise<Minute> {
     return await this.recordingRepo.upsert({
       meetingId: meeting.id,
       externalId,
@@ -215,7 +206,7 @@ export class TencentMtgMeetingCoreService {
     meetingId: string,
     file: RecordFile,
     state: number,
-  ): Promise<MeetingRecording> {
+  ): Promise<Minute> {
     return this.recordingRepo.upsert({
       meetingId,
       externalId: file.record_file_id,

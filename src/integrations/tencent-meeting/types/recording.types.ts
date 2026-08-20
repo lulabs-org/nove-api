@@ -12,7 +12,7 @@ export interface TencentRecordingFile {
   record_file_id: string;
 }
 
-export interface MeetingSummary {
+export interface MinuteSummary {
   download_address: string;
   file_type: string;
 }
@@ -26,9 +26,9 @@ export interface RecordingDetail {
   download_address_file_type?: string;
   audio_address?: string;
   audio_address_file_type?: string;
-  meeting_summary?: MeetingSummary[];
-  ai_meeting_transcripts?: MeetingSummary[];
-  ai_minutes?: MeetingSummary[];
+  meeting_summary?: MinuteSummary[];
+  ai_meeting_transcripts?: MinuteSummary[];
+  ai_minutes?: MinuteSummary[];
   record_name?: string;
   start_time?: string;
   end_time?: string;

@@ -36,7 +36,7 @@ export class TencentMtgController {
 
   /**
    * 触发同步腾讯会议录制列表
-   * 从腾讯会议 API 拉取账户级录制列表，并通过 upsert 补充 Meeting 和 MeetingRecording 数据
+   * 从腾讯会议 API 拉取账户级录制列表，并通过 upsert 补充 Meeting 和 Minute 数据
    */
   @Post('sync-recordings')
   @HttpCode(HttpStatus.ACCEPTED)

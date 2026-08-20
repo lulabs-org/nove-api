@@ -13,6 +13,7 @@ import { ConfigModule } from '@nestjs/config';
 import { openaiConfig } from '@/configs/openai.config';
 import { TasksModule } from '@/task/tasks.module';
 import { MeetingModule } from '@/meeting/meeting.module';
+import { MinuteModule } from '@/minute/minute.module';
 import { REPORT_GENERATION_QUEUE } from './queue/report-generation.constants';
 import { ReportGenerationProcessor } from './queue/report-generation.processor';
 import { ReportGenerationQueueService } from './queue/report-generation.queue.service';
@@ -24,6 +25,7 @@ import { ReportGenerationQueueService } from './queue/report-generation.queue.se
     ConfigModule.forFeature(openaiConfig),
     TasksModule,
     MeetingModule,
+    MinuteModule,
     BullModule.registerQueue({
       name: REPORT_GENERATION_QUEUE,
     }),

@@ -5,25 +5,25 @@ enum WebhookStatus {
 }
 
 model WebhookLog {
-  id           String        @id @default(cuid())
-  provider     String        @db.VarChar(50)  // e.g., 'tencent-meeting', 'stripe', 'github'
-  event        String        @db.VarChar(100) // The type of event, e.g., 'meeting.recording.ready'
-  
+  id       String @id @default(cuid())
+  provider String @db.VarChar(50) // e.g., 'tencent-meeting', 'stripe', 'github'
+  event    String @db.VarChar(100) // The type of event, e.g., 'meeting.recording.ready'
+
   // Storage for the incoming request data
-  payload      Json          @db.JsonB        // 原始的 Webhook 请求体（包含加密数据）
-  data         Json?         @db.JsonB        // 解密后、解析后的业务数据
-  headers      Json?         @db.JsonB        // 可选：相关请求头（例如签名信息）
-  
+  payload Json  @db.JsonB // 原始的 Webhook 请求体（包含加密数据）
+  data    Json? @db.JsonB // 解密后、解析后的业务数据
+  headers Json? @db.JsonB // 可选：相关请求头（例如签名信息）
+
   // Processing status
   status       WebhookStatus @default(PENDING)
   errorMessage String?       @map("error_message") @db.Text // Store error details if processing fails
-  
+
   // Optional relations to external entities if needed in the future
-  externalId   String?       @map("external_id") @db.VarChar(100)
+  externalId String? @map("external_id") @db.VarChar(100)
 
   // Timestamps
-  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt    DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@index([provider, event])
   @@index([status])

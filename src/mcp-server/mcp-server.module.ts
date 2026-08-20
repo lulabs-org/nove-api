@@ -13,7 +13,8 @@ import { Module } from '@nestjs/common';
 import { McpModule } from '@rekog/mcp-nest';
 import { RoleModule } from '@/admin/role/role.module';
 import { MeetingModule } from '@/meeting/meeting.module';
-import { RecordingParticipantSummaryRepository } from '@/meeting/repositories';
+import { MinuteModule } from '@/minute/minute.module';
+import { MinuteParticipantSummaryRepository } from '@/minute/repositories';
 
 import {
   GreetingTool,
@@ -40,6 +41,7 @@ import { SseController, StreamableHttpController } from './controllers';
     }),
     RoleModule,
     MeetingModule,
+    MinuteModule,
     UserModule,
   ],
   controllers: [SseController, StreamableHttpController],
@@ -50,7 +52,7 @@ import { SseController, StreamableHttpController } from './controllers';
     MeetingStatsTool,
     MeetingStatsRepository,
     PlatformUserRepository,
-    RecordingParticipantSummaryRepository,
+    MinuteParticipantSummaryRepository,
   ],
 })
 export class McpServerModule {}
