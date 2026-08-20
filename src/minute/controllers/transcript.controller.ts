@@ -26,7 +26,7 @@ import {
 } from '../dto';
 import { CuidPipe } from '@/common/pipes/cuid.pipe';
 
-@ApiTags('Meet Transcript')
+@ApiTags('Minute Transcript')
 @Controller('transcripts')
 @ApiBearerAuth()
 export class TranscriptController {

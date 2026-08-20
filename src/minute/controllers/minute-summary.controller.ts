@@ -29,7 +29,7 @@ import {
 } from '../dto/minute-summary.dto';
 import { CuidPipe } from '@/common/pipes/cuid.pipe';
 
-@ApiTags('Meet Summary')
+@ApiTags('Minute Summary')
 @Controller('meetings/:meetingId/summaries')
 @ApiBearerAuth()
 export class MinuteSummaryController {

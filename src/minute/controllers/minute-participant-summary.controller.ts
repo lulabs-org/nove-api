@@ -33,7 +33,7 @@ import {
   GenerateParticipantSummaryDto,
 } from '../dto/minute-participant-summary.dto';
 
-@ApiTags('Recording Participant Summary')
+@ApiTags('Minute Participant Summary')
 @ApiBearerAuth()
 @Controller('meetings/:meetingId/minutes/:minuteId/participant-summaries')
 export class MinuteParticipantSummaryController {

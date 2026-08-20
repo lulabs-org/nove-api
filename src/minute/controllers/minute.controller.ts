@@ -35,7 +35,7 @@ import {
 } from '../dto/minute.dto';
 import { MinuteSummaryDto } from '../dto/minute-summary.dto';
 
-@ApiTags('Meet Recording')
+@ApiTags('Minute')
 @Controller('recordings')
 @ApiBearerAuth()
 export class MinuteController {
