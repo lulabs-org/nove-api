@@ -13,8 +13,19 @@ import { MinuteSummaryRepository } from './repositories/minute-summary.repositor
 import { MinuteParticipantSummaryRepository } from './repositories/minute-participant-summary.repository';
 import { MinuteFileRepository } from './repositories/minute-file.repository';
 import { TranscriptRepository } from './repositories/transcript.repository';
+import { LlmModule } from '@/llm/llm.module';
+import { ConfigModule } from '@nestjs/config';
+import { openaiConfig } from '@/configs/openai.config';
+import { PrismaModule } from '@/prisma/prisma.module';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
+  imports: [
+    PrismaModule,
+    LlmModule,
+    ConfigModule.forFeature(openaiConfig),
+    HttpModule,
+  ],
   controllers: [
     MinuteController,
     MinuteSummaryController,
@@ -46,4 +57,4 @@ import { TranscriptRepository } from './repositories/transcript.repository';
     TranscriptRepository,
   ],
 })
-export class MinuteModule {}
+export class MinuteModule { }

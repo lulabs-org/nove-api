@@ -43,7 +43,7 @@ export class MinuteParticipantSummaryController {
   ) {}
 
   @Get()
-  @RequirePermissions('meeting:read')
+  @RequirePermissions('minute:read')
   @ApiResponse({
     status: HttpStatus.OK,
     type: MinuteParticipantSummaryListResponseDto,
@@ -63,7 +63,7 @@ export class MinuteParticipantSummaryController {
   }
 
   @Get(':id')
-  @RequirePermissions('meeting:read')
+  @RequirePermissions('minute:read')
   @ApiResponse({ status: HttpStatus.OK, type: MinuteParticipantSummaryDto })
   get(
     @Param('meetingId', CuidPipe) meetingId: string,
@@ -74,7 +74,7 @@ export class MinuteParticipantSummaryController {
   }
 
   @Post()
-  @RequirePermissions('meeting:create')
+  @RequirePermissions('minute:create')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '为录制中的参会者创建新总结版本' })
   create(
@@ -86,7 +86,7 @@ export class MinuteParticipantSummaryController {
   }
 
   @Put(':id')
-  @RequirePermissions('meeting:update')
+  @RequirePermissions('minute:update')
   update(
     @Param('meetingId', CuidPipe) meetingId: string,
     @Param('minuteId', CuidPipe) minuteId: string,
@@ -97,7 +97,7 @@ export class MinuteParticipantSummaryController {
   }
 
   @Delete(':id')
-  @RequirePermissions('meeting:delete')
+  @RequirePermissions('minute:delete')
   delete(
     @Param('meetingId', CuidPipe) meetingId: string,
     @Param('minuteId', CuidPipe) minuteId: string,

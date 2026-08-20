@@ -38,7 +38,7 @@ export class TranscriptController {
    * 创建转录记录
    */
   @Post()
-  @RequirePermissions('meeting:create')
+  @RequirePermissions('minute:create')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '创建转录记录' })
   @ApiResponse({ status: HttpStatus.CREATED, type: TranscriptDto })
@@ -53,7 +53,7 @@ export class TranscriptController {
    * 获取转录列表
    */
   @Get()
-  @RequirePermissions('meeting:read')
+  @RequirePermissions('minute:read')
   @ApiOperation({ summary: '获取转录列表' })
   @ApiResponse({ status: HttpStatus.OK, type: TranscriptListResponseDto })
   async getTranscripts(
@@ -72,7 +72,7 @@ export class TranscriptController {
    * 获取转录记录详情
    */
   @Get(':id')
-  @RequirePermissions('meeting:read')
+  @RequirePermissions('minute:read')
   @ApiOperation({ summary: '获取转录记录详情' })
   @ApiResponse({ status: HttpStatus.OK, type: TranscriptDto })
   async getTranscriptById(@Param('id', CuidPipe) id: string) {
@@ -83,7 +83,7 @@ export class TranscriptController {
    * 删除转录记录
    */
   @Delete(':id')
-  @RequirePermissions('meeting:delete')
+  @RequirePermissions('minute:delete')
   @ApiOperation({ summary: '删除转录记录' })
   @ApiResponse({ status: HttpStatus.OK, type: TranscriptDto })
   async deleteTranscript(@Param('id', CuidPipe) id: string) {

@@ -50,7 +50,7 @@ export class MinuteController {
    * 创建录制
    */
   @Post()
-  @RequirePermissions('meeting-recording:create')
+  @RequirePermissions('minute:create')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '创建录制记录' })
   @ApiResponse({
@@ -69,7 +69,7 @@ export class MinuteController {
    * 获取录制列表
    */
   @Get()
-  @RequirePermissions('meeting-recording:read')
+  @RequirePermissions('minute:read')
   @ApiOperation({ summary: '获取录制列表' })
   @ApiResponse({ status: 200, type: MinuteListResponseDto })
   async getRecordings(
@@ -83,7 +83,7 @@ export class MinuteController {
    * 获取录制详情
    */
   @Get(':id')
-  @RequirePermissions('meeting-recording:read')
+  @RequirePermissions('minute:read')
   @ApiOperation({ summary: '获取录制详情' })
   @ApiParam({ name: 'id', description: '录制记录ID', type: 'string' })
   @ApiResponse({
@@ -99,7 +99,7 @@ export class MinuteController {
    * 获取录制转写
    */
   @Get(':id/transcript')
-  @RequirePermissions('meeting-recording:read')
+  @RequirePermissions('minute:read')
   @HttpCode(HttpStatus.OK)
   @ApiGetTranscriptByRecordingIdDocs()
   async getTranscript(
@@ -133,7 +133,7 @@ export class MinuteController {
    * 获取录制总结
    */
   @Get(':id/summary')
-  @RequirePermissions('meeting-recording:read')
+  @RequirePermissions('minute:read')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '获取录制总结' })
   @ApiParam({ name: 'id', description: '录制记录ID', type: 'string' })
@@ -150,7 +150,7 @@ export class MinuteController {
    * 写入外部 AI 生成的录制总结
    */
   @Post(':id/summary')
-  @RequirePermissions('meeting-recording:create')
+  @RequirePermissions('minute:create')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '写入外部 AI 生成的录制总结' })
   @ApiParam({ name: 'id', description: '录制记录ID', type: 'string' })
@@ -170,7 +170,7 @@ export class MinuteController {
    * 更新录制记录
    */
   @Patch(':id')
-  @RequirePermissions('meeting-recording:update')
+  @RequirePermissions('minute:update')
   @ApiOperation({ summary: '更新录制记录' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -188,7 +188,7 @@ export class MinuteController {
    * 删除录制记录
    */
   @Delete(':id')
-  @RequirePermissions('meeting-recording:delete')
+  @RequirePermissions('minute:delete')
   @ApiOperation({ summary: '删除录制记录' })
   @ApiResponse({
     status: HttpStatus.OK,

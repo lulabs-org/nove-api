@@ -600,6 +600,43 @@ export const REAL_PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     action: 'stats_view',
   },
 
+
+  // ========== 妙记 (Minute) 管理 ==========
+  {
+    name: '查看妙记',
+    code: 'minute:read',
+    description: '查看妙记记录及相关信息（包括总结与转写）',
+    resource: 'minute',
+    action: 'read',
+  },
+  {
+    name: '创建妙记',
+    code: 'minute:create',
+    description: '创建新妙记记录',
+    resource: 'minute',
+    action: 'create',
+  },
+  {
+    name: '编辑妙记',
+    code: 'minute:update',
+    description: '编辑妙记记录（重新生成总结等）',
+    resource: 'minute',
+    action: 'update',
+  },
+  {
+    name: '删除妙记',
+    code: 'minute:delete',
+    description: '删除妙记记录',
+    resource: 'minute',
+    action: 'delete',
+  },
+  {
+    name: '查看妙记统计',
+    code: 'minute:stats_view',
+    description: '查看妙记统计数据',
+    resource: 'minute',
+    action: 'stats_view',
+  },
   // ========== 平台用户管理 ==========
   {
     name: '查看平台用户',
@@ -1230,6 +1267,43 @@ export const PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     action: 'stats_view',
   },
 
+
+  // ========== 妙记 (Minute) 管理 ==========
+  {
+    name: '查看妙记',
+    code: 'minute:read',
+    description: '查看妙记记录及相关信息（包括总结与转写）',
+    resource: 'minute',
+    action: 'read',
+  },
+  {
+    name: '创建妙记',
+    code: 'minute:create',
+    description: '创建新妙记记录',
+    resource: 'minute',
+    action: 'create',
+  },
+  {
+    name: '编辑妙记',
+    code: 'minute:update',
+    description: '编辑妙记记录（重新生成总结等）',
+    resource: 'minute',
+    action: 'update',
+  },
+  {
+    name: '删除妙记',
+    code: 'minute:delete',
+    description: '删除妙记记录',
+    resource: 'minute',
+    action: 'delete',
+  },
+  {
+    name: '查看妙记统计',
+    code: 'minute:stats_view',
+    description: '查看妙记统计数据',
+    resource: 'minute',
+    action: 'stats_view',
+  },
   // ========== 平台用户管理 ==========
   {
     name: '查看平台用户',

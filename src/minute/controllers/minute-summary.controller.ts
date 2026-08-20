@@ -38,7 +38,7 @@ export class MinuteSummaryController {
   constructor(private readonly meetingSummaryService: MinuteSummaryService) {}
 
   @Get()
-  @RequirePermissions('meeting:read')
+  @RequirePermissions('minute:read')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '获取会议总结列表' })
   @ApiResponse({ status: HttpStatus.OK, type: MinuteSummaryListResponseDto })
@@ -56,7 +56,7 @@ export class MinuteSummaryController {
   }
 
   @Get(':id')
-  @RequirePermissions('meeting:read')
+  @RequirePermissions('minute:read')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '获取会议总结详情' })
   @ApiResponse({ status: HttpStatus.OK, type: MinuteSummaryDto })
@@ -69,7 +69,7 @@ export class MinuteSummaryController {
   }
 
   @Post()
-  @RequirePermissions('meeting:create')
+  @RequirePermissions('minute:create')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '创建会议总结' })
   @ApiResponse({ status: HttpStatus.CREATED, type: MinuteSummaryDto })
@@ -82,7 +82,7 @@ export class MinuteSummaryController {
   }
 
   @Put(':id')
-  @RequirePermissions('meeting:update')
+  @RequirePermissions('minute:update')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '更新会议总结' })
   @ApiResponse({ status: HttpStatus.OK, type: MinuteSummaryDto })
@@ -96,7 +96,7 @@ export class MinuteSummaryController {
   }
 
   @Delete(':id')
-  @RequirePermissions('meeting:delete')
+  @RequirePermissions('minute:delete')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '删除会议总结' })
   @ApiResponse({ status: HttpStatus.OK, type: MinuteSummaryDto })
