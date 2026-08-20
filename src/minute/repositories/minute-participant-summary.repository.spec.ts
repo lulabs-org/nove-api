@@ -21,7 +21,7 @@ describe('MinuteParticipantSummaryRepository', () => {
         select: expect.objectContaining({
           meeting: {
             select: expect.objectContaining({
-              summaries: expect.objectContaining({
+              minuteSummaries: expect.objectContaining({
                 where: { isLatest: true, deletedAt: null },
                 orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
                 take: 1,

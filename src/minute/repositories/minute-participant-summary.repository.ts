@@ -29,11 +29,7 @@ export class MinuteParticipantSummaryRepository {
     return minute?.meetingId || null;
   }
 
-  async findMany(
-    minuteId: string,
-    skip: number,
-    take: number,
-  ) {
+  async findMany(minuteId: string, skip: number, take: number) {
     const where: Prisma.MinuteParticipantSummaryWhereInput = {
       minuteId,
       isLatest: true,

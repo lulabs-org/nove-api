@@ -600,7 +600,6 @@ export const REAL_PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     action: 'stats_view',
   },
 
-
   // ========== 妙记 (Minute) 管理 ==========
   {
     name: '查看妙记',
@@ -1266,7 +1265,6 @@ export const PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     resource: 'meeting',
     action: 'stats_view',
   },
-
 
   // ========== 妙记 (Minute) 管理 ==========
   {

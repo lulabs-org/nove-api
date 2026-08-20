@@ -34,10 +34,7 @@ export class MinuteParticipantSummaryCrudService {
     };
   }
 
-  async create(
-    minuteId: string,
-    data: CreateMinuteParticipantSummaryDto,
-  ) {
+  async create(minuteId: string, data: CreateMinuteParticipantSummaryDto) {
     const meetingId = await this.summaries.getMeetingIdByMinuteId(minuteId);
     if (!meetingId) {
       throw new NotFoundException(`Recording ${minuteId} not found`);

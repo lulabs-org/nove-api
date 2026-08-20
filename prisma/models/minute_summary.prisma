@@ -37,7 +37,7 @@ model MinuteSummary {
   processingTime Int?             @map("processing_time") // 处理耗时（毫秒）
   errorMessage   String?          @map("error_message") // 错误信息
 
-  // 用户交互记录 
+  // 用户交互记录
   createdId  String?       @map("created_id") // 创建者
   creator    PlatformUser? @relation("SummaryCreator", fields: [createdId], references: [id])
   approvedId String?       @map("approved_id") // 审核者

@@ -62,10 +62,10 @@ describe('MinuteSummaryRepository', () => {
       data: expect.objectContaining({
         meetingId: 'meeting-1',
         minuteId: 'recording-1',
-        content: 'External summary',
-        keywords: ['external'],
+        content: 'New content',
+        keywords: ['tech'],
         generatedBy: GenerationMethod.AI,
-        aiModel: 'external-model',
+        aiModel: 'GPT-4',
         language: 'zh-CN',
         status: ProcessingStatus.COMPLETED,
         version: 3,
