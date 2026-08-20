@@ -1,0 +1,43 @@
+model MinuteParticipantSummary {
+  id String @id @default(cuid())
+
+  meetingId String?  @map("meeting_id")
+  meeting   Meeting? @relation("MeetingMinuteParticipantSummaries", fields: [meetingId], references: [id], onDelete: Cascade)
+
+  minuteId String @map("minute_id")
+  minute   Minute @relation("MinuteParticipantSummaries", fields: [minuteId], references: [id], onDelete: Cascade)
+
+  platformUserId String       @map("platform_user_id")
+  platformUser   PlatformUser @relation("MinuteParticipantSummaries", fields: [platformUserId], references: [id], onDelete: Restrict)
+
+  meetingParticipantId String?             @map("meeting_participant_id")
+  meetingParticipant   MeetingParticipant? @relation("MinuteParticipantSummaries", fields: [meetingParticipantId], references: [id], onDelete: SetNull)
+
+  userName    String            @map("user_name") @db.VarChar(100)
+  partSummary String            @map("part_summary") @db.Text
+  keywords    String[]
+  generatedBy GenerationMethod? @map("generated_by")
+  aiModel     String?           @map("ai_model")
+  confidence  Float?
+
+  versionGroupKey   String                     @map("version_group_key") @db.VarChar(500)
+  version           Int                        @default(1)
+  isLatest          Boolean                    @default(true) @map("is_latest")
+  previousSummaryId String?                    @map("previous_summary_id")
+  previousSummary   MinuteParticipantSummary?  @relation("MinuteParticipantSummaryVersions", fields: [previousSummaryId], references: [id], onDelete: SetNull)
+  nextVersions      MinuteParticipantSummary[] @relation("MinuteParticipantSummaryVersions")
+
+  reportSources   TrackingReportMinuteSummarySource[]
+  observedStartAt DateTime?                           @map("observed_start_at") @db.Timestamptz(6)
+  observedEndAt   DateTime?                           @map("observed_end_at") @db.Timestamptz(6)
+  createdAt       DateTime                            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime                            @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt       DateTime?                           @map("deleted_at") @db.Timestamptz(6)
+
+  @@unique([versionGroupKey, version], map: "uq_minute_participant_summary_version")
+  @@index([meetingId, minuteId, deletedAt])
+  @@index([minuteId, platformUserId, deletedAt])
+  @@index([meetingParticipantId])
+  @@index([previousSummaryId])
+  @@map("minute_participant_summaries")
+}

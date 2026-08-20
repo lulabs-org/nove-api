@@ -9,11 +9,11 @@ model OAuthClient {
   grants       String[] // 允许的授权模式, 例如 ["authorization_code", "refresh_token"]
   scopes       String[] // 允许请求的权限范围列表
 
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  authCodes    OAuthAuthCode[]
-  tokens       OAuthToken[]
+  authCodes OAuthAuthCode[]
+  tokens    OAuthToken[]
 
   @@map("oauth_clients")
 }
@@ -26,10 +26,10 @@ model OAuthAuthCode {
   scopes      String[]
   expiresAt   DateTime @map("expires_at") @db.Timestamptz(6)
 
-  client      OAuthClient @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client OAuthClient @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@index([clientId])
   @@index([userId])
@@ -45,11 +45,11 @@ model OAuthToken {
   expiresAt    DateTime @map("expires_at") @db.Timestamptz(6)
   revoked      Boolean  @default(false)
 
-  client       OAuthClient @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
-  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client OAuthClient @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@index([clientId])
   @@index([userId])

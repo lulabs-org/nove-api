@@ -30,20 +30,15 @@ model Meeting {
   durationSeconds  Int?      @map("duration_seconds") // 持续时长(秒)
   timezone         String?   @db.VarChar(50) // 时区
 
-  // 录制和处理状态
-  hasRecording     Boolean          @default(false) @map("has_recording")
-  recordingStatus  ProcessingStatus @default(PENDING) @map("recording_status") // Status for recording processing (e.g. video/audio file generation)
-  processingStatus ProcessingStatus @default(PENDING) @map("processing_status") // Status for overall meeting processing (e.g. transcription, summary generation)
-
   // 元数据
   metadata Json @default("{}") @db.JsonB // 平台特定的元数据
 
   // 关联关系
-  participants                  MeetingParticipant[] // 参会记录
-  recordings                    MeetingRecording[] // 关联的录制
-  summaries                     MeetingSummary[] // 关联的总结记录
-  recordingParticipantSummaries RecordingParticipantSummary[] @relation("MeetingRecordingParticipantSummaries")
-  userActions                   MeetingUserAction[]           @relation("MeetingUserActions") // 用户操作记录
+  participants               MeetingParticipant[] // 参会记录
+  minutes                    Minute[] // 关联的妙记(录制)
+  minuteSummaries            MinuteSummary[] // 关联的总结记录
+  minuteParticipantSummaries MinuteParticipantSummary[] @relation("MeetingMinuteParticipantSummaries")
+  userActions                MeetingUserAction[]        @relation("MeetingUserActions") // 用户操作记录
 
   // 系统字段及时间
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -54,8 +49,6 @@ model Meeting {
   @@index([platform])
   @@index([startAt])
   @@index([endAt])
-  @@index([recordingStatus])
-  @@index([processingStatus])
   @@index([tags])
   @@index([deletedAt]) // 软删除查询索引
   @@index([createdAt]) // 创建时间查询优化

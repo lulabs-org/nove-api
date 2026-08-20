@@ -1,24 +1,28 @@
-model MeetingRecording {
+model Minute {
   id         String  @id @default(cuid())
   externalId String? @map("external_id") @db.VarChar(100) // 外部系统录制ID，用于唯一标识
 
   source RecordingSource @default(PLATFORM_AUTO)
   status RecordingStatus @default(RECORDING)
 
+  // 处理状态
+  processingStatus ProcessingStatus @default(PENDING) @map("processing_status")
+  hasRecording     Boolean          @default(true) @map("has_recording")
+
   // 元数据
   metadata Json @default("{}") @db.JsonB
 
-  meetingId String  @map("meeting_id")
-  meeting   Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  meetingId String?  @map("meeting_id")
+  meeting   Meeting? @relation(fields: [meetingId], references: [id], onDelete: SetNull)
 
   // 关联字段
   recorderUserId String?       @map("recorder_user_id")
   recorderUser   PlatformUser? @relation("RecordingUser", fields: [recorderUserId], references: [id], onDelete: SetNull)
 
-  files                MeetingRecordingFile[]
+  files                MinuteFile[]
   transcripts          Transcript[]
-  summaries            MeetingSummary[]
-  participantSummaries RecordingParticipantSummary[] @relation("RecordingParticipantSummaries")
+  summaries            MinuteSummary[]
+  participantSummaries MinuteParticipantSummary[] @relation("MinuteParticipantSummaries")
 
   // 系统字段及时间字段
   startAt   DateTime? @map("start_at") @db.Timestamptz(6)
@@ -27,8 +31,8 @@ model MeetingRecording {
   updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6) // 软删除时间戳
 
-  @@index([meetingId], map: "idx_recordings_meeting")
-  @@map("meet_recordings")
+  @@index([meetingId], map: "idx_minutes_meeting")
+  @@map("minutes")
 }
 
 // 录制来源枚举

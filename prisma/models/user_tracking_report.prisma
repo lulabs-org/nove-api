@@ -36,18 +36,18 @@ model UserTrackingReport {
   aiModel             String?            @map("ai_model")
   confidence          Float?
 
-  versionGroupKey         String                                 @map("version_group_key") @db.VarChar(700)
-  version                 Int                                    @default(1)
-  isLatest                Boolean                                @default(true) @map("is_latest")
-  previousReportId        String?                                @map("previous_report_id")
-  previousReport          UserTrackingReport?                    @relation("UserTrackingReportVersions", fields: [previousReportId], references: [id], onDelete: SetNull)
-  nextVersions            UserTrackingReport[]                   @relation("UserTrackingReportVersions")
-  recordingSummarySources TrackingReportRecordingSummarySource[]
-  sourceReports           TrackingReportSourceReport[]           @relation("DerivedTrackingReport")
-  derivedReports          TrackingReportSourceReport[]           @relation("SourceTrackingReport")
-  createdAt               DateTime                               @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt               DateTime                               @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt               DateTime?                              @map("deleted_at") @db.Timestamptz(6)
+  versionGroupKey      String                              @map("version_group_key") @db.VarChar(700)
+  version              Int                                 @default(1)
+  isLatest             Boolean                             @default(true) @map("is_latest")
+  previousReportId     String?                             @map("previous_report_id")
+  previousReport       UserTrackingReport?                 @relation("UserTrackingReportVersions", fields: [previousReportId], references: [id], onDelete: SetNull)
+  nextVersions         UserTrackingReport[]                @relation("UserTrackingReportVersions")
+  minuteSummarySources TrackingReportMinuteSummarySource[]
+  sourceReports        TrackingReportSourceReport[]        @relation("DerivedTrackingReport")
+  derivedReports       TrackingReportSourceReport[]        @relation("SourceTrackingReport")
+  createdAt            DateTime                            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime                            @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt            DateTime?                           @map("deleted_at") @db.Timestamptz(6)
 
   @@unique([versionGroupKey, version], map: "uq_user_tracking_report_version")
   @@index([subjectUserId, trackingType, periodStart])
@@ -58,18 +58,18 @@ model UserTrackingReport {
   @@map("user_tracking_reports")
 }
 
-model TrackingReportRecordingSummarySource {
-  id                 String                      @id @default(cuid())
-  reportId           String                      @map("report_id")
-  report             UserTrackingReport          @relation(fields: [reportId], references: [id], onDelete: Cascade)
-  recordingSummaryId String                      @map("recording_summary_id")
-  recordingSummary   RecordingParticipantSummary @relation(fields: [recordingSummaryId], references: [id], onDelete: Cascade)
-  metadata           Json                        @default("{}") @db.JsonB
-  createdAt          DateTime                    @default(now()) @map("created_at") @db.Timestamptz(6)
+model TrackingReportMinuteSummarySource {
+  id              String                   @id @default(cuid())
+  reportId        String                   @map("report_id")
+  report          UserTrackingReport       @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  minuteSummaryId String                   @map("minute_summary_id")
+  minuteSummary   MinuteParticipantSummary @relation(fields: [minuteSummaryId], references: [id], onDelete: Cascade)
+  metadata        Json                     @default("{}") @db.JsonB
+  createdAt       DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  @@unique([reportId, recordingSummaryId])
-  @@index([recordingSummaryId])
-  @@map("tracking_report_recording_summary_sources")
+  @@unique([reportId, minuteSummaryId])
+  @@index([minuteSummaryId])
+  @@map("tracking_report_minute_summary_sources")
 }
 
 model TrackingReportSourceReport {

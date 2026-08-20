@@ -5,10 +5,10 @@ model Transcript {
   language   String  @default("zh-CN")
   status     Int     @default(0) @db.SmallInt
 
-  recordingId String?             @map("recording_id")
-  recording   MeetingRecording?   @relation(fields: [recordingId], references: [id], onDelete: Cascade)
-  summaries   MeetingSummary[]
-  segments    TranscriptSegment[]
+  minuteId  String?             @map("minute_id")
+  minute    Minute?             @relation(fields: [minuteId], references: [id], onDelete: Cascade)
+  summaries MinuteSummary[]
+  segments  TranscriptSegment[]
 
   // 时间及系统字段
   startedAt  DateTime? @map("started_at") @db.Timestamptz(6)
@@ -19,7 +19,7 @@ model Transcript {
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
 
   @@index([createdAt])
-  @@index([recordingId])
+  @@index([minuteId])
   @@map("transcripts")
 }
 
