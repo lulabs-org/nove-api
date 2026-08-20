@@ -23,3 +23,4 @@ export * from './transcripts';
 export * from './orders';
 export * from './refunds';
 export * from './relations';
+export * from './minutes';

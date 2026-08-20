@@ -3,7 +3,7 @@
  * @Date: 2026-01-11 05:21:40
  * @LastEditors: 杨仕明 shiming.y@qq.com
  * @LastEditTime: 2026-01-12 11:38:15
- * @FilePath: /nove_api/prisma/seeds/mock/meetings/minute-summaries/minute-summaries.ts
+ * @FilePath: /nove_api/prisma/seeds/mock/minutes/minute-summaries/minute-summaries.ts
  * @Description:
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
