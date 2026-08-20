@@ -1,0 +1,28 @@
+model MeetingRecordingFile {
+  id String @id @default(cuid())
+
+  fileType   RecordingFileType @default(VIDEO) @map("file_type")
+  durationMs BigInt?           @map("duration_ms")
+  resolution String?
+
+  recordingId  String           @map("recording_id")
+  recording    MeetingRecording @relation(fields: [recordingId], references: [id], onDelete: Cascade)
+  fileObjectId String           @map("file_object_id") @db.Uuid
+  object       StorageObject    @relation(fields: [fileObjectId], references: [id], onDelete: Restrict)
+
+  // 系统字段及时间
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6) // 软删除时间戳
+
+  @@index([recordingId], map: "idx_recording_files_recording")
+  @@map("meet_recording_files")
+}
+
+// 录制文件类型枚举
+enum RecordingFileType {
+  VIDEO // 视频
+  AUDIO // 音频
+  TRANSCRIPT // 转录文本
+  CHAT // 聊天记录
+}
