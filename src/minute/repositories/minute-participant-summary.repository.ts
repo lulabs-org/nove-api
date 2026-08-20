@@ -11,34 +11,30 @@ export class MinuteParticipantSummaryRepository {
     return `recording:${minuteId}:user:${platformUserId}`;
   }
 
-  async findById(meetingId: string, minuteId: string, id: string) {
+  async findById(minuteId: string, id: string) {
     return this.prisma.minuteParticipantSummary.findFirst({
       where: {
         id,
-        meetingId,
         minuteId,
         deletedAt: null,
       },
     });
   }
 
-  async recordingBelongsToMeeting(meetingId: string, minuteId: string) {
-    return Boolean(
-      await this.prisma.minute.findFirst({
-        where: { id: minuteId, meetingId, deletedAt: null },
-        select: { id: true },
-      }),
-    );
+  async getMeetingIdByMinuteId(minuteId: string): Promise<string | null> {
+    const minute = await this.prisma.minute.findFirst({
+      where: { id: minuteId, deletedAt: null },
+      select: { meetingId: true },
+    });
+    return minute?.meetingId || null;
   }
 
   async findMany(
-    meetingId: string,
     minuteId: string,
     skip: number,
     take: number,
   ) {
     const where: Prisma.MinuteParticipantSummaryWhereInput = {
-      meetingId,
       minuteId,
       isLatest: true,
       deletedAt: null,
@@ -96,14 +92,13 @@ export class MinuteParticipantSummaryRepository {
     );
   }
 
-  async softDelete(meetingId: string, minuteId: string, id: string) {
+  async softDelete(minuteId: string, id: string) {
     return retryVersionTransaction(() =>
       this.prisma.$transaction(
         async (tx) => {
           const current = await tx.minuteParticipantSummary.findFirstOrThrow({
             where: {
               id,
-              meetingId,
               minuteId,
               deletedAt: null,
             },

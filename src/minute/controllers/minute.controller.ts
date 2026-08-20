@@ -36,7 +36,7 @@ import {
 import { MinuteSummaryDto } from '../dto/minute-summary.dto';
 
 @ApiTags('Minute')
-@Controller('recordings')
+@Controller('minutes')
 @ApiBearerAuth()
 export class MinuteController {
   private readonly logger = new Logger(MinuteController.name);

@@ -74,12 +74,14 @@ export class MinuteSummaryRepository {
     }
   }
 
-  async findByMeetingId(meetingId: string) {
+  async findByMinuteId(minuteId: string) {
     return this.prisma.minuteSummary.findFirst({
       where: {
-        meetingId,
+        minuteId,
         isLatest: true,
+        deletedAt: null,
       },
+      orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
     });
   }
 
@@ -157,13 +159,13 @@ export class MinuteSummaryRepository {
     });
   }
 
-  async findMany(meetingId: string, skip: number, take: number) {
+  async findMany(minuteId: string, skip: number, take: number) {
     const [total, records] = await this.prisma.$transaction([
       this.prisma.minuteSummary.count({
-        where: { meetingId, deletedAt: null },
+        where: { minuteId, deletedAt: null },
       }),
       this.prisma.minuteSummary.findMany({
-        where: { meetingId, deletedAt: null },
+        where: { minuteId, deletedAt: null },
         skip,
         take,
         orderBy: { createdAt: 'desc' },

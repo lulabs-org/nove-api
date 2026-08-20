@@ -10,8 +10,8 @@ import {
 export class MinuteParticipantSummaryCrudService {
   constructor(private readonly summaries: MinuteParticipantSummaryRepository) {}
 
-  async findById(meetingId: string, minuteId: string, id: string) {
-    const summary = await this.summaries.findById(meetingId, minuteId, id);
+  async findById(minuteId: string, id: string) {
+    const summary = await this.summaries.findById(minuteId, id);
     if (!summary)
       throw new NotFoundException(
         `Recording participant summary ${id} not found`,
@@ -19,9 +19,8 @@ export class MinuteParticipantSummaryCrudService {
     return summary;
   }
 
-  async findMany(meetingId: string, minuteId: string, page = 1, limit = 20) {
+  async findMany(minuteId: string, page = 1, limit = 20) {
     const result = await this.summaries.findMany(
-      meetingId,
       minuteId,
       (page - 1) * limit,
       limit,
@@ -36,16 +35,12 @@ export class MinuteParticipantSummaryCrudService {
   }
 
   async create(
-    meetingId: string,
     minuteId: string,
     data: CreateMinuteParticipantSummaryDto,
   ) {
-    if (
-      !(await this.summaries.recordingBelongsToMeeting(meetingId, minuteId))
-    ) {
-      throw new NotFoundException(
-        `Recording ${minuteId} not found in meeting ${meetingId}`,
-      );
+    const meetingId = await this.summaries.getMeetingIdByMinuteId(minuteId);
+    if (!meetingId) {
+      throw new NotFoundException(`Recording ${minuteId} not found`);
     }
     return this.summaries.saveNewVersion({
       ...data,
@@ -56,14 +51,13 @@ export class MinuteParticipantSummaryCrudService {
   }
 
   async update(
-    meetingId: string,
     minuteId: string,
     id: string,
     data: UpdateMinuteParticipantSummaryDto,
   ) {
-    const current = await this.findById(meetingId, minuteId, id);
+    const current = await this.findById(minuteId, id);
     return this.summaries.saveNewVersion({
-      meetingId,
+      meetingId: current.meetingId,
       minuteId: minuteId,
       platformUserId: current.platformUserId,
       userName: data.userName ?? current.userName,
@@ -76,9 +70,9 @@ export class MinuteParticipantSummaryCrudService {
     });
   }
 
-  async delete(meetingId: string, minuteId: string, id: string) {
-    await this.findById(meetingId, minuteId, id);
-    const data = await this.summaries.softDelete(meetingId, minuteId, id);
+  async delete(minuteId: string, id: string) {
+    await this.findById(minuteId, id);
+    const data = await this.summaries.softDelete(minuteId, id);
     return { success: true, data };
   }
 }

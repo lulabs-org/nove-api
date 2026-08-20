@@ -35,7 +35,7 @@ import {
 
 @ApiTags('Minute Participant Summary')
 @ApiBearerAuth()
-@Controller('meetings/:meetingId/minutes/:minuteId/participant-summaries')
+@Controller('minutes/:minuteId/participant-summaries')
 export class MinuteParticipantSummaryController {
   constructor(
     private readonly service: MinuteParticipantSummaryCrudService,
@@ -49,23 +49,21 @@ export class MinuteParticipantSummaryController {
     type: MinuteParticipantSummaryListResponseDto,
   })
   list(
-    @Param('meetingId', CuidPipe) meetingId: string,
     @Param('minuteId', CuidPipe) minuteId: string,
     @Query(new ValidationPipe({ transform: true }))
     query: QueryMinuteParticipantSummaryDto,
   ) {
-    return this.service.findMany(meetingId, minuteId, query.page, query.limit);
+    return this.service.findMany(minuteId, query.page, query.limit);
   }
 
   @Get(':id')
   @RequirePermissions('minute:read')
   @ApiResponse({ status: HttpStatus.OK, type: MinuteParticipantSummaryDto })
   get(
-    @Param('meetingId', CuidPipe) meetingId: string,
     @Param('minuteId', CuidPipe) minuteId: string,
     @Param('id', CuidPipe) id: string,
   ) {
-    return this.service.findById(meetingId, minuteId, id);
+    return this.service.findById(minuteId, id);
   }
 
   @Post()
@@ -73,32 +71,29 @@ export class MinuteParticipantSummaryController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '为录制中的参会者创建新总结版本' })
   create(
-    @Param('meetingId', CuidPipe) meetingId: string,
     @Param('minuteId', CuidPipe) minuteId: string,
     @Body(new ValidationPipe()) dto: CreateMinuteParticipantSummaryDto,
   ) {
-    return this.service.create(meetingId, minuteId, dto);
+    return this.service.create(minuteId, dto);
   }
 
   @Put(':id')
   @RequirePermissions('minute:update')
   update(
-    @Param('meetingId', CuidPipe) meetingId: string,
     @Param('minuteId', CuidPipe) minuteId: string,
     @Param('id', CuidPipe) id: string,
     @Body(new ValidationPipe()) dto: UpdateMinuteParticipantSummaryDto,
   ) {
-    return this.service.update(meetingId, minuteId, id, dto);
+    return this.service.update(minuteId, id, dto);
   }
 
   @Delete(':id')
   @RequirePermissions('minute:delete')
   delete(
-    @Param('meetingId', CuidPipe) meetingId: string,
     @Param('minuteId', CuidPipe) minuteId: string,
     @Param('id', CuidPipe) id: string,
   ) {
-    return this.service.delete(meetingId, minuteId, id);
+    return this.service.delete(minuteId, id);
   }
 
   @Post('generate')
@@ -106,7 +101,6 @@ export class MinuteParticipantSummaryController {
   @NoPermissionRequired()
   @ApiOperation({ summary: '生成参会者总结' })
   async generateSummaries(
-    @Param('meetingId', CuidPipe) meetingId: string,
     @Param('minuteId') minuteId: string,
     @Body() dto: GenerateParticipantSummaryDto,
   ) {

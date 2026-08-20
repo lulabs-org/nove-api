@@ -17,11 +17,11 @@ export class MinuteSummaryService {
     return this.meetingSummaryRepository.upsert(data);
   }
 
-  async getByMeetingId(meetingId: string) {
+  async getByMinuteId(minuteId: string) {
     const summary =
-      await this.meetingSummaryRepository.findByMeetingId(meetingId);
+      await this.meetingSummaryRepository.findByMinuteId(minuteId);
     if (!summary) {
-      throw new MinuteSummaryNotFoundException(meetingId);
+      throw new MinuteSummaryNotFoundException(minuteId);
     }
     return summary;
   }
@@ -34,10 +34,10 @@ export class MinuteSummaryService {
     return summary;
   }
 
-  async findMany(meetingId: string, page: number = 1, limit: number = 10) {
+  async findMany(minuteId: string, page: number = 1, limit: number = 10) {
     const skip = (page - 1) * limit;
     const { total, records } = await this.meetingSummaryRepository.findMany(
-      meetingId,
+      minuteId,
       skip,
       limit,
     );
@@ -50,10 +50,10 @@ export class MinuteSummaryService {
     };
   }
 
-  async create(meetingId: string, data: CreateMinuteSummaryDto) {
+  async create(minuteId: string, data: CreateMinuteSummaryDto) {
     return this.meetingSummaryRepository.create({
-      meetingId,
       ...data,
+      minuteId,
     });
   }
 
