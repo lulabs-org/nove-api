@@ -7,7 +7,7 @@ import {
 import { PARTICIPANT_SUMMARY_CONFIGS } from './config';
 import type { ParticipantSummary } from './type';
 
-export async function createParticipantSummaries(
+export async function createMinuteParticipantSummaries(
   prisma: PrismaClient,
   meetings: { meetings: Array<{ meeting: { id: string } }> },
   minute: { id: string },

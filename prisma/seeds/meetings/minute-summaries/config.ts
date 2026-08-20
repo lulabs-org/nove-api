@@ -3,7 +3,7 @@
  * @Date: 2026-01-12 03:36:20
  * @LastEditors: 杨仕明 shiming.y@qq.com
  * @LastEditTime: 2026-01-12 11:38:22
- * @FilePath: /nove_api/prisma/seeds/mock/meetings/summaries/config.ts
+ * @FilePath: /nove_api/prisma/seeds/mock/meetings/minute-summaries/config.ts
  * @Description:
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
@@ -11,7 +11,7 @@
 import { ProcessingStatus, GenerationMethod } from '@prisma/client';
 import type { MinuteSummaryConfig } from './type';
 
-export const MEETING_SUMMARY_CONFIGS: {
+export const MINUTE_SUMMARY_CONFIGS: {
   teamSummary: MinuteSummaryConfig;
 } = {
   teamSummary: {

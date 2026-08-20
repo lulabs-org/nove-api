@@ -3,16 +3,16 @@
  * @Date: 2026-01-11 05:21:40
  * @LastEditors: 杨仕明 shiming.y@qq.com
  * @LastEditTime: 2026-01-12 11:38:15
- * @FilePath: /nove_api/prisma/seeds/mock/meetings/summaries/summaries.ts
+ * @FilePath: /nove_api/prisma/seeds/mock/meetings/minute-summaries/minute-summaries.ts
  * @Description:
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 import { PrismaClient, ProcessingStatus, Prisma } from '@prisma/client';
-import { MEETING_SUMMARY_CONFIGS } from './config';
+import { MINUTE_SUMMARY_CONFIGS } from './config';
 import type { CreatedMinuteSummaries } from './type';
 
-export async function createMeetingSummary(
+export async function createMinuteSummary(
   prisma: PrismaClient,
   meetings: {
     meetings: Array<{
@@ -31,7 +31,7 @@ export async function createMeetingSummary(
     data: {
       meetingId: meetings.meetings[1].meeting.id,
       minuteId: minute.id,
-      ...MEETING_SUMMARY_CONFIGS.teamSummary,
+      ...MINUTE_SUMMARY_CONFIGS.teamSummary,
       createdId: platformUsers.platformUsers[1].platformUser.id,
       processingTime: 30000,
       status: ProcessingStatus.COMPLETED,

@@ -1,4 +1,4 @@
 export * from './meetings';
-export * from './recordings';
-export * from './summaries';
-export * from './participant-summaries';
+export * from './minutes';
+export * from './minute-summaries';
+export * from './minute-participant-summaries';
