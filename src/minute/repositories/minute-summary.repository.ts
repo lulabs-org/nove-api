@@ -73,27 +73,6 @@ export class MinuteSummaryRepository {
     }
   }
 
-  async findByMinuteId(minuteId: string) {
-    return this.prisma.minuteSummary.findFirst({
-      where: {
-        minuteId,
-        isLatest: true,
-        deletedAt: null,
-      },
-      orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
-    });
-  }
-
-  async findByRecordingId(minuteId: string) {
-    return this.prisma.minuteSummary.findFirst({
-      where: {
-        minuteId,
-        isLatest: true,
-        deletedAt: null,
-      },
-      orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
-    });
-  }
 
   async createExternalForRecording(
     minuteId: string,

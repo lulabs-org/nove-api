@@ -4,23 +4,6 @@ import { PrismaService } from '@/prisma/prisma.service';
 import { MinuteSummaryRepository } from './minute-summary.repository';
 
 describe('MinuteSummaryRepository', () => {
-  it('only returns the latest non-deleted recording summary', async () => {
-    const findFirst = jest.fn().mockResolvedValue({ id: 'summary-1' });
-    const repository = new MinuteSummaryRepository({
-      minuteSummary: { findFirst },
-    } as unknown as PrismaService);
-
-    await repository.findByRecordingId('recording-1');
-
-    expect(findFirst).toHaveBeenCalledWith({
-      where: {
-        minuteId: 'recording-1',
-        isLatest: true,
-        deletedAt: null,
-      },
-      orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
-    });
-  });
 
   it('creates a new latest version from externally generated content', async () => {
     const previous = { id: 'summary-1', version: 2 };

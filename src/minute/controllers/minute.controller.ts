@@ -32,9 +32,7 @@ import {
   MinuteListResponseDto,
   MinuteDto,
   MinuteDeleteResponseDto,
-  CreateRecordingSummaryDto,
 } from '../dto/minute.dto';
-import { MinuteSummaryDto } from '../dto/minute-summary.dto';
 
 @ApiTags('Minute')
 @Controller('minutes')
@@ -45,10 +43,10 @@ export class MinuteController {
   constructor(
     private readonly recordingService: MinuteService,
     private readonly transcriptService: TranscriptService,
-  ) {}
+  ) { }
 
   /**
-   * 创建录制
+   * 创建录制记录
    */
   @Post()
   @RequirePermissions('minute:create')
@@ -154,42 +152,6 @@ export class MinuteController {
     }
   }
 
-  /**
-   * 获取录制总结
-   */
-  @Get(':id/summary')
-  @RequirePermissions('minute:read')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: '获取录制总结' })
-  @ApiParam({ name: 'id', description: '录制记录ID', type: 'string' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: '获取成功',
-    type: MinuteSummaryDto,
-  })
-  async getRecordingSummary(@Param('id', CuidPipe) id: string) {
-    return this.recordingService.getSummary(id);
-  }
-
-  /**
-   * 写入录制总结
-   */
-  @Post(':id/summary')
-  @RequirePermissions('minute:create')
-  @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: '写入录制总结' })
-  @ApiParam({ name: 'id', description: '录制记录ID', type: 'string' })
-  @ApiResponse({
-    status: HttpStatus.CREATED,
-    description: '创建成功',
-    type: MinuteSummaryDto,
-  })
-  async createRecordingSummary(
-    @Param('id', CuidPipe) id: string,
-    @Body(new ValidationPipe()) createParams: CreateRecordingSummaryDto,
-  ) {
-    return this.recordingService.createSummary(id, createParams);
-  }
 
   /**
    * 更新录制记录

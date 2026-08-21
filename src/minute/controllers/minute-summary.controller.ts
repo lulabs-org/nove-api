@@ -64,8 +64,8 @@ export class MinuteSummaryController {
     @Param('minuteId', CuidPipe) minuteId: string,
     @Param('id', CuidPipe) id: string,
   ) {
-    this.logger.log(`获取会议总结详情: ${id}`);
-    return this.meetingSummaryService.findById(id);
+    this.logger.log(`获取会议总结详情: minuteId=${minuteId}, id=${id}`);
+    return this.meetingSummaryService.findById(minuteId, id);
   }
 
   @Post()
@@ -91,8 +91,8 @@ export class MinuteSummaryController {
     @Param('id', CuidPipe) id: string,
     @Body(new ValidationPipe()) updateParams: UpdateMinuteSummaryDto,
   ) {
-    this.logger.log(`更新会议总结: ${id}`);
-    return this.meetingSummaryService.update(id, updateParams);
+    this.logger.log(`更新会议总结: minuteId=${minuteId}, id=${id}`);
+    return this.meetingSummaryService.update(minuteId, id, updateParams);
   }
 
   @Delete(':id')
@@ -104,7 +104,7 @@ export class MinuteSummaryController {
     @Param('minuteId', CuidPipe) minuteId: string,
     @Param('id', CuidPipe) id: string,
   ) {
-    this.logger.log(`删除会议总结: ${id}`);
-    return this.meetingSummaryService.delete(id);
+    this.logger.log(`删除会议总结: minuteId=${minuteId}, id=${id}`);
+    return this.meetingSummaryService.delete(minuteId, id);
   }
 }
