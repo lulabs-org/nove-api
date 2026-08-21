@@ -5,10 +5,9 @@ model Transcript {
   language   String  @default("zh-CN")
   status     Int     @default(0) @db.SmallInt
 
-  minuteId  String?             @map("minute_id")
-  minute    Minute?             @relation(fields: [minuteId], references: [id], onDelete: Cascade)
-  summaries MinuteSummary[]
-  segments  TranscriptSegment[]
+  minuteId String?             @map("minute_id")
+  minute   Minute?             @relation(fields: [minuteId], references: [id], onDelete: Cascade)
+  segments TranscriptSegment[]
 
   // 时间及系统字段
   startedAt  DateTime? @map("started_at") @db.Timestamptz(6)
