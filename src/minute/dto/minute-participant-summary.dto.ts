@@ -14,7 +14,6 @@ export class CreateMinuteParticipantSummaryDto {
   @IsString()
   platformUserId: string;
 
-
   @ApiProperty({ description: '总结正文' })
   @IsString()
   partSummary: string;
@@ -27,7 +26,6 @@ export class CreateMinuteParticipantSummaryDto {
 }
 
 export class UpdateMinuteParticipantSummaryDto {
-
   @ApiPropertyOptional() @IsOptional() @IsString() partSummary?: string;
   @ApiPropertyOptional({ type: [String] })
   @IsOptional()

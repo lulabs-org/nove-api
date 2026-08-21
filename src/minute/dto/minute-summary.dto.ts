@@ -121,7 +121,6 @@ export class MinuteSummaryDto {
   @ApiPropertyOptional({ description: '决策记录' })
   decisions?: any;
 
-
   @ApiPropertyOptional({ description: '会议金句' })
   goldenQuotes?: any;
 
