@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
-import { PrismaClient, ProcessingStatus, Prisma } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { MINUTE_SUMMARY_CONFIGS } from './config';
 import type { CreatedMinuteSummaries } from './type';
 
