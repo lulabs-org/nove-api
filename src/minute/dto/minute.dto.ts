@@ -111,21 +111,6 @@ export class CreateRecordingSummaryDto extends CreateMinuteSummaryDto {
   @IsNotEmpty()
   aiModel?: string;
 
-  @ApiPropertyOptional({ description: '总结语言', default: 'zh-CN' })
-  @IsOptional()
-  @IsString()
-  @IsNotEmpty()
-  language?: string;
-
-  @ApiPropertyOptional({
-    description: '外部 AI 处理耗时（毫秒）',
-    minimum: 0,
-  })
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  processingTime?: number;
-
   @ApiPropertyOptional({ description: '参与者总结' })
   @IsOptional()
   @IsArray()
@@ -135,17 +120,6 @@ export class CreateRecordingSummaryDto extends CreateMinuteSummaryDto {
   @IsOptional()
   @IsArray()
   goldenQuotes?: Record<string, unknown>[];
-
-  @ApiPropertyOptional({
-    description: '外部 AI 返回的置信度',
-    minimum: 0,
-    maximum: 1,
-  })
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  @Max(1)
-  confidence?: number;
 }
 
 export class MinuteDto {

@@ -15,10 +15,6 @@ export class CreateMinuteSummaryDto {
   @ApiProperty({ description: '关联的录制ID' })
   @IsString()
   minuteId: string;
-  @ApiPropertyOptional({ description: '总结标题' })
-  @IsOptional()
-  @IsString()
-  title?: string;
 
   @ApiProperty({ description: '总结内容' })
   @IsString()
@@ -56,12 +52,7 @@ export class CreateMinuteSummaryDto {
   metadata?: any;
 }
 
-export class UpdateMinuteSummaryDto extends CreateMinuteSummaryDto {
-  @ApiPropertyOptional({ description: '处理状态', enum: ProcessingStatus })
-  @IsOptional()
-  @IsEnum(ProcessingStatus)
-  status?: ProcessingStatus;
-}
+export class UpdateMinuteSummaryDto extends CreateMinuteSummaryDto {}
 
 export class QueryMinuteSummaryDto {
   @ApiPropertyOptional({
@@ -91,20 +82,11 @@ export class QueryMinuteSummaryDto {
     return value as unknown;
   })
   isLatest?: boolean;
-
-  @ApiPropertyOptional({ description: '状态', enum: ProcessingStatus })
-  @IsOptional()
-  @Transform(({ value }) => (value === '' ? undefined : (value as string)))
-  @IsEnum(ProcessingStatus)
-  status?: ProcessingStatus;
 }
 
 export class MinuteSummaryDto {
   @ApiProperty({ description: '总结ID' })
   id: string;
-
-  @ApiPropertyOptional({ description: '总结标题' })
-  title?: string;
 
   @ApiProperty({ description: '总结内容' })
   content: string;
@@ -130,9 +112,6 @@ export class MinuteSummaryDto {
   @ApiPropertyOptional({ description: '元数据' })
   metadata?: any;
 
-  @ApiPropertyOptional({ description: '状态', enum: ProcessingStatus })
-  status?: ProcessingStatus;
-
   @ApiPropertyOptional({ description: '录制ID' })
   minuteId?: string;
 
@@ -142,20 +121,11 @@ export class MinuteSummaryDto {
   @ApiPropertyOptional({ description: '生成方式', enum: GenerationMethod })
   generatedBy?: GenerationMethod;
 
-  @ApiPropertyOptional({ description: '置信度' })
-  confidence?: number;
-
-  @ApiPropertyOptional({ description: '总结语言' })
-  language?: string;
-
   @ApiProperty({ description: '版本号' })
   version: number;
 
   @ApiProperty({ description: '是否为最新版本' })
   isLatest: boolean;
-
-  @ApiPropertyOptional({ description: '处理耗时（毫秒）' })
-  processingTime?: number;
 
   @ApiProperty({ description: '创建时间' })
   createdAt: Date;

@@ -48,7 +48,7 @@ export class MinuteSummaryController {
     query: QueryMinuteSummaryDto,
   ) {
     this.logger.log(`获取会议纪要总结列表: ${minuteId}`, { query });
-    return this.minuteSummaryService.findMany(
+    return this.minuteSummaryService.findVersionsByMinuteId(
       minuteId,
       query.page,
       query.limit,

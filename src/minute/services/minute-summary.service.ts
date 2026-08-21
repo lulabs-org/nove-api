@@ -14,8 +14,8 @@ export class MinuteSummaryService {
     private readonly meetingSummaryRepository: MinuteSummaryRepository,
   ) {}
 
-  async upsert(data: Prisma.MinuteSummaryUncheckedCreateInput) {
-    return this.meetingSummaryRepository.upsert(data);
+  async updateCurrentVersion(data: Prisma.MinuteSummaryUncheckedCreateInput) {
+    return this.meetingSummaryRepository.updateCurrentVersion(data);
   }
 
   async findById(minuteId: string, id: string) {
@@ -26,13 +26,18 @@ export class MinuteSummaryService {
     return summary;
   }
 
-  async findMany(minuteId: string, page: number = 1, limit: number = 10) {
+  async findVersionsByMinuteId(
+    minuteId: string,
+    page: number = 1,
+    limit: number = 10,
+  ) {
     const skip = (page - 1) * limit;
-    const { total, records } = await this.meetingSummaryRepository.findMany(
-      minuteId,
-      skip,
-      limit,
-    );
+    const { total, records } =
+      await this.meetingSummaryRepository.findVersionsByMinuteId(
+        minuteId,
+        skip,
+        limit,
+      );
     return {
       data: records,
       total,
@@ -45,7 +50,7 @@ export class MinuteSummaryService {
   async create(minuteId: string, data: CreateMinuteSummaryDto) {
     // 迁移原 POST /minutes/:id/summary 的多版本管理逻辑
     // 确保旧的 isLatest 为 false，新总结版本号递增
-    return this.meetingSummaryRepository.createExternalForRecording(
+    return this.meetingSummaryRepository.saveNewVersion(
       minuteId,
       data as unknown as CreateRecordingSummaryDto,
     );

@@ -97,13 +97,12 @@ export class TranscriptRepository {
   async findByRecordingId(minuteId: string) {
     return this.prisma.transcript.findFirst({
       where: { minuteId },
-      omit: { deletedAt: true },
     });
   }
 
   async findDetails(minuteId: string) {
     return this.prisma.transcript.findFirst({
-      where: { minuteId, deletedAt: null },
+      where: { minuteId },
       include: {
         segments: {
           orderBy: {
@@ -114,14 +113,12 @@ export class TranscriptRepository {
           },
         },
       },
-      omit: { deletedAt: true },
     });
   }
 
   async findBySource(source: string) {
     return this.prisma.transcript.findFirst({
       where: { source },
-      omit: { deletedAt: true },
     });
   }
 

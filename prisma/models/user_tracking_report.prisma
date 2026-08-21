@@ -34,7 +34,6 @@ model UserTrackingReport {
   schemaVersion       Int                @default(1) @map("schema_version")
   generatedBy         GenerationMethod?  @map("generated_by")
   aiModel             String?            @map("ai_model")
-  confidence          Float?
 
   versionGroupKey      String                              @map("version_group_key") @db.VarChar(700)
   version              Int                                 @default(1)

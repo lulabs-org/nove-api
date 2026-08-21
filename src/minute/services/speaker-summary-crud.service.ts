@@ -55,7 +55,7 @@ export class SpeakerSummaryCrudService {
 
   async delete(minuteId: string, id: string) {
     await this.findById(minuteId, id);
-    const data = await this.summaries.softDelete(minuteId, id);
+    const data = await this.summaries.delete(minuteId, id);
     return { success: true, data };
   }
 }

@@ -22,7 +22,7 @@ export class TencentMtgSummaryCoreService {
     aiMinutes?: string,
     actionItems?: string,
   ) {
-    return await this.meetingSummaryService.upsert({
+    return await this.meetingSummaryService.updateCurrentVersion({
       minuteId,
       content: fullSummary || '',
       aiMinutes: aiMinutes ? { content: aiMinutes } : undefined,
@@ -57,7 +57,7 @@ export class TencentMtgSummaryCoreService {
       return;
     }
 
-    await this.meetingSummaryService.upsert({
+    await this.meetingSummaryService.updateCurrentVersion({
       minuteId: minuteId,
       content: content.fullSummary || '',
       aiMinutes: content.aiMinutes ? { content: content.aiMinutes } : undefined,

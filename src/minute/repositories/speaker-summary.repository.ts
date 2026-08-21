@@ -12,7 +12,6 @@ export class SpeakerSummaryRepository {
       where: {
         id,
         minuteId,
-        deletedAt: null,
       },
     });
   }
@@ -29,7 +28,6 @@ export class SpeakerSummaryRepository {
     const where: Prisma.SpeakerSummaryWhereInput = {
       minuteId,
       isLatest: true,
-      deletedAt: null,
     };
     const [total, records] = await this.prisma.$transaction([
       this.prisma.speakerSummary.count({ where }),
@@ -57,7 +55,6 @@ export class SpeakerSummaryRepository {
               minuteId: params.minuteId,
               platformUserId: params.platformUserId,
               isLatest: true,
-              deletedAt: null,
             },
             orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
           });
@@ -83,7 +80,7 @@ export class SpeakerSummaryRepository {
     );
   }
 
-  async softDelete(minuteId: string, id: string) {
+  async delete(minuteId: string, id: string) {
     return retryVersionTransaction(() =>
       this.prisma.$transaction(
         async (tx) => {
@@ -91,19 +88,16 @@ export class SpeakerSummaryRepository {
             where: {
               id,
               minuteId,
-              deletedAt: null,
             },
           });
-          await tx.speakerSummary.update({
+          await tx.speakerSummary.delete({
             where: { id },
-            data: { deletedAt: new Date(), isLatest: false },
           });
           if (current.isLatest) {
             const predecessor = await tx.speakerSummary.findFirst({
               where: {
                 minuteId: current.minuteId,
                 platformUserId: current.platformUserId,
-                deletedAt: null,
               },
               orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
             });
@@ -131,7 +125,6 @@ export class SpeakerSummaryRepository {
           ? { in: platformUserIds }
           : undefined,
         isLatest: true,
-        deletedAt: null,
         createdAt: { gte: range.periodStart, lte: range.periodEnd },
       },
       include: {
@@ -161,7 +154,7 @@ export class SpeakerSummaryRepository {
           },
         },
         summaries: {
-          where: { isLatest: true, deletedAt: null },
+          where: { isLatest: true },
           orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
           take: 1,
           select: {
@@ -174,12 +167,10 @@ export class SpeakerSummaryRepository {
           },
         },
         transcripts: {
-          where: { deletedAt: null },
           orderBy: { createdAt: 'desc' },
           take: 1,
           select: {
             segments: {
-              where: { deletedAt: null },
               orderBy: { startTimeMs: 'asc' },
               select: {
                 startTimeMs: true,
@@ -203,7 +194,6 @@ export class SpeakerSummaryRepository {
       where: {
         platformUserId: { in: params.platformUserIds },
         isLatest: true,
-        deletedAt: null,
         createdAt: { gte: params.startDate, lte: params.endDate },
       },
       include: {
