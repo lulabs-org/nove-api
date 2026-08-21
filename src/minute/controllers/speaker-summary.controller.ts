@@ -40,7 +40,7 @@ export class SpeakerSummaryController {
   constructor(
     private readonly service: SpeakerSummaryCrudService,
     private readonly aiService: SpeakerSummaryService,
-  ) { }
+  ) {}
 
   @Get()
   @RequirePermissions('minute:read')

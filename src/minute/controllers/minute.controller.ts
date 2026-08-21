@@ -24,6 +24,7 @@ import { MinuteService } from '../services/minute.service';
 import { TranscriptService } from '../services/transcript.service';
 import { CuidPipe } from '@/common/pipes/cuid.pipe';
 import { ApiGetTranscriptByRecordingIdDocs } from '../decorators/minute.decorators';
+import { CreateTranscriptBodyDto, TranscriptDto } from '../dto/transcript.dto';
 import {
   CreateMinuteDto,
   UpdateMinuteDto,
@@ -44,7 +45,7 @@ export class MinuteController {
   constructor(
     private readonly recordingService: MinuteService,
     private readonly transcriptService: TranscriptService,
-  ) { }
+  ) {}
 
   /**
    * 创建录制
@@ -93,6 +94,30 @@ export class MinuteController {
   })
   async getRecordingById(@Param('id', CuidPipe) id: string) {
     return this.recordingService.getById(id);
+  }
+
+  /**
+   * 创建录制转写
+   */
+  @Post(':id/transcript')
+  @RequirePermissions('minute:create')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: '创建录制转写记录' })
+  @ApiParam({ name: 'id', description: '录制记录ID', type: 'string' })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: '创建成功',
+    type: TranscriptDto,
+  })
+  async createTranscript(
+    @Param('id', CuidPipe) id: string,
+    @Body(new ValidationPipe()) createParams: CreateTranscriptBodyDto,
+  ) {
+    this.logger.log(`创建录制转写记录: ${id}`);
+    return this.transcriptService.create({
+      ...createParams,
+      minuteId: id,
+    });
   }
 
   /**

@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { MinuteController } from './controllers/minute.controller';
 import { MinuteSummaryController } from './controllers/minute-summary.controller';
 import { SpeakerSummaryController } from './controllers/speaker-summary.controller';
-import { TranscriptController } from './controllers/transcript.controller';
 import { MinuteService } from './services/minute.service';
 import { MinuteSummaryService } from './services/minute-summary.service';
 import { SpeakerSummaryCrudService } from './services/speaker-summary-crud.service';
@@ -30,7 +29,6 @@ import { HttpModule } from '@nestjs/axios';
     MinuteController,
     MinuteSummaryController,
     SpeakerSummaryController,
-    TranscriptController,
   ],
   providers: [
     MinuteService,
