@@ -35,12 +35,12 @@ import {
 
 @ApiTags('Minute Speaker Summary')
 @ApiBearerAuth()
-@Controller('minutes/:minuteId/participant-summaries')
+@Controller('minutes/:minuteId/speaker-summaries')
 export class SpeakerSummaryController {
   constructor(
     private readonly service: SpeakerSummaryCrudService,
     private readonly aiService: SpeakerSummaryService,
-  ) {}
+  ) { }
 
   @Get()
   @RequirePermissions('minute:read')
