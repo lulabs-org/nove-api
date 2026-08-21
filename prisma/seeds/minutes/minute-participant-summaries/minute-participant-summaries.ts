@@ -29,22 +29,20 @@ export async function createMinuteParticipantSummaries(
       const config = PARTICIPANT_SUMMARY_CONFIGS[index];
       return prisma.minuteParticipantSummary.upsert({
         where: {
-          versionGroupKey_version: {
-            versionGroupKey: `minute:${minute.id}:user:${platformUser.id}`,
+          minuteId_platformUserId_version: {
+            minuteId: minute.id,
+            platformUserId: platformUser.id,
             version: 1,
           },
         },
         update: { partSummary: config.partSummary, keywords: config.keywords },
         create: {
-          meetingId: meeting.id,
           minuteId: minute.id,
           platformUserId: platformUser.id,
-          userName: config.userName,
           partSummary: config.partSummary,
           keywords: config.keywords,
           generatedBy: GenerationMethod.AI,
           aiModel: 'seed-model',
-          versionGroupKey: `minute:${minute.id}:user:${platformUser.id}`,
           observedStartAt,
           observedEndAt: now,
         },
@@ -55,6 +53,7 @@ export async function createMinuteParticipantSummaries(
   await Promise.all(
     summaries.slice(0, 5).map((summary, index) => {
       const platformUser = users[index].platformUser;
+      const config = PARTICIPANT_SUMMARY_CONFIGS[index];
       const periodStart = new Date(
         now.getFullYear(),
         now.getMonth(),
@@ -83,7 +82,7 @@ export async function createMinuteParticipantSummaries(
         create: {
           subjectUserId: platformUser.localUserId,
           platformUserId: platformUser.id,
-          subjectNameSnapshot: summary.userName,
+          subjectNameSnapshot: config?.userName || '未知',
           trackingType: TrackingReportType.PERIODIC_MEETING_SUMMARY,
           cadence: TrackingCadence.DAILY,
           periodStart,

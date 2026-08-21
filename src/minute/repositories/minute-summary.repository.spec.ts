@@ -43,16 +43,12 @@ describe('MinuteSummaryRepository', () => {
       $transaction: transaction,
     } as unknown as PrismaService);
 
-    const result = await repository.createExternalForRecording(
-      'meeting-1',
-      'recording-1',
-      {
-        content: 'New content',
-        aiModel: 'GPT-4',
-        keywords: ['tech'],
-        minuteId: 'recording-1',
-      },
-    );
+    const result = await repository.createExternalForRecording('recording-1', {
+      content: 'New content',
+      aiModel: 'GPT-4',
+      keywords: ['tech'],
+      minuteId: 'recording-1',
+    });
 
     expect(update).toHaveBeenCalledWith({
       where: { id: 'summary-1' },
@@ -60,7 +56,6 @@ describe('MinuteSummaryRepository', () => {
     });
     expect(create).toHaveBeenCalledWith({
       data: expect.objectContaining({
-        meetingId: 'meeting-1',
         minuteId: 'recording-1',
         content: 'New content',
         keywords: ['tech'],
@@ -70,7 +65,6 @@ describe('MinuteSummaryRepository', () => {
         status: ProcessingStatus.COMPLETED,
         version: 3,
         isLatest: true,
-        parentSummaryId: 'summary-1',
       }),
     });
     expect(transaction).toHaveBeenCalledWith(expect.any(Function), {

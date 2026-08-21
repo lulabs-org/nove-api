@@ -29,10 +29,8 @@ export async function createMinuteSummary(
 ): Promise<CreatedMinuteSummaries['teamSummary']> {
   return prisma.minuteSummary.create({
     data: {
-      meetingId: meetings.meetings[1].meeting.id,
       minuteId: minute.id,
       ...MINUTE_SUMMARY_CONFIGS.teamSummary,
-      createdId: platformUsers.platformUsers[1].platformUser.id,
       processingTime: 30000,
       status: ProcessingStatus.COMPLETED,
     },

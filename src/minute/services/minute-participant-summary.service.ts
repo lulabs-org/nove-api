@@ -133,12 +133,7 @@ export class MinuteParticipantSummaryService {
     // 6. 结果持久化
     await this.partSummaryRepo.saveNewVersion({
       platformUserId,
-      meetingId: meeting?.id,
       minuteId: recordId,
-      meetingParticipantId: meeting?.participants?.find(
-        (participant) => participant.ptUserId === platformUserId,
-      )?.id,
-      userName,
       partSummary: summary,
       generatedBy: GenerationMethod.AI,
       aiModel: this.config.model,
@@ -212,7 +207,7 @@ export class MinuteParticipantSummaryService {
     if (meeting.deletedAt) throw new MeetingRecordNotFoundException(meeting.id);
 
     const transcript = recording.transcripts[0];
-    const minuteSummary = meeting.minuteSummaries[0];
+    const minuteSummary = recording.summaries?.[0];
 
     if (!minuteSummary) throw new MinuteSummaryNotFoundException(meeting.id);
     if (!transcript) throw new NotFoundException(`转录记录不存在: ${minuteId}`);

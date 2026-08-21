@@ -77,9 +77,10 @@ export class MeetingStatsTool {
     const uniqueMeetingIds = new Set<string>(
       summaries
         .filter(
-          (s): s is typeof s & { meetingId: string } => s.meetingId !== null,
+          (s): s is typeof s & { minute: { meeting: { id: string } } } =>
+            s.minute?.meeting?.id != null,
         )
-        .map((s) => s.meetingId),
+        .map((s) => s.minute.meeting.id),
     );
 
     const meetings = await this.meetingRepo.getMeetings({
@@ -111,16 +112,16 @@ export class MeetingStatsTool {
       meetingsByDay: sortedMeetingsByDay,
       summaries: summaries.map((s) => ({
         id: s.id,
-        userName: s.userName,
+        userName: s.platformUser?.displayName || '未知',
         summary: s.partSummary,
         keywords: s.keywords,
         createdAt: s.createdAt.toISOString(),
-        meeting: s.meeting
+        meeting: s.minute?.meeting
           ? {
-              id: s.meeting.id,
-              title: s.meeting.title,
-              startTime: s.meeting.startAt?.toISOString(),
-              duration: s.meeting.durationSeconds,
+              id: s.minute.meeting.id,
+              title: s.minute.meeting.title,
+              startTime: s.minute.meeting.startAt?.toISOString(),
+              duration: s.minute.meeting.durationSeconds,
             }
           : null,
       })),

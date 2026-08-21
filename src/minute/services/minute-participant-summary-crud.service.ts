@@ -35,13 +35,8 @@ export class MinuteParticipantSummaryCrudService {
   }
 
   async create(minuteId: string, data: CreateMinuteParticipantSummaryDto) {
-    const meetingId = await this.summaries.getMeetingIdByMinuteId(minuteId);
-    if (!meetingId) {
-      throw new NotFoundException(`Recording ${minuteId} not found`);
-    }
     return this.summaries.saveNewVersion({
       ...data,
-      meetingId,
       minuteId: minuteId,
       generatedBy: GenerationMethod.MANUAL,
     });
@@ -54,14 +49,11 @@ export class MinuteParticipantSummaryCrudService {
   ) {
     const current = await this.findById(minuteId, id);
     return this.summaries.saveNewVersion({
-      meetingId: current.meetingId,
       minuteId: minuteId,
       platformUserId: current.platformUserId,
-      userName: data.userName ?? current.userName,
       partSummary: data.partSummary ?? current.partSummary,
       keywords: data.keywords ?? current.keywords,
       generatedBy: GenerationMethod.MANUAL,
-      meetingParticipantId: current.meetingParticipantId,
       observedStartAt: current.observedStartAt,
       observedEndAt: current.observedEndAt,
     });

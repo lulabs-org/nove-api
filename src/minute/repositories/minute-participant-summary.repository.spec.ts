@@ -19,15 +19,11 @@ describe('MinuteParticipantSummaryRepository', () => {
           deletedAt: null,
         },
         select: expect.objectContaining({
-          meeting: {
-            select: expect.objectContaining({
-              minuteSummaries: expect.objectContaining({
-                where: { isLatest: true, deletedAt: null },
-                orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
-                take: 1,
-              }),
-            }),
-          },
+          summaries: expect.objectContaining({
+            where: { isLatest: true, deletedAt: null },
+            orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
+            take: 1,
+          }),
           transcripts: expect.objectContaining({
             where: { deletedAt: null },
             orderBy: { createdAt: 'desc' },

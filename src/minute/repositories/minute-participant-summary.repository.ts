@@ -7,10 +7,6 @@ import { retryVersionTransaction } from '@/common/utils/prisma-transaction-retry
 export class MinuteParticipantSummaryRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  private groupKey(minuteId: string, platformUserId: string) {
-    return `recording:${minuteId}:user:${platformUserId}`;
-  }
-
   async findById(minuteId: string, id: string) {
     return this.prisma.minuteParticipantSummary.findFirst({
       where: {
@@ -50,18 +46,19 @@ export class MinuteParticipantSummaryRepository {
   async saveNewVersion(
     params: Omit<
       Prisma.MinuteParticipantSummaryUncheckedCreateInput,
-      'versionGroupKey' | 'version' | 'isLatest' | 'previousSummaryId'
+      'version' | 'isLatest'
     >,
   ) {
-    const versionGroupKey = this.groupKey(
-      params.minuteId,
-      params.platformUserId,
-    );
     return retryVersionTransaction(() =>
       this.prisma.$transaction(
         async (tx) => {
           const previous = await tx.minuteParticipantSummary.findFirst({
-            where: { versionGroupKey, isLatest: true, deletedAt: null },
+            where: {
+              minuteId: params.minuteId,
+              platformUserId: params.platformUserId,
+              isLatest: true,
+              deletedAt: null,
+            },
             orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
           });
           if (previous) {
@@ -76,9 +73,7 @@ export class MinuteParticipantSummaryRepository {
               generatedBy: params.generatedBy ?? GenerationMethod.AI,
               aiModel: params.aiModel ?? 'tencent-meeting-ai',
               keywords: params.keywords ?? [],
-              versionGroupKey,
               version: (previous?.version ?? 0) + 1,
-              previousSummaryId: previous?.id ?? null,
               isLatest: true,
             },
           });
@@ -106,7 +101,8 @@ export class MinuteParticipantSummaryRepository {
           if (current.isLatest) {
             const predecessor = await tx.minuteParticipantSummary.findFirst({
               where: {
-                versionGroupKey: current.versionGroupKey,
+                minuteId: current.minuteId,
+                platformUserId: current.platformUserId,
                 deletedAt: null,
               },
               orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
@@ -146,7 +142,9 @@ export class MinuteParticipantSummaryRepository {
           },
         ],
       },
-      include: { platformUser: { select: { localUserId: true } } },
+      include: {
+        platformUser: { select: { localUserId: true, displayName: true } },
+      },
     });
   }
 
@@ -168,19 +166,19 @@ export class MinuteParticipantSummaryRepository {
               where: { deletedAt: null },
               select: { id: true, ptUserId: true },
             },
-            minuteSummaries: {
-              where: { isLatest: true, deletedAt: null },
-              orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
-              take: 1,
-              select: {
-                aiMinutes: true,
-                keyPoints: true,
-                actionItems: true,
-                decisions: true,
-                goldenQuotes: true,
-                keywords: true,
-              },
-            },
+          },
+        },
+        summaries: {
+          where: { isLatest: true, deletedAt: null },
+          orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
+          take: 1,
+          select: {
+            aiMinutes: true,
+            keyPoints: true,
+            actionItems: true,
+            decisions: true,
+            goldenQuotes: true,
+            keywords: true,
           },
         },
         transcripts: {
@@ -217,13 +215,20 @@ export class MinuteParticipantSummaryRepository {
         createdAt: { gte: params.startDate, lte: params.endDate },
       },
       include: {
-        meeting: {
+        platformUser: {
+          select: { displayName: true },
+        },
+        minute: {
           select: {
-            id: true,
-            title: true,
-            startAt: true,
-            endAt: true,
-            durationSeconds: true,
+            meeting: {
+              select: {
+                id: true,
+                title: true,
+                startAt: true,
+                endAt: true,
+                durationSeconds: true,
+              },
+            },
           },
         },
       },

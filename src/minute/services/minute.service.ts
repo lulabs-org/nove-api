@@ -65,11 +65,10 @@ export class MinuteService {
 
   async createSummary(id: string, data: CreateRecordingSummaryDto) {
     const recording = await this.getById(id);
-    return this.meetingSummaryRepository.createExternalForRecording(
-      recording.meetingId,
-      id,
-      { ...data, minuteId: id },
-    );
+    return this.meetingSummaryRepository.createExternalForRecording(id, {
+      ...data,
+      minuteId: id,
+    });
   }
 
   async update(id: string, updateData: UpdateMinuteDto) {

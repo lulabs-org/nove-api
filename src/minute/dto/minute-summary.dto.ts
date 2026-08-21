@@ -121,8 +121,6 @@ export class MinuteSummaryDto {
   @ApiPropertyOptional({ description: '决策记录' })
   decisions?: any;
 
-  @ApiPropertyOptional({ description: '参与者总结' })
-  speakerInsights?: any;
 
   @ApiPropertyOptional({ description: '会议金句' })
   goldenQuotes?: any;
@@ -135,9 +133,6 @@ export class MinuteSummaryDto {
 
   @ApiPropertyOptional({ description: '状态', enum: ProcessingStatus })
   status?: ProcessingStatus;
-
-  @ApiProperty({ description: '会议ID' })
-  meetingId: string;
 
   @ApiPropertyOptional({ description: '录制ID' })
   minuteId?: string;
