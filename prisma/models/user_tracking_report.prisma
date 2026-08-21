@@ -59,13 +59,13 @@ model UserTrackingReport {
 }
 
 model TrackingReportMinuteSummarySource {
-  id              String                   @id @default(cuid())
-  reportId        String                   @map("report_id")
-  report          UserTrackingReport       @relation(fields: [reportId], references: [id], onDelete: Cascade)
-  minuteSummaryId String                   @map("minute_summary_id")
-  minuteSummary   MinuteParticipantSummary @relation(fields: [minuteSummaryId], references: [id], onDelete: Cascade)
-  metadata        Json                     @default("{}") @db.JsonB
-  createdAt       DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  id              String             @id @default(cuid())
+  reportId        String             @map("report_id")
+  report          UserTrackingReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  minuteSummaryId String             @map("minute_summary_id")
+  minuteSummary   SpeakerSummary     @relation(fields: [minuteSummaryId], references: [id], onDelete: Cascade)
+  metadata        Json               @default("{}") @db.JsonB
+  createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@unique([reportId, minuteSummaryId])
   @@index([minuteSummaryId])

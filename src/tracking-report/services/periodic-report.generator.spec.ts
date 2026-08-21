@@ -3,7 +3,7 @@ import { LlmService } from '@/llm/llm.service';
 import { TrackingReportService } from './tracking-report.service';
 import { PeriodicReportGenerator } from './periodic-report.generator';
 import { TrackingReportRepository } from '../repositories/tracking-report.repository';
-import { MinuteParticipantSummaryRepository } from '@/minute/repositories';
+import { SpeakerSummaryRepository } from '@/minute/repositories';
 import { PrismaService } from '@/prisma/prisma.service';
 
 describe('PeriodicReportGenerator', () => {
@@ -21,7 +21,7 @@ describe('PeriodicReportGenerator', () => {
   const service = new PeriodicReportGenerator(
     prisma as unknown as PrismaService,
     trackingReportRepository as unknown as TrackingReportRepository,
-    recordingSummaryRepository as unknown as MinuteParticipantSummaryRepository,
+    recordingSummaryRepository as unknown as SpeakerSummaryRepository,
     trackingReportService as unknown as TrackingReportService,
     llm as unknown as LlmService,
     { model: 'test-model' } as never,

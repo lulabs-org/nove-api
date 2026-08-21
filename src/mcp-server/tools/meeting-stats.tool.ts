@@ -5,14 +5,14 @@ import {
   MeetingStatsRepository,
   PlatformUserRepository,
 } from '../repositories';
-import { MinuteParticipantSummaryRepository } from '@/minute/repositories';
+import { SpeakerSummaryRepository } from '@/minute/repositories';
 
 @Injectable()
 export class MeetingStatsTool {
   constructor(
     private readonly meetingRepo: MeetingStatsRepository,
     private readonly ptUserRepo: PlatformUserRepository,
-    private readonly participantSummaryRepo: MinuteParticipantSummaryRepository,
+    private readonly participantSummaryRepo: SpeakerSummaryRepository,
   ) {}
 
   private validateDateRange(startDate: Date, endDate: Date): void {

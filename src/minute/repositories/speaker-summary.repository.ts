@@ -4,11 +4,11 @@ import { PrismaService } from '@/prisma/prisma.service';
 import { retryVersionTransaction } from '@/common/utils/prisma-transaction-retry';
 
 @Injectable()
-export class MinuteParticipantSummaryRepository {
+export class SpeakerSummaryRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findById(minuteId: string, id: string) {
-    return this.prisma.minuteParticipantSummary.findFirst({
+    return this.prisma.speakerSummary.findFirst({
       where: {
         id,
         minuteId,
@@ -26,14 +26,14 @@ export class MinuteParticipantSummaryRepository {
   }
 
   async findMany(minuteId: string, skip: number, take: number) {
-    const where: Prisma.MinuteParticipantSummaryWhereInput = {
+    const where: Prisma.SpeakerSummaryWhereInput = {
       minuteId,
       isLatest: true,
       deletedAt: null,
     };
     const [total, records] = await this.prisma.$transaction([
-      this.prisma.minuteParticipantSummary.count({ where }),
-      this.prisma.minuteParticipantSummary.findMany({
+      this.prisma.speakerSummary.count({ where }),
+      this.prisma.speakerSummary.findMany({
         where,
         skip,
         take,
@@ -45,14 +45,14 @@ export class MinuteParticipantSummaryRepository {
 
   async saveNewVersion(
     params: Omit<
-      Prisma.MinuteParticipantSummaryUncheckedCreateInput,
+      Prisma.SpeakerSummaryUncheckedCreateInput,
       'version' | 'isLatest'
     >,
   ) {
     return retryVersionTransaction(() =>
       this.prisma.$transaction(
         async (tx) => {
-          const previous = await tx.minuteParticipantSummary.findFirst({
+          const previous = await tx.speakerSummary.findFirst({
             where: {
               minuteId: params.minuteId,
               platformUserId: params.platformUserId,
@@ -62,12 +62,12 @@ export class MinuteParticipantSummaryRepository {
             orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
           });
           if (previous) {
-            await tx.minuteParticipantSummary.update({
+            await tx.speakerSummary.update({
               where: { id: previous.id },
               data: { isLatest: false },
             });
           }
-          return tx.minuteParticipantSummary.create({
+          return tx.speakerSummary.create({
             data: {
               ...params,
               generatedBy: params.generatedBy ?? GenerationMethod.AI,
@@ -87,19 +87,19 @@ export class MinuteParticipantSummaryRepository {
     return retryVersionTransaction(() =>
       this.prisma.$transaction(
         async (tx) => {
-          const current = await tx.minuteParticipantSummary.findFirstOrThrow({
+          const current = await tx.speakerSummary.findFirstOrThrow({
             where: {
               id,
               minuteId,
               deletedAt: null,
             },
           });
-          await tx.minuteParticipantSummary.update({
+          await tx.speakerSummary.update({
             where: { id },
             data: { deletedAt: new Date(), isLatest: false },
           });
           if (current.isLatest) {
-            const predecessor = await tx.minuteParticipantSummary.findFirst({
+            const predecessor = await tx.speakerSummary.findFirst({
               where: {
                 minuteId: current.minuteId,
                 platformUserId: current.platformUserId,
@@ -108,7 +108,7 @@ export class MinuteParticipantSummaryRepository {
               orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
             });
             if (predecessor) {
-              await tx.minuteParticipantSummary.update({
+              await tx.speakerSummary.update({
                 where: { id: predecessor.id },
                 data: { isLatest: true },
               });
@@ -125,22 +125,14 @@ export class MinuteParticipantSummaryRepository {
     range: { periodStart: Date; periodEnd: Date },
     platformUserIds?: string[],
   ) {
-    return this.prisma.minuteParticipantSummary.findMany({
+    return this.prisma.speakerSummary.findMany({
       where: {
         platformUserId: platformUserIds?.length
           ? { in: platformUserIds }
           : undefined,
         isLatest: true,
         deletedAt: null,
-        OR: [
-          {
-            observedStartAt: { gte: range.periodStart, lte: range.periodEnd },
-          },
-          {
-            observedStartAt: null,
-            createdAt: { gte: range.periodStart, lte: range.periodEnd },
-          },
-        ],
+        createdAt: { gte: range.periodStart, lte: range.periodEnd },
       },
       include: {
         platformUser: { select: { localUserId: true, displayName: true } },
@@ -207,7 +199,7 @@ export class MinuteParticipantSummaryRepository {
     startDate: Date;
     endDate: Date;
   }) {
-    return this.prisma.minuteParticipantSummary.findMany({
+    return this.prisma.speakerSummary.findMany({
       where: {
         platformUserId: { in: params.platformUserIds },
         isLatest: true,

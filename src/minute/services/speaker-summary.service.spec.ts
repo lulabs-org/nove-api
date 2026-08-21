@@ -6,8 +6,8 @@ import {
 } from '@/meeting/exceptions/meeting.exceptions';
 import { generatePrompt } from '@/common/utils';
 import { LlmService } from '@/llm/llm.service';
-import { MinuteParticipantSummaryRepository } from '../repositories';
-import { MinuteParticipantSummaryService } from './minute-participant-summary.service';
+import { SpeakerSummaryRepository } from '../repositories';
+import { SpeakerSummaryService } from './speaker-summary.service';
 
 jest.mock('@/common/utils', () => ({
   generatePrompt: jest.fn(() => ({
@@ -16,7 +16,7 @@ jest.mock('@/common/utils', () => ({
   })),
 }));
 
-describe('MinuteParticipantSummaryService', () => {
+describe('SpeakerSummaryService', () => {
   const minuteSummary = {
     aiMinutes: { sections: [] },
     keyPoints: [],
@@ -56,7 +56,7 @@ describe('MinuteParticipantSummaryService', () => {
     findGenerationContext: jest.Mock;
     saveNewVersion: jest.Mock;
   };
-  let service: MinuteParticipantSummaryService;
+  let service: SpeakerSummaryService;
 
   beforeEach(() => {
     llmService = { ask: jest.fn().mockResolvedValue('generated summary') };
@@ -64,9 +64,9 @@ describe('MinuteParticipantSummaryService', () => {
       findGenerationContext: jest.fn().mockResolvedValue(context),
       saveNewVersion: jest.fn().mockResolvedValue(undefined),
     };
-    service = new MinuteParticipantSummaryService(
+    service = new SpeakerSummaryService(
       llmService as unknown as LlmService,
-      repository as unknown as MinuteParticipantSummaryRepository,
+      repository as unknown as SpeakerSummaryRepository,
       {
         apiKey: { ark: '', openai: '' },
         baseURL: 'https://example.com',
