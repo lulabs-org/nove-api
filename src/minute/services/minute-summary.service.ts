@@ -6,6 +6,7 @@ import {
   CreateMinuteSummaryDto,
   UpdateMinuteSummaryDto,
 } from '../dto/minute-summary.dto';
+import { CreateRecordingSummaryDto } from '../dto/minute.dto';
 
 @Injectable()
 export class MinuteSummaryService {
@@ -16,8 +17,6 @@ export class MinuteSummaryService {
   async upsert(data: Prisma.MinuteSummaryUncheckedCreateInput) {
     return this.meetingSummaryRepository.upsert(data);
   }
-
-
 
   async findById(minuteId: string, id: string) {
     const summary = await this.meetingSummaryRepository.findById(id);
@@ -46,7 +45,10 @@ export class MinuteSummaryService {
   async create(minuteId: string, data: CreateMinuteSummaryDto) {
     // 迁移原 POST /minutes/:id/summary 的多版本管理逻辑
     // 确保旧的 isLatest 为 false，新总结版本号递增
-    return this.meetingSummaryRepository.createExternalForRecording(minuteId, data as any);
+    return this.meetingSummaryRepository.createExternalForRecording(
+      minuteId,
+      data as unknown as CreateRecordingSummaryDto,
+    );
   }
 
   async update(minuteId: string, id: string, data: UpdateMinuteSummaryDto) {

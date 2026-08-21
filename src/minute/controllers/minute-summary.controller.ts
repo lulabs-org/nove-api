@@ -35,7 +35,7 @@ import { CuidPipe } from '@/common/pipes/cuid.pipe';
 export class MinuteSummaryController {
   private readonly logger = new Logger(MinuteSummaryController.name);
 
-  constructor(private readonly minuteSummaryService: MinuteSummaryService) { }
+  constructor(private readonly minuteSummaryService: MinuteSummaryService) {}
 
   @Get()
   @RequirePermissions('minute-summary:read')

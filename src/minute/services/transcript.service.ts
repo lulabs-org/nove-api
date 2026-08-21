@@ -32,8 +32,6 @@ export class TranscriptService {
     });
   }
 
-
-
   /**
    * 基于段落（Segment）获取录制的转写文本
    */

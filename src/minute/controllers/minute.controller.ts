@@ -43,7 +43,7 @@ export class MinuteController {
   constructor(
     private readonly minuteService: MinuteService,
     private readonly transcriptService: TranscriptService,
-  ) { }
+  ) {}
 
   /**
    * 创建录制记录
@@ -151,7 +151,6 @@ export class MinuteController {
       throw error;
     }
   }
-
 
   /**
    * 更新录制记录

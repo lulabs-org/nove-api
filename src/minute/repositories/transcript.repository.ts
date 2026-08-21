@@ -90,13 +90,9 @@ export class TranscriptRepository {
     });
   }
 
-
-
   // ==========================================
   // READ OPERATIONS
   // ==========================================
-
-
 
   async findByRecordingId(minuteId: string) {
     return this.prisma.transcript.findFirst({

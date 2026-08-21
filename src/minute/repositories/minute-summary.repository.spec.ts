@@ -4,7 +4,6 @@ import { PrismaService } from '@/prisma/prisma.service';
 import { MinuteSummaryRepository } from './minute-summary.repository';
 
 describe('MinuteSummaryRepository', () => {
-
   it('creates a new latest version from externally generated content', async () => {
     const previous = { id: 'summary-1', version: 2 };
     const findFirst = jest.fn().mockResolvedValue(previous);

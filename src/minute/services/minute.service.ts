@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { MinuteRepository } from '../repositories/minute.repository';
 import { MinuteSummaryRepository } from '../repositories/minute-summary.repository';
 import { RecordingNotFoundException } from '@/meeting/exceptions/meeting.exceptions';
-import { MinuteSummaryNotFoundException } from '@/meeting/exceptions/meeting.exceptions';
 import {
   QueryMinuteDto,
   UpdateMinuteDto,
@@ -52,7 +51,6 @@ export class MinuteService {
   async create(data: CreateMinuteDto) {
     return this.meetingRecordingRepository.create(data);
   }
-
 
   async update(id: string, updateData: UpdateMinuteDto) {
     await this.getById(id);

@@ -73,7 +73,6 @@ export class MinuteSummaryRepository {
     }
   }
 
-
   async createExternalForRecording(
     minuteId: string,
     data: CreateRecordingSummaryDto,
