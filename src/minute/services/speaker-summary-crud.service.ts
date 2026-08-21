@@ -1,14 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { GenerationMethod } from '@prisma/client';
-import { MinuteParticipantSummaryRepository } from '../repositories';
+import { SpeakerSummaryRepository } from '../repositories';
 import {
-  CreateMinuteParticipantSummaryDto,
-  UpdateMinuteParticipantSummaryDto,
-} from '../dto/minute-participant-summary.dto';
+  CreateSpeakerSummaryDto,
+  UpdateSpeakerSummaryDto,
+} from '../dto/speaker-summary.dto';
 
 @Injectable()
-export class MinuteParticipantSummaryCrudService {
-  constructor(private readonly summaries: MinuteParticipantSummaryRepository) {}
+export class SpeakerSummaryCrudService {
+  constructor(private readonly summaries: SpeakerSummaryRepository) {}
 
   async findById(minuteId: string, id: string) {
     const summary = await this.summaries.findById(minuteId, id);
@@ -34,7 +34,7 @@ export class MinuteParticipantSummaryCrudService {
     };
   }
 
-  async create(minuteId: string, data: CreateMinuteParticipantSummaryDto) {
+  async create(minuteId: string, data: CreateSpeakerSummaryDto) {
     return this.summaries.saveNewVersion({
       ...data,
       minuteId: minuteId,
@@ -42,11 +42,7 @@ export class MinuteParticipantSummaryCrudService {
     });
   }
 
-  async update(
-    minuteId: string,
-    id: string,
-    data: UpdateMinuteParticipantSummaryDto,
-  ) {
+  async update(minuteId: string, id: string, data: UpdateSpeakerSummaryDto) {
     const current = await this.findById(minuteId, id);
     return this.summaries.saveNewVersion({
       minuteId: minuteId,
@@ -54,8 +50,6 @@ export class MinuteParticipantSummaryCrudService {
       partSummary: data.partSummary ?? current.partSummary,
       keywords: data.keywords ?? current.keywords,
       generatedBy: GenerationMethod.MANUAL,
-      observedStartAt: current.observedStartAt,
-      observedEndAt: current.observedEndAt,
     });
   }
 

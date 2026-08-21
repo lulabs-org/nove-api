@@ -14,8 +14,8 @@ import { GenerationMethod } from '@prisma/client';
 import { ConfigType } from '@nestjs/config';
 import { formatToTimezone, formatTimeMs } from '@/common/utils/time.util';
 import { LlmService } from '@/llm/llm.service';
-import { MinuteParticipantSummaryRepository } from '../repositories';
-import { GenerateParticipantSummaryDto } from '../dto/minute-participant-summary.dto';
+import { SpeakerSummaryRepository } from '../repositories';
+import { GenerateParticipantSummaryDto } from '../dto/speaker-summary.dto';
 import { SummarySegment } from '@/meeting/types';
 import { openaiConfig } from '@/configs/openai.config';
 import { generatePrompt } from '@/common/utils';
@@ -26,12 +26,12 @@ import {
 } from '@/meeting/exceptions/meeting.exceptions';
 
 @Injectable()
-export class MinuteParticipantSummaryService {
-  private readonly logger = new Logger(MinuteParticipantSummaryService.name);
+export class SpeakerSummaryService {
+  private readonly logger = new Logger(SpeakerSummaryService.name);
 
   constructor(
     private readonly llmService: LlmService,
-    private readonly partSummaryRepo: MinuteParticipantSummaryRepository,
+    private readonly partSummaryRepo: SpeakerSummaryRepository,
     @Inject(openaiConfig.KEY)
     private readonly config: ConfigType<typeof openaiConfig>,
   ) {}
@@ -137,8 +137,6 @@ export class MinuteParticipantSummaryService {
       partSummary: summary,
       generatedBy: GenerationMethod.AI,
       aiModel: this.config.model,
-      observedStartAt: periodStart,
-      observedEndAt: periodEnd,
     });
 
     this.logger.log(`成功生成参会者: ${userName}总结`);

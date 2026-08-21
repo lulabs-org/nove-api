@@ -18,7 +18,6 @@ export async function createMinuteParticipantSummaries(
   },
 ): Promise<ParticipantSummary[]> {
   const now = new Date();
-  const observedStartAt = new Date(now.getTime() - 60 * 60 * 1000);
   const users = platformUsers.platformUsers.slice(
     0,
     PARTICIPANT_SUMMARY_CONFIGS.length,
@@ -26,7 +25,7 @@ export async function createMinuteParticipantSummaries(
   const summaries = await Promise.all(
     users.map(({ platformUser }, index) => {
       const config = PARTICIPANT_SUMMARY_CONFIGS[index];
-      return prisma.minuteParticipantSummary.upsert({
+      return prisma.speakerSummary.upsert({
         where: {
           minuteId_platformUserId_version: {
             minuteId: minute.id,
@@ -42,8 +41,6 @@ export async function createMinuteParticipantSummaries(
           keywords: config.keywords,
           generatedBy: GenerationMethod.AI,
           aiModel: 'seed-model',
-          observedStartAt,
-          observedEndAt: now,
         },
       });
     }),

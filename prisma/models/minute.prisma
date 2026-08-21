@@ -19,10 +19,10 @@ model Minute {
   recorderUserId String?       @map("recorder_user_id")
   recorderUser   PlatformUser? @relation("RecordingUser", fields: [recorderUserId], references: [id], onDelete: SetNull)
 
-  files                MinuteFile[]
-  transcripts          Transcript[]
-  summaries            MinuteSummary[]
-  participantSummaries MinuteParticipantSummary[] @relation("MinuteParticipantSummaries")
+  files            MinuteFile[]
+  transcripts      Transcript[]
+  summaries        MinuteSummary[]
+  speakerSummaries SpeakerSummary[] @relation("SpeakerSummaries")
 
   // 系统字段及时间字段
   startAt   DateTime? @map("start_at") @db.Timestamptz(6)

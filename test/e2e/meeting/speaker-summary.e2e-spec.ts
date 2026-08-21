@@ -6,7 +6,7 @@ import { AppModule } from '../../../src/app.module';
 import { PrismaService } from '../../../src/prisma/prisma.service';
 import { PermService } from '../../../src/admin/permission/services/permission.service';
 import { JwtService } from '@nestjs/jwt';
-import { MinuteParticipantSummaryService } from '../../../src/minute/services';
+import { SpeakerSummaryService } from '../../../src/minute/services';
 import {
   MeetingPlatform,
   MeetingType,
@@ -32,7 +32,7 @@ describe('ParticipantSummaryController (e2e)', () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
-      .overrideProvider(MinuteParticipantSummaryService)
+      .overrideProvider(SpeakerSummaryService)
       .useValue({ generateSummaries })
       .overrideProvider(PermService)
       .useValue({
@@ -113,7 +113,7 @@ describe('ParticipantSummaryController (e2e)', () => {
       return;
     }
     if (createdSummaryId) {
-      await prisma.minuteParticipantSummary.deleteMany({
+      await prisma.speakerSummary.deleteMany({
         where: {
           minuteId: createdRecordingId,
           platformUserId,

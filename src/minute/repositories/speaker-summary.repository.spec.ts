@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { MinuteParticipantSummaryRepository } from './minute-participant-summary.repository';
+import { SpeakerSummaryRepository } from './speaker-summary.repository';
 import { PrismaService } from '@/prisma/prisma.service';
 
-describe('MinuteParticipantSummaryRepository', () => {
+describe('SpeakerSummaryRepository', () => {
   it('loads the complete generation context from the recording aggregate', async () => {
     const findFirst = jest.fn().mockResolvedValue({ id: 'recording-1' });
-    const repository = new MinuteParticipantSummaryRepository({
+    const repository = new SpeakerSummaryRepository({
       minute: { findFirst },
     } as unknown as PrismaService);
 

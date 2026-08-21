@@ -22,43 +22,43 @@ import {
   NoPermissionRequired,
 } from '@/admin/permission/decorators/permissions.decorator';
 import { CuidPipe } from '@/common/pipes/cuid.pipe';
-import { MinuteParticipantSummaryCrudService } from '../services/minute-participant-summary-crud.service';
-import { MinuteParticipantSummaryService } from '../services/minute-participant-summary.service';
+import { SpeakerSummaryCrudService } from '../services/speaker-summary-crud.service';
+import { SpeakerSummaryService } from '../services/speaker-summary.service';
 import {
-  CreateMinuteParticipantSummaryDto,
-  QueryMinuteParticipantSummaryDto,
-  MinuteParticipantSummaryDto,
-  MinuteParticipantSummaryListResponseDto,
-  UpdateMinuteParticipantSummaryDto,
+  CreateSpeakerSummaryDto,
+  QuerySpeakerSummaryDto,
+  SpeakerSummaryDto,
+  SpeakerSummaryListResponseDto,
+  UpdateSpeakerSummaryDto,
   GenerateParticipantSummaryDto,
-} from '../dto/minute-participant-summary.dto';
+} from '../dto/speaker-summary.dto';
 
 @ApiTags('Minute Participant Summary')
 @ApiBearerAuth()
 @Controller('minutes/:minuteId/participant-summaries')
-export class MinuteParticipantSummaryController {
+export class SpeakerSummaryController {
   constructor(
-    private readonly service: MinuteParticipantSummaryCrudService,
-    private readonly aiService: MinuteParticipantSummaryService,
+    private readonly service: SpeakerSummaryCrudService,
+    private readonly aiService: SpeakerSummaryService,
   ) {}
 
   @Get()
   @RequirePermissions('minute:read')
   @ApiResponse({
     status: HttpStatus.OK,
-    type: MinuteParticipantSummaryListResponseDto,
+    type: SpeakerSummaryListResponseDto,
   })
   list(
     @Param('minuteId', CuidPipe) minuteId: string,
     @Query(new ValidationPipe({ transform: true }))
-    query: QueryMinuteParticipantSummaryDto,
+    query: QuerySpeakerSummaryDto,
   ) {
     return this.service.findMany(minuteId, query.page, query.limit);
   }
 
   @Get(':id')
   @RequirePermissions('minute:read')
-  @ApiResponse({ status: HttpStatus.OK, type: MinuteParticipantSummaryDto })
+  @ApiResponse({ status: HttpStatus.OK, type: SpeakerSummaryDto })
   get(
     @Param('minuteId', CuidPipe) minuteId: string,
     @Param('id', CuidPipe) id: string,
@@ -72,7 +72,7 @@ export class MinuteParticipantSummaryController {
   @ApiOperation({ summary: '为录制中的参会者创建新总结版本' })
   create(
     @Param('minuteId', CuidPipe) minuteId: string,
-    @Body(new ValidationPipe()) dto: CreateMinuteParticipantSummaryDto,
+    @Body(new ValidationPipe()) dto: CreateSpeakerSummaryDto,
   ) {
     return this.service.create(minuteId, dto);
   }
@@ -82,7 +82,7 @@ export class MinuteParticipantSummaryController {
   update(
     @Param('minuteId', CuidPipe) minuteId: string,
     @Param('id', CuidPipe) id: string,
-    @Body(new ValidationPipe()) dto: UpdateMinuteParticipantSummaryDto,
+    @Body(new ValidationPipe()) dto: UpdateSpeakerSummaryDto,
   ) {
     return this.service.update(minuteId, id, dto);
   }
