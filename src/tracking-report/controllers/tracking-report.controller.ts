@@ -42,14 +42,14 @@ import {
 import { TrackingReportService } from '../services/tracking-report.service';
 import { ReportGenerationQueueService } from '../queue/report-generation.queue.service';
 
-@ApiTags('用户跟踪报告')
+@ApiTags('Tracking Report')
 @ApiBearerAuth()
 @Controller('tracking-reports')
 export class TrackingReportController {
   constructor(
     private readonly service: TrackingReportService,
     private readonly reportGenerationQueue: ReportGenerationQueueService,
-  ) {}
+  ) { }
 
   @Post()
   @RequirePermissions('tracking-report:create')

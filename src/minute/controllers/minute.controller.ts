@@ -44,7 +44,7 @@ export class MinuteController {
   constructor(
     private readonly recordingService: MinuteService,
     private readonly transcriptService: TranscriptService,
-  ) {}
+  ) { }
 
   /**
    * 创建录制
@@ -147,12 +147,12 @@ export class MinuteController {
   }
 
   /**
-   * 写入外部 AI 生成的录制总结
+   * 写入录制总结
    */
   @Post(':id/summary')
   @RequirePermissions('minute:create')
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: '写入外部 AI 生成的录制总结' })
+  @ApiOperation({ summary: '写入录制总结' })
   @ApiParam({ name: 'id', description: '录制记录ID', type: 'string' })
   @ApiResponse({
     status: HttpStatus.CREATED,
