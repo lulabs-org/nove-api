@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, OmitType } from '@nestjs/swagger';
 import {
   IsString,
   IsOptional,
@@ -38,6 +38,10 @@ export class CreateTranscriptDto {
   @IsOptional()
   finishedAt?: Date;
 }
+
+export class CreateTranscriptBodyDto extends OmitType(CreateTranscriptDto, [
+  'minuteId',
+] as const) {}
 
 export class TranscriptDto {
   @ApiProperty({ description: '记录ID' })

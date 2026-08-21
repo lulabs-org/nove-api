@@ -35,20 +35,20 @@ import { CuidPipe } from '@/common/pipes/cuid.pipe';
 export class MinuteSummaryController {
   private readonly logger = new Logger(MinuteSummaryController.name);
 
-  constructor(private readonly meetingSummaryService: MinuteSummaryService) {}
+  constructor(private readonly minuteSummaryService: MinuteSummaryService) {}
 
   @Get()
-  @RequirePermissions('minute:read')
+  @RequirePermissions('minute-summary:read')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: '获取会议总结列表' })
+  @ApiOperation({ summary: '获取会议纪要总结列表' })
   @ApiResponse({ status: HttpStatus.OK, type: MinuteSummaryListResponseDto })
   async getSummaries(
     @Param('minuteId', CuidPipe) minuteId: string,
     @Query(new ValidationPipe({ transform: true }))
     query: QueryMinuteSummaryDto,
   ) {
-    this.logger.log(`获取会议总结列表: ${minuteId}`, { query });
-    return this.meetingSummaryService.findMany(
+    this.logger.log(`获取会议纪要总结列表: ${minuteId}`, { query });
+    return this.minuteSummaryService.findMany(
       minuteId,
       query.page,
       query.limit,
@@ -56,55 +56,55 @@ export class MinuteSummaryController {
   }
 
   @Get(':id')
-  @RequirePermissions('minute:read')
+  @RequirePermissions('minute-summary:read')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: '获取会议总结详情' })
+  @ApiOperation({ summary: '获取会议纪要总结详情' })
   @ApiResponse({ status: HttpStatus.OK, type: MinuteSummaryDto })
   async getSummaryById(
     @Param('minuteId', CuidPipe) minuteId: string,
     @Param('id', CuidPipe) id: string,
   ) {
-    this.logger.log(`获取会议总结详情: ${id}`);
-    return this.meetingSummaryService.findById(id);
+    this.logger.log(`获取会议纪要总结详情: minuteId=${minuteId}, id=${id}`);
+    return this.minuteSummaryService.findById(minuteId, id);
   }
 
   @Post()
-  @RequirePermissions('minute:create')
+  @RequirePermissions('minute-summary:create')
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: '创建会议总结' })
+  @ApiOperation({ summary: '创建会议纪要总结' })
   @ApiResponse({ status: HttpStatus.CREATED, type: MinuteSummaryDto })
   async createSummary(
     @Param('minuteId', CuidPipe) minuteId: string,
     @Body(new ValidationPipe()) createParams: CreateMinuteSummaryDto,
   ) {
-    this.logger.log(`创建会议总结: ${minuteId}`);
-    return this.meetingSummaryService.create(minuteId, createParams);
+    this.logger.log(`创建会议纪要总结: ${minuteId}`);
+    return this.minuteSummaryService.create(minuteId, createParams);
   }
 
   @Put(':id')
-  @RequirePermissions('minute:update')
+  @RequirePermissions('minute-summary:update')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: '更新会议总结' })
+  @ApiOperation({ summary: '更新会议纪要总结' })
   @ApiResponse({ status: HttpStatus.OK, type: MinuteSummaryDto })
   async updateSummary(
     @Param('minuteId', CuidPipe) minuteId: string,
     @Param('id', CuidPipe) id: string,
     @Body(new ValidationPipe()) updateParams: UpdateMinuteSummaryDto,
   ) {
-    this.logger.log(`更新会议总结: ${id}`);
-    return this.meetingSummaryService.update(id, updateParams);
+    this.logger.log(`更新会议纪要总结: minuteId=${minuteId}, id=${id}`);
+    return this.minuteSummaryService.update(minuteId, id, updateParams);
   }
 
   @Delete(':id')
-  @RequirePermissions('minute:delete')
+  @RequirePermissions('minute-summary:delete')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: '删除会议总结' })
+  @ApiOperation({ summary: '删除会议纪要总结' })
   @ApiResponse({ status: HttpStatus.OK, type: MinuteSummaryDto })
   async deleteSummary(
     @Param('minuteId', CuidPipe) minuteId: string,
     @Param('id', CuidPipe) id: string,
   ) {
-    this.logger.log(`删除会议总结: ${id}`);
-    return this.meetingSummaryService.delete(id);
+    this.logger.log(`删除会议纪要总结: minuteId=${minuteId}, id=${id}`);
+    return this.minuteSummaryService.delete(minuteId, id);
   }
 }

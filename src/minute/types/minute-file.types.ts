@@ -13,7 +13,7 @@ import { RecordingFileType } from '@prisma/client';
 /**
  * 会议文件创建参数
  */
-export interface CreateMeetingFileParams {
+export interface CreateMinuteFileParams {
   minuteId: string;
   fileObjectId: string;
   fileType: RecordingFileType;
@@ -22,12 +22,12 @@ export interface CreateMeetingFileParams {
 }
 
 // Repository-layer alias for creating meeting file
-export type CreateMeetingFileData = CreateMeetingFileParams;
+export type CreateMinuteFileData = CreateMinuteFileParams;
 
 /**
  * 仓储层：会议文件更新数据
  */
-export interface UpdateMeetingFileData {
+export interface UpdateMinuteFileData {
   fileObjectId?: string;
   fileType?: RecordingFileType;
   durationMs?: number | bigint;

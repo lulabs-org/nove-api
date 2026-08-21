@@ -6,6 +6,7 @@ import {
   CreateMinuteSummaryDto,
   UpdateMinuteSummaryDto,
 } from '../dto/minute-summary.dto';
+import { CreateRecordingSummaryDto } from '../dto/minute.dto';
 
 @Injectable()
 export class MinuteSummaryService {
@@ -17,18 +18,9 @@ export class MinuteSummaryService {
     return this.meetingSummaryRepository.upsert(data);
   }
 
-  async getByMinuteId(minuteId: string) {
-    const summary =
-      await this.meetingSummaryRepository.findByMinuteId(minuteId);
-    if (!summary) {
-      throw new MinuteSummaryNotFoundException(minuteId);
-    }
-    return summary;
-  }
-
-  async findById(id: string) {
+  async findById(minuteId: string, id: string) {
     const summary = await this.meetingSummaryRepository.findById(id);
-    if (!summary) {
+    if (!summary || summary.minuteId !== minuteId) {
       throw new MinuteSummaryNotFoundException(id);
     }
     return summary;
@@ -51,19 +43,21 @@ export class MinuteSummaryService {
   }
 
   async create(minuteId: string, data: CreateMinuteSummaryDto) {
-    return this.meetingSummaryRepository.create({
-      ...data,
+    // 迁移原 POST /minutes/:id/summary 的多版本管理逻辑
+    // 确保旧的 isLatest 为 false，新总结版本号递增
+    return this.meetingSummaryRepository.createExternalForRecording(
       minuteId,
-    });
+      data as unknown as CreateRecordingSummaryDto,
+    );
   }
 
-  async update(id: string, data: UpdateMinuteSummaryDto) {
-    await this.findById(id); // Ensure exists
+  async update(minuteId: string, id: string, data: UpdateMinuteSummaryDto) {
+    await this.findById(minuteId, id); // Ensure exists
     return this.meetingSummaryRepository.update(id, data);
   }
 
-  async delete(id: string) {
-    const summary = await this.findById(id);
+  async delete(minuteId: string, id: string) {
+    const summary = await this.findById(minuteId, id);
     await this.meetingSummaryRepository.delete(id);
     return { success: true, data: summary, deletedAt: new Date() };
   }

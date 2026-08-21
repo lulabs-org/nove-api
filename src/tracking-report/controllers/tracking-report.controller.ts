@@ -49,7 +49,7 @@ export class TrackingReportController {
   constructor(
     private readonly service: TrackingReportService,
     private readonly reportGenerationQueue: ReportGenerationQueueService,
-  ) { }
+  ) {}
 
   @Post()
   @RequirePermissions('tracking-report:create')
