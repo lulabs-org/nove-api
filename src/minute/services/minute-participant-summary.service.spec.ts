@@ -35,9 +35,8 @@ describe('MinuteParticipantSummaryService', () => {
       startAt: new Date('2026-03-30T01:00:00Z'),
       endAt: new Date('2026-03-30T02:00:00Z'),
       deletedAt: null,
-      participants: [],
-      minuteSummaries: [minuteSummary],
     },
+    summaries: [minuteSummary],
     transcripts: [
       {
         segments: [
@@ -108,9 +107,7 @@ describe('MinuteParticipantSummaryService', () => {
     expect(repository.saveNewVersion).toHaveBeenCalledWith(
       expect.objectContaining({
         platformUserId: 'platform-user-1',
-        meetingId: 'meeting-1',
         minuteId: 'recording-1',
-        userName: 'Alice',
         partSummary: 'generated summary',
         aiModel: 'test-model',
       }),
@@ -145,7 +142,7 @@ describe('MinuteParticipantSummaryService', () => {
   it('throws when the latest meeting summary does not exist', async () => {
     repository.findGenerationContext.mockResolvedValue({
       ...context,
-      meeting: { ...context.meeting, minuteSummaries: [] },
+      summaries: [],
     });
 
     await expect(

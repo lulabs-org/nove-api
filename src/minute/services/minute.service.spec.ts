@@ -75,7 +75,6 @@ describe('MinuteService', () => {
       }),
     ).resolves.toEqual({ id: 'summary-1', content: 'External summary' });
     expect(summaries.createExternalForRecording).toHaveBeenCalledWith(
-      'meeting-1',
       'recording-1',
       {
         content: 'External summary',

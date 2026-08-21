@@ -108,10 +108,15 @@ describe('ParticipantSummaryController (e2e)', () => {
   });
 
   afterAll(async () => {
+    if (!prisma) {
+      if (app) await app.close();
+      return;
+    }
     if (createdSummaryId) {
       await prisma.minuteParticipantSummary.deleteMany({
         where: {
-          versionGroupKey: `recording:${createdRecordingId}:user:${platformUserId}`,
+          minuteId: createdRecordingId,
+          platformUserId,
         },
       });
     }
@@ -136,7 +141,6 @@ describe('ParticipantSummaryController (e2e)', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           platformUserId,
-          userName: 'Test Participant',
           partSummary: 'Participant summary content.',
           keywords: ['participant', 'test'],
         });
@@ -148,8 +152,6 @@ describe('ParticipantSummaryController (e2e)', () => {
       }
       expect(response.status).toBe(201);
       expect(response.body).toHaveProperty('id');
-      expect(response.body.meetingId).toBe(createdMeetingId);
-      expect(response.body.userName).toBe('Test Participant');
       expect(response.body.partSummary).toBe('Participant summary content.');
       createdSummaryId = response.body.id;
     });
@@ -205,7 +207,6 @@ describe('ParticipantSummaryController (e2e)', () => {
         .expect(200);
 
       expect(response.body.id).toBe(createdSummaryId);
-      expect(response.body.meetingId).toBe(createdMeetingId);
     });
 
     it('rejects a summary through another recording boundary', async () => {

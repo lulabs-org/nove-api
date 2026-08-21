@@ -14,10 +14,6 @@ export class CreateMinuteParticipantSummaryDto {
   @IsString()
   platformUserId: string;
 
-  @ApiProperty({ description: '参会人姓名快照' })
-  @IsString()
-  userName: string;
-
   @ApiProperty({ description: '总结正文' })
   @IsString()
   partSummary: string;
@@ -30,7 +26,6 @@ export class CreateMinuteParticipantSummaryDto {
 }
 
 export class UpdateMinuteParticipantSummaryDto {
-  @ApiPropertyOptional() @IsOptional() @IsString() userName?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() partSummary?: string;
   @ApiPropertyOptional({ type: [String] })
   @IsOptional()
@@ -56,11 +51,9 @@ export class QueryMinuteParticipantSummaryDto {
 
 export class MinuteParticipantSummaryDto {
   @ApiProperty() id: string;
-  @ApiProperty() meetingId: string;
   @ApiProperty() minuteId: string;
   @ApiProperty() platformUserId: string;
-  @ApiPropertyOptional({ nullable: true }) meetingParticipantId: string | null;
-  @ApiProperty() userName: string;
+
   @ApiProperty() partSummary: string;
   @ApiProperty({ type: [String] }) keywords: string[];
   @ApiProperty() version: number;

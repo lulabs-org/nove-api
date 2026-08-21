@@ -206,7 +206,7 @@ export class PeriodicReportGenerator {
       return rows.map((row) => ({
         id: row.id,
         content: row.partSummary,
-        userName: row.userName,
+        userName: row.platformUser?.displayName || '未知',
         periodStart: row.observedStartAt,
         periodEnd: row.observedEndAt,
         subjectUserId: row.platformUser.localUserId,

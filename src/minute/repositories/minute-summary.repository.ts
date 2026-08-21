@@ -38,7 +38,6 @@ export class MinuteSummaryRepository {
   async upsert(data: CreateInput) {
     const existingSummary = await this.prisma.minuteSummary.findFirst({
       where: {
-        meetingId: data.meetingId,
         minuteId: data.minuteId,
         isLatest: true,
       },
@@ -97,7 +96,6 @@ export class MinuteSummaryRepository {
   }
 
   async createExternalForRecording(
-    meetingId: string | null,
     minuteId: string,
     data: CreateRecordingSummaryDto,
   ) {
@@ -118,7 +116,6 @@ export class MinuteSummaryRepository {
 
           return tx.minuteSummary.create({
             data: {
-              meetingId,
               minuteId,
               title: data.title,
               content: data.content,
@@ -129,9 +126,6 @@ export class MinuteSummaryRepository {
                 | Prisma.InputJsonValue
                 | undefined,
               decisions: data.decisions as Prisma.InputJsonValue | undefined,
-              speakerInsights: data.speakerInsights as
-                | Prisma.InputJsonValue
-                | undefined,
               goldenQuotes: data.goldenQuotes as
                 | Prisma.InputJsonValue
                 | undefined,
@@ -144,7 +138,6 @@ export class MinuteSummaryRepository {
               status: ProcessingStatus.COMPLETED,
               version: (previous?.version ?? 0) + 1,
               isLatest: true,
-              parentSummaryId: previous?.id,
             },
           });
         },

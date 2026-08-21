@@ -23,7 +23,6 @@ export class TencentMtgSummaryCoreService {
     actionItems?: string,
   ) {
     return await this.meetingSummaryService.upsert({
-      meetingId,
       minuteId,
       content: fullSummary || '',
       aiMinutes: aiMinutes ? { content: aiMinutes } : undefined,
@@ -59,7 +58,6 @@ export class TencentMtgSummaryCoreService {
     }
 
     await this.meetingSummaryService.upsert({
-      meetingId: meetingId,
       minuteId: minuteId,
       content: content.fullSummary || '',
       aiMinutes: content.aiMinutes ? { content: content.aiMinutes } : undefined,

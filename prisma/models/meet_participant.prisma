@@ -6,9 +6,8 @@ model MeetingParticipant {
   meeting   Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
 
   // 参会人员
-  ptUserId        String?                    @map("pt_user_id")
-  ptUser          PlatformUser?              @relation("ParticipantUser", fields: [ptUserId], references: [id], onDelete: SetNull)
-  minuteSummaries MinuteParticipantSummary[] @relation("MinuteParticipantSummaries")
+  ptUserId String?       @map("pt_user_id")
+  ptUser   PlatformUser? @relation("ParticipantUser", fields: [ptUserId], references: [id], onDelete: SetNull)
 
   // 参会行为数据
   firstJoinTime        DateTime? @map("first_join_time") @db.Timestamptz(6) // 首次加入时间
