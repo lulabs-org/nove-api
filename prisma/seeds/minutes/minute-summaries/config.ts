@@ -15,12 +15,9 @@ export const MINUTE_SUMMARY_CONFIGS: {
   teamSummary: MinuteSummaryConfig;
 } = {
   teamSummary: {
-    title: '周例会总结 - 2024年12月第3周',
     content: '本次会议主要讨论了各项目的进展情况...',
     generatedBy: GenerationMethod.AI,
     aiModel: 'gpt-4',
-    confidence: 0.95,
-    language: 'zh-CN',
     keyPoints: [
       '项目A进度正常，预计下周完成',
       '项目B遇到技术难点，需要额外支持',
@@ -35,7 +32,5 @@ export const MINUTE_SUMMARY_CONFIGS: {
       },
     ],
     decisions: ['决定采用新的代码审查工具', '调整项目B的开发计划'],
-
-    status: ProcessingStatus.COMPLETED,
   },
 } as const;

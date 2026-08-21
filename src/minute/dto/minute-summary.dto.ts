@@ -2,14 +2,13 @@ import {
   IsString,
   IsOptional,
   IsArray,
-  IsEnum,
   IsObject,
   IsInt,
   Min,
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { GenerationMethod, ProcessingStatus } from '@prisma/client';
+import { GenerationMethod } from '@prisma/client';
 
 export class CreateMinuteSummaryDto {
   @ApiProperty({ description: '关联的录制ID' })

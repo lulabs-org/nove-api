@@ -31,8 +31,6 @@ export async function createMinuteSummary(
     data: {
       minuteId: minute.id,
       ...MINUTE_SUMMARY_CONFIGS.teamSummary,
-      processingTime: 30000,
-      status: ProcessingStatus.COMPLETED,
     },
   });
 }
