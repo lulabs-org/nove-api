@@ -10,7 +10,7 @@
  * - npx tsx prisma/seed.ts --real                         # 初始化所有种子数据（real 模式）
  * - npx tsx prisma/seed.ts --module <name>                # 仅初始化指定模块数据（mock 模式）
  * - npx tsx prisma/seed.ts --real --module <name>         # 仅初始化指定模块数据（real 模式）
- * 
+ *
  * 支持的独立同步模块: permissions, products, channels, projects, platform-users, meetings, orders, refunds
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
@@ -31,7 +31,7 @@ async function main(): Promise<void> {
   if (moduleIndex !== -1 && moduleIndex + 1 < process.argv.length) {
     const moduleName = process.argv[moduleIndex + 1];
     console.log(`\n🚀 开始独立同步模块: ${moduleName} (${mode} 模式)...`);
-    
+
     switch (moduleName) {
       case 'permissions':
         await seedFunctions.createPermissions(prisma, mode === 'real');
@@ -59,10 +59,12 @@ async function main(): Promise<void> {
         break;
       default:
         console.error(`❌ 不支持单独同步模块或模块不存在: ${moduleName}`);
-        console.log('支持的独立同步模块: permissions, products, channels, projects, platform-users, meetings, orders, refunds');
+        console.log(
+          '支持的独立同步模块: permissions, products, channels, projects, platform-users, meetings, orders, refunds',
+        );
         process.exit(1);
     }
-    
+
     console.log(`\n✅ 模块 ${moduleName} 同步完成！`);
     return;
   }

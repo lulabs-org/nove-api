@@ -17,7 +17,6 @@ export async function createMinuteParticipantSummaries(
     }>;
   },
 ): Promise<ParticipantSummary[]> {
-  const meeting = meetings.meetings[0].meeting;
   const now = new Date();
   const observedStartAt = new Date(now.getTime() - 60 * 60 * 1000);
   const users = platformUsers.platformUsers.slice(
