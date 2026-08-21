@@ -41,7 +41,7 @@ export class MinuteController {
   private readonly logger = new Logger(MinuteController.name);
 
   constructor(
-    private readonly recordingService: MinuteService,
+    private readonly minuteService: MinuteService,
     private readonly transcriptService: TranscriptService,
   ) { }
 
@@ -57,11 +57,11 @@ export class MinuteController {
     description: '创建成功',
     type: MinuteDto,
   })
-  async createRecording(
+  async createMinute(
     @Body(new ValidationPipe()) createParams: CreateMinuteDto,
   ) {
     this.logger.log(`创建录制记录: ${createParams.meetingId}`);
-    return this.recordingService.create(createParams);
+    return this.minuteService.create(createParams);
   }
 
   /**
@@ -71,11 +71,11 @@ export class MinuteController {
   @RequirePermissions('minute:read')
   @ApiOperation({ summary: '获取录制列表' })
   @ApiResponse({ status: 200, type: MinuteListResponseDto })
-  async getRecordings(
+  async getMinutes(
     @Query(new ValidationPipe({ transform: true }))
     query: QueryMinuteDto,
   ) {
-    return this.recordingService.findMany(query);
+    return this.minuteService.findMany(query);
   }
 
   /**
@@ -90,8 +90,8 @@ export class MinuteController {
     description: '获取成功',
     type: MinuteDto,
   })
-  async getRecordingById(@Param('id', CuidPipe) id: string) {
-    return this.recordingService.getById(id);
+  async getMinuteById(@Param('id', CuidPipe) id: string) {
+    return this.minuteService.getById(id);
   }
 
   /**
@@ -164,11 +164,11 @@ export class MinuteController {
     description: '更新成功',
     type: MinuteDto,
   })
-  async updateRecording(
+  async updateMinute(
     @Param('id', CuidPipe) id: string,
     @Body(new ValidationPipe()) updateParams: UpdateMinuteDto,
   ) {
-    return this.recordingService.update(id, updateParams);
+    return this.minuteService.update(id, updateParams);
   }
 
   /**
@@ -182,7 +182,7 @@ export class MinuteController {
     description: '删除成功',
     type: MinuteDeleteResponseDto,
   })
-  async deleteRecording(@Param('id', CuidPipe) id: string) {
-    return this.recordingService.delete(id);
+  async deleteMinute(@Param('id', CuidPipe) id: string) {
+    return this.minuteService.delete(id);
   }
 }

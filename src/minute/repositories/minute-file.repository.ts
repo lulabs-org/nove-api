@@ -10,7 +10,7 @@
  */
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import type { CreateMeetingFileData, UpdateMeetingFileData } from '../types';
+import type { CreateMinuteFileData, UpdateMinuteFileData } from '../types';
 
 @Injectable()
 export class MinuteFileRepository {
@@ -19,7 +19,7 @@ export class MinuteFileRepository {
   /**
    * 创建会议文件
    */
-  async create(data: CreateMeetingFileData) {
+  async create(data: CreateMinuteFileData) {
     return this.prisma.minuteFile.create({
       data,
     });
@@ -28,7 +28,7 @@ export class MinuteFileRepository {
   /**
    * 更新会议文件
    */
-  async update(id: string, data: UpdateMeetingFileData) {
+  async update(id: string, data: UpdateMinuteFileData) {
     return this.prisma.minuteFile.update({
       where: { id },
       data,

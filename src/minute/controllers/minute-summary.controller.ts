@@ -35,7 +35,7 @@ import { CuidPipe } from '@/common/pipes/cuid.pipe';
 export class MinuteSummaryController {
   private readonly logger = new Logger(MinuteSummaryController.name);
 
-  constructor(private readonly meetingSummaryService: MinuteSummaryService) {}
+  constructor(private readonly minuteSummaryService: MinuteSummaryService) {}
 
   @Get()
   @RequirePermissions('minute:read')
@@ -48,7 +48,7 @@ export class MinuteSummaryController {
     query: QueryMinuteSummaryDto,
   ) {
     this.logger.log(`获取会议总结列表: ${minuteId}`, { query });
-    return this.meetingSummaryService.findMany(
+    return this.minuteSummaryService.findMany(
       minuteId,
       query.page,
       query.limit,
@@ -65,7 +65,7 @@ export class MinuteSummaryController {
     @Param('id', CuidPipe) id: string,
   ) {
     this.logger.log(`获取会议总结详情: minuteId=${minuteId}, id=${id}`);
-    return this.meetingSummaryService.findById(minuteId, id);
+    return this.minuteSummaryService.findById(minuteId, id);
   }
 
   @Post()
@@ -78,7 +78,7 @@ export class MinuteSummaryController {
     @Body(new ValidationPipe()) createParams: CreateMinuteSummaryDto,
   ) {
     this.logger.log(`创建会议总结: ${minuteId}`);
-    return this.meetingSummaryService.create(minuteId, createParams);
+    return this.minuteSummaryService.create(minuteId, createParams);
   }
 
   @Put(':id')
@@ -92,7 +92,7 @@ export class MinuteSummaryController {
     @Body(new ValidationPipe()) updateParams: UpdateMinuteSummaryDto,
   ) {
     this.logger.log(`更新会议总结: minuteId=${minuteId}, id=${id}`);
-    return this.meetingSummaryService.update(minuteId, id, updateParams);
+    return this.minuteSummaryService.update(minuteId, id, updateParams);
   }
 
   @Delete(':id')
@@ -105,6 +105,6 @@ export class MinuteSummaryController {
     @Param('id', CuidPipe) id: string,
   ) {
     this.logger.log(`删除会议总结: minuteId=${minuteId}, id=${id}`);
-    return this.meetingSummaryService.delete(minuteId, id);
+    return this.minuteSummaryService.delete(minuteId, id);
   }
 }
