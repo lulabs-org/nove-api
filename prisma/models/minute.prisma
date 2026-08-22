@@ -21,7 +21,7 @@ model Minute {
 
   files            MinuteFile[]
   transcripts      Transcript[]
-  summaries        MinuteSummary[]
+  summary          MinuteSummary?
   speakerSummaries SpeakerSummary[] @relation("SpeakerSummaries")
 
   // 系统字段及时间字段

@@ -35,7 +35,7 @@ export class SpeakerSummaryCrudService {
   }
 
   async create(minuteId: string, data: CreateSpeakerSummaryDto) {
-    return this.summaries.saveNewVersion({
+    return this.summaries.upsert({
       ...data,
       minuteId: minuteId,
       generatedBy: GenerationMethod.MANUAL,
@@ -44,7 +44,7 @@ export class SpeakerSummaryCrudService {
 
   async update(minuteId: string, id: string, data: UpdateSpeakerSummaryDto) {
     const current = await this.findById(minuteId, id);
-    return this.summaries.saveNewVersion({
+    return this.summaries.upsert({
       minuteId: minuteId,
       platformUserId: current.platformUserId,
       partSummary: data.partSummary ?? current.partSummary,

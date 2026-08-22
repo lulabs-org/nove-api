@@ -12,15 +12,11 @@ model SpeakerSummary {
   generatedBy GenerationMethod? @map("generated_by")
   aiModel     String?           @map("ai_model")
 
-  version  Int     @default(1)
-  isLatest Boolean @default(true) @map("is_latest")
-
   reportSources TrackingReportMinuteSummarySource[]
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  @@unique([minuteId, platformUserId, version], map: "uq_speaker_summary_version")
-  @@index([minuteId, platformUserId])
+  @@unique([minuteId, platformUserId], map: "uq_speaker_summary")
   @@map("speaker_summaries")
 }

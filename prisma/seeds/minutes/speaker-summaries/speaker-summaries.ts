@@ -27,10 +27,9 @@ export async function createSpeakerSummaries(
       const config = SPEAKER_SUMMARY_CONFIGS[index];
       return prisma.speakerSummary.upsert({
         where: {
-          minuteId_platformUserId_version: {
+          minuteId_platformUserId: {
             minuteId: minute.id,
             platformUserId: platformUser.id,
-            version: 1,
           },
         },
         update: { partSummary: config.partSummary, keywords: config.keywords },

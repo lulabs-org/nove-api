@@ -1,12 +1,4 @@
-import {
-  IsString,
-  IsOptional,
-  IsArray,
-  IsObject,
-  IsInt,
-  Min,
-} from 'class-validator';
-import { Type, Transform } from 'class-transformer';
+import { IsString, IsOptional, IsArray, IsObject } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { GenerationMethod } from '@prisma/client';
 
@@ -53,36 +45,6 @@ export class CreateMinuteSummaryDto {
 
 export class UpdateMinuteSummaryDto extends CreateMinuteSummaryDto {}
 
-export class QueryMinuteSummaryDto {
-  @ApiPropertyOptional({
-    description: '页码（从 1 开始）',
-    example: 1,
-    minimum: 1,
-  })
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  page?: number = 1;
-
-  @ApiPropertyOptional({ description: '每页数量', example: 10, minimum: 1 })
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  limit?: number = 10;
-
-  @ApiPropertyOptional({ description: '是否为最新版本' })
-  @IsOptional()
-  @Transform(({ value }) => {
-    if (value === '') return undefined;
-    if (value === 'true') return true;
-    if (value === 'false') return false;
-    return value as unknown;
-  })
-  isLatest?: boolean;
-}
-
 export class MinuteSummaryDto {
   @ApiProperty({ description: '总结ID' })
   id: string;
@@ -120,32 +82,9 @@ export class MinuteSummaryDto {
   @ApiPropertyOptional({ description: '生成方式', enum: GenerationMethod })
   generatedBy?: GenerationMethod;
 
-  @ApiProperty({ description: '版本号' })
-  version: number;
-
-  @ApiProperty({ description: '是否为最新版本' })
-  isLatest: boolean;
-
   @ApiProperty({ description: '创建时间' })
   createdAt: Date;
 
   @ApiProperty({ description: '更新时间' })
   updatedAt: Date;
-}
-
-export class MinuteSummaryListResponseDto {
-  @ApiProperty({ type: [MinuteSummaryDto], description: '总结列表' })
-  data: MinuteSummaryDto[];
-
-  @ApiProperty({ description: '总条数' })
-  total: number;
-
-  @ApiProperty({ description: '当前页码' })
-  page: number;
-
-  @ApiProperty({ description: '每页条数' })
-  limit: number;
-
-  @ApiProperty({ description: '总页数' })
-  totalPages: number;
 }

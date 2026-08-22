@@ -34,7 +34,7 @@ export class SpeakerSummaryService {
     private readonly partSummaryRepo: SpeakerSummaryRepository,
     @Inject(openaiConfig.KEY)
     private readonly config: ConfigType<typeof openaiConfig>,
-  ) {}
+  ) { }
 
   async generateSummaries({
     recordId,
@@ -46,10 +46,10 @@ export class SpeakerSummaryService {
     const context = await this.fetchMeetingContext(recordId);
     const { transcript } = context;
 
-    let userIdsToProcess = platformUserIds;
-    if (!userIdsToProcess || userIdsToProcess.length === 0) {
+    let userIdsToProcess = platformUserIds || [];
+    if (userIdsToProcess.length === 0) {
       userIdsToProcess = [
-        ...new Set(
+        ...new Set<string>(
           transcript.segments
             .map((s) => s.speaker?.id)
             .filter((id): id is string => id != null),
@@ -131,7 +131,7 @@ export class SpeakerSummaryService {
     const summary = await this.llmService.ask(prompt, systemPrompt);
 
     // 6. 结果持久化
-    await this.partSummaryRepo.saveNewVersion({
+    await this.partSummaryRepo.upsert({
       platformUserId,
       minuteId: recordId,
       partSummary: summary,
@@ -205,7 +205,7 @@ export class SpeakerSummaryService {
     if (meeting.deletedAt) throw new MeetingRecordNotFoundException(meeting.id);
 
     const transcript = recording.transcripts[0];
-    const minuteSummary = recording.summaries?.[0];
+    const minuteSummary = recording.summary;
 
     if (!minuteSummary) throw new MinuteSummaryNotFoundException(meeting.id);
     if (!transcript) throw new NotFoundException(`转录记录不存在: ${minuteId}`);

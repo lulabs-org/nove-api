@@ -1,19 +1,6 @@
-/*
- * @Author: 杨仕明 shiming.y@qq.com
- * @Date: 2026-01-03 08:11:41
- * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-29 19:35:27
- * @FilePath: /nove_api/src/tencent-mtg/repositories/meeting-summary.repository.ts
- * @Description:
- *
- * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
- */
-
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { GenerationMethod, Prisma } from '@prisma/client';
-import { retryVersionTransaction } from '@/common/utils/prisma-transaction-retry';
-import { CreateRecordingSummaryDto } from '../dto/minute.dto';
 
 type CreateInput = Prisma.MinuteSummaryUncheckedCreateInput;
 
@@ -21,123 +8,31 @@ type CreateInput = Prisma.MinuteSummaryUncheckedCreateInput;
 export class MinuteSummaryRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(data: CreateInput) {
-    return this.prisma.minuteSummary.create({
-      data: {
+  async upsert(minuteId: string, data: Omit<CreateInput, 'minuteId'>) {
+    return this.prisma.minuteSummary.upsert({
+      where: { minuteId },
+      create: {
         ...data,
+        minuteId,
         generatedBy: data.generatedBy || GenerationMethod.AI,
-        version: data.version || 1,
-        isLatest: data.isLatest !== undefined ? data.isLatest : true,
+        aiModel: data.aiModel || 'tencent-meeting-ai',
+      },
+      update: {
+        ...data,
+        updatedAt: new Date(),
       },
     });
   }
 
-  async updateCurrentVersion(data: CreateInput) {
-    const existingSummary = await this.prisma.minuteSummary.findFirst({
-      where: {
-        minuteId: data.minuteId,
-        isLatest: true,
-      },
-    });
-
-    if (existingSummary) {
-      return this.prisma.minuteSummary.update({
-        where: { id: existingSummary.id },
-        data: {
-          content: data.content,
-          aiMinutes: data.aiMinutes,
-          actionItems: data.actionItems,
-          generatedBy: data.generatedBy,
-          aiModel: data.aiModel,
-          updatedAt: new Date(),
-        },
-      });
-    } else {
-      return this.prisma.minuteSummary.create({
-        data: {
-          ...data,
-          generatedBy: data.generatedBy || GenerationMethod.AI,
-          aiModel: data.aiModel || 'tencent-meeting-ai',
-          version: data.version || 1,
-          isLatest: data.isLatest !== undefined ? data.isLatest : true,
-        },
-      });
-    }
-  }
-
-  async saveNewVersion(minuteId: string, data: CreateRecordingSummaryDto) {
-    return retryVersionTransaction(() =>
-      this.prisma.$transaction(
-        async (tx) => {
-          const previous = await tx.minuteSummary.findFirst({
-            where: { minuteId, isLatest: true },
-            orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
-          });
-
-          if (previous) {
-            await tx.minuteSummary.update({
-              where: { id: previous.id },
-              data: { isLatest: false },
-            });
-          }
-
-          return tx.minuteSummary.create({
-            data: {
-              minuteId,
-              content: data.content,
-              keywords: data.keywords ?? [],
-              aiMinutes: data.aiMinutes as Prisma.InputJsonValue | undefined,
-              keyPoints: data.keyPoints as Prisma.InputJsonValue | undefined,
-              actionItems: data.actionItems as
-                | Prisma.InputJsonValue
-                | undefined,
-              decisions: data.decisions as Prisma.InputJsonValue | undefined,
-              goldenQuotes: data.goldenQuotes as
-                | Prisma.InputJsonValue
-                | undefined,
-              metadata: data.metadata as Prisma.InputJsonValue | undefined,
-              generatedBy: GenerationMethod.AI,
-              aiModel: data.aiModel ?? 'external-ai',
-              version: (previous?.version ?? 0) + 1,
-              isLatest: true,
-            },
-          });
-        },
-        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
-      ),
-    );
-  }
-
-  async findById(id: string) {
+  async findByMinuteId(minuteId: string) {
     return this.prisma.minuteSummary.findUnique({
-      where: { id },
+      where: { minuteId },
     });
   }
 
-  async findLatestByMinuteId(minuteId: string) {
-    return this.prisma.minuteSummary.findFirst({
-      where: { minuteId, isLatest: true },
-    });
-  }
-
-  async findVersionsByMinuteId(minuteId: string, skip: number, take: number) {
-    const [total, records] = await this.prisma.$transaction([
-      this.prisma.minuteSummary.count({
-        where: { minuteId },
-      }),
-      this.prisma.minuteSummary.findMany({
-        where: { minuteId },
-        skip,
-        take,
-        orderBy: { createdAt: 'desc' },
-      }),
-    ]);
-    return { total, records };
-  }
-
-  async update(id: string, data: Prisma.MinuteSummaryUpdateInput) {
+  async update(minuteId: string, data: Prisma.MinuteSummaryUpdateInput) {
     return this.prisma.minuteSummary.update({
-      where: { id },
+      where: { minuteId },
       data: {
         ...data,
         updatedAt: new Date(),
@@ -145,9 +40,9 @@ export class MinuteSummaryRepository {
     });
   }
 
-  async delete(id: string) {
+  async delete(minuteId: string) {
     return this.prisma.minuteSummary.delete({
-      where: { id },
+      where: { minuteId },
     });
   }
 }

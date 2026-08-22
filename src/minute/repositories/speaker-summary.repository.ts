@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { GenerationMethod, Prisma } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
-import { retryVersionTransaction } from '@/common/utils/prisma-transaction-retry';
 
 @Injectable()
 export class SpeakerSummaryRepository {
@@ -27,7 +26,6 @@ export class SpeakerSummaryRepository {
   async findMany(minuteId: string, skip: number, take: number) {
     const where: Prisma.SpeakerSummaryWhereInput = {
       minuteId,
-      isLatest: true,
     };
     const [total, records] = await this.prisma.$transaction([
       this.prisma.speakerSummary.count({ where }),
@@ -41,78 +39,33 @@ export class SpeakerSummaryRepository {
     return { total, records };
   }
 
-  async saveNewVersion(
-    params: Omit<
-      Prisma.SpeakerSummaryUncheckedCreateInput,
-      'version' | 'isLatest'
-    >,
-  ) {
-    return retryVersionTransaction(() =>
-      this.prisma.$transaction(
-        async (tx) => {
-          const previous = await tx.speakerSummary.findFirst({
-            where: {
-              minuteId: params.minuteId,
-              platformUserId: params.platformUserId,
-              isLatest: true,
-            },
-            orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
-          });
-          if (previous) {
-            await tx.speakerSummary.update({
-              where: { id: previous.id },
-              data: { isLatest: false },
-            });
-          }
-          return tx.speakerSummary.create({
-            data: {
-              ...params,
-              generatedBy: params.generatedBy ?? GenerationMethod.AI,
-              aiModel: params.aiModel ?? 'tencent-meeting-ai',
-              keywords: params.keywords ?? [],
-              version: (previous?.version ?? 0) + 1,
-              isLatest: true,
-            },
-          });
+  async upsert(params: Prisma.SpeakerSummaryUncheckedCreateInput) {
+    return this.prisma.speakerSummary.upsert({
+      where: {
+        minuteId_platformUserId: {
+          minuteId: params.minuteId,
+          platformUserId: params.platformUserId,
         },
-        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
-      ),
-    );
+      },
+      update: {
+        partSummary: params.partSummary,
+        keywords: params.keywords ?? [],
+        generatedBy: params.generatedBy ?? GenerationMethod.AI,
+        aiModel: params.aiModel ?? 'tencent-meeting-ai',
+      },
+      create: {
+        ...params,
+        generatedBy: params.generatedBy ?? GenerationMethod.AI,
+        aiModel: params.aiModel ?? 'tencent-meeting-ai',
+        keywords: params.keywords ?? [],
+      },
+    });
   }
 
   async delete(minuteId: string, id: string) {
-    return retryVersionTransaction(() =>
-      this.prisma.$transaction(
-        async (tx) => {
-          const current = await tx.speakerSummary.findFirstOrThrow({
-            where: {
-              id,
-              minuteId,
-            },
-          });
-          await tx.speakerSummary.delete({
-            where: { id },
-          });
-          if (current.isLatest) {
-            const predecessor = await tx.speakerSummary.findFirst({
-              where: {
-                minuteId: current.minuteId,
-                platformUserId: current.platformUserId,
-              },
-              orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
-            });
-            if (predecessor) {
-              await tx.speakerSummary.update({
-                where: { id: predecessor.id },
-                data: { isLatest: true },
-              });
-            }
-          }
-          return current;
-        },
-        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
-      ),
-    );
+    return this.prisma.speakerSummary.delete({
+      where: { id },
+    });
   }
 
   findForPeriodicReport(
@@ -124,7 +77,6 @@ export class SpeakerSummaryRepository {
         platformUserId: platformUserIds?.length
           ? { in: platformUserIds }
           : undefined,
-        isLatest: true,
         createdAt: { gte: range.periodStart, lte: range.periodEnd },
       },
       include: {
@@ -153,10 +105,7 @@ export class SpeakerSummaryRepository {
             },
           },
         },
-        summaries: {
-          where: { isLatest: true },
-          orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
-          take: 1,
+        summary: {
           select: {
             aiMinutes: true,
             keyPoints: true,
@@ -193,7 +142,6 @@ export class SpeakerSummaryRepository {
     return this.prisma.speakerSummary.findMany({
       where: {
         platformUserId: { in: params.platformUserIds },
-        isLatest: true,
         createdAt: { gte: params.startDate, lte: params.endDate },
       },
       include: {
