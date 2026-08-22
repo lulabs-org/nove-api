@@ -11,7 +11,7 @@
 
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import { GenerationMethod, ProcessingStatus, Prisma } from '@prisma/client';
+import { GenerationMethod, Prisma } from '@prisma/client';
 import { retryVersionTransaction } from '@/common/utils/prisma-transaction-retry';
 import { CreateRecordingSummaryDto } from '../dto/minute.dto';
 
@@ -26,16 +26,13 @@ export class MinuteSummaryRepository {
       data: {
         ...data,
         generatedBy: data.generatedBy || GenerationMethod.AI,
-        aiModel: data.aiModel || 'tencent-meeting-ai',
-        status: data.status || ProcessingStatus.COMPLETED,
-        language: data.language || 'zh-CN',
         version: data.version || 1,
         isLatest: data.isLatest !== undefined ? data.isLatest : true,
       },
     });
   }
 
-  async upsert(data: CreateInput) {
+  async updateCurrentVersion(data: CreateInput) {
     const existingSummary = await this.prisma.minuteSummary.findFirst({
       where: {
         minuteId: data.minuteId,
@@ -52,9 +49,6 @@ export class MinuteSummaryRepository {
           actionItems: data.actionItems,
           generatedBy: data.generatedBy,
           aiModel: data.aiModel,
-          status: data.status,
-          processingTime: data.processingTime,
-          language: data.language,
           updatedAt: new Date(),
         },
       });
@@ -64,8 +58,6 @@ export class MinuteSummaryRepository {
           ...data,
           generatedBy: data.generatedBy || GenerationMethod.AI,
           aiModel: data.aiModel || 'tencent-meeting-ai',
-          status: data.status || ProcessingStatus.COMPLETED,
-          language: data.language || 'zh-CN',
           version: data.version || 1,
           isLatest: data.isLatest !== undefined ? data.isLatest : true,
         },
@@ -73,15 +65,12 @@ export class MinuteSummaryRepository {
     }
   }
 
-  async createExternalForRecording(
-    minuteId: string,
-    data: CreateRecordingSummaryDto,
-  ) {
+  async saveNewVersion(minuteId: string, data: CreateRecordingSummaryDto) {
     return retryVersionTransaction(() =>
       this.prisma.$transaction(
         async (tx) => {
           const previous = await tx.minuteSummary.findFirst({
-            where: { minuteId, isLatest: true, deletedAt: null },
+            where: { minuteId, isLatest: true },
             orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
           });
 
@@ -95,7 +84,6 @@ export class MinuteSummaryRepository {
           return tx.minuteSummary.create({
             data: {
               minuteId,
-              title: data.title,
               content: data.content,
               keywords: data.keywords ?? [],
               aiMinutes: data.aiMinutes as Prisma.InputJsonValue | undefined,
@@ -110,10 +98,6 @@ export class MinuteSummaryRepository {
               metadata: data.metadata as Prisma.InputJsonValue | undefined,
               generatedBy: GenerationMethod.AI,
               aiModel: data.aiModel ?? 'external-ai',
-              confidence: data.confidence,
-              language: data.language ?? 'zh-CN',
-              processingTime: data.processingTime,
-              status: ProcessingStatus.COMPLETED,
               version: (previous?.version ?? 0) + 1,
               isLatest: true,
             },
@@ -126,17 +110,23 @@ export class MinuteSummaryRepository {
 
   async findById(id: string) {
     return this.prisma.minuteSummary.findUnique({
-      where: { id, deletedAt: null },
+      where: { id },
     });
   }
 
-  async findMany(minuteId: string, skip: number, take: number) {
+  async findLatestByMinuteId(minuteId: string) {
+    return this.prisma.minuteSummary.findFirst({
+      where: { minuteId, isLatest: true },
+    });
+  }
+
+  async findVersionsByMinuteId(minuteId: string, skip: number, take: number) {
     const [total, records] = await this.prisma.$transaction([
       this.prisma.minuteSummary.count({
-        where: { minuteId, deletedAt: null },
+        where: { minuteId },
       }),
       this.prisma.minuteSummary.findMany({
-        where: { minuteId, deletedAt: null },
+        where: { minuteId },
         skip,
         take,
         orderBy: { createdAt: 'desc' },
@@ -156,11 +146,8 @@ export class MinuteSummaryRepository {
   }
 
   async delete(id: string) {
-    return this.prisma.minuteSummary.update({
+    return this.prisma.minuteSummary.delete({
       where: { id },
-      data: {
-        deletedAt: new Date(),
-      },
     });
   }
 }

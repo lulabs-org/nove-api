@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { MinuteSummaryService } from '@/minute/services';
-import { GenerationMethod, ProcessingStatus } from '@prisma/client';
+import { GenerationMethod } from '@prisma/client';
 import { SummaryService as ApiSummaryService } from '@/integrations/tencent-meeting/services/meeting-summary.service';
 
 @Injectable()
@@ -22,15 +22,13 @@ export class TencentMtgSummaryCoreService {
     aiMinutes?: string,
     actionItems?: string,
   ) {
-    return await this.meetingSummaryService.upsert({
+    return await this.meetingSummaryService.updateCurrentVersion({
       minuteId,
       content: fullSummary || '',
       aiMinutes: aiMinutes ? { content: aiMinutes } : undefined,
       actionItems: actionItems ? { items: actionItems } : undefined,
       generatedBy: GenerationMethod.AI,
       aiModel: 'tencent-meeting-ai',
-      status: ProcessingStatus.COMPLETED,
-      language: 'zh-CN',
       version: 1,
       isLatest: true,
     });
@@ -57,15 +55,13 @@ export class TencentMtgSummaryCoreService {
       return;
     }
 
-    await this.meetingSummaryService.upsert({
+    await this.meetingSummaryService.updateCurrentVersion({
       minuteId: minuteId,
       content: content.fullSummary || '',
       aiMinutes: content.aiMinutes ? { content: content.aiMinutes } : undefined,
       actionItems: content.todo ? { items: content.todo } : undefined,
       generatedBy: GenerationMethod.AI,
       aiModel: 'tencent-meeting-ai',
-      status: ProcessingStatus.COMPLETED,
-      language: 'zh-CN',
       version: 1,
       isLatest: true,
     });

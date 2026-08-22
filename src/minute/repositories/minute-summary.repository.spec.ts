@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { GenerationMethod, Prisma, ProcessingStatus } from '@prisma/client';
+import { GenerationMethod, Prisma } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { MinuteSummaryRepository } from './minute-summary.repository';
 
@@ -25,7 +25,7 @@ describe('MinuteSummaryRepository', () => {
       $transaction: transaction,
     } as unknown as PrismaService);
 
-    const result = await repository.createExternalForRecording('recording-1', {
+    const result = await repository.saveNewVersion('recording-1', {
       content: 'New content',
       aiModel: 'GPT-4',
       keywords: ['tech'],
@@ -43,8 +43,6 @@ describe('MinuteSummaryRepository', () => {
         keywords: ['tech'],
         generatedBy: GenerationMethod.AI,
         aiModel: 'GPT-4',
-        language: 'zh-CN',
-        status: ProcessingStatus.COMPLETED,
         version: 3,
         isLatest: true,
       }),

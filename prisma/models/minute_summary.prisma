@@ -3,7 +3,6 @@ model MinuteSummary {
   id String @id @default(cuid())
 
   // 总结内容
-  title        String?  @db.VarChar(500) // 总结标题
   content      String   @db.Text // 总结内容
   // AI生成的结构化会议纪要，格式: { "sections": [{ "title": "string", "content": "string", "timestamp": "string" }] }
   aiMinutes    Json?    @map("ai_minutes")
@@ -23,32 +22,20 @@ model MinuteSummary {
   // 生成信息
   generatedBy GenerationMethod? @map("generated_by") // 生成方式
   aiModel     String?           @map("ai_model") // AI模型版本
-  confidence  Float? // 置信度
-  language    String? // 总结语言
 
   // 版本控制
   version  Int     @default(1) @map("version")
   isLatest Boolean @default(true) @map("is_latest")
-
-  // 状态管理
-  status         ProcessingStatus @default(PENDING) @map("status")
-  processingTime Int?             @map("processing_time") // 处理耗时（毫秒）
-  errorMessage   String?          @map("error_message") // 错误信息
 
   // 关联录制 (Minute)
   minuteId String @map("minute_id")
   minute   Minute @relation(fields: [minuteId], references: [id], onDelete: Cascade)
 
   // 系统字段及时间
-  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
+  @@unique([minuteId, version], map: "uq_minute_summary_version")
   @@index([minuteId], map: "idx_minute_summary_minute")
-  @@index([isLatest], map: "idx_minute_summary_is_latest")
-  @@index([status], map: "idx_minute_summary_status")
-  @@index([version], map: "idx_minute_summary_version")
-  @@index([language], map: "idx_minute_summary_language") // 语言查询优化
-  @@index([status, createdAt], map: "idx_minute_summary_status_created") // 按状态查询总结列表
   @@map("minute_summaries")
 }

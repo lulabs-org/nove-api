@@ -20,17 +20,15 @@ describe('SpeakerSummaryRepository', () => {
         },
         select: expect.objectContaining({
           summaries: expect.objectContaining({
-            where: { isLatest: true, deletedAt: null },
+            where: { isLatest: true },
             orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
             take: 1,
           }),
           transcripts: expect.objectContaining({
-            where: { deletedAt: null },
             orderBy: { createdAt: 'desc' },
             take: 1,
             select: {
               segments: expect.objectContaining({
-                where: { deletedAt: null },
                 orderBy: { startTimeMs: 'asc' },
                 select: expect.objectContaining({
                   speaker: expect.objectContaining({
