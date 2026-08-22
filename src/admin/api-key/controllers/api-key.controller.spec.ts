@@ -91,12 +91,15 @@ describe('ApiKeyController', () => {
   });
 
   it('uses the dedicated permission for each API Key mutation', () => {
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(Reflect.getMetadata(PERMISSIONS_KEY, controller.updateKey)).toEqual([
       'api-key:update',
     ]);
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(Reflect.getMetadata(PERMISSIONS_KEY, controller.revokeKey)).toEqual([
       'api-key:revoke',
     ]);
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(Reflect.getMetadata(PERMISSIONS_KEY, controller.rotateKey)).toEqual([
       'api-key:rotate',
     ]);
