@@ -51,6 +51,7 @@ interface FakeRefreshTokenRow {
   deviceId: string | null;
   userAgent: string | null;
   ip: string | null;
+  tokenVersion: number;
 }
 
 interface FakeUserRow {
@@ -97,6 +98,7 @@ interface RefreshCreateArgs {
     deviceId?: string | null;
     userAgent?: string | null;
     ip?: string | null;
+    tokenVersion?: number;
   };
 }
 
@@ -119,7 +121,8 @@ interface RefreshUpdateArgs {
 
 interface RefreshUpdateManyArgs {
   where: {
-    userId: string;
+    userId?: string;
+    tokenHash?: string;
     revokedAt?: null;
     jti?: { not: string | null };
   };
@@ -133,10 +136,22 @@ interface UserWithRelations extends FakeUserRow {
 }
 
 /**
+ * 可控并发门闩：在指定 fake 操作执行前挂起，
+ * 让测试精确编排 reset 与 refresh 两条流程的交错顺序（而非依赖真实计时）
+ */
+interface FakeGates {
+  /** consumeToken（按 tokenHash 条件更新）执行前触发 */
+  beforeConsume?: () => Promise<void> | void;
+  /** refreshToken.create 执行前触发 */
+  beforeCreate?: () => Promise<void> | void;
+}
+
+/**
  * 内存版 Prisma：模拟 user 与 refreshToken 两张表被本测试触达的读写
  */
 function createFakePrisma(user: FakeUserRow) {
   const refreshTokens: FakeRefreshTokenRow[] = [];
+  const gates: FakeGates = {};
   let seq = 0;
 
   const userWithRelations = (): UserWithRelations => ({
@@ -182,7 +197,8 @@ function createFakePrisma(user: FakeUserRow) {
       },
     },
     refreshToken: {
-      create: ({ data }: RefreshCreateArgs) => {
+      create: async ({ data }: RefreshCreateArgs) => {
+        if (gates.beforeCreate) await gates.beforeCreate();
         const row: FakeRefreshTokenRow = {
           id: `rt-${++seq}`,
           userId: data.userId,
@@ -195,9 +211,10 @@ function createFakePrisma(user: FakeUserRow) {
           deviceId: data.deviceId ?? null,
           userAgent: data.userAgent ?? null,
           ip: data.ip ?? null,
+          tokenVersion: data.tokenVersion ?? 0,
         };
         refreshTokens.push(row);
-        return Promise.resolve({ ...row });
+        return { ...row };
       },
 
       findUnique: ({ where }: RefreshFindUniqueArgs) => {
@@ -235,25 +252,34 @@ function createFakePrisma(user: FakeUserRow) {
         return Promise.resolve({ ...row });
       },
 
-      updateMany: ({ where, data }: RefreshUpdateManyArgs) => {
+      updateMany: async ({ where, data }: RefreshUpdateManyArgs) => {
+        // consumeToken 的调用特征：按 tokenHash 定位单行；revokeAll 按 userId 定位
+        if (where.tokenHash !== undefined && gates.beforeConsume) {
+          await gates.beforeConsume();
+        }
         let count = 0;
         for (const r of refreshTokens) {
-          if (r.userId !== where.userId) continue;
+          if (where.userId !== undefined && r.userId !== where.userId) continue;
+          if (where.tokenHash !== undefined && r.tokenHash !== where.tokenHash)
+            continue;
           if (where.revokedAt === null && r.revokedAt !== null) continue;
           if (where.jti?.not !== undefined && r.jti === where.jti.not) continue;
           r.revokedAt = data.revokedAt ?? new Date();
           r.replacedBy = data.replacedBy ?? r.replacedBy;
           count += 1;
         }
-        return Promise.resolve({ count });
+        return { count };
       },
     },
+    // 交互式事务：单文件内存 fake 无需真隔离，直接以同一 client 执行回调
+    $transaction: (fn: (txClient: unknown) => Promise<unknown>) => fn(prisma),
   };
 
   return {
     prisma: prisma as unknown as PrismaService,
     user,
     refreshTokens,
+    gates,
   };
 }
 
@@ -452,6 +478,156 @@ describe('密码重置会话失效（tokenVersion 回归测试）', () => {
       await expect(strategy.validate(legacyPayload)).rejects.toThrow(
         UnauthorizedException,
       );
+    });
+  });
+
+  describe('场景三：竞态穿透防护（review 指出的 refresh/reset 竞态）', () => {
+    it('漏网未撤销的旧版本 refresh token：被轮换版本护栏拒绝，无法换发新会话', async () => {
+      // 登录 → R1（记录 tokenVersion=0）
+      const login = await tokenService.generateTokens(USER_ID, {
+        ip: '127.0.0.1',
+      });
+
+      // 密码重置：R1 被事务内 revokeAll 撤销，tokenVersion 0→1
+      await resetPassword();
+      expect(fakePrisma.user.tokenVersion).toBe(1);
+
+      // 模拟极端竞态漏网：旧记录"逃脱"了 revokeAll 的评估范围
+      //（等价于并发轮换在 revokeAll 行锁评估之后才落库的新记录）
+      const leaked = fakePrisma.refreshTokens.find(
+        (r) => r.tokenHash.length > 0 && r.tokenVersion === 0,
+      );
+      expect(leaked).toBeDefined();
+      if (!leaked) throw new Error('leaked record not found');
+      leaked.revokedAt = null;
+
+      // 旧会话用漏网的 R1 尝试轮换：
+      // 预检通过（revokedAt=null），但记录版本 0 ≠ 当前版本 1 → 版本护栏拒绝
+      await expect(
+        tokenService.refreshToken(login.refreshToken, { ip: '127.0.0.1' }),
+      ).rejects.toThrow(UnauthorizedException);
+
+      // 漏网记录不会被消费，也无法产生任何新 access token
+      expect(leaked.revokedAt).toBeNull();
+      const recordsAfterAttempt = fakePrisma.refreshTokens.length;
+      expect(recordsAfterAttempt).toBe(2); // 登录 R1 + reset 自签记录，无新增
+    });
+
+    it('正常路径：版本一致时轮换不受版本护栏影响', async () => {
+      // reset 后本设备拿到新会话（tokenVersion=1）
+      const result = await resetPassword();
+      if (!result.refreshToken) throw new Error('refreshToken missing');
+
+      // 立即轮换：记录版本 1 === 用户版本 1 → 正常换发
+      const rotated = await tokenService.refreshToken(result.refreshToken, {
+        ip: '127.0.0.1',
+      });
+      const rotatedPayload = decode(rotated.accessToken);
+      expect(rotatedPayload.ver).toBe(1);
+
+      // 新 access token 通过策略校验
+      await expect(strategy.validate(rotatedPayload)).resolves.toBeDefined();
+    });
+  });
+
+  describe('场景四：可控并发（reset 执行期间的并发 refresh）', () => {
+    /** 统计"可用活跃会话"：未撤销且版本与当前用户版本一致（即真正可兑换 access 的记录） */
+    const countUsableSessions = () =>
+      fakePrisma.refreshTokens.filter(
+        (r) =>
+          r.revokedAt === null &&
+          r.tokenVersion === fakePrisma.user.tokenVersion,
+      ).length;
+
+    it('交错A：refresh 预检通过后、消费前 reset 提交 → 消费失败，无任何新会话落库', async () => {
+      const login = await tokenService.generateTokens(USER_ID, {
+        ip: '127.0.0.1',
+      });
+
+      // 门闩：让 refresh 恰好停在 consumeToken 执行前（此时预检/护栏均已通过）
+      let releaseConsume!: () => void;
+      const consumeGate = new Promise<void>(
+        (resolve) => (releaseConsume = resolve),
+      );
+      let reachedConsume!: () => void;
+      const reached = new Promise<void>(
+        (resolve) => (reachedConsume = resolve),
+      );
+      fakePrisma.gates.beforeConsume = () => {
+        reachedConsume();
+        return consumeGate;
+      };
+
+      // 启动并发 refresh，等待其抵达消费点
+      const refreshPromise = tokenService.refreshToken(login.refreshToken, {
+        ip: '127.0.0.1',
+      });
+      await reached;
+
+      // reset 完整提交：版本 0→1 + revokeAll（真实库中对应事务持行锁后提交）
+      await resetPassword();
+      expect(fakePrisma.user.tokenVersion).toBe(1);
+
+      // 放行 refresh：consumeToken 的条件（revokedAt IS NULL）已被 reset 破坏
+      releaseConsume();
+      await expect(refreshPromise).rejects.toThrow(UnauthorizedException);
+
+      // 断言：refresh 未产生任何新记录（登录 R1 已撤销 + reset 自签，共 2 条）
+      expect(fakePrisma.refreshTokens).toHaveLength(2);
+      // 唯一可用活跃会话 = reset 为本设备签发的那条
+      expect(countUsableSessions()).toBe(1);
+    });
+
+    it('交错B：refresh 消费成功后、落库前 reset 提交 → 幽灵会话被护栏+ver 双重拒绝', async () => {
+      const login = await tokenService.generateTokens(USER_ID, {
+        ip: '127.0.0.1',
+      });
+
+      // 一次性门闩：仅拦截 refresh 的首次 create（reset 自签记录不触发）
+      let releaseCreate!: () => void;
+      const createGate = new Promise<void>(
+        (resolve) => (releaseCreate = resolve),
+      );
+      let reachedCreate!: () => void;
+      const reached = new Promise<void>((resolve) => (reachedCreate = resolve));
+      let armed = true;
+      fakePrisma.gates.beforeCreate = () => {
+        if (!armed) return Promise.resolve();
+        armed = false;
+        reachedCreate();
+        return createGate;
+      };
+
+      // 启动并发 refresh：预检→护栏（版本 0===0 通过）→消费成功（旧行标记 revoked）→ 落库前挂起
+      // （等价于真实库中"新记录 INSERT 尚未提交、reset 的 updateMany 不可见"的交错）
+      const refreshPromise = tokenService.refreshToken(login.refreshToken, {
+        ip: '127.0.0.1',
+      });
+      await reached;
+
+      // reset 提交：版本 0→1；revokeAll 撤销不到尚未落库的新记录 → 幽灵记录漏网
+      await resetPassword();
+      expect(fakePrisma.user.tokenVersion).toBe(1);
+
+      // 放行 refresh：幽灵记录（tokenVersion=0）落库，refresh 调用本身"成功"返回
+      releaseCreate();
+      const ghost = await refreshPromise;
+
+      // 但幽灵会话完全不可用——
+      // ① 其 access token（ver=0 ≠ 1）被策略拒绝
+      const ghostPayload = decode(ghost.accessToken);
+      expect(ghostPayload.ver).toBe(0);
+      await expect(strategy.validate(ghostPayload)).rejects.toThrow(
+        UnauthorizedException,
+      );
+
+      // ② 幽灵 refresh token 被轮换版本护栏拒绝，永远无法续命
+      await expect(
+        tokenService.refreshToken(ghost.refreshToken, { ip: '127.0.0.1' }),
+      ).rejects.toThrow(UnauthorizedException);
+
+      // 唯一可用活跃会话仍是 reset 本设备会话
+      expect(countUsableSessions()).toBe(1);
     });
   });
 });

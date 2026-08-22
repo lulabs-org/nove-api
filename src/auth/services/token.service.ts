@@ -106,6 +106,7 @@ export class TokenService {
         deviceId: context?.deviceId,
         userAgent: context?.userAgent,
         ip: context?.ip,
+        tokenVersion: user.tokenVersion,
       });
     } catch (error) {
       this.logger.error('Failed to store refresh token', error);
@@ -130,6 +131,7 @@ export class TokenService {
     refreshExpiresIn: number;
   }> {
     try {
+      // 1. 预检：读取记录做业务校验（快速失败路径）
       const oldTokenRecord =
         await this.refreshTokenRepo.findByToken(refreshToken);
       if (!oldTokenRecord || oldTokenRecord.revokedAt) {
@@ -141,9 +143,29 @@ export class TokenService {
         throw new UnauthorizedException('用户不存在');
       }
 
+      // 2. 版本护栏：记录诞生时的版本必须等于用户当前版本。
+      // 记录属于密码重置前的旧会话（即使因竞态漏网未被 revokeAll 撤销）时，
+      // 此处直接拒绝换发，阻断旧会话穿透密码重置。
+      if (oldTokenRecord.tokenVersion !== user.tokenVersion) {
+        this.logger.warn(
+          `Refresh token rejected by version guard: user=${user.id}, record ver=${oldTokenRecord.tokenVersion}, current ver=${user.tokenVersion}`,
+        );
+        throw new UnauthorizedException('刷新令牌已失效，请重新登录');
+      }
+
+      // 3. 原子消费：单条条件 UPDATE 完成"校验+撤销"，与密码重置的
+      // revokeAll 在行级互斥，消除"先通过校验、后落库新记录"的竞态窗口
+      const newRefreshToken = generateRandomToken();
+      const consumed = await this.refreshTokenRepo.consumeToken(
+        refreshToken,
+        newRefreshToken,
+      );
+      if (!consumed) {
+        throw new UnauthorizedException('刷新令牌无效或已过期');
+      }
+
+      // 4. 签发新 access（ver 快照为当前版本）并落库新 refresh 记录（同版本）
       const accessJti = randomUUID();
-      // ver 快照为刷新时刻的用户令牌版本，确保轮换签发的新 access token
-      // 与数据库中的失效边界一致
       const accessToken = this.jwtService.sign(
         { sub: user.id, ver: user.tokenVersion },
         {
@@ -152,8 +174,6 @@ export class TokenService {
           jwtid: accessJti,
         },
       );
-
-      const newRefreshToken = generateRandomToken();
 
       const expiresIn = Math.floor(
         parseDurationToMs(this.accessExpiresIn) / 1000,
@@ -179,6 +199,7 @@ export class TokenService {
           userAgent:
             context?.userAgent || oldTokenRecord.userAgent || undefined,
           ip: context?.ip || oldTokenRecord.ip || undefined,
+          tokenVersion: user.tokenVersion,
         });
       } catch (error) {
         this.logger.error(
@@ -186,12 +207,6 @@ export class TokenService {
           error,
         );
         throw new InternalServerErrorException('刷新令牌轮换失败');
-      }
-
-      try {
-        await this.refreshTokenRepo.revokeToken(refreshToken);
-      } catch (error) {
-        this.logger.error('Failed to revoke old refresh token', error);
       }
 
       return {

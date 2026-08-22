@@ -11,6 +11,9 @@ model RefreshToken {
   expiresAt  DateTime
   revokedAt  DateTime?
   replacedBy String?
+  /// 该记录诞生时用户的令牌版本；轮换时与 users.token_version 比对，
+  /// 不一致说明记录属于密码重置前的旧会话，拒绝换发（版本护栏）
+  tokenVersion Int     @default(0) @map("token_version")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

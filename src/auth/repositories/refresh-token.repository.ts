@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { createHash } from 'node:crypto';
 import {
@@ -23,10 +24,12 @@ export class RefreshTokenRepository {
    */
   async createRefreshToken(
     data: CreateRefreshTokenData,
+    tx?: Prisma.TransactionClient,
   ): Promise<RefreshToken> {
     const tokenHash = this.hashToken(data.token);
+    const client = tx ?? this.prisma;
 
-    return this.prisma.refreshToken.create({
+    return client.refreshToken.create({
       data: {
         userId: data.userId,
         tokenHash,
@@ -36,8 +39,33 @@ export class RefreshTokenRepository {
         deviceId: data.deviceId,
         userAgent: data.userAgent,
         ip: data.ip,
+        tokenVersion: data.tokenVersion ?? 0,
       },
     }) as Promise<RefreshToken>;
+  }
+
+  /**
+   * 原子消费刷新令牌：仅当记录存在且未撤销时条件更新，返回是否消费成功。
+   *
+   * "校验 + 撤销"合并为单条条件 UPDATE，与密码重置的 revokeAll 在行级互斥：
+   * - 若重置事务先撤销该行，此处 count=0 → 轮换被拒绝；
+   * - 若轮换先消费该行，重置事务的 updateMany 会在行锁释放后重新评估，
+   *   轮换新建的记录（revokedAt IS NULL）同样会被撤销。
+   * 从而消除"先通过校验、后落库新记录"的竞态窗口。
+   */
+  async consumeToken(
+    token: string,
+    replacedBy?: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<boolean> {
+    const tokenHash = this.hashToken(token);
+    const client = tx ?? this.prisma;
+
+    const result = await client.refreshToken.updateMany({
+      where: { tokenHash, revokedAt: null },
+      data: { revokedAt: new Date(), replacedBy },
+    });
+    return result.count === 1;
   }
 
   /**
@@ -107,16 +135,18 @@ export class RefreshTokenRepository {
   }
 
   /**
-   * 撤销用户的所有刷新令牌
+   * 撤销用户的所有刷新令牌（可传入事务客户端，与密码更新同事务执行）
    */
   async revokeAllTokensByUserId(
     userId: string,
     excludeJti?: string,
     options: RevokeRefreshTokenOptions = {},
+    tx?: Prisma.TransactionClient,
   ): Promise<number> {
     const revokedAt = options.revokedAt || new Date();
+    const client = tx ?? this.prisma;
 
-    const result = await this.prisma.refreshToken.updateMany({
+    const result = await client.refreshToken.updateMany({
       where: {
         userId,
         revokedAt: null,

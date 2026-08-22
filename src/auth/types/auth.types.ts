@@ -22,6 +22,8 @@ export interface RefreshToken {
   expiresAt: Date;
   revokedAt?: Date | null;
   replacedBy?: string | null;
+  /** 该记录诞生时的用户令牌版本（版本护栏用） */
+  tokenVersion: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -35,6 +37,8 @@ export interface CreateRefreshTokenData {
   deviceId?: string;
   userAgent?: string;
   ip?: string;
+  /** 记录诞生时的用户令牌版本，默认取 0 */
+  tokenVersion?: number;
 }
 
 // 撤销刷新令牌选项接口

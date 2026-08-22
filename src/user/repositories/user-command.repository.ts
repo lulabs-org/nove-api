@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import type { User, UserProfile } from '@prisma/client';
 
@@ -81,10 +82,15 @@ export class UserCommandRepository {
     });
   }
 
-  updatePassword(id: string, password: string): Promise<User> {
+  updatePassword(
+    id: string,
+    password: string,
+    tx?: Prisma.TransactionClient,
+  ): Promise<User> {
     // 同一条 UPDATE 中原子递增 tokenVersion：密码变更后，
     // 所有历史签发的 access token 因 ver 不一致而立即失效
-    return this.prisma.user.update({
+    const client = tx ?? this.prisma;
+    return client.user.update({
       where: { id },
       data: {
         passwordHash: password,
