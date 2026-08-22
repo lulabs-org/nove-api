@@ -64,6 +64,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('用户不存在');
     }
 
+    // 用户级令牌失效边界：token 签发时快照的 ver 必须与用户当前 tokenVersion 一致。
+    // 密码重置/修改会原子递增 tokenVersion，因此所有历史签发的 access token（包括
+    // refresh rotation 前的旧 token、以及未持久化 jti 的存量 token）都会立即失效。
+    // 缺失 ver 的存量 token 按 0 处理，部署后仍可正常使用，直至下次密码变更。
+    const tokenVer = payload.ver ?? 0;
+    if (tokenVer !== authUser.tokenVersion) {
+      throw new UnauthorizedException('访问令牌已失效，请重新登录');
+    }
+
     // 如果 JWT 中带有 scope 权限范围（OAuth 2.0 场景），则将其附加到 authUser 上
     if (payload.scopes) {
       authUser.scopes = payload.scopes;

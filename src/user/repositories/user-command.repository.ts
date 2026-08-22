@@ -82,9 +82,14 @@ export class UserCommandRepository {
   }
 
   updatePassword(id: string, password: string): Promise<User> {
+    // 同一条 UPDATE 中原子递增 tokenVersion：密码变更后，
+    // 所有历史签发的 access token 因 ver 不一致而立即失效
     return this.prisma.user.update({
       where: { id },
-      data: { passwordHash: password },
+      data: {
+        passwordHash: password,
+        tokenVersion: { increment: 1 },
+      },
     });
   }
 

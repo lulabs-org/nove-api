@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, MinLength, Matches, IsOptional, IsEnum } from 'class-validator';
+import {
+  IsString,
+  MinLength,
+  Matches,
+  IsOptional,
+  IsEnum,
+} from 'class-validator';
 import { ClientType } from '../types/jwt.types';
 
 export class ResetPasswordDto {
@@ -21,7 +27,8 @@ export class ResetPasswordDto {
   newPassword: string;
 
   @ApiProperty({
-    description: '客户端类型，决定 refresh token 下发方式（web=cookie，app=body）',
+    description:
+      '客户端类型，决定 refresh token 下发方式（web=cookie，app=body）',
     enum: ClientType,
     required: false,
   })

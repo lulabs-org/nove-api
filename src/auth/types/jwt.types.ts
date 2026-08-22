@@ -22,6 +22,8 @@ export interface AuthenticatedUser {
   createdAt: Date;
   lastLoginAt?: Date | null;
   scopes?: string[];
+  /** 用户级令牌失效边界（users.token_version），与 JWT payload.ver 比对 */
+  tokenVersion: number;
 }
 
 export interface JwtPayload {
@@ -32,6 +34,8 @@ export interface JwtPayload {
   iat?: number;
   exp?: number;
   scopes?: string[];
+  /** 签发时的用户令牌版本号；缺失时按 0 处理（兼容存量无 ver 声明的 token） */
+  ver?: number;
 }
 
 export enum TokenBlacklistScope {

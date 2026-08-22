@@ -22,6 +22,10 @@ model User {
   // 用户状态
   active Boolean @default(true) // 用户状态：true=活跃，false=禁用
 
+  // 令牌版本号：作为用户级令牌失效边界，密码重置/修改时原子递增，
+  // JWT 校验时与 payload.ver 比对，版本不一致即拒绝（覆盖所有历史签发的 access token）
+  tokenVersion Int @default(0) @map("token_version")
+
   // 系统时间戳字段
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)

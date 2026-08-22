@@ -68,7 +68,14 @@ export class TokenService {
     refreshToken: string;
     refreshExpiresIn: number;
   }> {
-    const payload = { sub: userId };
+    // 读取用户当前令牌版本，快照进 JWT ver 声明；密码变更递增 tokenVersion 后，
+    // 旧 ver 的 token 会在 JwtStrategy 校验时被拒绝
+    const user = await this.userRepo.byId(userId);
+    if (!user) {
+      throw new UnauthorizedException('用户不存在');
+    }
+
+    const payload = { sub: userId, ver: user.tokenVersion };
     const accessJti = randomUUID();
 
     const accessToken = this.jwtService.sign(payload, {
@@ -135,8 +142,10 @@ export class TokenService {
       }
 
       const accessJti = randomUUID();
+      // ver 快照为刷新时刻的用户令牌版本，确保轮换签发的新 access token
+      // 与数据库中的失效边界一致
       const accessToken = this.jwtService.sign(
-        { sub: user.id },
+        { sub: user.id, ver: user.tokenVersion },
         {
           secret: this.accessSecret,
           expiresIn: this.accessExpiresIn,
