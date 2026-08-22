@@ -4,10 +4,10 @@ import {
   TrackingCadence,
   TrackingReportType,
 } from '@prisma/client';
-import { PARTICIPANT_SUMMARY_CONFIGS } from './config';
-import type { ParticipantSummary } from './type';
+import { SPEAKER_SUMMARY_CONFIGS } from './config';
+import type { SpeakerSummary } from './type';
 
-export async function createMinuteParticipantSummaries(
+export async function createSpeakerSummaries(
   prisma: PrismaClient,
   meetings: { meetings: Array<{ meeting: { id: string } }> },
   minute: { id: string },
@@ -16,21 +16,20 @@ export async function createMinuteParticipantSummaries(
       platformUser: { id: string; localUserId: string | null };
     }>;
   },
-): Promise<ParticipantSummary[]> {
+): Promise<SpeakerSummary[]> {
   const now = new Date();
   const users = platformUsers.platformUsers.slice(
     0,
-    PARTICIPANT_SUMMARY_CONFIGS.length,
+    SPEAKER_SUMMARY_CONFIGS.length,
   );
   const summaries = await Promise.all(
     users.map(({ platformUser }, index) => {
-      const config = PARTICIPANT_SUMMARY_CONFIGS[index];
+      const config = SPEAKER_SUMMARY_CONFIGS[index];
       return prisma.speakerSummary.upsert({
         where: {
-          minuteId_platformUserId_version: {
+          minuteId_platformUserId: {
             minuteId: minute.id,
             platformUserId: platformUser.id,
-            version: 1,
           },
         },
         update: { partSummary: config.partSummary, keywords: config.keywords },
@@ -49,7 +48,7 @@ export async function createMinuteParticipantSummaries(
   await Promise.all(
     summaries.slice(0, 5).map((summary, index) => {
       const platformUser = users[index].platformUser;
-      const config = PARTICIPANT_SUMMARY_CONFIGS[index];
+      const config = SPEAKER_SUMMARY_CONFIGS[index];
       const periodStart = new Date(
         now.getFullYear(),
         now.getMonth(),

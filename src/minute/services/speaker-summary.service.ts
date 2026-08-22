@@ -47,9 +47,9 @@ export class SpeakerSummaryService {
     const { transcript } = context;
 
     let userIdsToProcess = platformUserIds;
-    if (!userIdsToProcess || userIdsToProcess.length === 0) {
+    if (!userIdsToProcess) {
       userIdsToProcess = [
-        ...new Set(
+        ...new Set<string>(
           transcript.segments
             .map((s) => s.speaker?.id)
             .filter((id): id is string => id != null),
@@ -131,7 +131,7 @@ export class SpeakerSummaryService {
     const summary = await this.llmService.ask(prompt, systemPrompt);
 
     // 6. 结果持久化
-    await this.partSummaryRepo.saveNewVersion({
+    await this.partSummaryRepo.upsert({
       platformUserId,
       minuteId: recordId,
       partSummary: summary,
@@ -156,7 +156,8 @@ export class SpeakerSummaryService {
       return null;
     }
 
-    const userName = spokenSegment.speakerName;
+    const userName =
+      spokenSegment.speakerName || spokenSegment.speaker?.displayName;
     if (!userName) {
       this.logger.warn(`无法获取参会者 ${platformUserId} 的姓名，无法生成总结`);
       return null;
@@ -205,7 +206,7 @@ export class SpeakerSummaryService {
     if (meeting.deletedAt) throw new MeetingRecordNotFoundException(meeting.id);
 
     const transcript = recording.transcripts[0];
-    const minuteSummary = recording.summaries?.[0];
+    const minuteSummary = recording.summary;
 
     if (!minuteSummary) throw new MinuteSummaryNotFoundException(meeting.id);
     if (!transcript) throw new NotFoundException(`转录记录不存在: ${minuteId}`);

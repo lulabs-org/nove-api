@@ -636,6 +636,67 @@ export const REAL_PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     resource: 'minute',
     action: 'stats_view',
   },
+
+  // ========== 纪要总结管理 ==========
+  {
+    name: '查看纪要总结',
+    code: 'minute-summary:read',
+    description: '查看纪要总结信息',
+    resource: 'minute-summary',
+    action: 'read',
+  },
+  {
+    name: '创建纪要总结',
+    code: 'minute-summary:create',
+    description: '创建新纪要总结',
+    resource: 'minute-summary',
+    action: 'create',
+  },
+  {
+    name: '编辑纪要总结',
+    code: 'minute-summary:update',
+    description: '编辑纪要总结信息',
+    resource: 'minute-summary',
+    action: 'update',
+  },
+  {
+    name: '删除纪要总结',
+    code: 'minute-summary:delete',
+    description: '删除纪要总结',
+    resource: 'minute-summary',
+    action: 'delete',
+  },
+
+  // ========== 发言人总结管理 ==========
+  {
+    name: '查看发言人总结',
+    code: 'speaker-summary:read',
+    description: '查看发言人总结信息',
+    resource: 'speaker-summary',
+    action: 'read',
+  },
+  {
+    name: '创建发言人总结',
+    code: 'speaker-summary:create',
+    description: '创建新发言人总结',
+    resource: 'speaker-summary',
+    action: 'create',
+  },
+  {
+    name: '编辑发言人总结',
+    code: 'speaker-summary:update',
+    description: '编辑发言人总结信息',
+    resource: 'speaker-summary',
+    action: 'update',
+  },
+  {
+    name: '删除发言人总结',
+    code: 'speaker-summary:delete',
+    description: '删除发言人总结',
+    resource: 'speaker-summary',
+    action: 'delete',
+  },
+
   // ========== 平台用户管理 ==========
   {
     name: '查看平台用户',
@@ -1302,6 +1363,67 @@ export const PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     resource: 'minute',
     action: 'stats_view',
   },
+
+  // ========== 纪要总结管理 ==========
+  {
+    name: '查看纪要总结',
+    code: 'minute-summary:read',
+    description: '查看纪要总结信息',
+    resource: 'minute-summary',
+    action: 'read',
+  },
+  {
+    name: '创建纪要总结',
+    code: 'minute-summary:create',
+    description: '创建新纪要总结',
+    resource: 'minute-summary',
+    action: 'create',
+  },
+  {
+    name: '编辑纪要总结',
+    code: 'minute-summary:update',
+    description: '编辑纪要总结信息',
+    resource: 'minute-summary',
+    action: 'update',
+  },
+  {
+    name: '删除纪要总结',
+    code: 'minute-summary:delete',
+    description: '删除纪要总结',
+    resource: 'minute-summary',
+    action: 'delete',
+  },
+
+  // ========== 发言人总结管理 ==========
+  {
+    name: '查看发言人总结',
+    code: 'speaker-summary:read',
+    description: '查看发言人总结信息',
+    resource: 'speaker-summary',
+    action: 'read',
+  },
+  {
+    name: '创建发言人总结',
+    code: 'speaker-summary:create',
+    description: '创建新发言人总结',
+    resource: 'speaker-summary',
+    action: 'create',
+  },
+  {
+    name: '编辑发言人总结',
+    code: 'speaker-summary:update',
+    description: '编辑发言人总结信息',
+    resource: 'speaker-summary',
+    action: 'update',
+  },
+  {
+    name: '删除发言人总结',
+    code: 'speaker-summary:delete',
+    description: '删除发言人总结',
+    resource: 'speaker-summary',
+    action: 'delete',
+  },
+
   // ========== 平台用户管理 ==========
   {
     name: '查看平台用户',

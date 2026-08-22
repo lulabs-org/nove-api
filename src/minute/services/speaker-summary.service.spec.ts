@@ -36,7 +36,7 @@ describe('SpeakerSummaryService', () => {
       endAt: new Date('2026-03-30T02:00:00Z'),
       deletedAt: null,
     },
-    summaries: [minuteSummary],
+    summary: minuteSummary,
     transcripts: [
       {
         segments: [
@@ -54,7 +54,7 @@ describe('SpeakerSummaryService', () => {
   let llmService: { ask: jest.Mock };
   let repository: {
     findGenerationContext: jest.Mock;
-    saveNewVersion: jest.Mock;
+    upsert: jest.Mock;
   };
   let service: SpeakerSummaryService;
 
@@ -62,7 +62,7 @@ describe('SpeakerSummaryService', () => {
     llmService = { ask: jest.fn().mockResolvedValue('generated summary') };
     repository = {
       findGenerationContext: jest.fn().mockResolvedValue(context),
-      saveNewVersion: jest.fn().mockResolvedValue(undefined),
+      upsert: jest.fn().mockResolvedValue(undefined),
     };
     service = new SpeakerSummaryService(
       llmService as unknown as LlmService,
@@ -104,7 +104,7 @@ describe('SpeakerSummaryService', () => {
       'participant prompt',
       'system prompt',
     );
-    expect(repository.saveNewVersion).toHaveBeenCalledWith(
+    expect(repository.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         platformUserId: 'platform-user-1',
         minuteId: 'recording-1',
@@ -142,7 +142,7 @@ describe('SpeakerSummaryService', () => {
   it('throws when the latest meeting summary does not exist', async () => {
     repository.findGenerationContext.mockResolvedValue({
       ...context,
-      summaries: [],
+      summary: null,
     });
 
     await expect(

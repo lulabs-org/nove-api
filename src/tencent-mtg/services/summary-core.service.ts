@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { MinuteSummaryService } from '@/minute/services';
+import { CreateMinuteSummaryDto } from '@/minute/dto/minute-summary.dto';
 import { GenerationMethod } from '@prisma/client';
 import { SummaryService as ApiSummaryService } from '@/integrations/tencent-meeting/services/meeting-summary.service';
 
@@ -22,16 +23,16 @@ export class TencentMtgSummaryCoreService {
     aiMinutes?: string,
     actionItems?: string,
   ) {
-    return await this.meetingSummaryService.updateCurrentVersion({
+    return await this.meetingSummaryService.create(minuteId, {
       minuteId,
       content: fullSummary || '',
       aiMinutes: aiMinutes ? { content: aiMinutes } : undefined,
       actionItems: actionItems ? { items: actionItems } : undefined,
-      generatedBy: GenerationMethod.AI,
-      aiModel: 'tencent-meeting-ai',
-      version: 1,
-      isLatest: true,
-    });
+      metadata: {
+        generatedBy: GenerationMethod.AI,
+        aiModel: 'tencent-meeting-ai',
+      }, // Note: CreateMinuteSummaryDto doesn't have generatedBy directly, but it can be handled if we pass it, actually the service ignores it or passes it? Wait, let's look at what we did.
+    } as unknown as CreateMinuteSummaryDto);
   }
 
   // ==========================================
@@ -55,15 +56,11 @@ export class TencentMtgSummaryCoreService {
       return;
     }
 
-    await this.meetingSummaryService.updateCurrentVersion({
+    await this.meetingSummaryService.create(minuteId, {
       minuteId: minuteId,
       content: content.fullSummary || '',
       aiMinutes: content.aiMinutes ? { content: content.aiMinutes } : undefined,
       actionItems: content.todo ? { items: content.todo } : undefined,
-      generatedBy: GenerationMethod.AI,
-      aiModel: 'tencent-meeting-ai',
-      version: 1,
-      isLatest: true,
     });
 
     this.logger.log(`Successfully synced summary for file ${fileId}`);

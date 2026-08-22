@@ -17,10 +17,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import {
-  RequirePermissions,
-  NoPermissionRequired,
-} from '@/admin/permission/decorators/permissions.decorator';
+import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
 import { CuidPipe } from '@/common/pipes/cuid.pipe';
 import { SpeakerSummaryCrudService } from '../services/speaker-summary-crud.service';
 import { SpeakerSummaryService } from '../services/speaker-summary.service';
@@ -43,7 +40,7 @@ export class SpeakerSummaryController {
   ) {}
 
   @Get()
-  @RequirePermissions('minute:read')
+  @RequirePermissions('speaker-summary:read')
   @ApiResponse({
     status: HttpStatus.OK,
     type: SpeakerSummaryListResponseDto,
@@ -56,18 +53,18 @@ export class SpeakerSummaryController {
     return this.service.findMany(minuteId, query.page, query.limit);
   }
 
-  @Get(':id')
-  @RequirePermissions('minute:read')
+  @Get(':summaryId')
+  @RequirePermissions('speaker-summary:read')
   @ApiResponse({ status: HttpStatus.OK, type: SpeakerSummaryDto })
   get(
     @Param('minuteId', CuidPipe) minuteId: string,
-    @Param('id', CuidPipe) id: string,
+    @Param('summaryId', CuidPipe) summaryId: string,
   ) {
-    return this.service.findById(minuteId, id);
+    return this.service.findById(minuteId, summaryId);
   }
 
   @Post()
-  @RequirePermissions('minute:create')
+  @RequirePermissions('speaker-summary:create')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '为录制中的参会者创建新总结版本' })
   create(
@@ -77,32 +74,32 @@ export class SpeakerSummaryController {
     return this.service.create(minuteId, dto);
   }
 
-  @Put(':id')
-  @RequirePermissions('minute:update')
+  @Put(':summaryId')
+  @RequirePermissions('speaker-summary:update')
   update(
     @Param('minuteId', CuidPipe) minuteId: string,
-    @Param('id', CuidPipe) id: string,
+    @Param('summaryId', CuidPipe) summaryId: string,
     @Body(new ValidationPipe()) dto: UpdateSpeakerSummaryDto,
   ) {
-    return this.service.update(minuteId, id, dto);
+    return this.service.update(minuteId, summaryId, dto);
   }
 
-  @Delete(':id')
-  @RequirePermissions('minute:delete')
+  @Delete(':summaryId')
+  @RequirePermissions('speaker-summary:delete')
   delete(
     @Param('minuteId', CuidPipe) minuteId: string,
-    @Param('id', CuidPipe) id: string,
+    @Param('summaryId', CuidPipe) summaryId: string,
   ) {
-    return this.service.delete(minuteId, id);
+    return this.service.delete(minuteId, summaryId);
   }
 
   @Post('generate')
   @HttpCode(HttpStatus.OK)
-  @NoPermissionRequired()
+  @RequirePermissions('speaker-summary:create')
   @ApiOperation({ summary: '生成参会者总结' })
   async generateSummaries(
-    @Param('minuteId') minuteId: string,
-    @Body() dto: GenerateParticipantSummaryDto,
+    @Param('minuteId', CuidPipe) minuteId: string,
+    @Body(new ValidationPipe()) dto: GenerateParticipantSummaryDto,
   ) {
     return {
       success: true,

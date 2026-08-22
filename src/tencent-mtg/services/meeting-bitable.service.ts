@@ -343,7 +343,6 @@ export class MeetingBitableService {
       // Fetch from Database
       const summary = await this.prisma.minuteSummary.findFirst({
         where: { minuteId: internalRecordingId },
-        orderBy: { version: 'desc' },
       });
 
       const transcript = await this.prisma.transcript.findFirst({
