@@ -36,7 +36,7 @@ describe('SpeakerSummaryService', () => {
       endAt: new Date('2026-03-30T02:00:00Z'),
       deletedAt: null,
     },
-    summaries: [minuteSummary],
+    summary: minuteSummary,
     transcripts: [
       {
         segments: [
@@ -142,7 +142,7 @@ describe('SpeakerSummaryService', () => {
   it('throws when the latest meeting summary does not exist', async () => {
     repository.findGenerationContext.mockResolvedValue({
       ...context,
-      summaries: [],
+      summary: null,
     });
 
     await expect(
