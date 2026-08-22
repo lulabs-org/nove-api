@@ -43,7 +43,7 @@ export class SpeakerSummaryController {
   ) {}
 
   @Get()
-  @RequirePermissions('minute:read')
+  @RequirePermissions('speaker-summary:read')
   @ApiResponse({
     status: HttpStatus.OK,
     type: SpeakerSummaryListResponseDto,
@@ -57,7 +57,7 @@ export class SpeakerSummaryController {
   }
 
   @Get(':id')
-  @RequirePermissions('minute:read')
+  @RequirePermissions('speaker-summary:read')
   @ApiResponse({ status: HttpStatus.OK, type: SpeakerSummaryDto })
   get(
     @Param('minuteId', CuidPipe) minuteId: string,
@@ -67,7 +67,7 @@ export class SpeakerSummaryController {
   }
 
   @Post()
-  @RequirePermissions('minute:create')
+  @RequirePermissions('speaker-summary:create')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '为录制中的参会者创建新总结版本' })
   create(
@@ -78,7 +78,7 @@ export class SpeakerSummaryController {
   }
 
   @Put(':id')
-  @RequirePermissions('minute:update')
+  @RequirePermissions('speaker-summary:update')
   update(
     @Param('minuteId', CuidPipe) minuteId: string,
     @Param('id', CuidPipe) id: string,
@@ -88,7 +88,7 @@ export class SpeakerSummaryController {
   }
 
   @Delete(':id')
-  @RequirePermissions('minute:delete')
+  @RequirePermissions('speaker-summary:delete')
   delete(
     @Param('minuteId', CuidPipe) minuteId: string,
     @Param('id', CuidPipe) id: string,

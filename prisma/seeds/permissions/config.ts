@@ -667,6 +667,36 @@ export const REAL_PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     action: 'delete',
   },
 
+  // ========== 发言人总结管理 ==========
+  {
+    name: '查看发言人总结',
+    code: 'speaker-summary:read',
+    description: '查看发言人总结信息',
+    resource: 'speaker-summary',
+    action: 'read',
+  },
+  {
+    name: '创建发言人总结',
+    code: 'speaker-summary:create',
+    description: '创建新发言人总结',
+    resource: 'speaker-summary',
+    action: 'create',
+  },
+  {
+    name: '编辑发言人总结',
+    code: 'speaker-summary:update',
+    description: '编辑发言人总结信息',
+    resource: 'speaker-summary',
+    action: 'update',
+  },
+  {
+    name: '删除发言人总结',
+    code: 'speaker-summary:delete',
+    description: '删除发言人总结',
+    resource: 'speaker-summary',
+    action: 'delete',
+  },
+
   // ========== 平台用户管理 ==========
   {
     name: '查看平台用户',
@@ -1361,6 +1391,36 @@ export const PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     code: 'minute-summary:delete',
     description: '删除纪要总结',
     resource: 'minute-summary',
+    action: 'delete',
+  },
+
+  // ========== 发言人总结管理 ==========
+  {
+    name: '查看发言人总结',
+    code: 'speaker-summary:read',
+    description: '查看发言人总结信息',
+    resource: 'speaker-summary',
+    action: 'read',
+  },
+  {
+    name: '创建发言人总结',
+    code: 'speaker-summary:create',
+    description: '创建新发言人总结',
+    resource: 'speaker-summary',
+    action: 'create',
+  },
+  {
+    name: '编辑发言人总结',
+    code: 'speaker-summary:update',
+    description: '编辑发言人总结信息',
+    resource: 'speaker-summary',
+    action: 'update',
+  },
+  {
+    name: '删除发言人总结',
+    code: 'speaker-summary:delete',
+    description: '删除发言人总结',
+    resource: 'speaker-summary',
     action: 'delete',
   },
 
