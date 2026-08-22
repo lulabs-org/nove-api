@@ -34,7 +34,14 @@ async function main(): Promise<void> {
 
     switch (moduleName) {
       case 'permissions':
-        await seedFunctions.createPermissions(prisma, mode === 'real');
+        {
+          const permissions = await seedFunctions.createPermissions(
+            prisma,
+            mode === 'real',
+          );
+          const roles = await prisma.role.findMany();
+          await seedFunctions.assignRolePermissions(prisma, permissions, roles);
+        }
         break;
       case 'products':
         await seedFunctions.createProducts(prisma);

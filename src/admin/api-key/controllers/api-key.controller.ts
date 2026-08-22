@@ -171,7 +171,7 @@ export class ApiKeyController {
     status: 404,
     description: 'API Key 不存在',
   })
-  @RequirePermissions('api-key:update')
+  @RequirePermissions('api-key:revoke')
   async revokeKey(
     @User() user: CurrentUser,
     @Param('id') id: string,
@@ -208,7 +208,7 @@ export class ApiKeyController {
     status: 404,
     description: 'API Key 不存在',
   })
-  @RequirePermissions('api-key:update')
+  @RequirePermissions('api-key:rotate')
   async rotateKey(
     @User() user: CurrentUser,
     @Param('id') id: string,

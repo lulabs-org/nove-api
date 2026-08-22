@@ -39,6 +39,9 @@ async function seedRealDatabase(prisma: PrismaClient): Promise<void> {
   log('  2: 创建角色');
   const roles = await seedFunctions.createRoles(prisma, true, organization.id);
 
+  log('  3: 分配角色权限');
+  await seedFunctions.assignRolePermissions(prisma, permissions, roles);
+
   log(`\n🏢 organization: ${organization.name}`);
   log(
     `\n🏢 permissions: ${permissions.map((permission) => permission.name).join(', ')}`,

@@ -4,6 +4,7 @@ import { ApiKeyService } from '../services/api-key.service';
 import { UserOrgService } from '../services/user-organization.service';
 import { ApiKeyStatus } from '@prisma/client';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { PERMISSIONS_KEY } from '@/admin/permission/decorators/permissions.decorator';
 
 describe('ApiKeyController', () => {
   let controller: ApiKeyController;
@@ -87,6 +88,18 @@ describe('ApiKeyController', () => {
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
+  });
+
+  it('uses the dedicated permission for each API Key mutation', () => {
+    expect(Reflect.getMetadata(PERMISSIONS_KEY, controller.updateKey)).toEqual([
+      'api-key:update',
+    ]);
+    expect(Reflect.getMetadata(PERMISSIONS_KEY, controller.revokeKey)).toEqual([
+      'api-key:revoke',
+    ]);
+    expect(Reflect.getMetadata(PERMISSIONS_KEY, controller.rotateKey)).toEqual([
+      'api-key:rotate',
+    ]);
   });
 
   describe('createKey', () => {
