@@ -17,9 +17,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import {
-  RequirePermissions,
-} from '@/admin/permission/decorators/permissions.decorator';
+import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
 import { CuidPipe } from '@/common/pipes/cuid.pipe';
 import { SpeakerSummaryCrudService } from '../services/speaker-summary-crud.service';
 import { SpeakerSummaryService } from '../services/speaker-summary.service';
@@ -39,7 +37,7 @@ export class SpeakerSummaryController {
   constructor(
     private readonly service: SpeakerSummaryCrudService,
     private readonly aiService: SpeakerSummaryService,
-  ) { }
+  ) {}
 
   @Get()
   @RequirePermissions('speaker-summary:read')

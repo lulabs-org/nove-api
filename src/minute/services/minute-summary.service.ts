@@ -10,7 +10,7 @@ import {
 export class MinuteSummaryService {
   constructor(
     private readonly meetingSummaryRepository: MinuteSummaryRepository,
-  ) { }
+  ) {}
 
   async findByMinuteId(minuteId: string) {
     const summary =
@@ -22,6 +22,7 @@ export class MinuteSummaryService {
   }
 
   async create(minuteId: string, data: CreateMinuteSummaryDto) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { minuteId: _, ...restData } = data;
     return this.meetingSummaryRepository.upsert(minuteId, restData);
   }
@@ -29,6 +30,7 @@ export class MinuteSummaryService {
   async update(minuteId: string, data: UpdateMinuteSummaryDto) {
     await this.findByMinuteId(minuteId); // Ensure exists
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { minuteId: _, ...restData } = data;
     return this.meetingSummaryRepository.update(minuteId, restData);
   }

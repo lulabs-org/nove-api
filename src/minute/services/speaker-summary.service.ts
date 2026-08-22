@@ -34,7 +34,7 @@ export class SpeakerSummaryService {
     private readonly partSummaryRepo: SpeakerSummaryRepository,
     @Inject(openaiConfig.KEY)
     private readonly config: ConfigType<typeof openaiConfig>,
-  ) { }
+  ) {}
 
   async generateSummaries({
     recordId,
@@ -156,7 +156,8 @@ export class SpeakerSummaryService {
       return null;
     }
 
-    const userName = spokenSegment.speakerName || spokenSegment.speaker?.displayName;
+    const userName =
+      spokenSegment.speakerName || spokenSegment.speaker?.displayName;
     if (!userName) {
       this.logger.warn(`无法获取参会者 ${platformUserId} 的姓名，无法生成总结`);
       return null;

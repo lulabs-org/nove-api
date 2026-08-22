@@ -42,7 +42,11 @@ export class SpeakerSummaryCrudService {
     });
   }
 
-  async update(minuteId: string, summaryId: string, data: UpdateSpeakerSummaryDto) {
+  async update(
+    minuteId: string,
+    summaryId: string,
+    data: UpdateSpeakerSummaryDto,
+  ) {
     const current = await this.findById(minuteId, summaryId);
     return this.summaries.update(summaryId, {
       partSummary: data.partSummary ?? current.partSummary,

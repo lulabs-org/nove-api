@@ -4,7 +4,7 @@ import { PrismaService } from '@/prisma/prisma.service';
 
 @Injectable()
 export class SpeakerSummaryRepository {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async findById(minuteId: string, summaryId: string) {
     return this.prisma.speakerSummary.findFirst({
