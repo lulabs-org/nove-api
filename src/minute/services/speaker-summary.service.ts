@@ -46,8 +46,8 @@ export class SpeakerSummaryService {
     const context = await this.fetchMeetingContext(recordId);
     const { transcript } = context;
 
-    let userIdsToProcess = platformUserIds || [];
-    if (userIdsToProcess.length === 0) {
+    let userIdsToProcess = platformUserIds;
+    if (!userIdsToProcess) {
       userIdsToProcess = [
         ...new Set<string>(
           transcript.segments
@@ -156,7 +156,7 @@ export class SpeakerSummaryService {
       return null;
     }
 
-    const userName = spokenSegment.speakerName;
+    const userName = spokenSegment.speakerName || spokenSegment.speaker?.displayName;
     if (!userName) {
       this.logger.warn(`无法获取参会者 ${platformUserId} 的姓名，无法生成总结`);
       return null;

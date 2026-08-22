@@ -10,11 +10,11 @@ import {
 export class SpeakerSummaryCrudService {
   constructor(private readonly summaries: SpeakerSummaryRepository) {}
 
-  async findById(minuteId: string, id: string) {
-    const summary = await this.summaries.findById(minuteId, id);
+  async findById(minuteId: string, summaryId: string) {
+    const summary = await this.summaries.findById(minuteId, summaryId);
     if (!summary)
       throw new NotFoundException(
-        `Recording participant summary ${id} not found`,
+        `Recording participant summary ${summaryId} not found`,
       );
     return summary;
   }
@@ -42,20 +42,18 @@ export class SpeakerSummaryCrudService {
     });
   }
 
-  async update(minuteId: string, id: string, data: UpdateSpeakerSummaryDto) {
-    const current = await this.findById(minuteId, id);
-    return this.summaries.upsert({
-      minuteId: minuteId,
-      platformUserId: current.platformUserId,
+  async update(minuteId: string, summaryId: string, data: UpdateSpeakerSummaryDto) {
+    const current = await this.findById(minuteId, summaryId);
+    return this.summaries.update(summaryId, {
       partSummary: data.partSummary ?? current.partSummary,
       keywords: data.keywords ?? current.keywords,
       generatedBy: GenerationMethod.MANUAL,
     });
   }
 
-  async delete(minuteId: string, id: string) {
-    await this.findById(minuteId, id);
-    const data = await this.summaries.delete(minuteId, id);
+  async delete(minuteId: string, summaryId: string) {
+    await this.findById(minuteId, summaryId);
+    const data = await this.summaries.delete(summaryId);
     return { success: true, data };
   }
 }

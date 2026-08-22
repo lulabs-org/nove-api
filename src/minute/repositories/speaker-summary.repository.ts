@@ -4,12 +4,12 @@ import { PrismaService } from '@/prisma/prisma.service';
 
 @Injectable()
 export class SpeakerSummaryRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
-  async findById(minuteId: string, id: string) {
+  async findById(minuteId: string, summaryId: string) {
     return this.prisma.speakerSummary.findFirst({
       where: {
-        id,
+        id: summaryId,
         minuteId,
       },
     });
@@ -62,9 +62,16 @@ export class SpeakerSummaryRepository {
     });
   }
 
-  async delete(minuteId: string, id: string) {
+  async update(summaryId: string, data: Prisma.SpeakerSummaryUpdateInput) {
+    return this.prisma.speakerSummary.update({
+      where: { id: summaryId },
+      data,
+    });
+  }
+
+  async delete(summaryId: string) {
     return this.prisma.speakerSummary.delete({
-      where: { id },
+      where: { id: summaryId },
     });
   }
 
