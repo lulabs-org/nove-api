@@ -136,9 +136,9 @@ async function seedMockDatabase(prisma: PrismaClient): Promise<void> {
     minute,
   );
 
-  log('  15.5 创建参与者会议总结');
+  log('  15.5 创建发言人会议总结');
   const participantSummaries =
-    await seedFunctions.createMinuteParticipantSummaries(
+    await seedFunctions.createSpeakerSummaries(
       prisma,
       meetings,
       minute,

@@ -2,13 +2,13 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-24
  * @Description: 参与者会议总结配置
- * @FilePath: /nove_api/prisma/seeds/mock/minutes/minute-participant-summaries/config.ts
+ * @FilePath: /nove_api/prisma/seeds/mock/minutes/speaker-summaries/config.ts
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
-import type { ParticipantSummaryConfig } from './type';
+import type { SpeakerSummaryConfig } from './type';
 
-export const PARTICIPANT_SUMMARY_CONFIGS: readonly ParticipantSummaryConfig[] =
+export const SPEAKER_SUMMARY_CONFIGS: readonly SpeakerSummaryConfig[] =
   [
     {
       userName: '张三',

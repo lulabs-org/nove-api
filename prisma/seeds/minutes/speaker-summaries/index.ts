@@ -1,3 +1,3 @@
-export * from './minute-participant-summaries';
+export * from './speaker-summaries';
 export * from './config';
 export * from './type';
