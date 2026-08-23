@@ -1,21 +1,21 @@
 // 刷新令牌存储模型
 model RefreshToken {
   id         String    @id @default(cuid())
-  userId     String
-  tokenHash  String    @unique
+  userId     String    @map("user_id")
+  tokenHash  String    @unique @map("token_hash")
   jti        String?   @unique
-  deviceInfo String?
-  deviceId   String?
-  userAgent  String?
+  deviceInfo String?   @map("device_info")
+  deviceId   String?   @map("device_id")
+  userAgent  String?   @map("user_agent")
   ip         String?
-  expiresAt  DateTime
-  revokedAt  DateTime?
-  replacedBy String?
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz(6)
+  revokedAt  DateTime? @map("revoked_at") @db.Timestamptz(6)
+  replacedBy String?   @map("replaced_by")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@index([userId])
   @@index([deviceId, userId])
