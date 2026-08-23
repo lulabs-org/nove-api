@@ -14,8 +14,7 @@ model Project {
   outcomes      Json? // 学习成果
 
   // 关联关系
-  curriculums     Curriculum[] // 项目的课程
-  trackingReports UserTrackingReport[] @relation("ProjectTrackingReports")
+  curriculums Curriculum[] // 项目的课程
 
   @@index([category])
   @@index([slug])

@@ -12,8 +12,6 @@ model SpeakerSummary {
   generatedBy GenerationMethod? @map("generated_by")
   aiModel     String?           @map("ai_model")
 
-  reportSources TrackingReportMinuteSummarySource[]
-
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 

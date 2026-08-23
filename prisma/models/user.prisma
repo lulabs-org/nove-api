@@ -61,7 +61,6 @@ model User {
 
   // 平台与存储相关关联
   platformUsers          PlatformUser[] // 平台用户关联
-  trackingReports        UserTrackingReport[] @relation("UserTrackingReports")
   uploadedStorageObjects StorageObject[]
   phoneHashMappings      UserPhoneHash[] // 手机号哈希映射
 
