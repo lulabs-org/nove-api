@@ -70,6 +70,20 @@ export class UpdateSpeakerSummaryDto {
   @IsArray()
   @IsString({ each: true })
   keywords?: string[];
+
+  @ApiPropertyOptional({
+    description: '生成方式',
+    enum: GenerationMethod,
+    example: GenerationMethod.AI,
+  })
+  @IsOptional()
+  @IsEnum(GenerationMethod)
+  generatedBy?: GenerationMethod;
+
+  @ApiPropertyOptional({ description: '使用的 AI 模型', example: 'gpt-4o' })
+  @IsOptional()
+  @IsString()
+  aiModel?: string;
 }
 
 export class QuerySpeakerSummaryDto {
