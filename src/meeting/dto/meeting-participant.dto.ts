@@ -34,18 +34,30 @@ export class MeetingParticipantPlatformUserDto {
   @ApiProperty({ description: '平台', enum: Platform })
   platform: Platform;
 
-  @ApiPropertyOptional({ description: '显示名称', nullable: true })
+  @ApiPropertyOptional({
+    description: '显示名称',
+    type: String,
+    nullable: true,
+  })
   displayName: string | null;
 
-  @ApiPropertyOptional({ description: '头像', nullable: true })
+  @ApiPropertyOptional({ description: '头像', type: String, nullable: true })
   avatarUrl: string | null;
 }
 
 export class MeetingParticipantUserProfileDto {
-  @ApiPropertyOptional({ description: '用户资料显示名', nullable: true })
+  @ApiPropertyOptional({
+    description: '用户资料显示名',
+    type: String,
+    nullable: true,
+  })
   displayName: string | null;
 
-  @ApiPropertyOptional({ description: '用户资料头像', nullable: true })
+  @ApiPropertyOptional({
+    description: '用户资料头像',
+    type: String,
+    nullable: true,
+  })
   avatar: string | null;
 }
 
@@ -53,16 +65,24 @@ export class MeetingParticipantUserDto {
   @ApiProperty({ description: '本地用户 ID（users.id）' })
   id: string;
 
-  @ApiPropertyOptional({ description: '登录用户名', nullable: true })
+  @ApiPropertyOptional({
+    description: '登录用户名',
+    type: String,
+    nullable: true,
+  })
   username: string | null;
 
-  @ApiPropertyOptional({ description: '邮箱', nullable: true })
+  @ApiPropertyOptional({ description: '邮箱', type: String, nullable: true })
   email: string | null;
 
-  @ApiPropertyOptional({ description: '国家代码', nullable: true })
+  @ApiPropertyOptional({
+    description: '国家代码',
+    type: String,
+    nullable: true,
+  })
   countryCode: string | null;
 
-  @ApiPropertyOptional({ description: '手机号', nullable: true })
+  @ApiPropertyOptional({ description: '手机号', type: String, nullable: true })
   phone: string | null;
 
   @ApiPropertyOptional({
@@ -79,13 +99,27 @@ export class MeetingParticipantDto {
   @ApiProperty({ description: '会议 ID' })
   meetingId: string;
 
-  @ApiPropertyOptional({ description: '首次入会时间', nullable: true })
+  @ApiPropertyOptional({
+    description: '首次入会时间',
+    type: String,
+    format: 'date-time',
+    nullable: true,
+  })
   firstJoinTime: Date | null;
 
-  @ApiPropertyOptional({ description: '最后离会时间', nullable: true })
+  @ApiPropertyOptional({
+    description: '最后离会时间',
+    type: String,
+    format: 'date-time',
+    nullable: true,
+  })
   lastLeaveTime: Date | null;
 
-  @ApiPropertyOptional({ description: '累计参会时长（秒）', nullable: true })
+  @ApiPropertyOptional({
+    description: '累计参会时长（秒）',
+    type: Number,
+    nullable: true,
+  })
   totalDurationSeconds: number | null;
 
   @ApiPropertyOptional({
