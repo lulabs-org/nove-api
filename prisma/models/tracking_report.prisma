@@ -8,7 +8,9 @@ model TrackingReport {
   cadence      TrackingReportCadence
   /// 周期标识，用于防重和分组查询。例如："2026-08-15" (日), "2026-W34" (周), "2026-08" (月), "2026-Q3" (季), "2026" (年)
   periodKey    String?                  @map("period_key") @db.VarChar(50)
+  /// 周期开始时间（包含）
   periodStart  DateTime                 @map("period_start") @db.Timestamptz(6)
+  /// 下一周期开始时间（不包含），与 periodStart 组成半开区间
   periodEnd    DateTime                 @map("period_end") @db.Timestamptz(6)
   timezone     String                   @default("Asia/Shanghai") @db.VarChar(100)
   content      String                   @db.Text

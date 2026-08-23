@@ -1,69 +1,73 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { TrackingCadence, TrackingReportType } from '@prisma/client';
+import { ApiProperty, ApiPropertyOptional, OmitType } from '@nestjs/swagger';
+import {
+  GenerationMethod,
+  TargetTrackingReportType,
+  TrackingReportCadence,
+  TrackingSourceType,
+  TrackingTargetType,
+} from '@prisma/client';
 
-export enum TrackingReportSubjectKind {
-  LOCAL_USER = 'LOCAL_USER',
-  PLATFORM_USER = 'PLATFORM_USER',
-  PROJECT = 'PROJECT',
-}
-
-export class TrackingReportLocalUserDto {
+export class TrackingTargetSummaryDto {
   @ApiProperty() id: string;
-  @ApiPropertyOptional({ nullable: true }) username: string | null;
-  @ApiPropertyOptional({ nullable: true }) email: string | null;
-  @ApiPropertyOptional({ nullable: true }) countryCode: string | null;
-  @ApiPropertyOptional({ nullable: true }) phone: string | null;
-  @ApiPropertyOptional({ nullable: true }) displayName: string | null;
-  @ApiPropertyOptional({ nullable: true }) avatar: string | null;
+  @ApiProperty({ enum: TrackingTargetType }) targetType: TrackingTargetType;
+  @ApiProperty() targetId: string;
+  @ApiProperty() nameSnapshot: string;
 }
 
-export class TrackingReportPlatformUserDto {
+export class TrackingTargetDetailDto extends TrackingTargetSummaryDto {
+  @ApiProperty({ type: Object }) metadata: Record<string, unknown>;
+  @ApiProperty({ type: String, format: 'date-time' }) createdAt: Date;
+  @ApiProperty({ type: String, format: 'date-time' }) updatedAt: Date;
+}
+
+export class TrackingReportSourceDto {
   @ApiProperty() id: string;
-  @ApiProperty() platform: string;
-  @ApiPropertyOptional({ nullable: true }) ptUserId: string | null;
-  @ApiProperty() ptUnionId: string;
-  @ApiPropertyOptional({ nullable: true }) displayName: string | null;
-}
-
-export class TrackingReportProjectDto {
-  @ApiProperty() id: string;
-  @ApiProperty() title: string;
-  @ApiPropertyOptional({ nullable: true }) subtitle: string | null;
-  @ApiPropertyOptional({ nullable: true }) category: string | null;
-  @ApiPropertyOptional({ nullable: true }) image: string | null;
-}
-
-export class TrackingReportSubjectSummaryDto {
-  @ApiProperty({ enum: TrackingReportSubjectKind })
-  kind: TrackingReportSubjectKind;
-
-  @ApiProperty() displayName: string;
-  @ApiPropertyOptional({ nullable: true }) avatar: string | null;
-  @ApiProperty({ description: '是否已关联本地用户' }) isLinked: boolean;
-}
-
-export class TrackingReportSubjectDto extends TrackingReportSubjectSummaryDto {
-  @ApiProperty({ description: '生成报告时保留的历史名称快照' })
-  nameSnapshot: string;
-  @ApiPropertyOptional({ type: TrackingReportLocalUserDto, nullable: true })
-  localUser: TrackingReportLocalUserDto | null;
-  @ApiPropertyOptional({ type: TrackingReportPlatformUserDto, nullable: true })
-  platformUser: TrackingReportPlatformUserDto | null;
-  @ApiPropertyOptional({ type: TrackingReportProjectDto, nullable: true })
-  project: TrackingReportProjectDto | null;
+  @ApiProperty({ enum: TrackingSourceType }) sourceType: TrackingSourceType;
+  @ApiProperty() sourceId: string;
+  @ApiProperty({ type: Object }) metadata: Record<string, unknown>;
+  @ApiProperty({ type: String, format: 'date-time' }) createdAt: Date;
+  @ApiProperty({ type: String, format: 'date-time' }) updatedAt: Date;
 }
 
 export class TrackingReportListItemDto {
   @ApiProperty() id: string;
-  @ApiProperty({ type: TrackingReportSubjectSummaryDto })
-  subject: TrackingReportSubjectSummaryDto;
-  @ApiProperty({ enum: TrackingReportType }) trackingType: TrackingReportType;
-  @ApiProperty({ enum: TrackingCadence }) cadence: TrackingCadence;
-  @ApiProperty({ type: String, format: 'date-time' }) periodStart: Date;
-  @ApiProperty({ type: String, format: 'date-time' }) periodEnd: Date;
-  @ApiProperty() isLatest: boolean;
-  @ApiProperty() version: number;
+  @ApiProperty({ type: TrackingTargetSummaryDto })
+  target: TrackingTargetSummaryDto;
+  @ApiProperty({ enum: TargetTrackingReportType })
+  trackingType: TargetTrackingReportType;
+  @ApiProperty({ enum: TrackingReportCadence }) cadence: TrackingReportCadence;
+  @ApiPropertyOptional({ type: String, nullable: true })
+  periodKey: string | null;
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    description: '周期开始时间（包含）',
+  })
+  periodStart: Date;
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    description: '下一周期开始时间（不包含）',
+  })
+  periodEnd: Date;
+  @ApiProperty() timezone: string;
+  @ApiPropertyOptional({ enum: GenerationMethod, nullable: true })
+  generatedBy: GenerationMethod | null;
+  @ApiPropertyOptional({ type: String, nullable: true }) aiModel: string | null;
+  @ApiProperty() sourceCount: number;
   @ApiProperty({ type: String, format: 'date-time' }) createdAt: Date;
+  @ApiProperty({ type: String, format: 'date-time' }) updatedAt: Date;
+}
+
+export class TrackingReportDetailDto extends OmitType(
+  TrackingReportListItemDto,
+  ['target'] as const,
+) {
+  @ApiProperty({ type: TrackingTargetDetailDto })
+  target: TrackingTargetDetailDto;
+  @ApiProperty() content: string;
+  @ApiProperty({ type: [TrackingReportSourceDto] })
+  sources: TrackingReportSourceDto[];
 }
 
 export class TrackingReportListResponseDto {
@@ -73,14 +77,4 @@ export class TrackingReportListResponseDto {
   @ApiProperty() page: number;
   @ApiProperty() limit: number;
   @ApiProperty() totalPages: number;
-}
-
-export class TrackingReportDetailDto extends TrackingReportListItemDto {
-  @ApiProperty() timezone: string;
-  @ApiProperty() content: string;
-  @ApiPropertyOptional({ type: Object, nullable: true })
-  structuredData: Record<string, unknown> | null;
-  @ApiProperty() versionGroupKey: string;
-  @ApiPropertyOptional({ nullable: true }) previousReportId: string | null;
-  @ApiProperty({ type: String, format: 'date-time' }) updatedAt: Date;
 }

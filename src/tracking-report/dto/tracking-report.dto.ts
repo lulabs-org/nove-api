@@ -1,134 +1,190 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { TrackingCadence, TrackingReportType } from '@prisma/client';
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
+import {
+  GenerationMethod,
+  TargetTrackingReportType,
+  TrackingReportCadence,
+  TrackingSourceType,
+  TrackingTargetType,
+} from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
   IsArray,
-  IsBoolean,
   IsDate,
   IsEnum,
   IsInt,
-  IsObject,
   IsNotEmpty,
+  IsObject,
   IsOptional,
   IsString,
   Max,
+  MaxLength,
   Min,
+  ValidateNested,
 } from 'class-validator';
 
+export class TrackingReportSourceInputDto {
+  @ApiProperty({ enum: TrackingSourceType })
+  @IsEnum(TrackingSourceType)
+  sourceType: TrackingSourceType;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  sourceId: string;
+
+  @ApiPropertyOptional({ type: Object, default: {} })
+  @IsOptional()
+  @IsObject()
+  metadata?: Record<string, unknown>;
+}
+
 export class CreateTrackingReportDto {
-  @ApiPropertyOptional() @IsOptional() @IsString() subjectUserId?: string;
-  @ApiPropertyOptional() @IsOptional() @IsString() platformUserId?: string;
-  @ApiPropertyOptional() @IsOptional() @IsString() projectId?: string;
-  @ApiProperty() @IsString() subjectNameSnapshot: string;
-  @ApiProperty({ enum: TrackingReportType })
-  @IsEnum(TrackingReportType)
-  trackingType: TrackingReportType;
-  @ApiProperty({ enum: TrackingCadence })
-  @IsEnum(TrackingCadence)
-  cadence: TrackingCadence;
-  @ApiProperty() @Type(() => Date) @IsDate() periodStart: Date;
-  @ApiProperty() @Type(() => Date) @IsDate() periodEnd: Date;
-  @ApiPropertyOptional({ default: 'Asia/Shanghai' })
+  @ApiProperty({ enum: TrackingTargetType })
+  @IsEnum(TrackingTargetType)
+  targetType: TrackingTargetType;
+
+  @ApiProperty({
+    description: '业务对象 ID，例如用户、平台用户、项目或组织 ID',
+  })
+  @IsString()
+  @IsNotEmpty()
+  targetId: string;
+
+  @ApiProperty({ description: '追踪目标名称快照' })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(100)
+  targetName: string;
+
+  @ApiPropertyOptional({ type: Object, default: {} })
+  @IsOptional()
+  @IsObject()
+  targetMetadata?: Record<string, unknown>;
+
+  @ApiProperty({ enum: TargetTrackingReportType })
+  @IsEnum(TargetTrackingReportType)
+  trackingType: TargetTrackingReportType;
+
+  @ApiProperty({ enum: TrackingReportCadence })
+  @IsEnum(TrackingReportCadence)
+  cadence: TrackingReportCadence;
+
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    description: '用于定位所属周期的基准时间',
+    example: '2026-08-23T10:00:00+08:00',
+  })
+  @Type(() => Date)
+  @IsDate()
+  baseDate: Date;
+
+  @ApiPropertyOptional({
+    default: 'Asia/Shanghai',
+    description: '用于计算周期边界的 IANA 时区',
+  })
   @IsOptional()
   @IsString()
   timezone?: string;
-  @ApiProperty() @IsString() content: string;
-  @ApiPropertyOptional({ type: Object })
+
+  @ApiProperty()
+  @IsString()
+  content: string;
+
+  @ApiPropertyOptional({ enum: GenerationMethod })
   @IsOptional()
-  @IsObject()
-  structuredData?: Record<string, unknown>;
-  @ApiPropertyOptional({ type: [String] })
+  @IsEnum(GenerationMethod)
+  generatedBy?: GenerationMethod;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  aiModel?: string;
+
+  @ApiPropertyOptional({ type: [TrackingReportSourceInputDto] })
   @IsOptional()
   @IsArray()
-  @IsString({ each: true })
-  minuteSummaryIds?: string[];
-  @ApiPropertyOptional({ type: [String] })
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  sourceReportIds?: string[];
+  @ValidateNested({ each: true })
+  @Type(() => TrackingReportSourceInputDto)
+  sources?: TrackingReportSourceInputDto[];
 }
 
-export class UpdateTrackingReportDto {
-  @ApiPropertyOptional() @IsOptional() @IsString() subjectNameSnapshot?: string;
-  @ApiPropertyOptional() @IsOptional() @IsString() timezone?: string;
-  @ApiPropertyOptional() @IsOptional() @IsString() content?: string;
-  @ApiPropertyOptional({ type: Object })
+class UpdateTrackingReportFieldsDto {
+  @ApiProperty()
+  @IsString()
+  content: string;
+
+  @ApiPropertyOptional({ enum: GenerationMethod, nullable: true })
   @IsOptional()
-  @IsObject()
-  structuredData?: Record<string, unknown>;
-  @ApiPropertyOptional({ type: [String] })
+  @IsEnum(GenerationMethod)
+  generatedBy?: GenerationMethod | null;
+
+  @ApiPropertyOptional({ nullable: true })
   @IsOptional()
+  @IsString()
+  aiModel?: string | null;
+
+  @ApiProperty({ type: [TrackingReportSourceInputDto] })
   @IsArray()
-  @IsString({ each: true })
-  minuteSummaryIds?: string[];
-  @ApiPropertyOptional({ type: [String] })
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  sourceReportIds?: string[];
+  @ValidateNested({ each: true })
+  @Type(() => TrackingReportSourceInputDto)
+  sources: TrackingReportSourceInputDto[];
 }
+
+export class UpdateTrackingReportDto extends PartialType(
+  UpdateTrackingReportFieldsDto,
+) {}
 
 export class QueryTrackingReportDto {
-  @IsOptional() @IsString() subjectUserId?: string;
-  @IsOptional() @IsString() platformUserId?: string;
-  @IsOptional() @IsString() projectId?: string;
-  @IsOptional() @IsEnum(TrackingReportType) trackingType?: TrackingReportType;
-  @IsOptional() @IsEnum(TrackingCadence) cadence?: TrackingCadence;
-  @IsOptional() @Type(() => Date) @IsDate() periodStart?: Date;
-  @IsOptional() @Type(() => Date) @IsDate() periodEnd?: Date;
-  @IsOptional() @Type(() => Boolean) @IsBoolean() isLatest = true;
-  @IsOptional() @Type(() => Number) @IsInt() @Min(1) page = 1;
-  @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(100) limit = 20;
-}
-
-export class TriggerSummaryDto {
-  @ApiProperty({
-    description: '总结周期类型 (例如 DAILY, WEEKLY)',
-    enum: TrackingCadence,
-  })
-  @IsEnum(TrackingCadence, { message: '无效的周期类型' })
-  @IsNotEmpty({ message: 'cadence 不能为空' })
-  cadence!: TrackingCadence;
-
-  @ApiPropertyOptional({ description: '基准日期' })
+  @ApiPropertyOptional({ enum: TrackingTargetType })
   @IsOptional()
-  @IsDate({ message: '无效的日期格式' })
+  @IsEnum(TrackingTargetType)
+  targetType?: TrackingTargetType;
+
+  @ApiPropertyOptional({ description: '业务对象 ID' })
+  @IsOptional()
+  @IsString()
+  targetId?: string;
+
+  @ApiPropertyOptional({ description: '按目标名称模糊搜索' })
+  @IsOptional()
+  @IsString()
+  keyword?: string;
+
+  @ApiPropertyOptional({ enum: TargetTrackingReportType })
+  @IsOptional()
+  @IsEnum(TargetTrackingReportType)
+  trackingType?: TargetTrackingReportType;
+
+  @ApiPropertyOptional({ enum: TrackingReportCadence })
+  @IsOptional()
+  @IsEnum(TrackingReportCadence)
+  cadence?: TrackingReportCadence;
+
+  @ApiPropertyOptional({ type: String, format: 'date-time' })
+  @IsOptional()
   @Type(() => Date)
-  baseDate?: Date;
+  @IsDate()
+  periodStart?: Date;
 
-  @ApiPropertyOptional({
-    description: '指定生成总结的部分用户 (platformUserId 列表)',
-    type: [String],
-  })
+  @ApiPropertyOptional({ type: String, format: 'date-time' })
   @IsOptional()
-  @IsArray({ message: 'platformUserIds 必须是数组' })
-  @IsString({ each: true, message: 'platformUserIds 数组必须包含字符串' })
-  platformUserIds?: string[];
+  @Type(() => Date)
+  @IsDate()
+  periodEnd?: Date;
 
-  @ApiPropertyOptional({
-    description: '指定生成总结的部分系统用户 (subjectUserId 列表)',
-    type: [String],
-  })
+  @ApiPropertyOptional({ default: 1, minimum: 1 })
   @IsOptional()
-  @IsArray({ message: 'subjectUserIds 必须是数组' })
-  @IsString({ each: true, message: 'subjectUserIds 数组必须包含字符串' })
-  subjectUserIds?: string[];
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page = 1;
 
-  @ApiPropertyOptional({
-    description: '追踪报告类型，默认为 PERIODIC_MEETING_SUMMARY',
-    enum: TrackingReportType,
-  })
+  @ApiPropertyOptional({ default: 20, minimum: 1, maximum: 100 })
   @IsOptional()
-  @IsEnum(TrackingReportType, { message: '无效的追踪报告类型' })
-  trackingType?: TrackingReportType;
-
-  @ApiPropertyOptional({
-    description:
-      '强制重新生成，即使该周期已有报告（默认 false）。用于补跑或纠错场景。',
-    default: false,
-  })
-  @IsOptional()
-  @IsBoolean()
-  force?: boolean;
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit = 20;
 }
