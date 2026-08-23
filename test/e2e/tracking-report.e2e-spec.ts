@@ -2,7 +2,12 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Test } from '@nestjs/testing';
-import { TrackingCadence, TrackingReportType } from '@prisma/client';
+import {
+  TargetTrackingReportType,
+  TrackingReportCadence,
+  TrackingSourceType,
+  TrackingTargetType,
+} from '@prisma/client';
 import * as request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { PermService } from '../../src/admin/permission/services/permission.service';
@@ -12,8 +17,7 @@ describe('TrackingReportController (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let token: string;
-  const userId = `tracking-user-${Date.now()}`;
-  let projectId: string;
+  const businessTargetId = `tracking-target-${Date.now()}`;
 
   beforeAll(async () => {
     const module = await Test.createTestingModule({ imports: [AppModule] })
@@ -21,111 +25,135 @@ describe('TrackingReportController (e2e)', () => {
       .useValue({
         hasAnyPermission: () => true,
         hasAllPermissions: () => true,
-        getPermByRoleCodes: () => [
-          'user:read',
-          'user:create',
-          'user:update',
-          'user:delete',
-        ],
+        getPermByRoleCodes: () => ['tracking-report:read'],
       })
       .compile();
     app = module.createNestApplication();
     app.useGlobalPipes(
-      new ValidationPipe({ transform: true, whitelist: true }),
+      new ValidationPipe({
+        transform: true,
+        whitelist: true,
+        forbidNonWhitelisted: true,
+      }),
     );
     await app.init();
     prisma = app.get(PrismaService);
     await prisma.user.create({
-      data: { id: userId, username: userId, active: true },
+      data: { id: businessTargetId, username: businessTargetId, active: true },
     });
-    projectId = (
-      await prisma.project.create({
-        data: { title: `Tracking project ${Date.now()}` },
-      })
-    ).id;
-    token = app.get(JwtService).sign({ sub: userId, roles: ['admin'] });
+    token = app
+      .get(JwtService)
+      .sign({ sub: businessTargetId, roles: ['admin'] });
   });
 
   afterAll(async () => {
-    await prisma.userTrackingReport.deleteMany({
-      where: { subjectUserId: userId },
+    const target = await prisma.trackingTarget.findUnique({
+      where: {
+        targetType_targetId: {
+          targetType: TrackingTargetType.USER,
+          targetId: businessTargetId,
+        },
+      },
     });
-    await prisma.user.deleteMany({ where: { id: userId } });
-    await prisma.project.deleteMany({ where: { id: projectId } });
+    if (target) {
+      await prisma.trackingReport.deleteMany({
+        where: { targetId: target.id },
+      });
+      await prisma.trackingTarget.delete({ where: { id: target.id } });
+    }
+    await prisma.user.deleteMany({ where: { id: businessTargetId } });
     await app.close();
   });
 
-  it.each([
-    TrackingReportType.PERIODIC_MEETING_SUMMARY,
-    TrackingReportType.TRAINING_PLAN,
-    TrackingReportType.USER_PROFILE,
-  ])('creates, lists and versions %s reports', async (trackingType) => {
+  it('creates, lists, updates, reads and soft-deletes a generic tracking report', async () => {
     const body = {
-      subjectUserId: userId,
-      subjectNameSnapshot: 'Alice',
-      trackingType,
-      cadence: TrackingCadence.MONTHLY,
-      periodStart: '2026-08-01T00:00:00.000Z',
-      periodEnd: '2026-08-31T23:59:59.999Z',
-      content: `${trackingType} v1`,
-      structuredData: { source: 'e2e' },
+      targetType: TrackingTargetType.USER,
+      targetId: businessTargetId,
+      targetName: 'Alice',
+      targetMetadata: { department: 'Product' },
+      trackingType: TargetTrackingReportType.USER_PROFILE,
+      cadence: TrackingReportCadence.MONTHLY,
+      baseDate: '2026-08-23T10:00:00+08:00',
+      timezone: 'Asia/Shanghai',
+      content: 'profile v1',
+      sources: [
+        {
+          sourceType: TrackingSourceType.MEETING,
+          sourceId: 'meeting-1',
+          metadata: { title: 'Kickoff' },
+        },
+      ],
     };
     const created = await request(app.getHttpServer())
       .post('/tracking-reports')
       .set('Authorization', `Bearer ${token}`)
       .send(body)
       .expect(201);
-    expect(created.body.version).toBe(1);
-    const updated = await request(app.getHttpServer())
-      .put(`/tracking-reports/${created.body.id}`)
-      .set('Authorization', `Bearer ${token}`)
-      .send({ content: `${trackingType} v2` })
-      .expect(200);
-    expect(updated.body.version).toBe(2);
-    expect(updated.body.id).not.toBe(created.body.id);
+    expect(created.body).toEqual(
+      expect.objectContaining({
+        content: 'profile v1',
+        periodKey: '2026-08',
+        periodStart: '2026-07-31T16:00:00.000Z',
+        periodEnd: '2026-08-31T16:00:00.000Z',
+        sourceCount: 1,
+        target: expect.objectContaining({
+          targetType: TrackingTargetType.USER,
+          targetId: businessTargetId,
+          nameSnapshot: 'Alice',
+        }),
+      }),
+    );
+
     const list = await request(app.getHttpServer())
       .get('/tracking-reports')
       .set('Authorization', `Bearer ${token}`)
-      .query({ subjectUserId: userId, trackingType })
+      .query({
+        targetType: TrackingTargetType.USER,
+        targetId: businessTargetId,
+      })
       .expect(200);
-    expect(list.body.data).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ id: updated.body.id, isLatest: true }),
-      ]),
+    expect(list.body.data[0]).not.toHaveProperty('content');
+    expect(list.body.data[0]).toEqual(
+      expect.objectContaining({ id: created.body.id, sourceCount: 1 }),
     );
+
+    const updated = await request(app.getHttpServer())
+      .put(`/tracking-reports/${created.body.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ content: 'profile v2', sources: [] })
+      .expect(200);
+    expect(updated.body).toEqual(
+      expect.objectContaining({
+        id: created.body.id,
+        content: 'profile v2',
+        sourceCount: 0,
+      }),
+    );
+
+    await request(app.getHttpServer())
+      .delete(`/tracking-reports/${created.body.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+    await request(app.getHttpServer())
+      .get(`/tracking-reports/${created.body.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .expect(404);
   });
 
-  it('rejects project progress without a project', async () => {
+  it('rejects caller-supplied derived period fields', async () => {
     await request(app.getHttpServer())
       .post('/tracking-reports')
       .set('Authorization', `Bearer ${token}`)
       .send({
-        subjectUserId: userId,
-        subjectNameSnapshot: 'Alice',
-        trackingType: TrackingReportType.PROJECT_PROGRESS,
-        cadence: TrackingCadence.MONTHLY,
+        targetType: TrackingTargetType.USER,
+        targetId: businessTargetId,
+        targetName: 'Alice',
+        trackingType: TargetTrackingReportType.USER_PROFILE,
+        cadence: TrackingReportCadence.MONTHLY,
+        baseDate: '2026-08-23T10:00:00+08:00',
         periodStart: '2026-08-01T00:00:00.000Z',
-        periodEnd: '2026-08-31T23:59:59.999Z',
-        content: 'progress',
+        content: 'invalid caller-derived period',
       })
       .expect(400);
-  });
-
-  it('creates project-scoped progress', async () => {
-    const response = await request(app.getHttpServer())
-      .post('/tracking-reports')
-      .set('Authorization', `Bearer ${token}`)
-      .send({
-        subjectUserId: userId,
-        projectId,
-        subjectNameSnapshot: 'Alice',
-        trackingType: TrackingReportType.PROJECT_PROGRESS,
-        cadence: TrackingCadence.MONTHLY,
-        periodStart: '2026-08-01T00:00:00.000Z',
-        periodEnd: '2026-08-31T23:59:59.999Z',
-        content: 'progress',
-      })
-      .expect(201);
-    expect(response.body.projectId).toBe(projectId);
   });
 });

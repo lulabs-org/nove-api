@@ -1,213 +1,151 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, TrackingCadence, TrackingReportType } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
-import { retryVersionTransaction } from '@/common/utils/prisma-transaction-retry';
+import {
+  CreateTrackingReportDto,
+  TrackingReportSourceInputDto,
+  UpdateTrackingReportDto,
+} from '../dto/tracking-report.dto';
 
-export type TrackingReportCreate = Omit<
-  Prisma.UserTrackingReportUncheckedCreateInput,
-  'versionGroupKey' | 'version' | 'isLatest' | 'previousReportId'
-> & { minuteSummaryIds?: string[]; sourceReportIds?: string[] };
+export type CreateTrackingReportData = Omit<
+  CreateTrackingReportDto,
+  'baseDate'
+> & {
+  periodKey: string;
+  periodStart: Date;
+  periodEnd: Date;
+  timezone: string;
+};
 
-const trackingReportSubjectSummarySelect = {
-  subjectUser: {
-    select: {
-      profile: {
-        select: {
-          displayName: true,
-          avatar: true,
-        },
-      },
-    },
-  },
-  platformUser: {
-    select: {
-      displayName: true,
-    },
-  },
-  project: {
-    select: {
-      title: true,
-      image: true,
-    },
-  },
-} satisfies Prisma.UserTrackingReportSelect;
-
-const trackingReportSubjectDetailSelect = {
-  subjectUser: {
-    select: {
-      id: true,
-      username: true,
-      email: true,
-      countryCode: true,
-      phone: true,
-      profile: {
-        select: {
-          displayName: true,
-          avatar: true,
-        },
-      },
-    },
-  },
-  platformUser: {
-    select: {
-      id: true,
-      platform: true,
-      ptUserId: true,
-      ptUnionId: true,
-      displayName: true,
-    },
-  },
-  project: {
-    select: {
-      id: true,
-      title: true,
-      subtitle: true,
-      category: true,
-      image: true,
-    },
-  },
-} satisfies Prisma.UserTrackingReportSelect;
+const targetSummarySelect = {
+  id: true,
+  targetType: true,
+  targetId: true,
+  nameSnapshot: true,
+} satisfies Prisma.TrackingTargetSelect;
 
 export const trackingReportListSelect = {
   id: true,
-  subjectUserId: true,
-  platformUserId: true,
-  projectId: true,
-  subjectNameSnapshot: true,
+  target: { select: targetSummarySelect },
   trackingType: true,
   cadence: true,
+  periodKey: true,
   periodStart: true,
   periodEnd: true,
-  isLatest: true,
-  version: true,
+  timezone: true,
+  generatedBy: true,
+  aiModel: true,
   createdAt: true,
-  ...trackingReportSubjectSummarySelect,
-} satisfies Prisma.UserTrackingReportSelect;
+  updatedAt: true,
+  _count: { select: { sources: true } },
+} satisfies Prisma.TrackingReportSelect;
 
-export type TrackingReportListRecord = Prisma.UserTrackingReportGetPayload<{
+export const trackingReportDetailSelect = {
+  ...trackingReportListSelect,
+  content: true,
+  target: {
+    select: {
+      ...targetSummarySelect,
+      metadata: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  },
+  sources: {
+    select: {
+      id: true,
+      sourceType: true,
+      sourceId: true,
+      metadata: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+    orderBy: { createdAt: 'asc' },
+  },
+} satisfies Prisma.TrackingReportSelect;
+
+export type TrackingReportListRecord = Prisma.TrackingReportGetPayload<{
   select: typeof trackingReportListSelect;
 }>;
+export type TrackingReportDetailRecord = Prisma.TrackingReportGetPayload<{
+  select: typeof trackingReportDetailSelect;
+}>;
 
-const trackingReportSubjectDetailRecordSelect = {
-  subjectUserId: true,
-  platformUserId: true,
-  projectId: true,
-  subjectNameSnapshot: true,
-  trackingType: true,
-  ...trackingReportSubjectDetailSelect,
-} satisfies Prisma.UserTrackingReportSelect;
-
-export type TrackingReportSubjectDetailRecord =
-  Prisma.UserTrackingReportGetPayload<{
-    select: typeof trackingReportSubjectDetailRecordSelect;
-  }>;
+function sourceData(sources: TrackingReportSourceInputDto[]) {
+  return sources.map((source) => ({
+    sourceType: source.sourceType,
+    sourceId: source.sourceId,
+    metadata: (source.metadata ?? {}) as Prisma.InputJsonValue,
+  }));
+}
 
 @Injectable()
 export class TrackingReportRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  groupKey(
-    data: Pick<
-      TrackingReportCreate,
-      | 'subjectUserId'
-      | 'platformUserId'
-      | 'trackingType'
-      | 'cadence'
-      | 'periodStart'
-      | 'periodEnd'
-      | 'projectId'
-    >,
-  ) {
-    const identity = data.subjectUserId
-      ? `user:${data.subjectUserId}`
-      : `platform:${data.platformUserId}`;
-    return [
-      identity,
-      data.trackingType,
-      data.cadence,
-      new Date(data.periodStart).getTime(),
-      new Date(data.periodEnd).getTime(),
-      data.projectId ?? '-',
-    ].join(':');
-  }
-
-  async saveNewVersion(data: TrackingReportCreate) {
-    const { minuteSummaryIds = [], sourceReportIds = [], ...report } = data;
-    const versionGroupKey = this.groupKey(data);
-    return retryVersionTransaction(() =>
-      this.prisma.$transaction(
-        async (tx) => {
-          const previous = await tx.userTrackingReport.findFirst({
-            where: { versionGroupKey, isLatest: true, deletedAt: null },
-            orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
-          });
-          if (previous)
-            await tx.userTrackingReport.update({
-              where: { id: previous.id },
-              data: { isLatest: false },
-            });
-          const created = await tx.userTrackingReport.create({
-            data: {
-              ...report,
-              structuredData: report.structuredData ?? {},
-              schemaVersion: 1,
-              versionGroupKey,
-              version: (previous?.version ?? 0) + 1,
-              previousReportId: previous?.id,
-              isLatest: true,
-            },
-          });
-          if (minuteSummaryIds.length) {
-            await tx.trackingReportMinuteSummarySource.createMany({
-              data: [...new Set(minuteSummaryIds)].map((minuteSummaryId) => ({
-                reportId: created.id,
-                minuteSummaryId,
-              })),
-              skipDuplicates: true,
-            });
-          }
-          if (sourceReportIds.length) {
-            await tx.trackingReportSourceReport.createMany({
-              data: [...new Set(sourceReportIds)].map((sourceReportId) => ({
-                reportId: created.id,
-                sourceReportId,
-              })),
-              skipDuplicates: true,
-            });
-          }
-          return created;
+  async create(dto: CreateTrackingReportData) {
+    return this.prisma.$transaction(async (tx) => {
+      const target = await tx.trackingTarget.upsert({
+        where: {
+          targetType_targetId: {
+            targetType: dto.targetType,
+            targetId: dto.targetId,
+          },
         },
-        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
-      ),
-    );
-  }
-
-  findById(id: string) {
-    return this.prisma.userTrackingReport.findFirst({
-      where: { id, deletedAt: null },
-      include: {
-        minuteSummarySources: true,
-        sourceReports: true,
-        ...trackingReportSubjectDetailSelect,
-      },
+        create: {
+          targetType: dto.targetType,
+          targetId: dto.targetId,
+          nameSnapshot: dto.targetName,
+          metadata: (dto.targetMetadata ?? {}) as Prisma.InputJsonValue,
+        },
+        update: {
+          nameSnapshot: dto.targetName,
+          ...(dto.targetMetadata === undefined
+            ? {}
+            : { metadata: dto.targetMetadata as Prisma.InputJsonValue }),
+        },
+      });
+      return tx.trackingReport.create({
+        data: {
+          targetId: target.id,
+          trackingType: dto.trackingType,
+          cadence: dto.cadence,
+          periodKey: dto.periodKey,
+          periodStart: dto.periodStart,
+          periodEnd: dto.periodEnd,
+          timezone: dto.timezone,
+          content: dto.content,
+          generatedBy: dto.generatedBy,
+          aiModel: dto.aiModel,
+          sources: dto.sources?.length
+            ? {
+                createMany: {
+                  data: sourceData(dto.sources),
+                  skipDuplicates: true,
+                },
+              }
+            : undefined,
+        },
+        select: trackingReportDetailSelect,
+      });
     });
   }
 
-  findSubjectByReportId(id: string) {
-    return this.prisma.userTrackingReport.findFirst({
+  findById(id: string) {
+    return this.prisma.trackingReport.findFirst({
       where: { id, deletedAt: null },
-      select: trackingReportSubjectDetailRecordSelect,
+      select: trackingReportDetailSelect,
     });
   }
 
   async findMany(
-    where: Prisma.UserTrackingReportWhereInput,
+    where: Prisma.TrackingReportWhereInput,
     skip: number,
     take: number,
   ) {
     const [total, data] = await this.prisma.$transaction([
-      this.prisma.userTrackingReport.count({ where }),
-      this.prisma.userTrackingReport.findMany({
+      this.prisma.trackingReport.count({ where }),
+      this.prisma.trackingReport.findMany({
         where,
         skip,
         take,
@@ -218,83 +156,34 @@ export class TrackingReportRepository {
     return { total, data };
   }
 
-  async softDelete(id: string) {
-    return retryVersionTransaction(() =>
-      this.prisma.$transaction(
-        async (tx) => {
-          const current = await tx.userTrackingReport.findFirstOrThrow({
-            where: { id, deletedAt: null },
+  async update(id: string, dto: UpdateTrackingReportDto) {
+    const { sources, ...data } = dto;
+    return this.prisma.$transaction(async (tx) => {
+      if (sources !== undefined) {
+        await tx.trackingReportSource.deleteMany({ where: { reportId: id } });
+        if (sources.length) {
+          await tx.trackingReportSource.createMany({
+            data: sourceData(sources).map((source) => ({
+              ...source,
+              reportId: id,
+            })),
+            skipDuplicates: true,
           });
-          await tx.userTrackingReport.update({
-            where: { id },
-            data: { deletedAt: new Date(), isLatest: false },
-          });
-          if (current.isLatest) {
-            const previous = await tx.userTrackingReport.findFirst({
-              where: {
-                versionGroupKey: current.versionGroupKey,
-                deletedAt: null,
-              },
-              orderBy: [{ version: 'desc' }, { createdAt: 'desc' }],
-            });
-            if (previous)
-              await tx.userTrackingReport.update({
-                where: { id: previous.id },
-                data: { isLatest: true },
-              });
-          }
-          return current;
-        },
-        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
-      ),
-    );
-  }
-
-  findPeriodicSummaries(
-    cadence: TrackingCadence,
-    range: { periodStart: Date; periodEnd: Date },
-    platformUserIds?: string[],
-    trackingType: TrackingReportType = TrackingReportType.PERIODIC_MEETING_SUMMARY,
-  ) {
-    return this.prisma.userTrackingReport.findMany({
-      where: {
-        trackingType,
-        cadence,
-        platformUserId: platformUserIds?.length
-          ? { in: platformUserIds }
-          : undefined,
-        periodStart: { gte: range.periodStart },
-        periodEnd: { lte: range.periodEnd },
-        isLatest: true,
-        deletedAt: null,
-      },
+        }
+      }
+      return tx.trackingReport.update({
+        where: { id },
+        data,
+        select: trackingReportDetailSelect,
+      });
     });
   }
 
-  /**
-   * 检查指定周期内是否已有 isLatest=true 的报告（用于业务层防重）。
-   * - 若 platformUserIds 指定，只检查这些用户
-   * - 若不指定，检查任意用户是否存在该周期报告
-   */
-  async countByPeriod(params: {
-    cadence: TrackingCadence;
-    periodStart: Date;
-    periodEnd: Date;
-    trackingType: TrackingReportType;
-    platformUserIds?: string[];
-  }): Promise<number> {
-    return this.prisma.userTrackingReport.count({
-      where: {
-        cadence: params.cadence,
-        trackingType: params.trackingType,
-        periodStart: params.periodStart,
-        periodEnd: params.periodEnd,
-        isLatest: true,
-        deletedAt: null,
-        ...(params.platformUserIds?.length
-          ? { platformUserId: { in: params.platformUserIds } }
-          : {}),
-      },
+  softDelete(id: string) {
+    return this.prisma.trackingReport.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+      select: { id: true, deletedAt: true },
     });
   }
 }
