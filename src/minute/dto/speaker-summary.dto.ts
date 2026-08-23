@@ -87,12 +87,25 @@ export class UpdateSpeakerSummaryDto {
 }
 
 export class QuerySpeakerSummaryDto {
+  @ApiPropertyOptional({
+    description: '页码',
+    type: Number,
+    default: 1,
+    minimum: 1,
+  })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
   page = 1;
 
+  @ApiPropertyOptional({
+    description: '每页数量',
+    type: Number,
+    default: 20,
+    minimum: 1,
+    maximum: 100,
+  })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
