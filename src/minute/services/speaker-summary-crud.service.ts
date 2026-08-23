@@ -38,7 +38,8 @@ export class SpeakerSummaryCrudService {
     return this.summaries.upsert({
       ...data,
       minuteId: minuteId,
-      generatedBy: GenerationMethod.MANUAL,
+      generatedBy: data.generatedBy ?? GenerationMethod.MANUAL,
+      aiModel: data.aiModel ?? null,
     });
   }
 

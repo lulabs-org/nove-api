@@ -41,6 +41,7 @@ export class SpeakerSummaryController {
 
   @Get()
   @RequirePermissions('speaker-summary:read')
+  @ApiOperation({ summary: '获取参会者总结列表' })
   @ApiResponse({
     status: HttpStatus.OK,
     type: SpeakerSummaryListResponseDto,
@@ -55,6 +56,7 @@ export class SpeakerSummaryController {
 
   @Get(':summaryId')
   @RequirePermissions('speaker-summary:read')
+  @ApiOperation({ summary: '获取参会者总结详情' })
   @ApiResponse({ status: HttpStatus.OK, type: SpeakerSummaryDto })
   get(
     @Param('minuteId', CuidPipe) minuteId: string,
@@ -66,7 +68,7 @@ export class SpeakerSummaryController {
   @Post()
   @RequirePermissions('speaker-summary:create')
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: '为录制中的参会者创建新总结版本' })
+  @ApiOperation({ summary: '创建参会者总结' })
   create(
     @Param('minuteId', CuidPipe) minuteId: string,
     @Body(new ValidationPipe()) dto: CreateSpeakerSummaryDto,
@@ -76,6 +78,7 @@ export class SpeakerSummaryController {
 
   @Put(':summaryId')
   @RequirePermissions('speaker-summary:update')
+  @ApiOperation({ summary: '更新参会者总结' })
   update(
     @Param('minuteId', CuidPipe) minuteId: string,
     @Param('summaryId', CuidPipe) summaryId: string,
@@ -86,6 +89,7 @@ export class SpeakerSummaryController {
 
   @Delete(':summaryId')
   @RequirePermissions('speaker-summary:delete')
+  @ApiOperation({ summary: '删除参会者总结' })
   delete(
     @Param('minuteId', CuidPipe) minuteId: string,
     @Param('summaryId', CuidPipe) summaryId: string,
