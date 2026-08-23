@@ -41,8 +41,10 @@ export async function createRefunds(
     const refundPromises = REFUND_CONFIGS.map((config) => {
       const createInput = convertToRefundCreateInput(config);
 
-      return prisma.orderRefund.create({
-        data: createInput,
+      return prisma.orderRefund.upsert({
+        where: { afterSaleCode: createInput.afterSaleCode },
+        create: createInput,
+        update: createInput,
       });
     });
 
