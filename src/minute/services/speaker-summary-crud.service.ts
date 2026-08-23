@@ -52,7 +52,8 @@ export class SpeakerSummaryCrudService {
     return this.summaries.update(summaryId, {
       partSummary: data.partSummary ?? current.partSummary,
       keywords: data.keywords ?? current.keywords,
-      generatedBy: GenerationMethod.MANUAL,
+      generatedBy: data.generatedBy ?? current.generatedBy,
+      aiModel: data.aiModel ?? current.aiModel,
     });
   }
 
