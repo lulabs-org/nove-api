@@ -38,6 +38,16 @@ describe('MeetingController', () => {
     expect(meetingService.getStats).not.toHaveBeenCalled();
   });
 
+  it('rejects an empty statistics date range before querying', async () => {
+    await expect(
+      controller.getMeetingStats({
+        startDate: '2026-08-24T00:00:00.000+08:00',
+        endDate: '2026-08-24T00:00:00.000+08:00',
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(meetingService.getStats).not.toHaveBeenCalled();
+  });
+
   it('returns the persisted soft-delete timestamp', async () => {
     const deletedAt = new Date('2026-08-13T01:00:00.000Z');
     const deletedRecord = { id: 'meeting-1', deletedAt };

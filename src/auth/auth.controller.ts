@@ -374,6 +374,14 @@ export class AuthController {
     };
   }
 
+  @Get('api-key/validate')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @RequireAuth('api_key')
+  validateApiKey(): { authenticated: true } {
+    return { authenticated: true };
+  }
+
   @Get('permissions')
   @HttpCode(HttpStatus.OK)
   @ApiGetPermissionsDocs()

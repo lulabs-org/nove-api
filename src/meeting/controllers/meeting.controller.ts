@@ -187,8 +187,8 @@ export class MeetingController {
     const startDate = query.startDate ? new Date(query.startDate) : undefined;
     const endDate = query.endDate ? new Date(query.endDate) : undefined;
 
-    if (startDate && endDate && startDate > endDate) {
-      throw new BadRequestException('startDate 不能晚于 endDate');
+    if (startDate && endDate && startDate >= endDate) {
+      throw new BadRequestException('startDate 必须早于 endDate');
     }
 
     this.logger.log('获取会议统计信息', query);

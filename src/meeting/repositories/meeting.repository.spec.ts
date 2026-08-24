@@ -468,6 +468,20 @@ describe('MeetingRepository', () => {
         }),
       );
     });
+
+    it('uses an exclusive end date for half-open meeting ranges', async () => {
+      const startDate = new Date('2026-08-24T00:00:00.000+08:00');
+      const endDate = new Date('2026-08-25T00:00:00.000+08:00');
+      (prismaService.meeting.findMany as jest.Mock).mockResolvedValue([]);
+      (prismaService.meeting.count as jest.Mock).mockResolvedValue(0);
+
+      await repository.get({ startDate, endDate });
+
+      const [query] = prismaService.meeting.findMany.mock.calls.at(
+        -1,
+      ) as unknown as [{ where: { startAt: unknown } }];
+      expect(query.where.startAt).toEqual({ gte: startDate, lt: endDate });
+    });
   });
 
   describe('getStats', () => {
@@ -501,7 +515,7 @@ describe('MeetingRepository', () => {
       expect(prismaService.meeting.count).toHaveBeenCalledWith({
         where: {
           deletedAt: null,
-          startAt: { gte: startDate, lte: endDate },
+          startAt: { gte: startDate, lt: endDate },
         },
       });
       expect(prismaService.meeting.findMany).toHaveBeenCalledWith(

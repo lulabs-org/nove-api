@@ -343,7 +343,7 @@ export class MeetingRepository {
         where.startAt.gte = startDate;
       }
       if (endDate) {
-        where.startAt.lte = endDate;
+        where.startAt.lt = endDate;
       }
     }
 
@@ -392,7 +392,7 @@ export class MeetingRepository {
         ? {
             startAt: {
               ...(params.startDate ? { gte: params.startDate } : {}),
-              ...(params.endDate ? { lte: params.endDate } : {}),
+              ...(params.endDate ? { lt: params.endDate } : {}),
             },
           }
         : {}),
