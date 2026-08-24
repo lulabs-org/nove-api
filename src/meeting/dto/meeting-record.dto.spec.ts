@@ -57,6 +57,8 @@ describe('meeting record DTO contracts', () => {
       participantCount: 0,
       hostUserName: 'Ignored Host',
       participantList: [],
+      processingStatus: 'COMPLETED',
+      recordingStatus: 'COMPLETED',
     });
 
     const errors = await validateRequest(dto);
@@ -64,7 +66,12 @@ describe('meeting record DTO contracts', () => {
     expect(dto.durationSeconds).toBe(0);
     expect(dto.participantCount).toBe(0);
     expect(errors.map((error) => error.property)).toEqual(
-      expect.arrayContaining(['hostUserName', 'participantList']),
+      expect.arrayContaining([
+        'hostUserName',
+        'participantList',
+        'processingStatus',
+        'recordingStatus',
+      ]),
     );
   });
 });

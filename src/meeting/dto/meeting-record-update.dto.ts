@@ -7,7 +7,7 @@ import {
   Min,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { MeetingType, ProcessingStatus } from '@prisma/client';
+import { MeetingType } from '@prisma/client';
 import { Type } from 'class-transformer';
 
 export class UpdateMeetingRecordDto {
@@ -74,24 +74,6 @@ export class UpdateMeetingRecordDto {
   @IsInt({ message: '持续时间必须是整数' })
   @Min(0, { message: '持续时间不能小于0' })
   durationSeconds?: number;
-
-  @ApiPropertyOptional({
-    description: '录制状态',
-    enum: ProcessingStatus,
-    example: ProcessingStatus.COMPLETED,
-  })
-  @IsOptional()
-  @IsEnum(ProcessingStatus, { message: '无效的录制状态' })
-  recordingStatus?: ProcessingStatus;
-
-  @ApiPropertyOptional({
-    description: '处理状态',
-    enum: ProcessingStatus,
-    example: ProcessingStatus.COMPLETED,
-  })
-  @IsOptional()
-  @IsEnum(ProcessingStatus, { message: '无效的处理状态' })
-  processingStatus?: ProcessingStatus;
 
   @ApiPropertyOptional({
     description: '参会人数',
