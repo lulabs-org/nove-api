@@ -1,6 +1,7 @@
+import { ProcessingStatus } from '../../minute/enums/status.enum';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsDateString, IsOptional, Matches } from 'class-validator';
-import { MeetingPlatform, MeetingType, ProcessingStatus } from '@prisma/client';
+import { MeetingPlatform, MeetingType } from '@prisma/client';
 import { MeetingRecordResponseDto } from './meeting-record-response.dto';
 
 export class QueryMeetingStatsDto {

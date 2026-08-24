@@ -1,4 +1,8 @@
-import { MeetingType, RecordingStatus, ProcessingStatus } from '@prisma/client';
+import {
+  RecordingStatus,
+  ProcessingStatus,
+} from '../../minute/enums/status.enum';
+import { MeetingType } from '@prisma/client';
 
 /**
  * Constant representing a recurring meeting type in Tencent Meeting API.

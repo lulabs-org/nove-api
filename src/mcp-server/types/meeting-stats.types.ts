@@ -21,6 +21,8 @@ export type MeetingDetailsResult = Meeting & {
       files: Array<{
         durationMs: bigint | null;
       }>;
+      summary: { id: string } | null;
+      transcripts: Array<{ id: string }>;
     }
   >;
 };

@@ -140,7 +140,7 @@ describe('MeetingController (e2e)', () => {
       expect(response.body.id).toBe(createdMeetingId);
       expect(response.body.title).toBe('E2E Test Meeting');
       expect(response.body).not.toHaveProperty('createdById');
-      expect(response.body).toHaveProperty('recordings');
+      expect(response.body).toHaveProperty('minutes');
     });
 
     it('should return 404 for non-existent meeting', async () => {

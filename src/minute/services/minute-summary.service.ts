@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { MinuteSummaryRepository } from '../repositories/minute-summary.repository';
 import { MinuteSummaryNotFoundException } from '@/meeting/exceptions/meeting.exceptions';
 import {
-  CreateMinuteSummaryDto,
+  CreateMinuteSummaryBodyDto,
   UpdateMinuteSummaryDto,
 } from '../dto/minute-summary.dto';
 
@@ -21,18 +21,14 @@ export class MinuteSummaryService {
     return summary;
   }
 
-  async create(minuteId: string, data: CreateMinuteSummaryDto) {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { minuteId: _, ...restData } = data;
-    return this.meetingSummaryRepository.upsert(minuteId, restData);
+  async create(minuteId: string, data: CreateMinuteSummaryBodyDto) {
+    return this.meetingSummaryRepository.upsert(minuteId, data);
   }
 
   async update(minuteId: string, data: UpdateMinuteSummaryDto) {
     await this.findByMinuteId(minuteId); // Ensure exists
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { minuteId: _, ...restData } = data;
-    return this.meetingSummaryRepository.update(minuteId, restData);
+    return this.meetingSummaryRepository.update(minuteId, data);
   }
 
   async delete(minuteId: string) {

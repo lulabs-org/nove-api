@@ -1,3 +1,4 @@
+import { ProcessingStatus } from '../../minute/enums/status.enum';
 import { applyDecorators } from '@nestjs/common';
 import {
   ApiOperation,
@@ -6,7 +7,7 @@ import {
   ApiParam,
   ApiBody,
 } from '@nestjs/swagger';
-import { MeetingPlatform, MeetingType, ProcessingStatus } from '@prisma/client';
+import { MeetingPlatform, MeetingType } from '@prisma/client';
 import {
   MeetingRecordListResponseDto,
   MeetingStatsResponseDto,

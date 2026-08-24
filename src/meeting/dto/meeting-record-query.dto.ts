@@ -1,3 +1,4 @@
+import { ProcessingStatus } from '../../minute/enums/status.enum';
 /*
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-10 08:39:58
@@ -18,7 +19,7 @@ import {
   Max,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { MeetingPlatform, MeetingType, ProcessingStatus } from '@prisma/client';
+import { MeetingPlatform, MeetingType } from '@prisma/client';
 import { Transform, Type } from 'class-transformer';
 
 export class QueryMeetingRecordsDto {

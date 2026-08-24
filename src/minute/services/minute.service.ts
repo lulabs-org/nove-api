@@ -34,7 +34,6 @@ export class MinuteService {
     const { total, records } = await this.meetingRecordingRepository.findMany({
       meetingId: query.meetingId,
       source: query.source,
-      status: query.status,
       skip,
       take: limit,
     });

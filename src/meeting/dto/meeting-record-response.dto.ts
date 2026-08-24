@@ -1,11 +1,9 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  MeetingPlatform,
-  MeetingType,
-  ProcessingStatus,
-  RecordingSource,
   RecordingStatus,
-} from '@prisma/client';
+  ProcessingStatus,
+} from '../../minute/enums/status.enum';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { MeetingPlatform, MeetingType, RecordingSource } from '@prisma/client';
 
 export class MeetingHostResponseDto {
   @ApiProperty({ description: '平台用户 ID' })
@@ -40,9 +38,12 @@ export class MinuteSummaryResponseDto {
   @ApiProperty({ description: '录制来源', enum: RecordingSource })
   source: RecordingSource;
 
-  @ApiProperty({ description: '录制状态', enum: RecordingStatus })
-  status: RecordingStatus;
-
+  @ApiPropertyOptional({
+    description: '错误信息',
+    type: String,
+    nullable: true,
+  })
+  errorMessage?: string | null;
   @ApiPropertyOptional({
     description: '录制开始时间',
     type: String,

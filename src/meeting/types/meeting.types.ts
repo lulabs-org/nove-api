@@ -1,3 +1,4 @@
+import { ProcessingStatus } from '../../minute/enums/status.enum';
 /*
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-01 20:55:12
@@ -9,7 +10,7 @@
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
-import { MeetingPlatform, MeetingType, ProcessingStatus } from '@prisma/client';
+import { MeetingPlatform, MeetingType } from '@prisma/client';
 
 /**
  * 会议记录创建参数
@@ -24,9 +25,6 @@ export interface CreateMeetingRecordParams {
   actualStartAt: Date;
   endedAt: Date;
   durationSeconds: number;
-  hasRecording: boolean;
-  recordingStatus: ProcessingStatus;
-  processingStatus: ProcessingStatus;
   metadata?: any;
 }
 
@@ -34,8 +32,6 @@ export interface CreateMeetingRecordParams {
  * 会议记录更新参数
  */
 export interface UpdateMeetingRecordParams {
-  recordingStatus?: ProcessingStatus;
-  processingStatus?: ProcessingStatus;
   transcript?: string;
   summary?: string;
   participantCount?: number;

@@ -1,11 +1,7 @@
+import { RecordingStatus } from '../enums/status.enum';
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import {
-  RecordingSource,
-  RecordingStatus,
-  PrismaClient,
-  Prisma,
-} from '@prisma/client';
+import { RecordingSource, PrismaClient, Prisma } from '@prisma/client';
 
 type PrismaTransaction = Omit<
   PrismaClient,
@@ -44,9 +40,13 @@ export class MinuteRepository {
   }) {
     return this.prisma.minute.create({
       data: {
-        ...data,
+        meetingId: data.meetingId,
+        externalId: data.externalId,
+        startAt: data.startAt,
+        endAt: data.endAt,
+        recorderUserId: data.recorderUserId,
         source: data.source || RecordingSource.PLATFORM_AUTO,
-        status: data.status || RecordingStatus.COMPLETED,
+        errorMessage: data.status === RecordingStatus.FAILED ? 'Failed' : null,
         metadata: data.metadata ? (data.metadata as Prisma.InputJsonValue) : {},
       },
     });
@@ -55,7 +55,6 @@ export class MinuteRepository {
   async findMany(query: {
     meetingId?: string;
     source?: RecordingSource;
-    status?: RecordingStatus;
     skip: number;
     take: number;
   }) {
@@ -63,7 +62,6 @@ export class MinuteRepository {
       deletedAt: null,
       ...(query.meetingId ? { meetingId: query.meetingId } : {}),
       ...(query.source ? { source: query.source } : {}),
-      ...(query.status ? { status: query.status } : {}),
     };
 
     const [total, records] = await this.prisma.$transaction([
@@ -108,7 +106,8 @@ export class MinuteRepository {
         where: { id: existingRecording.id },
         data: {
           source: data.source,
-          status: data.status,
+          errorMessage:
+            data.status === RecordingStatus.FAILED ? 'Failed' : null,
           startAt: data.startAt,
           endAt: data.endAt,
         },
@@ -119,7 +118,8 @@ export class MinuteRepository {
           meetingId: data.meetingId,
           externalId: data.externalId,
           source: data.source || RecordingSource.PLATFORM_AUTO,
-          status: data.status || RecordingStatus.COMPLETED,
+          errorMessage:
+            data.status === RecordingStatus.FAILED ? 'Failed' : null,
           startAt: data.startAt,
           endAt: data.endAt,
         },
@@ -169,7 +169,6 @@ export class MinuteRepository {
       data: {
         externalId: recordFileId,
         source: RecordingSource.PLATFORM_AUTO,
-        status: RecordingStatus.COMPLETED,
         meetingId: existingMeetingId,
         metadata: {
           autoCreated: true,

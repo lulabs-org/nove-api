@@ -1,3 +1,4 @@
+import { ProcessingStatus } from '../../minute/enums/status.enum';
 /**
  * @fileoverview Unit tests for MeetingRepository
  */
@@ -5,7 +6,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MeetingRepository } from './meeting.repository';
 import { PrismaService } from '../../prisma/prisma.service';
-import { MeetingPlatform, MeetingType, ProcessingStatus } from '@prisma/client';
+import { MeetingPlatform, MeetingType, Prisma } from '@prisma/client';
 
 describe('MeetingRepository', () => {
   let repository: MeetingRepository;
@@ -469,6 +470,29 @@ describe('MeetingRepository', () => {
       );
     });
 
+    it('derives pending status filters and returns no records for skipped', async () => {
+      (prismaService.meeting.findMany as jest.Mock).mockResolvedValue([]);
+      (prismaService.meeting.count as jest.Mock).mockResolvedValue(0);
+
+      await repository.get({ status: ProcessingStatus.PENDING });
+      await repository.get({ status: ProcessingStatus.SKIPPED });
+
+      const calls = prismaService.meeting.findMany.mock
+        .calls as unknown as Array<[{ where: Prisma.MeetingWhereInput }]>;
+      const [pendingQuery] = calls.at(-2) as [
+        { where: Prisma.MeetingWhereInput },
+      ];
+      const [skippedQuery] = calls.at(-1) as [
+        { where: Prisma.MeetingWhereInput },
+      ];
+
+      expect(Array.isArray(pendingQuery.where.AND)).toBe(true);
+      const [pendingCondition] = pendingQuery.where
+        .AND as Prisma.MeetingWhereInput[];
+      expect(Array.isArray(pendingCondition.AND)).toBe(true);
+      expect(skippedQuery.where.AND).toEqual([{ id: { in: [] } }]);
+    });
+
     it('uses an exclusive end date for half-open meeting ranges', async () => {
       const startDate = new Date('2026-08-24T00:00:00.000+08:00');
       const endDate = new Date('2026-08-25T00:00:00.000+08:00');
@@ -488,7 +512,13 @@ describe('MeetingRepository', () => {
     it('should aggregate real meeting statistics within the date range', async () => {
       const startDate = new Date('2026-08-01T00:00:00.000Z');
       const endDate = new Date('2026-08-31T23:59:59.999Z');
-      (prismaService.meeting.count as jest.Mock).mockResolvedValue(3);
+      (prismaService.meeting.count as jest.Mock)
+        .mockResolvedValueOnce(3)
+        .mockResolvedValueOnce(1)
+        .mockResolvedValueOnce(1)
+        .mockResolvedValueOnce(1)
+        .mockResolvedValueOnce(0)
+        .mockResolvedValueOnce(0);
       (prismaService.meeting.groupBy as jest.Mock)
         .mockResolvedValueOnce([
           {
@@ -508,7 +538,13 @@ describe('MeetingRepository', () => {
         platformStats: [
           { platform: MeetingPlatform.TENCENT_MEETING, count: 3 },
         ],
-        statusStats: [{ status: ProcessingStatus.PENDING, count: 0 }],
+        statusStats: [
+          { status: ProcessingStatus.PENDING, count: 1 },
+          { status: ProcessingStatus.PROCESSING, count: 1 },
+          { status: ProcessingStatus.COMPLETED, count: 1 },
+          { status: ProcessingStatus.FAILED, count: 0 },
+          { status: ProcessingStatus.SKIPPED, count: 0 },
+        ],
         typeStats: [{ type: MeetingType.SCHEDULED, count: 3 }],
         recentMeetings: [],
       });
