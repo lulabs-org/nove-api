@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
-import { PrismaClient, RecordingStatus, Prisma } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { MINUTE_FILE_CONFIGS } from './config';
 import type { CreatedMinute } from './type';
 
@@ -62,7 +62,6 @@ export async function createMinute(
         meetingId,
         startAt: new Date(),
         endAt: new Date(),
-        status: RecordingStatus.COMPLETED,
         recorderUserId: recorderUserId,
       },
     });

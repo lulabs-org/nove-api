@@ -132,12 +132,10 @@ describe('ParticipantSummaryController (e2e)', () => {
     await app.close();
   });
 
-  describe('/meetings/:meetingId/recordings/:minuteId/participant-summaries (POST)', () => {
+  describe('/minutes/:minuteId/speaker-summaries (POST)', () => {
     it('should create a participant summary', async () => {
       const response = await request(app.getHttpServer())
-        .post(
-          `/meetings/${createdMeetingId}/recordings/${createdRecordingId}/participant-summaries`,
-        )
+        .post(`/minutes/${createdRecordingId}/speaker-summaries`)
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           platformUserId,
@@ -157,12 +155,10 @@ describe('ParticipantSummaryController (e2e)', () => {
     });
   });
 
-  describe('/meet-ai/recordings/:minuteId/participant-summaries/generate (POST)', () => {
+  describe('/minutes/:minuteId/speaker-summaries/generate (POST)', () => {
     it('passes the recording scope to participant summary generation', async () => {
-      await request(app.getHttpServer())
-        .post(
-          `/meet-ai/recordings/${createdRecordingId}/participant-summaries/generate`,
-        )
+      const response = await request(app.getHttpServer())
+        .post(`/minutes/${createdRecordingId}/speaker-summaries/generate`)
         .set('Authorization', `Bearer ${authToken}`)
         .send({ platformUserIds: [platformUserId] })
         .expect(200)
@@ -179,12 +175,10 @@ describe('ParticipantSummaryController (e2e)', () => {
     });
   });
 
-  describe('/meetings/:meetingId/recordings/:minuteId/participant-summaries (GET)', () => {
+  describe('/minutes/:minuteId/speaker-summaries (GET)', () => {
     it('should get participant summaries list', async () => {
       const response = await request(app.getHttpServer())
-        .get(
-          `/meetings/${createdMeetingId}/recordings/${createdRecordingId}/participant-summaries`,
-        )
+        .get(`/minutes/${createdRecordingId}/speaker-summaries`)
         .set('Authorization', `Bearer ${authToken}`)
         .query({ limit: 10, page: 1 })
         .expect(200);
@@ -197,11 +191,11 @@ describe('ParticipantSummaryController (e2e)', () => {
     });
   });
 
-  describe('/meetings/:meetingId/recordings/:minuteId/participant-summaries/:id (GET)', () => {
+  describe('/minutes/:minuteId/speaker-summaries/:id (GET)', () => {
     it('should get a specific participant summary', async () => {
       const response = await request(app.getHttpServer())
         .get(
-          `/meetings/${createdMeetingId}/recordings/${createdRecordingId}/participant-summaries/${createdSummaryId}`,
+          `/minutes/${createdRecordingId}/speaker-summaries/${createdSummaryId}`,
         )
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
@@ -212,18 +206,18 @@ describe('ParticipantSummaryController (e2e)', () => {
     it('rejects a summary through another recording boundary', async () => {
       await request(app.getHttpServer())
         .get(
-          `/meetings/${createdMeetingId}/recordings/${otherRecordingId}/participant-summaries/${createdSummaryId}`,
+          `/minutes/${otherRecordingId}/speaker-summaries/${createdSummaryId}`,
         )
         .set('Authorization', `Bearer ${authToken}`)
         .expect(404);
     });
   });
 
-  describe('/meetings/:meetingId/recordings/:minuteId/participant-summaries/:id (PUT)', () => {
+  describe('/minutes/:minuteId/speaker-summaries/:id (PUT)', () => {
     it('should update a participant summary', async () => {
       const response = await request(app.getHttpServer())
         .put(
-          `/meetings/${createdMeetingId}/recordings/${createdRecordingId}/participant-summaries/${createdSummaryId}`,
+          `/minutes/${createdRecordingId}/speaker-summaries/${createdSummaryId}`,
         )
         .set('Authorization', `Bearer ${authToken}`)
         .send({
@@ -231,8 +225,7 @@ describe('ParticipantSummaryController (e2e)', () => {
         })
         .expect(200);
 
-      expect(response.body.id).not.toBe(createdSummaryId);
-      expect(response.body.version).toBe(2);
+      expect(response.body.id).toBe(createdSummaryId);
       updatedSummaryId = response.body.id;
       expect(response.body.partSummary).toBe(
         'Updated participant summary content.',
@@ -240,11 +233,11 @@ describe('ParticipantSummaryController (e2e)', () => {
     });
   });
 
-  describe('/meetings/:meetingId/recordings/:minuteId/participant-summaries/:id (DELETE)', () => {
+  describe('/minutes/:minuteId/speaker-summaries/:id (DELETE)', () => {
     it('should delete a participant summary', async () => {
       const response = await request(app.getHttpServer())
         .delete(
-          `/meetings/${createdMeetingId}/recordings/${createdRecordingId}/participant-summaries/${updatedSummaryId}`,
+          `/minutes/${createdRecordingId}/speaker-summaries/${updatedSummaryId}`,
         )
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
@@ -252,7 +245,7 @@ describe('ParticipantSummaryController (e2e)', () => {
       // Verify deletion
       await request(app.getHttpServer())
         .get(
-          `/meetings/${createdMeetingId}/recordings/${createdRecordingId}/participant-summaries/${updatedSummaryId}`,
+          `/minutes/${createdRecordingId}/speaker-summaries/${updatedSummaryId}`,
         )
         .set('Authorization', `Bearer ${authToken}`)
         .expect(404);

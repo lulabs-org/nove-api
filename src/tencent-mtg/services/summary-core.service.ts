@@ -57,7 +57,6 @@ export class TencentMtgSummaryCoreService {
     }
 
     await this.meetingSummaryService.create(minuteId, {
-      minuteId: minuteId,
       content: content.fullSummary || '',
       aiMinutes: content.aiMinutes ? { content: content.aiMinutes } : undefined,
       actionItems: content.todo ? { items: content.todo } : undefined,

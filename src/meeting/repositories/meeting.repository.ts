@@ -2,7 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { GetMeetingRecordsParams } from '@/meeting/types';
 
-import { MeetingPlatform, Prisma, ProcessingStatus } from '@prisma/client';
+import { MeetingPlatform, Prisma } from '@prisma/client';
+import {
+  deriveProcessingStatus,
+  deriveRecordingStatus,
+  ProcessingStatus,
+} from '../../minute/enums/status.enum';
 import type {
   MeetingHostResponseDto,
   MeetingListItemResponseDto,
@@ -48,12 +53,22 @@ const meetingResponseSelect = {
       id: true,
       externalId: true,
       source: true,
-      status: true,
-      processingStatus: true,
+      errorMessage: true,
       startAt: true,
       endAt: true,
       createdAt: true,
       updatedAt: true,
+      files: {
+        select: { id: true },
+        take: 1,
+      },
+      transcripts: {
+        select: { id: true, status: true },
+        take: 1,
+      },
+      summary: {
+        select: { id: true },
+      },
     },
   },
   _count: {
@@ -99,6 +114,85 @@ type CreateMeetingRecordData = Omit<
   'id' | 'createdAt' | 'updatedAt' | 'deletedAt'
 >;
 
+const activeMinuteWhere = { deletedAt: null } as const;
+
+function meetingProcessingStatusWhere(
+  status: ProcessingStatus,
+): Prisma.MeetingWhereInput {
+  if (status === ProcessingStatus.FAILED) {
+    return {
+      minutes: {
+        some: { ...activeMinuteWhere, errorMessage: { not: null } },
+      },
+    };
+  }
+
+  if (status === ProcessingStatus.COMPLETED) {
+    return {
+      AND: [
+        {
+          minutes: {
+            none: { ...activeMinuteWhere, errorMessage: { not: null } },
+          },
+        },
+        {
+          minutes: {
+            some: { ...activeMinuteWhere, summary: { isNot: null } },
+          },
+        },
+      ],
+    };
+  }
+
+  if (status === ProcessingStatus.PROCESSING) {
+    return {
+      AND: [
+        {
+          minutes: {
+            none: { ...activeMinuteWhere, errorMessage: { not: null } },
+          },
+        },
+        {
+          minutes: {
+            none: { ...activeMinuteWhere, summary: { isNot: null } },
+          },
+        },
+        {
+          minutes: {
+            some: { ...activeMinuteWhere, transcripts: { some: {} } },
+          },
+        },
+      ],
+    };
+  }
+
+  if (status === ProcessingStatus.PENDING) {
+    return {
+      AND: [
+        {
+          minutes: {
+            none: { ...activeMinuteWhere, errorMessage: { not: null } },
+          },
+        },
+        {
+          minutes: {
+            none: { ...activeMinuteWhere, summary: { isNot: null } },
+          },
+        },
+        {
+          minutes: {
+            none: { ...activeMinuteWhere, transcripts: { some: {} } },
+          },
+        },
+      ],
+    };
+  }
+
+  // SKIPPED is retained in the public enum for compatibility, but it can no
+  // longer be represented after removing the persisted processing status.
+  return { id: { in: [] } };
+}
+
 @Injectable()
 export class MeetingRepository {
   constructor(private prisma: PrismaService) {}
@@ -119,6 +213,9 @@ export class MeetingRepository {
     record: MeetingResponseRecord,
     includeRecordings = true,
   ) {
+    const recordingStatus = deriveRecordingStatus(record.minutes);
+    const processingStatus = deriveProcessingStatus(record.minutes);
+
     return {
       id: record.id,
       platform: record.platform,
@@ -140,8 +237,8 @@ export class MeetingRepository {
       durationSeconds: record.durationSeconds,
       timezone: record.timezone,
       hasRecording: record.minutes.length > 0,
-      recordingStatus: record.minutes[0]?.status,
-      processingStatus: record.minutes[0]?.processingStatus,
+      recordingStatus,
+      processingStatus,
       metadata: record.metadata,
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,
@@ -330,7 +427,7 @@ export class MeetingRepository {
     }
 
     if (status) {
-      where.minutes = { some: { processingStatus: status } };
+      where.AND = [meetingProcessingStatusWhere(status)];
     }
 
     if (type) {
@@ -398,7 +495,7 @@ export class MeetingRepository {
         : {}),
     };
 
-    const [total, platformGroups, statusGroups, typeGroups, recentRecords] =
+    const [total, platformGroups, statusStats, typeGroups, recentRecords] =
       await Promise.all([
         this.prisma.meeting.count({ where }),
         this.prisma.meeting.groupBy({
@@ -407,10 +504,16 @@ export class MeetingRepository {
           _count: { _all: true },
           orderBy: { platform: 'asc' },
         }),
-        // Processing Status stats removed from Meeting group by, we can get it from Minute later if needed
-        Promise.resolve([
-          { _count: { _all: 0 }, processingStatus: ProcessingStatus.PENDING },
-        ]),
+        Promise.all(
+          Object.values(ProcessingStatus).map(async (status) => ({
+            status,
+            count: await this.prisma.meeting.count({
+              where: {
+                AND: [where, meetingProcessingStatusWhere(status)],
+              },
+            }),
+          })),
+        ),
         this.prisma.meeting.groupBy({
           by: ['type'],
           where,
@@ -431,10 +534,7 @@ export class MeetingRepository {
         platform: group.platform,
         count: group._count._all,
       })),
-      statusStats: statusGroups.map((group) => ({
-        status: group.processingStatus,
-        count: group._count._all,
-      })),
+      statusStats,
       typeStats: typeGroups.map((group) => ({
         type: group.type,
         count: group._count._all,

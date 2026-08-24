@@ -1,4 +1,8 @@
 import { Injectable } from '@nestjs/common';
+import {
+  deriveProcessingStatus,
+  deriveRecordingStatus,
+} from '@/minute/enums/status.enum';
 import { Tool, Context, ToolScopes } from '@rekog/mcp-nest';
 import { z } from 'zod';
 import {
@@ -186,8 +190,8 @@ export class MeetingStatsTool {
         duration: meeting.durationSeconds,
         participants,
         hasRecording: meeting.minutes.length > 0,
-        recordingStatus: meeting.minutes[0]?.status || 'PENDING',
-        processingStatus: meeting.minutes[0]?.processingStatus || 'PENDING',
+        recordingStatus: deriveRecordingStatus(meeting.minutes),
+        processingStatus: deriveProcessingStatus(meeting.minutes),
         recording: recordingFile
           ? {
               available: true,

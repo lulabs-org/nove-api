@@ -63,6 +63,13 @@ export class MeetingStatsRepository {
                 durationMs: true,
               },
             },
+            summary: {
+              select: { id: true },
+            },
+            transcripts: {
+              select: { id: true },
+              take: 1,
+            },
           },
         },
       },

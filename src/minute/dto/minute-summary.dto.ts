@@ -1,5 +1,5 @@
 import { IsString, IsOptional, IsArray, IsObject } from 'class-validator';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, OmitType } from '@nestjs/swagger';
 import { GenerationMethod } from '@prisma/client';
 
 export class CreateMinuteSummaryDto {
@@ -43,7 +43,12 @@ export class CreateMinuteSummaryDto {
   metadata?: any;
 }
 
-export class UpdateMinuteSummaryDto extends CreateMinuteSummaryDto {}
+export class CreateMinuteSummaryBodyDto extends OmitType(
+  CreateMinuteSummaryDto,
+  ['minuteId'] as const,
+) {}
+
+export class UpdateMinuteSummaryDto extends CreateMinuteSummaryBodyDto {}
 
 export class MinuteSummaryDto {
   @ApiProperty({ description: '总结ID' })

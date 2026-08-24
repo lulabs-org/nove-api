@@ -6,12 +6,7 @@ import { AppModule } from '../../../src/app.module';
 import { PrismaService } from '../../../src/prisma/prisma.service';
 import { PermService } from '../../../src/admin/permission/services/permission.service';
 import { JwtService } from '@nestjs/jwt';
-import {
-  MeetingPlatform,
-  MeetingType,
-  RecordingSource,
-  RecordingStatus,
-} from '@prisma/client';
+import { MeetingPlatform, MeetingType, RecordingSource } from '@prisma/client';
 
 describe('MinuteController (e2e)', () => {
   let app: INestApplication;
@@ -94,15 +89,14 @@ describe('MinuteController (e2e)', () => {
     await app.close();
   });
 
-  describe('/recordings (POST)', () => {
-    it('should create a meeting recording', async () => {
+  describe('/minutes (POST)', () => {
+    it('should create a recording record', async () => {
       const response = await request(app.getHttpServer())
-        .post('/recordings')
+        .post('/minutes')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           meetingId: createdMeetingId,
           source: RecordingSource.PLATFORM_AUTO,
-          status: RecordingStatus.PROCESSING,
         });
 
       if (response.status !== 201) {
@@ -117,10 +111,10 @@ describe('MinuteController (e2e)', () => {
     });
   });
 
-  describe('/recordings (GET)', () => {
-    it('should get meeting recordings list', async () => {
+  describe('/minutes (GET)', () => {
+    it('should get a list of recordings', async () => {
       const response = await request(app.getHttpServer())
-        .get('/recordings')
+        .get('/minutes')
         .set('Authorization', `Bearer ${authToken}`)
         .query({ limit: 10, page: 1, meetingId: createdMeetingId })
         .expect(200);
@@ -133,10 +127,10 @@ describe('MinuteController (e2e)', () => {
     });
   });
 
-  describe('/recordings/:id (GET)', () => {
-    it('should get a specific meeting recording', async () => {
+  describe('/minutes/:id (GET)', () => {
+    it('should get a specific recording', async () => {
       const response = await request(app.getHttpServer())
-        .get(`/recordings/${createdRecordingId}`)
+        .get(`/minutes/${createdRecordingId}`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
 
@@ -145,12 +139,13 @@ describe('MinuteController (e2e)', () => {
     });
   });
 
-  describe('/recordings/:id/transcript (GET)', () => {
-    it('should get a specific meeting recording transcript', async () => {
-      // It might return 404 because transcript does not exist, so we expect 404 for a normal run,
-      // or if it returns 200 we check it. Let's see what the service does.
+  describe('/minutes/:id/transcript (GET)', () => {
+    it('should get recording transcript', async () => {
+      // Mock the HTTP request in the service
+      // This is a placeholder test as we can't easily mock the external HTTP call in E2E
+      // without setting up Nock or similar
       const response = await request(app.getHttpServer())
-        .get(`/recordings/${createdRecordingId}/transcript`)
+        .get(`/minutes/${createdRecordingId}/transcript`)
         .set('Authorization', `Bearer ${authToken}`);
 
       // We accept either 200 (if empty string/json is returned) or 404 (if not found)
@@ -158,25 +153,25 @@ describe('MinuteController (e2e)', () => {
     });
   });
 
-  describe('/recordings/:id (PATCH)', () => {
-    it('should update a meeting recording', async () => {
+  describe('/minutes/:id (PATCH)', () => {
+    it('should update recording metadata', async () => {
       const response = await request(app.getHttpServer())
-        .patch(`/recordings/${createdRecordingId}`)
+        .patch(`/minutes/${createdRecordingId}`)
         .set('Authorization', `Bearer ${authToken}`)
         .send({
-          status: RecordingStatus.COMPLETED,
+          externalId: 'test_external_id_updated',
         })
         .expect(200);
 
       expect(response.body.id).toBe(createdRecordingId);
-      expect(response.body.status).toBe(RecordingStatus.COMPLETED);
+      expect(response.body.externalId).toBe('test_external_id_updated');
     });
   });
 
-  describe('/recordings/:id (DELETE)', () => {
-    it('should delete a meeting recording', async () => {
+  describe('/minutes/:id (DELETE)', () => {
+    it('should delete a recording', async () => {
       const response = await request(app.getHttpServer())
-        .delete(`/recordings/${createdRecordingId}`)
+        .delete(`/minutes/${createdRecordingId}`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
 

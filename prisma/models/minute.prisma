@@ -3,11 +3,8 @@ model Minute {
   externalId String? @map("external_id") @db.VarChar(100) // 外部系统录制ID，用于唯一标识
 
   source RecordingSource @default(PLATFORM_AUTO)
-  status RecordingStatus @default(RECORDING)
-
-  // 处理状态
-  processingStatus ProcessingStatus @default(PENDING) @map("processing_status")
-  hasRecording     Boolean          @default(true) @map("has_recording")
+  // 错误信息（用于记录失败状态）
+  errorMessage String? @map("error_message")
 
   // 元数据
   metadata Json @default("{}") @db.JsonB
@@ -40,12 +37,4 @@ enum RecordingSource {
   PLATFORM_AUTO // 平台自动录制
   USER_MANUAL // 用户手动录制
   THIRD_PARTY // 第三方录制
-}
-
-// 录制状态枚举
-enum RecordingStatus {
-  RECORDING // 录制中
-  PROCESSING // 处理中
-  COMPLETED // 已完成
-  FAILED // 失败
 }

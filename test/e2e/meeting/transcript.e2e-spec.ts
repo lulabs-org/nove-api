@@ -6,12 +6,7 @@ import { AppModule } from '../../../src/app.module';
 import { PrismaService } from '../../../src/prisma/prisma.service';
 import { PermService } from '../../../src/admin/permission/services/permission.service';
 import { JwtService } from '@nestjs/jwt';
-import {
-  MeetingPlatform,
-  MeetingType,
-  RecordingSource,
-  RecordingStatus,
-} from '@prisma/client';
+import { MeetingPlatform, MeetingType, RecordingSource } from '@prisma/client';
 
 describe('TranscriptController (e2e)', () => {
   let app: INestApplication;
@@ -77,12 +72,11 @@ describe('TranscriptController (e2e)', () => {
     createdMeetingId = meetingRes.body.id;
 
     const recordingRes = await request(app.getHttpServer())
-      .post('/recordings')
+      .post('/minutes')
       .set('Authorization', `Bearer ${authToken}`)
       .send({
         meetingId: createdMeetingId,
-        source: RecordingSource.PLATFORM_AUTO,
-        status: RecordingStatus.COMPLETED,
+        source: 'PLATFORM_AUTO',
       });
     createdRecordingId = recordingRes.body.id;
   });
@@ -112,10 +106,9 @@ describe('TranscriptController (e2e)', () => {
   describe('/transcripts (POST)', () => {
     it('should create a transcript', async () => {
       const response = await request(app.getHttpServer())
-        .post('/transcripts')
+        .post(`/minutes/${createdRecordingId}/transcript`)
         .set('Authorization', `Bearer ${authToken}`)
         .send({
-          minuteId: createdRecordingId,
           source: 'System Generated',
           status: 1,
         });
@@ -132,46 +125,15 @@ describe('TranscriptController (e2e)', () => {
     });
   });
 
-  describe('/transcripts (GET)', () => {
-    it('should get transcripts list', async () => {
+  describe('/minutes/:id/transcript (GET)', () => {
+    it('should get transcript as text', async () => {
       const response = await request(app.getHttpServer())
-        .get('/transcripts')
+        .get(`/minutes/${createdRecordingId}/transcript`)
         .set('Authorization', `Bearer ${authToken}`)
-        .query({ limit: 10, page: 1, minuteId: createdRecordingId })
+        .query({ format: 'text' })
         .expect(200);
 
-      expect(response.body).toHaveProperty('data');
-      expect(Array.isArray(response.body.data)).toBe(true);
-      expect(
-        response.body.data.some((t: any) => t.id === createdTranscriptId),
-      ).toBe(true);
-    });
-  });
-
-  describe('/transcripts/:id (GET)', () => {
-    it('should get a specific transcript', async () => {
-      const response = await request(app.getHttpServer())
-        .get(`/transcripts/${createdTranscriptId}`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .expect(200);
-
-      expect(response.body.id).toBe(createdTranscriptId);
-      expect(response.body.minuteId).toBe(createdRecordingId);
-    });
-  });
-
-  describe('/transcripts/:id (DELETE)', () => {
-    it('should delete a transcript', async () => {
-      const response = await request(app.getHttpServer())
-        .delete(`/transcripts/${createdTranscriptId}`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .expect(200);
-
-      // Verify deletion
-      await request(app.getHttpServer())
-        .get(`/transcripts/${createdTranscriptId}`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .expect(404);
+      expect(response.body).toHaveProperty('text');
     });
   });
 });

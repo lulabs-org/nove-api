@@ -1,3 +1,4 @@
+import { RecordingStatus } from '../../minute/enums/status.enum';
 import { Injectable, Logger } from '@nestjs/common';
 import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
 import { MeetingRepository } from '@/meeting/repositories/meeting.repository';
@@ -9,7 +10,6 @@ import {
   Meeting,
   Minute,
   RecordingSource,
-  RecordingStatus,
 } from '@prisma/client';
 import { Meetuser, EventPayload, MeetingSessionInfo } from '../types';
 import { TencentEventUtils } from '../utils/tencent-event.utils';

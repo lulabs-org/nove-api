@@ -90,12 +90,3 @@ enum FileType {
   DOCUMENT // 文档
   OTHER // 其他类型
 }
-
-// 处理状态枚举
-enum ProcessingStatus {
-  PENDING // 待处理
-  PROCESSING // 处理中
-  COMPLETED // 已完成
-  FAILED // 处理失败
-  SKIPPED // 已跳过
-}

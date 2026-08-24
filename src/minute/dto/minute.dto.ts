@@ -12,7 +12,7 @@ import {
   IsArray,
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
-import { RecordingSource, RecordingStatus } from '@prisma/client';
+import { RecordingSource } from '@prisma/client';
 import { CreateMinuteSummaryDto } from './minute-summary.dto';
 
 export class QueryMinuteDto {
@@ -27,12 +27,6 @@ export class QueryMinuteDto {
   @Transform(({ value }) => (value === '' ? undefined : (value as string)))
   @IsEnum(RecordingSource)
   source?: RecordingSource;
-
-  @ApiPropertyOptional({ description: '状态', enum: RecordingStatus })
-  @IsOptional()
-  @Transform(({ value }) => (value === '' ? undefined : (value as string)))
-  @IsEnum(RecordingStatus)
-  status?: RecordingStatus;
 
   @ApiPropertyOptional({ description: '页码', default: 1 })
   @IsOptional()
@@ -64,11 +58,6 @@ export class CreateMinuteDto {
   @IsOptional()
   @IsEnum(RecordingSource)
   source?: RecordingSource;
-
-  @ApiPropertyOptional({ description: '状态', enum: RecordingStatus })
-  @IsOptional()
-  @IsEnum(RecordingStatus)
-  status?: RecordingStatus;
 
   @ApiPropertyOptional({ description: '开始时间' })
   @IsOptional()
@@ -125,20 +114,28 @@ export class MinuteDto {
   @ApiProperty({ description: '录音ID' })
   id: string;
 
-  @ApiPropertyOptional({ description: '外部系统录制ID' })
-  externalId?: string;
+  @ApiPropertyOptional({
+    description: '外部系统录制ID',
+    type: String,
+    nullable: true,
+  })
+  externalId?: string | null;
 
   @ApiProperty({ description: '录音来源', enum: RecordingSource })
   source: RecordingSource;
 
-  @ApiProperty({ description: '状态', enum: RecordingStatus })
-  status: RecordingStatus;
+  @ApiPropertyOptional({
+    description: '错误信息',
+    type: String,
+    nullable: true,
+  })
+  errorMessage?: string | null;
 
   @ApiProperty({ description: '元数据' })
   metadata: any;
 
-  @ApiProperty({ description: '会议ID' })
-  meetingId: string;
+  @ApiPropertyOptional({ description: '会议ID', type: String, nullable: true })
+  meetingId?: string | null;
 
   @ApiPropertyOptional({ description: '录制用户ID' })
   recorderUserId?: string;

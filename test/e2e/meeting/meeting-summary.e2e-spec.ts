@@ -13,6 +13,7 @@ describe('MinuteSummaryController (e2e)', () => {
   let prisma: PrismaService;
   let jwtService: JwtService;
   let createdMeetingId: string;
+  let createdMinuteId: string;
   let createdSummaryId: string;
   let authToken: string;
   const testUserId = 'test_user_id_' + Date.now();
@@ -69,6 +70,15 @@ describe('MinuteSummaryController (e2e)', () => {
         durationSeconds: 3600,
       });
     createdMeetingId = meetingRes.body.id;
+
+    const minuteRes = await request(app.getHttpServer())
+      .post('/minutes')
+      .set('Authorization', `Bearer ${authToken}`)
+      .send({
+        meetingId: createdMeetingId,
+        source: 'PLATFORM_AUTO',
+      });
+    createdMinuteId = minuteRes.body.id;
   });
 
   afterAll(async () => {
@@ -88,10 +98,10 @@ describe('MinuteSummaryController (e2e)', () => {
     await app.close();
   });
 
-  describe('/meetings/:meetingId/summaries (POST)', () => {
-    it('should create a meeting summary', async () => {
+  describe('/minutes/:minuteId/summary (POST)', () => {
+    it('should create a minute summary', async () => {
       const response = await request(app.getHttpServer())
-        .post(`/meetings/${createdMeetingId}/summaries`)
+        .post(`/minutes/${createdMinuteId}/summary`)
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           content: 'This is a test summary for the meeting.',
@@ -106,7 +116,7 @@ describe('MinuteSummaryController (e2e)', () => {
       }
       expect(response.status).toBe(201);
       expect(response.body).toHaveProperty('id');
-      expect(response.body.meetingId).toBe(createdMeetingId);
+      expect(response.body.minuteId).toBe(createdMinuteId);
       expect(response.body.content).toBe(
         'This is a test summary for the meeting.',
       );
@@ -114,38 +124,23 @@ describe('MinuteSummaryController (e2e)', () => {
     });
   });
 
-  describe('/meetings/:meetingId/summaries (GET)', () => {
-    it('should get meeting summaries list', async () => {
+  describe('/minutes/:minuteId/summary (GET)', () => {
+    it('should get minute summary', async () => {
       const response = await request(app.getHttpServer())
-        .get(`/meetings/${createdMeetingId}/summaries`)
+        .get(`/minutes/${createdMinuteId}/summary`)
         .set('Authorization', `Bearer ${authToken}`)
         .query({ limit: 10, page: 1 })
         .expect(200);
 
-      expect(response.body).toHaveProperty('data');
-      expect(Array.isArray(response.body.data)).toBe(true);
-      expect(
-        response.body.data.some((s: any) => s.id === createdSummaryId),
-      ).toBe(true);
+      expect(response.body).toHaveProperty('id');
+      expect(response.body.minuteId).toBe(createdMinuteId);
     });
   });
 
-  describe('/meetings/:meetingId/summaries/:id (GET)', () => {
-    it('should get a specific meeting summary', async () => {
+  describe('/minutes/:minuteId/summary (PUT)', () => {
+    it('should update minute summary', async () => {
       const response = await request(app.getHttpServer())
-        .get(`/meetings/${createdMeetingId}/summaries/${createdSummaryId}`)
-        .set('Authorization', `Bearer ${authToken}`)
-        .expect(200);
-
-      expect(response.body.id).toBe(createdSummaryId);
-      expect(response.body.meetingId).toBe(createdMeetingId);
-    });
-  });
-
-  describe('/meetings/:meetingId/summaries/:id (PUT)', () => {
-    it('should update a meeting summary', async () => {
-      const response = await request(app.getHttpServer())
-        .put(`/meetings/${createdMeetingId}/summaries/${createdSummaryId}`)
+        .put(`/minutes/${createdMinuteId}/summary`)
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           content: 'Updated test summary content.',
@@ -157,16 +152,16 @@ describe('MinuteSummaryController (e2e)', () => {
     });
   });
 
-  describe('/meetings/:meetingId/summaries/:id (DELETE)', () => {
-    it('should delete a meeting summary', async () => {
+  describe('/minutes/:minuteId/summary (DELETE)', () => {
+    it('should delete minute summary', async () => {
       const response = await request(app.getHttpServer())
-        .delete(`/meetings/${createdMeetingId}/summaries/${createdSummaryId}`)
+        .delete(`/minutes/${createdMinuteId}/summary`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(200);
 
       // Verify deletion
       await request(app.getHttpServer())
-        .get(`/meetings/${createdMeetingId}/summaries/${createdSummaryId}`)
+        .get(`/minutes/${createdMinuteId}/summary`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(404);
     });

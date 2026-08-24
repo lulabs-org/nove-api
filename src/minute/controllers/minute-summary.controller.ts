@@ -20,7 +20,7 @@ import {
 import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
 import { MinuteSummaryService } from '../services/minute-summary.service';
 import {
-  CreateMinuteSummaryDto,
+  CreateMinuteSummaryBodyDto,
   UpdateMinuteSummaryDto,
   MinuteSummaryDto,
 } from '../dto/minute-summary.dto';
@@ -51,7 +51,7 @@ export class MinuteSummaryController {
   @ApiResponse({ status: HttpStatus.CREATED, type: MinuteSummaryDto })
   async createSummary(
     @Param('minuteId', CuidPipe) minuteId: string,
-    @Body(new ValidationPipe()) createParams: CreateMinuteSummaryDto,
+    @Body(new ValidationPipe()) createParams: CreateMinuteSummaryBodyDto,
   ) {
     this.logger.log(`创建纪要总结: ${minuteId}`);
     return this.minuteSummaryService.create(minuteId, createParams);
