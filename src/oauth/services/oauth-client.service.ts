@@ -1,29 +1,27 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
-  BadRequestException,
 } from '@nestjs/common';
+import { OAuthClientType } from '@prisma/client';
+import * as bcrypt from 'bcryptjs';
+import * as crypto from 'crypto';
+
 import { PrismaService } from '@/prisma/prisma.service';
 import { CreateClientDto } from '../dto/oauth.dto';
-import * as crypto from 'crypto';
-import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class OAuthClientService {
   constructor(private readonly prisma: PrismaService) {}
 
-  /**
-   * 创建 OAuth 客户端
-   */
   async createClient(dto: CreateClientDto) {
-    const clientId = this.generateClientId();
-    const clientSecret = this.generateClientSecret();
-    const hashedSecret = await bcrypt.hash(clientSecret, 10);
-
+    const clientId = crypto.randomBytes(16).toString('hex');
+    const clientSecret = crypto.randomBytes(32).toString('base64url');
     const client = await this.prisma.oAuthClient.create({
       data: {
         clientId,
-        clientSecret: hashedSecret,
+        clientSecret: await bcrypt.hash(clientSecret, 10),
+        clientType: OAuthClientType.CONFIDENTIAL,
         name: dto.name,
         description: dto.description,
         logoUri: dto.logoUri,
@@ -36,56 +34,78 @@ export class OAuthClientService {
     return {
       id: client.id,
       clientId: client.clientId,
-      clientSecret: clientSecret, // 仅在创建时返回一次明文
+      clientSecret,
       name: client.name,
       redirectUris: client.redirectUris,
     };
   }
 
-  /**
-   * 验证客户端凭证
-   */
-  async validateClient(clientId: string, clientSecret: string) {
+  async findClient(clientId: string) {
     const client = await this.prisma.oAuthClient.findUnique({
       where: { clientId },
     });
+    if (!client) throw new NotFoundException('OAuth client not found');
+    return client;
+  }
 
-    if (!client) {
-      throw new NotFoundException('Client not found');
+  async validateClient(clientId: string, clientSecret?: string) {
+    const client = await this.findClient(clientId);
+    if (client.clientType === OAuthClientType.PUBLIC) return client;
+    if (!clientSecret || !client.clientSecret) {
+      throw new BadRequestException('Client credentials are required');
     }
-
-    const isMatch = await bcrypt.compare(clientSecret, client.clientSecret);
-    if (!isMatch) {
+    if (!(await bcrypt.compare(clientSecret, client.clientSecret))) {
       throw new BadRequestException('Invalid client credentials');
     }
-
     return client;
   }
 
-  /**
-   * 验证重定向 URI
-   */
   async validateRedirectUri(clientId: string, redirectUri: string) {
-    const client = await this.prisma.oAuthClient.findUnique({
-      where: { clientId },
-    });
-
-    if (!client) {
-      throw new NotFoundException('Client not found');
-    }
-
-    if (!client.redirectUris.includes(redirectUri)) {
-      throw new BadRequestException('Invalid redirect URI');
-    }
-
+    const client = await this.findClient(clientId);
+    const matches = client.redirectUris.some((registered) =>
+      this.redirectUriMatches(registered, redirectUri),
+    );
+    if (!matches) throw new BadRequestException('Invalid redirect URI');
     return client;
   }
 
-  private generateClientId(): string {
-    return crypto.randomBytes(16).toString('hex');
+  validateRequestedScopes(allowedScopes: string[], requestedScopes: string[]) {
+    const requested = [...new Set(requestedScopes.filter(Boolean))];
+    const invalid = requested.filter((scope) => !allowedScopes.includes(scope));
+    if (invalid.length > 0) {
+      throw new BadRequestException(
+        `Client is not allowed to request scopes: ${invalid.join(', ')}`,
+      );
+    }
+    if (requested.length === 0) {
+      throw new BadRequestException('At least one scope is required');
+    }
+    return requested;
   }
 
-  private generateClientSecret(): string {
-    return crypto.randomBytes(32).toString('base64url');
+  private redirectUriMatches(registeredValue: string, requestedValue: string) {
+    let registered: URL;
+    let requested: URL;
+    try {
+      registered = new URL(registeredValue);
+      requested = new URL(requestedValue);
+    } catch {
+      return false;
+    }
+
+    const isLoopback =
+      registered.protocol === 'http:' && registered.hostname === '127.0.0.1';
+    if (!isLoopback) return registered.toString() === requested.toString();
+
+    return (
+      requested.protocol === 'http:' &&
+      requested.hostname === '127.0.0.1' &&
+      requested.pathname === registered.pathname &&
+      requested.username === '' &&
+      requested.password === '' &&
+      requested.search === '' &&
+      requested.hash === '' &&
+      requested.port !== ''
+    );
   }
 }

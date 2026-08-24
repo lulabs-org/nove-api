@@ -140,7 +140,20 @@ export class UnifiedAuthGuard extends AuthGuard('jwt') implements CanActivate {
     const user = requestWithUser.user;
     if (!user) return false;
 
-    // 解析用户的组织和权限
+    // OAuth access tokens are delegated credentials: their scopes and
+    // organization are an upper bound, not the user's complete role set.
+    if (user.tokenUse === 'oauth_access') {
+      request.authContext = {
+        authMethod: 'oauth',
+        userId: user.id,
+        orgId: user.organizationId ?? null,
+        permissions: user.scopes ?? [],
+        oauthClientId: user.clientId,
+      };
+      return true;
+    }
+
+    // 解析普通用户 JWT 的组织和权限
     let orgId: string | null = null;
     let permissions: string[] = [];
 

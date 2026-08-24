@@ -30,6 +30,7 @@
     "test:system": "jest --selectProjects system",
     "test:system:watch": "jest --selectProjects system --watch",
     "test:e2e": "jest --selectProjects e2e",
+    "test:oauth:e2e": "tsx scripts/ts/verify-cli-oauth-e2e.ts",
     "test:all": "jest --selectProjects unit integration system e2e",
     "test:ci": "jest --selectProjects unit integration system e2e --coverage",
     "db:generate": "prisma generate",
