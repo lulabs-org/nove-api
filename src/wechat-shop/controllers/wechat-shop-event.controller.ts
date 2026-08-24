@@ -81,8 +81,9 @@ export class WechatShopEventController implements OnModuleInit {
   @Get()
   @ApiOperation({
     summary: 'Verify webhook',
-    description: '用于接收并响应微信小店事件推送服务器的 URL 验证请求。',
+    description: '，发起验证部分：用于接收并响应微信小店事件推送服务器的 URL 验证请求',
   })
+  // NestJS 的参数提取装饰器，把 URL 上的 4 个参数分别取出来绑定到同名变量
   verifyWebhook(
     @Query('signature') signature: string,
     @Query('timestamp') timestamp: string,
@@ -100,7 +101,7 @@ export class WechatShopEventController implements OnModuleInit {
         'WeChat webhook verification parameters are missing',
       );
     }
-
+    // 2. 使用 token、timestamp、nonce 生成签名
     const hash = generateSignature(token, timestamp, nonce);
 
     // 3. 开发者获得加密后的字符串可与 signature 对比，标识该请求来源于微信

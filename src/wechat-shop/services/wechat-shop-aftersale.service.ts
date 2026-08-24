@@ -23,8 +23,10 @@ export class WechatShopAftersaleService {
    */
   async syncSingle(afterSaleOrderId: string) {
     const response =
+      //获取完整的售后信息
       await this.wechatShopClient.getAftersaleOrder(afterSaleOrderId);
     const aftersaleOrder = response.after_sale_order!;
+    // 根据售后单的订单ID，查询本地订单
     const order = await this.wechatShopRepository.findLatestByExternalId(
       String(aftersaleOrder.order_id),
     );
@@ -37,7 +39,7 @@ export class WechatShopAftersaleService {
     }
 
     const refundData = this.mapRefundData(aftersaleOrder, order?.id);
-
+    // 写入数据库
     return this.wechatShopRepository.upsertRefund({
       afterSaleCode: String(aftersaleOrder.after_sale_order_id),
       create: refundData,

@@ -56,6 +56,7 @@ export class WechatShopEventService {
    */
   private async handleAftersaleUpdate(payload: ChannelsEcAftersaleUpdateEvent) {
     const afterSaleOrderId =
+      //把after_sale_order_id取出来
       payload.finder_shop_aftersale_status_update?.after_sale_order_id;
 
     if (!afterSaleOrderId) {
