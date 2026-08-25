@@ -58,8 +58,7 @@ describe('Admin user DTOs', () => {
         displayName: '',
         avatar: '',
         bio: '',
-        firstName: '',
-        lastName: '',
+        fullName: '',
         dateOfBirth: '',
         gender: '',
         address: '',
@@ -74,6 +73,7 @@ describe('Admin user DTOs', () => {
       expect(dto.username).toBeNull();
       expect(dto.email).toBeNull();
       expect(dto.avatar).toBeNull();
+      expect(dto.fullName).toBeNull();
       expect(dto.dateOfBirth).toBeNull();
       expect(dto.gender).toBeNull();
       expect(dto.website).toBeNull();

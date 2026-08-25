@@ -20,8 +20,7 @@ export const adminUserSelect = {
       displayName: true,
       avatar: true,
       bio: true,
-      firstName: true,
-      lastName: true,
+      fullName: true,
       dateOfBirth: true,
       gender: true,
       address: true,
@@ -69,8 +68,7 @@ export interface AdminUserWriteData {
   displayName?: string | null;
   avatar?: string | null;
   bio?: string | null;
-  firstName?: string | null;
-  lastName?: string | null;
+  fullName?: string | null;
   dateOfBirth?: Date | null;
   gender?: Gender | null;
   address?: string | null;
@@ -135,8 +133,7 @@ export class AdminUserRepository {
       displayName,
       avatar,
       bio,
-      firstName,
-      lastName,
+      fullName,
       dateOfBirth,
       gender,
       address,
@@ -150,8 +147,7 @@ export class AdminUserRepository {
       displayName,
       avatar,
       bio,
-      firstName,
-      lastName,
+      fullName,
       dateOfBirth,
       gender,
       address,
@@ -178,8 +174,7 @@ export class AdminUserRepository {
       displayName,
       avatar,
       bio,
-      firstName,
-      lastName,
+      fullName,
       dateOfBirth,
       gender,
       address,
@@ -193,8 +188,7 @@ export class AdminUserRepository {
       displayName,
       avatar,
       bio,
-      firstName,
-      lastName,
+      fullName,
       dateOfBirth,
       gender,
       address,
