@@ -101,7 +101,11 @@ export class AdminUserController {
       },
     },
   })
-  @ApiOperation({ summary: '通过 CSV 或 XLSX 文件批量导入用户' })
+  @ApiOperation({
+    summary: '通过 CSV 或 XLSX 文件批量导入用户',
+    description:
+      '姓名字段推荐使用 fullName（完整姓名/姓名）；兼容旧模板的 firstName/lastName（名/姓）并在导入时合并，不代表已实名认证。',
+  })
   @ApiResponse({ status: 201, type: UserImportResponseDto })
   @RequirePermissions('user:create')
   importUsers(@UploadedFile() file?: UploadFile) {

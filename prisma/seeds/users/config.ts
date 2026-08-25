@@ -26,8 +26,7 @@ export const USERS_REAL = [
     password: PASSWORDS.ADMIN,
     profile: {
       displayName: '系统管理员',
-      firstName: '系统',
-      lastName: '管理员',
+      fullName: '系统管理员',
       gender: $Enums.Gender.PREFER_NOT_TO_SAY,
       bio: '系统管理员账户，负责系统整体管理和维护',
     },
@@ -38,8 +37,7 @@ export const USERS_REAL = [
     password: PASSWORDS.ADMIN,
     profile: {
       displayName: '财务专员',
-      firstName: '财务',
-      lastName: '专员',
+      fullName: '财务专员',
       gender: $Enums.Gender.FEMALE,
       bio: '负责公司财务管理和账务处理',
       city: '北京',
@@ -55,8 +53,7 @@ export const USERS_MOCK = [
     password: PASSWORDS.ADMIN,
     profile: {
       displayName: '系统管理员',
-      firstName: '系统',
-      lastName: '管理员',
+      fullName: '系统管理员',
       gender: $Enums.Gender.PREFER_NOT_TO_SAY,
       bio: '系统管理员账户，负责系统整体管理和维护',
     },
@@ -67,8 +64,7 @@ export const USERS_MOCK = [
     password: PASSWORDS.ADMIN,
     profile: {
       displayName: '财务专员',
-      firstName: '财务',
-      lastName: '专员',
+      fullName: '财务专员',
       gender: $Enums.Gender.FEMALE,
       bio: '负责公司财务管理和账务处理',
       city: '北京',
@@ -81,8 +77,7 @@ export const USERS_MOCK = [
     password: PASSWORDS.ADMIN,
     profile: {
       displayName: '客服专员',
-      firstName: '客服',
-      lastName: '专员',
+      fullName: '客服专员',
       gender: $Enums.Gender.FEMALE,
       bio: '负责客户服务和问题解答',
       city: '上海',
@@ -95,8 +90,7 @@ export const USERS_MOCK = [
     password: PASSWORDS.USER,
     profile: {
       displayName: '张三',
-      firstName: '三',
-      lastName: '张',
+      fullName: '张三',
       gender: $Enums.Gender.MALE,
       city: '北京',
       country: COUNTRY,
@@ -110,8 +104,7 @@ export const USERS_MOCK = [
     password: PASSWORDS.USER,
     profile: {
       displayName: '李四',
-      firstName: '四',
-      lastName: '李',
+      fullName: '李四',
       gender: $Enums.Gender.FEMALE,
       city: '上海',
       country: COUNTRY,
@@ -125,8 +118,7 @@ export const USERS_MOCK = [
     password: PASSWORDS.USER,
     profile: {
       displayName: '王五',
-      firstName: '五',
-      lastName: '王',
+      fullName: '王五',
       gender: $Enums.Gender.MALE,
       city: '广州',
       country: COUNTRY,
@@ -140,8 +132,7 @@ export const USERS_MOCK = [
     password: PASSWORDS.USER,
     profile: {
       displayName: '赵六',
-      firstName: '六',
-      lastName: '赵',
+      fullName: '赵六',
       gender: $Enums.Gender.FEMALE,
       city: '深圳',
       country: COUNTRY,
@@ -155,8 +146,7 @@ export const USERS_MOCK = [
     password: PASSWORDS.USER,
     profile: {
       displayName: '钱七',
-      firstName: '七',
-      lastName: '钱',
+      fullName: '钱七',
       gender: $Enums.Gender.OTHER,
       city: '杭州',
       country: COUNTRY,

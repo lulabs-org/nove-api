@@ -177,19 +177,16 @@ export class CreateAdminUserDto {
   @MaxLength(500)
   bio?: string | null;
 
-  @ApiPropertyOptional({ description: '名', type: String, nullable: true })
+  @ApiPropertyOptional({
+    description: '用户填写的完整姓名，未经实名认证',
+    type: String,
+    nullable: true,
+  })
   @IsOptional()
   @Transform(trimToNull)
   @IsString()
-  @MaxLength(100)
-  firstName?: string | null;
-
-  @ApiPropertyOptional({ description: '姓', type: String, nullable: true })
-  @IsOptional()
-  @Transform(trimToNull)
-  @IsString()
-  @MaxLength(100)
-  lastName?: string | null;
+  @MaxLength(200)
+  fullName?: string | null;
 
   @ApiPropertyOptional({
     description: '出生日期，格式 YYYY-MM-DD',
@@ -275,10 +272,7 @@ export class AdminUserProfileDto {
   bio: string | null;
 
   @ApiPropertyOptional({ nullable: true, type: String })
-  firstName: string | null;
-
-  @ApiPropertyOptional({ nullable: true, type: String })
-  lastName: string | null;
+  fullName: string | null;
 
   @ApiPropertyOptional({ nullable: true, type: String, format: 'date' })
   dateOfBirth: Date | null;
