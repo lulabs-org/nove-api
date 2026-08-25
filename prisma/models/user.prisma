@@ -1,6 +1,6 @@
 model User {
   id       String  @id @default(cuid())
-  username String? @unique @db.VarChar(50) // 登录用户名，如 john_doe
+  username String @unique @db.VarChar(50) // 登录用户名，如 john_doe
 
   // password 密码相关字段
   passwordHash   String?   @map("password_hash") @db.VarChar(255)

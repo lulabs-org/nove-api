@@ -1,5 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import { generateUsername } from '@/common/utils';
 import { Job } from 'bullmq';
 import { PrismaService } from '@/prisma/prisma.service';
 import { ITaskHandler } from './task-handler.interface';
@@ -142,6 +143,7 @@ export class LinkOrdersToUsersByPhoneHandler
     try {
       const created = await this.prisma.user.create({
         data: {
+          username: generateUsername(),
           countryCode: contact.countryCode,
           phone: contact.phone,
           phoneVerifiedAt: null,

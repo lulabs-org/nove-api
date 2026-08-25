@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Gender, Prisma } from '@prisma/client';
+import { generateUsername } from '@/common/utils';
 import { PrismaService } from '@/prisma/prisma.service';
 
 export const adminUserSelect = {
@@ -165,6 +166,7 @@ export class AdminUserRepository {
     return this.prisma.user.create({
       data: {
         ...userData,
+        username: userData.username ?? generateUsername(),
         ...(hasProfileData ? { profile: { create: profileData } } : {}),
       },
       select: adminUserSelect,

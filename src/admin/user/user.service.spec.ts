@@ -157,7 +157,7 @@ describe('AdminUserService', () => {
   it('returns a conflict for a duplicate email', async () => {
     repository.findConflict.mockResolvedValue({
       id: 'other',
-      username: null,
+      username: undefined,
       email: 'alice@example.com',
       countryCode: null,
       phone: null,
@@ -200,7 +200,7 @@ describe('AdminUserService', () => {
   it('imports CSV rows independently and reports masked failures', async () => {
     repository.findConflict.mockResolvedValueOnce(null).mockResolvedValueOnce({
       id: 'existing',
-      username: null,
+      username: undefined,
       email: 'duplicate@example.com',
       countryCode: null,
       phone: null,

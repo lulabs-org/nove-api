@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { generateUsername } from '@/common/utils';
 import { PrismaService } from '@/prisma/prisma.service';
 import type { User, UserProfile } from '@prisma/client';
 
@@ -27,7 +28,7 @@ export class UserCommandRepository {
   > {
     return this.prisma.user.create({
       data: {
-        username: data.username ?? null,
+        username: data.username ?? generateUsername(),
         email: data.email ?? null,
         phone: data.phone ?? null,
         countryCode: data.countryCode ?? null,
