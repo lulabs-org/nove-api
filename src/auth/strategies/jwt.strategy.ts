@@ -72,6 +72,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       authUser.tokenUse = payload.token_use;
       authUser.clientId = payload.client_id;
       authUser.organizationId = payload.org_id;
+      authUser.credentialVersion = payload.credential_version ?? 1;
     }
 
     return authUser;

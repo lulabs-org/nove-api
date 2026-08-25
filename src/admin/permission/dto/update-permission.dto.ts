@@ -63,4 +63,9 @@ export class UpdatePermissionDto {
     return value as boolean;
   })
   active?: boolean;
+
+  @ApiPropertyOptional({ description: '是否允许作为 OAuth 委托 Scope' })
+  @IsBoolean()
+  @IsOptional()
+  oauthDelegatable?: boolean;
 }

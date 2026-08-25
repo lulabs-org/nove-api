@@ -112,6 +112,11 @@ export class RevokeTokenDto {
   @IsString()
   @IsNotEmpty()
   client_id: string;
+
+  @ApiPropertyOptional({ description: 'Confidential clients only' })
+  @IsString()
+  @IsOptional()
+  client_secret?: string;
 }
 
 export class CreateClientDto {

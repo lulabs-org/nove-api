@@ -35,6 +35,9 @@ export class PermissionTreeDto {
   @ApiProperty({ description: '是否启用' })
   active: boolean;
 
+  @ApiProperty({ description: '是否允许作为 OAuth 委托 Scope' })
+  oauthDelegatable: boolean;
+
   @ApiProperty({ description: '创建时间' })
   createdAt: Date;
 

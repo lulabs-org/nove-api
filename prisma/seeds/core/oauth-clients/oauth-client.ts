@@ -1,8 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 
-export async function createOAuthClients(
-  prisma: PrismaClient,
-): Promise<void> {
+export async function createOAuthClients(prisma: PrismaClient): Promise<void> {
   console.log(`🔑 开始创建 OAuth Clients 数据...`);
 
   try {
@@ -13,6 +11,8 @@ export async function createOAuthClients(
         clientType: 'PUBLIC',
         name: 'Nove CLI',
         description: 'Official Nove command line client',
+        isSystem: true,
+        status: 'ACTIVE',
         redirectUris: ['http://127.0.0.1/oauth/callback'],
         grants: ['authorization_code', 'refresh_token'],
         scopes: [
@@ -43,6 +43,7 @@ export async function createOAuthClients(
         clientType: 'PUBLIC',
         name: 'Nove CLI',
         description: 'Official Nove command line client',
+        isSystem: true,
         redirectUris: ['http://127.0.0.1/oauth/callback'],
         grants: ['authorization_code', 'refresh_token'],
         scopes: [

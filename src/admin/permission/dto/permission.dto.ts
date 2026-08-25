@@ -21,4 +21,7 @@ export class PermissionDto {
 
   @ApiProperty({ description: '权限类型' })
   type: string;
+
+  @ApiProperty({ description: '是否允许作为 OAuth 委托 Scope' })
+  oauthDelegatable: boolean;
 }
