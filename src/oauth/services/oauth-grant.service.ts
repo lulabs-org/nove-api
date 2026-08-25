@@ -323,7 +323,12 @@ export class OAuthGrantService {
       where: { id: requestId },
       include: { client: true },
     });
-    if (!request || request.consumedAt || request.expiresAt <= new Date()) {
+    if (
+      !request ||
+      request.client.status !== 'ACTIVE' ||
+      request.consumedAt ||
+      request.expiresAt <= new Date()
+    ) {
       throw new BadRequestException(
         'Authorization request is invalid or expired',
       );
@@ -352,6 +357,22 @@ export class OAuthGrantService {
       familyId: string;
     },
   ) {
+    const client = await tx.oAuthClient.findUnique({
+      where: { clientId: grant.clientId },
+      select: {
+        status: true,
+        credentialVersion: true,
+        grants: true,
+        scopes: true,
+      },
+    });
+    if (!client || client.status !== 'ACTIVE') {
+      throw new UnauthorizedException('OAuth client is disabled');
+    }
+    this.clientService.requireGrant(client.grants, 'refresh_token');
+    const effectiveScopes = grant.scopes.filter((scope) =>
+      client.scopes.includes(scope),
+    );
     const expiresIn = parseAccessTokenTtl(this.config.accessExpiresIn);
     const accessToken = this.jwtService.sign(
       {
@@ -359,7 +380,8 @@ export class OAuthGrantService {
         client_id: grant.clientId,
         token_use: 'oauth_access',
         org_id: grant.organizationId,
-        scopes: grant.scopes,
+        scopes: effectiveScopes,
+        credential_version: client.credentialVersion,
       },
       {
         secret: this.config.accessSecret,
@@ -375,7 +397,7 @@ export class OAuthGrantService {
         clientId: grant.clientId,
         userId: grant.userId,
         organizationId: grant.organizationId,
-        scopes: grant.scopes,
+        scopes: effectiveScopes,
         expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL_MS),
       },
     });
@@ -385,7 +407,7 @@ export class OAuthGrantService {
       token_type: 'Bearer',
       expires_in: expiresIn,
       refresh_token: refreshToken,
-      scope: grant.scopes.join(' '),
+      scope: effectiveScopes.join(' '),
       organization_id: grant.organizationId,
     };
   }

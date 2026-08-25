@@ -57,6 +57,7 @@ import { ProductModule } from './product/product.module';
 import { ChannelModule } from './channel/channel.module';
 import { OrderRefundModule } from './order-refund/order-refund.module';
 import { TrackingReportModule } from './tracking-report/tracking-report.module';
+import { OAuthClientAdminModule } from './admin/oauth-client/oauth-client-admin.module';
 
 @Module({
   imports: [
@@ -130,6 +131,7 @@ import { TrackingReportModule } from './tracking-report/tracking-report.module';
     ChannelModule,
     OrderRefundModule,
     TrackingReportModule,
+    OAuthClientAdminModule,
   ],
   controllers: [AppController],
   providers: [

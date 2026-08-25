@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { OAuthClientType } from '@prisma/client';
+import { OAuthClientStatus } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
 
@@ -50,6 +51,7 @@ export class OAuthClientService {
 
   async validateClient(clientId: string, clientSecret?: string) {
     const client = await this.findClient(clientId);
+    this.requireActive(client.status);
     if (client.clientType === OAuthClientType.PUBLIC) return client;
     if (!clientSecret || !client.clientSecret) {
       throw new BadRequestException('Client credentials are required');
@@ -62,6 +64,7 @@ export class OAuthClientService {
 
   async validateRedirectUri(clientId: string, redirectUri: string) {
     const client = await this.findClient(clientId);
+    this.requireActive(client.status);
     const matches = client.redirectUris.some((registered) =>
       this.redirectUriMatches(registered, redirectUri),
     );
@@ -81,6 +84,18 @@ export class OAuthClientService {
       throw new BadRequestException('At least one scope is required');
     }
     return requested;
+  }
+
+  requireGrant(grants: string[], grant: string) {
+    if (!grants.includes(grant)) {
+      throw new BadRequestException(`Grant type is not allowed: ${grant}`);
+    }
+  }
+
+  private requireActive(status: OAuthClientStatus) {
+    if (status !== OAuthClientStatus.ACTIVE) {
+      throw new BadRequestException('OAuth client is disabled');
+    }
   }
 
   private redirectUriMatches(registeredValue: string, requestedValue: string) {

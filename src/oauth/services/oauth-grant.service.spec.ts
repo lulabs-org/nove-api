@@ -25,6 +25,7 @@ describe('OAuthGrantService', () => {
       findUnique: jest.fn(),
       updateMany: jest.fn(),
     },
+    oAuthClient: { findUnique: jest.fn() },
     orgMember: { count: jest.fn(), findMany: jest.fn() },
     permission: { findMany: jest.fn() },
     $transaction: jest.fn(),
@@ -33,6 +34,7 @@ describe('OAuthGrantService', () => {
   const clientService = {
     validateRedirectUri: jest.fn(),
     validateRequestedScopes: jest.fn(),
+    requireGrant: jest.fn(),
   };
   const permService = { getPermByUserId: jest.fn() };
   const service = new OAuthGrantService(
@@ -51,6 +53,12 @@ describe('OAuthGrantService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     prisma.$transaction.mockImplementation((callback) => callback(prisma));
+    prisma.oAuthClient.findUnique.mockResolvedValue({
+      status: 'ACTIVE',
+      credentialVersion: 1,
+      grants: ['authorization_code', 'refresh_token'],
+      scopes: ['meeting:read'],
+    });
   });
 
   it('persists only client-approved requested scopes and the PKCE challenge', async () => {
@@ -86,7 +94,7 @@ describe('OAuthGrantService', () => {
     prisma.oAuthAuthorizationRequest.findUnique.mockResolvedValue({
       id: 'request-1',
       clientId: 'nove-cli',
-      client: {},
+      client: { status: 'ACTIVE' },
       consumedAt: null,
       expiresAt: new Date(Date.now() + 60_000),
       requestedScopes: ['meeting:read'],

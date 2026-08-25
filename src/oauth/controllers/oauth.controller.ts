@@ -91,7 +91,11 @@ export class OAuthController {
   @Public()
   @HttpCode(HttpStatus.OK)
   async token(@Body(ValidationPipe) body: TokenDto) {
-    await this.clientService.validateClient(body.client_id, body.client_secret);
+    const client = await this.clientService.validateClient(
+      body.client_id,
+      body.client_secret,
+    );
+    this.clientService.requireGrant(client.grants, body.grant_type);
     if (body.grant_type === 'authorization_code') {
       if (!body.code || !body.redirect_uri || !body.code_verifier) {
         throw new BadRequestException(
@@ -115,7 +119,7 @@ export class OAuthController {
   @Public()
   @HttpCode(HttpStatus.OK)
   async revoke(@Body(ValidationPipe) body: RevokeTokenDto) {
-    await this.clientService.validateClient(body.client_id);
+    await this.clientService.validateClient(body.client_id, body.client_secret);
     await this.grantService.revokeRefreshToken(body.client_id, body.token);
     return {};
   }

@@ -10,6 +10,7 @@ import { ApiKeyService } from '@/admin/api-key/services/api-key.service';
 import { UserOrgService } from '@/admin/api-key/services/user-organization.service';
 import { PermService } from '@/admin/permission/services/permission.service';
 import { REQUIRE_AUTH_KEY } from '../decorators/require-auth.decorator';
+import { PrismaService } from '@/prisma/prisma.service';
 
 /* eslint-disable @typescript-eslint/unbound-method */
 
@@ -84,6 +85,10 @@ describe('UnifiedAuthGuard', () => {
         { provide: ApiKeyService, useValue: mockApiKeyService },
         { provide: UserOrgService, useValue: mockUserOrgService },
         { provide: PermService, useValue: mockPermService },
+        {
+          provide: PrismaService,
+          useValue: { oAuthClient: { findUnique: jest.fn() } },
+        },
       ],
     }).compile();
 

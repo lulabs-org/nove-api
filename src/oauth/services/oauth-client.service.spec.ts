@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { OAuthClientType } from '@prisma/client';
+import { OAuthClientStatus, OAuthClientType } from '@prisma/client';
 
 import { PrismaService } from '@/prisma/prisma.service';
 import { OAuthClientService } from './oauth-client.service';
@@ -17,6 +17,7 @@ describe('OAuthClientService', () => {
     findUnique.mockResolvedValue({
       clientId: 'nove-cli',
       clientType: OAuthClientType.PUBLIC,
+      status: OAuthClientStatus.ACTIVE,
       redirectUris: ['http://127.0.0.1/oauth/callback'],
     });
 
@@ -37,6 +38,7 @@ describe('OAuthClientService', () => {
     findUnique.mockResolvedValue({
       clientId: 'nove-cli',
       clientType: OAuthClientType.PUBLIC,
+      status: OAuthClientStatus.ACTIVE,
       redirectUris: ['http://127.0.0.1/oauth/callback'],
     });
 
@@ -50,6 +52,7 @@ describe('OAuthClientService', () => {
       clientId: 'nove-cli',
       clientSecret: null,
       clientType: OAuthClientType.PUBLIC,
+      status: OAuthClientStatus.ACTIVE,
       scopes: ['meeting:read'],
     });
 

@@ -31,6 +31,8 @@ import { ApiKeyService } from '@/admin/api-key/services/api-key.service';
 import { UserOrgService } from '@/admin/api-key/services/user-organization.service';
 import { PermService } from '@/admin/permission/services/permission.service';
 import type { AuthenticatedUser } from '@/auth/types/jwt.types';
+import { PrismaService } from '@/prisma/prisma.service';
+import { OAuthClientStatus } from '@prisma/client';
 
 @Injectable()
 export class UnifiedAuthGuard extends AuthGuard('jwt') implements CanActivate {
@@ -41,6 +43,7 @@ export class UnifiedAuthGuard extends AuthGuard('jwt') implements CanActivate {
     private readonly apiKeyService: ApiKeyService,
     private readonly userOrgService: UserOrgService,
     private readonly permService: PermService,
+    private readonly prisma: PrismaService,
   ) {
     super();
   }
@@ -80,7 +83,7 @@ export class UnifiedAuthGuard extends AuthGuard('jwt') implements CanActivate {
       );
     }
 
-    return this.handleJwtAuth(context, request);
+    return this.handleJwtAuth(context, request, requiredMethods);
   }
 
   /**
@@ -131,6 +134,7 @@ export class UnifiedAuthGuard extends AuthGuard('jwt') implements CanActivate {
   private async handleJwtAuth(
     context: ExecutionContext,
     request: Request,
+    requiredMethods?: AuthMethod[],
   ): Promise<boolean> {
     // 委托给 Passport JWT strategy
     const result = await (super.canActivate(context) as Promise<boolean>);
@@ -143,11 +147,38 @@ export class UnifiedAuthGuard extends AuthGuard('jwt') implements CanActivate {
     // OAuth access tokens are delegated credentials: their scopes and
     // organization are an upper bound, not the user's complete role set.
     if (user.tokenUse === 'oauth_access') {
+      if (requiredMethods && !requiredMethods.includes('oauth')) {
+        throw new ForbiddenException(
+          'This endpoint does not accept OAuth delegated authentication',
+        );
+      }
+      const client = user.clientId
+        ? await this.prisma.oAuthClient.findUnique({
+            where: { clientId: user.clientId },
+            select: {
+              status: true,
+              credentialVersion: true,
+              scopes: true,
+            },
+          })
+        : null;
+      if (
+        !client ||
+        client.status !== OAuthClientStatus.ACTIVE ||
+        client.credentialVersion !== (user.credentialVersion ?? 1)
+      ) {
+        throw new UnauthorizedException(
+          'OAuth client credential is no longer active',
+        );
+      }
+      const currentScopes = (user.scopes ?? []).filter((scope) =>
+        client.scopes.includes(scope),
+      );
       request.authContext = {
         authMethod: 'oauth',
         userId: user.id,
         orgId: user.organizationId ?? null,
-        permissions: user.scopes ?? [],
+        permissions: currentScopes,
         oauthClientId: user.clientId,
       };
       return true;

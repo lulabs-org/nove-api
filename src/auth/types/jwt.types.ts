@@ -25,6 +25,7 @@ export interface AuthenticatedUser {
   tokenUse?: 'oauth_access';
   clientId?: string;
   organizationId?: string;
+  credentialVersion?: number;
 }
 
 export interface JwtPayload {
@@ -38,6 +39,7 @@ export interface JwtPayload {
   token_use?: 'oauth_access';
   client_id?: string;
   org_id?: string;
+  credential_version?: number;
 }
 
 export enum TokenBlacklistScope {
