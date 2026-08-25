@@ -10,8 +10,13 @@
  * - npx tsx prisma/seed.ts --real                         # 初始化所有种子数据（real 模式）
  * - npx tsx prisma/seed.ts --module <name>                # 仅初始化指定模块数据（mock 模式）
  * - npx tsx prisma/seed.ts --real --module <name>         # 仅初始化指定模块数据（real 模式）
+ * 
+ * 模块同步示例:
+ * - npx tsx prisma/seed.ts --module permissions           # 仅初始化权限数据（mock 模式）
+ * - npx tsx prisma/seed.ts --module platform-users        # 仅初始化平台用户数据（mock 模式）
+ * - npx tsx prisma/seed.ts --real --module permissions    # 仅初始化权限数据（real 模式）
  *
- * 支持的独立同步模块: permissions, products, channels, projects, platform-users, meetings, orders, refunds
+ * 支持的独立同步模块: permissions, products, channels, projects, platform-users, meetings, orders, refunds, oauth-clients
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
@@ -64,10 +69,13 @@ async function main(): Promise<void> {
       case 'refunds':
         await seedFunctions.createRefunds(prisma);
         break;
+      case 'oauth-clients':
+        await seedFunctions.createOAuthClients(prisma);
+        break;
       default:
         console.error(`❌ 不支持单独同步模块或模块不存在: ${moduleName}`);
         console.log(
-          '支持的独立同步模块: permissions, products, channels, projects, platform-users, meetings, orders, refunds',
+          '支持的独立同步模块: permissions, products, channels, projects, platform-users, meetings, orders, refunds, oauth-clients',
         );
         process.exit(1);
     }
