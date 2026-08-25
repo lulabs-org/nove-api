@@ -3,6 +3,7 @@ import 'dotenv/config';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaClient } from '@prisma/client';
 import * as crypto from 'crypto';
+import { generateUsername } from '../../src/common/utils';
 
 const prisma = new PrismaClient();
 const apiBaseUrl = process.env.OAUTH_E2E_API_URL || 'http://127.0.0.1:3000';
@@ -26,6 +27,7 @@ async function main() {
 
   const user = await prisma.user.create({
     data: {
+      username: generateUsername(),
       active: true,
       email: `oauth-e2e-${suffix}@example.test`,
       orgMembers: {

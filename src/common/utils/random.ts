@@ -51,3 +51,16 @@ export function generateNumericCode(length = 6): string {
 export function generateRandomToken(byteLength = 48): string {
   return randomBytes(byteLength).toString('base64url');
 }
+
+/**
+ * Generates a random username with a specific prefix.
+ *
+ * @returns A randomly generated username (e.g., 'user_1a2b3c4d')
+ */
+export function generateUsername(): string {
+  // 结合时间戳（毫秒转为36进制）和随机数。
+  // 时间戳保证了不同毫秒生成的用户名绝对不同，随机数处理了同一毫秒内的并发碰撞。
+  const timePart = Date.now().toString(36);
+  const randomPart = randomBytes(4).toString('hex');
+  return `user_${timePart}${randomPart}`;
+}

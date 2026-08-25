@@ -234,7 +234,7 @@ export class AdminUserService {
       : undefined;
     return {
       ...(dto.username !== undefined
-        ? { username: dto.username?.trim() || null }
+        ? { username: dto.username?.trim() || undefined }
         : {}),
       ...(dto.email !== undefined
         ? { email: dto.email?.trim().toLowerCase() || null }
