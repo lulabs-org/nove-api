@@ -68,6 +68,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (payload.scopes) {
       authUser.scopes = payload.scopes;
     }
+    if (payload.token_use === 'oauth_access') {
+      authUser.tokenUse = payload.token_use;
+      authUser.clientId = payload.client_id;
+      authUser.organizationId = payload.org_id;
+    }
 
     return authUser;
   }

@@ -66,6 +66,15 @@ describe('PermissionGuard', () => {
       permissions: [],
     });
 
+  const oauthContext = (permissions: string[]) =>
+    createContext({
+      authMethod: 'oauth',
+      userId: 'user-1',
+      orgId: 'org-1',
+      permissions,
+      oauthClientId: 'nove-cli',
+    });
+
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -108,6 +117,23 @@ describe('PermissionGuard', () => {
     await expect(
       guard.canActivate(apiKeyContext(['meeting:read'])),
     ).resolves.toBe(false);
+  });
+
+  it('treats OAuth scopes as an upper bound and rechecks the current user role', async () => {
+    const guard = createGuard({ permissions: ['meeting:delete'] });
+
+    await expect(
+      guard.canActivate(oauthContext(['meeting:read'])),
+    ).resolves.toBe(false);
+    expect(permissionService.hasAnyPermission).not.toHaveBeenCalled();
+
+    permissionService.hasAnyPermission.mockResolvedValue(false);
+    await expect(
+      guard.canActivate(oauthContext(['meeting:delete'])),
+    ).resolves.toBe(false);
+    expect(permissionService.hasAnyPermission).toHaveBeenCalledWith('user-1', [
+      'meeting:delete',
+    ]);
   });
 
   it('requires the same overlapping permission in ANY mode', async () => {
