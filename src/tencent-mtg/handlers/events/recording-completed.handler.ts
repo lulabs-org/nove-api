@@ -61,7 +61,7 @@ export class RecordingCompletedHandler extends BaseEventHandler {
     // 延迟 2 分钟：由于腾讯会议的录制转写完成 webhook 触发时，
     // 其接口的数据有时还处于最终落盘中，直接请求可能获取不到最完整的纪要/转写或参会人，
     // 因此这里特意延迟 120 秒，以保证后续接口调用能够拿到全量数据。
-    // await new Promise((resolve) => setTimeout(resolve, 120000));
+    await new Promise((resolve) => setTimeout(resolve, 120000));
 
     const { meeting_info, recording_files = [] } = payload;
     const { meeting_id, sub_meeting_id, creator } = meeting_info;
