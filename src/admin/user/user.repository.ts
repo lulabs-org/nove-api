@@ -61,7 +61,7 @@ export type AdminUserListRecord = Prisma.UserGetPayload<{
 }>;
 
 export interface AdminUserWriteData {
-  username?: string | null;
+  username?: string;
   email?: string | null;
   countryCode?: string | null;
   phone?: string | null;
