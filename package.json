@@ -1,8 +1,8 @@
 {
-  "name": "nove_api",
-  "version": "0.0.1",
-  "description": "",
-  "author": "",
+  "name": "nove-api",
+  "version": "0.8.0",
+  "description": "Nove API Service",
+  "author": "LuLabs",
   "private": true,
   "license": "MIT",
   "prisma": {
