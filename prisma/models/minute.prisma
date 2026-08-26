@@ -1,0 +1,40 @@
+model Minute {
+  id         String  @id @default(cuid())
+  externalId String? @map("external_id") @db.VarChar(100) // 外部系统录制ID，用于唯一标识
+
+  source RecordingSource @default(PLATFORM_AUTO)
+  // 错误信息（用于记录失败状态）
+  errorMessage String? @map("error_message")
+
+  // 元数据
+  metadata Json @default("{}") @db.JsonB
+
+  meetingId String?  @map("meeting_id")
+  meeting   Meeting? @relation(fields: [meetingId], references: [id], onDelete: SetNull)
+
+  // 关联字段
+  recorderUserId String?       @map("recorder_user_id")
+  recorderUser   PlatformUser? @relation("RecordingUser", fields: [recorderUserId], references: [id], onDelete: SetNull)
+
+  files            MinuteFile[]
+  transcripts      Transcript[]
+  summary          MinuteSummary?
+  speakerSummaries SpeakerSummary[] @relation("SpeakerSummaries")
+
+  // 系统字段及时间字段
+  startAt   DateTime? @map("start_at") @db.Timestamptz(6)
+  endAt     DateTime? @map("end_at") @db.Timestamptz(6)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6) // 软删除时间戳
+
+  @@index([meetingId], map: "idx_minutes_meeting")
+  @@map("minutes")
+}
+
+// 录制来源枚举
+enum RecordingSource {
+  PLATFORM_AUTO // 平台自动录制
+  USER_MANUAL // 用户手动录制
+  THIRD_PARTY // 第三方录制
+}

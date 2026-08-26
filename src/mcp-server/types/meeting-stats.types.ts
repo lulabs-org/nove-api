@@ -1,8 +1,4 @@
-import type {
-  Meeting,
-  MeetingParticipant,
-  MeetingRecording,
-} from '@prisma/client';
+import type { Meeting, MeetingParticipant, Minute } from '@prisma/client';
 
 export type MeetingDetailsResult = Meeting & {
   createdBy: {
@@ -20,11 +16,13 @@ export type MeetingDetailsResult = Meeting & {
       } | null;
     }
   >;
-  recordings: Array<
-    MeetingRecording & {
+  minutes: Array<
+    Minute & {
       files: Array<{
         durationMs: bigint | null;
       }>;
+      summary: { id: string } | null;
+      transcripts: Array<{ id: string }>;
     }
   >;
 };

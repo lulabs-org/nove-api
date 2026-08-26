@@ -21,6 +21,11 @@ export interface AuthenticatedUser {
   phoneVerified: boolean;
   createdAt: Date;
   lastLoginAt?: Date | null;
+  scopes?: string[];
+  tokenUse?: 'oauth_access';
+  clientId?: string;
+  organizationId?: string;
+  credentialVersion?: number;
 }
 
 export interface JwtPayload {
@@ -30,6 +35,11 @@ export interface JwtPayload {
   jti?: string;
   iat?: number;
   exp?: number;
+  scopes?: string[];
+  token_use?: 'oauth_access';
+  client_id?: string;
+  org_id?: string;
+  credential_version?: number;
 }
 
 export enum TokenBlacklistScope {

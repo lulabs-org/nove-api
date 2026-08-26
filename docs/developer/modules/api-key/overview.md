@@ -51,7 +51,7 @@ pnpm db:migrate
 ### 创建 API Key
 
 ```bash
-POST /admin/api-keys
+POST /api/api-keys
 Authorization: Bearer <jwt_token>
 Content-Type: application/json
 
@@ -82,14 +82,14 @@ Content-Type: application/json
 ### 列出 API Keys
 
 ```bash
-GET /admin/api-keys?page=1&pageSize=10
+GET /api/api-keys?page=1&pageSize=10
 Authorization: Bearer <jwt_token>
 ```
 
 ### 更新 API Key
 
 ```bash
-PATCH /admin/api-keys/:id
+PATCH /api/api-keys/:id
 Authorization: Bearer <jwt_token>
 Content-Type: application/json
 
@@ -103,14 +103,14 @@ Content-Type: application/json
 ### 撤销 API Key
 
 ```bash
-POST /admin/api-keys/:id/revoke
+POST /api/api-keys/:id/revoke
 Authorization: Bearer <jwt_token>
 ```
 
 ### 轮换 API Key
 
 ```bash
-POST /admin/api-keys/:id/rotate
+POST /api/api-keys/:id/rotate
 Authorization: Bearer <jwt_token>
 ```
 
@@ -123,21 +123,21 @@ Authorization: Bearer <jwt_token>
 **方式 1：Authorization Header**
 
 ```bash
-GET /v1/me
+GET /api/me
 Authorization: Bearer sk_prod_AbCdEfGhIj.1234567890abcdefghijklmnopqrstuvwxyz
 ```
 
 **方式 2：x-api-key Header**
 
 ```bash
-GET /v1/me
+GET /api/me
 x-api-key: sk_prod_AbCdEfGhIj.1234567890abcdefghijklmnopqrstuvwxyz
 ```
 
 ### 演示端点
 
 ```bash
-GET /v1/me
+GET /api/me
 ```
 
 响应：
@@ -321,4 +321,4 @@ export class MeetingsController {
 
 ## 许可证
 
-Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
+Copyright (c) 2026 by Nove API-Team, All Rights Reserved.

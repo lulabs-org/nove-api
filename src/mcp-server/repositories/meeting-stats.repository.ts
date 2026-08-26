@@ -53,12 +53,23 @@ export class MeetingStatsRepository {
             },
           },
         },
-        recordings: {
+        minutes: {
           where: {
             deletedAt: null,
           },
           include: {
-            files: true,
+            files: {
+              select: {
+                durationMs: true,
+              },
+            },
+            summary: {
+              select: { id: true },
+            },
+            transcripts: {
+              select: { id: true },
+              take: 1,
+            },
           },
         },
       },

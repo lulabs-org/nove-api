@@ -39,6 +39,12 @@ async function seedRealDatabase(prisma: PrismaClient): Promise<void> {
   log('  2: 创建角色');
   const roles = await seedFunctions.createRoles(prisma, true, organization.id);
 
+  log('  3: 分配角色权限');
+  await seedFunctions.assignRolePermissions(prisma, permissions, roles);
+
+  log('  4: 创建 OAuth Clients');
+  await seedFunctions.createOAuthClients(prisma);
+
   log(`\n🏢 organization: ${organization.name}`);
   log(
     `\n🏢 permissions: ${permissions.map((permission) => permission.name).join(', ')}`,
@@ -122,30 +128,36 @@ async function seedMockDatabase(prisma: PrismaClient): Promise<void> {
   const meetings = await seedFunctions.createMeetings(prisma);
 
   log('  15.3 创建会议录音');
-  const { meetingRecording } = await seedFunctions.createMeetingRecording(
+  const { minute } = await seedFunctions.createMinute(
     prisma,
     meetings,
     platformUsers,
   );
 
   log('  15.4 创建会议总结');
-  const teamSummary = await seedFunctions.createMeetingSummary(
+  const teamSummary = await seedFunctions.createMinuteSummary(
     prisma,
     meetings,
     platformUsers,
+    minute,
   );
 
-  log('  15.5 创建参与者会议总结');
-  const participantSummaries = await seedFunctions.createParticipantSummaries(
+  log('  15.5 创建发言人会议总结');
+  const participantSummaries = await seedFunctions.createSpeakerSummaries(
     prisma,
     meetings,
+    minute,
+    platformUsers,
   );
 
   const meetingCount = Object.keys(meetings).length;
   const platformUserCount = Object.keys(platformUsers).length;
-  const recordingCount = meetingRecording ? 1 : 0;
+  const recordingCount = minute ? 1 : 0;
   const summaryCount = teamSummary ? 1 : 0;
   const participantSummaryCount = participantSummaries.length;
+
+  log('\n🔑 步骤 16: 创建 OAuth Clients');
+  await seedFunctions.createOAuthClients(prisma);
 
   log('\n✅ 数据库种子数据初始化完成！');
   log('\n📊 统计信息:');

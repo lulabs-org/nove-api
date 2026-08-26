@@ -1,4 +1,4 @@
-export interface MeetingParticipantDetail {
+export interface ParticipantDetail {
   userid: string;
   uuid: string;
   user_name: string;
@@ -31,7 +31,7 @@ export interface MeetingParticipantsResponse {
   subject: string;
   schedule_start_time: string;
   schedule_end_time: string;
-  participants: MeetingParticipantDetail[];
+  participants: ParticipantDetail[];
   has_remaining: boolean;
   next_pos: number;
   total_count: number;
@@ -40,4 +40,9 @@ export interface MeetingParticipantsResponse {
     new_error_code?: number;
     message: string;
   };
+}
+
+export interface ParticipantsList {
+  deduplicated: ParticipantDetail[];
+  original: ParticipantDetail[];
 }

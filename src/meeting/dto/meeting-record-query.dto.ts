@@ -1,3 +1,4 @@
+import { ProcessingStatus } from '../../minute/enums/status.enum';
 /*
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-10 08:39:58
@@ -12,14 +13,14 @@ import {
   IsString,
   IsOptional,
   IsEnum,
-  IsDateString,
+  IsDate,
   IsNumber,
   Min,
   Max,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { MeetingPlatform, MeetingType, ProcessingStatus } from '@prisma/client';
-import { Transform } from 'class-transformer';
+import { MeetingPlatform, MeetingType } from '@prisma/client';
+import { Transform, Type } from 'class-transformer';
 
 export class QueryMeetingRecordsDto {
   @ApiPropertyOptional({
@@ -28,6 +29,7 @@ export class QueryMeetingRecordsDto {
     example: MeetingPlatform.TENCENT_MEETING,
   })
   @IsOptional()
+  @Transform(({ value }) => (value === '' ? undefined : (value as string)))
   @IsEnum(MeetingPlatform)
   platform?: MeetingPlatform;
 
@@ -37,6 +39,7 @@ export class QueryMeetingRecordsDto {
     example: ProcessingStatus.COMPLETED,
   })
   @IsOptional()
+  @Transform(({ value }) => (value === '' ? undefined : (value as string)))
   @IsEnum(ProcessingStatus)
   status?: ProcessingStatus;
 
@@ -46,24 +49,29 @@ export class QueryMeetingRecordsDto {
     example: MeetingType.SCHEDULED,
   })
   @IsOptional()
+  @Transform(({ value }) => (value === '' ? undefined : (value as string)))
   @IsEnum(MeetingType)
   type?: MeetingType;
 
   @ApiPropertyOptional({
-    description: '开始日期',
-    example: '2024-01-01',
+    description:
+      '开始日期（务必传入包含时区信息的 ISO 8601 格式，例如前端通过 date.toISOString() 生成）',
+    example: '2023-12-31T16:00:00.000Z',
   })
   @IsOptional()
-  @IsDateString()
-  startDate?: string;
+  @Type(() => Date)
+  @IsDate()
+  startDate?: Date;
 
   @ApiPropertyOptional({
-    description: '结束日期',
-    example: '2024-12-31',
+    description:
+      '结束日期（务必传入包含时区信息的 ISO 8601 格式，例如前端通过 date.toISOString() 生成）',
+    example: '2024-12-31T15:59:59.999Z',
   })
   @IsOptional()
-  @IsDateString()
-  endDate?: string;
+  @Type(() => Date)
+  @IsDate()
+  endDate?: Date;
 
   @ApiPropertyOptional({
     description: '页码',

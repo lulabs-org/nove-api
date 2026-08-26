@@ -28,9 +28,9 @@ export class MeetingRecordNotFoundException extends MeetingException {
  * 会议记录已存在异常
  */
 export class MeetingRecordAlreadyExistsException extends MeetingException {
-  constructor(platformMeetingId: string, platformRecordingId: string) {
+  constructor(platformMeetingId: string, subMeetingId: string) {
     super(
-      `会议记录已存在: 会议ID=${platformMeetingId}, 录制ID=${platformRecordingId}`,
+      `会议记录已存在: 会议ID=${platformMeetingId}, 子会议ID=${subMeetingId}`,
       HttpStatus.CONFLICT,
     );
   }
@@ -70,5 +70,23 @@ export class MeetingStatusException extends MeetingException {
       `会议状态不符合要求: ${meetingId}, 当前状态: ${currentStatus}, 要求状态: ${requiredStatus}`,
       HttpStatus.CONFLICT,
     );
+  }
+}
+
+/**
+ * 录制记录未找到异常
+ */
+export class RecordingNotFoundException extends MeetingException {
+  constructor(minuteId: string) {
+    super(`录制记录不存在: ${minuteId}`, HttpStatus.NOT_FOUND);
+  }
+}
+
+/**
+ * 会议总结未找到异常
+ */
+export class MinuteSummaryNotFoundException extends MeetingException {
+  constructor(meetingId: string) {
+    super(`会议总结不存在: ${meetingId}`, HttpStatus.NOT_FOUND);
   }
 }

@@ -3,8 +3,8 @@ model Order {
   id String @id @default(cuid()) // 内部主键
 
   // 编码体系：内部号 + 对外展示号
-  orderCode   String @map("order_code") // 内部订单号（系统生成）
-  orderNumber String @map("order_number") // 对外订单号（展示/客服）
+  orderCode   String @map("order_code") // 内部订单号（系统生成的数字字符串）
+  orderNumber String @map("order_number") // 对外订单号（由 orderCode 编码生成）
 
   // 外部平台订单号（建议按渠道维度做唯一）
   externalId String? @map("external_order_id")
@@ -29,8 +29,8 @@ model Order {
   financialClosedAt DateTime? @map("financial_closed_at") @db.Timestamptz(6) // 财务结单时间
 
   // 金额（最小货币单位：分/cent；JPY则是"1"代表1日元）
-  amount    Int      @map("amount") // 订单金额（最小单位：分）
-  currency  Currency @default(CNY) // 币种
+  amount   Int      @map("amount") // 订单金额（最小单位：分）
+  currency Currency @default(CNY) // 币种
 
   // 换算信息：建议在"支付成功"时锁定
   amountCny   Int?      @map("amount_cny") // 人民币金额（最小单位：分），可空：未支付/未换算/免费单等
@@ -76,7 +76,6 @@ model Order {
   @@unique([orderNumber], map: "uk_orders_order_number")
   // 外部订单号：通常同一外部平台在不同渠道/店铺可能重复，所以建议复合唯一
   @@unique([channelId, externalId], map: "uk_orders_channel_external_id")
-
   // ========= 索引（按真实查询习惯组织） =========
   @@index([purchaserId, createdAt], map: "idx_orders_purchaser_created_at")
   @@index([purchaserId, status], map: "idx_orders_purchaser_status")
@@ -92,7 +91,6 @@ model Order {
   @@index([productId, createdAt], map: "idx_orders_product_created_at")
   // 软删除过滤（常用）
   @@index([deletedAt], map: "idx_orders_deleted_at")
-
   @@map("orders")
 }
 

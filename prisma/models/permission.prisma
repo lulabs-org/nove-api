@@ -1,23 +1,24 @@
 // 权限表
 model Permission {
-  id          String         @id @default(cuid())
-  name        String // 权限名称
-  code        String         @unique // 权限编码
-  description String? // 权限描述
-  resource    String // 资源标识
-  action      String // 操作类型
-  type        PermissionType @default(MENU) // 权限类型
-  parentId    String? // 父权限ID
-  level       Int            @default(1) // 权限层级
-  sortOrder   Int            @default(0) // 排序
-  active      Boolean        @default(true) // 是否启用
+  id               String         @id @default(cuid())
+  name             String // 权限名称
+  code             String         @unique // 权限编码
+  description      String? // 权限描述
+  resource         String // 资源标识
+  action           String // 操作类型
+  type             PermissionType @default(MENU) // 权限类型
+  parentId         String? // 父权限ID
+  level            Int            @default(1) // 权限层级
+  sortOrder        Int            @default(0) // 排序
+  active           Boolean        @default(true) // 是否启用
+  oauthDelegatable Boolean        @default(false) @map("oauth_delegatable")
 
   // 自关联
   parent   Permission?  @relation("PermissionHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
   children Permission[] @relation("PermissionHierarchy")
 
   // 关联关系
-  roles RolePermission[]
+  roles   RolePermission[]
   members MemberPermission[]
 
   createdAt DateTime @default(now())
@@ -52,7 +53,7 @@ model DataPermissionRule {
   active      Boolean @default(true) // 是否启用
 
   // 关联关系
-  roles RoleDataPermission[]
+  roles   RoleDataPermission[]
   members MemberDataPermission[]
 
   createdAt DateTime @default(now())

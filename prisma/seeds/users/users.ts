@@ -12,6 +12,7 @@
 import { PrismaClient, User } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { COUNTRY_CODE, USERS_MOCK, USERS_REAL } from './config';
+import { generateUsername } from '../../../src/common/utils';
 import { UserConfig, UserProfileCreateInput } from './type';
 
 async function createUserWithProfile(
@@ -46,6 +47,7 @@ async function createUserWithProfile(
         countryCode: COUNTRY_CODE,
         phone,
         phoneVerifiedAt: new Date(),
+        username: generateUsername(),
       },
     });
 

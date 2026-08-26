@@ -120,6 +120,7 @@ export class RefreshTokenRepository {
       where: {
         userId,
         revokedAt: null,
+        expiresAt: { gt: new Date() },
         ...(excludeJti && { jti: { not: excludeJti } }),
       },
       data: {
@@ -163,6 +164,7 @@ export class RefreshTokenRepository {
         userId,
         deviceId,
         revokedAt: null,
+        expiresAt: { gt: new Date() },
       },
       data: {
         revokedAt,

@@ -3,6 +3,110 @@ import { PrismaService } from '../../prisma/prisma.service';
 import type { GetMeetingRecordsParams } from '@/meeting/types';
 
 import { MeetingPlatform, Prisma } from '@prisma/client';
+import {
+  deriveProcessingStatus,
+  deriveRecordingStatus,
+  ProcessingStatus,
+} from '../../minute/enums/status.enum';
+import type {
+  MeetingHostResponseDto,
+  MeetingListItemResponseDto,
+  MeetingStatsResponseDto,
+} from '../dto';
+
+const meetingHostSelect = {
+  id: true,
+  displayName: true,
+  localUserId: true,
+} satisfies Prisma.PlatformUserSelect;
+
+const meetingResponseSelect = {
+  id: true,
+  platform: true,
+  meetingId: true,
+  subMeetingId: true,
+  externalId: true,
+  title: true,
+  description: true,
+  meetingCode: true,
+  type: true,
+  language: true,
+  tags: true,
+  participantCount: true,
+  scheduledStartAt: true,
+  scheduledEndAt: true,
+  startAt: true,
+  endAt: true,
+  durationSeconds: true,
+  timezone: true,
+
+  metadata: true,
+  createdAt: true,
+  updatedAt: true,
+  deletedAt: true,
+  host: {
+    select: meetingHostSelect,
+  },
+  minutes: {
+    where: { deletedAt: null },
+    select: {
+      id: true,
+      externalId: true,
+      source: true,
+      errorMessage: true,
+      startAt: true,
+      endAt: true,
+      createdAt: true,
+      updatedAt: true,
+      files: {
+        select: { id: true },
+        take: 1,
+      },
+      transcripts: {
+        select: { id: true, status: true },
+        take: 1,
+      },
+      summary: {
+        select: { id: true },
+      },
+    },
+  },
+  _count: {
+    select: {
+      participants: { where: { deletedAt: null } },
+    },
+  },
+} satisfies Prisma.MeetingSelect;
+
+const meetingListSelect = {
+  id: true,
+  title: true,
+  platform: true,
+  startAt: true,
+  endAt: true,
+  participantCount: true,
+  host: {
+    select: meetingHostSelect,
+  },
+  _count: {
+    select: {
+      participants: { where: { deletedAt: null } },
+      minutes: { where: { deletedAt: null } },
+    },
+  },
+} satisfies Prisma.MeetingSelect;
+
+type MeetingResponseRecord = Prisma.MeetingGetPayload<{
+  select: typeof meetingResponseSelect;
+}>;
+
+type MeetingListRecord = Prisma.MeetingGetPayload<{
+  select: typeof meetingListSelect;
+}>;
+
+type MeetingHostRecord = Prisma.PlatformUserGetPayload<{
+  select: typeof meetingHostSelect;
+}>;
 
 type UpdateMeetingRecordData = Prisma.MeetingUncheckedUpdateInput;
 type CreateMeetingRecordData = Omit<
@@ -10,14 +114,156 @@ type CreateMeetingRecordData = Omit<
   'id' | 'createdAt' | 'updatedAt' | 'deletedAt'
 >;
 
+const activeMinuteWhere = { deletedAt: null } as const;
+
+function meetingProcessingStatusWhere(
+  status: ProcessingStatus,
+): Prisma.MeetingWhereInput {
+  if (status === ProcessingStatus.FAILED) {
+    return {
+      minutes: {
+        some: { ...activeMinuteWhere, errorMessage: { not: null } },
+      },
+    };
+  }
+
+  if (status === ProcessingStatus.COMPLETED) {
+    return {
+      AND: [
+        {
+          minutes: {
+            none: { ...activeMinuteWhere, errorMessage: { not: null } },
+          },
+        },
+        {
+          minutes: {
+            some: { ...activeMinuteWhere, summary: { isNot: null } },
+          },
+        },
+      ],
+    };
+  }
+
+  if (status === ProcessingStatus.PROCESSING) {
+    return {
+      AND: [
+        {
+          minutes: {
+            none: { ...activeMinuteWhere, errorMessage: { not: null } },
+          },
+        },
+        {
+          minutes: {
+            none: { ...activeMinuteWhere, summary: { isNot: null } },
+          },
+        },
+        {
+          minutes: {
+            some: { ...activeMinuteWhere, transcripts: { some: {} } },
+          },
+        },
+      ],
+    };
+  }
+
+  if (status === ProcessingStatus.PENDING) {
+    return {
+      AND: [
+        {
+          minutes: {
+            none: { ...activeMinuteWhere, errorMessage: { not: null } },
+          },
+        },
+        {
+          minutes: {
+            none: { ...activeMinuteWhere, summary: { isNot: null } },
+          },
+        },
+        {
+          minutes: {
+            none: { ...activeMinuteWhere, transcripts: { some: {} } },
+          },
+        },
+      ],
+    };
+  }
+
+  // SKIPPED is retained in the public enum for compatibility, but it can no
+  // longer be represented after removing the persisted processing status.
+  return { id: { in: [] } };
+}
+
 @Injectable()
 export class MeetingRepository {
   constructor(private prisma: PrismaService) {}
 
+  private toHostResponse(
+    host: MeetingHostRecord | null,
+  ): MeetingHostResponseDto | null {
+    if (!host) return null;
+
+    return {
+      platformUserId: host.id,
+      displayName: host.displayName ?? null,
+      userId: host.localUserId ?? null,
+    };
+  }
+
+  private toResponseRecord(
+    record: MeetingResponseRecord,
+    includeRecordings = true,
+  ) {
+    const recordingStatus = deriveRecordingStatus(record.minutes);
+    const processingStatus = deriveProcessingStatus(record.minutes);
+
+    return {
+      id: record.id,
+      platform: record.platform,
+      meetingId: record.meetingId,
+      subMeetingId: record.subMeetingId,
+      externalId: record.externalId,
+      title: record.title,
+      description: record.description,
+      meetingCode: record.meetingCode,
+      type: record.type,
+      language: record.language,
+      tags: record.tags,
+      host: this.toHostResponse(record.host),
+      participantCount: record.participantCount ?? record._count?.participants,
+      scheduledStartAt: record.scheduledStartAt,
+      scheduledEndAt: record.scheduledEndAt,
+      startAt: record.startAt,
+      endAt: record.endAt,
+      durationSeconds: record.durationSeconds,
+      timezone: record.timezone,
+      hasRecording: record.minutes.length > 0,
+      recordingStatus,
+      processingStatus,
+      metadata: record.metadata,
+      createdAt: record.createdAt,
+      updatedAt: record.updatedAt,
+      deletedAt: record.deletedAt,
+      ...(includeRecordings ? { minutes: record.minutes } : {}),
+    };
+  }
+
+  private toListRecord(record: MeetingListRecord): MeetingListItemResponseDto {
+    return {
+      id: record.id,
+      title: record.title,
+      platform: record.platform,
+      startAt: record.startAt,
+      endAt: record.endAt,
+      host: this.toHostResponse(record.host),
+      participantCount: record.participantCount ?? record._count.participants,
+      hasRecording: record._count.minutes > 0,
+    };
+  }
+
   /**
    * Find meeting record by platform and meeting ID
    */
-  async findByPtId(
+  async findByPt(
     platform: MeetingPlatform,
     meetingId: string,
     subMeetingId: string,
@@ -38,31 +284,44 @@ export class MeetingRepository {
    * Find meeting record by ID
    */
   async findById(id: string) {
-    return this.prisma.meeting.findUnique({
+    const record = await this.prisma.meeting.findUnique({
       where: { id, deletedAt: null },
-      include: {
-        recordings: true,
-      },
+      select: meetingResponseSelect,
     });
+
+    return record ? this.toResponseRecord(record) : null;
+  }
+
+  async exists(id: string): Promise<boolean> {
+    const record = await this.prisma.meeting.findUnique({
+      where: { id, deletedAt: null },
+      select: { id: true },
+    });
+
+    return record !== null;
   }
 
   /**
    * Create meeting record
    */
   async create(data: CreateMeetingRecordData) {
-    return this.prisma.meeting.create({
+    const record = await this.prisma.meeting.create({
       data,
+      select: meetingResponseSelect,
     });
+    return this.toResponseRecord(record);
   }
 
   /**
    * Update meeting record
    */
   async update(id: string, data: UpdateMeetingRecordData) {
-    return this.prisma.meeting.update({
+    const record = await this.prisma.meeting.update({
       where: { id, deletedAt: null },
       data,
+      select: meetingResponseSelect,
     });
+    return this.toResponseRecord(record);
   }
 
   /**
@@ -109,12 +368,20 @@ export class MeetingRepository {
    * Soft delete meeting record
    */
   async softDelete(id: string) {
-    return this.prisma.meeting.update({
+    const record = await this.prisma.meeting.update({
       where: { id, deletedAt: null },
       data: {
         deletedAt: new Date(),
       },
+      select: meetingResponseSelect,
     });
+    if (!record.deletedAt) {
+      throw new Error(`Meeting ${id} was not marked as deleted`);
+    }
+    return {
+      ...this.toResponseRecord(record),
+      deletedAt: record.deletedAt,
+    };
   }
 
   /**
@@ -133,7 +400,7 @@ export class MeetingRepository {
    * Get meeting records list
    */
   async get(params: GetMeetingRecordsParams): Promise<{
-    records: any[];
+    records: MeetingListItemResponseDto[];
     total: number;
     page: number;
     limit: number;
@@ -151,14 +418,7 @@ export class MeetingRepository {
     } = params;
     const skip = (page - 1) * limit;
 
-    const where: {
-      platform?: typeof platform;
-      processingStatus?: typeof status;
-      type?: typeof type;
-      startAt?: { gte?: Date; lte?: Date };
-      OR?: Array<{ title?: { contains?: string; mode?: 'insensitive' } }>;
-      deletedAt?: null;
-    } = {
+    const where: Prisma.MeetingWhereInput = {
       deletedAt: null,
     };
 
@@ -167,7 +427,7 @@ export class MeetingRepository {
     }
 
     if (status) {
-      where.processingStatus = status;
+      where.AND = [meetingProcessingStatusWhere(status)];
     }
 
     if (type) {
@@ -180,20 +440,25 @@ export class MeetingRepository {
         where.startAt.gte = startDate;
       }
       if (endDate) {
-        where.startAt.lte = endDate;
+        where.startAt.lt = endDate;
       }
     }
 
     if (search) {
-      where.OR = [{ title: { contains: search, mode: 'insensitive' } }];
+      where.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        {
+          host: {
+            displayName: { contains: search, mode: 'insensitive' },
+          },
+        },
+      ];
     }
 
     const [records, total] = await Promise.all([
       this.prisma.meeting.findMany({
         where,
-        include: {
-          recordings: true,
-        },
+        select: meetingListSelect,
         orderBy: {
           createdAt: 'desc',
         },
@@ -203,12 +468,80 @@ export class MeetingRepository {
       this.prisma.meeting.count({ where }),
     ]);
 
+    const listRecords = records.map((record) => this.toListRecord(record));
+
     return {
-      records,
+      records: listRecords,
       total,
       page,
       limit,
       totalPages: Math.ceil(total / limit),
+    };
+  }
+
+  async getStats(params: {
+    startDate?: Date;
+    endDate?: Date;
+  }): Promise<MeetingStatsResponseDto> {
+    const where: Prisma.MeetingWhereInput = {
+      deletedAt: null,
+      ...(params.startDate || params.endDate
+        ? {
+            startAt: {
+              ...(params.startDate ? { gte: params.startDate } : {}),
+              ...(params.endDate ? { lt: params.endDate } : {}),
+            },
+          }
+        : {}),
+    };
+
+    const [total, platformGroups, statusStats, typeGroups, recentRecords] =
+      await Promise.all([
+        this.prisma.meeting.count({ where }),
+        this.prisma.meeting.groupBy({
+          by: ['platform'],
+          where,
+          _count: { _all: true },
+          orderBy: { platform: 'asc' },
+        }),
+        Promise.all(
+          Object.values(ProcessingStatus).map(async (status) => ({
+            status,
+            count: await this.prisma.meeting.count({
+              where: {
+                AND: [where, meetingProcessingStatusWhere(status)],
+              },
+            }),
+          })),
+        ),
+        this.prisma.meeting.groupBy({
+          by: ['type'],
+          where,
+          _count: { _all: true },
+          orderBy: { type: 'asc' },
+        }),
+        this.prisma.meeting.findMany({
+          where,
+          select: meetingResponseSelect,
+          orderBy: { startAt: { sort: 'desc', nulls: 'last' } },
+          take: 5,
+        }),
+      ]);
+
+    return {
+      total,
+      platformStats: platformGroups.map((group) => ({
+        platform: group.platform,
+        count: group._count._all,
+      })),
+      statusStats,
+      typeStats: typeGroups.map((group) => ({
+        type: group.type,
+        count: group._count._all,
+      })),
+      recentMeetings: recentRecords.map((record) =>
+        this.toResponseRecord(record, false),
+      ),
     };
   }
 }

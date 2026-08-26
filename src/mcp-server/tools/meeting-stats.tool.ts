@@ -1,19 +1,22 @@
 import { Injectable } from '@nestjs/common';
+import {
+  deriveProcessingStatus,
+  deriveRecordingStatus,
+} from '@/minute/enums/status.enum';
 import { Tool, Context, ToolScopes } from '@rekog/mcp-nest';
 import { z } from 'zod';
 import {
   MeetingStatsRepository,
-  ParticipantSummaryRepository,
   PlatformUserRepository,
 } from '../repositories';
-import { PeriodType } from '@prisma/client';
+import { SpeakerSummaryRepository } from '@/minute/repositories';
 
 @Injectable()
 export class MeetingStatsTool {
   constructor(
     private readonly meetingRepo: MeetingStatsRepository,
     private readonly ptUserRepo: PlatformUserRepository,
-    private readonly participantSummaryRepo: ParticipantSummaryRepository,
+    private readonly participantSummaryRepo: SpeakerSummaryRepository,
   ) {}
 
   private validateDateRange(startDate: Date, endDate: Date): void {
@@ -45,13 +48,17 @@ export class MeetingStatsTool {
       userId,
       startDate,
       endDate,
-    }: { userId: string; startDate: string; endDate: string },
+    }: {
+      userId: string;
+      startDate: string;
+      endDate: string;
+    },
     context: Context,
   ) {
     await context.reportProgress({ progress: 10, total: 100 });
 
-    const startDateObj = new Date(startDate);
-    const endDateObj = new Date(endDate);
+    const startDateObj = new Date(`${startDate}T00:00:00+08:00`);
+    const endDateObj = new Date(`${endDate}T23:59:59.999+08:00`);
 
     this.validateDateRange(startDateObj, endDateObj);
 
@@ -63,11 +70,10 @@ export class MeetingStatsTool {
 
     const platformUserIds = platformUsers.map((u) => u.id);
 
-    const summaries = await this.participantSummaryRepo.getSummaries({
+    const summaries = await this.participantSummaryRepo.findByDateRange({
       platformUserIds,
       startDate: startDateObj,
       endDate: endDateObj,
-      periodType: PeriodType.SINGLE,
     });
 
     await context.reportProgress({ progress: 70, total: 100 });
@@ -75,9 +81,10 @@ export class MeetingStatsTool {
     const uniqueMeetingIds = new Set<string>(
       summaries
         .filter(
-          (s): s is typeof s & { meetingId: string } => s.meetingId !== null,
+          (s): s is typeof s & { minute: { meeting: { id: string } } } =>
+            s.minute?.meeting?.id != null,
         )
-        .map((s) => s.meetingId),
+        .map((s) => s.minute.meeting.id),
     );
 
     const meetings = await this.meetingRepo.getMeetings({
@@ -109,17 +116,16 @@ export class MeetingStatsTool {
       meetingsByDay: sortedMeetingsByDay,
       summaries: summaries.map((s) => ({
         id: s.id,
-        userName: s.userName,
-        periodType: s.periodType,
+        userName: s.platformUser?.displayName || '未知',
         summary: s.partSummary,
         keywords: s.keywords,
         createdAt: s.createdAt.toISOString(),
-        meeting: s.meeting
+        meeting: s.minute?.meeting
           ? {
-              id: s.meeting.id,
-              title: s.meeting.title,
-              startTime: s.meeting.startAt?.toISOString(),
-              duration: s.meeting.durationSeconds,
+              id: s.minute.meeting.id,
+              title: s.minute.meeting.title,
+              startTime: s.minute.meeting.startAt?.toISOString(),
+              duration: s.minute.meeting.durationSeconds,
             }
           : null,
       })),
@@ -154,12 +160,12 @@ export class MeetingStatsTool {
       userId: p.ptUser?.id,
       name: p.ptUser?.displayName || 'Unknown',
       email: p.ptUser?.email,
-      joinTime: p.joinTime?.toISOString(),
-      leaveTime: p.leftTime?.toISOString(),
-      duration: p.durationSeconds,
+      joinTime: p.firstJoinTime?.toISOString(),
+      leaveTime: p.lastLeaveTime?.toISOString(),
+      duration: p.totalDurationSeconds,
     }));
 
-    const recording = meeting.recordings[0];
+    const recording = meeting.minutes[0];
     const recordingFile = recording?.files[0];
 
     return {
@@ -183,7 +189,9 @@ export class MeetingStatsTool {
         endTime: meeting.endAt?.toISOString(),
         duration: meeting.durationSeconds,
         participants,
-        status: meeting.processingStatus,
+        hasRecording: meeting.minutes.length > 0,
+        recordingStatus: deriveRecordingStatus(meeting.minutes),
+        processingStatus: deriveProcessingStatus(meeting.minutes),
         recording: recordingFile
           ? {
               available: true,

@@ -1,0 +1,20 @@
+model SpeakerSummary {
+  id String @id @default(cuid())
+
+  minuteId String @map("minute_id")
+  minute   Minute @relation("SpeakerSummaries", fields: [minuteId], references: [id], onDelete: Cascade)
+
+  platformUserId String       @map("platform_user_id")
+  platformUser   PlatformUser @relation("SpeakerSummaries", fields: [platformUserId], references: [id], onDelete: Cascade)
+
+  partSummary String            @map("part_summary") @db.Text
+  keywords    String[]
+  generatedBy GenerationMethod? @map("generated_by")
+  aiModel     String?           @map("ai_model")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([minuteId, platformUserId], map: "uq_speaker_summary")
+  @@map("speaker_summaries")
+}

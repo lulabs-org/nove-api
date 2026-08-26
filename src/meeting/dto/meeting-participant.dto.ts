@@ -1,0 +1,154 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Platform } from '@prisma/client';
+import { Type } from 'class-transformer';
+import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+
+export class QueryMeetingParticipantsDto {
+  @ApiPropertyOptional({ description: '页码', default: 1 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page?: number = 1;
+
+  @ApiPropertyOptional({ description: '每页数量', default: 50 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit?: number = 50;
+
+  @ApiPropertyOptional({
+    description: '按姓名、邮箱、手机号或平台用户 ID 搜索',
+  })
+  @IsOptional()
+  @IsString()
+  search?: string;
+}
+
+export class MeetingParticipantPlatformUserDto {
+  @ApiProperty({ description: '平台用户记录 ID（本系统主键）' })
+  id: string;
+
+  @ApiProperty({ description: '平台', enum: Platform })
+  platform: Platform;
+
+  @ApiPropertyOptional({
+    description: '显示名称',
+    type: String,
+    nullable: true,
+  })
+  displayName: string | null;
+
+  @ApiPropertyOptional({ description: '头像', type: String, nullable: true })
+  avatarUrl: string | null;
+}
+
+export class MeetingParticipantUserProfileDto {
+  @ApiPropertyOptional({
+    description: '用户资料显示名',
+    type: String,
+    nullable: true,
+  })
+  displayName: string | null;
+
+  @ApiPropertyOptional({
+    description: '用户资料头像',
+    type: String,
+    nullable: true,
+  })
+  avatar: string | null;
+}
+
+export class MeetingParticipantUserDto {
+  @ApiProperty({ description: '本地用户 ID（users.id）' })
+  id: string;
+
+  @ApiPropertyOptional({
+    description: '登录用户名',
+    type: String,
+    nullable: true,
+  })
+  username: string | null;
+
+  @ApiPropertyOptional({ description: '邮箱', type: String, nullable: true })
+  email: string | null;
+
+  @ApiPropertyOptional({
+    description: '国家代码',
+    type: String,
+    nullable: true,
+  })
+  countryCode: string | null;
+
+  @ApiPropertyOptional({ description: '手机号', type: String, nullable: true })
+  phone: string | null;
+
+  @ApiPropertyOptional({
+    type: MeetingParticipantUserProfileDto,
+    nullable: true,
+  })
+  profile: MeetingParticipantUserProfileDto | null;
+}
+
+export class MeetingParticipantDto {
+  @ApiProperty({ description: '参会记录 ID' })
+  id: string;
+
+  @ApiProperty({ description: '会议 ID' })
+  meetingId: string;
+
+  @ApiPropertyOptional({
+    description: '首次入会时间',
+    type: String,
+    format: 'date-time',
+    nullable: true,
+  })
+  firstJoinTime: Date | null;
+
+  @ApiPropertyOptional({
+    description: '最后离会时间',
+    type: String,
+    format: 'date-time',
+    nullable: true,
+  })
+  lastLeaveTime: Date | null;
+
+  @ApiPropertyOptional({
+    description: '累计参会时长（秒）',
+    type: Number,
+    nullable: true,
+  })
+  totalDurationSeconds: number | null;
+
+  @ApiPropertyOptional({
+    type: MeetingParticipantPlatformUserDto,
+    nullable: true,
+  })
+  platformUser: MeetingParticipantPlatformUserDto | null;
+
+  @ApiPropertyOptional({
+    description: '关联的本地用户，平台用户未绑定时为 null',
+    type: MeetingParticipantUserDto,
+    nullable: true,
+  })
+  user: MeetingParticipantUserDto | null;
+}
+
+export class MeetingParticipantListResponseDto {
+  @ApiProperty({ type: [MeetingParticipantDto] })
+  data: MeetingParticipantDto[];
+
+  @ApiProperty({ description: '成员总数' })
+  total: number;
+
+  @ApiProperty({ description: '当前页' })
+  page: number;
+
+  @ApiProperty({ description: '每页数量' })
+  limit: number;
+
+  @ApiProperty({ description: '总页数' })
+  totalPages: number;
+}

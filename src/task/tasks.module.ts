@@ -12,36 +12,54 @@
 // src/tasks/tasks.module.ts
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
+import { BullBoardModule } from '@bull-board/nestjs';
+import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { TasksController } from './tasks.controller';
-import { TasksService } from './service/tasks.service';
+import { TasksService } from './services/tasks.service';
 import { TaskProcessor } from './processors/task.processor';
 import { PrismaService } from '../prisma/prisma.service';
-import { OpenaiModule } from '../integrations/openai/openai.module';
-import { PeriodSummary } from './service/period-summary.service';
-import { PeriodSummaryTool } from './service/period-summary-tool';
-import { PeriodSummaryRepository } from './repositories/period-summary.repository';
-import { PeriodTimeRange } from './utils/period-time-range';
+import { LlmModule } from '../llm/llm.module';
+import { HttpModule } from '@nestjs/axios';
+import { TasksRepository } from './repositories/tasks.repository';
+import { TaskExecutionLogsRepository } from './repositories/task-execution-logs.repository';
+import { UserModule } from '../user/user.module';
 
 import { ConfigModule } from '@nestjs/config';
 import { openaiConfig } from '../configs/openai.config';
+import { TASK_QUEUE_NAME } from './task.constants';
+import { TaskHandlerRegistry } from './handlers/task-handler.registry';
+import { HttpTaskHandler } from './handlers/http.handler';
+import { MigratePhoneHashesHandler } from './handlers/migrate-phone-hashes.handler';
+import { LinkPlatformUsersByPhoneHashHandler } from './handlers/link-platform-users-by-phone-hash.handler';
+import { LinkOrdersToUsersByPhoneHandler } from './handlers/link-orders-to-users-by-phone.handler';
 
 @Module({
   imports: [
     BullModule.registerQueue({
-      name: 'tasks', // 队列名
+      name: TASK_QUEUE_NAME, // 队列名
     }),
-    OpenaiModule,
+    BullBoardModule.forFeature({
+      name: TASK_QUEUE_NAME,
+      adapter: BullMQAdapter,
+    }),
+    LlmModule,
     ConfigModule.forFeature(openaiConfig),
+    HttpModule,
+    UserModule,
   ],
   controllers: [TasksController],
   providers: [
     TasksService,
     TaskProcessor,
+    TasksRepository,
+    TaskExecutionLogsRepository,
     PrismaService,
-    PeriodSummary,
-    PeriodSummaryTool,
-    PeriodSummaryRepository,
-    PeriodTimeRange,
+    TaskHandlerRegistry,
+    HttpTaskHandler,
+    MigratePhoneHashesHandler,
+    LinkPlatformUsersByPhoneHashHandler,
+    LinkOrdersToUsersByPhoneHandler,
   ],
+  exports: [TaskHandlerRegistry],
 })
 export class TasksModule {}

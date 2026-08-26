@@ -1,0 +1,66 @@
+// 会议总结表
+model MinuteSummary {
+  id String @id @default(cuid())
+
+  // 总结内容
+  content      String   @db.Text // 总结内容
+  // AI生成的结构化会议纪要，格式:
+  // {
+  //   "sections": [{
+  //     "title": "string",
+  //     "content": "string",
+  //     "timestamp": "string"
+  //   }]
+  // }
+  aiMinutes    Json?    @map("ai_minutes")
+  // 关键要点，格式:
+  // [{
+  //   "point": "string",
+  //   "importance": "high|medium|low",
+  //   "timestamp": "string"
+  // }]
+  keyPoints    Json?    @map("key_points")
+  // 行动项，格式:
+  // [{
+  //   "task": "string",
+  //   "assignee": "string",
+  //   "dueDate": "string",
+  //   "status": "pending|in_progress|completed"
+  // }]
+  actionItems  Json?    @map("action_items")
+  // 决策记录，格式:
+  // [{
+  //   "decision": "string",
+  //   "reason": "string",
+  //   "votedBy": ["string"],
+  //   "timestamp": "string"
+  // }]
+  decisions    Json?    @map("decisions")
+  // 会议金句，格式:
+  // [{
+  //   "speaker": "string",
+  //   "content": "string",
+  //   "explanation": "string",
+  //   "timestamp": "string"
+  // }]
+  goldenQuotes Json?    @map("golden_quotes")
+  keywords     String[] @map("keywords") // 关键词
+
+  // 元数据
+  metadata Json? @map("metadata") // 扩展元数据
+
+  // 生成信息
+  generatedBy GenerationMethod? @map("generated_by") // 生成方式
+  aiModel     String?           @map("ai_model") // AI模型版本
+
+  // 关联录制 (Minute)
+  minuteId String @unique @map("minute_id")
+  minute   Minute @relation(fields: [minuteId], references: [id], onDelete: Cascade)
+
+  // 系统字段及时间
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([minuteId], map: "idx_minute_summary_minute")
+  @@map("minute_summaries")
+}

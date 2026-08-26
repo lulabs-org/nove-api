@@ -20,5 +20,5 @@ export const ORGANIZATION_CONFIG: OrganizationConfig = {
 export const REAL_ORGANIZATION_CONFIG: OrganizationConfig = {
   name: 'Nove',
   code: 'Nove',
-  description: 'Nove - 专注于教育科技和在线学习平台',
+  description: 'Nove - 专注于构建AI时代的数据仓库平台',
 };

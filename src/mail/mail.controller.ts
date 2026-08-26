@@ -18,16 +18,18 @@ import {
   HttpException,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { MailService } from './mail.service';
+import { MailService } from './services/mail.service';
 import { SendEmailDto } from './dto/send-email.dto';
 import { Public } from '@/auth/decorators/public.decorator';
 import {
   ApiSendEmailDocs,
   ApiVerifyConnectionDocs,
 } from './decorators/mail.decorators';
+import { NoPermissionRequired } from '@/admin/permission/decorators/permissions.decorator';
 
 @ApiTags('Mail')
 @Controller('mail')
+@NoPermissionRequired()
 export class MailController {
   constructor(private readonly mailService: MailService) {}
 

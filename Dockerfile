@@ -8,7 +8,7 @@
 # ==========================================
 # Build Stage
 # ==========================================
-FROM node:20-alpine AS build
+FROM node:22-alpine AS build
 
 # Enable Corepack for modern package manager support (pnpm/yarn)
 # This allows using pnpm as the package manager in the container
@@ -22,9 +22,8 @@ WORKDIR /usr/src/app
 # when only source code changes
 COPY package*.json pnpm-lock.yaml ./
 
-# Install all dependencies (including dev dependencies)
-# --no-frozen-lockfile allows minor lockfile updates if needed
-RUN pnpm install --no-frozen-lockfile
+# pnpm 11 requires explicit permission for dependency build scripts
+RUN pnpm install --no-frozen-lockfile --config.dangerouslyAllowAllBuilds=true
 
 # Copy source code after dependencies are installed
 COPY . .
@@ -39,7 +38,7 @@ RUN pnpm run db:generate && \
 # ==========================================
 # Production Stage
 # ==========================================
-FROM node:20-alpine AS production
+FROM node:22-alpine AS production
 
 # Set working directory for the production application
 WORKDIR /usr/src/app

@@ -14,11 +14,22 @@ const MANAGER_PERMISSIONS = [
   'product:read',
   'product:create',
   'product:update',
+  'channel:read',
+  'channel:create',
+  'channel:update',
   'order:read',
   'order:create',
   'order:update',
   'order:status',
+  'order-refund:read',
+  'order-refund:create',
+  'order-refund:update',
+  'order-refund:settle',
   'dashboard:read',
+  'tracking-report:read',
+  'tracking-report:create',
+  'tracking-report:update',
+  'tracking-report:delete',
 ];
 
 // 财务角色权限列表
@@ -27,6 +38,9 @@ const FINANCE_PERMISSIONS = [
   'finance:export',
   'finance:audit',
   'order:read',
+  'order-refund:read',
+  'order-refund:update',
+  'order-refund:settle',
   'dashboard:read',
 ];
 
@@ -36,12 +50,21 @@ const CUSTOMER_SERVICE_PERMISSIONS = [
   'order:read',
   'order:update',
   'order:status',
+  'order-refund:read',
+  'order-refund:create',
+  'order-refund:update',
   'product:read',
+  'channel:read',
   'dashboard:read',
 ];
 
 // 普通用户角色权限列表
-const USER_PERMISSIONS = ['dashboard:read', 'product:read', 'order:read'];
+const USER_PERMISSIONS = [
+  'dashboard:read',
+  'product:read',
+  'channel:read',
+  'order:read',
+];
 
 /**
  * 为指定角色分配权限

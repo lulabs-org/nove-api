@@ -1,6 +1,32 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { MeetingPlatform, MeetingType, ProcessingStatus } from '@prisma/client';
+import { ProcessingStatus } from '../../minute/enums/status.enum';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsDateString, IsOptional, Matches } from 'class-validator';
+import { MeetingPlatform, MeetingType } from '@prisma/client';
 import { MeetingRecordResponseDto } from './meeting-record-response.dto';
+
+export class QueryMeetingStatsDto {
+  @ApiPropertyOptional({
+    description: '统计开始时间（包含时区的 ISO 8601 时间）',
+    example: '2026-08-01T00:00:00.000+08:00',
+  })
+  @IsOptional()
+  @IsDateString({}, { message: 'startDate 必须是有效的 ISO 8601 时间' })
+  @Matches(/(?:Z|[+-]\d{2}:\d{2})$/, {
+    message: 'startDate 必须包含时区信息',
+  })
+  startDate?: string;
+
+  @ApiPropertyOptional({
+    description: '统计结束时间（包含时区的 ISO 8601 时间）',
+    example: '2026-08-31T23:59:59.999+08:00',
+  })
+  @IsOptional()
+  @IsDateString({}, { message: 'endDate 必须是有效的 ISO 8601 时间' })
+  @Matches(/(?:Z|[+-]\d{2}:\d{2})$/, {
+    message: 'endDate 必须包含时区信息',
+  })
+  endDate?: string;
+}
 
 export class PlatformStatsDto {
   @ApiProperty({ description: '平台名称', enum: MeetingPlatform })

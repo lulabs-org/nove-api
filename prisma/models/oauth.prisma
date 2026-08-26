@@ -1,0 +1,123 @@
+model OAuthClient {
+  id                String            @id @default(uuid())
+  clientId          String            @unique @map("client_id")
+  clientSecret      String?           @map("client_secret") // confidential client only, hashed
+  clientType        OAuthClientType   @default(CONFIDENTIAL) @map("client_type")
+  name              String
+  description       String?
+  logoUri           String?           @map("logo_uri")
+  redirectUris      String[]          @map("redirect_uris") // 允许的回调地址列表
+  grants            String[] // 允许的授权模式, 例如 ["authorization_code", "refresh_token"]
+  scopes            String[] // 允许请求的权限范围列表
+  status            OAuthClientStatus @default(ACTIVE)
+  isSystem          Boolean           @default(false) @map("is_system")
+  credentialVersion Int               @default(1) @map("credential_version")
+  disabledAt        DateTime?         @map("disabled_at") @db.Timestamptz(6)
+  createdBy         String?           @map("created_by")
+  updatedBy         String?           @map("updated_by")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  authCodes             OAuthAuthCode[]
+  tokens                OAuthToken[]
+  authorizationRequests OAuthAuthorizationRequest[]
+  auditLogs             OAuthClientAuditLog[]
+  creator               User?                       @relation("OAuthClientCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  updater               User?                       @relation("OAuthClientUpdater", fields: [updatedBy], references: [id], onDelete: SetNull)
+
+  @@map("oauth_clients")
+}
+
+model OAuthClientAuditLog {
+  id            String   @id @default(uuid())
+  oauthClientId String   @map("oauth_client_id")
+  actorUserId   String?  @map("actor_user_id")
+  action        String
+  metadata      Json?
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  client OAuthClient @relation(fields: [oauthClientId], references: [id], onDelete: Cascade)
+  actor  User?       @relation("OAuthClientAuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([oauthClientId, createdAt])
+  @@index([actorUserId])
+  @@map("oauth_client_audit_logs")
+}
+
+model OAuthAuthCode {
+  codeHash            String   @id @map("code_hash")
+  clientId            String   @map("client_id")
+  userId              String   @map("user_id")
+  organizationId      String   @map("organization_id")
+  redirectUri         String   @map("redirect_uri")
+  scopes              String[]
+  codeChallenge       String   @map("code_challenge")
+  codeChallengeMethod String   @default("S256") @map("code_challenge_method")
+  expiresAt           DateTime @map("expires_at") @db.Timestamptz(6)
+
+  client       OAuthClient @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Org         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([clientId])
+  @@index([userId])
+  @@map("oauth_auth_codes")
+}
+
+model OAuthToken {
+  id               String    @id @default(uuid())
+  refreshTokenHash String    @unique @map("refresh_token_hash")
+  familyId         String    @map("family_id")
+  clientId         String    @map("client_id")
+  userId           String    @map("user_id")
+  organizationId   String    @map("organization_id")
+  scopes           String[]
+  expiresAt        DateTime  @map("expires_at") @db.Timestamptz(6)
+  revoked          Boolean   @default(false)
+  revokedAt        DateTime? @map("revoked_at") @db.Timestamptz(6)
+  rotatedAt        DateTime? @map("rotated_at") @db.Timestamptz(6)
+
+  client       OAuthClient @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Org         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([clientId])
+  @@index([userId])
+  @@index([familyId])
+  @@map("oauth_tokens")
+}
+
+model OAuthAuthorizationRequest {
+  id                  String    @id @default(uuid())
+  clientId            String    @map("client_id")
+  redirectUri         String    @map("redirect_uri")
+  requestedScopes     String[]  @map("requested_scopes")
+  state               String
+  codeChallenge       String    @map("code_challenge")
+  codeChallengeMethod String    @default("S256") @map("code_challenge_method")
+  expiresAt           DateTime  @map("expires_at") @db.Timestamptz(6)
+  consumedAt          DateTime? @map("consumed_at") @db.Timestamptz(6)
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  client OAuthClient @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+
+  @@index([clientId])
+  @@index([expiresAt])
+  @@map("oauth_authorization_requests")
+}
+
+enum OAuthClientType {
+  PUBLIC
+  CONFIDENTIAL
+}
+
+enum OAuthClientStatus {
+  ACTIVE
+  DISABLED
+}

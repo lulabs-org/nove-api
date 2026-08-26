@@ -48,15 +48,20 @@ import { Public } from '@/auth/decorators/public.decorator';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { TokenBlacklistService } from './services/token-blacklist.service';
 import { User, CurrentUser } from '@/auth/decorators/user.decorator';
+import { RequireAuth } from '@/auth/decorators/require-auth.decorator';
 import { ClientType } from '@/auth/types/jwt.types';
-import { PermService } from '@/permission/services/permission.service';
+import { PermService } from '@/admin/permission/services/permission.service';
 import { HttpUtil } from '@/common/utils/http.util';
+import { DesensitizationUtil } from '@/common/utils/desensitization.util';
+import { UserOrgService } from '@/admin/api-key/services/user-organization.service';
+import { NoPermissionRequired } from '@/admin/permission/decorators/permissions.decorator';
 
 @ApiTags('Auth')
 @Controller({
   path: 'api/auth',
   version: '1',
 })
+@NoPermissionRequired()
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
 
@@ -67,6 +72,7 @@ export class AuthController {
     private readonly tokenService: TokenService,
     private readonly tokenBlacklist: TokenBlacklistService,
     private readonly permService: PermService,
+    private readonly userOrgService: UserOrgService,
   ) {}
 
   @Public()
@@ -85,13 +91,17 @@ export class AuthController {
       ip,
       userAgent,
     );
+    const user = {
+      ...result.user,
+      currentOrgId: await this.resolveCurrentOrgId(result.user.id),
+    };
 
     const isWebClient = registerDto.clientType === ClientType.Web;
     if (isWebClient) {
       res.cookie('refreshToken', result.refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         maxAge: (result.refreshExpiresIn || 0) * 1000,
         path: '/',
       });
@@ -99,11 +109,11 @@ export class AuthController {
       return {
         accessToken: result.accessToken,
         expiresIn: result.expiresIn,
-        user: result.user, // 如果有
+        user,
       } as AuthResponseDto;
     }
 
-    return result;
+    return { ...result, user };
   }
 
   @Public()
@@ -118,13 +128,17 @@ export class AuthController {
     const ip = HttpUtil.getClientIp(req);
     const userAgent = req.get('User-Agent');
     const result = await this.loginService.login(loginDto, ip, userAgent);
+    const user = {
+      ...result.user,
+      currentOrgId: await this.resolveCurrentOrgId(result.user.id),
+    };
 
     const isWebClient = loginDto.clientType === ClientType.Web;
     if (isWebClient) {
       res.cookie('refreshToken', result.refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         maxAge: (result.refreshExpiresIn || 0) * 1000,
         path: '/',
       });
@@ -132,11 +146,11 @@ export class AuthController {
       return {
         accessToken: result.accessToken,
         expiresIn: result.expiresIn,
-        user: result.user, // 如果有
+        user,
       } as AuthResponseDto;
     }
 
-    return result;
+    return { ...result, user };
   }
 
   @Public()
@@ -194,7 +208,7 @@ export class AuthController {
       res.cookie('refreshToken', result.refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         maxAge: (result.refreshExpiresIn || 0) * 1000,
         path: '/',
       });
@@ -211,6 +225,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiLogoutDocs()
   @ApiBearerAuth()
+  @RequireAuth('jwt')
   async logout(
     @User() user: CurrentUser,
     @Req() req: Request,
@@ -272,7 +287,7 @@ export class AuthController {
         res.clearCookie('refreshToken', {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
-          sameSite: 'strict',
+          sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
           path: '/',
         });
       }
@@ -329,24 +344,27 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiGetMeDocs()
   @ApiBearerAuth()
+  @RequireAuth('jwt')
   async getMe(@User() user: CurrentUser): Promise<AuthUserWithPermissionsDto> {
     const roles = user.roles || ['USER'];
     const perm = await this.permService.getPermByRoleCodes(roles);
+    const currentOrgId = await this.resolveCurrentOrgId(user.id);
 
     return {
       id: user.id,
       username: user.username || undefined,
       email: user.email,
-      phone: user.phone || undefined,
+      phone: DesensitizationUtil.maskPhone(user.phone),
       countryCode: user.countryCode || undefined,
       name:
         (user.profile?.displayName as string) ||
         user.username ||
         user.email ||
-        user.phone ||
+        DesensitizationUtil.maskPhone(user.phone) ||
         'Unknown',
       avatar: (user.profile?.avatar as string) || undefined,
       roles,
+      currentOrgId,
       perm,
       active: user.active,
       emailVerified: user.emailVerified,
@@ -356,10 +374,19 @@ export class AuthController {
     };
   }
 
+  @Get('api-key/validate')
+  @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth()
+  @RequireAuth('api_key')
+  validateApiKey(): { authenticated: true } {
+    return { authenticated: true };
+  }
+
   @Get('permissions')
   @HttpCode(HttpStatus.OK)
   @ApiGetPermissionsDocs()
   @ApiBearerAuth()
+  @RequireAuth('jwt')
   async getPermissions(
     @User() user: CurrentUser,
   ): Promise<PermissionsResponseDto> {
@@ -372,10 +399,20 @@ export class AuthController {
         (user.profile?.displayName as string) ||
         user.username ||
         user.email ||
-        user.phone ||
+        DesensitizationUtil.maskPhone(user.phone) ||
         'Unknown',
       roles,
       perm,
     };
+  }
+
+  private async resolveCurrentOrgId(
+    userId: string,
+  ): Promise<string | undefined> {
+    try {
+      return await this.userOrgService.getPrimaryOrgId(userId);
+    } catch {
+      return undefined;
+    }
   }
 }

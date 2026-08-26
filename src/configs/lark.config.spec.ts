@@ -29,7 +29,7 @@ describe('larkConfig', () => {
     process.env.LARK_BASE_URL = 'https://example.larksuite.com';
     process.env.LARK_BITABLE_APP_TOKEN = 'app_token_abc';
     process.env.LARK_TABLE_MEETING_RECORD = 'tbl_meeting';
-    process.env.LARK_TABLE_MEETING_USE = 'tbl_user';
+    process.env.LARK_TABLE_MEETING_USER = 'tbl_user';
     process.env.LARK_TABLE_MEETING_RECORDING = 'tbl_recording';
     process.env.LARK_TABLE_PERSONAL_MEETING_SUMMARY = 'tbl_number_record';
     process.env.LARK_EVENT_ENCRYPT_KEY = 'encrypt_key_789';
@@ -59,7 +59,7 @@ describe('larkConfig', () => {
     delete process.env.LARK_BASE_URL;
     delete process.env.LARK_BITABLE_APP_TOKEN;
     delete process.env.LARK_TABLE_MEETING_RECORD;
-    delete process.env.LARK_TABLE_MEETING_USE;
+    delete process.env.LARK_TABLE_MEETING_USER;
     delete process.env.LARK_TABLE_MEETING_RECORDING;
     delete process.env.LARK_TABLE_PERSONAL_MEETING_SUMMARY;
     delete process.env.LARK_EVENT_ENCRYPT_KEY;

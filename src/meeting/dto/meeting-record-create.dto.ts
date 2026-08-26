@@ -3,13 +3,13 @@ import {
   IsNotEmpty,
   IsEnum,
   IsOptional,
-  IsDateString,
-  IsNumber,
+  IsDate,
+  IsInt,
   Min,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { MeetingPlatform, MeetingType, ProcessingStatus } from '@prisma/client';
-import { Transform } from 'class-transformer';
+import { MeetingPlatform, MeetingType } from '@prisma/client';
+import { Type } from 'class-transformer';
 
 export class CreateMeetingRecordDto {
   @ApiProperty({
@@ -28,14 +28,6 @@ export class CreateMeetingRecordDto {
   @IsNotEmpty({ message: '平台会议ID不能为空' })
   @IsString({ message: '平台会议ID必须是字符串' })
   platformMeetingId: string;
-
-  @ApiPropertyOptional({
-    description: '平台录制ID',
-    example: 'recording_123456',
-  })
-  @IsOptional()
-  @IsString({ message: '平台录制ID必须是字符串' })
-  platformRecordingId?: string;
 
   @ApiProperty({
     description: '会议标题',
@@ -70,74 +62,36 @@ export class CreateMeetingRecordDto {
   @IsString({ message: '主持人用户ID必须是字符串' })
   hostUserId?: string;
 
-  @ApiProperty({
-    description: '主持人用户名',
-    example: '张三',
-  })
-  @IsNotEmpty({ message: '主持人用户名不能为空' })
-  @IsString({ message: '主持人用户名必须是字符串' })
-  hostUserName: string;
-
   @ApiPropertyOptional({
-    description: '实际开始时间',
+    description:
+      '实际开始时间（务必传入包含时区信息的 ISO 8601 格式，例如前端通过 date.toISOString() 生成）',
     example: '2024-01-01T10:00:00.000Z',
   })
   @IsOptional()
-  @IsDateString({}, { message: '实际开始时间格式不正确' })
-  actualStartAt?: string;
+  @Type(() => Date)
+  @IsDate({ message: '实际开始时间格式不正确' })
+  actualStartAt?: Date;
 
   @ApiPropertyOptional({
-    description: '结束时间',
+    description:
+      '结束时间（务必传入包含时区信息的 ISO 8601 格式，例如前端通过 date.toISOString() 生成）',
     example: '2024-01-01T11:00:00.000Z',
   })
   @IsOptional()
-  @IsDateString({}, { message: '结束时间格式不正确' })
-  endedAt?: string;
+  @Type(() => Date)
+  @IsDate({ message: '结束时间格式不正确' })
+  endedAt?: Date;
 
   @ApiPropertyOptional({
-    description: '持续时间（分钟）',
-    example: 60,
+    description: '持续时间（秒）',
+    example: 3600,
     minimum: 0,
   })
   @IsOptional()
-  @Transform(({ value }) => parseInt(String(value)))
-  @IsNumber({}, { message: '持续时间必须是数字' })
+  @Type(() => Number)
+  @IsInt({ message: '持续时间必须是整数' })
   @Min(0, { message: '持续时间不能小于0' })
-  duration?: number;
-
-  @ApiPropertyOptional({
-    description: '是否有录制',
-    example: true,
-    default: false,
-  })
-  @IsOptional()
-  @Transform(({ value }) => {
-    if (typeof value === 'string') {
-      return value.toLowerCase() === 'true';
-    }
-    return Boolean(value);
-  })
-  hasRecording?: boolean = false;
-
-  @ApiPropertyOptional({
-    description: '录制状态',
-    enum: ProcessingStatus,
-    example: ProcessingStatus.PENDING,
-    default: ProcessingStatus.PENDING,
-  })
-  @IsOptional()
-  @IsEnum(ProcessingStatus, { message: '无效的录制状态' })
-  recordingStatus?: ProcessingStatus = ProcessingStatus.PENDING;
-
-  @ApiPropertyOptional({
-    description: '处理状态',
-    enum: ProcessingStatus,
-    example: ProcessingStatus.PENDING,
-    default: ProcessingStatus.PENDING,
-  })
-  @IsOptional()
-  @IsEnum(ProcessingStatus, { message: '无效的处理状态' })
-  processingStatus?: ProcessingStatus = ProcessingStatus.PENDING;
+  durationSeconds?: number;
 
   @ApiPropertyOptional({
     description: '元数据',

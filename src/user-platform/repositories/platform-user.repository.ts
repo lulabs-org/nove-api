@@ -5,6 +5,16 @@ import type { PlatformUser, Platform, Prisma } from '@prisma/client';
 type PlatformUserCreateInput = Prisma.PlatformUserUncheckedCreateInput;
 type PlatformUserUpdateInput = Prisma.PlatformUserUncheckedUpdateInput;
 
+type PlatformUserWithProfile = Prisma.PlatformUserGetPayload<{
+  include: {
+    user: {
+      include: {
+        profile: true;
+      };
+    };
+  };
+}>;
+
 @Injectable()
 export class PlatformUserRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -33,7 +43,7 @@ export class PlatformUserRepository {
     >,
   ): Promise<PlatformUser> {
     return this.prisma.platformUser.update({
-      where: { id },
+      where: { id, deletedAt: null },
       data,
     });
   }
@@ -50,7 +60,7 @@ export class PlatformUserRepository {
     return this.prisma.platformUser.upsert({
       where: { unique_platform_union_user: { platform, ptUnionId } },
       create: { ...data, platform, ptUnionId, lastSeenAt: now },
-      update: { ...data, lastSeenAt: now },
+      update: { ...data, lastSeenAt: now, deletedAt: null },
     });
   }
 
@@ -76,7 +86,7 @@ export class PlatformUserRepository {
         return this.prisma.platformUser.upsert({
           where: { unique_platform_union_user: { platform, ptUnionId } },
           create: { ...data, platform, ptUnionId, lastSeenAt: now },
-          update: { ...data, lastSeenAt: now },
+          update: { ...data, lastSeenAt: now, deletedAt: null },
         });
       }),
     );
@@ -86,25 +96,34 @@ export class PlatformUserRepository {
     platform: Platform,
     ptUnionId: string,
   ): Promise<PlatformUser | null> {
-    return this.prisma.platformUser.findUnique({
+    return this.prisma.platformUser.findFirst({
       where: {
-        unique_platform_union_user: {
-          platform,
-          ptUnionId,
+        platform,
+        ptUnionId,
+        deletedAt: null,
+      },
+    });
+  }
+
+  async findById(id: string): Promise<PlatformUserWithProfile | null> {
+    return this.prisma.platformUser.findFirst({
+      where: { id, deletedAt: null },
+      include: {
+        user: {
+          include: {
+            profile: true,
+          },
         },
       },
     });
   }
 
-  async findById(id: string): Promise<PlatformUser | null> {
-    return this.prisma.platformUser.findUnique({
-      where: { id },
-    });
-  }
-
   async findByUserId(userId: string): Promise<PlatformUser[]> {
     return this.prisma.platformUser.findMany({
-      where: { user: { id: userId } },
+      where: {
+        user: { id: userId },
+        deletedAt: null,
+      },
     });
   }
 
@@ -113,6 +132,7 @@ export class PlatformUserRepository {
       where: {
         platform,
         active: true,
+        deletedAt: null,
       },
     });
   }
@@ -126,6 +146,7 @@ export class PlatformUserRepository {
         platform,
         ptUserId,
         active: true,
+        deletedAt: null,
       },
     });
   }
@@ -139,6 +160,7 @@ export class PlatformUserRepository {
         platform,
         displayName,
         active: true,
+        deletedAt: null,
       },
     });
   }
@@ -155,6 +177,7 @@ export class PlatformUserRepository {
         phoneHash,
         localUserId: null,
         active: true,
+        deletedAt: null,
       },
     });
   }
@@ -170,27 +193,28 @@ export class PlatformUserRepository {
         countryCode,
         phoneHash,
         active: true,
+        deletedAt: null,
       },
     });
   }
 
   async updateLastSeen(id: string): Promise<PlatformUser> {
     return this.prisma.platformUser.update({
-      where: { id },
+      where: { id, deletedAt: null },
       data: { lastSeenAt: new Date() },
     });
   }
 
   async deactivate(id: string): Promise<PlatformUser> {
     return this.prisma.platformUser.update({
-      where: { id },
+      where: { id, deletedAt: null },
       data: { active: false },
     });
   }
 
   async activate(id: string): Promise<PlatformUser> {
     return this.prisma.platformUser.update({
-      where: { id },
+      where: { id, deletedAt: null },
       data: { active: true },
     });
   }
@@ -199,17 +223,124 @@ export class PlatformUserRepository {
     countryCode: string,
     phone: string,
   ): Promise<{ count: number }> {
-    return this.prisma.platformUser.deleteMany({
+    return this.prisma.platformUser.updateMany({
       where: {
         countryCode,
         phone,
+        deletedAt: null,
+      },
+      data: {
+        deletedAt: new Date(),
       },
     });
   }
 
   async deleteById(id: string): Promise<PlatformUser> {
-    return this.prisma.platformUser.delete({
-      where: { id },
+    return this.prisma.platformUser.update({
+      where: { id, deletedAt: null },
+      data: {
+        deletedAt: new Date(),
+      },
+    });
+  }
+
+  async findMany(params: {
+    platform?: Platform;
+    keyword?: string;
+    active?: boolean;
+    localUserId?: string;
+    page?: number;
+    pageSize?: number;
+  }): Promise<{ items: PlatformUser[]; total: number }> {
+    const {
+      platform,
+      keyword,
+      active,
+      localUserId,
+      page = 1,
+      pageSize = 20,
+    } = params;
+
+    const where: Prisma.PlatformUserWhereInput = {
+      deletedAt: null,
+      ...(platform ? { platform } : {}),
+      ...(active !== undefined ? { active } : {}),
+      ...(localUserId ? { localUserId } : {}),
+      ...(keyword
+        ? {
+            OR: [
+              { id: keyword },
+              { displayName: { contains: keyword, mode: 'insensitive' } },
+              { phone: { contains: keyword } },
+              { ptUserId: { contains: keyword, mode: 'insensitive' } },
+              { ptUnionId: { contains: keyword, mode: 'insensitive' } },
+              {
+                user: {
+                  is: {
+                    OR: [
+                      { id: keyword },
+                      { username: { contains: keyword, mode: 'insensitive' } },
+                      { email: { contains: keyword, mode: 'insensitive' } },
+                      { phone: { contains: keyword } },
+                      {
+                        profile: {
+                          displayName: {
+                            contains: keyword,
+                            mode: 'insensitive',
+                          },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            ],
+          }
+        : {}),
+    };
+
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.platformUser.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+      this.prisma.platformUser.count({ where }),
+    ]);
+
+    return { items, total };
+  }
+
+  async searchLocalUsers(keyword: string) {
+    return this.prisma.user.findMany({
+      where: {
+        deletedAt: null,
+        OR: [
+          { id: keyword },
+          { username: { contains: keyword, mode: 'insensitive' } },
+          { email: { contains: keyword, mode: 'insensitive' } },
+          { phone: { contains: keyword } },
+          {
+            profile: {
+              displayName: { contains: keyword, mode: 'insensitive' },
+            },
+          },
+        ],
+      },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        phone: true,
+        profile: {
+          select: {
+            displayName: true,
+            avatar: true,
+          },
+        },
+      },
+      take: 20,
     });
   }
 }

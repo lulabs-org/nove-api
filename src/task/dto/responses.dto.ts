@@ -1,0 +1,35 @@
+import { TaskStatus, TaskType } from '@prisma/client';
+
+// ---- Swagger View Models（仅用于文档展示，不影响业务类型）----
+export class OkResponse {
+  ok!: true;
+}
+
+export class RunNowResponse {
+  jobId!: string | number | null;
+}
+
+export class TaskEntity {
+  id!: string;
+  name!: string;
+  handler!: string;
+  type!: TaskType;
+  queueName!: string;
+  jobId!: string | null;
+  repeatKey!: string | null;
+  cron!: string | null;
+  timezone!: string | null;
+  runAt!: Date | null;
+  payload!: Record<string, unknown>;
+  status!: TaskStatus;
+  lastError!: string | null;
+  createdAt!: Date;
+  updatedAt!: Date;
+}
+
+export class PaginatedTasksResponse {
+  items!: TaskEntity[];
+  total!: number;
+  page!: number;
+  pageSize!: number;
+}

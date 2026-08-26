@@ -23,7 +23,7 @@ import {
 
 import { McpStreamableHttpService } from '@rekog/mcp-nest';
 import { Public } from '@/auth/decorators/public.decorator';
-import { McpAuthJwtGuard } from '@/api-key/guards/api-key-mcp-auth.guard';
+import { McpAuthJwtGuard } from '@/admin/api-key/guards/api-key-mcp-auth.guard';
 
 /**
  * Advanced Streamable HTTP Controller - Direct use of McpStreamableHttpService

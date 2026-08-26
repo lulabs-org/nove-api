@@ -13,6 +13,7 @@ import { Injectable } from '@nestjs/common';
 import { Tool, ToolScopes, Context } from '@rekog/mcp-nest';
 import { z } from 'zod';
 import { PrismaService } from '@/prisma/prisma.service';
+import { DesensitizationUtil } from '@/common/utils/desensitization.util';
 import type { McpRequestWithUser, McpUserPayload } from '@rekog/mcp-nest';
 
 @Injectable()
@@ -49,9 +50,9 @@ export class UserInfoTool {
       data: {
         id: user.id,
         username: user.username,
-        email: user.email,
+        email: DesensitizationUtil.maskEmail(user.email),
         countryCode: user.countryCode,
-        phone: user.phone,
+        phone: DesensitizationUtil.maskPhone(user.phone),
         emailVerified: !!user.emailVerifiedAt,
         phoneVerified: !!user.phoneVerifiedAt,
         active: user.active,
@@ -62,8 +63,7 @@ export class UserInfoTool {
               displayName: user.profile.displayName,
               avatar: user.profile.avatar,
               bio: user.profile.bio,
-              firstName: user.profile.firstName,
-              lastName: user.profile.lastName,
+              fullName: user.profile.fullName,
               dateOfBirth: user.profile.dateOfBirth?.toISOString(),
               gender: user.profile.gender,
               city: user.profile.city,
@@ -124,9 +124,9 @@ export class UserInfoTool {
       data: {
         id: dbUser.id,
         username: dbUser.username,
-        email: dbUser.email,
+        email: DesensitizationUtil.maskEmail(dbUser.email),
         countryCode: dbUser.countryCode,
-        phone: dbUser.phone,
+        phone: DesensitizationUtil.maskPhone(dbUser.phone),
         emailVerified: !!dbUser.emailVerifiedAt,
         phoneVerified: !!dbUser.phoneVerifiedAt,
         active: dbUser.active,
@@ -137,8 +137,7 @@ export class UserInfoTool {
               displayName: dbUser.profile.displayName,
               avatar: dbUser.profile.avatar,
               bio: dbUser.profile.bio,
-              firstName: dbUser.profile.firstName,
-              lastName: dbUser.profile.lastName,
+              fullName: dbUser.profile.fullName,
               dateOfBirth: dbUser.profile.dateOfBirth?.toISOString(),
               gender: dbUser.profile.gender,
               city: dbUser.profile.city,

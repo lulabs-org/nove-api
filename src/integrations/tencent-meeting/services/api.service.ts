@@ -1,16 +1,17 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, Logger } from '@nestjs/common';
 import { ConfigType } from '@nestjs/config';
 import { tencentMeetingConfig } from '@/configs/tencent-mtg.config';
 import { generateSignature } from '../utils/crypto.util';
 import {
   RecordingDetail,
+  RecordMeeting,
   RecordMeetingsResponse,
   MeetingParticipantsResponse,
   MeetingDetailResponse,
   SmartTopicsResponse,
   SmartFullSummaryResponse,
   SmartMeetingMinutesResponse,
-  RecordingTranscriptResponse,
+  TranscriptResponse,
 } from '../types';
 
 /**
@@ -21,6 +22,7 @@ import {
 @Injectable()
 export class TencentApiService {
   private readonly BASE_URL = 'https://api.meeting.qq.com';
+  private readonly logger = new Logger(TencentApiService.name);
 
   constructor(
     @Inject(tencentMeetingConfig.KEY)
@@ -56,9 +58,13 @@ export class TencentApiService {
     queryParams: Record<string, unknown> = {},
   ): Promise<T> {
     try {
-      const queryString = new URLSearchParams(
-        queryParams as Record<string, string>,
-      ).toString();
+      const filteredParams: Record<string, string> = {};
+      for (const [key, value] of Object.entries(queryParams)) {
+        if (value !== undefined) {
+          filteredParams[key] = String(value as string | number | boolean);
+        }
+      }
+      const queryString = new URLSearchParams(filteredParams).toString();
       const fullRequestUri = queryString
         ? `${requestUri}?${queryString}`
         : requestUri;
@@ -108,7 +114,10 @@ export class TencentApiService {
 
       return responseData;
     } catch (error: unknown) {
-      console.error('API请求失败:', error);
+      this.logger.error(
+        'API请求失败:',
+        error instanceof Error ? error.message : String(error),
+      );
       throw error;
     }
   }
@@ -134,7 +143,7 @@ export class TencentApiService {
     const code = new_error_code ?? error_code ?? 0;
 
     if (code === 500125) {
-      throw new Error('IP白名单错误');
+      throw new Error(`IP白名单错误: ${message}`);
     }
 
     throw new Error(message || `API error at ${requestUri} (${timestamp})`);
@@ -195,41 +204,28 @@ export class TencentApiService {
 
   /**
    * Retrieves detailed information about a specific meeting
-   * https://cloud.tencent.com/document/product/1095/93432#9bc6b875-6415-4cda-931e-0d987e4da5bf
+   * https://cloud.tencent.com/document/product/1095/93432#a30942f2-df7d-4e00-8ab3-aba782396e90
    * @param meetingId - Unique meeting identifier
-   * @param userId - User ID making the request (required if operatorId is not provided)
-   * @param instanceId - Meeting instance ID (default: 1)
-   * @param operatorId - Operator ID (optional, if provided takes precedence over userId)
+   * @param operatorId - Operator ID
    * @param operatorIdType - Operator ID type (default: 1 for userid)
-   * @param subMeetingId - Sub-meeting ID for recurring meetings (optional)
+   * @param instanceId - Meeting instance ID (default: 1)
    * @returns Promise resolving to meeting details
    */
   async getMeetingDetail(
     meetingId: string,
-    userId?: string,
-    instanceId: number = 1,
-    operatorId?: string,
+    operatorId: string,
     operatorIdType: number = 1,
-    subMeetingId?: string,
+    instanceId: number = 1,
   ): Promise<MeetingDetailResponse> {
+    if (!operatorId) {
+      throw new Error('operatorId must be provided');
+    }
+
     const queryParams: Record<string, unknown> = {
       instanceid: instanceId,
+      operator_id: operatorId,
+      operator_id_type: operatorIdType,
     };
-
-    // 根据文档，operator_id和userid二者必填一项，若两者都填，以operator_id字段为准
-    if (operatorId) {
-      queryParams.operator_id = operatorId;
-      queryParams.operator_id_type = operatorIdType;
-    } else if (userId) {
-      queryParams.userid = userId;
-    } else {
-      throw new Error('Either operatorId or userId must be provided');
-    }
-
-    // 添加子会议ID（用于周期性会议）
-    if (subMeetingId) {
-      queryParams.sub_meeting_id = subMeetingId;
-    }
 
     return this.sendRequest<MeetingDetailResponse>(
       'GET',
@@ -405,40 +401,116 @@ export class TencentApiService {
    * @param recordFileId - Unique identifier of the recording file
    * @param operatorId - Operator ID making the request
    * @param operatorIdType - Operator ID type (1: userid, 2: openid)
-   * @param page - Page number for pagination
-   * @param pageSize - Number of transcript entries per page
+   * @param pid - Paragraph ID from which to start querying
+   * @param limit - Number of paragraphs to query
    * @param pwd - Optional password for accessing the recording file
+   * @param meetingId - Optional meeting ID
+   * @param transcriptsType - Optional transcript type (0: original, 1: smart optimized)
    * @returns Promise resolving to recording transcript details
    */
-  async getTranscript(
-    recordFileId: string,
-    operatorId: string,
-    operatorIdType: number = 1,
-    page?: number,
-    pageSize?: number,
-    pwd?: string,
-  ): Promise<RecordingTranscriptResponse> {
+  async getTranscript(params: {
+    recordFileId: string;
+    operatorId: string;
+    operatorIdType?: number;
+    meetingId?: string;
+    transcriptsType?: number;
+    pid?: string;
+    limit?: number;
+  }): Promise<TranscriptResponse> {
     const queryParams: Record<string, unknown> = {
-      record_file_id: recordFileId,
-      operator_id: operatorId,
-      operator_id_type: operatorIdType,
+      record_file_id: params.recordFileId,
+      operator_id: params.operatorId,
+      operator_id_type: params.operatorIdType ?? 1,
     };
 
     // Add optional parameters if provided
-    if (page !== undefined) {
-      queryParams.page = page;
+    if (params.pid !== undefined) {
+      queryParams.pid = params.pid;
     }
-    if (pageSize !== undefined) {
-      queryParams.page_size = pageSize;
+    if (params.limit !== undefined) {
+      queryParams.limit = params.limit;
     }
-    if (pwd) {
-      queryParams.pwd = pwd;
+    if (params.meetingId) {
+      queryParams.meeting_id = params.meetingId;
+    }
+    if (params.transcriptsType !== undefined) {
+      queryParams.transcripts_type = params.transcriptsType;
     }
 
-    return this.sendRequest<RecordingTranscriptResponse>(
+    return this.sendRequest<TranscriptResponse>(
       'GET',
       `/v1/records/transcripts/details`,
       queryParams,
     );
+  }
+
+  /**
+   * Retrieves all corporate meeting records within a specified time range
+   * Automatically paginates through all pages to collect complete data
+   * @param startTime - Start timestamp (Unix timestamp in seconds)
+   * @param endTime - End timestamp (Unix timestamp in seconds)
+   * @param operatorId - Optional operator ID for filtering
+   * @param operatorIdType - Operator ID type (default 1)
+   * @returns Promise resolving to all meeting records across all pages
+   */
+  async getAllCorpRecords(
+    startTime: number,
+    endTime: number,
+    operatorId?: string,
+    operatorIdType: number = 1,
+  ): Promise<RecordMeeting[]> {
+    const maxRange = 31 * 24 * 60 * 60;
+    const allRecords: RecordMeeting[] = [];
+
+    let chunkStart = startTime;
+    while (chunkStart < endTime) {
+      const chunkEnd = Math.min(chunkStart + maxRange, endTime);
+
+      const chunkRecords = await this.fetchCorpRecordsPage(
+        chunkStart,
+        chunkEnd,
+        operatorId,
+        operatorIdType,
+      );
+      allRecords.push(...chunkRecords);
+
+      chunkStart = chunkEnd;
+    }
+
+    this.logger.log(`Fetched ${allRecords.length} recording records in total`);
+
+    return allRecords;
+  }
+
+  private async fetchCorpRecordsPage(
+    startTime: number,
+    endTime: number,
+    operatorId?: string,
+    operatorIdType: number = 1,
+  ): Promise<RecordMeeting[]> {
+    const records: RecordMeeting[] = [];
+    const pageSize = 20;
+    let page = 1;
+    let totalPage = 1;
+
+    do {
+      const response = await this.getCorpRecords(
+        startTime,
+        endTime,
+        pageSize,
+        page,
+        operatorId,
+        operatorIdType,
+      );
+
+      if (response.record_meetings) {
+        records.push(...response.record_meetings);
+      }
+
+      totalPage = response.total_page;
+      page++;
+    } while (page <= totalPage);
+
+    return records;
   }
 }

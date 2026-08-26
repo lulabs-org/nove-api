@@ -22,7 +22,7 @@ model Product {
   isFeatured       Boolean         @default(false) @map("is_featured") // 是否精选
   salesCount       Int             @default(0) @map("sales_count") // 销售数量
   viewCount        Int             @default(0) @map("view_count") // 浏览次数
-  rating           Decimal?        @db.Decimal(3, 2) @map("rating") // 评分 (0-5)
+  rating           Decimal?        @map("rating") @db.Decimal(3, 2) // 评分 (0-5)
   reviewCount      Int             @default(0) @map("review_count") // 评价数量
   createdBy        String?         @map("created_by") // 创建人（系统用户ID）
   updatedBy        String?         @map("updated_by") // 更新人（系统用户ID）
@@ -35,8 +35,9 @@ model Product {
   orders  Order[] // 产品的订单记录
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6) // 创建时间
-  updatedAt DateTime @updatedAt     @map("updated_at") @db.Timestamptz(6) // 更新时间
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6) // 更新时间
 
+  @@unique([productCode], map: "uq_product_product_code")
   @@index([category], map: "idx_product_category")
   @@index([status], map: "idx_product_status")
   @@index([createdAt], map: "idx_product_created_at")
@@ -45,7 +46,6 @@ model Product {
   @@index([category, status], map: "idx_product_category_status") // 分类产品查询
   @@index([createdBy], map: "idx_product_created_by")
   @@index([updatedBy], map: "idx_product_updated_by")
-  @@unique([productCode], map: "uq_product_product_code")
   @@map("products")
 }
 

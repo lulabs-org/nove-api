@@ -9,18 +9,21 @@
  * Copyright (c) 2025 by ${git_name_email}, All Rights Reserved.
  */
 
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
 import { Public } from '@/auth/decorators/public.decorator';
 import { AppService } from './app.service';
 
 @ApiTags('Default')
 @Controller()
+@UseGuards(ThrottlerGuard)
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @Get()
   @Public()
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 限制 1 分钟内最多请求 5 次
   @ApiOperation({ summary: '获取欢迎信息' })
   @ApiResponse({ status: 200, description: '返回欢迎信息', type: String })
   getHello(): string {

@@ -1,0 +1,118 @@
+model TrackingReport {
+  id String @id @default(cuid())
+
+  targetId String         @map("target_id")
+  target   TrackingTarget @relation(fields: [targetId], references: [id], onDelete: Cascade)
+
+  trackingType TargetTrackingReportType @map("tracking_type")
+  cadence      TrackingReportCadence
+  /// 周期标识，用于防重和分组查询。例如："2026-08-15" (日), "2026-W34" (周), "2026-08" (月), "2026-Q3" (季), "2026" (年)
+  periodKey    String?                  @map("period_key") @db.VarChar(50)
+  /// 周期开始时间（包含）
+  periodStart  DateTime                 @map("period_start") @db.Timestamptz(6)
+  /// 下一周期开始时间（不包含），与 periodStart 组成半开区间
+  periodEnd    DateTime                 @map("period_end") @db.Timestamptz(6)
+  timezone     String                   @default("Asia/Shanghai") @db.VarChar(100)
+  content      String                   @db.Text
+  generatedBy  GenerationMethod?        @map("generated_by")
+  aiModel      String?                  @map("ai_model")
+
+  sources TrackingReportSource[]
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@unique([targetId, trackingType, periodKey], map: "uq_tracking_report_period")
+  @@index([targetId, trackingType, periodStart])
+  @@index([trackingType, cadence, periodStart])
+  @@map("tracking_reports")
+}
+
+model TrackingReportSource {
+  id String @id @default(cuid())
+
+  reportId String         @map("report_id")
+  report   TrackingReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  sourceType TrackingSourceType @map("source_type")
+  sourceId   String             @map("source_id")
+
+  metadata  Json     @default("{}") @db.JsonB
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([reportId, sourceType, sourceId])
+  @@index([sourceType, sourceId])
+  @@map("tracking_report_sources")
+}
+
+model TrackingTarget {
+  id String @id @default(cuid())
+
+  targetType TrackingTargetType @map("target_type")
+  targetId   String             @map("target_id")
+
+  nameSnapshot String @map("name_snapshot") @db.VarChar(100)
+  metadata     Json   @default("{}") @db.JsonB
+
+  reports TrackingReport[]
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([targetType, targetId])
+  @@map("tracking_targets")
+}
+
+/// 追踪目标类型（Hub的聚焦点）
+enum TrackingTargetType {
+  /// 本地用户
+  USER
+  /// 平台用户（外部接入）
+  PLATFORM_USER
+  /// 项目
+  PROJECT
+  /// 组织/团队
+  ORGANIZATION
+}
+
+/// 追踪报告类型
+enum TargetTrackingReportType {
+  /// 会议总结
+  MEETING_SUMMARY
+  /// 培训计划
+  TRAINING_PLAN
+  /// 培养方案
+  DEVELOPMENT_PLAN
+  /// 项目进度
+  PROJECT_PROGRESS
+  /// 用户画像
+  USER_PROFILE
+}
+
+/// 追踪引用来源的类型
+enum TrackingSourceType {
+  /// 个人发言总结
+  SPEAKER_SUMMARY
+  /// 历史追踪报告
+  TRACKING_REPORT
+  /// 文档/文件
+  DOCUMENT
+  /// 会议记录
+  MEETING
+}
+
+/// 追踪频率（周期）
+enum TrackingReportCadence {
+  /// 每日
+  DAILY
+  /// 每周
+  WEEKLY
+  /// 每月
+  MONTHLY
+  /// 每季度
+  QUARTERLY
+  /// 每年
+  YEARLY
+}

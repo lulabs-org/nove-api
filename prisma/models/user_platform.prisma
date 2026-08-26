@@ -26,15 +26,13 @@ model PlatformUser {
   active Boolean @default(true) // 是否活跃
 
   // 关联关系
-  createdMeetings      Meeting[]            @relation("MeetingCreator") // 创建的会议
-  hostedMeetings       Meeting[]            @relation("HostedMeetings") // 主持的会议
-  paragraphs           Paragraph[]          @relation("Speaker") // 关联的段落
-  createdSummaries     MeetingSummary[]     @relation("SummaryCreator") // 创建的总结
-  approvedSummaries    MeetingSummary[]     @relation("ApprovedSummaries") // 审核的总结
-  actions              MeetingUserAction[]  @relation("UserActions")
-  meetingRecordings    MeetingRecording[]   @relation("RecordingUser")
-  meetingParticipants  MeetingParticipant[] @relation("ParticipantUser")
-  participantSummaries ParticipantSummary[] @relation("ParticipantSummaries") // 参与者总结
+  createdMeetings     Meeting[]            @relation("MeetingCreator") // 创建的会议
+  hostedMeetings      Meeting[]            @relation("HostedMeetings") // 主持的会议
+  transcriptSegments  TranscriptSegment[]  @relation("Speaker") // 关联的片段
+  actions             MeetingUserAction[]  @relation("UserActions")
+  minutes             Minute[]             @relation("RecordingUser")
+  meetingParticipants MeetingParticipant[] @relation("ParticipantUser")
+  speakerSummaries    SpeakerSummary[]     @relation("SpeakerSummaries")
 
   // 系统字段及时间
   createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)

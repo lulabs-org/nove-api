@@ -21,15 +21,15 @@ describe('TranscriptFormatterService', () => {
   describe('format', () => {
     it('should return empty string when transcript is null or undefined', () => {
       expect(service.format(undefined)).toEqual({
-        formattedText: '',
-        speakerInfos: [],
+        text: '',
+        speakers: [],
       });
     });
 
     it('should return empty string when transcript has no minutes or paragraphs', () => {
       expect(service.format([])).toEqual({
-        formattedText: '',
-        speakerInfos: [],
+        text: '',
+        speakers: [],
       });
     });
 
@@ -107,11 +107,9 @@ describe('TranscriptFormatterService', () => {
       ];
 
       const result = service.format(transcript);
-      expect(result.formattedText).toBe(
-        '张三(01:00:00)：大家好，今天我们讨论项目进展',
-      );
-      expect(result.speakerInfos).toHaveLength(1);
-      expect(result.speakerInfos[0].username).toBe('张三');
+      expect(result.text).toBe('张三(01:00:00)：大家好，今天我们讨论项目进展');
+      expect(result.speakers).toHaveLength(1);
+      expect(result.speakers[0].username).toBe('张三');
     });
 
     it('should format transcript with single paragraph and multiple sentences', () => {
@@ -201,11 +199,9 @@ describe('TranscriptFormatterService', () => {
       ];
 
       const result = service.format(transcript);
-      expect(result.formattedText).toBe(
-        '李四(01:01:05)：首先，我来介绍一下这个功能。',
-      );
-      expect(result.speakerInfos).toHaveLength(1);
-      expect(result.speakerInfos[0].username).toBe('李四');
+      expect(result.text).toBe('李四(01:01:05)：首先，我来介绍一下这个功能。');
+      expect(result.speakers).toHaveLength(1);
+      expect(result.speakers[0].username).toBe('李四');
     });
 
     it('should format transcript with multiple paragraphs', () => {
@@ -303,10 +299,10 @@ describe('TranscriptFormatterService', () => {
       ];
 
       const result = service.format(transcript);
-      expect(result.formattedText).toBe(
+      expect(result.text).toBe(
         '王五(00:30:00)：项目目前进展顺利\n\n赵六(00:31:00)：下一阶段计划是',
       );
-      expect(result.speakerInfos).toHaveLength(2);
+      expect(result.speakers).toHaveLength(2);
     });
 
     it('should handle missing speaker_info', () => {
@@ -353,7 +349,7 @@ describe('TranscriptFormatterService', () => {
       ];
 
       const result = service.format(transcript);
-      expect(result.formattedText).toBe('未知发言人(00:01:00)：没有发言人信息');
+      expect(result.text).toBe('未知发言人(00:01:00)：没有发言人信息');
     });
 
     it('should handle missing username in speaker_info', () => {
@@ -394,7 +390,7 @@ describe('TranscriptFormatterService', () => {
       ];
 
       const result = service.format(transcript);
-      expect(result.formattedText).toBe('未知发言人(00:02:00)：用户名为空');
+      expect(result.text).toBe('未知发言人(00:02:00)：用户名为空');
     });
 
     it('should handle empty sentences array', () => {
@@ -415,7 +411,7 @@ describe('TranscriptFormatterService', () => {
       ];
 
       const result = service.format(transcript);
-      expect(result.formattedText).toBe('');
+      expect(result.text).toBe('');
     });
 
     it('should handle empty words array in sentence', () => {
@@ -443,7 +439,7 @@ describe('TranscriptFormatterService', () => {
       ];
 
       const result = service.format(transcript);
-      expect(result.formattedText).toBe('测试用户(00:00:30)：');
+      expect(result.text).toBe('测试用户(00:00:30)：');
     });
   });
 });

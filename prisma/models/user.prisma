@@ -1,6 +1,6 @@
 model User {
   id       String  @id @default(cuid())
-  username String? @unique @db.VarChar(50) // 登录用户名，如 john_doe
+  username String @unique @db.VarChar(50) // 登录用户名，如 john_doe
 
   // password 密码相关字段
   passwordHash   String?   @map("password_hash") @db.VarChar(255)
@@ -29,13 +29,18 @@ model User {
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6) // 软删除时间戳
 
   // 认证相关关联
-  accounts      Account[]
-  sessions      Session[]
-  Authenticator Authenticator[]
-  refreshTokens RefreshToken[] // User's refresh tokens
-
+  accounts             Account[]
+  sessions             Session[]
+  Authenticator        Authenticator[]
+  refreshTokens        RefreshToken[] // User's refresh tokens
+  oauthAuthCodes       OAuthAuthCode[] // User's OAuth auth codes
+  oauthTokens          OAuthToken[] // User's OAuth tokens
+  createdOAuthClients  OAuthClient[]         @relation("OAuthClientCreator")
+  updatedOAuthClients  OAuthClient[]         @relation("OAuthClientUpdater")
+  oauthClientAuditLogs OAuthClientAuditLog[] @relation("OAuthClientAuditActor")
   // 组织成员关联
-  orgMembers OrgMember[] // 用户所属的组织成员关系
+  orgMembers           OrgMember[] // 用户所属的组织成员关系
+  ledDepartments       Dept[]                @relation("DepartmentLeader")
 
   // 个人详细信息
   profile     UserProfile?
@@ -60,6 +65,7 @@ model User {
   // 平台与存储相关关联
   platformUsers          PlatformUser[] // 平台用户关联
   uploadedStorageObjects StorageObject[]
+  phoneHashMappings      UserPhoneHash[] // 手机号哈希映射
 
   @@unique([countryCode, phone], name: "uq_users_country_code_phone")
   @@index([username]) // 用户名登录优化

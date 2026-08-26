@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-29 10:29:37
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-19 17:38:58
+ * @LastEditTime: 2026-03-29 20:28:14
  * @FilePath: /nove_api/src/mcp-server/mcp-server.module.ts
  * @Description:
  *
@@ -11,19 +11,19 @@
 
 import { Module } from '@nestjs/common';
 import { McpModule } from '@rekog/mcp-nest';
-import { RoleModule } from '@/role/role.module';
+import { RoleModule } from '@/admin/role/role.module';
+import { MeetingModule } from '@/meeting/meeting.module';
+import { MinuteModule } from '@/minute/minute.module';
+import { SpeakerSummaryRepository } from '@/minute/repositories';
+
 import {
   GreetingTool,
   UserInfoTool,
   UserSearchTool,
   MeetingStatsTool,
 } from './tools';
-import {
-  UserSearchRepository,
-  MeetingStatsRepository,
-  PlatformUserRepository,
-  ParticipantSummaryRepository,
-} from './repositories';
+import { MeetingStatsRepository, PlatformUserRepository } from './repositories';
+import { UserModule } from '@/user/user.module';
 import { SseController, StreamableHttpController } from './controllers';
 
 @Module({
@@ -40,6 +40,9 @@ import { SseController, StreamableHttpController } from './controllers';
       // guards: [McpAuthJwtGuard], // 保护所有 MCP 端点
     }),
     RoleModule,
+    MeetingModule,
+    MinuteModule,
+    UserModule,
   ],
   controllers: [SseController, StreamableHttpController],
   providers: [
@@ -47,10 +50,9 @@ import { SseController, StreamableHttpController } from './controllers';
     UserInfoTool,
     UserSearchTool,
     MeetingStatsTool,
-    UserSearchRepository,
     MeetingStatsRepository,
     PlatformUserRepository,
-    ParticipantSummaryRepository,
+    SpeakerSummaryRepository,
   ],
 })
 export class McpServerModule {}

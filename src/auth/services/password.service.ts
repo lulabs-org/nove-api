@@ -12,9 +12,10 @@ import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
 import { VerificationService } from '@/verification/verification.service';
 import { CodeType } from '@/verification/enums';
-import { UserRepository } from '@/user/repositories/user.repository';
+import { UserQueryRepository } from '@/user/repositories/user-query.repository';
+import { UserCommandRepository } from '@/user/repositories/user-command.repository';
 import { AuthPolicyService } from './auth-policy.service';
-import { MailService } from '@/mail/mail.service';
+import { MailService } from '@/mail/services/mail.service';
 import { buildPasswordResetNotificationEmail } from '../../common/email-templates';
 import { hashPassword, validatePassword } from '@/common/utils/password.util';
 import { LoginType } from '@/auth/enums';
@@ -24,7 +25,8 @@ export class PasswordService {
   private readonly logger = new Logger(PasswordService.name);
 
   constructor(
-    private readonly userRepo: UserRepository,
+    private readonly userQueryRepo: UserQueryRepository,
+    private readonly userCommandRepo: UserCommandRepository,
     private readonly verificationService: VerificationService,
     private readonly authPolicy: AuthPolicyService,
     private readonly mailService: MailService,
@@ -46,7 +48,7 @@ export class PasswordService {
       throw new BadRequestException(verifyResult.message);
     }
 
-    const user = await this.userRepo.findByTarget(target);
+    const user = await this.userQueryRepo.byTarget(target);
     if (!user) {
       throw new BadRequestException('用户不存在');
     }
@@ -54,7 +56,7 @@ export class PasswordService {
     validatePassword(newPassword);
 
     const hashedPassword = await hashPassword(newPassword);
-    await this.userRepo.updatePassword(user.id, hashedPassword);
+    await this.userCommandRepo.updatePassword(user.id, hashedPassword);
 
     await this.authPolicy.createLoginLog({
       userId: user.id,

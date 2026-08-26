@@ -9,17 +9,4 @@
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
-export type TableDependencies = Map<string, string[]>;
-
-export interface DatabaseOperationOptions {
-  force?: boolean;
-}
-
-export type DatabaseCommand = 'seed' | 'clean' | 'drop' | 'reset' | 'analyze';
-
-export interface ParsedCommandLineArgs {
-  command: DatabaseCommand;
-  force: boolean;
-}
-
 export type SeedMode = 'mock' | 'real';

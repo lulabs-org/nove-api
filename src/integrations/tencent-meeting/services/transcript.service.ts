@@ -2,7 +2,7 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-12-24 00:00:00
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-09 01:01:29
+ * @LastEditTime: 2026-03-22 03:02:34
  * @FilePath: /nove_api/src/integrations/tencent-meeting/services/transcript.service.ts
  * @Description: 转写服务，负责获取和格式化录音转写内容
  *
@@ -35,49 +35,52 @@ export class TranscriptService {
 
   /**
    * 获取录音转写内容
-   * @param recordFileId 录制文件ID
+   * @param meetingId 会议ID
+   * @param fileId 录制文件ID
    * @param userId 用户ID
    * @returns 包含原始响应、唯一用户名、格式化转写和关键词的结果
    */
-  async getTranscript(
-    recordFileId: string,
+  async fetch(
+    meetingId: string,
+    fileId: string,
     userId: string,
   ): Promise<TranscriptResult> {
     const startTime = Date.now();
-    const context = { recordFileId, userId };
+    const context = { fileId, userId };
 
     this.logger.log('开始获取录音转写', context);
 
     try {
-      // 获取转写数据
-      const transcriptResponse = await this.api.getTranscript(
-        recordFileId,
-        userId,
-      );
+      const res = await this.api.getTranscript({
+        recordFileId: fileId,
+        operatorId: userId,
+        operatorIdType: 1,
+        meetingId: meetingId,
+      });
 
-      if (!transcriptResponse?.minutes?.paragraphs) {
+      if (!res?.minutes?.paragraphs) {
         return this.emptyResult;
       }
 
-      const { minutes } = transcriptResponse;
+      const { minutes } = res;
       const { paragraphs } = minutes;
       const keywords = minutes.keywords || [];
-      const { speakerInfos, formattedText } = this.formatter.format(paragraphs);
+      const { speakers, text } = this.formatter.format(paragraphs);
 
       const duration = Date.now() - startTime;
 
       this.logger.log('获取录音转写成功', {
         ...context,
         duration,
-        uniqueSpeakerInfosCount: speakerInfos.length,
+        uniqueSpeakerInfosCount: speakers.length,
         keywordsCount: keywords.length,
-        formattedLinesCount: formattedText.split('\n\n').length,
+        formattedLinesCount: text.split('\n\n').length,
       });
 
       return {
         paragraphs,
-        uniqueSpeakerInfos: speakerInfos,
-        formattedText,
+        uniqueSpeakerInfos: speakers,
+        formattedText: text,
         keywords,
       };
     } catch (error: unknown) {

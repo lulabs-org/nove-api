@@ -10,11 +10,8 @@ export class UserProfileDto {
   @ApiPropertyOptional({ description: '个人简介' })
   bio?: string;
 
-  @ApiPropertyOptional({ description: '名' })
-  firstName?: string;
-
-  @ApiPropertyOptional({ description: '姓' })
-  lastName?: string;
+  @ApiPropertyOptional({ description: '用户填写的完整姓名，未经实名认证' })
+  fullName?: string;
 
   @ApiPropertyOptional({ description: '出生日期', format: 'date-time' })
   dateOfBirth?: Date;

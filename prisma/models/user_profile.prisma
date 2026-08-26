@@ -10,10 +10,8 @@ model UserProfile {
   bio         String? @db.VarChar(500)
 
   /// 详细个人信息
-  /// 名
-  firstName   String?   @db.VarChar(100)
-  /// 姓
-  lastName    String?   @db.VarChar(100)
+  /// 用户填写的完整姓名，未经实名认证
+  fullName    String?   @map("full_name") @db.VarChar(200)
   /// 出生日期
   dateOfBirth DateTime? @map("date_of_birth") @db.Date
   /// 性别

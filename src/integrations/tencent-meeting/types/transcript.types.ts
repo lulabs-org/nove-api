@@ -9,18 +9,18 @@
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
-export interface RecordingTranscriptWord {
+export interface TranscriptWord {
   wid: string;
   start_time: number;
   end_time: number;
   text: string;
 }
 
-export interface RecordingTranscriptSentence {
+export interface TranscriptSentence {
   sid: string;
   start_time: number;
   end_time: number;
-  words: RecordingTranscriptWord[];
+  words: TranscriptWord[];
 }
 
 export interface SpeakerInfo {
@@ -31,22 +31,22 @@ export interface SpeakerInfo {
   tm_xid?: string;
 }
 
-export interface RecordingTranscriptParagraph {
+export interface TranscriptParagraph {
   pid: string;
   start_time: number;
   end_time: number;
-  sentences: RecordingTranscriptSentence[];
+  sentences: TranscriptSentence[];
   speaker_info: SpeakerInfo;
 }
 
-export interface RecordingTranscriptData {
-  paragraphs: RecordingTranscriptParagraph[];
+export interface TranscriptData {
+  paragraphs: TranscriptParagraph[];
   keywords: string[];
   audio_detect: number;
 }
 
-export interface RecordingTranscriptResponse {
-  minutes: RecordingTranscriptData;
+export interface TranscriptResponse {
+  minutes: TranscriptData;
   more: boolean;
   error_info?: {
     error_code: number;
@@ -56,7 +56,7 @@ export interface RecordingTranscriptResponse {
 }
 
 export interface TranscriptResult {
-  paragraphs: RecordingTranscriptParagraph[];
+  paragraphs: TranscriptParagraph[];
   uniqueSpeakerInfos: SpeakerInfo[];
   formattedText: string;
   keywords: string[];
