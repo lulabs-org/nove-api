@@ -1,3 +1,4 @@
+import * as JSONBig from 'json-bigint';
 import { createDecipheriv, createHash } from 'node:crypto';
 
 /**
@@ -71,5 +72,6 @@ export function decryptWechatMessage(
     throw new Error('AppID mismatch');
   }
 
-  return JSON.parse(msg) as Record<string, unknown>;
+  const JSONBigString = JSONBig({ storeAsString: true });
+  return JSONBigString.parse(msg) as Record<string, unknown>;
 }
