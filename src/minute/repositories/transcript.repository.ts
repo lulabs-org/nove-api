@@ -9,8 +9,60 @@
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { PrismaTransaction } from '@/tencent-mtg/types';
+
+const transcriptDetailsSelect = {
+  id: true,
+  segments: {
+    orderBy: { startTimeMs: 'asc' },
+    select: {
+      id: true,
+      speakerName: true,
+      startTimeMs: true,
+      endTimeMs: true,
+      text: true,
+      speaker: {
+        select: {
+          id: true,
+          displayName: true,
+        },
+      },
+    },
+  },
+} satisfies Prisma.TranscriptSelect;
+
+const transcriptDetailsWithLocalUserSelect = {
+  id: true,
+  segments: {
+    orderBy: { startTimeMs: 'asc' },
+    select: {
+      id: true,
+      speakerName: true,
+      startTimeMs: true,
+      endTimeMs: true,
+      text: true,
+      speaker: {
+        select: {
+          id: true,
+          displayName: true,
+          user: {
+            select: {
+              id: true,
+              profile: {
+                select: {
+                  displayName: true,
+                  fullName: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+} satisfies Prisma.TranscriptSelect;
 
 @Injectable()
 export class TranscriptRepository {
@@ -103,16 +155,14 @@ export class TranscriptRepository {
   async findDetails(minuteId: string) {
     return this.prisma.transcript.findFirst({
       where: { minuteId },
-      include: {
-        segments: {
-          orderBy: {
-            startTimeMs: 'asc',
-          },
-          include: {
-            speaker: true,
-          },
-        },
-      },
+      select: transcriptDetailsSelect,
+    });
+  }
+
+  async findDetailsWithLocalUser(minuteId: string) {
+    return this.prisma.transcript.findFirst({
+      where: { minuteId },
+      select: transcriptDetailsWithLocalUserSelect,
     });
   }
 
