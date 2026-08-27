@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { formatTimeMs } from '@/common/utils/time.util';
 import {
-  PlatformUserMeetingTranscriptsResponseDto,
+  PlatformUserMinuteTranscriptsResponseDto,
   PlatformUserTranscriptContextResponseDto,
   PlatformUserTranscriptSegmentDto,
 } from '../dto/platform-user-transcript.dto';
@@ -27,17 +27,17 @@ type TranscriptSegmentRecord = {
 export class PlatformUserTranscriptService {
   constructor(private readonly repository: PlatformUserTranscriptRepository) {}
 
-  async getMeetingTranscripts(
+  async getMinuteTranscripts(
     platformUserId: string,
     startDateValue: string,
     endDateValue: string,
-  ): Promise<PlatformUserMeetingTranscriptsResponseDto> {
+  ): Promise<PlatformUserMinuteTranscriptsResponseDto> {
     const { startDate, endDate } = this.validateDateRange(
       startDateValue,
       endDateValue,
     );
     const platformUser = await this.ensurePlatformUser(platformUserId);
-    const meetings = await this.repository.findMeetingTranscripts(
+    const minutes = await this.repository.findMinuteTranscripts(
       platformUserId,
       startDate,
       endDate,
@@ -47,25 +47,27 @@ export class PlatformUserTranscriptService {
       platformUser,
       startDate: startDate.toISOString(),
       endDate: endDate.toISOString(),
-      meetings: meetings.map((meeting) => ({
-        meetingId: meeting.id,
-        title: meeting.title,
-        platform: meeting.platform,
-        type: meeting.type,
-        startAt: meeting.startAt,
-        endAt: meeting.endAt,
-        minutes: meeting.minutes.map((minute) => ({
-          minuteId: minute.id,
-          externalId: minute.externalId,
-          source: minute.source,
-          startAt: minute.startAt,
-          endAt: minute.endAt,
-          transcripts: minute.transcripts.map((transcript) => ({
-            transcriptId: transcript.id,
-            segments: transcript.segments.map((segment) =>
-              this.mapSegment(segment),
-            ),
-          })),
+      minutes: minutes.map((minute) => ({
+        minuteId: minute.id,
+        externalId: minute.externalId,
+        source: minute.source,
+        startAt: minute.startAt,
+        endAt: minute.endAt,
+        meeting: minute.meeting
+          ? {
+              meetingId: minute.meeting.id,
+              title: minute.meeting.title,
+              platform: minute.meeting.platform,
+              type: minute.meeting.type,
+              startAt: minute.meeting.startAt,
+              endAt: minute.meeting.endAt,
+            }
+          : null,
+        transcripts: minute.transcripts.map((transcript) => ({
+          transcriptId: transcript.id,
+          segments: transcript.segments.map((segment) =>
+            this.mapSegment(segment),
+          ),
         })),
       })),
     };

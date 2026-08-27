@@ -12,9 +12,9 @@ import {
 import { RequireAllPermissions } from '@/admin/permission/decorators/permissions.decorator';
 import { CuidPipe } from '@/common/pipes/cuid.pipe';
 import {
-  PlatformUserMeetingTranscriptsResponseDto,
+  PlatformUserMinuteTranscriptsResponseDto,
   PlatformUserTranscriptContextResponseDto,
-  QueryPlatformUserMeetingTranscriptsDto,
+  QueryPlatformUserMinuteTranscriptsDto,
   QueryPlatformUserTranscriptContextDto,
 } from '../dto/platform-user-transcript.dto';
 import { PlatformUserTranscriptService } from '../services/platform-user-transcript.service';
@@ -25,20 +25,20 @@ import { PlatformUserTranscriptService } from '../services/platform-user-transcr
 export class PlatformUserTranscriptController {
   constructor(private readonly service: PlatformUserTranscriptService) {}
 
-  @Get('platform-users/:platformUserId/meeting-transcripts')
+  @Get('platform-users/:platformUserId/minute-transcripts')
   @RequireAllPermissions('platform-user:read', 'minute:read')
-  @ApiOperation({ summary: '查询用户会议记录及发言' })
+  @ApiOperation({ summary: '查询用户有发言的录制及转写段落' })
   @ApiParam({ name: 'platformUserId', description: '平台用户记录 ID' })
-  @ApiOkResponse({ type: PlatformUserMeetingTranscriptsResponseDto })
+  @ApiOkResponse({ type: PlatformUserMinuteTranscriptsResponseDto })
   @ApiBadRequestResponse({ description: '时间格式、顺序或跨度无效' })
   @ApiForbiddenResponse({ description: '缺少所需读取权限' })
   @ApiNotFoundResponse({ description: '平台用户不存在' })
-  getMeetingTranscripts(
+  getMinuteTranscripts(
     @Param('platformUserId', CuidPipe) platformUserId: string,
     @Query(new ValidationPipe({ transform: true }))
-    query: QueryPlatformUserMeetingTranscriptsDto,
+    query: QueryPlatformUserMinuteTranscriptsDto,
   ) {
-    return this.service.getMeetingTranscripts(
+    return this.service.getMinuteTranscripts(
       platformUserId,
       query.startDate,
       query.endDate,

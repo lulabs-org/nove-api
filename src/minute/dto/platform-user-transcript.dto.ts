@@ -5,7 +5,7 @@ import { MeetingPlatform, MeetingType, RecordingSource } from '@prisma/client';
 
 const TIMEZONE_SUFFIX = /(?:Z|[+-]\d{2}:\d{2})$/;
 
-export class QueryPlatformUserMeetingTranscriptsDto {
+export class QueryPlatformUserMinuteTranscriptsDto {
   @ApiProperty({
     description: '查询开始时间（包含时区的 ISO 8601 时间，包含边界）',
     example: '2026-08-01T00:00:00+08:00',
@@ -105,6 +105,26 @@ export class PlatformUserTranscriptContextGroupDto {
   segments: PlatformUserTranscriptContextSegmentDto[];
 }
 
+export class PlatformUserTranscriptMeetingDto {
+  @ApiProperty({ description: '会议 ID' })
+  meetingId: string;
+
+  @ApiProperty({ description: '会议标题' })
+  title: string;
+
+  @ApiProperty({ description: '会议平台', enum: MeetingPlatform })
+  platform: MeetingPlatform;
+
+  @ApiProperty({ description: '会议类型', enum: MeetingType })
+  type: MeetingType;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  startAt: Date | null;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  endAt: Date | null;
+}
+
 export class PlatformUserTranscriptMinuteDto {
   @ApiProperty({ description: 'Minute ID' })
   minuteId: string;
@@ -125,34 +145,26 @@ export class PlatformUserTranscriptMinuteDto {
   @ApiProperty({ type: String, format: 'date-time', nullable: true })
   endAt: Date | null;
 
+  @ApiProperty({
+    description: '录制关联的会议；独立录制时为 null',
+    type: 'object',
+    nullable: true,
+    properties: {
+      meetingId: { type: 'string', description: '会议 ID' },
+      title: { type: 'string', description: '会议标题' },
+      platform: { type: 'string', enum: Object.values(MeetingPlatform) },
+      type: { type: 'string', enum: Object.values(MeetingType) },
+      startAt: { type: 'string', format: 'date-time', nullable: true },
+      endAt: { type: 'string', format: 'date-time', nullable: true },
+    },
+  })
+  meeting: PlatformUserTranscriptMeetingDto | null;
+
   @ApiProperty({ type: [PlatformUserTranscriptGroupDto] })
   transcripts: PlatformUserTranscriptGroupDto[];
 }
 
-export class PlatformUserTranscriptMeetingDto {
-  @ApiProperty({ description: '会议 ID' })
-  meetingId: string;
-
-  @ApiProperty({ description: '会议标题' })
-  title: string;
-
-  @ApiProperty({ description: '会议平台', enum: MeetingPlatform })
-  platform: MeetingPlatform;
-
-  @ApiProperty({ description: '会议类型', enum: MeetingType })
-  type: MeetingType;
-
-  @ApiProperty({ type: String, format: 'date-time', nullable: true })
-  startAt: Date | null;
-
-  @ApiProperty({ type: String, format: 'date-time', nullable: true })
-  endAt: Date | null;
-
-  @ApiProperty({ type: [PlatformUserTranscriptMinuteDto] })
-  minutes: PlatformUserTranscriptMinuteDto[];
-}
-
-export class PlatformUserMeetingTranscriptsResponseDto {
+export class PlatformUserMinuteTranscriptsResponseDto {
   @ApiProperty({ type: PlatformUserTranscriptIdentityDto })
   platformUser: PlatformUserTranscriptIdentityDto;
 
@@ -162,8 +174,8 @@ export class PlatformUserMeetingTranscriptsResponseDto {
   @ApiProperty({ type: String, format: 'date-time' })
   endDate: string;
 
-  @ApiProperty({ type: [PlatformUserTranscriptMeetingDto] })
-  meetings: PlatformUserTranscriptMeetingDto[];
+  @ApiProperty({ type: [PlatformUserTranscriptMinuteDto] })
+  minutes: PlatformUserTranscriptMinuteDto[];
 }
 
 export class PlatformUserTranscriptContextResponseDto {

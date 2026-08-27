@@ -5,17 +5,17 @@ import { validate } from 'class-validator';
 import { ApiOkResponse, DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import type { SchemaObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
 import {
-  PlatformUserMeetingTranscriptsResponseDto,
+  PlatformUserMinuteTranscriptsResponseDto,
   PlatformUserTranscriptContextResponseDto,
-  QueryPlatformUserMeetingTranscriptsDto,
+  QueryPlatformUserMinuteTranscriptsDto,
   QueryPlatformUserTranscriptContextDto,
 } from './platform-user-transcript.dto';
 
 @Controller('platform-user-transcript-contract-test')
 class PlatformUserTranscriptContractTestController {
-  @Get('meetings')
-  @ApiOkResponse({ type: PlatformUserMeetingTranscriptsResponseDto })
-  getMeetings(): void {}
+  @Get('minutes')
+  @ApiOkResponse({ type: PlatformUserMinuteTranscriptsResponseDto })
+  getMinutes(): void {}
 
   @Get('context')
   @ApiOkResponse({ type: PlatformUserTranscriptContextResponseDto })
@@ -23,8 +23,8 @@ class PlatformUserTranscriptContractTestController {
 }
 
 describe('Platform user transcript query DTOs', () => {
-  it('accepts timezone-explicit meeting transcript dates', async () => {
-    const dto = plainToInstance(QueryPlatformUserMeetingTranscriptsDto, {
+  it('accepts timezone-explicit minute transcript dates', async () => {
+    const dto = plainToInstance(QueryPlatformUserMinuteTranscriptsDto, {
       startDate: '2026-08-01T00:00:00+08:00',
       endDate: '2026-09-01T00:00:00+08:00',
     });
@@ -33,7 +33,7 @@ describe('Platform user transcript query DTOs', () => {
   });
 
   it('rejects dates without timezone information', async () => {
-    const dto = plainToInstance(QueryPlatformUserMeetingTranscriptsDto, {
+    const dto = plainToInstance(QueryPlatformUserMinuteTranscriptsDto, {
       startDate: '2026-08-01T00:00:00',
       endDate: '2026-08-02T00:00:00',
     });
@@ -102,5 +102,15 @@ describe('Platform user transcript response OpenAPI contract', () => {
       nullable: true,
     });
     expect(segment.required).toContain('platformUser');
+  });
+
+  it('documents minute meeting metadata as nullable', () => {
+    const minute = schemas.PlatformUserTranscriptMinuteDto;
+    const meeting = minute.properties?.meeting as SchemaObject;
+
+    expect(meeting).toMatchObject({ type: 'object', nullable: true });
+    expect(meeting).not.toHaveProperty('allOf');
+    expect(meeting.properties?.meetingId).toMatchObject({ type: 'string' });
+    expect(minute.required).toContain('meeting');
   });
 });

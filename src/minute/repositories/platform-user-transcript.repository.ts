@@ -49,17 +49,23 @@ export class PlatformUserTranscriptRepository {
     });
   }
 
-  findMeetingTranscripts(
+  findMinuteTranscripts(
     platformUserId: string,
     startDate: Date,
     endDate: Date,
   ) {
-    return this.prisma.meeting.findMany({
+    return this.prisma.minute.findMany({
       where: {
         deletedAt: null,
         startAt: { gte: startDate, lt: endDate },
-        participants: {
-          some: { ptUserId: platformUserId, deletedAt: null },
+        OR: [
+          { meeting: { is: null } },
+          { meeting: { is: { deletedAt: null } } },
+        ],
+        transcripts: {
+          some: {
+            segments: { some: { speakerId: platformUserId } },
+          },
         },
       },
       orderBy: [
@@ -69,34 +75,31 @@ export class PlatformUserTranscriptRepository {
       ],
       select: {
         id: true,
-        title: true,
-        platform: true,
-        type: true,
+        externalId: true,
+        source: true,
         startAt: true,
         endAt: true,
-        minutes: {
-          where: { deletedAt: null },
-          orderBy: [
-            { startAt: { sort: 'asc', nulls: 'last' } },
-            { createdAt: 'asc' },
-            { id: 'asc' },
-          ],
+        meeting: {
           select: {
             id: true,
-            externalId: true,
-            source: true,
+            title: true,
+            platform: true,
+            type: true,
             startAt: true,
             endAt: true,
-            transcripts: {
-              orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
-              select: {
-                id: true,
-                segments: {
-                  where: { speakerId: platformUserId },
-                  orderBy: [{ startTimeMs: 'asc' }, { id: 'asc' }],
-                  select: transcriptSegmentSelect,
-                },
-              },
+          },
+        },
+        transcripts: {
+          where: {
+            segments: { some: { speakerId: platformUserId } },
+          },
+          orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+          select: {
+            id: true,
+            segments: {
+              where: { speakerId: platformUserId },
+              orderBy: [{ startTimeMs: 'asc' }, { id: 'asc' }],
+              select: transcriptSegmentSelect,
             },
           },
         },
