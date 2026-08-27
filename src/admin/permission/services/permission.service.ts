@@ -79,6 +79,7 @@ export class PermService {
       resource: string;
       action: string;
       type: string;
+      oauthDelegatable: boolean;
     }>
   > {
     try {
@@ -299,6 +300,7 @@ export class PermService {
       level: permission.level,
       sortOrder: permission.sortOrder,
       active: permission.active,
+      oauthDelegatable: permission.oauthDelegatable,
       createdAt: permission.createdAt,
       updatedAt: permission.updatedAt,
       children: permission.children?.map((child) => this.toTreeDto(child)),

@@ -42,6 +42,9 @@ async function seedRealDatabase(prisma: PrismaClient): Promise<void> {
   log('  3: 分配角色权限');
   await seedFunctions.assignRolePermissions(prisma, permissions, roles);
 
+  log('  4: 创建 OAuth Clients');
+  await seedFunctions.createOAuthClients(prisma);
+
   log(`\n🏢 organization: ${organization.name}`);
   log(
     `\n🏢 permissions: ${permissions.map((permission) => permission.name).join(', ')}`,
@@ -152,6 +155,9 @@ async function seedMockDatabase(prisma: PrismaClient): Promise<void> {
   const recordingCount = minute ? 1 : 0;
   const summaryCount = teamSummary ? 1 : 0;
   const participantSummaryCount = participantSummaries.length;
+
+  log('\n🔑 步骤 16: 创建 OAuth Clients');
+  await seedFunctions.createOAuthClients(prisma);
 
   log('\n✅ 数据库种子数据初始化完成！');
   log('\n📊 统计信息:');

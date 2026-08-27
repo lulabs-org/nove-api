@@ -1,3 +1,4 @@
+import * as JSONBig from 'json-bigint';
 import { createDecipheriv, createHash, timingSafeEqual } from 'node:crypto';
 
 /**
@@ -94,7 +95,8 @@ export function decryptWechatMessage(
     throw new Error('AppID mismatch');
   }
 
-  const parsed = JSON.parse(msg) as unknown;
+  const JSONBigString = JSONBig({ storeAsString: true });
+  const parsed = JSONBigString.parse(msg) as unknown;
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
     throw new Error('Decrypted message must be a JSON object');
   }

@@ -26,8 +26,7 @@ const userRecord = (
     displayName: 'Alice',
     avatar: null,
     bio: null,
-    firstName: null,
-    lastName: null,
+    fullName: null,
     dateOfBirth: null,
     gender: null,
     address: null,
@@ -136,6 +135,7 @@ describe('AdminUserService', () => {
       countryCode: '86',
       phone: '138 0013 8000',
       displayName: ' Alice ',
+      fullName: ' Alice Smith ',
     });
 
     expect(repository.create.mock.calls[0][0]).toEqual({
@@ -143,6 +143,7 @@ describe('AdminUserService', () => {
       countryCode: '+86',
       phone: '13800138000',
       displayName: 'Alice',
+      fullName: 'Alice Smith',
     });
     expect(result.emailVerified).toBe(false);
     expect(result).not.toHaveProperty('emailVerifiedAt');
@@ -157,7 +158,7 @@ describe('AdminUserService', () => {
   it('returns a conflict for a duplicate email', async () => {
     repository.findConflict.mockResolvedValue({
       id: 'other',
-      username: null,
+      username: 'mock_username',
       email: 'alice@example.com',
       countryCode: null,
       phone: null,
@@ -200,14 +201,14 @@ describe('AdminUserService', () => {
   it('imports CSV rows independently and reports masked failures', async () => {
     repository.findConflict.mockResolvedValueOnce(null).mockResolvedValueOnce({
       id: 'existing',
-      username: null,
+      username: 'mock_username',
       email: 'duplicate@example.com',
       countryCode: null,
       phone: null,
     });
     repository.create.mockResolvedValue(userRecord());
     const csv = Buffer.from(
-      '邮箱,国家代码,手机号,显示名称,是否启用\nnew@example.com,+86,13800138001,新用户,是\nduplicate@example.com,,,,否\n',
+      '邮箱,国家代码,手机号,显示名称,姓名,是否启用\nnew@example.com,+86,13800138001,新用户,张三,是\nduplicate@example.com,,,,,否\n',
     );
 
     const result = await service.importUsers({
@@ -224,6 +225,10 @@ describe('AdminUserService', () => {
     });
     expect(result.failures[0]).toMatchObject({ row: 3, code: 'CONFLICT' });
     expect(result.failures[0].identifier).toBe('du***@example.com');
+    expect(repository.create.mock.calls[0][0]).toMatchObject({
+      displayName: '新用户',
+      fullName: '张三',
+    });
   });
 
   it('imports the first worksheet from an XLSX file', async () => {
@@ -255,6 +260,30 @@ describe('AdminUserService', () => {
         active: false,
       }),
     );
+  });
+
+  it('preserves names from legacy split-name import templates', async () => {
+    repository.findConflict.mockResolvedValue(null);
+    repository.create.mockResolvedValue(userRecord());
+    const csv = Buffer.from(
+      'email,displayName,firstName,lastName\nzhang@example.com,张三,三,张\nalice@example.com,Alice,Alice,Smith\n',
+    );
+
+    await service.importUsers({
+      originalname: 'legacy-users.csv',
+      mimetype: 'text/csv',
+      size: csv.length,
+      buffer: csv,
+    });
+
+    expect(repository.create.mock.calls[0][0]).toMatchObject({
+      email: 'zhang@example.com',
+      fullName: '张三',
+    });
+    expect(repository.create.mock.calls[1][0]).toMatchObject({
+      email: 'alice@example.com',
+      fullName: 'Alice Smith',
+    });
   });
 
   it('reports invalid email syntax as a row failure', async () => {

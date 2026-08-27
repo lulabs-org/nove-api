@@ -84,4 +84,13 @@ export class CreatePermissionDto {
     return value as boolean;
   })
   active?: boolean;
+
+  @ApiProperty({
+    description: '是否允许作为 OAuth 委托 Scope',
+    example: false,
+    default: false,
+  })
+  @IsBoolean()
+  @IsOptional()
+  oauthDelegatable?: boolean;
 }

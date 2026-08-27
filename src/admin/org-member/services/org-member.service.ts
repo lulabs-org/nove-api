@@ -6,6 +6,7 @@ import {
   HttpException,
 } from '@nestjs/common';
 import { Prisma, OrgMember } from '@prisma/client';
+import { generateUsername } from '@/common/utils';
 import { PrismaService } from '@/prisma/prisma.service';
 import { OrgMemberRepository } from '../repositories/org-member.repository';
 import {
@@ -456,6 +457,7 @@ export class OrgMemberService {
     } else {
       const user = await tx.user.create({
         data: {
+          username: generateUsername(),
           email: email ?? null,
           phone: phone ?? null,
           countryCode: countryCode ?? null,

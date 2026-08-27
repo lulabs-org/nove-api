@@ -41,11 +41,14 @@ const HEADER_ALIASES: Record<string, keyof ImportRow> = {
   手机: 'phone',
   displayname: 'displayName',
   显示名称: 'displayName',
-  姓名: 'displayName',
   avatar: 'avatar',
   头像: 'avatar',
   bio: 'bio',
   个人简介: 'bio',
+  fullName: 'fullName',
+  fullname: 'fullName',
+  完整姓名: 'fullName',
+  姓名: 'fullName',
   firstName: 'firstName',
   firstname: 'firstName',
   名: 'firstName',
@@ -88,6 +91,7 @@ interface ImportRow {
   displayName?: unknown;
   avatar?: unknown;
   bio?: unknown;
+  fullName?: unknown;
   firstName?: unknown;
   lastName?: unknown;
   dateOfBirth?: unknown;
@@ -234,7 +238,7 @@ export class AdminUserService {
       : undefined;
     return {
       ...(dto.username !== undefined
-        ? { username: dto.username?.trim() || null }
+        ? { username: dto.username?.trim() || undefined }
         : {}),
       ...(dto.email !== undefined
         ? { email: dto.email?.trim().toLowerCase() || null }
@@ -250,11 +254,8 @@ export class AdminUserService {
         ? { avatar: dto.avatar?.trim() || null }
         : {}),
       ...(dto.bio !== undefined ? { bio: dto.bio?.trim() || null } : {}),
-      ...(dto.firstName !== undefined
-        ? { firstName: dto.firstName?.trim() || null }
-        : {}),
-      ...(dto.lastName !== undefined
-        ? { lastName: dto.lastName?.trim() || null }
+      ...(dto.fullName !== undefined
+        ? { fullName: dto.fullName?.trim() || null }
         : {}),
       ...(dto.dateOfBirth !== undefined
         ? {
@@ -366,16 +367,23 @@ export class AdminUserService {
 
   private rowToDto(row: ImportRow): CreateAdminUserDto {
     const text = (value: unknown) => this.primitiveText(value) || undefined;
+    const displayName = text(row.displayName);
+    const fullName =
+      text(row.fullName) ??
+      this.composeLegacyFullName(
+        text(row.firstName),
+        text(row.lastName),
+        displayName,
+      );
     return {
       username: text(row.username),
       email: text(row.email)?.toLowerCase(),
       countryCode: text(row.countryCode),
       phone: text(row.phone),
-      displayName: text(row.displayName),
+      displayName,
       avatar: text(row.avatar),
       bio: text(row.bio),
-      firstName: text(row.firstName),
-      lastName: text(row.lastName),
+      fullName,
       dateOfBirth: text(row.dateOfBirth),
       gender: this.parseGender(row.gender),
       address: text(row.address),
@@ -385,6 +393,25 @@ export class AdminUserService {
       website: text(row.website),
       active: this.parseActive(row.active),
     };
+  }
+
+  private composeLegacyFullName(
+    firstName?: string,
+    lastName?: string,
+    displayName?: string,
+  ): string | undefined {
+    if (!firstName) return lastName;
+    if (!lastName) return firstName;
+    const candidates = [
+      `${firstName}${lastName}`,
+      `${lastName}${firstName}`,
+      `${firstName} ${lastName}`,
+      `${lastName} ${firstName}`,
+    ];
+    if (displayName && candidates.includes(displayName)) return displayName;
+    return /[㐀-鿿ぁ-んァ-ン가-힣]/u.test(`${firstName}${lastName}`)
+      ? `${lastName}${firstName}`
+      : `${firstName} ${lastName}`;
   }
 
   private async validateImportDto(dto: CreateAdminUserDto): Promise<void> {

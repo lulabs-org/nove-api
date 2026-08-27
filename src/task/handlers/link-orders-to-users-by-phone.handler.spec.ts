@@ -75,6 +75,8 @@ describe('LinkOrdersToUsersByPhoneHandler', () => {
         countryCode: '+86',
         phone: '13900139000',
         phoneVerifiedAt: null,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        username: expect.any(String),
       },
       select: { id: true },
     });

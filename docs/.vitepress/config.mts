@@ -74,6 +74,10 @@ export default withMermaid(
             { text: '脚本说明', link: '/developer/guides/development/package-scripts' },
             { text: '测试规范', link: '/developer/guides/development/nestjs-testing-standards' },
             { text: '安全规范', link: '/developer/guides/development/security' },
+            {
+              text: 'OAuth 客户端管理',
+              link: '/developer/guides/development/oauth-client-management',
+            },
             { text: '版本控制', link: '/developer/guides/development/version-control' },
             { text: '文档维护', link: '/developer/guides/documentation' },
           ],

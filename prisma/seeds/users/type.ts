@@ -4,8 +4,7 @@ export interface UserProfileCreateInput {
   displayName?: string;
   avatar?: string;
   bio?: string;
-  firstName?: string;
-  lastName?: string;
+  fullName?: string;
   dateOfBirth?: Date;
   gender?: Gender;
   city?: string;

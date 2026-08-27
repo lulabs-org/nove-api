@@ -8,7 +8,7 @@
 /**
  * 认证方式枚举
  */
-export type AuthMethod = 'jwt' | 'api_key';
+export type AuthMethod = 'jwt' | 'api_key' | 'oauth';
 
 /**
  * 统一认证上下文接口
@@ -29,6 +29,9 @@ export interface AuthContext {
 
   /** API Key ID（仅 API Key 认证时有值） */
   apiKeyId?: string;
+
+  /** OAuth client ID（仅 OAuth delegated access token 时有值） */
+  oauthClientId?: string;
 }
 
 /**

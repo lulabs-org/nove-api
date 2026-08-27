@@ -20,6 +20,8 @@ model Org {
   apiKeys           ApiKey[] // API Keys
   apiKeyUsageLogs   ApiKeyUsageLog[] // API Key 使用日志
   memberDepartments MemberDepartment[]
+  oauthAuthCodes     OAuthAuthCode[]
+  oauthTokens        OAuthToken[]
 
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)

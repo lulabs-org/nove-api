@@ -209,6 +209,7 @@ export class RoleService {
       resource: permission.resource,
       action: permission.action,
       type: permission.type,
+      oauthDelegatable: permission.oauthDelegatable,
     };
   }
 

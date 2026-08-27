@@ -1,97 +1,146 @@
 import {
-  IsString,
+  ArrayNotEmpty,
+  IsArray,
+  IsIn,
   IsNotEmpty,
   IsOptional,
-  IsArray,
+  IsString,
   IsUrl,
+  Length,
+  Matches,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class AuthorizeDto {
-  @ApiProperty({ description: '客户端 ID' })
+  @ApiProperty({ description: 'OAuth client ID' })
   @IsString()
   @IsNotEmpty()
   client_id: string;
 
-  @ApiProperty({ description: '授权类型，固定为 code' })
-  @IsString()
-  @IsNotEmpty()
-  response_type: string;
+  @ApiProperty({ enum: ['code'] })
+  @IsIn(['code'])
+  response_type: 'code';
 
-  @ApiProperty({ description: '重定向 URI' })
+  @ApiProperty({ description: 'Registered redirect URI' })
   @IsUrl({ require_tld: false })
-  @IsNotEmpty()
   redirect_uri: string;
 
-  @ApiPropertyOptional({ description: '请求的作用域，空格分隔' })
+  @ApiProperty({ description: 'Space-delimited requested permissions' })
   @IsString()
-  @IsOptional()
-  scope?: string;
+  @IsNotEmpty()
+  @Length(1, 4096)
+  scope: string;
 
-  @ApiPropertyOptional({ description: '状态参数，原样返回' })
+  @ApiProperty({ description: 'Client CSRF state' })
   @IsString()
-  @IsOptional()
-  state?: string;
+  @IsNotEmpty()
+  @Length(16, 512)
+  state: string;
+
+  @ApiProperty({ description: 'PKCE S256 challenge' })
+  @Matches(/^[A-Za-z0-9_-]{43}$/)
+  code_challenge: string;
+
+  @ApiProperty({ enum: ['S256'] })
+  @IsIn(['S256'])
+  code_challenge_method: 'S256';
+}
+
+export class AuthorizationDecisionDto {
+  @ApiProperty({
+    description: 'Permissions selected by the user',
+    type: [String],
+  })
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsString({ each: true })
+  scopes: string[];
+
+  @ApiProperty({
+    description: 'Organization in which the delegated grant applies',
+  })
+  @IsString()
+  @IsNotEmpty()
+  organization_id: string;
 }
 
 export class TokenDto {
-  @ApiProperty({ description: '授权模式: authorization_code 或 refresh_token' })
-  @IsString()
-  @IsNotEmpty()
+  @ApiProperty({ enum: ['authorization_code', 'refresh_token'] })
+  @IsIn(['authorization_code', 'refresh_token'])
   grant_type: 'authorization_code' | 'refresh_token';
 
-  @ApiPropertyOptional({
-    description: '授权码 (grant_type=authorization_code 时必填)',
-  })
+  @ApiPropertyOptional()
   @IsString()
   @IsOptional()
   code?: string;
 
-  @ApiPropertyOptional({
-    description: '刷新令牌 (grant_type=refresh_token 时必填)',
-  })
+  @ApiPropertyOptional()
   @IsString()
   @IsOptional()
   refresh_token?: string;
 
-  @ApiProperty({ description: '客户端 ID' })
+  @ApiProperty()
   @IsString()
   @IsNotEmpty()
   client_id: string;
 
-  @ApiProperty({ description: '客户端秘钥' })
+  @ApiPropertyOptional({ description: 'Confidential clients only' })
   @IsString()
-  @IsNotEmpty()
-  client_secret: string;
+  @IsOptional()
+  client_secret?: string;
 
-  @ApiPropertyOptional({ description: '重定向 URI (需与获取 code 时一致)' })
+  @ApiPropertyOptional()
   @IsString()
   @IsOptional()
   redirect_uri?: string;
+
+  @ApiPropertyOptional({
+    description: 'PKCE verifier for authorization code exchange',
+  })
+  @IsString()
+  @IsOptional()
+  code_verifier?: string;
+}
+
+export class RevokeTokenDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  token: string;
+
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  client_id: string;
+
+  @ApiPropertyOptional({ description: 'Confidential clients only' })
+  @IsString()
+  @IsOptional()
+  client_secret?: string;
 }
 
 export class CreateClientDto {
-  @ApiProperty({ description: '客户端名称' })
+  @ApiProperty()
   @IsString()
   @IsNotEmpty()
   name: string;
 
-  @ApiPropertyOptional({ description: '客户端描述' })
+  @ApiPropertyOptional()
   @IsString()
   @IsOptional()
   description?: string;
 
-  @ApiPropertyOptional({ description: '客户端 Logo' })
+  @ApiPropertyOptional()
   @IsUrl()
   @IsOptional()
   logoUri?: string;
 
-  @ApiProperty({ description: '允许的重定向 URI 列表', type: [String] })
+  @ApiProperty({ type: [String] })
   @IsArray()
   @IsUrl({ require_tld: false }, { each: true })
   redirectUris: string[];
 
-  @ApiPropertyOptional({ description: '允许的作用域列表', type: [String] })
+  @ApiPropertyOptional({ type: [String] })
   @IsArray()
   @IsString({ each: true })
   @IsOptional()

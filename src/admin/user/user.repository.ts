@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Gender, Prisma } from '@prisma/client';
+import { generateUsername } from '@/common/utils';
 import { PrismaService } from '@/prisma/prisma.service';
 
 export const adminUserSelect = {
@@ -19,8 +20,7 @@ export const adminUserSelect = {
       displayName: true,
       avatar: true,
       bio: true,
-      firstName: true,
-      lastName: true,
+      fullName: true,
       dateOfBirth: true,
       gender: true,
       address: true,
@@ -60,7 +60,7 @@ export type AdminUserListRecord = Prisma.UserGetPayload<{
 }>;
 
 export interface AdminUserWriteData {
-  username?: string | null;
+  username?: string;
   email?: string | null;
   countryCode?: string | null;
   phone?: string | null;
@@ -68,8 +68,7 @@ export interface AdminUserWriteData {
   displayName?: string | null;
   avatar?: string | null;
   bio?: string | null;
-  firstName?: string | null;
-  lastName?: string | null;
+  fullName?: string | null;
   dateOfBirth?: Date | null;
   gender?: Gender | null;
   address?: string | null;
@@ -134,8 +133,7 @@ export class AdminUserRepository {
       displayName,
       avatar,
       bio,
-      firstName,
-      lastName,
+      fullName,
       dateOfBirth,
       gender,
       address,
@@ -149,8 +147,7 @@ export class AdminUserRepository {
       displayName,
       avatar,
       bio,
-      firstName,
-      lastName,
+      fullName,
       dateOfBirth,
       gender,
       address,
@@ -165,6 +162,7 @@ export class AdminUserRepository {
     return this.prisma.user.create({
       data: {
         ...userData,
+        username: userData.username ?? generateUsername(),
         ...(hasProfileData ? { profile: { create: profileData } } : {}),
       },
       select: adminUserSelect,
@@ -176,8 +174,7 @@ export class AdminUserRepository {
       displayName,
       avatar,
       bio,
-      firstName,
-      lastName,
+      fullName,
       dateOfBirth,
       gender,
       address,
@@ -191,8 +188,7 @@ export class AdminUserRepository {
       displayName,
       avatar,
       bio,
-      firstName,
-      lastName,
+      fullName,
       dateOfBirth,
       gender,
       address,

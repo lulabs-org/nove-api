@@ -84,11 +84,12 @@ export class PermissionGuard implements CanActivate {
     }
 
     try {
-      const permissionsToCheck = this.getPermissionsAllowedByApiKey(
-        request.authContext,
-        requiredPermissions,
-        mode,
-      );
+      const permissionsToCheck =
+        this.getPermissionsAllowedByDelegatedCredential(
+          request.authContext,
+          requiredPermissions,
+          mode,
+        );
 
       if (!permissionsToCheck) {
         return false;
@@ -131,12 +132,15 @@ export class PermissionGuard implements CanActivate {
    * ANY 模式下必须保证同一个权限点同时存在于 Key scopes 和用户角色中；
    * 不能出现 Key 有 A、用户有 B，却因为双方各自满足 ANY 而放行的情况。
    */
-  private getPermissionsAllowedByApiKey(
+  private getPermissionsAllowedByDelegatedCredential(
     authContext: RequestWithAuthContext['authContext'],
     requiredPermissions: string[],
     mode: PermissionMode,
   ): string[] | null {
-    if (authContext?.authMethod !== 'api_key') {
+    if (
+      authContext?.authMethod !== 'api_key' &&
+      authContext?.authMethod !== 'oauth'
+    ) {
       return requiredPermissions;
     }
 
@@ -151,7 +155,7 @@ export class PermissionGuard implements CanActivate {
 
     if (!hasRequiredScopes) {
       this.logger.warn(
-        `API key ${authContext.apiKeyId ?? 'unknown'} does not have required scopes: ${requiredPermissions.join(', ')}`,
+        `Delegated credential ${authContext.apiKeyId ?? 'oauth'} does not have required scopes: ${requiredPermissions.join(', ')}`,
       );
       return null;
     }

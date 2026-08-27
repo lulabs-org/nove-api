@@ -71,6 +71,7 @@ export class PermRepository {
         resource: true,
         action: true,
         type: true,
+        oauthDelegatable: true,
       },
       orderBy: [
         {
@@ -177,6 +178,7 @@ export class PermRepository {
     level?: number;
     sortOrder?: number;
     active?: boolean;
+    oauthDelegatable?: boolean;
   }) {
     return this.prisma.permission.create({
       data,
@@ -195,6 +197,7 @@ export class PermRepository {
       level?: number;
       sortOrder?: number;
       active?: boolean;
+      oauthDelegatable?: boolean;
     },
   ) {
     return this.prisma.permission.update({

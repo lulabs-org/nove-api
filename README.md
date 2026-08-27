@@ -1,7 +1,10 @@
-<h1 align="center">Nove API</h1>
+<h1 align="center">Nove API (Core Service)</h1>
 
 <p align="center">
-  基于 NestJS 的企业级多租户后端服务，提供完整的用户认证体系、组织权限管理、会议记录与统计分析，并深度集成腾讯会议 Webhook/开放 API、飞书多维表格（Bitable）同步与 OpenAI 智能能力。
+  <b>Nove 生态系统</b>的核心后端服务。为 <b>Nove Admin (管理后台)</b>、<b>Nove CLI (命令行工具)</b> 以及第三方接入提供坚实可靠的底层 API 支撑。
+</p>
+<p align="center">
+  基于 NestJS 构建，提供企业级多租户架构、OAuth2 授权体系、组织与用户管理、会议记录及智能化统计分析；并具备强大的第三方音视频服务、企业协同办公套件及 AI 大模型能力的深度集成方案。
 </p>
 
 <p align="center">
@@ -12,6 +15,16 @@
   <img alt="Redis" src="https://img.shields.io/badge/Redis-BullMQ-DC382D?logo=redis">
   <img alt="License" src="https://img.shields.io/badge/license-MIT-green">
 </p>
+
+---
+
+## ✨ 核心特性
+
+- **🏢 企业级架构**：基于 NestJS 构建，采用模块化设计，内置强大的依赖注入和控制反转机制，保障代码的高可维护性。
+- **🔐 完善的身份认证**：内置 OAuth2 服务端能力，支持多渠道登录、JWT 鉴权及灵活的 API Key 机制。
+- **👥 多租户与权限控制**：支持复杂的组织架构映射，提供细粒度的 RBAC/ABAC 权限管理。
+- **🧩 深度集成能力**：架构设计上充分考虑了外部系统扩展，支持无缝对接各大主流音视频会议平台、企业协同办公软件及领先的 AI 大模型服务。
+- **🚀 高性能与高可用**：采用 PostgreSQL 作为主数据库，结合 Prisma ORM 保证数据访问类型安全；结合 Redis 与 BullMQ 提供强大的异步任务调度与队列处理能力。
 
 ---
 
@@ -47,14 +60,14 @@ Nove API 的所有文档（包括架构设计、API 参考、开发指南、第�
 ### 2. 安装与配置
 
 ```bash
-# 安装依赖
+# 1. 安装依赖
 pnpm install
 
-# 配置环境变量
+# 2. 配置环境变量
 cp .env.example .env
-# 在 .env 中填入 DATABASE_URL, REDIS_HOST 等必要配置
+# 请在 .env 中填入 DATABASE_URL, REDIS_HOST 等必要配置
 
-# 初始化数据库
+# 3. 初始化数据库结构
 pnpm db:generate
 pnpm db:push
 ```
@@ -62,16 +75,16 @@ pnpm db:push
 ### 3. 启动服务
 
 ```bash
-# 启动开发服务器（热重载）
+# 启动开发服务器（支持热重载）
 pnpm start:dev
 ```
 
-启动后可访问：
-- **Swagger API 文档**: `http://localhost:3000/api`
-- **GraphQL Playground**: `http://localhost:3000/graphql`
+启动成功后可访问以下本地服务：
+- **Swagger API 接口文档**: `http://localhost:3000/api`
+- **GraphQL 调试面板 (Playground)**: `http://localhost:3000/graphql`
 
 ---
 
 ## 📄 许可
 
-[MIT License](./LICENSE)
+本项目采用 [MIT License](./LICENSE) 开源协议。
