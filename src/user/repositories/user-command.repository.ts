@@ -89,6 +89,16 @@ export class UserCommandRepository {
     });
   }
 
+  /**
+   * 递增令牌版本，使该用户所有已签发的 access token 立即失效
+   */
+  incrementTokenVersion(id: string): Promise<User> {
+    return this.prisma.user.update({
+      where: { id },
+      data: { tokenVersion: { increment: 1 } },
+    });
+  }
+
   updateProfile(
     id: string,
     data: {

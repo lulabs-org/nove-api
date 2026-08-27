@@ -50,6 +50,7 @@ export class JwtUserLookupService implements JwtUserLookup {
       phoneVerified: !!user.phoneVerifiedAt,
       createdAt: user.createdAt,
       lastLoginAt: user.lastLoginAt,
+      tokenVersion: user.tokenVersion,
     };
   }
 }

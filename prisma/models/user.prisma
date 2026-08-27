@@ -22,6 +22,9 @@ model User {
   // 用户状态
   active Boolean @default(true) // 用户状态：true=活跃，false=禁用
 
+  // 令牌版本：递增后使该用户所有已签发的 access token 立即失效（用于全部设备登出等全局撤销场景）
+  tokenVersion Int @default(0) @map("token_version")
+
   // 系统时间戳字段
   createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)

@@ -373,6 +373,11 @@ export class OAuthGrantService {
     const effectiveScopes = grant.scopes.filter((scope) =>
       client.scopes.includes(scope),
     );
+    // 令牌版本需随令牌下发，用户全局撤销（如全部设备登出）后旧令牌立即失效
+    const user = await tx.user.findUnique({
+      where: { id: grant.userId },
+      select: { tokenVersion: true },
+    });
     const expiresIn = parseAccessTokenTtl(this.config.accessExpiresIn);
     const accessToken = this.jwtService.sign(
       {
@@ -382,6 +387,7 @@ export class OAuthGrantService {
         org_id: grant.organizationId,
         scopes: effectiveScopes,
         credential_version: client.credentialVersion,
+        token_version: user?.tokenVersion ?? 0,
       },
       {
         secret: this.config.accessSecret,

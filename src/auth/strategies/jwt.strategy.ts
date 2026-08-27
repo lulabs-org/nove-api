@@ -64,6 +64,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('用户不存在');
     }
 
+    // 令牌版本校验：版本不匹配说明令牌签发后发生过全局撤销（如全部设备登出）
+    if ((payload.token_version ?? 0) !== (authUser.tokenVersion ?? 0)) {
+      throw new UnauthorizedException('访问令牌已失效，请重新登录');
+    }
+
     // 如果 JWT 中带有 scope 权限范围（OAuth 2.0 场景），则将其附加到 authUser 上
     if (payload.scopes) {
       authUser.scopes = payload.scopes;

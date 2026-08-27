@@ -26,6 +26,7 @@ describe('OAuthGrantService', () => {
       updateMany: jest.fn(),
     },
     oAuthClient: { findUnique: jest.fn() },
+    user: { findUnique: jest.fn() },
     orgMember: { count: jest.fn(), findMany: jest.fn() },
     permission: { findMany: jest.fn() },
     $transaction: jest.fn(),
@@ -59,6 +60,7 @@ describe('OAuthGrantService', () => {
       grants: ['authorization_code', 'refresh_token'],
       scopes: ['meeting:read'],
     });
+    prisma.user.findUnique.mockResolvedValue({ tokenVersion: 0 });
   });
 
   it('persists only client-approved requested scopes and the PKCE challenge', async () => {
@@ -146,6 +148,7 @@ describe('OAuthGrantService', () => {
         org_id: 'org-1',
         scopes: ['meeting:read'],
         token_use: 'oauth_access',
+        token_version: 0,
       }),
       expect.any(Object),
     );

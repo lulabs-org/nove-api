@@ -26,6 +26,7 @@ export interface AuthenticatedUser {
   clientId?: string;
   organizationId?: string;
   credentialVersion?: number;
+  tokenVersion?: number;
 }
 
 export interface JwtPayload {
@@ -40,6 +41,7 @@ export interface JwtPayload {
   client_id?: string;
   org_id?: string;
   credential_version?: number;
+  token_version?: number;
 }
 
 export enum TokenBlacklistScope {

@@ -20,6 +20,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigType } from '@nestjs/config';
 import { jwtConfig } from '@/configs/jwt.config';
 import { UserQueryRepository } from '@/user/repositories/user-query.repository';
+import { UserCommandRepository } from '@/user/repositories/user-command.repository';
 import { RefreshTokenRepository } from '@/auth/repositories/refresh-token.repository';
 import { randomUUID } from 'node:crypto';
 import { TokenBlacklistService } from './token-blacklist.service';
@@ -41,6 +42,7 @@ export class TokenService {
   constructor(
     private readonly jwtService: JwtService,
     private readonly userRepo: UserQueryRepository,
+    private readonly userCommandRepo: UserCommandRepository,
     private readonly refreshTokenRepo: RefreshTokenRepository,
     @Inject(jwtConfig.KEY)
     private readonly config: ConfigType<typeof jwtConfig>,
@@ -63,7 +65,8 @@ export class TokenService {
     refreshToken: string;
     refreshExpiresIn: number;
   }> {
-    const payload = { sub: userId };
+    const user = await this.userRepo.byId(userId);
+    const payload = { sub: userId, token_version: user?.tokenVersion ?? 0 };
     const accessJti = randomUUID();
 
     const accessToken = this.jwtService.sign(payload, {
@@ -130,7 +133,7 @@ export class TokenService {
       }
 
       const accessToken = this.jwtService.sign(
-        { sub: user.id },
+        { sub: user.id, token_version: user.tokenVersion },
         {
           secret: this.accessSecret,
           expiresIn: this.accessExpiresIn,
@@ -230,6 +233,8 @@ export class TokenService {
       if (options.revokeAllDevices) {
         const revokedCount =
           await this.refreshTokenRepo.revokeAllTokensByUserId(userId);
+        // 递增令牌版本，使所有设备已签发的 access token 立即失效
+        await this.userCommandRepo.incrementTokenVersion(userId);
         result.allDevicesLoggedOut = true;
         result.revokedTokensCount = revokedCount;
       } else if (options.deviceId) {
