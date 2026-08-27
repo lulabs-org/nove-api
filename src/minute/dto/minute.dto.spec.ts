@@ -4,13 +4,17 @@ import { ApiOkResponse, DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import type { SchemaObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
-import { MinuteDto, QueryMinuteDto } from './minute.dto';
+import { MinuteDto, MinuteListResponseDto, QueryMinuteDto } from './minute.dto';
 
 @Controller('minute-contract-test')
 class MinuteContractTestController {
   @Get()
   @ApiOkResponse({ type: MinuteDto })
   get(): void {}
+
+  @Get('list')
+  @ApiOkResponse({ type: MinuteListResponseDto })
+  list(): void {}
 }
 
 describe('minute DTO contract', () => {
@@ -46,7 +50,35 @@ describe('minute DTO contract', () => {
         type: 'string',
         nullable: true,
       });
+      expect(schema.properties?.recorderUserId).toMatchObject({
+        type: 'string',
+        nullable: true,
+      });
+      expect(schema.properties?.startAt).toMatchObject({
+        type: 'string',
+        format: 'date-time',
+        nullable: true,
+      });
+      expect(schema.properties?.endAt).toMatchObject({
+        type: 'string',
+        format: 'date-time',
+        nullable: true,
+      });
+      expect(schema.properties?.deletedAt).toMatchObject({
+        type: 'string',
+        format: 'date-time',
+        nullable: true,
+      });
       expect(schema.properties).not.toHaveProperty('status');
+
+      const listSchema = document.components?.schemas
+        ?.MinuteListResponseDto as SchemaObject;
+      expect(listSchema.properties?.data).toMatchObject({
+        type: 'array',
+        items: {
+          $ref: '#/components/schemas/MinuteDto',
+        },
+      });
     } finally {
       await app.close();
     }
