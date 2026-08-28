@@ -10,7 +10,7 @@ import { PlatformUserTranscriptController } from './platform-user-transcript.con
 
 describe('PlatformUserTranscriptController', () => {
   const service = {
-    getMeetingTranscripts: jest.fn(),
+    getMinuteTranscripts: jest.fn(),
     getTranscriptContext: jest.fn(),
   };
   const controller = new PlatformUserTranscriptController(
@@ -21,16 +21,17 @@ describe('PlatformUserTranscriptController', () => {
 
   it('exposes both transcript query routes', () => {
     expect(
-      Reflect.getMetadata(PATH_METADATA, controller.getMeetingTranscripts),
-    ).toBe('platform-users/:platformUserId/meeting-transcripts');
+      Reflect.getMetadata(PATH_METADATA, PlatformUserTranscriptController),
+    ).toBe('platform-users/:platformUserId');
+    expect(
+      Reflect.getMetadata(PATH_METADATA, controller.getMinuteTranscripts),
+    ).toBe('minutes/transcripts');
     expect(
       Reflect.getMetadata(PATH_METADATA, controller.getTranscriptContext),
-    ).toBe(
-      'minutes/:minuteId/platform-users/:platformUserId/transcript-context',
-    );
+    ).toBe('minutes/:minuteId/transcript-context');
   });
 
-  it.each([['getMeetingTranscripts'], ['getTranscriptContext']] as const)(
+  it.each([['getMinuteTranscripts'], ['getTranscriptContext']] as const)(
     'requires both platform-user and minute read permissions for %s',
     (method) => {
       expect(Reflect.getMetadata(PERMISSIONS_KEY, controller[method])).toEqual([
@@ -43,15 +44,15 @@ describe('PlatformUserTranscriptController', () => {
     },
   );
 
-  it('delegates meeting transcript queries', async () => {
-    service.getMeetingTranscripts.mockResolvedValue({ meetings: [] });
+  it('delegates minute transcript queries', async () => {
+    service.getMinuteTranscripts.mockResolvedValue({ minutes: [] });
 
-    await controller.getMeetingTranscripts('platform-user-1', {
+    await controller.getMinuteTranscripts('platform-user-1', {
       startDate: '2026-08-01T00:00:00Z',
       endDate: '2026-09-01T00:00:00Z',
     });
 
-    expect(service.getMeetingTranscripts).toHaveBeenCalledWith(
+    expect(service.getMinuteTranscripts).toHaveBeenCalledWith(
       'platform-user-1',
       '2026-08-01T00:00:00Z',
       '2026-09-01T00:00:00Z',

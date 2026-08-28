@@ -22,7 +22,7 @@ const segment = (
 describe('PlatformUserTranscriptService', () => {
   let repository: {
     findPlatformUser: jest.Mock;
-    findMeetingTranscripts: jest.Mock;
+    findMinuteTranscripts: jest.Mock;
     findMinuteContextSource: jest.Mock;
   };
   let service: PlatformUserTranscriptService;
@@ -33,7 +33,7 @@ describe('PlatformUserTranscriptService', () => {
         id: 'target',
         displayName: 'Target User',
       }),
-      findMeetingTranscripts: jest.fn(),
+      findMinuteTranscripts: jest.fn(),
       findMinuteContextSource: jest.fn(),
     };
     service = new PlatformUserTranscriptService(
@@ -41,48 +41,48 @@ describe('PlatformUserTranscriptService', () => {
     );
   });
 
-  it('maps nested meetings, minutes and target transcript segments', async () => {
-    repository.findMeetingTranscripts.mockResolvedValue([
+  it('maps matching minutes, optional meetings and target transcript segments', async () => {
+    repository.findMinuteTranscripts.mockResolvedValue([
       {
-        id: 'meeting-1',
-        title: 'One-time meeting',
-        platform: MeetingPlatform.TENCENT_MEETING,
-        type: MeetingType.ONE_TIME,
+        id: 'minute-1',
+        externalId: null,
+        source: RecordingSource.PLATFORM_AUTO,
         startAt: new Date('2026-08-02T01:00:00Z'),
         endAt: null,
-        minutes: [
-          {
-            id: 'minute-1',
-            externalId: null,
-            source: RecordingSource.PLATFORM_AUTO,
-            startAt: null,
-            endAt: null,
-            transcripts: [
-              { id: 'transcript-1', segments: [segment('s1', 'target', 0)] },
-            ],
-          },
+        meeting: {
+          id: 'meeting-1',
+          title: 'One-time meeting',
+          platform: MeetingPlatform.TENCENT_MEETING,
+          type: MeetingType.ONE_TIME,
+          startAt: new Date('2026-08-02T01:00:00Z'),
+          endAt: null,
+        },
+        transcripts: [
+          { id: 'transcript-1', segments: [segment('s1', 'target', 0)] },
         ],
       },
       {
-        id: 'meeting-2',
-        title: 'Recurring meeting without recordings',
-        platform: MeetingPlatform.FEISHU,
-        type: MeetingType.RECURRING,
+        id: 'minute-2',
+        externalId: 'external-2',
+        source: RecordingSource.THIRD_PARTY,
         startAt: new Date('2026-08-01T01:00:00Z'),
         endAt: null,
-        minutes: [],
+        meeting: null,
+        transcripts: [
+          { id: 'transcript-2', segments: [segment('s2', 'target', 1_000)] },
+        ],
       },
     ]);
 
-    const result = await service.getMeetingTranscripts(
+    const result = await service.getMinuteTranscripts(
       'target',
       '2026-08-01T00:00:00Z',
       '2026-09-01T00:00:00Z',
     );
 
-    expect(result.meetings).toHaveLength(2);
-    expect(result.meetings[0].type).toBe(MeetingType.ONE_TIME);
-    expect(result.meetings[0].minutes[0].transcripts[0].segments[0]).toEqual({
+    expect(result.minutes).toHaveLength(2);
+    expect(result.minutes[0].meeting?.type).toBe(MeetingType.ONE_TIME);
+    expect(result.minutes[0].transcripts[0].segments[0]).toEqual({
       id: 's1',
       speakerName: 'speaker-target',
       startTime: '00:00:00',
@@ -90,12 +90,12 @@ describe('PlatformUserTranscriptService', () => {
       text: 'text-s1',
       platformUser: { id: 'target', displayName: 'user-target' },
     });
-    expect(result.meetings[1].minutes).toEqual([]);
+    expect(result.minutes[1].meeting).toBeNull();
   });
 
   it('rejects reversed and longer-than-31-day ranges', async () => {
     await expect(
-      service.getMeetingTranscripts(
+      service.getMinuteTranscripts(
         'target',
         '2026-08-02T00:00:00Z',
         '2026-08-01T00:00:00Z',
@@ -103,7 +103,7 @@ describe('PlatformUserTranscriptService', () => {
     ).rejects.toBeInstanceOf(BadRequestException);
 
     await expect(
-      service.getMeetingTranscripts(
+      service.getMinuteTranscripts(
         'target',
         '2026-08-01T00:00:00Z',
         '2026-09-02T00:00:00Z',
