@@ -21,11 +21,11 @@ import { PlatformUserTranscriptService } from '../services/platform-user-transcr
 
 @ApiTags('Minute')
 @ApiBearerAuth()
-@Controller()
+@Controller('platform-users/:platformUserId')
 export class PlatformUserTranscriptController {
   constructor(private readonly service: PlatformUserTranscriptService) {}
 
-  @Get('platform-users/:platformUserId/minute-transcripts')
+  @Get('minutes/transcripts')
   @RequireAllPermissions('platform-user:read', 'minute:read')
   @ApiOperation({ summary: '查询用户有发言的录制及转写段落' })
   @ApiParam({ name: 'platformUserId', description: '平台用户记录 ID' })
@@ -45,7 +45,7 @@ export class PlatformUserTranscriptController {
     );
   }
 
-  @Get('minutes/:minuteId/platform-users/:platformUserId/transcript-context')
+  @Get('minutes/:minuteId/transcript-context')
   @RequireAllPermissions('platform-user:read', 'minute:read')
   @ApiOperation({ summary: '获取用户转写上下文' })
   @ApiParam({ name: 'platformUserId', description: '平台用户记录 ID' })

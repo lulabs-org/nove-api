@@ -21,13 +21,14 @@ describe('PlatformUserTranscriptController', () => {
 
   it('exposes both transcript query routes', () => {
     expect(
+      Reflect.getMetadata(PATH_METADATA, PlatformUserTranscriptController),
+    ).toBe('platform-users/:platformUserId');
+    expect(
       Reflect.getMetadata(PATH_METADATA, controller.getMinuteTranscripts),
-    ).toBe('platform-users/:platformUserId/minute-transcripts');
+    ).toBe('minutes/transcripts');
     expect(
       Reflect.getMetadata(PATH_METADATA, controller.getTranscriptContext),
-    ).toBe(
-      'minutes/:minuteId/platform-users/:platformUserId/transcript-context',
-    );
+    ).toBe('minutes/:minuteId/transcript-context');
   });
 
   it.each([['getMinuteTranscripts'], ['getTranscriptContext']] as const)(
