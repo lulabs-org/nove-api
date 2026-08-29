@@ -1,6 +1,16 @@
-import { PrismaClient, Curriculum, Project, Prisma } from '@prisma/client';
+import {
+  PrismaClient,
+  Curriculum,
+  Project,
+  Prisma,
+  CurriculumStatus,
+} from '@prisma/client';
 import { CURRICULUM_CONFIGS } from './config';
-import type { CreateCurriculumsParams, CreatedCurriculums } from './type';
+import type {
+  CreateCurriculumsParams,
+  CreatedCurriculums,
+  CurriculumConfig,
+} from './type';
 
 class CurriculumSeedError extends Error {
   constructor(
@@ -28,25 +38,25 @@ function validateProjectReferences(
   return missingIds;
 }
 
-function convertToPrismaInput(config: {
-  id: string;
-  projectId: string;
-  title: string;
-  description: string;
-  week: number;
-  topics: readonly string[];
-  goals: readonly string[];
-}): Prisma.CurriculumCreateInput {
+function convertToPrismaInput(
+  config: CurriculumConfig,
+): Prisma.CurriculumCreateInput {
   return {
     id: config.id,
     project: {
       connect: { id: config.projectId },
     },
     title: config.title,
+    subtitle: config.subtitle,
     description: config.description,
     week: config.week,
-    topics: config.topics as Prisma.InputJsonValue,
-    goals: config.goals as Prisma.InputJsonValue,
+    sortOrder: config.sortOrder ?? config.week ?? 0,
+    status: config.status ?? CurriculumStatus.PUBLISHED,
+    topics: (config.topics ?? []) as unknown as Prisma.InputJsonValue,
+    goals: (config.goals ?? []) as unknown as Prisma.InputJsonValue,
+    deliverables: (config.deliverables ??
+      []) as unknown as Prisma.InputJsonValue,
+    resources: (config.resources ?? []) as unknown as Prisma.InputJsonValue,
   };
 }
 

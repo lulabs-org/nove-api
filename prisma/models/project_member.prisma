@@ -1,0 +1,34 @@
+// 项目成员关联表（支持多师制导师、助教与学员参与）
+model ProjectMember {
+  id        String            @id @default(cuid())
+  projectId String            @map("project_id")
+  userId    String            @map("user_id")
+  role      ProjectMemberRole @default(STUDENT) // 成员在项目中的角色
+
+  joinedAt  DateTime          @default(now()) @map("joined_at") @db.Timestamptz(6)
+  metadata  Json              @default("{}") @db.JsonB // 成员在项目中的扩展属性（如分组、评价、考核数据等）
+
+  // 关联关系
+  project   Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // 系统审计与时间
+  createdAt DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime?         @map("deleted_at") @db.Timestamptz(6) // 软删除时间戳
+
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+  @@index([deletedAt])
+  @@map("project_members")
+}
+
+// 项目成员角色枚举
+enum ProjectMemberRole {
+  OWNER      // 项目主理人/总负责
+  INSTRUCTOR // 主讲导师
+  MENTOR     // 指导助教/Mentor
+  STUDENT    // 正式学员
+  AUDITOR    // 旁听/观察员
+}

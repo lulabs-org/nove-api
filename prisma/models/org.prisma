@@ -22,6 +22,7 @@ model Org {
   memberDepartments MemberDepartment[]
   oauthAuthCodes     OAuthAuthCode[]
   oauthTokens        OAuthToken[]
+  projects           Project[] // 组织下的项目/实训项目
 
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)

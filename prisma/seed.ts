@@ -10,7 +10,7 @@
  * - npx tsx prisma/seed.ts --real                         # 初始化所有种子数据（real 模式）
  * - npx tsx prisma/seed.ts --module <name>                # 仅初始化指定模块数据（mock 模式）
  * - npx tsx prisma/seed.ts --real --module <name>         # 仅初始化指定模块数据（real 模式）
- * 
+ *
  * 模块同步示例:
  * - npx tsx prisma/seed.ts --module permissions           # 仅初始化权限数据（mock 模式）
  * - npx tsx prisma/seed.ts --module platform-users        # 仅初始化平台用户数据（mock 模式）

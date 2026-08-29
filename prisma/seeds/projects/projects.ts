@@ -2,9 +2,9 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-01-11 05:21:40
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-12 08:26:14
- * @FilePath: /nove_api/prisma/seeds/mock/projects/projects.ts
- * @Description:
+ * @LastEditTime: 2026-08-30 00:53:00
+ * @FilePath: /nove-api/prisma/seeds/projects/projects.ts
+ * @Description: 项目种子数据生成
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
@@ -23,13 +23,19 @@ export async function createProjects(
         id: config.id,
         title: config.title,
         subtitle: config.subtitle,
+        code: config.code,
         category: config.category,
         image: config.image,
         duration: config.duration,
         level: config.level,
         maxStudents: config.maxStudents,
+        enrolledCount: config.enrolledCount ?? 0,
+        status: config.status,
+        sortOrder: config.sortOrder ?? 0,
+        isFeatured: config.isFeatured ?? false,
         description: config.description,
         slug: config.slug,
+        tags: config.tags ? [...config.tags] : [],
         prerequisites: config.prerequisites as unknown as Prisma.InputJsonValue,
         outcomes: config.outcomes as unknown as Prisma.InputJsonValue,
       };

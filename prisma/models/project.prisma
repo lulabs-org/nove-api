@@ -1,22 +1,86 @@
-// 项目表
+// 项目/实训项目表（PBL 项目与组织协同资产中枢）
 model Project {
-  id            String  @id @default(cuid())
-  title         String  @db.VarChar(100) // 项目标题
-  subtitle      String? @db.VarChar(150) // 项目副标题
-  category      String? @db.VarChar(50) // 项目分类
-  image         String? @db.VarChar(200) // 项目图片
-  duration      String? @db.VarChar(20) // 项目时长
-  level         String? @db.VarChar(20) // 难度级别
-  maxStudents   Int?    @map("max_students") // 最大学生数
-  description   String? @db.Text // 项目描述
-  slug          String? @db.VarChar(50) // URL slug
-  prerequisites Json? // 前置要求
-  outcomes      Json? // 学习成果
+  id              String        @id @default(cuid())
+  orgId           String?       @map("org_id") // 所属组织ID（多租户数据隔离）
+
+  // 基本标识与展示
+  title           String        @db.VarChar(150) // 项目标题
+  subtitle        String?       @db.VarChar(255) // 项目副标题 / 一句话介绍
+  code            String?       @db.VarChar(50)  // 项目代号/编号（如：PRJ-2026-001）
+  slug            String?       @unique @db.VarChar(100) // URL 唯一别名
+  category        String?       @db.VarChar(50)  // 分类（数据分析 / 机器学习 / Web全栈 等）
+  image           String?       @map("image") @db.VarChar(500) // 封面图片/Logo
+  description     String?       @db.Text // 详细项目介绍与背景
+
+  // PBL 核心要素（教学、技能与产出）
+  level           ProjectLevel  @default(BEGINNER) // 难度级别
+  duration        String?       @map("duration") @db.VarChar(50) // 周期文本描述（如 "8周" / "8周（每周约10小时）"）
+  maxStudents     Int?          @map("max_students") // 名额上限
+  enrolledCount   Int           @default(0) @map("enrolled_count") // 当前报名/参与人数
+  prerequisites   Json?         @db.JsonB // 前置技能/要求列表
+  outcomes        Json?         @db.JsonB // 预期产出/学习成果列表
+  tags            String[]      @default([]) // 标签数组
+
+  // 商业化/产品绑定（可选：联动 Nove 的商品订单体系）
+  productId       String?       @map("product_id") // 关联产品ID
+
+  // 状态与排期
+  status          ProjectStatus @default(DRAFT)
+  sortOrder       Int           @default(0) @map("sort_order") // 排序权重
+  isFeatured      Boolean       @default(false) @map("is_featured") // 是否精选推荐
+  startDate       DateTime?     @map("start_date") @db.Timestamptz(6) // 项目开营时间
+  endDate         DateTime?     @map("end_date") @db.Timestamptz(6) // 项目结项时间
+  enrollDeadline  DateTime?     @map("enroll_deadline") @db.Timestamptz(6) // 报名截止时间
+  publishedAt     DateTime?     @map("published_at") @db.Timestamptz(6) // 发布时间
+
+  // 人员管理与权限责任人
+  ownerId         String?       @map("owner_id") // 主负责人 / 核心导师
+  createdById     String?       @map("created_by") // 创建人
+  updatedById     String?       @map("updated_by") // 更新人
+
+  // 元数据与扩展逃生舱（对齐 nove-doc 仓库元数据规范）
+  metadata        Json          @default("{}") @db.JsonB
 
   // 关联关系
-  curriculums Curriculum[] // 项目的课程
+  org             Org?          @relation(fields: [orgId], references: [id], onDelete: SetNull)
+  owner           User?         @relation("ProjectOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  creator         User?         @relation("ProjectCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  updater         User?         @relation("ProjectUpdater", fields: [updatedById], references: [id], onDelete: SetNull)
+  product         Product?      @relation("ProjectProduct", fields: [productId], references: [id], onDelete: SetNull)
 
+  curriculums     Curriculum[]  // 项目包含的阶段/大纲
+  members         ProjectMember[] // 项目成员（导师、助教、学员）
+
+  // 系统审计时间
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt       DateTime?     @map("deleted_at") @db.Timestamptz(6) // 软删除
+
+  // 索引优化
+  @@index([orgId])
+  @@index([status])
   @@index([category])
-  @@index([slug])
+  @@index([ownerId])
+  @@index([deletedAt])
+  @@index([createdAt])
+  @@index([orgId, status])
+  @@index([status, publishedAt])
   @@map("projects")
+}
+
+// 项目状态枚举
+enum ProjectStatus {
+  DRAFT       // 草稿
+  PUBLISHED   // 已发布/预热
+  ENROLLING   // 招募/报名中
+  IN_PROGRESS // 进行中/开营中
+  COMPLETED   // 已结项/已完结
+  ARCHIVED    // 已归档
+}
+
+// 难度级别枚举
+enum ProjectLevel {
+  BEGINNER     // 初级/入门
+  INTERMEDIATE // 中级/进阶
+  ADVANCED     // 高级/实战
 }

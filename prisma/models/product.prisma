@@ -30,9 +30,10 @@ model Product {
   archivedAt       DateTime?       @map("archived_at") @db.Timestamptz(6) // 归档时间
 
   // 关联关系
-  creator User?   @relation("ProductCreator", fields: [createdBy], references: [id], onDelete: SetNull)
-  updater User?   @relation("ProductUpdater", fields: [updatedBy], references: [id], onDelete: SetNull)
-  orders  Order[] // 产品的订单记录
+  creator  User?     @relation("ProductCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  updater  User?     @relation("ProductUpdater", fields: [updatedBy], references: [id], onDelete: SetNull)
+  orders   Order[]   // 产品的订单记录
+  projects Project[] @relation("ProjectProduct") // 关联的项目/实训项目
 
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6) // 创建时间
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6) // 更新时间
