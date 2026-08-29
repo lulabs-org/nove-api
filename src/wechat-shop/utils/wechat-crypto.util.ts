@@ -1,5 +1,5 @@
 import * as JSONBig from 'json-bigint';
-import { createDecipheriv, createHash, timingSafeEqual } from 'node:crypto';
+import { createDecipheriv, createHash } from 'node:crypto';
 
 /**
  * 微信签名生成工具
@@ -11,21 +11,8 @@ import { createDecipheriv, createHash, timingSafeEqual } from 'node:crypto';
  * @returns SHA1 签名字符串
  */
 export function generateSignature(...args: string[]): string {
-  const str = [...args].sort().join('');
+  const str = args.sort().join('');
   return createHash('sha1').update(str).digest('hex');
-}
-
-/**
- * 使用常量时间比较签名，避免普通字符串比较泄露匹配进度。
- */
-export function isSignatureEqual(actual: string, expected: string): boolean {
-  const actualBuffer = Buffer.from(actual);
-  const expectedBuffer = Buffer.from(expected);
-
-  return (
-    actualBuffer.length === expectedBuffer.length &&
-    timingSafeEqual(actualBuffer, expectedBuffer)
-  );
 }
 
 /**
@@ -52,9 +39,6 @@ export function decryptWechatMessage(
   const iv = aesKey.subarray(0, 16);
 
   const encryptedBuf = Buffer.from(encrypt, 'base64');
-  if (encryptedBuf.length === 0 || encryptedBuf.length % 16 !== 0) {
-    throw new Error('Invalid encrypted message length');
-  }
 
   const decipher = createDecipheriv('aes-256-cbc', aesKey, iv);
 
@@ -67,14 +51,10 @@ export function decryptWechatMessage(
 
   // 手动去除 PKCS#7 填充
   const pad = decryptedBuf[decryptedBuf.length - 1];
-  if (pad < 1 || pad > 32 || pad > decryptedBuf.length) {
-    throw new Error('Invalid PKCS#7 padding');
+  let unpaddedBuf = decryptedBuf;
+  if (pad >= 1 && pad <= 32) {
+    unpaddedBuf = decryptedBuf.subarray(0, decryptedBuf.length - pad);
   }
-  const padding = decryptedBuf.subarray(decryptedBuf.length - pad);
-  if (!padding.every((byte) => byte === pad)) {
-    throw new Error('Invalid PKCS#7 padding');
-  }
-  const unpaddedBuf = decryptedBuf.subarray(0, decryptedBuf.length - pad);
 
   // FullStr = random(16B) + msg_len(4B) + msg + appid
   if (unpaddedBuf.length < 20) {
@@ -82,9 +62,6 @@ export function decryptWechatMessage(
   }
 
   const msgLen = unpaddedBuf.readUInt32BE(16);
-  if (20 + msgLen > unpaddedBuf.length) {
-    throw new Error('Invalid decrypted message length');
-  }
   const msgBuf = unpaddedBuf.subarray(20, 20 + msgLen);
   const msgAppIdBuf = unpaddedBuf.subarray(20 + msgLen);
 
@@ -96,10 +73,5 @@ export function decryptWechatMessage(
   }
 
   const JSONBigString = JSONBig({ storeAsString: true });
-  const parsed = JSONBigString.parse(msg) as unknown;
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-    throw new Error('Decrypted message must be a JSON object');
-  }
-
-  return parsed as Record<string, unknown>;
+  return JSONBigString.parse(msg) as Record<string, unknown>;
 }
