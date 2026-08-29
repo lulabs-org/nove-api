@@ -1,16 +1,43 @@
-// 课程表
+// 课程/大纲表（阶段、周计划与交付物要求）
 model Curriculum {
-  id          String  @id @default(cuid())
-  projectId   String? @map("project_id") // 项目ID
-  title       String? @db.VarChar(100) // 课程标题
-  description String? @db.Text // 课程描述
-  week        Int? // 第几周
-  topics      Json? // 主题列表
-  goals       Json? // 学习目标
+  id            String            @id @default(cuid())
+  projectId     String            @map("project_id") // 所属项目ID
+
+  // 章节与阶段基本信息
+  title         String            @db.VarChar(150) // 阶段标题（如 "第1周：需求分析与环境搭建"）
+  subtitle      String?           @db.VarChar(255) // 副标题
+  week          Int?              // 阶段/第几周
+  sortOrder     Int               @default(0) @map("sort_order") // 排序权重
+  description   String?           @db.Text // 阶段详情与实训任务说明
+
+  // 结构化教学与交付资产（供 Agent 自动化检查与评估）
+  topics        Json?             @db.JsonB // 核心主题与知识点列表
+  goals         Json?             @db.JsonB // 本阶段学习与实训目标
+  deliverables  Json?             @db.JsonB // 本阶段要求提交的作业/产出物规范
+  resources     Json?             @db.JsonB // 课件、参考文档、录像链接列表
+
+  status        CurriculumStatus  @default(PUBLISHED)
+
+  // 扩展元数据
+  metadata      Json              @default("{}") @db.JsonB
 
   // 关联关系
-  project Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project       Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // 系统审计与时间
+  createdAt     DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt     DateTime?         @map("deleted_at") @db.Timestamptz(6)
 
   @@index([projectId])
+  @@index([projectId, sortOrder])
+  @@index([deletedAt])
   @@map("curriculums")
+}
+
+// 课程/大纲状态枚举
+enum CurriculumStatus {
+  DRAFT     // 草稿
+  PUBLISHED // 已发布
+  ARCHIVED  // 已归档
 }

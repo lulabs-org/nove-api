@@ -62,6 +62,12 @@ model User {
   createdProducts Product[] @relation("ProductCreator") // 创建的产品
   updatedProducts Product[] @relation("ProductUpdater") // 更新的产品
 
+  // 项目相关关联
+  ownedProjects   Project[]       @relation("ProjectOwner") // 负责的项目
+  createdProjects Project[]       @relation("ProjectCreator") // 创建的项目
+  updatedProjects Project[]       @relation("ProjectUpdater") // 更新的项目
+  projectMembers  ProjectMember[] // 参与的项目成员关系
+
   // 平台与存储相关关联
   platformUsers          PlatformUser[] // 平台用户关联
   uploadedStorageObjects StorageObject[]
