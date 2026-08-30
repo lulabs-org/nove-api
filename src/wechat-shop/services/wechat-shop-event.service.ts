@@ -31,13 +31,21 @@ export class WechatShopEventService {
    * 处理微信小店 Webhook 事件
    */
   async handleWechatEvent(eventData: Record<string, unknown>) {
-    const eventType = String(eventData.Event);
-    const handler = this.eventHandlers[eventType];
+    try {
+      const eventType = String(eventData.Event);
+      const handler = this.eventHandlers[eventType];
 
-    if (handler) {
-      await handler(eventData);
-    } else {
-      this.logger.debug(`Ignored WeChat event type: ${eventType}`);
+      if (handler) {
+        await handler(eventData);
+      } else {
+        this.logger.debug(`Ignored WeChat event type: ${eventType}`);
+      }
+    } catch (err) {
+      // 记录错误但不抛出异常，为了能够向微信返回 success，避免微信持续重试
+      this.logger.error(
+        `Failed to process WeChat event [${String(eventData.Event)}]:`,
+        err,
+      );
     }
   }
 
