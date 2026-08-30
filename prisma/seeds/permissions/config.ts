@@ -263,6 +263,43 @@ export const REAL_PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     action: 'toggle-status',
   },
 
+  // ========== 项目管理 ==========
+  {
+    name: '查看项目',
+    code: 'project:read',
+    description: '查看项目信息',
+    resource: 'project',
+    action: 'read',
+  },
+  {
+    name: '创建项目',
+    code: 'project:create',
+    description: '创建新项目',
+    resource: 'project',
+    action: 'create',
+  },
+  {
+    name: '编辑项目',
+    code: 'project:update',
+    description: '编辑项目信息',
+    resource: 'project',
+    action: 'update',
+  },
+  {
+    name: '删除项目',
+    code: 'project:delete',
+    description: '软删除项目',
+    resource: 'project',
+    action: 'delete',
+  },
+  {
+    name: '切换项目状态',
+    code: 'project:toggle-status',
+    description: '切换项目生命周期状态',
+    resource: 'project',
+    action: 'toggle-status',
+  },
+
   // ========== 渠道管理 ==========
   {
     name: '查看渠道',
@@ -987,6 +1024,43 @@ export const PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     code: 'product:toggle-status',
     description: '产品上下架操作',
     resource: 'product',
+    action: 'toggle-status',
+  },
+
+  // ========== 项目管理 ==========
+  {
+    name: '查看项目',
+    code: 'project:read',
+    description: '查看项目信息',
+    resource: 'project',
+    action: 'read',
+  },
+  {
+    name: '创建项目',
+    code: 'project:create',
+    description: '创建新项目',
+    resource: 'project',
+    action: 'create',
+  },
+  {
+    name: '编辑项目',
+    code: 'project:update',
+    description: '编辑项目信息',
+    resource: 'project',
+    action: 'update',
+  },
+  {
+    name: '删除项目',
+    code: 'project:delete',
+    description: '软删除项目',
+    resource: 'project',
+    action: 'delete',
+  },
+  {
+    name: '切换项目状态',
+    code: 'project:toggle-status',
+    description: '切换项目生命周期状态',
+    resource: 'project',
     action: 'toggle-status',
   },
 
