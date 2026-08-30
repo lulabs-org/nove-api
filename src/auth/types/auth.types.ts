@@ -65,6 +65,8 @@ export interface LogoutResult {
   accessTokenRevoked: boolean;
   refreshTokenRevoked: boolean;
   allDevicesLoggedOut?: boolean;
+  // 用户级撤销标记是否写入成功（全部已签发 access token 是否立即失效）
+  allAccessTokensRevoked?: boolean;
   revokedTokensCount?: number;
   message: string;
 }

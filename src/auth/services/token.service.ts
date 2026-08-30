@@ -228,9 +228,14 @@ export class TokenService {
       }
 
       if (options.revokeAllDevices) {
+        // 先撤销全部 refresh token（封死新签发），再写入用户级撤销标记，
+        // 令所有已签发的 access token 在自然过期前立即失效
         const revokedCount =
           await this.refreshTokenRepo.revokeAllTokensByUserId(userId);
+        const userRevocation =
+          await this.tokenBlacklist.setUserRevokedBefore(userId);
         result.allDevicesLoggedOut = true;
+        result.allAccessTokensRevoked = userRevocation.added;
         result.revokedTokensCount = revokedCount;
       } else if (options.deviceId) {
         const revokedCount = await this.refreshTokenRepo.revokeTokensByDeviceId(
