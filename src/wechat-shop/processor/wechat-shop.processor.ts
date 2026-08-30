@@ -26,7 +26,9 @@ export class WechatShopProcessor extends WorkerHost {
 
         case 'sync-single-aftersale': {
           const data = job.data as { afterSaleOrderId: string };
-          await this.wechatShopAftersaleService.syncSingle(data.afterSaleOrderId);
+          await this.wechatShopAftersaleService.syncSingle(
+            data.afterSaleOrderId,
+          );
           break;
         }
 
