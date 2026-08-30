@@ -103,7 +103,10 @@ async function seedMockDatabase(prisma: PrismaClient): Promise<void> {
   const channelData = await seedFunctions.createChannels(prisma);
 
   log('\n📚 步骤 10: 创建项目数据');
-  const projectData = await seedFunctions.createProjects(prisma);
+  const projectData = await seedFunctions.createProjects(
+    prisma,
+    organization.id,
+  );
 
   log('\n📖 步骤 11: 创建课程数据');
   const curriculumData = await seedFunctions.createCurriculums(prisma, {

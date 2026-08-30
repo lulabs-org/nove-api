@@ -8,12 +8,16 @@ const MANAGER_PERMISSIONS = [
   'user:read',
   'user:create',
   'user:update',
+  'org-member:read',
   'department:read',
   'department:create',
   'department:update',
   'product:read',
   'product:create',
   'product:update',
+  'project:read',
+  'project:create',
+  'project:update',
   'channel:read',
   'channel:create',
   'channel:update',
@@ -54,6 +58,7 @@ const CUSTOMER_SERVICE_PERMISSIONS = [
   'order-refund:create',
   'order-refund:update',
   'product:read',
+  'project:read',
   'channel:read',
   'dashboard:read',
 ];
@@ -62,6 +67,7 @@ const CUSTOMER_SERVICE_PERMISSIONS = [
 const USER_PERMISSIONS = [
   'dashboard:read',
   'product:read',
+  'project:read',
   'channel:read',
   'order:read',
 ];

@@ -14,10 +14,24 @@ import type { CreatedProjects } from './type';
 
 export async function createProjects(
   prisma: PrismaClient,
+  organizationId?: string,
 ): Promise<CreatedProjects> {
   console.log('📚 开始创建项目数据...');
 
   try {
+    const targetOrgId =
+      organizationId ??
+      (
+        await prisma.org.findFirst({
+          where: { active: true, deletedAt: null },
+          orderBy: { createdAt: 'asc' },
+          select: { id: true },
+        })
+      )?.id;
+    if (!targetOrgId) {
+      throw new Error('创建项目种子数据前必须先创建有效组织');
+    }
+
     const projectPromises = PROJECT_CONFIGS.map((config) => {
       const createInput: Prisma.ProjectUncheckedCreateInput = {
         id: config.id,
@@ -38,6 +52,7 @@ export async function createProjects(
         tags: config.tags ? [...config.tags] : [],
         prerequisites: config.prerequisites as unknown as Prisma.InputJsonValue,
         outcomes: config.outcomes as unknown as Prisma.InputJsonValue,
+        orgId: targetOrgId,
       };
 
       return prisma.project.upsert({
