@@ -49,31 +49,44 @@ export class TokenBlacklistService {
     const { jti, exp: expSec } = TokenBlacklistService.extractJtiExp(decoded);
     if (!jti || !expSec) return { jti, added: false };
 
-    const nowMs = Date.now();
     const expiresAtMs = expSec * 1000;
-    const ttlMs = expiresAtMs - nowMs;
-    if (ttlMs <= 0) return { jti, added: false };
+    if (expiresAtMs <= Date.now()) return { jti, added: false };
 
+    await this.writeEntry(this.composeKey(scope, jti), expiresAtMs);
+    return { jti, added: true };
+  }
+
+  // Blacklist a known jti directly until expiresAtMs (batch user/device revocation)
+  async addByJti(
+    jti: string,
+    expiresAtMs: number,
+    scope: TokenBlacklistScope = TokenBlacklistScope.AccessToken,
+  ): Promise<boolean> {
+    if (expiresAtMs <= Date.now()) return false;
+
+    await this.writeEntry(this.composeKey(scope, jti), expiresAtMs);
+    return true;
+  }
+
+  // Persist one blacklist entry to Redis, with in-memory fallback on failure
+  private async writeEntry(key: string, expiresAtMs: number): Promise<void> {
+    const ttlMs = expiresAtMs - Date.now();
     const ttlSec = Math.max(Math.floor(ttlMs / 1000), 1);
-    const key = this.composeKey(scope, jti);
 
     if (this.redis.isReady()) {
       try {
         // Wait for Redis operation to complete
         await this.redis.getClient()!.set(key, '1', 'EX', ttlSec);
+        return;
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
         this.logger.error(`Redis set failed: ${msg}`);
         // Fallback to in-memory map with scheduled cleanup
-        this.local.set(key, expiresAtMs);
-        setTimeout(() => this.local.delete(key), ttlMs).unref?.();
       }
-    } else {
-      // Fallback to in-memory map with scheduled cleanup
-      this.local.set(key, expiresAtMs);
-      setTimeout(() => this.local.delete(key), ttlMs).unref?.();
     }
-    return { jti, added: true };
+    // Fallback to in-memory map with scheduled cleanup
+    this.local.set(key, expiresAtMs);
+    setTimeout(() => this.local.delete(key), ttlMs).unref?.();
   }
 
   // Check if a jti is blacklisted

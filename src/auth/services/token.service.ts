@@ -37,6 +37,8 @@ export class TokenService {
   private readonly accessSecret: string;
   private readonly accessExpiresIn: string;
   private readonly refreshExpiresIn: string;
+  /** 访问令牌生命周期（毫秒），作为批量拉黑时的枚举窗口 */
+  private readonly accessWindowMs: number;
 
   constructor(
     private readonly jwtService: JwtService,
@@ -49,6 +51,7 @@ export class TokenService {
     this.accessSecret = this.config.accessSecret;
     this.accessExpiresIn = this.config.accessExpiresIn;
     this.refreshExpiresIn = this.config.refreshExpiresIn;
+    this.accessWindowMs = parseDurationToMs(this.config.accessExpiresIn);
   }
 
   /**
@@ -88,7 +91,8 @@ export class TokenService {
       await this.refreshTokenRepo.createRefreshToken({
         userId,
         token: refreshToken,
-        jti: undefined,
+        // 登记访问令牌 JTI，供登出/踢设备时批量拉黑
+        jti: accessJti,
         expiresAt,
         deviceInfo: context?.deviceInfo,
         deviceId: context?.deviceId,
@@ -129,12 +133,13 @@ export class TokenService {
         throw new UnauthorizedException('用户不存在');
       }
 
+      const accessJti = randomUUID();
       const accessToken = this.jwtService.sign(
         { sub: user.id },
         {
           secret: this.accessSecret,
           expiresIn: this.accessExpiresIn,
-          jwtid: randomUUID(),
+          jwtid: accessJti,
         },
       );
 
@@ -156,7 +161,8 @@ export class TokenService {
         await this.refreshTokenRepo.createRefreshToken({
           userId: user.id,
           token: newRefreshToken,
-          jti: undefined,
+          // 登记轮换后新访问令牌的 JTI
+          jti: accessJti,
           expiresAt: newExpiresAt,
           deviceInfo:
             context?.deviceInfo || oldTokenRecord.deviceInfo || undefined,
@@ -228,8 +234,10 @@ export class TokenService {
       }
 
       if (options.revokeAllDevices) {
+        // 先撤销刷新令牌（封死新签发），再按已登记的 JTI 批量拉黑活跃访问令牌
         const revokedCount =
           await this.refreshTokenRepo.revokeAllTokensByUserId(userId);
+        await this.revokeActiveAccessTokens(userId);
         result.allDevicesLoggedOut = true;
         result.revokedTokensCount = revokedCount;
       } else if (options.deviceId) {
@@ -237,6 +245,7 @@ export class TokenService {
           userId,
           options.deviceId,
         );
+        await this.revokeActiveAccessTokens(userId, options.deviceId);
         result.revokedTokensCount = revokedCount;
       } else if (options.refreshToken) {
         result.revokedTokensCount = result.refreshTokenRevoked ? 1 : 0;
@@ -259,6 +268,32 @@ export class TokenService {
       this.logger.error('Logout failed', error);
       result.message = '退出登录失败';
       return result;
+    }
+  }
+
+  /**
+   * 拉黑窗口期内仍活跃的访问令牌（按登记的 JTI 批量失效）
+   *
+   * 访问令牌的过期时间由所在刷新令牌行的 createdAt 推导（二者同时签发）。
+   * 拉黑失败不阻断登出流程：此时访问令牌仍受短 TTL 自然过期兜底。
+   */
+  private async revokeActiveAccessTokens(
+    userId: string,
+    deviceId?: string,
+  ): Promise<void> {
+    try {
+      const entries = await this.refreshTokenRepo.findActiveAccessJtis(
+        userId,
+        this.accessWindowMs,
+        deviceId,
+      );
+
+      for (const { jti, createdAt } of entries) {
+        const expiresAtMs = createdAt.getTime() + this.accessWindowMs;
+        await this.tokenBlacklist.addByJti(jti, expiresAtMs);
+      }
+    } catch (error) {
+      this.logger.warn('Failed to blacklist active access tokens', error);
     }
   }
 }

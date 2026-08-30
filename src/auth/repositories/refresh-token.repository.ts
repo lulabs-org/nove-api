@@ -175,6 +175,31 @@ export class RefreshTokenRepository {
     return result.count;
   }
 
+  /**
+   * 查询窗口期内仍可能活跃的访问令牌 JTI（供登出时批量拉黑）
+   *
+   * 枚举条件说明：
+   * - 含未撤销行，也含窗口期内（一个访问令牌生命周期内）刚被轮换撤销的行
+   * - 排除 JTI 为 NULL 的存量行（旧数据无登记，其访问令牌自然过期即可）
+   */
+  async findActiveAccessJtis(
+    userId: string,
+    accessWindowMs: number,
+    deviceId?: string,
+  ): Promise<Array<{ jti: string; createdAt: Date }>> {
+    const windowStart = new Date(Date.now() - accessWindowMs);
+    const rows = await this.prisma.refreshToken.findMany({
+      where: {
+        userId,
+        ...(deviceId && { deviceId }),
+        jti: { not: null },
+        OR: [{ revokedAt: null }, { revokedAt: { gt: windowStart } }],
+      },
+      select: { jti: true, createdAt: true },
+    });
+    return rows as Array<{ jti: string; createdAt: Date }>;
+  }
+
   async deleteToken(token: string): Promise<boolean> {
     const tokenHash = this.hashToken(token);
 
@@ -187,7 +212,7 @@ export class RefreshTokenRepository {
       return false;
     }
   }
-
+  
   async deleteAllTokensByUserId(
     userId: string,
     excludeTokenHash?: string,
