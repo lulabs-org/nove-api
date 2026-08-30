@@ -5,11 +5,14 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma, ProjectStatus } from '@prisma/client';
+import { randomUUID } from 'node:crypto';
 import {
   CreateProjectDto,
   ProjectDto,
   ProjectListResponseDto,
+  ProjectOwnerListResponseDto,
   QueryProjectDto,
+  QueryProjectOwnerDto,
   UpdateProjectDto,
 } from '../dto';
 import {
@@ -34,8 +37,8 @@ export class ProjectService {
     actorId?: string | null,
   ): Promise<ProjectDto> {
     await this.ensureSlugAvailable(dto.slug);
-    await this.validateRelations(orgId, dto.ownerId, dto.productId);
-    this.validateCapacity(dto.enrolledCount ?? 0, dto.maxStudents);
+    await this.validateRelations(dto.ownerId, dto.productId);
+    this.validateCapacity(0, dto.maxStudents);
     this.validateDates(dto.startDate, dto.endDate);
 
     const status = dto.status ?? ProjectStatus.DRAFT;
@@ -43,7 +46,7 @@ export class ProjectService {
       orgId,
       title: dto.title.trim(),
       subtitle: this.nullableString(dto.subtitle),
-      code: this.nullableString(dto.code),
+      code: this.generateProjectCode(),
       slug: dto.slug ?? null,
       category: this.nullableString(dto.category),
       image: this.nullableString(dto.image),
@@ -51,7 +54,6 @@ export class ProjectService {
       level: dto.level,
       duration: this.nullableString(dto.duration),
       maxStudents: dto.maxStudents,
-      enrolledCount: dto.enrolledCount,
       prerequisites: this.nullableJsonList(dto.prerequisites),
       outcomes: this.nullableJsonList(dto.outcomes),
       tags: this.normalizeList(dto.tags) ?? [],
@@ -123,6 +125,24 @@ export class ProjectService {
     return this.toDto(await this.findProject(id, orgId));
   }
 
+  async findOwnerOptions(
+    query: QueryProjectOwnerDto,
+  ): Promise<ProjectOwnerListResponseDto> {
+    const keyword = query.keyword.trim();
+    const items = await this.projectRepository.findOwnerOptions({ keyword });
+    return {
+      items: items.map((user) => ({
+        id: user.id,
+        displayName:
+          user.profile?.displayName ||
+          user.profile?.fullName ||
+          user.username ||
+          user.email ||
+          user.id,
+      })),
+    };
+  }
+
   async update(
     id: string,
     orgId: string,
@@ -134,13 +154,12 @@ export class ProjectService {
       await this.ensureSlugAvailable(dto.slug, id);
     }
     if (dto.ownerId !== undefined || dto.productId !== undefined) {
-      await this.validateRelations(orgId, dto.ownerId, dto.productId);
+      await this.validateRelations(dto.ownerId, dto.productId);
     }
 
-    const enrolledCount = dto.enrolledCount ?? existing.enrolledCount;
     const maxStudents =
       dto.maxStudents !== undefined ? dto.maxStudents : existing.maxStudents;
-    this.validateCapacity(enrolledCount, maxStudents);
+    this.validateCapacity(existing._count.members, maxStudents);
 
     const startDate =
       dto.startDate !== undefined
@@ -156,7 +175,7 @@ export class ProjectService {
     const project = await this.projectRepository.update(id, orgId, {
       title: dto.title?.trim(),
       subtitle: this.optionalNullableString(dto, 'subtitle'),
-      code: this.optionalNullableString(dto, 'code'),
+      code: existing.code ? undefined : this.generateProjectCode(),
       slug: dto.slug,
       category: this.optionalNullableString(dto, 'category'),
       image: this.optionalNullableString(dto, 'image'),
@@ -164,7 +183,6 @@ export class ProjectService {
       level: dto.level,
       duration: this.optionalNullableString(dto, 'duration'),
       maxStudents: dto.maxStudents,
-      enrolledCount: dto.enrolledCount,
       prerequisites:
         dto.prerequisites === undefined
           ? undefined
@@ -246,17 +264,11 @@ export class ProjectService {
   }
 
   private async validateRelations(
-    orgId: string,
     ownerId?: string | null,
     productId?: string | null,
   ): Promise<void> {
-    if (
-      ownerId &&
-      !(await this.projectRepository.isActiveOrgMember(orgId, ownerId))
-    ) {
-      throw new BadRequestException(
-        'Project owner must be an active organization member',
-      );
+    if (ownerId && !(await this.projectRepository.activeUserExists(ownerId))) {
+      throw new BadRequestException('Project owner must be an active user');
     }
     if (productId && !(await this.projectRepository.productExists(productId))) {
       throw new BadRequestException('Product not found');
@@ -306,15 +318,15 @@ export class ProjectService {
 
   private optionalNullableString(
     dto: UpdateProjectDto,
-    key:
-      | 'subtitle'
-      | 'code'
-      | 'category'
-      | 'image'
-      | 'description'
-      | 'duration',
+    key: 'subtitle' | 'category' | 'image' | 'description' | 'duration',
   ): string | null | undefined {
     return dto[key] === undefined ? undefined : this.nullableString(dto[key]);
+  }
+
+  private generateProjectCode(): string {
+    const year = new Date().getUTCFullYear();
+    const suffix = randomUUID().replaceAll('-', '').slice(0, 12).toUpperCase();
+    return `PRJ-${year}-${suffix}`;
   }
 
   private normalizeList(value?: string[] | null): string[] | null | undefined {
@@ -352,7 +364,7 @@ export class ProjectService {
       level: project.level,
       duration: project.duration,
       maxStudents: project.maxStudents,
-      enrolledCount: project.enrolledCount,
+      enrolledCount: project._count.members,
       prerequisites: this.jsonStringList(project.prerequisites),
       outcomes: this.jsonStringList(project.outcomes),
       tags: project.tags,

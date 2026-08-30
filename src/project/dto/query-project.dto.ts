@@ -19,7 +19,6 @@ export const PROJECT_SORT_FIELDS = [
   'sortOrder',
   'startDate',
   'publishedAt',
-  'enrolledCount',
 ] as const;
 
 export class QueryProjectDto {

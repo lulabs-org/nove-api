@@ -2,6 +2,11 @@
 import { ProjectStatus } from '@prisma/client';
 import { Test } from '@nestjs/testing';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import {
+  PERMISSIONS_KEY,
+  PERMISSION_MODE_KEY,
+  PermissionMode,
+} from '@/admin/permission/decorators/permissions.decorator';
 import { ProjectService } from '../services/project.service';
 import { ProjectController } from './project.controller';
 
@@ -17,6 +22,7 @@ describe('ProjectController', () => {
       }),
       create: jest.fn(),
       findAll: jest.fn(),
+      findOwnerOptions: jest.fn(),
       findById: jest.fn(),
       update: jest.fn(),
       updateStatus: jest.fn(),
@@ -58,6 +64,18 @@ describe('ProjectController', () => {
     );
   });
 
+  it('requires both project update and global user read to search owners', () => {
+    const handler = ProjectController.prototype.findOwnerOptions;
+
+    expect(Reflect.getMetadata(PERMISSIONS_KEY, handler)).toEqual([
+      'project:update',
+      'user:read',
+    ]);
+    expect(Reflect.getMetadata(PERMISSION_MODE_KEY, handler)).toBe(
+      PermissionMode.ALL,
+    );
+  });
+
   it('publishes the project routes and relation schemas in OpenAPI', async () => {
     const moduleRef = await Test.createTestingModule({
       controllers: [ProjectController],
@@ -71,6 +89,7 @@ describe('ProjectController', () => {
     );
 
     expect(document.paths).toHaveProperty('/admin/projects');
+    expect(document.paths).toHaveProperty('/admin/projects/owner-options');
     expect(document.paths).toHaveProperty('/admin/projects/{id}');
     expect(document.paths).toHaveProperty('/admin/projects/{id}/status');
     expect(document.components?.schemas?.ProjectDto).toMatchObject({
@@ -80,6 +99,11 @@ describe('ProjectController', () => {
         product: { nullable: true },
       },
     });
+    const createSchema = document.components?.schemas?.CreateProjectDto as
+      | { properties?: Record<string, unknown> }
+      | undefined;
+    expect(createSchema?.properties).not.toHaveProperty('code');
+    expect(createSchema?.properties).not.toHaveProperty('enrolledCount');
     await app.close();
   });
 });

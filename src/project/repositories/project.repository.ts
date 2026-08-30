@@ -15,7 +15,6 @@ export const PROJECT_SELECT = {
   level: true,
   duration: true,
   maxStudents: true,
-  enrolledCount: true,
   prerequisites: true,
   outcomes: true,
   tags: true,
@@ -43,10 +42,26 @@ export const PROJECT_SELECT = {
   product: {
     select: { id: true, productCode: true, name: true, status: true },
   },
+  _count: {
+    select: {
+      members: { where: { role: 'STUDENT', deletedAt: null } },
+    },
+  },
 } satisfies Prisma.ProjectSelect;
 
 export type ProjectRecord = Prisma.ProjectGetPayload<{
   select: typeof PROJECT_SELECT;
+}>;
+
+const PROJECT_OWNER_SELECT = {
+  id: true,
+  username: true,
+  email: true,
+  profile: { select: { displayName: true, fullName: true } },
+} satisfies Prisma.UserSelect;
+
+export type ProjectOwnerRecord = Prisma.UserGetPayload<{
+  select: typeof PROJECT_OWNER_SELECT;
 }>;
 
 @Injectable()
@@ -108,18 +123,62 @@ export class ProjectRepository {
     });
   }
 
-  async isActiveOrgMember(orgId: string, userId: string): Promise<boolean> {
-    const member = await this.prisma.orgMember.findFirst({
-      where: {
-        orgId,
-        userId,
-        status: 'ACTIVE',
-        deletedAt: null,
-        user: { active: true, deletedAt: null },
-      },
+  async activeUserExists(userId: string): Promise<boolean> {
+    const user = await this.prisma.user.findFirst({
+      where: { id: userId, active: true, deletedAt: null },
       select: { id: true },
     });
-    return Boolean(member);
+    return Boolean(user);
+  }
+
+  async findOwnerOptions(options: {
+    keyword: string;
+  }): Promise<ProjectOwnerRecord[]> {
+    const where: Prisma.UserWhereInput = {
+      active: true,
+      deletedAt: null,
+      OR: [
+        {
+          username: {
+            contains: options.keyword,
+            mode: 'insensitive' as const,
+          },
+        },
+        {
+          email: {
+            contains: options.keyword,
+            mode: 'insensitive' as const,
+          },
+        },
+        { phone: { contains: options.keyword } },
+        {
+          profile: {
+            is: {
+              displayName: {
+                contains: options.keyword,
+                mode: 'insensitive' as const,
+              },
+            },
+          },
+        },
+        {
+          profile: {
+            is: {
+              fullName: {
+                contains: options.keyword,
+                mode: 'insensitive' as const,
+              },
+            },
+          },
+        },
+      ],
+    };
+    return this.prisma.user.findMany({
+      where,
+      take: 20,
+      orderBy: [{ profile: { displayName: 'asc' } }, { createdAt: 'desc' }],
+      select: PROJECT_OWNER_SELECT,
+    });
   }
 
   async productExists(productId: string): Promise<boolean> {

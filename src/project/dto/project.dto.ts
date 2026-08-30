@@ -9,6 +9,11 @@ export class ProjectOwnerDto {
   displayName: string;
 }
 
+export class ProjectOwnerListResponseDto {
+  @ApiProperty({ type: [ProjectOwnerDto] })
+  items: ProjectOwnerDto[];
+}
+
 export class ProjectProductDto {
   @ApiProperty()
   id: string;
@@ -60,7 +65,9 @@ export class ProjectDto {
   @ApiPropertyOptional({ nullable: true })
   maxStudents: number | null;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: '未软删除的正式学员（STUDENT）数量，由项目成员关系实时统计',
+  })
   enrolledCount: number;
 
   @ApiPropertyOptional({ type: [String], nullable: true })
