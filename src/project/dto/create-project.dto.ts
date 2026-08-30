@@ -50,13 +50,6 @@ export class CreateProjectDto {
   @MaxLength(255)
   subtitle?: string | null;
 
-  @ApiPropertyOptional({ nullable: true, example: 'PRJ-2026-001' })
-  @IsOptional()
-  @Transform(nullableTrim)
-  @IsString()
-  @MaxLength(50)
-  code?: string | null;
-
   @ApiPropertyOptional({ nullable: true, example: 'python-data-analysis' })
   @IsOptional()
   @Transform(normalizeSlug)
@@ -110,12 +103,6 @@ export class CreateProjectDto {
   @IsInt()
   @Min(0)
   maxStudents?: number | null;
-
-  @ApiPropertyOptional({ default: 0, minimum: 0 })
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  enrolledCount?: number;
 
   @ApiPropertyOptional({ type: [String], nullable: true })
   @IsOptional()

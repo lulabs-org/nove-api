@@ -26,7 +26,7 @@ describe('ProjectService', () => {
     level: ProjectLevel.BEGINNER,
     duration: null,
     maxStudents: 20,
-    enrolledCount: 10,
+    _count: { members: 10 },
     prerequisites: ['TypeScript'],
     outcomes: ['A working app'],
     tags: ['Web'],
@@ -66,7 +66,8 @@ describe('ProjectService', () => {
       findMany: jest.fn(),
       update: jest.fn(),
       softDelete: jest.fn(),
-      isActiveOrgMember: jest.fn(),
+      activeUserExists: jest.fn(),
+      findOwnerOptions: jest.fn(),
       productExists: jest.fn(),
     } as unknown as jest.Mocked<ProjectRepository>;
     service = new ProjectService(repository);
@@ -79,13 +80,14 @@ describe('ProjectService', () => {
 
   it('creates a normalized project in the authenticated organization', async () => {
     repository.findBySlug.mockResolvedValue(null);
-    repository.isActiveOrgMember.mockResolvedValue(true);
+    repository.activeUserExists.mockResolvedValue(true);
     repository.productExists.mockResolvedValue(true);
     repository.create.mockImplementation((data) =>
       Promise.resolve(
         project({
           orgId: data.orgId,
           title: data.title,
+          code: data.code,
           status: data.status,
           tags: data.tags,
           publishedAt: data.publishedAt,
@@ -112,6 +114,7 @@ describe('ProjectService', () => {
       expect.objectContaining({
         orgId: 'org-1',
         title: 'Project One',
+        code: expect.stringMatching(/^PRJ-\d{4}-[A-F0-9]{12}$/),
         tags: ['Web'],
         prerequisites: ['TypeScript'],
         createdById: 'user-1',
@@ -129,18 +132,10 @@ describe('ProjectService', () => {
     ).rejects.toThrow('Project slug already exists');
 
     repository.findBySlug.mockResolvedValue(null);
-    repository.isActiveOrgMember.mockResolvedValue(false);
+    repository.activeUserExists.mockResolvedValue(false);
     await expect(
       service.create('org-1', { title: 'Invalid owner', ownerId: 'user-2' }),
-    ).rejects.toThrow('active organization member');
-
-    await expect(
-      service.create('org-1', {
-        title: 'Over capacity',
-        enrolledCount: 11,
-        maxStudents: 10,
-      }),
-    ).rejects.toBeInstanceOf(BadRequestException);
+    ).rejects.toThrow('active user');
 
     await expect(
       service.create('org-1', {
@@ -149,6 +144,49 @@ describe('ProjectService', () => {
         endDate: '2026-09-01T00:00:00.000Z',
       }),
     ).rejects.toThrow('End date cannot be before start date');
+  });
+
+  it('searches active global users as owner options', async () => {
+    repository.findOwnerOptions.mockResolvedValue([
+      {
+        id: 'external-user',
+        username: 'external',
+        email: 'external@example.com',
+        profile: { displayName: '外部主导人', fullName: null },
+      },
+    ]);
+
+    await expect(
+      service.findOwnerOptions({ keyword: ' 外部 ' }),
+    ).resolves.toEqual({
+      items: [{ id: 'external-user', displayName: '外部主导人' }],
+    });
+    expect(repository.findOwnerOptions).toHaveBeenCalledWith({
+      keyword: '外部',
+    });
+  });
+
+  it('backfills a generated code when a legacy project is next saved', async () => {
+    repository.findById.mockResolvedValue(project({ code: null }) as never);
+    repository.update.mockImplementation((_id, _orgId, data) =>
+      Promise.resolve(project({ code: data.code, title: data.title }) as never),
+    );
+
+    const result = await service.update(
+      'project-1',
+      'org-1',
+      { title: 'Updated legacy project' },
+      'user-1',
+    );
+
+    expect(repository.update).toHaveBeenCalledWith(
+      'project-1',
+      'org-1',
+      expect.objectContaining({
+        code: expect.stringMatching(/^PRJ-\d{4}-[A-F0-9]{12}$/),
+      }),
+    );
+    expect(result.code).toMatch(/^PRJ-\d{4}-[A-F0-9]{12}$/);
   });
 
   it('applies organization filters and stable sorting to list queries', async () => {
@@ -164,7 +202,7 @@ describe('ProjectService', () => {
       status: ProjectStatus.PUBLISHED,
       level: ProjectLevel.BEGINNER,
       isFeatured: true,
-      sortField: 'enrolledCount',
+      sortField: 'updatedAt',
       sortOrder: 'desc',
     });
 
@@ -178,9 +216,22 @@ describe('ProjectService', () => {
         isFeatured: true,
         OR: expect.any(Array),
       }),
-      orderBy: [{ enrolledCount: 'desc' }, { createdAt: 'desc' }],
+      orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
     });
     expect(result).toMatchObject({ total: 1, page: 2, pageSize: 20 });
+  });
+
+  it('returns the active student count and prevents lowering capacity below it', async () => {
+    repository.findById.mockResolvedValue(project() as never);
+
+    await expect(
+      service.update('project-1', 'org-1', { maxStudents: 9 }, 'user-1'),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    expect(await service.findById('project-1', 'org-1')).toEqual(
+      expect.objectContaining({ enrolledCount: 10 }),
+    );
+    expect(repository.update).not.toHaveBeenCalled();
   });
 
   it('backfills the first publication timestamp and preserves tenant scope', async () => {

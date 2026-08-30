@@ -18,13 +18,18 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
+import {
+  RequireAllPermissions,
+  RequirePermissions,
+} from '@/admin/permission/decorators/permissions.decorator';
 import { Auth } from '@/auth/decorators/auth.decorator';
 import {
   CreateProjectDto,
   ProjectDto,
   ProjectListResponseDto,
+  ProjectOwnerListResponseDto,
   QueryProjectDto,
+  QueryProjectOwnerDto,
   UpdateProjectDto,
   UpdateProjectStatusDto,
 } from '../dto';
@@ -64,6 +69,16 @@ export class ProjectController {
       this.projectService.requireOrgId(orgId),
       query,
     );
+  }
+
+  @Get('owner-options')
+  @RequireAllPermissions('project:update', 'user:read')
+  @ApiOperation({ summary: '搜索可担任项目主负责人的有效本地用户' })
+  @ApiResponse({ status: 200, type: ProjectOwnerListResponseDto })
+  findOwnerOptions(
+    @Query() query: QueryProjectOwnerDto,
+  ): Promise<ProjectOwnerListResponseDto> {
+    return this.projectService.findOwnerOptions(query);
   }
 
   @Get(':id')
