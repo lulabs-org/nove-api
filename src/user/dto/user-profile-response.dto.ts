@@ -4,7 +4,7 @@ export class UserProfileDto {
   @ApiPropertyOptional({ description: '姓名' })
   name?: string;
 
-  @ApiPropertyOptional({ description: '头像URL' })
+  @ApiPropertyOptional({ description: '短期有效的头像签名 URL' })
   avatar?: string;
 
   @ApiPropertyOptional({ description: '个人简介' })

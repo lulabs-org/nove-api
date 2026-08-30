@@ -30,7 +30,7 @@ export class AuthUserWithPermissionsDto {
   @ApiProperty({ description: '用户名称' })
   name: string;
 
-  @ApiProperty({ description: '头像', required: false })
+  @ApiProperty({ description: '短期有效的头像签名 URL', required: false })
   avatar?: string;
 
   @ApiProperty({ description: '用户角色代码列表', type: [String] })

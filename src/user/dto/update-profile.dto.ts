@@ -30,11 +30,6 @@ export class UpdateProfileDto {
   @IsString()
   phone?: string;
 
-  @ApiProperty({ required: false, description: '头像URL' })
-  @IsOptional()
-  @IsString()
-  avatar?: string;
-
   @ApiProperty({ required: false, description: '显示名称' })
   @IsOptional()
   @IsString()
