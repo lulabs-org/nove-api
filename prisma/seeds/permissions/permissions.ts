@@ -10,29 +10,12 @@
  */
 
 import { PrismaClient, Permission } from '@prisma/client';
+import { NOVE_CLI_OAUTH_SCOPES } from '../oauth-scopes';
 import { PERMISSION_CONFIGS, REAL_PERMISSION_CONFIGS } from './config';
 
-const OAUTH_DELEGATABLE_PERMISSION_CODES = new Set([
-  'meeting:read',
-  'meeting:create',
-  'meeting:update',
-  'meeting:delete',
-  'meeting:stats_view',
-  'minute:read',
-  'minute:delete',
-  'speaker-summary:read',
-  'speaker-summary:create',
-  'speaker-summary:update',
-  'speaker-summary:delete',
-  'tracking-report:read',
-  'tracking-report:create',
-  'tracking-report:update',
-  'tracking-report:delete',
-  'user:read',
-  'user:create',
-  'user:update',
-  'user:delete',
-]);
+const OAUTH_DELEGATABLE_PERMISSION_CODES = new Set<string>(
+  NOVE_CLI_OAUTH_SCOPES,
+);
 
 const OAUTH_CLIENT_PERMISSION_CONFIGS = [
   {

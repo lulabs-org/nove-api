@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { NOVE_CLI_OAUTH_SCOPES } from '../../oauth-scopes';
 
 export async function createOAuthClients(prisma: PrismaClient): Promise<void> {
   console.log(`🔑 开始创建 OAuth Clients 数据...`);
@@ -15,27 +16,7 @@ export async function createOAuthClients(prisma: PrismaClient): Promise<void> {
         status: 'ACTIVE',
         redirectUris: ['http://127.0.0.1/oauth/callback'],
         grants: ['authorization_code', 'refresh_token'],
-        scopes: [
-          'meeting:read',
-          'meeting:create',
-          'meeting:update',
-          'meeting:delete',
-          'meeting:stats_view',
-          'minute:read',
-          'minute:delete',
-          'speaker-summary:read',
-          'speaker-summary:create',
-          'speaker-summary:update',
-          'speaker-summary:delete',
-          'tracking-report:read',
-          'tracking-report:create',
-          'tracking-report:update',
-          'tracking-report:delete',
-          'user:read',
-          'user:create',
-          'user:update',
-          'user:delete',
-        ],
+        scopes: [...NOVE_CLI_OAUTH_SCOPES],
       },
       create: {
         clientId: 'nove-cli',
@@ -46,27 +27,7 @@ export async function createOAuthClients(prisma: PrismaClient): Promise<void> {
         isSystem: true,
         redirectUris: ['http://127.0.0.1/oauth/callback'],
         grants: ['authorization_code', 'refresh_token'],
-        scopes: [
-          'meeting:read',
-          'meeting:create',
-          'meeting:update',
-          'meeting:delete',
-          'meeting:stats_view',
-          'minute:read',
-          'minute:delete',
-          'speaker-summary:read',
-          'speaker-summary:create',
-          'speaker-summary:update',
-          'speaker-summary:delete',
-          'tracking-report:read',
-          'tracking-report:create',
-          'tracking-report:update',
-          'tracking-report:delete',
-          'user:read',
-          'user:create',
-          'user:update',
-          'user:delete',
-        ],
+        scopes: [...NOVE_CLI_OAUTH_SCOPES],
       },
     });
 
