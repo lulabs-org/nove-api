@@ -16,9 +16,12 @@ cp .env.example .env
 - `CORS_ORIGINS`、`CORS_ORIGIN_REGEXES`、`CORS_CREDENTIALS`
 - `BULL_BOARD_USER`、`BULL_BOARD_PASSWORD`
 - 腾讯会议、飞书、微信小店、SMTP、短信和 LLM 凭据
+- 头像存储所需的 `ALIYUN_OSS_REGION`、`ALIYUN_OSS_BUCKET`、`ALIYUN_OSS_PUBLIC_BASE_URL`，以及可选的 `ALIYUN_OSS_SIGNED_URL_EXPIRES_SECONDS`
 - 数据库加密密钥（用于动态系统配置）
 
 不要直接使用 `.env.example` 中的占位密钥。生产凭据应由部署平台的 Secret 管理能力注入，并限制 `.env` 文件权限。
+
+个人头像写入 `avatars/{userId}/{uuid}.webp`。Bucket 与对象均保持私有，可以继续开启“阻止公共访问”；不要开放匿名读取或写入。数据库保存稳定的本站托管对象地址，API 在返回当前用户资料和 `/api/auth/me` 时生成短期 GET 签名 URL，默认有效期为 600 秒，且不会把签名 URL 写入数据库。`ALIYUN_OSS_PUBLIC_BASE_URL` 用于识别本站托管对象，通常填写 Bucket 公网域名。服务端 RAM 身份只授予该前缀所需的 `PutObject`、`GetObject` 和 `DeleteObject` 权限。缺少任一必要 OSS 配置或 OSS 拒绝上传时，其他 API 仍可启动，但头像上传返回 503；签名生成失败时资料接口仍可返回，只是不包含头像 URL。
 
 ## 本地开发
 

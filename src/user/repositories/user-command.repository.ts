@@ -98,7 +98,7 @@ export class UserCommandRepository {
       countryCode?: string;
       profile?: Partial<{
         displayName: string;
-        avatar: string;
+        avatar: string | null;
         bio: string;
       }>;
     },
@@ -131,6 +131,24 @@ export class UserCommandRepository {
               },
             }
           : {}),
+      },
+      include: { profile: true },
+    });
+  }
+
+  updateAvatar(
+    id: string,
+    avatar: string | null,
+  ): Promise<User & { profile: UserProfile | null }> {
+    return this.prisma.user.update({
+      where: { id },
+      data: {
+        profile: {
+          upsert: {
+            create: { avatar },
+            update: { avatar },
+          },
+        },
       },
       include: { profile: true },
     });

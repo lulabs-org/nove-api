@@ -11,12 +11,16 @@
 
 import {
   Controller,
+  Delete,
   Get,
   Put,
   Body,
   Req,
+  UploadedFile,
+  UseInterceptors,
   ValidationPipe,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags } from '@nestjs/swagger';
 import { NoPermissionRequired } from '@/admin/permission/decorators/permissions.decorator';
 import { Request } from 'express';
@@ -25,9 +29,13 @@ import { User, CurrentUser } from '@/auth/decorators/user.decorator';
 import { UpdateProfileDto } from '@/user/dto/update-profile.dto';
 import { UserProfileResponseDto } from '@/user/dto/user-profile-response.dto';
 import {
+  ApiDeleteUserAvatarDocs,
   ApiGetUserProfileDocs,
+  ApiUploadUserAvatarDocs,
   ApiUpdateUserProfileDocs,
 } from './decorators/user.decorators';
+import { RequireAuth } from '@/auth/decorators/require-auth.decorator';
+import { AvatarUploadFile } from '@/user/types/avatar-upload-file';
 
 @ApiTags('User')
 @Controller('api/user')
@@ -56,6 +64,28 @@ export class UserController {
       ip,
       userAgent,
     );
+  }
+
+  @Put('profile/avatar')
+  @RequireAuth('jwt')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 5 * 1024 * 1024 },
+    }),
+  )
+  @ApiUploadUserAvatarDocs()
+  uploadAvatar(
+    @User() user: CurrentUser,
+    @UploadedFile() file?: AvatarUploadFile,
+  ): Promise<UserProfileResponseDto> {
+    return this.profileService.uploadAvatar(user.id, file);
+  }
+
+  @Delete('profile/avatar')
+  @RequireAuth('jwt')
+  @ApiDeleteUserAvatarDocs()
+  deleteAvatar(@User() user: CurrentUser): Promise<UserProfileResponseDto> {
+    return this.profileService.deleteAvatar(user.id);
   }
 
   private getClientIp(req: Request): string {

@@ -22,4 +22,54 @@ describe('AuthController API key validation', () => {
       authenticated: true,
     });
   });
+
+  it('returns a short-lived avatar URL from the profile service', async () => {
+    const permService = {
+      getPermByRoleCodes: jest.fn().mockResolvedValue(['profile:read']),
+    };
+    const userOrgService = {
+      getPrimaryOrgId: jest.fn().mockResolvedValue('org-1'),
+    };
+    const profileService = {
+      getReadableAvatarUrl: jest
+        .fn()
+        .mockReturnValue('https://signed.example/avatar.webp?Signature=1'),
+    };
+    const controller = new AuthController(
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      permService as never,
+      userOrgService as never,
+      profileService as never,
+    );
+    const createdAt = new Date('2026-01-01T00:00:00.000Z');
+
+    const result = await controller.getMe({
+      id: 'user-1',
+      username: 'tester',
+      email: 'tester@example.com',
+      phone: undefined,
+      countryCode: undefined,
+      profile: {
+        displayName: '测试用户',
+        avatar: 'https://bucket.example/avatars/user-1/avatar.webp',
+      },
+      roles: ['USER'],
+      active: true,
+      emailVerified: true,
+      phoneVerified: false,
+      createdAt,
+      lastLoginAt: null,
+    });
+
+    expect(profileService.getReadableAvatarUrl).toHaveBeenCalledWith(
+      'https://bucket.example/avatars/user-1/avatar.webp',
+    );
+    expect(result.avatar).toBe(
+      'https://signed.example/avatar.webp?Signature=1',
+    );
+  });
 });

@@ -55,6 +55,7 @@ import { HttpUtil } from '@/common/utils/http.util';
 import { DesensitizationUtil } from '@/common/utils/desensitization.util';
 import { UserOrgService } from '@/admin/api-key/services/user-organization.service';
 import { NoPermissionRequired } from '@/admin/permission/decorators/permissions.decorator';
+import { ProfileService } from '@/user/services/profile.service';
 
 @ApiTags('Auth')
 @Controller({
@@ -73,6 +74,7 @@ export class AuthController {
     private readonly tokenBlacklist: TokenBlacklistService,
     private readonly permService: PermService,
     private readonly userOrgService: UserOrgService,
+    private readonly profileService: ProfileService,
   ) {}
 
   @Public()
@@ -362,7 +364,9 @@ export class AuthController {
         user.email ||
         DesensitizationUtil.maskPhone(user.phone) ||
         'Unknown',
-      avatar: (user.profile?.avatar as string) || undefined,
+      avatar: this.profileService.getReadableAvatarUrl(
+        user.profile?.avatar as string | undefined,
+      ),
       roles,
       currentOrgId,
       perm,
