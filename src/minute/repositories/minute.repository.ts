@@ -2,15 +2,54 @@ import { RecordingStatus } from '../enums/status.enum';
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { RecordingSource, PrismaClient, Prisma } from '@prisma/client';
+import type { Meeting } from '@prisma/client';
 
 type PrismaTransaction = Omit<
   PrismaClient,
   '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
 >;
 
+type MinuteMeetingSummaryWithDeletedAt = Pick<
+  Meeting,
+  'id' | 'title' | 'platform' | 'startAt' | 'endAt' | 'deletedAt'
+>;
+type MinuteMeetingSummary = Omit<
+  MinuteMeetingSummaryWithDeletedAt,
+  'deletedAt'
+>;
+
 @Injectable()
 export class MinuteRepository {
   constructor(private readonly prisma: PrismaService) {}
+
+  private readonly meetingSummary = {
+    id: true,
+    title: true,
+    platform: true,
+    startAt: true,
+    endAt: true,
+    deletedAt: true,
+  } satisfies Prisma.MeetingSelect;
+
+  private normalizeMeeting<
+    T extends { meeting: MinuteMeetingSummaryWithDeletedAt | null },
+  >(minute: T): Omit<T, 'meeting'> & { meeting: MinuteMeetingSummary | null } {
+    const { meeting, ...record } = minute;
+    if (!meeting || meeting.deletedAt) {
+      return { ...record, meeting: null };
+    }
+
+    return {
+      ...record,
+      meeting: {
+        id: meeting.id,
+        title: meeting.title,
+        platform: meeting.platform,
+        startAt: meeting.startAt,
+        endAt: meeting.endAt,
+      },
+    };
+  }
 
   async find(meetingId: string, externalId: string) {
     return this.prisma.minute.findFirst({
@@ -22,10 +61,14 @@ export class MinuteRepository {
   }
 
   async findById(id: string) {
-    return this.prisma.minute.findUnique({
+    const minute = await this.prisma.minute.findUnique({
       where: { id, deletedAt: null },
       omit: { deletedAt: true },
+      include: {
+        meeting: { select: this.meetingSummary },
+      },
     });
+    return minute ? this.normalizeMeeting(minute) : null;
   }
 
   async create(data: {
@@ -53,13 +96,37 @@ export class MinuteRepository {
   }
 
   async findMany(query: {
+    search?: string;
     meetingId?: string;
     source?: RecordingSource;
     skip: number;
     take: number;
   }) {
-    const where = {
+    const where: Prisma.MinuteWhereInput = {
       deletedAt: null,
+      ...(query.search
+        ? {
+            OR: [
+              {
+                externalId: {
+                  contains: query.search,
+                  mode: Prisma.QueryMode.insensitive,
+                },
+              },
+              {
+                meeting: {
+                  is: {
+                    deletedAt: null,
+                    title: {
+                      contains: query.search,
+                      mode: Prisma.QueryMode.insensitive,
+                    },
+                  },
+                },
+              },
+            ],
+          }
+        : {}),
       ...(query.meetingId ? { meetingId: query.meetingId } : {}),
       ...(query.source ? { source: query.source } : {}),
     };
@@ -72,9 +139,15 @@ export class MinuteRepository {
         take: query.take,
         orderBy: { createdAt: 'desc' },
         omit: { deletedAt: true },
+        include: {
+          meeting: { select: this.meetingSummary },
+        },
       }),
     ]);
-    return { total, records };
+    return {
+      total,
+      records: records.map((record) => this.normalizeMeeting(record)),
+    };
   }
 
   async update(id: string, data: Prisma.MinuteUpdateInput) {

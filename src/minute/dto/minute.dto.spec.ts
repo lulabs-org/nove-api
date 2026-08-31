@@ -50,6 +50,10 @@ describe('minute DTO contract', () => {
         type: 'string',
         nullable: true,
       });
+      expect(schema.properties?.meeting).toMatchObject({
+        allOf: [{ $ref: '#/components/schemas/MinuteMeetingDto' }],
+        nullable: true,
+      });
       expect(schema.properties?.recorderUserId).toMatchObject({
         type: 'string',
         nullable: true,
@@ -82,5 +86,14 @@ describe('minute DTO contract', () => {
     } finally {
       await app.close();
     }
+  });
+
+  it('accepts the minute search query field', async () => {
+    const dto = plainToInstance(QueryMinuteDto, { search: '周会' });
+
+    await expect(
+      validate(dto, { whitelist: true, forbidNonWhitelisted: true }),
+    ).resolves.toHaveLength(0);
+    expect(dto.search).toBe('周会');
   });
 });
