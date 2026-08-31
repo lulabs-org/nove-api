@@ -15,8 +15,7 @@ import { CodeType } from '@/common/enums';
 import { UserQueryRepository } from '@/user/repositories/user-query.repository';
 import { UserCommandRepository } from '@/user/repositories/user-command.repository';
 import { AuthPolicyService } from './auth-policy.service';
-import { MailService } from '@/mail/services/mail.service';
-import { buildPasswordResetNotificationEmail } from '../../common/email-templates';
+import { AuthMailService } from '@/mail/services/auth-mail.service';
 import { hashPassword, validatePassword } from '@/common/utils/password.util';
 import { LoginType } from '@/auth/enums';
 
@@ -29,7 +28,7 @@ export class PasswordService {
     private readonly userCommandRepo: UserCommandRepository,
     private readonly otpService: OtpService,
     private readonly authPolicy: AuthPolicyService,
-    private readonly mailService: MailService,
+    private readonly authMailService: AuthMailService,
   ) {}
 
   async resetPassword(
@@ -76,16 +75,11 @@ export class PasswordService {
             ? (user.profile as { name?: string }).name || 'User'
             : 'User';
 
-        const { subject, html } = buildPasswordResetNotificationEmail(
+        await this.authMailService.sendPasswordResetNotification(
+          user.email,
           displayName,
           new Date(),
         );
-
-        await this.mailService.sendSimpleEmail({
-          to: user.email,
-          subject,
-          html,
-        });
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : String(error);

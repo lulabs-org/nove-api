@@ -12,10 +12,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { SendEmailDto } from '../dto/send-email.dto';
 import { MailerService, MailerSendOptions } from './mailer.service';
-import {
-  buildWelcomeEmail,
-  buildVerificationEmail,
-} from '../../common/email-templates';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 
@@ -120,20 +116,6 @@ export class MailService {
   private maskEmail(email: string): string {
     const [name = '', domain = ''] = email.split('@');
     return `${name.slice(0, 2)}***@${domain}`;
-  }
-
-  async sendVerificationCode(
-    email: string,
-    code: string,
-    type: 'register' | 'login' | 'reset_password' | 'security',
-  ): Promise<void> {
-    const { subject, html } = buildVerificationEmail(type, code);
-    await this.sendSimpleEmail({ to: email, subject, html });
-  }
-
-  async sendWelcomeEmail(email: string, username: string): Promise<void> {
-    const { subject, html } = buildWelcomeEmail(username);
-    await this.sendSimpleEmail({ to: email, subject, html });
   }
 
   async sendMailLater(email: string, delayMs: number) {

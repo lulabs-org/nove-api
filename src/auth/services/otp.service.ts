@@ -5,7 +5,7 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { VerificationCodeRepository } from '@/auth/repositories/verification-code.repository';
-import { MailService } from '@/mail/services/mail.service';
+import { AuthMailService } from '@/mail/services/auth-mail.service';
 import { SmsDeliveryError, SmsService } from '@/sms/sms.service';
 import { CodeType } from '@/common/enums';
 import { VerificationCodeType } from '@prisma/client';
@@ -19,7 +19,7 @@ import {
 export class OtpService {
   constructor(
     private readonly repo: VerificationCodeRepository,
-    private readonly mailService: MailService,
+    private readonly authMailService: AuthMailService,
     private readonly smsService: SmsService,
   ) {}
 
@@ -177,7 +177,7 @@ export class OtpService {
       [CodeType.CHANGE_PHONE]: 'security',
     } as const;
 
-    await this.mailService.sendVerificationCode(email, code, typeMap[type]);
+    await this.authMailService.sendVerificationCode(email, code, typeMap[type]);
   }
 
   private async sendSmsCode(

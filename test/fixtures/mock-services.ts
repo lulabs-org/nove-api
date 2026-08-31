@@ -46,13 +46,13 @@ export const mockAuthService = {
 };
 
 /**
- * Mock EmailService for testing
+ * Mock AuthMailService for testing
  */
-export const mockEmailService = {
-  sendEmail: jest.fn(),
-  sendVerificationEmail: jest.fn(),
+export const mockAuthMailService = {
+  sendVerificationCode: jest.fn(),
   sendWelcomeEmail: jest.fn(),
-  sendPasswordResetEmail: jest.fn(),
+  sendPasswordResetNotification: jest.fn(),
+  sendContactChangeNotification: jest.fn(),
 };
 
 /**
@@ -103,7 +103,7 @@ export const mockOtpService = {
 interface MockProviders {
   prisma?: Partial<typeof mockPrismaService>;
   auth?: Partial<typeof mockAuthService>;
-  email?: Partial<typeof mockEmailService>;
+  authMail?: Partial<typeof mockAuthMailService>;
   user?: Partial<typeof mockUserService>;
   meeting?: Partial<typeof mockMeetingService>;
   tencent?: Partial<typeof mockTencentApiService>;
@@ -123,8 +123,8 @@ export const createMockProviders = (customMocks: MockProviders = {}) => [
     useValue: { ...mockAuthService, ...customMocks.auth },
   },
   {
-    provide: 'EmailService',
-    useValue: { ...mockEmailService, ...customMocks.email },
+    provide: 'AuthMailService',
+    useValue: { ...mockAuthMailService, ...customMocks.authMail },
   },
   {
     provide: 'UserService',

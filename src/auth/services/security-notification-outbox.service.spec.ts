@@ -18,7 +18,7 @@ describe('SecurityNotificationOutboxService', () => {
   };
   const prisma = { securityNotificationOutbox: outbox };
   const crypto = { decryptSnapshot: jest.fn() };
-  const mail = { sendSimpleEmail: jest.fn() };
+  const authMail = { sendContactChangeNotification: jest.fn() };
   const sms = { sendSecurityChangeNotice: jest.fn() };
   let service: SecurityNotificationOutboxService;
 
@@ -27,7 +27,7 @@ describe('SecurityNotificationOutboxService', () => {
     service = new SecurityNotificationOutboxService(
       prisma as never,
       crypto as never,
-      mail as never,
+      authMail as never,
       sms as never,
     );
     outbox.updateMany
@@ -57,9 +57,13 @@ describe('SecurityNotificationOutboxService', () => {
 
     await service.processPending();
 
-    expect(mail.sendSimpleEmail).toHaveBeenCalledWith(
-      expect.objectContaining({ to: 'old@example.com' }),
-      { maskTargetInLogs: true },
+    expect(authMail.sendContactChangeNotification).toHaveBeenCalledWith(
+      'old@example.com',
+      expect.objectContaining({
+        contactLabel: '邮箱',
+        newContactMasked: 'ne***@example.com',
+        recipient: SecurityNotificationRecipient.OLD,
+      }),
     );
     const updateInput = firstMockArgument(outbox.update);
     expect(updateInput).toMatchObject({
@@ -126,7 +130,9 @@ describe('SecurityNotificationOutboxService', () => {
       kind: 'email',
       email: 'new@example.com',
     });
-    mail.sendSimpleEmail.mockRejectedValue(new Error('provider failure'));
+    authMail.sendContactChangeNotification.mockRejectedValue(
+      new Error('provider failure'),
+    );
 
     await service.processPending();
 

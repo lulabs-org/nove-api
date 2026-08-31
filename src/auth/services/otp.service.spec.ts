@@ -12,7 +12,7 @@ describe('OtpService delivery accounting', () => {
     invalidateActiveCodes: jest.fn(),
     upsertSendLimit: jest.fn(),
   };
-  const mailService = { sendVerificationCode: jest.fn() };
+  const authMailService = { sendVerificationCode: jest.fn() };
   const smsService = { sendSms: jest.fn() };
   let service: OtpService;
 
@@ -26,7 +26,7 @@ describe('OtpService delivery accounting', () => {
     repo.upsertSendLimit.mockResolvedValue(undefined);
     service = new OtpService(
       repo as never,
-      mailService as never,
+      authMailService as never,
       smsService as never,
     );
   });

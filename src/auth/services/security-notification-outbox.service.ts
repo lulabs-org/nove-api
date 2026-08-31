@@ -7,9 +7,8 @@ import {
   UserSecurityAuditEventType,
 } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
-import { MailService } from '@/mail/services/mail.service';
+import { AuthMailService } from '@/mail/services/auth-mail.service';
 import { SmsDeliveryError, SmsService } from '@/sms/sms.service';
-import { buildContactChangeNotificationEmail } from '@/common/email-templates';
 import { SecurityAuditCryptoService } from './security-audit-crypto.service';
 
 const RETRY_DELAYS_MS = [60_000, 300_000, 1_800_000, 7_200_000, 43_200_000];
@@ -23,7 +22,7 @@ export class SecurityNotificationOutboxService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly crypto: SecurityAuditCryptoService,
-    private readonly mailService: MailService,
+    private readonly authMailService: AuthMailService,
     private readonly smsService: SmsService,
   ) {}
 
@@ -85,15 +84,14 @@ export class SecurityNotificationOutboxService {
 
       if (item.channel === SecurityNotificationChannel.EMAIL) {
         if (snapshot.kind !== 'email') throw new Error('CONTACT_KIND_MISMATCH');
-        const content = buildContactChangeNotificationEmail({
-          contactLabel,
-          newContactMasked: item.auditLog.newValueMasked,
-          changedAt: item.auditLog.createdAt,
-          recipient: item.recipient,
-        });
-        await this.mailService.sendSimpleEmail(
-          { to: snapshot.email, ...content },
-          { maskTargetInLogs: true },
+        await this.authMailService.sendContactChangeNotification(
+          snapshot.email,
+          {
+            contactLabel,
+            newContactMasked: item.auditLog.newValueMasked,
+            changedAt: item.auditLog.createdAt,
+            recipient: item.recipient,
+          },
         );
       } else {
         if (snapshot.kind !== 'phone') throw new Error('CONTACT_KIND_MISMATCH');
