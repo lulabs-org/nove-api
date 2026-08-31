@@ -18,11 +18,13 @@ import { BullModule } from '@nestjs/bullmq';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { SystemConfigModule } from '@/admin/system-config/system-config.module';
+import { MeetingModule } from '@/meeting/meeting.module';
 
 @Module({
   imports: [
     LarkModule,
     SystemConfigModule,
+    MeetingModule,
     BullModule.registerQueue({ name: 'lark-events' }),
     BullBoardModule.forFeature({
       name: 'lark-events',

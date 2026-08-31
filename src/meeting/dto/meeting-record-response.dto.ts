@@ -71,6 +71,9 @@ export class MeetingRecordResponseDto {
   @ApiProperty({ description: '会议记录ID' })
   id: string;
 
+  @ApiPropertyOptional({ description: '所属组织 ID', nullable: true })
+  orgId: string | null;
+
   @ApiProperty({ description: '会议平台', enum: MeetingPlatform })
   platform: MeetingPlatform;
 

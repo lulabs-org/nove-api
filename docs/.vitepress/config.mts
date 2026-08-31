@@ -127,6 +127,13 @@ export default withMermaid(
               ],
             },
             {
+              text: '云盘与 Minute 文件',
+              collapsed: true,
+              items: [
+                { text: '模块概述', link: '/developer/modules/drive/overview' },
+              ],
+            },
+            {
               text: '邮件模块',
               collapsed: true,
               items: [

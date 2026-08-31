@@ -4,6 +4,7 @@ import { MeetingRepository } from '../repositories/meeting.repository';
 import { MeetingParticipantRepository } from '../repositories/meeting-participant.repository';
 import { MeetingService } from './meeting.service';
 import { MeetingRecordNotFoundException } from '../exceptions/meeting.exceptions';
+import { PrismaService } from '@/prisma/prisma.service';
 
 describe('MeetingService', () => {
   const repository = {
@@ -26,6 +27,7 @@ describe('MeetingService', () => {
     service = new MeetingService(
       repository as unknown as MeetingRepository,
       participantRepository as unknown as MeetingParticipantRepository,
+      {} as PrismaService,
     );
   });
 
@@ -33,13 +35,16 @@ describe('MeetingService', () => {
     repository.findByPt.mockResolvedValue(null);
     repository.create.mockResolvedValue({ id: 'meeting-1' });
 
-    await service.create({
-      platform: MeetingPlatform.TENCENT_MEETING,
-      platformMeetingId: 'platform-meeting-1',
-      title: 'Meeting',
-      type: MeetingType.RECURRING,
-      durationSeconds: 3600,
-    });
+    await service.create(
+      {
+        platform: MeetingPlatform.TENCENT_MEETING,
+        platformMeetingId: 'platform-meeting-1',
+        title: 'Meeting',
+        type: MeetingType.RECURRING,
+        durationSeconds: 3600,
+      },
+      'org-1',
+    );
 
     expect(repository.findByPt).toHaveBeenCalledWith(
       MeetingPlatform.TENCENT_MEETING,
@@ -49,6 +54,7 @@ describe('MeetingService', () => {
     expect(repository.create).toHaveBeenCalledWith(
       expect.objectContaining({
         subMeetingId: '__ROOT__',
+        orgId: 'org-1',
         durationSeconds: 3600,
       }),
     );

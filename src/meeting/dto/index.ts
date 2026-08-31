@@ -6,3 +6,4 @@ export * from './meeting-record-delete.dto';
 export * from './meeting-record-create.dto';
 export * from './meeting-record-update.dto';
 export * from './health-check.dto';
+export * from './assign-meeting-organization.dto';

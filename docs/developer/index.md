@@ -12,6 +12,7 @@
 | 理解认证和 API Key | [认证概述](modules/authentication/overview.md) · [API Key](modules/api-key/overview.md) |
 | 开发组织/成员能力 | [组织、部门与成员](modules/org-management/overview.md) |
 | 管理动态密钥配置 | [全局系统配置](modules/system-config/overview.md) |
+| 接入云盘和 Minute 文件 | [云盘与 Minute 文件](modules/drive/overview.md) |
 | 接入 Agent | [MCP 连接指南](modules/mcp/connection-guide.md) |
 | 维护腾讯会议或飞书 | [腾讯会议](integrations/tencent-meeting/overview.md) · [飞书](integrations/lark/overview.md) |
 | 构建与发布 | [部署概览](guides/deployment/overview.md) · [部署指南](guides/deployment/guide.md) |
@@ -23,7 +24,7 @@
 - PostgreSQL/Prisma 保存业务数据；Redis/BullMQ 承担飞书和微信订单等异步任务。
 - 全局认证、Scope、权限和 DTO 校验统一生效，例外必须通过装饰器显式声明。
 - 会议域覆盖会议、录制、转写、会议总结和参会者总结；AI 生成由 `meet-ai` + `llm` 编排。
-- 全局系统配置支持邮件、AI、腾讯会议、飞书与微信小店；服务环境变量只在首次启动时导入，敏感字段只返回掩码。
+- 全局系统配置支持邮件、AI、腾讯会议、飞书、微信小店与云盘安全策略；服务环境变量只在首次启动时导入，敏感字段只返回掩码。
 
 路线图文档（如[会议插件系统](roadmap/meeting-plugin-system.md)）描述未来方案，不代表已经实现；阅读时应与[模块地图](architecture/module-map.md)中的当前能力区分。
 

@@ -31,6 +31,7 @@ export class PlatformUserTranscriptService {
     platformUserId: string,
     startDateValue: string,
     endDateValue: string,
+    orgId?: string,
   ): Promise<PlatformUserMinuteTranscriptsResponseDto> {
     const { startDate, endDate } = this.validateDateRange(
       startDateValue,
@@ -41,6 +42,7 @@ export class PlatformUserTranscriptService {
       platformUserId,
       startDate,
       endDate,
+      orgId,
     );
 
     return {
@@ -77,11 +79,13 @@ export class PlatformUserTranscriptService {
     platformUserId: string,
     minuteId: string,
     depth: number,
+    orgId?: string,
   ): Promise<PlatformUserTranscriptContextResponseDto> {
     const platformUser = await this.ensurePlatformUser(platformUserId);
     const minute = await this.repository.findMinuteContextSource(
       minuteId,
       platformUserId,
+      orgId,
     );
 
     if (!minute) {

@@ -1,6 +1,51 @@
 import { Prisma } from '@prisma/client';
 import type { PermissionConfig } from './type';
 
+const DRIVE_PERMISSION_CONFIGS: readonly PermissionConfig[] = [
+  {
+    name: '查看云盘',
+    code: 'drive:read',
+    description: '浏览和下载有权访问的云盘文件',
+    resource: 'drive',
+    action: 'read',
+  },
+  {
+    name: '上传云盘文件',
+    code: 'drive:upload',
+    description: '创建文件夹和上传文件',
+    resource: 'drive',
+    action: 'upload',
+  },
+  {
+    name: '编辑云盘文件',
+    code: 'drive:update',
+    description: '重命名和移动云盘文件',
+    resource: 'drive',
+    action: 'update',
+  },
+  {
+    name: '删除云盘文件',
+    code: 'drive:delete',
+    description: '移入回收站和恢复文件',
+    resource: 'drive',
+    action: 'delete',
+  },
+  {
+    name: '管理云盘授权',
+    code: 'drive:manage-acl',
+    description: '管理文件和文件夹授权',
+    resource: 'drive',
+    action: 'manage-acl',
+  },
+  {
+    name: '云盘超级管理',
+    code: 'drive:admin',
+    description: '访问待归属空间和跨组织管理能力',
+    resource: 'drive',
+    action: 'admin',
+  },
+];
+
 export const REAL_PERMISSION_CONFIGS: readonly PermissionConfig[] = [
   // ========== 用户管理 ==========
   {
@@ -793,6 +838,7 @@ export const REAL_PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     resource: 'platform-user',
     action: 'delete',
   },
+  ...DRIVE_PERMISSION_CONFIGS,
 ] as const satisfies readonly Prisma.PermissionCreateInput[];
 
 export const PERMISSION_CONFIGS: readonly PermissionConfig[] = [
@@ -1587,4 +1633,5 @@ export const PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     resource: 'platform-user',
     action: 'delete',
   },
+  ...DRIVE_PERMISSION_CONFIGS,
 ] as const satisfies readonly Prisma.PermissionCreateInput[];
