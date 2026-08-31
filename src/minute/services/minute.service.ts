@@ -32,6 +32,7 @@ export class MinuteService {
     const skip = (page - 1) * limit;
 
     const { total, records } = await this.meetingRecordingRepository.findMany({
+      search: query.search,
       meetingId: query.meetingId,
       source: query.source,
       skip,
