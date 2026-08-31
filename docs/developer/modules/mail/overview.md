@@ -2,7 +2,7 @@
 
 ## 概述
 
-邮件模块位于 `src/mail/`，提供文本和 HTML 邮件发送、抄送、密送、SMTP 连接检查和 BullMQ 延迟任务。验证码与欢迎邮件由业务模块通过 `MailService` 调用。
+邮件模块位于 `src/mail/`，提供文本和 HTML 邮件发送、抄送、密送、SMTP 连接检查和 BullMQ 延迟任务。`MailService` 只负责通用投递，认证邮件统一由 `AuthMailService` 选择模板并启用收件人脱敏日志。
 
 ## 技术架构
 
@@ -30,6 +30,11 @@ SMTP_SECURE=false
 SMTP_USER=your-email@gmail.com
 SMTP_PASS=your-app-password
 SMTP_FROM=your-email@gmail.com
+EMAIL_BRAND_NAME="Nove System"
+EMAIL_BRAND_LOGO_URL=https://assets.example.com/nove-logo.png
+EMAIL_BRAND_PRIMARY_COLOR="#2563eb"
+EMAIL_BRAND_FOOTER_TEXT="此邮件由 Nove System 自动发送，请勿回复。"
+EMAIL_BRAND_PUBLIC_BASE_URL=https://assets.example.com
 ```
 
 ### 常用邮件服务配置
@@ -74,8 +79,17 @@ src/mail/
 ├── mail.module.ts                # 模块定义
 ├── mail.processor.ts             # 队列任务处理器
 ├── services/
-│   ├── mail.service.ts       # 业务逻辑
+│   ├── auth-mail.service.ts  # 认证邮件编排
+│   ├── email-brand-resolver.service.ts # 平台/组织品牌解析
+│   ├── mail.service.ts       # 通用投递与队列
 │   └── mailer.service.ts     # Nodemailer 封装
+├── templates/
+│   ├── layout.ts                         # 公共品牌布局
+│   ├── helpers.ts                        # HTML 转义与时区格式化
+│   ├── verification-code.template.ts     # 验证码
+│   ├── welcome.template.ts               # 欢迎邮件
+│   ├── password-reset.template.ts        # 密码重置通知
+│   └── contact-change.template.ts        # 联系方式变更通知
 ├── dto/
 │   └── send-email.dto.ts     # 数据传输对象
 └── decorators/
@@ -206,9 +220,14 @@ Nodemailer 封装位于 `src/mail/services/mailer.service.ts`，配置文件位�
 "已将发送 recipient@example.com 的任务加入队列，延迟 60 秒执行"
 ```
 
-### 4. 内置邮件服务方法
+### 4. 认证邮件服务
 
-邮件服务还提供了一些内置方法，用于特定场景的邮件发送：
+认证业务应注入 `AuthMailService`，不要直接拼接 HTML 或调用模板构建函数。该服务提供以下方法：
+
+- 未提供组织上下文时使用环境变量配置的平台默认品牌。
+- 组织级业务可传入服务端可信来源的 `{ orgId }`，解析有效组织的 `name` 和 `logo`。
+- `orgId` 不得直接采信匿名请求参数；组织不存在、停用或软删除时回退平台品牌。
+- 组织相对 Logo 路径通过 `EMAIL_BRAND_PUBLIC_BASE_URL` 转换为 HTTPS 绝对地址，不安全地址不会渲染。
 
 #### 发送验证码邮件
 
@@ -216,7 +235,7 @@ Nodemailer 封装位于 `src/mail/services/mailer.service.ts`，配置文件位�
 async sendVerificationCode(
   email: string,
   code: string,
-  type: 'register' | 'login' | 'reset_password'
+  type: 'register' | 'login' | 'reset_password' | 'security'
 ): Promise<void>
 ```
 
@@ -226,7 +245,9 @@ async sendVerificationCode(
 async sendWelcomeEmail(email: string, username: string): Promise<void>
 ```
 
-#### 发送简单邮件
+此外还提供密码重置通知和联系方式变更通知。所有认证模板同时生成 HTML 与纯文本内容，对动态 HTML 值进行转义，并按 `Asia/Shanghai` 格式化安全事件时间。
+
+#### 通用邮件投递
 
 ```typescript
 async sendSimpleEmail(options: EmailOptions): Promise<void>
@@ -348,23 +369,29 @@ const sendEmailLater = async () => {
 ### NestJS 中使用邮件服务
 
 ```typescript
-import { MailService } from '@/mail/services/mail.service';
+import { AuthMailService } from '@/mail/services/auth-mail.service';
 
 @Injectable()
 export class UserService {
-  constructor(private readonly mailService: MailService) {}
+  constructor(private readonly authMailService: AuthMailService) {}
 
   async sendWelcomeEmail(user: User) {
-    await this.mailService.sendWelcomeEmail(user.email, user.username);
+    await this.authMailService.sendWelcomeEmail(user.email, user.username);
   }
 
-  async sendVerificationCode(email: string) {
-    const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-    await this.mailService.sendVerificationCode(email, code, 'register');
-    return code;
+  async sendOrganizationWelcomeEmail(user: User, trustedOrgId: string) {
+    await this.authMailService.sendWelcomeEmail(user.email, user.username, {
+      orgId: trustedOrgId,
+    });
+  }
+
+  async sendVerificationCode(email: string, code: string) {
+    await this.authMailService.sendVerificationCode(email, code, 'register');
   }
 }
 ```
+
+验证码必须由认证模块现有的安全随机数与持久化流程生成，不要在邮件调用方临时生成。
 
 ## 启动服务
 
@@ -431,7 +458,7 @@ redis-cli
 
 6. **性能优化**
    - 对于大量邮件发送，使用队列系统避免阻塞主线程
-   - 考虑使用邮件模板减少重复内容生成
+   - 认证邮件复用 `src/mail/templates` 中的公共布局和模板
    - 合理设置队列并发数，避免过载
 
 7. **安全考虑**

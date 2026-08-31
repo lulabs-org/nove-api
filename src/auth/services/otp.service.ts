@@ -4,26 +4,56 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
-import { VerificationRepository } from './repositories/verification.repository';
-import { MailService } from '@/mail/services/mail.service';
-import { SmsService } from '../sms/sms.service';
-import { CodeType } from '@/verification/enums';
+import { VerificationCodeRepository } from '@/auth/repositories/verification-code.repository';
+import { AuthMailService } from '@/mail/services/auth-mail.service';
+import { SmsDeliveryError, SmsService } from '@/sms/sms.service';
+import { CodeType } from '@/common/enums';
 import { VerificationCodeType } from '@prisma/client';
 import {
   generateNumericCode,
   isValidEmail,
   isValidCnPhone,
-} from '../common/utils';
+} from '@/common/utils';
 
 @Injectable()
-export class VerificationService {
+export class OtpService {
   constructor(
-    private readonly repo: VerificationRepository,
-    private readonly mailService: MailService,
+    private readonly repo: VerificationCodeRepository,
+    private readonly authMailService: AuthMailService,
     private readonly smsService: SmsService,
   ) {}
 
   async sendCode(
+    target: string,
+    type: CodeType,
+    ip: string,
+    userAgent?: string,
+    countryCode?: string,
+  ): Promise<{ success: boolean; message: string }> {
+    if (
+      type === CodeType.IDENTITY_CONFIRM ||
+      type === CodeType.CHANGE_EMAIL ||
+      type === CodeType.CHANGE_PHONE
+    ) {
+      throw new BadRequestException('该验证码用途仅允许在登录后使用');
+    }
+    return this.sendCodeInternal(target, type, ip, userAgent, countryCode);
+  }
+
+  async sendSecurityCode(
+    target: string,
+    type:
+      | CodeType.IDENTITY_CONFIRM
+      | CodeType.CHANGE_EMAIL
+      | CodeType.CHANGE_PHONE,
+    ip: string,
+    userAgent?: string,
+    countryCode?: string,
+  ): Promise<{ success: boolean; message: string }> {
+    return this.sendCodeInternal(target, type, ip, userAgent, countryCode);
+  }
+
+  private async sendCodeInternal(
     target: string,
     type: CodeType,
     ip: string,
@@ -44,7 +74,7 @@ export class VerificationService {
 
     const codeType = this.convertCodeType(type);
 
-    await this.repo.createVerificationCode({
+    const verificationCode = await this.repo.createVerificationCode({
       target,
       code,
       type: codeType,
@@ -53,12 +83,22 @@ export class VerificationService {
       userAgent,
     });
 
-    if (isEmail) {
-      await this.sendEmailCode(target, code, type);
-    } else {
-      await this.sendSmsCode(target, code, type, countryCode);
+    try {
+      if (isEmail) {
+        await this.sendEmailCode(target, code, type);
+      } else {
+        await this.sendSmsCode(target, code, type, countryCode);
+      }
+    } catch (error) {
+      await this.repo.deleteVerificationCode(verificationCode.id);
+      throw error;
     }
 
+    await this.repo.invalidateActiveCodes(
+      target,
+      codeType,
+      verificationCode.id,
+    );
     await this.updateSendLimit(target, ip);
 
     return {
@@ -73,13 +113,16 @@ export class VerificationService {
     type: CodeType,
   ): Promise<{ valid: boolean; message: string }> {
     const codeType = this.convertCodeType(type);
-    const verificationCode = await this.repo.findValidVerificationCode(
+    const verificationCode = await this.repo.findLatestActiveCode(
       target,
-      code,
       codeType,
     );
 
-    if (!verificationCode) {
+    if (!verificationCode || verificationCode.attemptCount >= 5) {
+      return { valid: false, message: '验证码无效或已过期' };
+    }
+    if (verificationCode.code !== code) {
+      await this.repo.incrementAttemptCount(verificationCode.id);
       return { valid: false, message: '验证码无效或已过期' };
     }
 
@@ -129,9 +172,12 @@ export class VerificationService {
       [CodeType.REGISTER]: 'register',
       [CodeType.LOGIN]: 'login',
       [CodeType.RESET_PASSWORD]: 'reset_password',
+      [CodeType.IDENTITY_CONFIRM]: 'security',
+      [CodeType.CHANGE_EMAIL]: 'security',
+      [CodeType.CHANGE_PHONE]: 'security',
     } as const;
 
-    await this.mailService.sendVerificationCode(email, code, typeMap[type]);
+    await this.authMailService.sendVerificationCode(email, code, typeMap[type]);
   }
 
   private async sendSmsCode(
@@ -144,8 +190,10 @@ export class VerificationService {
       await this.smsService.sendSms(phone, code, type, countryCode);
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      throw new BadRequestException(`短信发送失败: ${errorMessage}`);
+        error instanceof SmsDeliveryError
+          ? error.message
+          : '短信服务暂时不可用，请稍后重试';
+      throw new BadRequestException(errorMessage);
     }
   }
 
@@ -154,6 +202,9 @@ export class VerificationService {
       [CodeType.REGISTER]: VerificationCodeType.REGISTER,
       [CodeType.LOGIN]: VerificationCodeType.LOGIN,
       [CodeType.RESET_PASSWORD]: VerificationCodeType.RESET_PASSWORD,
+      [CodeType.IDENTITY_CONFIRM]: VerificationCodeType.IDENTITY_CONFIRM,
+      [CodeType.CHANGE_EMAIL]: VerificationCodeType.CHANGE_EMAIL,
+      [CodeType.CHANGE_PHONE]: VerificationCodeType.CHANGE_PHONE,
     } as const;
     return typeMap[type];
   }

@@ -46,13 +46,13 @@ export const mockAuthService = {
 };
 
 /**
- * Mock EmailService for testing
+ * Mock AuthMailService for testing
  */
-export const mockEmailService = {
-  sendEmail: jest.fn(),
-  sendVerificationEmail: jest.fn(),
+export const mockAuthMailService = {
+  sendVerificationCode: jest.fn(),
   sendWelcomeEmail: jest.fn(),
-  sendPasswordResetEmail: jest.fn(),
+  sendPasswordResetNotification: jest.fn(),
+  sendContactChangeNotification: jest.fn(),
 };
 
 /**
@@ -91,9 +91,9 @@ export const mockTencentApiService = {
 };
 
 /**
- * Mock VerificationService for testing
+ * Mock OtpService for testing
  */
-export const mockVerificationService = {
+export const mockOtpService = {
   sendSmsCode: jest.fn(),
   sendEmailCode: jest.fn(),
   verifyCode: jest.fn(),
@@ -103,11 +103,11 @@ export const mockVerificationService = {
 interface MockProviders {
   prisma?: Partial<typeof mockPrismaService>;
   auth?: Partial<typeof mockAuthService>;
-  email?: Partial<typeof mockEmailService>;
+  authMail?: Partial<typeof mockAuthMailService>;
   user?: Partial<typeof mockUserService>;
   meeting?: Partial<typeof mockMeetingService>;
   tencent?: Partial<typeof mockTencentApiService>;
-  verification?: Partial<typeof mockVerificationService>;
+  otp?: Partial<typeof mockOtpService>;
 }
 
 /**
@@ -123,8 +123,8 @@ export const createMockProviders = (customMocks: MockProviders = {}) => [
     useValue: { ...mockAuthService, ...customMocks.auth },
   },
   {
-    provide: 'EmailService',
-    useValue: { ...mockEmailService, ...customMocks.email },
+    provide: 'AuthMailService',
+    useValue: { ...mockAuthMailService, ...customMocks.authMail },
   },
   {
     provide: 'UserService',
@@ -139,7 +139,7 @@ export const createMockProviders = (customMocks: MockProviders = {}) => [
     useValue: { ...mockTencentApiService, ...customMocks.tencent },
   },
   {
-    provide: 'VerificationService',
-    useValue: { ...mockVerificationService, ...customMocks.verification },
+    provide: 'OtpService',
+    useValue: { ...mockOtpService, ...customMocks.otp },
   },
 ];

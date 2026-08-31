@@ -1,10 +1,10 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
-import { VerificationService } from '@/verification/verification.service';
-import { MailService } from '@/mail/services/mail.service';
+import { OtpService } from '@/auth/services/otp.service';
+import { AuthMailService } from '@/mail/services/auth-mail.service';
 import { RegisterDto } from '../dto/register.dto';
 import { AuthResponseDto } from '../dto/auth-response.dto';
 import { AuthType } from '@/auth/enums';
-import { CodeType } from '@/verification/enums';
+import { CodeType } from '@/common/enums';
 import { UserQueryRepository } from '@/user/repositories/user-query.repository';
 import { UserCommandRepository } from '@/user/repositories/user-command.repository';
 import { TokenService } from './token.service';
@@ -19,8 +19,8 @@ export class RegisterService {
   constructor(
     private readonly userQueryRepo: UserQueryRepository,
     private readonly userCommandRepo: UserCommandRepository,
-    private readonly verificationService: VerificationService,
-    private readonly mailService: MailService,
+    private readonly otpService: OtpService,
+    private readonly authMailService: AuthMailService,
     private readonly tokenService: TokenService,
     private readonly authPolicy: AuthPolicyService,
   ) {}
@@ -39,7 +39,7 @@ export class RegisterService {
 
     if (type === AuthType.EMAIL_CODE || type === AuthType.PHONE_CODE) {
       const target = type === AuthType.EMAIL_CODE ? email : phone;
-      const verifyResult = await this.verificationService.verifyCode(
+      const verifyResult = await this.otpService.verifyCode(
         target!,
         code!,
         CodeType.REGISTER,
@@ -76,7 +76,7 @@ export class RegisterService {
 
     if (email) {
       try {
-        await this.mailService.sendWelcomeEmail(email, username || 'User');
+        await this.authMailService.sendWelcomeEmail(email, username || 'User');
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : String(error);

@@ -43,6 +43,14 @@ function makeConfig(
       pass: map.smtp?.pass ?? '',
       from: map.smtp?.from ?? '',
     },
+    brand: {
+      name: map.brand?.name ?? 'Nove System',
+      logoUrl: map.brand?.logoUrl ?? null,
+      primaryColor: map.brand?.primaryColor ?? '#2563eb',
+      footerText:
+        map.brand?.footerText ?? '此邮件由 Nove System 自动发送，请勿回复。',
+      publicBaseUrl: map.brand?.publicBaseUrl ?? null,
+    },
   };
 }
 

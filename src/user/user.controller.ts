@@ -44,12 +44,14 @@ export class UserController {
   constructor(private readonly profileService: ProfileService) {}
 
   @Get('profile')
+  @RequireAuth('jwt')
   @ApiGetUserProfileDocs()
   async getProfile(@User() user: CurrentUser): Promise<UserProfileResponseDto> {
     return await this.profileService.getProfile(user.id);
   }
 
   @Put('profile')
+  @RequireAuth('jwt')
   @ApiUpdateUserProfileDocs()
   async updateProfile(
     @User() user: CurrentUser,

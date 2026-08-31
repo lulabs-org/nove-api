@@ -10,13 +10,12 @@
  */
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
-import { VerificationService } from '@/verification/verification.service';
-import { CodeType } from '@/verification/enums';
+import { OtpService } from '@/auth/services/otp.service';
+import { CodeType } from '@/common/enums';
 import { UserQueryRepository } from '@/user/repositories/user-query.repository';
 import { UserCommandRepository } from '@/user/repositories/user-command.repository';
 import { AuthPolicyService } from './auth-policy.service';
-import { MailService } from '@/mail/services/mail.service';
-import { buildPasswordResetNotificationEmail } from '../../common/email-templates';
+import { AuthMailService } from '@/mail/services/auth-mail.service';
 import { hashPassword, validatePassword } from '@/common/utils/password.util';
 import { LoginType } from '@/auth/enums';
 
@@ -27,9 +26,9 @@ export class PasswordService {
   constructor(
     private readonly userQueryRepo: UserQueryRepository,
     private readonly userCommandRepo: UserCommandRepository,
-    private readonly verificationService: VerificationService,
+    private readonly otpService: OtpService,
     private readonly authPolicy: AuthPolicyService,
-    private readonly mailService: MailService,
+    private readonly authMailService: AuthMailService,
   ) {}
 
   async resetPassword(
@@ -39,7 +38,7 @@ export class PasswordService {
   ): Promise<{ success: boolean; message: string }> {
     const { target, code, newPassword } = resetPasswordDto;
 
-    const verifyResult = await this.verificationService.verifyCode(
+    const verifyResult = await this.otpService.verifyCode(
       target,
       code,
       CodeType.RESET_PASSWORD,
@@ -76,16 +75,11 @@ export class PasswordService {
             ? (user.profile as { name?: string }).name || 'User'
             : 'User';
 
-        const { subject, html } = buildPasswordResetNotificationEmail(
+        await this.authMailService.sendPasswordResetNotification(
+          user.email,
           displayName,
           new Date(),
         );
-
-        await this.mailService.sendSimpleEmail({
-          to: user.email,
-          subject,
-          html,
-        });
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : String(error);

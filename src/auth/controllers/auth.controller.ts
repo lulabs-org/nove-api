@@ -3,7 +3,7 @@
  * @Date: 2026-03-04 18:05:33
  * @LastEditors: 杨仕明 shiming.y@qq.com
  * @LastEditTime: 2026-03-19 11:36:32
- * @FilePath: /nove_api/src/auth/auth.controller.ts
+ * @FilePath: /nove_api/src/auth/controllers/auth.controller.ts
  * @Description:
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
@@ -32,7 +32,7 @@ import {
   ApiLogoutDocs,
   ApiGetMeDocs,
   ApiGetPermissionsDocs,
-} from './decorators';
+} from '../decorators';
 import {
   RegisterDto,
   LoginDto,
@@ -43,10 +43,10 @@ import {
   PermissionsResponseDto,
 } from '@/auth/dto';
 import { LoginService, RegisterService, TokenService } from '@/auth/services';
-import { PasswordService } from './services/password.service';
+import { PasswordService } from '../services/password.service';
 import { Public } from '@/auth/decorators/public.decorator';
-import { ResetPasswordDto } from './dto/reset-password.dto';
-import { TokenBlacklistService } from './services/token-blacklist.service';
+import { ResetPasswordDto } from '../dto/reset-password.dto';
+import { TokenBlacklistService } from '../services/token-blacklist.service';
 import { User, CurrentUser } from '@/auth/decorators/user.decorator';
 import { RequireAuth } from '@/auth/decorators/require-auth.decorator';
 import { ClientType } from '@/auth/types/jwt.types';
