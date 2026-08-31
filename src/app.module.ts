@@ -28,7 +28,6 @@ import { MinuteModule } from './minute/minute.module';
 
 import { TencentMtgModule } from './tencent-mtg/tencent-mtg.module';
 import { LarkMeetingModule } from './lark-meeting/lark-meeting.module';
-import { VerificationModule } from '@/verification/verification.module';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { AppResolver } from './app.resolver';
@@ -113,7 +112,6 @@ import { ProjectModule } from './project/project.module';
 
     TencentMtgModule,
     LarkMeetingModule,
-    VerificationModule,
     LlmModule,
     ApiKeyModule,
     PermissionModule,

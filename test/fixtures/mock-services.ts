@@ -91,9 +91,9 @@ export const mockTencentApiService = {
 };
 
 /**
- * Mock VerificationService for testing
+ * Mock OtpService for testing
  */
-export const mockVerificationService = {
+export const mockOtpService = {
   sendSmsCode: jest.fn(),
   sendEmailCode: jest.fn(),
   verifyCode: jest.fn(),
@@ -107,7 +107,7 @@ interface MockProviders {
   user?: Partial<typeof mockUserService>;
   meeting?: Partial<typeof mockMeetingService>;
   tencent?: Partial<typeof mockTencentApiService>;
-  verification?: Partial<typeof mockVerificationService>;
+  otp?: Partial<typeof mockOtpService>;
 }
 
 /**
@@ -139,7 +139,7 @@ export const createMockProviders = (customMocks: MockProviders = {}) => [
     useValue: { ...mockTencentApiService, ...customMocks.tencent },
   },
   {
-    provide: 'VerificationService',
-    useValue: { ...mockVerificationService, ...customMocks.verification },
+    provide: 'OtpService',
+    useValue: { ...mockOtpService, ...customMocks.otp },
   },
 ];

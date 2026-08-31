@@ -81,7 +81,10 @@ export class MailService {
     return this.mailer.verify();
   }
 
-  async sendSimpleEmail(options: EmailOptions): Promise<void> {
+  async sendSimpleEmail(
+    options: EmailOptions,
+    settings: { maskTargetInLogs?: boolean } = {},
+  ): Promise<void> {
     try {
       const mailOptions: MailerSendOptions = {
         from: options.from,
@@ -93,25 +96,36 @@ export class MailService {
 
       const result = await this.mailer.send(mailOptions);
       if (!result) {
-        const errorMsg = `邮件服务未配置，无法发送邮件到: ${options.to}`;
+        const errorMsg = '邮件服务未配置，无法发送邮件';
         this.logger.warn(errorMsg);
         throw new Error(errorMsg);
       }
+      const target = settings.maskTargetInLogs
+        ? this.maskEmail(options.to)
+        : options.to;
       this.logger.log(
-        `邮件发送成功: ${options.to}, MessageId: ${result.messageId}`,
+        `邮件发送成功: ${target}, MessageId: ${result.messageId}`,
       );
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      this.logger.error(`邮件发送失败: ${options.to}`, errorMessage);
+      const target = settings.maskTargetInLogs
+        ? this.maskEmail(options.to)
+        : options.to;
+      this.logger.error(`邮件发送失败: ${target}`, errorMessage);
       throw error;
     }
+  }
+
+  private maskEmail(email: string): string {
+    const [name = '', domain = ''] = email.split('@');
+    return `${name.slice(0, 2)}***@${domain}`;
   }
 
   async sendVerificationCode(
     email: string,
     code: string,
-    type: 'register' | 'login' | 'reset_password',
+    type: 'register' | 'login' | 'reset_password' | 'security',
   ): Promise<void> {
     const { subject, html } = buildVerificationEmail(type, code);
     await this.sendSimpleEmail({ to: email, subject, html });

@@ -4,11 +4,11 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-import { VerificationService } from '@/verification/verification.service';
+import { OtpService } from '@/auth/services/otp.service';
 import { LoginDto } from '../dto/login.dto';
 import { AuthResponseDto } from '../dto/auth-response.dto';
 import { AuthType } from '@/auth/enums';
-import { CodeType } from '@/verification/enums';
+import { CodeType } from '@/common/enums';
 import * as bcrypt from 'bcryptjs';
 import { TokenService } from './token.service';
 import { AuthPolicyService } from './auth-policy.service';
@@ -23,7 +23,7 @@ export class LoginService {
   constructor(
     private readonly userQueryRepo: UserQueryRepository,
     private readonly userCommandRepo: UserCommandRepository,
-    private readonly verificationService: VerificationService,
+    private readonly otpService: OtpService,
     private readonly tokenService: TokenService,
     private readonly authPolicy: AuthPolicyService,
   ) {}
@@ -61,7 +61,7 @@ export class LoginService {
 
     try {
       if (type === AuthType.EMAIL_CODE || type === AuthType.PHONE_CODE) {
-        const verifyResult = await this.verificationService.verifyCode(
+        const verifyResult = await this.otpService.verifyCode(
           target,
           code!,
           CodeType.LOGIN,

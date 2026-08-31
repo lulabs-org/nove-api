@@ -1,7 +1,7 @@
 import { RequestMethod } from '@nestjs/common';
 import { METHOD_METADATA, PATH_METADATA } from '@nestjs/common/constants';
 import { AuthController } from './auth.controller';
-import { REQUIRE_AUTH_KEY } from './decorators/require-auth.decorator';
+import { REQUIRE_AUTH_KEY } from '../decorators/require-auth.decorator';
 
 describe('AuthController API key validation', () => {
   it('exposes an API-key-only validation endpoint', () => {

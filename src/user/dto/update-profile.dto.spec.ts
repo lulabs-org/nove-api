@@ -18,4 +18,23 @@ describe('UpdateProfileDto', () => {
       expect.arrayContaining([expect.objectContaining({ property: 'avatar' })]),
     );
   });
+
+  it.each(['email', 'phone', 'countryCode'])(
+    'rejects the security-managed %s field',
+    async (field) => {
+      const dto = plainToInstance(UpdateProfileDto, {
+        displayName: '测试用户',
+        [field]: 'changed-value',
+      });
+
+      const errors = await validate(dto, {
+        whitelist: true,
+        forbidNonWhitelisted: true,
+      });
+
+      expect(errors).toEqual(
+        expect.arrayContaining([expect.objectContaining({ property: field })]),
+      );
+    },
+  );
 });

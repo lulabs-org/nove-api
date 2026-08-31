@@ -1,10 +1,15 @@
-export type VerificationType = 'register' | 'login' | 'reset_password';
+export type VerificationType =
+  | 'register'
+  | 'login'
+  | 'reset_password'
+  | 'security';
 
 export function buildVerificationEmail(type: VerificationType, code: string) {
   const typeMap: Record<VerificationType, string> = {
     register: '注册',
     login: '登录',
     reset_password: '重置密码',
+    security: '安全操作',
   };
 
   const subject = `LuLab ${typeMap[type]}验证码`;
@@ -119,5 +124,32 @@ export function buildPasswordResetNotificationEmail(
       </div>
     `;
 
+  return { subject, html };
+}
+
+export function buildContactChangeNotificationEmail(options: {
+  contactLabel: '邮箱' | '手机号';
+  newContactMasked: string;
+  changedAt: Date;
+  recipient: 'OLD' | 'NEW';
+}): { subject: string; html: string } {
+  const changedAt = options.changedAt.toLocaleString('zh-CN', {
+    hour12: false,
+  });
+  const destination = options.recipient === 'OLD' ? '原联系方式' : '新联系方式';
+  const subject = `Nove 账号${options.contactLabel}变更通知`;
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <h2 style="color: #111827;">账号安全通知</h2>
+      <p>您的 Nove 账号${options.contactLabel}已完成${options.recipient === 'OLD' ? '换绑' : '绑定验证'}。</p>
+      <div style="background: #f3f4f6; padding: 16px; border-radius: 8px;">
+        <p style="margin: 0 0 8px;">通知对象：${destination}</p>
+        <p style="margin: 0 0 8px;">当前${options.contactLabel}：${options.newContactMasked}</p>
+        <p style="margin: 0;">操作时间：${changedAt}</p>
+      </div>
+      <p style="color: #b45309;">如非本人操作，请立即登录安全设置修改密码并下线其他设备，或联系管理员恢复账号。</p>
+      <p style="color: #6b7280; font-size: 12px;">此邮件由 Nove System 自动发送，请勿回复。</p>
+    </div>
+  `;
   return { subject, html };
 }

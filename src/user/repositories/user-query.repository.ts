@@ -105,7 +105,8 @@ export class UserQueryRepository {
     ];
     if (countryCode) {
       conditions.push({
-        uq_users_country_code_phone: { countryCode, phone: target },
+        countryCode,
+        phone: target,
       });
     } else {
       conditions.push({ phone: target });

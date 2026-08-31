@@ -18,6 +18,19 @@ import Credential from '@alicloud/credentials';
 import { CodeType } from '../common/enums';
 import { aliyunConfig } from '../configs/aliyun.config';
 
+const SMS_TEST_NUMBER_LIMIT = 'isv.SMS_TEST_NUMBER_LIMIT';
+const SMS_TEST_SIGN_TEMPLATE_LIMIT = 'isv.SMS_TEST_SIGN_TEMPLATE_LIMIT';
+
+export class SmsDeliveryError extends Error {
+  constructor(
+    message: string,
+    readonly providerCode?: string,
+  ) {
+    super(message);
+    this.name = 'SmsDeliveryError';
+  }
+}
+
 @Injectable()
 export class SmsService {
   private readonly logger = new Logger(SmsService.name);
@@ -56,21 +69,46 @@ export class SmsService {
     type: CodeType,
     countryCode?: string,
   ): Promise<void> {
-    try {
-      // 根据验证码类型选择模板
-      const templateCode = this.getTemplateCode(type);
-      const signName = this.getSignName();
+    const templateCode = this.getTemplateCode(type);
+    await this.deliverSms(phoneNumber, countryCode, templateCode, { code });
+  }
 
-      // 构建完整的手机号（包含国家代码）
-      const fullPhoneNumber = countryCode
-        ? `${countryCode}${phoneNumber}`
-        : phoneNumber;
+  async sendSecurityChangeNotice(
+    phoneNumber: string,
+    countryCode: string,
+    contactLabel: string,
+    newContactMasked: string,
+    changedAt: string,
+  ): Promise<void> {
+    const templateCode = this.cfg.sms.templates.securityChange;
+    if (!templateCode) {
+      throw new SmsDeliveryError(
+        '安全通知短信模板未配置',
+        'SECURITY_CHANGE_TEMPLATE_MISSING',
+      );
+    }
+    await this.deliverSms(phoneNumber, countryCode, templateCode, {
+      contactType: contactLabel,
+      newContact: newContactMasked,
+      changedAt,
+    });
+  }
+
+  private async deliverSms(
+    phoneNumber: string,
+    countryCode: string | undefined,
+    templateCode: string,
+    templateParams: Record<string, string>,
+  ): Promise<void> {
+    const fullPhoneNumber = this.formatPhoneNumber(phoneNumber, countryCode);
+    try {
+      const signName = this.getSignName();
 
       const sendSmsRequest = new $Dysmsapi20170525.SendSmsRequest({
         phoneNumbers: fullPhoneNumber,
         signName: signName,
         templateCode: templateCode,
-        templateParam: JSON.stringify({ code: code }),
+        templateParam: JSON.stringify(templateParams),
       });
 
       const runtime = new $Util.RuntimeOptions({});
@@ -80,19 +118,35 @@ export class SmsService {
         runtime,
       );
 
-      this.logger.log(`短信发送成功: ${fullPhoneNumber}, 验证码: ${code}`);
-
       // 检查响应状态
       if (response.body?.code !== 'OK') {
-        const message = response.body?.message ?? '未知错误';
-        throw new Error(`短信发送失败: ${message}`);
+        const providerCode = response.body?.code;
+        this.logDeliveryFailure(
+          fullPhoneNumber,
+          providerCode,
+          response.body?.requestId,
+        );
+        throw new SmsDeliveryError(
+          this.toPublicErrorMessage(providerCode, response.body?.message),
+          providerCode,
+        );
       }
+      this.logger.log(`短信发送成功: ${this.maskPhoneNumber(fullPhoneNumber)}`);
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      this.logger.error(`短信发送失败: ${errorMessage}`);
+      if (error instanceof SmsDeliveryError) throw error;
 
       const typedError = error as Record<string, unknown>;
+      const providerCode =
+        typeof typedError?.code === 'string' ? typedError.code : undefined;
+      const requestId =
+        typeof typedError?.requestId === 'string'
+          ? typedError.requestId
+          : undefined;
+      const providerMessage =
+        typeof typedError?.message === 'string'
+          ? typedError.message
+          : undefined;
+      this.logDeliveryFailure(fullPhoneNumber, providerCode, requestId);
       if (typedError?.data && typeof typedError.data === 'object') {
         const data = typedError.data as Record<string, unknown>;
         if (data?.Recommend) {
@@ -104,8 +158,55 @@ export class SmsService {
           this.logger.error(`诊断地址: ${recommendStr}`);
         }
       }
-      throw new Error(`短信发送失败: ${errorMessage}`);
+      throw new SmsDeliveryError(
+        this.toPublicErrorMessage(providerCode, providerMessage),
+        providerCode,
+      );
     }
+  }
+
+  private toPublicErrorMessage(
+    providerCode?: string,
+    providerMessage?: string,
+  ): string {
+    if (
+      providerCode === SMS_TEST_NUMBER_LIMIT ||
+      (providerMessage?.includes('授权') && providerMessage.includes('手机号'))
+    ) {
+      return '当前使用的是阿里云测试短信，只能发送给已绑定的测试手机号。请先在阿里云短信控制台绑定该号码，或改用审核通过的正式签名和模板';
+    }
+    if (providerCode === SMS_TEST_SIGN_TEMPLATE_LIMIT) {
+      return '阿里云短信签名与模板类型不匹配。测试签名必须搭配测试模板；正式签名必须搭配审核通过的正式模板，请检查 ALIYUN_SMS_SIGN_NAME 和 ALIYUN_SMS_TEMPLATE_LOGIN';
+    }
+    return '短信服务暂时不可用，请稍后重试';
+  }
+
+  private logDeliveryFailure(
+    phoneNumber: string,
+    providerCode?: string,
+    requestId?: string,
+  ): void {
+    this.logger.error(
+      `短信发送失败: target=${this.maskPhoneNumber(phoneNumber)}, code=${providerCode ?? 'UNKNOWN'}, requestId=${requestId ?? 'UNKNOWN'}`,
+    );
+  }
+
+  private maskPhoneNumber(phoneNumber: string): string {
+    if (phoneNumber.length <= 7) return '***';
+    return `${phoneNumber.slice(0, 3)}****${phoneNumber.slice(-4)}`;
+  }
+
+  private formatPhoneNumber(phoneNumber: string, countryCode?: string): string {
+    const normalizedCountryCode = countryCode?.trim();
+    if (
+      !normalizedCountryCode ||
+      normalizedCountryCode === '+86' ||
+      normalizedCountryCode === '86' ||
+      normalizedCountryCode === '0086'
+    ) {
+      return phoneNumber;
+    }
+    return `${normalizedCountryCode.replace(/^\+/, '')}${phoneNumber}`;
   }
 
   /**
@@ -117,6 +218,9 @@ export class SmsService {
       [CodeType.REGISTER]: this.cfg.sms.templates.register,
       [CodeType.LOGIN]: this.cfg.sms.templates.login,
       [CodeType.RESET_PASSWORD]: this.cfg.sms.templates.resetPassword,
+      [CodeType.IDENTITY_CONFIRM]: this.cfg.sms.templates.login,
+      [CodeType.CHANGE_EMAIL]: this.cfg.sms.templates.login,
+      [CodeType.CHANGE_PHONE]: this.cfg.sms.templates.login,
     } as const;
     return templateMap[type];
   }

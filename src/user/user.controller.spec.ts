@@ -33,7 +33,21 @@ describe('UserController avatar endpoints', () => {
     expect(profileService.deleteAvatar.mock.calls[0]).toEqual(['user-1']);
   });
 
-  it('requires ordinary JWT authentication on avatar mutations', () => {
+  it('requires ordinary JWT authentication on all personal profile endpoints', () => {
+    expect(
+      Reflect.getMetadata(
+        REQUIRE_AUTH_KEY,
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        UserController.prototype.getProfile,
+      ),
+    ).toEqual(['jwt']);
+    expect(
+      Reflect.getMetadata(
+        REQUIRE_AUTH_KEY,
+        // eslint-disable-next-line @typescript-eslint/unbound-method
+        UserController.prototype.updateProfile,
+      ),
+    ).toEqual(['jwt']);
     expect(
       Reflect.getMetadata(
         REQUIRE_AUTH_KEY,

@@ -10,8 +10,8 @@
  */
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { ResetPasswordDto } from '../dto/reset-password.dto';
-import { VerificationService } from '@/verification/verification.service';
-import { CodeType } from '@/verification/enums';
+import { OtpService } from '@/auth/services/otp.service';
+import { CodeType } from '@/common/enums';
 import { UserQueryRepository } from '@/user/repositories/user-query.repository';
 import { UserCommandRepository } from '@/user/repositories/user-command.repository';
 import { AuthPolicyService } from './auth-policy.service';
@@ -27,7 +27,7 @@ export class PasswordService {
   constructor(
     private readonly userQueryRepo: UserQueryRepository,
     private readonly userCommandRepo: UserCommandRepository,
-    private readonly verificationService: VerificationService,
+    private readonly otpService: OtpService,
     private readonly authPolicy: AuthPolicyService,
     private readonly mailService: MailService,
   ) {}
@@ -39,7 +39,7 @@ export class PasswordService {
   ): Promise<{ success: boolean; message: string }> {
     const { target, code, newPassword } = resetPasswordDto;
 
-    const verifyResult = await this.verificationService.verifyCode(
+    const verifyResult = await this.otpService.verifyCode(
       target,
       code,
       CodeType.RESET_PASSWORD,

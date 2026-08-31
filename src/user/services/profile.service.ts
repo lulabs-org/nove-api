@@ -65,8 +65,7 @@ export class ProfileService {
     userAgent?: string,
   ): Promise<UserProfileResponseDto> {
     this.logger.log(`用户 ${userId} 正在更新资料，IP: ${ip}, UA: ${userAgent}`);
-    const { username, email, phone, countryCode, displayName, bio } =
-      updateProfileDto;
+    const { username, displayName, bio } = updateProfileDto;
 
     const existingUser = await this.userQueryRepo.withProfile(userId);
     if (!existingUser) {
@@ -80,27 +79,6 @@ export class ProfileService {
       }
     }
 
-    if (email && email !== existingUser.email) {
-      const emailExists = await this.userQueryRepo.byEmail(email);
-      if (emailExists) {
-        throw new ConflictException('邮箱已被使用');
-      }
-    }
-
-    if (
-      phone &&
-      (phone !== existingUser.phone ||
-        updateProfileDto.countryCode !== existingUser.countryCode)
-    ) {
-      const phoneExists = await this.userQueryRepo.byPhone(
-        updateProfileDto.countryCode || existingUser.countryCode || '',
-        phone,
-      );
-      if (phoneExists) {
-        throw new ConflictException('手机号已被使用');
-      }
-    }
-
     const profileUpdates: {
       displayName?: string;
       bio?: string;
@@ -111,8 +89,9 @@ export class ProfileService {
         displayName ||
         existingUser.profile?.displayName ||
         username ||
-        email?.split('@')[0] ||
-        phone;
+        existingUser.email?.split('@')[0] ||
+        existingUser.phone ||
+        undefined;
     }
 
     if (bio !== undefined) {
@@ -121,9 +100,6 @@ export class ProfileService {
 
     const updatedUser = await this.userCommandRepo.updateProfile(userId, {
       ...(username !== undefined ? { username } : {}),
-      ...(email !== undefined ? { email } : {}),
-      ...(phone !== undefined ? { phone } : {}),
-      ...(countryCode !== undefined ? { countryCode } : {}),
       ...(Object.keys(profileUpdates).length
         ? { profile: profileUpdates }
         : {}),

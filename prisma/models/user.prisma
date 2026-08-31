@@ -48,7 +48,8 @@ model User {
   preferences UserPreference?
 
   // 登录日志关联
-  loginLogs      LoginLog[] // 登录日志
+  loginLogs LoginLog[] // 登录日志
+  securityAuditLogs UserSecurityAuditLog[]
   // API Key 关联
   createdApiKeys ApiKey[] // 创建的 API Keys
 
