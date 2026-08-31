@@ -62,29 +62,21 @@ describe('TokenBlacklistService', () => {
       );
     });
 
-    it('Redis set 失败时退化为本地兜底，撤销仍生效', async () => {
+    it('Redis set 失败时显式失败（fail-closed），返回 added=false', async () => {
       redisClient.set.mockRejectedValue(new Error('boom'));
 
-      await service.setUserRevokedBefore(USER_ID);
+      const { added } = await service.setUserRevokedBefore(USER_ID);
 
-      expect(
-        await service.isUserRevokedBefore(USER_ID, NOW_MS / 1000 - 5),
-      ).toBe(true);
-      expect(
-        await service.isUserRevokedBefore(USER_ID, NOW_MS / 1000 + 5),
-      ).toBe(false);
+      expect(added).toBe(false);
     });
 
-    it('Redis 不可用时退化为本地兜底，不调用 Redis', async () => {
+    it('Redis 不可用时显式失败，不调用 Redis', async () => {
       isReady.mockReturnValue(false);
 
       const { added } = await service.setUserRevokedBefore(USER_ID);
 
-      expect(added).toBe(true);
+      expect(added).toBe(false);
       expect(redisClient.set).not.toHaveBeenCalled();
-      expect(
-        await service.isUserRevokedBefore(USER_ID, NOW_MS / 1000 - 1),
-      ).toBe(true);
     });
   });
 
@@ -127,43 +119,21 @@ describe('TokenBlacklistService', () => {
       ).toBe(false);
     });
 
-    it('Redis 读取失败时回退本地兜底', async () => {
-      isReady.mockReturnValue(false);
-      await service.setUserRevokedBefore(USER_ID);
-
-      // Redis 恢复但读取抛错，仍以本地兜底为准
-      isReady.mockReturnValue(true);
+    it('Redis 读取失败时放行（读侧 fail-open，由写侧 fail-closed 兜住）', async () => {
       redisClient.get.mockRejectedValue(new Error('get failed'));
-
-      expect(
-        await service.isUserRevokedBefore(USER_ID, NOW_MS / 1000 - 1),
-      ).toBe(true);
-    });
-
-    it('Redis 与本地兜底并存时取较晚的撤销边界（并集语义）', async () => {
-      isReady.mockReturnValue(false);
-      await service.setUserRevokedBefore(USER_ID); // 本地边界：NOW_MS
-
-      // Redis 中存在更早的边界（例如故障期间未同步）
-      isReady.mockReturnValue(true);
-      redisClient.get.mockResolvedValue(String(NOW_MS - 60_000));
-
-      // 介于两个边界之间签发的 token 以较晚边界为准，被拒
-      expect(
-        await service.isUserRevokedBefore(USER_ID, (NOW_MS - 30_000) / 1000),
-      ).toBe(true);
-    });
-
-    it('本地兜底过期后清理并放行', async () => {
-      isReady.mockReturnValue(false);
-      await service.setUserRevokedBefore(USER_ID);
-
-      // 前进 15 分钟，受影响 token 均已自然过期，标记随之失效
-      jest.setSystemTime(NOW_MS + 15 * 60 * 1000 + 1);
 
       expect(
         await service.isUserRevokedBefore(USER_ID, NOW_MS / 1000 - 10),
       ).toBe(false);
+    });
+
+    it('Redis 不可用时放行', async () => {
+      isReady.mockReturnValue(false);
+
+      expect(
+        await service.isUserRevokedBefore(USER_ID, NOW_MS / 1000 - 10),
+      ).toBe(false);
+      expect(redisClient.get).not.toHaveBeenCalled();
     });
   });
 

@@ -22,11 +22,6 @@ import { parseDurationToMs } from '@/common/utils';
 export class TokenBlacklistService {
   private readonly logger = new Logger(TokenBlacklistService.name);
   private readonly local = new Map<string, number>(); // scope+jti -> expiresAt(ms) (fallback)
-  // userId -> { before(ms), expiresAt(ms) }（用户级撤销的本地兜底）
-  private readonly localUserRevoked = new Map<
-    string,
-    { before: number; expiresAt: number }
-  >();
 
   constructor(
     private readonly jwtService: JwtService,
@@ -56,13 +51,17 @@ export class TokenBlacklistService {
 
   // 用户级撤销：令某时间点之前签发的所有 access token 立即失效。
   // 标记 TTL 与 access token 最长生命周期对齐（届时受影响 token 均已自然过期），
-  // 到期由 Redis 自动清理；Redis 不可用时退化为本地内存兜底。
+  // 到期由 Redis 自动清理。写侧 fail-closed：Redis 不可用或写入失败时显式返回
+  // added=false，不再退化为进程内存兜底（多实例不可见、重启即丢，会造成
+  // "报告撤销成功但实际未生效"的假象）。
   async setUserRevokedBefore(
     userId: string,
   ): Promise<{ revokedBefore: number; added: boolean }> {
     const nowMs = Date.now();
-    const ttlMs = parseDurationToMs(this.config.accessExpiresIn);
-    const ttlSec = Math.max(Math.ceil(ttlMs / 1000), 1);
+    const ttlSec = Math.max(
+      Math.ceil(parseDurationToMs(this.config.accessExpiresIn) / 1000),
+      1,
+    );
     const key = this.composeUserRevokedKey(userId);
 
     if (this.redis.isReady()) {
@@ -72,50 +71,34 @@ export class TokenBlacklistService {
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
         this.logger.error(`Redis set failed: ${msg}`);
-        // 落入本地兜底
       }
+    } else {
+      this.logger.warn('Redis not ready, user-level revocation skipped');
     }
-    this.localUserRevoked.set(key, {
-      before: nowMs,
-      expiresAt: nowMs + ttlMs,
-    });
-    setTimeout(() => this.localUserRevoked.delete(key), ttlMs).unref?.();
-    return { revokedBefore: nowMs, added: true };
+    return { revokedBefore: nowMs, added: false };
   }
 
   // 校验某用户在 iatSec（秒）及之前签发的 token 是否已被用户级撤销。
-  // 同时读取 Redis 与本地兜底并取较晚时间戳（多次撤销事件取并集语义），
-  // 避免本地兜底写入后被恢复的 Redis 读值漏判。
+  // 读侧以 Redis 为唯一事实源：无标记或读取失败均视为未撤销（fail-open），
+  // 由写侧的 fail-closed 保证标记要么真实写入、要么向上层显式报告失败。
   async isUserRevokedBefore(userId: string, iatSec: number): Promise<boolean> {
     const key = this.composeUserRevokedKey(userId);
-    const candidates: number[] = [];
 
     if (this.redis.isReady()) {
       try {
         const raw = await this.redis.getClient()!.get(key);
-        if (raw !== null) {
-          const value = Number(raw);
-          if (!Number.isNaN(value)) candidates.push(value);
-        }
+        if (raw === null) return false;
+        const revokedBeforeMs = Number(raw);
+        if (Number.isNaN(revokedBeforeMs)) return false;
+        // 用 <= 而非 <：同一秒内先签发后撤销的 token 也拒绝（fail-closed）
+        return iatSec * 1000 <= revokedBeforeMs;
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
         this.logger.error(`Redis get failed: ${msg}`);
+        return false;
       }
     }
-
-    const local = this.localUserRevoked.get(key);
-    if (local) {
-      if (Date.now() <= local.expiresAt) {
-        candidates.push(local.before);
-      } else {
-        this.localUserRevoked.delete(key);
-      }
-    }
-
-    if (candidates.length === 0) return false;
-    const revokedBeforeMs = Math.max(...candidates);
-    // 用 <= 而非 <：同一秒内先签发后撤销的 token 也拒绝（fail-closed）
-    return iatSec * 1000 <= revokedBeforeMs;
+    return false;
   }
 
   // Add a token's jti to blacklist until its expiry
