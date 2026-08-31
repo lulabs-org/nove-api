@@ -7,9 +7,13 @@ services:
       - '${NOVE_PORT:-3000}:3000'
     env_file:
       - .env
+    environment:
+      CLAMAV_HOST: clamav
+      CLAMAV_PORT: 3310
     depends_on:
       - redis
       - postgres
+      - clamav
     networks:
       - nove_net
   redis:
@@ -25,15 +29,20 @@ services:
       - redis_data:/data
     command:
       [
-      "redis-server",
-      "--appendonly","yes",
-      "--requirepass","${REDIS_PASSWORD}",
-      "--databases","${REDIS_DATABASES:-16}",
-      "--maxmemory","${REDIS_MAXMEMORY:-256mb}",
-      "--maxmemory-policy","noeviction"
-    ]
+        'redis-server',
+        '--appendonly',
+        'yes',
+        '--requirepass',
+        '${REDIS_PASSWORD}',
+        '--databases',
+        '${REDIS_DATABASES:-16}',
+        '--maxmemory',
+        '${REDIS_MAXMEMORY:-256mb}',
+        '--maxmemory-policy',
+        'noeviction',
+      ]
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      test: ['CMD', 'redis-cli', '-a', '${REDIS_PASSWORD}', 'ping']
       interval: 5s
       timeout: 3s
       retries: 10
@@ -52,16 +61,44 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-lulab}"]
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-lulab}',
+        ]
       interval: 5s
       timeout: 3s
       retries: 10
+    networks:
+      - nove_net
+  clamav:
+    image: clamav/clamav:1.5-debian13-slim
+    container_name: nove-clamav
+    restart: unless-stopped
+    environment:
+      CLAMD_CONF_StreamMaxLength: 2048M
+      CLAMD_CONF_MaxFileSize: 2048M
+      CLAMD_CONF_MaxScanSize: 2048M
+      CLAMD_CONF_PCREMaxFileSize: 2048M
+      CLAMD_CONF_MaxScanTime: 600000
+      FRESHCLAM_CHECKS: 12
+    ports:
+      - '127.0.0.1:${CLAMAV_PORT:-3310}:3310'
+    volumes:
+      - clamav_data:/var/lib/clamav
+    healthcheck:
+      test: ['CMD', 'clamdscan', '--ping', '1']
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 120s
     networks:
       - nove_net
 
 volumes:
   redis_data:
   postgres_data:
+  clamav_data:
 
 networks:
   nove_net:

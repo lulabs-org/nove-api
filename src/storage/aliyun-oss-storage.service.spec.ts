@@ -152,4 +152,37 @@ describe('AliyunOssStorageService', () => {
     );
     expect(client.signatureUrl).toHaveBeenCalledTimes(1);
   });
+
+  it('does not override Content-Type in drive download URLs', () => {
+    const service = new AliyunOssStorageService();
+    const client = {
+      put: jest.fn(),
+      delete: jest.fn(),
+      signatureUrl: jest
+        .fn()
+        .mockReturnValue('https://signed.example.com/report.pdf?signature=1'),
+    };
+    withClient(service, client);
+
+    expect(
+      service.getDownloadUrl({
+        key: 'drive/space-1/report.pdf',
+        fileName: '季度报告.pdf',
+        contentType: 'application/pdf',
+        expiresSeconds: 600,
+      }),
+    ).toBe('https://signed.example.com/report.pdf?signature=1');
+    expect(client.signatureUrl).toHaveBeenCalledWith(
+      'drive/space-1/report.pdf',
+      {
+        expires: 600,
+        method: 'GET',
+        response: {
+          'content-disposition':
+            "attachment; filename*=UTF-8''%E5%AD%A3%E5%BA%A6%E6%8A%A5%E5%91%8A.pdf",
+          'cache-control': 'private, no-store',
+        },
+      },
+    );
+  });
 });

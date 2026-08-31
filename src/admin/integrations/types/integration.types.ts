@@ -1,6 +1,6 @@
 import { Type } from '@nestjs/common';
 
-export type IntegrationValue = string | number | boolean;
+export type IntegrationValue = string | number | boolean | string[];
 export type IntegrationValues = Record<string, IntegrationValue>;
 
 export interface IntegrationDefinition<TDto extends object = object> {
@@ -28,6 +28,7 @@ export interface IntegrationTestProvider {
 export type ConfigSource = 'database' | 'default';
 
 export type IntegrationModuleName =
+  | 'drive'
   | 'mail'
   | 'ai'
   | 'tencent-meeting'

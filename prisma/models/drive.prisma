@@ -1,0 +1,279 @@
+model DriveSpace {
+  id          String           @id @default(cuid())
+  type        DriveSpaceType
+  name        String           @db.VarChar(150)
+  status      DriveSpaceStatus @default(ACTIVE)
+  ownerUserId String?          @map("owner_user_id")
+  orgId       String?          @map("org_id")
+
+  ownerUser User? @relation("DrivePersonalOwner", fields: [ownerUserId], references: [id], onDelete: Cascade)
+  org       Org?  @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  nodes          DriveNode[]
+  grants         DriveGrant[]
+  uploadSessions UploadSession[]
+  auditLogs      DriveAuditLog[]
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@index([ownerUserId])
+  @@index([orgId])
+  @@index([type, status])
+  @@map("drive_spaces")
+}
+
+model DriveNode {
+  id         String        @id @default(cuid())
+  spaceId    String        @map("space_id")
+  parentId   String?       @map("parent_id")
+  type       DriveNodeType
+  name       String        @db.VarChar(255)
+  inheritAcl Boolean       @default(true) @map("inherit_acl")
+  fileId     String?       @unique @map("file_id")
+
+  space          DriveSpace      @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  parent         DriveNode?      @relation("DriveNodeHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  children       DriveNode[]     @relation("DriveNodeHierarchy")
+  file           DriveFile?      @relation(fields: [fileId], references: [id], onDelete: Restrict)
+  grants         DriveGrant[]
+  uploadSessions UploadSession[]
+
+  createdById String?   @map("created_by")
+  createdBy   User?     @relation("DriveNodeCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+  purgeAfter  DateTime? @map("purge_after") @db.Timestamptz(6)
+
+  @@index([spaceId, parentId, deletedAt])
+  @@index([parentId])
+  @@index([purgeAfter])
+  @@map("drive_nodes")
+}
+
+model DriveFile {
+  id          String             @id @default(cuid())
+  managedBy   DriveFileManagedBy @default(USER) @map("managed_by")
+  createdById String?            @map("created_by")
+
+  createdBy User?         @relation("DriveFileCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  node      DriveNode?
+  versions  FileVersion[]
+  bindings  FileBinding[]
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([createdById])
+  @@map("drive_files")
+}
+
+model FileVersion {
+  id              String            @id @default(cuid())
+  fileId          String            @map("file_id")
+  version         Int
+  storageObjectId String            @map("storage_object_id") @db.Uuid
+  status          FileVersionStatus @default(VERIFYING)
+  originalName    String            @map("original_name") @db.VarChar(255)
+  contentType     String            @map("content_type") @db.VarChar(255)
+  sizeBytes       BigInt            @map("size_bytes")
+  checksumSha256  String?           @map("checksum_sha256") @db.VarChar(64)
+  rejectionReason String?           @map("rejection_reason") @db.Text
+  scanProvider    FileScanProvider  @default(POLICY_BYPASS) @map("scan_provider")
+  scanAttempts    Int               @default(0) @map("scan_attempts")
+  scanResult      Json?             @map("scan_result") @db.JsonB
+  scanStartedAt   DateTime?         @map("scan_started_at") @db.Timestamptz(6)
+  scanCompletedAt DateTime?         @map("scan_completed_at") @db.Timestamptz(6)
+
+  file          DriveFile     @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  storageObject StorageObject @relation(fields: [storageObjectId], references: [id], onDelete: Restrict)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([fileId, version])
+  @@index([storageObjectId])
+  @@index([status])
+  @@index([status, scanProvider])
+  @@map("file_versions")
+}
+
+model UploadSession {
+  id                     String              @id @default(cuid())
+  spaceId                String              @map("space_id")
+  parentId               String?             @map("parent_id")
+  createdById            String              @map("created_by")
+  fileName               String              @map("file_name") @db.VarChar(255)
+  declaredContentType    String              @map("declared_content_type") @db.VarChar(255)
+  declaredSizeBytes      BigInt              @map("declared_size_bytes")
+  declaredChecksumSha256 String?             @map("declared_checksum_sha256") @db.VarChar(64)
+  scanProvider           FileScanProvider    @default(POLICY_BYPASS) @map("scan_provider")
+  objectKey              String              @unique @map("object_key") @db.VarChar(1024)
+  providerUploadId       String              @map("provider_upload_id") @db.VarChar(255)
+  status                 UploadSessionStatus @default(CREATED)
+  completedParts         Json                @default("[]") @map("completed_parts") @db.JsonB
+  expiresAt              DateTime            @map("expires_at") @db.Timestamptz(6)
+
+  space     DriveSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  parent    DriveNode? @relation(fields: [parentId], references: [id], onDelete: SetNull)
+  createdBy User       @relation("UploadSessionCreator", fields: [createdById], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([spaceId, status])
+  @@index([expiresAt, status])
+  @@map("upload_sessions")
+}
+
+model DriveGrant {
+  id            String             @id @default(cuid())
+  spaceId       String             @map("space_id")
+  nodeId        String?            @map("node_id")
+  principalType DrivePrincipalType @map("principal_type")
+  principalId   String             @map("principal_id")
+  effect        DriveGrantEffect   @default(ALLOW)
+  actions       DriveAction[]
+
+  space DriveSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  node  DriveNode? @relation(fields: [nodeId], references: [id], onDelete: Cascade)
+
+  createdById String   @map("created_by")
+  createdBy   User     @relation("DriveGrantCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([nodeId])
+  @@index([principalType, principalId])
+  @@map("drive_grants")
+}
+
+model FileBinding {
+  id         String                @id @default(cuid())
+  fileId     String                @map("file_id")
+  targetType FileBindingTargetType @map("target_type")
+  targetId   String                @map("target_id")
+  fieldKey   String                @default("") @map("field_key") @db.VarChar(100)
+  purpose    String                @default("") @db.VarChar(100)
+  metadata   Json                  @default("{}") @db.JsonB
+  active     Boolean               @default(true)
+
+  file       DriveFile   @relation(fields: [fileId], references: [id], onDelete: Restrict)
+  minuteFile MinuteFile?
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([fileId, targetType, targetId, fieldKey, purpose])
+  @@index([targetType, targetId, active])
+  @@map("file_bindings")
+}
+
+model DriveAuditLog {
+  id        String           @id @default(cuid())
+  spaceId   String           @map("space_id")
+  nodeId    String?          @map("node_id")
+  fileId    String?          @map("file_id")
+  actorId   String?          @map("actor_id")
+  action    DriveAuditAction
+  metadata  Json             @default("{}") @db.JsonB
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  space DriveSpace @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  actor User?      @relation("DriveAuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([spaceId, createdAt])
+  @@index([nodeId])
+  @@index([fileId])
+  @@map("drive_audit_logs")
+}
+
+enum DriveSpaceType {
+  PERSONAL
+  ORG
+  SYSTEM_UNASSIGNED
+}
+
+enum DriveSpaceStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum DriveNodeType {
+  FILE
+  FOLDER
+}
+
+enum DriveFileManagedBy {
+  USER
+  SYSTEM
+}
+
+enum FileVersionStatus {
+  VERIFYING
+  ACTIVE
+  REJECTED
+}
+
+enum FileScanProvider {
+  ALIYUN_SAS
+  CLAMAV
+  POLICY_BYPASS
+}
+
+enum UploadSessionStatus {
+  CREATED
+  UPLOADING
+  VERIFYING
+  ACTIVE
+  REJECTED
+  EXPIRED
+}
+
+enum DrivePrincipalType {
+  ORG
+  USER
+  ORG_MEMBER
+  DEPARTMENT
+  ROLE
+}
+
+enum DriveGrantEffect {
+  ALLOW
+  DENY
+}
+
+enum DriveAction {
+  VIEW
+  DOWNLOAD
+  UPLOAD
+  RENAME
+  MOVE
+  SHARE
+  DELETE
+  MANAGE_ACL
+}
+
+enum FileBindingTargetType {
+  MINUTE
+  PROJECT
+  CUSTOM_RECORD
+  OTHER
+}
+
+enum DriveAuditAction {
+  CREATE_FOLDER
+  CREATE_FILE
+  DOWNLOAD
+  RENAME
+  MOVE
+  GRANT
+  REVOKE
+  TRASH
+  RESTORE
+  PURGE
+  BIND
+  UNBIND
+}

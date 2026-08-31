@@ -34,6 +34,11 @@ const MANAGER_PERMISSIONS = [
   'tracking-report:create',
   'tracking-report:update',
   'tracking-report:delete',
+  'drive:read',
+  'drive:upload',
+  'drive:update',
+  'drive:delete',
+  'drive:manage-acl',
 ];
 
 // 财务角色权限列表
@@ -70,6 +75,7 @@ const USER_PERMISSIONS = [
   'project:read',
   'channel:read',
   'order:read',
+  'drive:read',
 ];
 
 /**

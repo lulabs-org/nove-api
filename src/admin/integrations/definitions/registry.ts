@@ -1,3 +1,4 @@
+import { driveConfig } from './drive.config';
 import { aiConfig } from './ai.config';
 import { larkConfig } from './lark.config';
 import { mailConfig } from './mail.config';
@@ -12,6 +13,7 @@ import {
 export { ConfigSource, IntegrationModuleName };
 
 export const IntegrationRegistry = {
+  drive: driveConfig,
   mail: mailConfig,
   ai: aiConfig,
   'tencent-meeting': tencentMeetingConfig,
