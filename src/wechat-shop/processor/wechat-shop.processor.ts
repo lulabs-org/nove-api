@@ -2,12 +2,16 @@ import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
 import { WechatShopOrderService } from '../services/wechat-shop-order.service';
+import { WechatShopAftersaleService } from '../services/wechat-shop-aftersale.service';
 
 @Processor('wechat-order-sync')
 export class WechatShopProcessor extends WorkerHost {
   private readonly logger = new Logger(WechatShopProcessor.name);
 
-  constructor(private readonly wechatShopOrderService: WechatShopOrderService) {
+  constructor(
+    private readonly wechatShopOrderService: WechatShopOrderService,
+    private readonly wechatShopAftersaleService: WechatShopAftersaleService,
+  ) {
     super();
   }
 
@@ -17,6 +21,14 @@ export class WechatShopProcessor extends WorkerHost {
         case 'sync-single-order': {
           const data = job.data as { orderId: string };
           await this.wechatShopOrderService.syncSingle(data.orderId);
+          break;
+        }
+
+        case 'sync-single-aftersale': {
+          const data = job.data as { afterSaleOrderId: string };
+          await this.wechatShopAftersaleService.syncSingle(
+            data.afterSaleOrderId,
+          );
           break;
         }
 

@@ -3,6 +3,8 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 type CreateOrderData = Prisma.OrderUncheckedCreateInput;
 type UpdateOrderData = Prisma.OrderUncheckedUpdateInput;
+type CreateRefundData = Prisma.OrderRefundUncheckedCreateInput;
+type UpdateRefundData = Prisma.OrderRefundUncheckedUpdateInput;
 
 @Injectable()
 export class WechatShopRepository {
@@ -65,5 +67,20 @@ export class WechatShopRepository {
     const order = await this.create(createData);
 
     return { action: 'created' as const, order };
+  }
+
+  /**
+   * 按微信售后单号幂等写入退款记录。
+   */
+  async upsertRefund(params: {
+    afterSaleCode: string;
+    create: CreateRefundData;
+    update: UpdateRefundData;
+  }) {
+    return this.prisma.orderRefund.upsert({
+      where: { afterSaleCode: params.afterSaleCode },
+      create: params.create,
+      update: params.update,
+    });
   }
 }

@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import {
   ChannelsEcAftersaleUpdateEvent,
   ChannelsEcOrderPayEvent,
@@ -23,6 +24,7 @@ export class WechatShopEventService {
 
   constructor(
     private readonly wechatShopOrderService: WechatShopOrderService,
+    @InjectQueue('wechat-order-sync') private readonly syncQueue: Queue,
   ) {}
 
   /**
@@ -61,10 +63,24 @@ export class WechatShopEventService {
    * 处理售后状态更新事件
    */
   private async handleAftersaleUpdate(payload: ChannelsEcAftersaleUpdateEvent) {
-    const orderId = payload.finder_shop_aftersale_status_update?.order_id;
-    if (orderId) {
-      // TODO: 处理售后状态更新
-      await Promise.resolve();
+    const afterSaleOrderId =
+      //把after_sale_order_id取出来
+      payload.finder_shop_aftersale_status_update?.after_sale_order_id;
+
+    if (!afterSaleOrderId) {
+      throw new Error('Missing after_sale_order_id in WeChat aftersale event');
     }
+
+    // 回调只负责可靠入队，详情查询和数据库写入交给 Worker 重试处理。
+    await this.syncQueue.add(
+      'sync-single-aftersale',
+      { afterSaleOrderId: String(afterSaleOrderId) },
+      {
+        attempts: 5,
+        backoff: { type: 'exponential', delay: 1000 },
+        removeOnComplete: 100,
+        removeOnFail: 500,
+      },
+    );
   }
 }

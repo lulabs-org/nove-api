@@ -11,6 +11,7 @@ import { WechatShopEventController } from './controllers/wechat-shop-event.contr
 import { WechatShopRepository } from './repositories';
 import { WechatShopOrderService } from './services/wechat-shop-order.service';
 import { WechatShopEventService } from './services/wechat-shop-event.service';
+import { WechatShopAftersaleService } from './services/wechat-shop-aftersale.service';
 import { WechatShopClientService } from './services/wechat-shop-client.service';
 import { WechatShopTokenService } from './services/wechat-shop-token.service';
 import { WechatShopProcessor } from './processor/wechat-shop.processor';
@@ -35,6 +36,7 @@ import { SystemConfigModule } from '@/admin/system-config/system-config.module';
   providers: [
     WechatShopOrderService,
     WechatShopEventService,
+    WechatShopAftersaleService,
     WechatShopRepository,
     WechatShopClientService,
     WechatShopTokenService,
