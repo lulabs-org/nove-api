@@ -3,11 +3,13 @@ import { Prisma } from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { PrismaService } from '@/prisma/prisma.service';
-import { readBootstrapEnvironment } from '../configs';
 import {
+  readBootstrapEnvironment,
   SYSTEM_CONFIG_ENV_IMPORT_KEY,
-  SYSTEM_CONFIG_MODULES,
   SystemConfigEnvironmentImportMetadata,
+} from '../configs';
+import {
+  SYSTEM_CONFIG_MODULES,
   SystemConfigModuleName,
   SystemConfigRegistry,
   SystemConfigValues,

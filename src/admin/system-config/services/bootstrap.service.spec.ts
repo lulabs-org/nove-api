@@ -5,7 +5,7 @@ import { ConfigCodecService } from './config-codec.service';
 import {
   SYSTEM_CONFIG_ENV_IMPORT_KEY,
   SystemConfigEnvironmentImportMetadata,
-} from '../registries/system-config.registry';
+} from '../configs';
 
 interface UpsertArgs {
   where: { orgId_key: { orgId: string; key: string } };

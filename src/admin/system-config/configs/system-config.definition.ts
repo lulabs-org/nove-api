@@ -135,3 +135,17 @@ export const environment = {
     return { keys, read };
   },
 };
+
+export const SYSTEM_CONFIG_ENV_IMPORT_KEY = 'SYSTEM_CONFIG_ENV_IMPORT_V1';
+
+export interface SystemConfigEnvironmentImportModule {
+  status: 'imported' | 'existing' | 'skipped';
+  fields: string[];
+  configured: boolean;
+}
+
+export interface SystemConfigEnvironmentImportMetadata {
+  version: 1;
+  completedAt: string;
+  modules: Record<string, SystemConfigEnvironmentImportModule>;
+}

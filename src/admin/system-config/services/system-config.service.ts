@@ -10,11 +10,13 @@ import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { SystemConfigRepository } from '../repositories/system-config.repository';
 import {
+  SYSTEM_CONFIG_ENV_IMPORT_KEY,
+  SystemConfigEnvironmentImportMetadata,
+} from '../configs';
+import {
   ConfigSource,
   isSystemConfigModule,
-  SYSTEM_CONFIG_ENV_IMPORT_KEY,
   SYSTEM_CONFIG_MODULES,
-  SystemConfigEnvironmentImportMetadata,
   SystemConfigModuleName,
   SystemConfigRegistry,
   SystemConfigValues,
