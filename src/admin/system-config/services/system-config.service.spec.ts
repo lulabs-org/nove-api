@@ -137,7 +137,7 @@ describe('SystemConfigService', () => {
     expect(emit).toHaveBeenCalledWith('config.ai.deleted', {
       orgId,
       value: {
-        provider: 'custom',
+        provider: 'openai',
         baseUrl: 'https://ark.cn-beijing.volces.com/api/v3',
         model: '{TEMPLATE_ENDPOINT_ID}',
         maxTokens: 16000,

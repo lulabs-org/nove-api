@@ -6,7 +6,7 @@ export type SystemConfigValues = Record<string, SystemConfigValue>;
 export interface EnvironmentSource<
   TValue extends SystemConfigValue = SystemConfigValue,
 > {
-  keys: readonly string[];
+  key: string;
   read: (environment: NodeJS.ProcessEnv) => TValue | undefined;
 }
 

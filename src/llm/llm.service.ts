@@ -6,7 +6,7 @@ import {
   SystemConfigService,
 } from '@/admin/system-config/services';
 import { OnEvent } from '@nestjs/event-emitter';
-import { SystemConfigRegistry } from '@/admin/system-config/registries/system-config.registry';
+import { SystemConfigRegistry } from '@/admin/system-config/configs';
 import { getDefaultValues } from '@/admin/system-config/configs';
 
 @Injectable()

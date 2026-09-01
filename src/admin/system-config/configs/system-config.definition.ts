@@ -4,7 +4,6 @@ import {
   ConfigDefinition,
   ConfigRegistryEntry,
   EnvironmentSource,
-  SystemConfigValue,
   SystemConfigValues,
 } from './system-config.types';
 
@@ -50,10 +49,8 @@ export function readBootstrapEnvironment(
   for (const [name, field] of Object.entries(entry.fields)) {
     if (!field.environment) continue;
 
-    const isExplicit = field.environment.keys.some((key) => {
-      const value = environment[key];
-      return value !== undefined && value.trim() !== '';
-    });
+    const rawValue = environment[field.environment.key];
+    const isExplicit = rawValue !== undefined && rawValue.trim() !== '';
     if (isExplicit) fields.push(name);
 
     const value = field.environment.read(environment);
@@ -64,23 +61,19 @@ export function readBootstrapEnvironment(
 }
 
 export const environment = {
-  string(
-    key: string,
-    options: { trim?: boolean } = { trim: true },
-  ): EnvironmentSource<string> {
+  string(key: string): EnvironmentSource<string> {
     return {
-      keys: [key],
+      key,
       read: (values) => {
         const value = values[key];
-        if (value === undefined) return undefined;
-        return options.trim === false ? value : value.trim();
+        return value === undefined ? undefined : value.trim();
       },
     };
   },
 
   number(key: string): EnvironmentSource<number> {
     return {
-      keys: [key],
+      key,
       read: (values) =>
         values[key] === undefined ? undefined : Number(values[key]),
     };
@@ -88,17 +81,9 @@ export const environment = {
 
   boolean(key: string): EnvironmentSource<boolean> {
     return {
-      keys: [key],
+      key,
       read: (values) =>
         values[key] === undefined ? undefined : values[key] === 'true',
     };
   },
-
-  custom<TValue extends SystemConfigValue>(
-    keys: readonly string[],
-    read: (values: NodeJS.ProcessEnv) => TValue | undefined,
-  ): EnvironmentSource<TValue> {
-    return { keys, read };
-  },
 };
-

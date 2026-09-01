@@ -25,14 +25,11 @@ export const mailConfig = defineSystemConfig(UpdateMailConfigDto, {
     pass: {
       required: true,
       secret: true,
-      environment: environment.string('SMTP_PASS', { trim: false }),
+      environment: environment.string('SMTP_PASS'),
     },
     from: {
       required: true,
-      environment: environment.custom(
-        ['SMTP_FROM', 'SMTP_USER'],
-        (values) => values.SMTP_FROM?.trim() || values.SMTP_USER?.trim(),
-      ),
+      environment: environment.string('SMTP_FROM'),
     },
     brandName: {
       default: 'Nove System',
@@ -47,14 +44,7 @@ export const mailConfig = defineSystemConfig(UpdateMailConfigDto, {
     },
     brandFooterText: {
       default: '此邮件由 Nove System 自动发送，请勿回复。',
-      environment: environment.custom(['EMAIL_BRAND_FOOTER_TEXT'], (values) => {
-        const footer = values.EMAIL_BRAND_FOOTER_TEXT?.trim();
-        if (footer) return footer;
-        const brandName = values.EMAIL_BRAND_NAME?.trim();
-        return brandName
-          ? `此邮件由 ${brandName} 自动发送，请勿回复。`
-          : undefined;
-      }),
+      environment: environment.string('EMAIL_BRAND_FOOTER_TEXT'),
     },
     brandPublicBaseUrl: {
       environment: environment.string('EMAIL_BRAND_PUBLIC_BASE_URL'),

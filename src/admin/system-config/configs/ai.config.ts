@@ -1,28 +1,16 @@
 import { UpdateAiConfigDto } from '../dto/ai-config.dto';
 import { defineSystemConfig, environment } from './system-config.definition';
 
-const AI_KEY_ENVIRONMENT = ['ARK_API_KEY', 'OPENAI_API_KEY'] as const;
-
 export const aiConfig = defineSystemConfig(UpdateAiConfigDto, {
   description: 'Organization AI Model Configuration',
   fields: {
     provider: {
-      default: 'custom',
-      environment: environment.custom(AI_KEY_ENVIRONMENT, (values) =>
-        values.ARK_API_KEY
-          ? 'ark'
-          : values.OPENAI_API_KEY
-            ? 'openai'
-            : undefined,
-      ),
+      default: 'openai',
     },
     apiKey: {
       required: true,
       secret: true,
-      environment: environment.custom(
-        AI_KEY_ENVIRONMENT,
-        (values) => values.ARK_API_KEY || values.OPENAI_API_KEY,
-      ),
+      environment: environment.string('OPENAI_API_KEY'),
     },
     baseUrl: {
       required: true,
