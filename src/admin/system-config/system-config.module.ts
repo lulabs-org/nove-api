@@ -3,6 +3,7 @@ import { SystemConfigController } from './controllers';
 import { SystemConfigRepository } from './repositories';
 import {
   BootstrapService,
+  ConfigCodecService,
   SingleOrgContextService,
   SystemConfigService,
   TesterService,
@@ -15,6 +16,7 @@ import {
     SystemConfigRepository,
     TesterService,
     BootstrapService,
+    ConfigCodecService,
     SingleOrgContextService,
   ],
   exports: [SystemConfigService, BootstrapService, SingleOrgContextService],

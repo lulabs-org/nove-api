@@ -7,6 +7,7 @@ import {
 } from '@/admin/system-config/services';
 import { OnEvent } from '@nestjs/event-emitter';
 import { SystemConfigRegistry } from '@/admin/system-config/registries/system-config.registry';
+import { getDefaultValues } from '@/admin/system-config/configs';
 
 @Injectable()
 export class LlmService implements OnModuleInit {
@@ -22,14 +23,15 @@ export class LlmService implements OnModuleInit {
     private readonly systemConfigService: SystemConfigService,
     private readonly orgContext: SingleOrgContextService,
   ) {
+    const defaults = getDefaultValues(SystemConfigRegistry.ai);
     this.openai = new OpenAI({
       apiKey: '',
-      baseURL: String(SystemConfigRegistry.ai.defaults.baseUrl),
+      baseURL: String(defaults.baseUrl),
     });
     this.activeConfig = {
-      model: String(SystemConfigRegistry.ai.defaults.model),
-      maxTokens: Number(SystemConfigRegistry.ai.defaults.maxTokens),
-      temperature: Number(SystemConfigRegistry.ai.defaults.temperature),
+      model: String(defaults.model),
+      maxTokens: Number(defaults.maxTokens),
+      temperature: Number(defaults.temperature),
     };
   }
 

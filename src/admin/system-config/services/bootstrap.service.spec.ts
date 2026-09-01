@@ -1,6 +1,7 @@
 import { decrypt, encrypt } from '@/common/utils/crypto.util';
 import { PrismaService } from '@/prisma/prisma.service';
 import { BootstrapService } from './bootstrap.service';
+import { ConfigCodecService } from './config-codec.service';
 import {
   SYSTEM_CONFIG_ENV_IMPORT_KEY,
   SystemConfigEnvironmentImportMetadata,
@@ -96,7 +97,7 @@ describe('BootstrapService', () => {
         callback({ systemConfig }),
       ),
     } as unknown as PrismaService;
-    service = new BootstrapService(prisma);
+    service = new BootstrapService(prisma, new ConfigCodecService());
   });
 
   afterEach(() => {
