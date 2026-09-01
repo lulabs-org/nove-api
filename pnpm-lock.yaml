@@ -125,6 +125,9 @@ importers:
       csv-parse:
         specifier: ^6.1.0
         version: 6.1.0
+      debug:
+        specifier: ^4.4.3
+        version: 4.4.3
       dotenv:
         specifier: ^17.2.2
         version: 17.2.3
@@ -234,9 +237,6 @@ importers:
       cuid:
         specifier: ^3.0.0
         version: 3.0.0
-      debug:
-        specifier: ^4.4.3
-        version: 4.4.3
       eslint:
         specifier: ^9.18.0
         version: 9.37.0(jiti@2.6.1)
