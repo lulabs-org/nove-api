@@ -1,5 +1,5 @@
 import { decrypt, encrypt } from '@/common/utils/crypto.util';
-import { SystemConfigRegistry } from '../registries/system-config.registry';
+import { SystemConfigRegistry } from '../configs';
 import { ConfigCodecService } from './config-codec.service';
 
 describe('ConfigCodecService', () => {

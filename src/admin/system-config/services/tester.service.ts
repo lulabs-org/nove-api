@@ -4,7 +4,7 @@ import * as Lark from '@larksuiteoapi/node-sdk';
 import * as nodemailer from 'nodemailer';
 import { generateSignature } from '@/integrations/tencent-meeting/utils/crypto.util';
 import { SystemConfigService } from './system-config.service';
-import { SystemConfigValues } from '../registries/system-config.registry';
+import { SystemConfigValues } from '../configs';
 
 export interface TestResult {
   orgId: string;

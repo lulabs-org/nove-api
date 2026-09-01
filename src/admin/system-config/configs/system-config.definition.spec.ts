@@ -4,7 +4,7 @@ import {
   getSecretFields,
   readBootstrapEnvironment,
 } from './system-config.definition';
-import { SystemConfigRegistry } from '../registries/system-config.registry';
+import { SystemConfigRegistry } from './index';
 
 describe('system config definitions', () => {
   const originalEnv = process.env;
