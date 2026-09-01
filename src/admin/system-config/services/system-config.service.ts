@@ -20,7 +20,7 @@ import {
   SystemConfigModuleName,
   SystemConfigRegistry,
   SystemConfigValues,
-} from '../registries/system-config.registry';
+} from '../configs';
 import { ConfigCodecService } from './config-codec.service';
 
 export interface EffectiveSystemConfig {
