@@ -1,13 +1,13 @@
 import { SystemConfigService } from './system-config.service';
-import { SystemConfigTesterService } from './system-config-tester.service';
+import { TesterService } from './tester.service';
 
-describe('SystemConfigTesterService', () => {
+describe('TesterService', () => {
   const systemConfigService = {
     resolveDraftConfig: jest.fn().mockResolvedValue({ value: {} }),
   } as unknown as SystemConfigService;
 
   it('returns a successful transient result without persisting state', async () => {
-    const service = new SystemConfigTesterService(systemConfigService);
+    const service = new TesterService(systemConfigService);
     jest
       .spyOn(service as never, 'runTest')
       .mockResolvedValue(undefined as never);
@@ -19,7 +19,7 @@ describe('SystemConfigTesterService', () => {
   });
 
   it('sanitizes provider failures', async () => {
-    const service = new SystemConfigTesterService(systemConfigService);
+    const service = new TesterService(systemConfigService);
     jest
       .spyOn(service as never, 'runTest')
       .mockRejectedValue(new Error('secret provider response') as never);

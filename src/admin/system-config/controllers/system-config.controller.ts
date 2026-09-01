@@ -14,7 +14,7 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
-import { SystemConfigService, SystemConfigTesterService } from '../services';
+import { SystemConfigService, TesterService } from '../services';
 
 @ApiTags('Admin / System Config')
 @ApiBearerAuth()
@@ -22,7 +22,7 @@ import { SystemConfigService, SystemConfigTesterService } from '../services';
 export class SystemConfigController {
   constructor(
     private readonly systemConfigService: SystemConfigService,
-    private readonly systemConfigTester: SystemConfigTesterService,
+    private readonly systemConfigTester: TesterService,
   ) {}
 
   @Get()

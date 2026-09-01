@@ -17,9 +17,9 @@ const MAX_TRANSACTION_ATTEMPTS = 3;
 const ENCRYPTED_VALUE_PATTERN = /^[0-9a-f]{32}:[0-9a-f]{32}:[0-9a-f]*$/i;
 
 @Injectable()
-export class SystemConfigEnvironmentBootstrapService {
+export class BootstrapService {
   private readonly logger = new Logger(
-    SystemConfigEnvironmentBootstrapService.name,
+    BootstrapService.name,
   );
 
   constructor(private readonly prisma: PrismaService) {}

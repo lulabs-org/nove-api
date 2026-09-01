@@ -12,7 +12,7 @@ export interface TestResult {
 }
 
 @Injectable()
-export class SystemConfigTesterService {
+export class TesterService {
   constructor(private readonly systemConfigService: SystemConfigService) {}
 
   async testConfig(
