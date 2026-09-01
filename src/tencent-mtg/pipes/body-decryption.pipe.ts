@@ -24,17 +24,15 @@ import {
 } from '@/integrations/tencent-meeting';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express'; // 或 fastify
-import { ConfigType } from '@nestjs/config';
-import { tencentMeetingConfig } from '@/configs/tencent-mtg.config';
 import { TencentWebhookEventBodyDto } from '../dto/tencent-webhook-body.dto';
 import { MeetingEvent } from '../types';
+import { SystemConfigService } from '@/admin/system-config/services/system-config.service';
 
 @Injectable({ scope: Scope.REQUEST }) // 需要获取 Request Headers，所以必须是 Request Scope
 export class BodyDecryptionPipe implements PipeTransform {
   constructor(
     @Inject(REQUEST) private readonly request: Request,
-    @Inject(tencentMeetingConfig.KEY)
-    private readonly tencentConfig: ConfigType<typeof tencentMeetingConfig>,
+    private readonly systemConfigService: SystemConfigService,
   ) {}
 
   async transform(value: TencentWebhookEventBodyDto): Promise<MeetingEvent> {
@@ -55,7 +53,10 @@ export class BodyDecryptionPipe implements PipeTransform {
     }
 
     // 3. 验证签名
-    const { token, encodingAesKey } = this.tencentConfig.webhook;
+    const { value: config } =
+      await this.systemConfigService.getEffectiveConfig('tencent-meeting');
+    const token = String(config.webhookToken ?? '');
+    const encodingAesKey = String(config.encodingAesKey ?? '');
     const isValid = verifySignature(
       token,
       timestamp,

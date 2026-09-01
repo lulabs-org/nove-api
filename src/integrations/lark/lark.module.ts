@@ -10,7 +10,6 @@
  */
 
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
 import { LarkClient } from './lark.client';
 import { BitableService, MinuteService } from './services';
 import {
@@ -19,10 +18,10 @@ import {
   RecordingFileBitableRepository,
   NumberRecordBitableRepository,
 } from './repositories';
-import { larkConfig } from '../../configs/lark.config';
+import { SystemConfigModule } from '@/admin/system-config/system-config.module';
 
 @Module({
-  imports: [ConfigModule.forFeature(larkConfig)],
+  imports: [SystemConfigModule],
   providers: [
     LarkClient,
     BitableService,

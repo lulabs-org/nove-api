@@ -1,0 +1,284 @@
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { Prisma } from '@prisma/client';
+import { plainToInstance } from 'class-transformer';
+import { validate } from 'class-validator';
+import { decrypt, encrypt } from '@/common/utils/crypto.util';
+import { SystemConfigRepository } from '../repositories/system-config.repository';
+import {
+  ConfigSource,
+  isSystemConfigModule,
+  SYSTEM_CONFIG_ENV_IMPORT_KEY,
+  SYSTEM_CONFIG_MODULES,
+  SystemConfigEnvironmentImportMetadata,
+  SystemConfigModuleName,
+  SystemConfigRegistry,
+  SystemConfigValues,
+} from '../registries/system-config.registry';
+
+export interface EffectiveSystemConfig {
+  module: SystemConfigModuleName;
+  value: SystemConfigValues;
+  configured: boolean;
+  source: ConfigSource;
+  updatedAt: Date | null;
+  environmentImportedAt: string | null;
+  environmentImportedFields: string[];
+}
+
+export interface PublicSystemConfig extends EffectiveSystemConfig {
+  value: SystemConfigValues;
+}
+
+@Injectable()
+export class SystemConfigService {
+  private readonly logger = new Logger(SystemConfigService.name);
+
+  constructor(
+    private readonly configRepository: SystemConfigRepository,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
+
+  private getModuleKey(module: SystemConfigModuleName): string {
+    return `${module.toUpperCase()}_CONFIG`;
+  }
+
+  private assertModule(module: string): SystemConfigModuleName {
+    if (!isSystemConfigModule(module)) {
+      throw new NotFoundException(
+        `Module configuration for '${module}' not found in registry`,
+      );
+    }
+    return module;
+  }
+
+  async getRawConfig(module: string) {
+    const moduleName = this.assertModule(module);
+    return this.configRepository.findByKey(this.getModuleKey(moduleName));
+  }
+
+  async getEffectiveConfig(module: string): Promise<EffectiveSystemConfig> {
+    const moduleName = this.assertModule(module);
+    const entry = SystemConfigRegistry[moduleName];
+    const stored = await this.configRepository.findByKey(
+      this.getModuleKey(moduleName),
+    );
+    const databaseValue = (stored?.value ?? {}) as SystemConfigValues;
+    const decryptedDatabaseValue = { ...databaseValue };
+
+    for (const field of entry.secretFields) {
+      const value = decryptedDatabaseValue[field];
+      if (typeof value === 'string' && value) {
+        try {
+          decryptedDatabaseValue[field] = decrypt(value);
+        } catch {
+          this.logger.error(
+            `Failed to decrypt ${moduleName}.${field}; database override ignored`,
+          );
+          delete decryptedDatabaseValue[field];
+        }
+      }
+    }
+
+    const value = { ...entry.defaults, ...decryptedDatabaseValue };
+    const source: ConfigSource = stored ? 'database' : 'default';
+    const importMetadata = await this.getEnvironmentImportMetadata(moduleName);
+
+    const configured = entry.requiredFields.every((field) =>
+      this.hasValue(value[field]),
+    );
+
+    return {
+      module: moduleName,
+      value,
+      configured,
+      source,
+      updatedAt: stored?.updatedAt ?? null,
+      environmentImportedAt:
+        importMetadata.fields.length > 0 ? importMetadata.completedAt : null,
+      environmentImportedFields: importMetadata.fields,
+    };
+  }
+
+  async listConfigs() {
+    return Promise.all(
+      SYSTEM_CONFIG_MODULES.map(async (module) => {
+        const config = await this.getEffectiveConfig(module);
+        return {
+          module: config.module,
+          configured: config.configured,
+          source: config.source,
+          updatedAt: config.updatedAt,
+        };
+      }),
+    );
+  }
+
+  async getConfig(module: string): Promise<PublicSystemConfig> {
+    const effective = await this.getEffectiveConfig(module);
+    const value = { ...effective.value };
+    const entry = SystemConfigRegistry[effective.module];
+
+    for (const field of entry.secretFields) {
+      if (this.hasValue(value[field])) value[field] = '********';
+    }
+
+    return { ...effective, value };
+  }
+
+  async resolveDraftConfig(
+    module: string,
+    data: Record<string, unknown>,
+  ): Promise<EffectiveSystemConfig> {
+    const current = await this.getEffectiveConfig(module);
+    await this.validateData(current.module, data);
+    const entry = SystemConfigRegistry[current.module];
+    const draft = { ...data };
+
+    for (const field of entry.secretFields) {
+      if (
+        draft[field] === '********' ||
+        (typeof draft[field] === 'string' && !draft[field].trim())
+      ) {
+        delete draft[field];
+      }
+    }
+
+    const value = { ...current.value, ...draft } as SystemConfigValues;
+    const missingFields = entry.requiredFields.filter(
+      (field) => !this.hasValue(value[field]),
+    );
+    if (missingFields.length > 0) {
+      throw new BadRequestException(
+        `Missing required configuration: ${missingFields.join(', ')}`,
+      );
+    }
+
+    return { ...current, value };
+  }
+
+  async updateConfig(module: string, data: Record<string, unknown>) {
+    const moduleName = this.assertModule(module);
+    const entry = SystemConfigRegistry[moduleName];
+    await this.validateData(moduleName, data);
+
+    const before = await this.getEffectiveConfig(moduleName);
+    const key = this.getModuleKey(moduleName);
+    const existing = await this.configRepository.findByKey(key);
+    const currentConfig = (existing?.value ?? {}) as Record<string, unknown>;
+    const normalizedData = Object.fromEntries(
+      Object.entries(data).filter(([, value]) => value !== undefined),
+    );
+    const newConfig = { ...currentConfig, ...normalizedData };
+
+    for (const field of entry.secretFields) {
+      const value = normalizedData[field];
+      if (value === '********' || value === '') {
+        if (currentConfig[field] === undefined) delete newConfig[field];
+        else newConfig[field] = currentConfig[field];
+      } else if (typeof value === 'string') {
+        newConfig[field] = encrypt(value);
+      }
+    }
+
+    await this.configRepository.upsert(
+      key,
+      newConfig as Prisma.InputJsonValue,
+      entry.secretFields.length > 0,
+      entry.description,
+    );
+
+    const after = await this.getEffectiveConfig(moduleName);
+    const restartRequired =
+      moduleName === 'lark' &&
+      (before.value.appId !== after.value.appId ||
+        before.value.appSecret !== after.value.appSecret);
+
+    this.eventEmitter.emit(`config.${moduleName}.updated`, after.value);
+    this.logger.log(`${entry.description} updated by admin.`);
+
+    return {
+      success: true,
+      message: restartRequired
+        ? '配置已保存；飞书事件长连接需重启 API 后生效'
+        : '配置已保存并生效',
+      restartRequired,
+    };
+  }
+
+  async deleteConfig(module: string) {
+    const moduleName = this.assertModule(module);
+    const key = this.getModuleKey(moduleName);
+    const existing = await this.configRepository.findByKey(key);
+
+    if (!existing) {
+      throw new NotFoundException(
+        `Configuration for module '${moduleName}' does not exist`,
+      );
+    }
+
+    await this.configRepository.delete(key);
+    const fallback = await this.getEffectiveConfig(moduleName);
+    const restartRequired = moduleName === 'lark';
+    this.eventEmitter.emit(`config.${moduleName}.deleted`, fallback.value);
+    this.logger.log(
+      `${SystemConfigRegistry[moduleName].description} deleted by admin.`,
+    );
+
+    return {
+      success: true,
+      message: restartRequired
+        ? '配置已删除；飞书事件长连接需重启 API'
+        : '配置已删除，服务已变为未配置',
+      restartRequired,
+    };
+  }
+
+  private async getEnvironmentImportMetadata(
+    module: SystemConfigModuleName,
+  ): Promise<{ completedAt: string | null; fields: string[] }> {
+    const marker = await this.configRepository.findByKey(
+      SYSTEM_CONFIG_ENV_IMPORT_KEY,
+    );
+    if (!marker) return { completedAt: null, fields: [] };
+
+    const metadata =
+      marker.value as unknown as Partial<SystemConfigEnvironmentImportMetadata>;
+    const moduleMetadata = metadata.modules?.[module];
+    return {
+      completedAt:
+        typeof metadata.completedAt === 'string' ? metadata.completedAt : null,
+      fields: Array.isArray(moduleMetadata?.fields)
+        ? moduleMetadata.fields.filter(
+            (field): field is string => typeof field === 'string',
+          )
+        : [],
+    };
+  }
+
+  private async validateData(
+    module: SystemConfigModuleName,
+    data: Record<string, unknown>,
+  ): Promise<void> {
+    const dtoInstance = plainToInstance(SystemConfigRegistry[module].dto, data);
+    const errors = await validate(dtoInstance, {
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    });
+    if (errors.length === 0) return;
+
+    const messages = errors
+      .flatMap((error) => Object.values(error.constraints ?? {}))
+      .join('; ');
+    throw new BadRequestException(`Validation failed: ${messages}`);
+  }
+
+  private hasValue(value: unknown): boolean {
+    return value !== undefined && value !== null && value !== '';
+  }
+}

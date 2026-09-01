@@ -1,6 +1,5 @@
 import { HttpService } from '@nestjs/axios';
 import {
-  Inject,
   Injectable,
   Logger,
   ServiceUnavailableException,
@@ -9,11 +8,9 @@ import {
 import { AxiosError } from 'axios';
 import { firstValueFrom } from 'rxjs';
 import { OnEvent } from '@nestjs/event-emitter';
-import { wechatShopConfig, WechatShopConfig } from '@/configs';
 import { RedisService } from '@/redis/redis.service';
 import { WechatShopApiResponse } from '../types';
-import { SystemConfigService } from '@/admin/system-config/system-config.service';
-import { decrypt } from '@/common/utils/crypto.util';
+import { SystemConfigService } from '@/admin/system-config/services/system-config.service';
 
 @Injectable()
 export class WechatShopTokenService implements OnModuleInit {
@@ -26,14 +23,13 @@ export class WechatShopTokenService implements OnModuleInit {
   private baseUrl: string;
 
   constructor(
-    @Inject(wechatShopConfig.KEY) private readonly config: WechatShopConfig,
     private readonly httpService: HttpService,
     private readonly redisService: RedisService,
     private readonly systemConfigService: SystemConfigService,
   ) {
-    this.appId = this.config.appId;
-    this.appSecret = this.config.appSecret;
-    this.baseUrl = this.config.apiBaseUrl;
+    this.appId = '';
+    this.appSecret = '';
+    this.baseUrl = 'https://api.weixin.qq.com';
     this.redisKey = `WECHAT_SHOP_ACCESS_TOKEN:${this.appId}`;
   }
 
@@ -52,24 +48,19 @@ export class WechatShopTokenService implements OnModuleInit {
     await this.reloadConfig();
   }
 
+  @OnEvent('config.wechat-shop.deleted')
+  async handleConfigDelete() {
+    await this.clearTokenCache();
+    await this.reloadConfig();
+  }
+
   private async reloadConfig() {
-    const rawConfig =
-      await this.systemConfigService.getRawConfig('wechat-shop');
-
-    if (rawConfig && rawConfig.value) {
-      const dbConfig = rawConfig.value as Record<string, string>;
-      this.appId = dbConfig.appId ?? this.config.appId;
-      this.baseUrl = dbConfig.apiBaseUrl ?? this.config.apiBaseUrl;
-      this.redisKey = `WECHAT_SHOP_ACCESS_TOKEN:${this.appId}`;
-
-      if (dbConfig.appSecret) {
-        try {
-          this.appSecret = decrypt(dbConfig.appSecret);
-        } catch {
-          this.logger.error('Failed to decrypt wechat-shop appSecret from DB');
-        }
-      }
-    }
+    const { value } =
+      await this.systemConfigService.getEffectiveConfig('wechat-shop');
+    this.appId = String(value.appId ?? '');
+    this.appSecret = String(value.appSecret ?? '');
+    this.baseUrl = String(value.apiBaseUrl ?? 'https://api.weixin.qq.com');
+    this.redisKey = `WECHAT_SHOP_ACCESS_TOKEN:${this.appId}`;
 
     if (!this.appId || !this.appSecret) {
       this.logger.warn(

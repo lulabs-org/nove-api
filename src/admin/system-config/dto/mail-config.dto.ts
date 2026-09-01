@@ -1,41 +1,76 @@
 import {
   IsString,
-  IsNotEmpty,
   IsInt,
   IsBoolean,
   IsOptional,
+  IsUrl,
+  Matches,
+  Max,
+  Min,
 } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UpdateMailConfigDto {
-  @ApiProperty({ description: 'SMTP Host', example: 'smtp.gmail.com' })
+  @ApiPropertyOptional({ description: 'SMTP Host', example: 'smtp.gmail.com' })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  host: string;
+  host?: string;
 
-  @ApiProperty({ description: 'SMTP Port', example: 587 })
+  @ApiPropertyOptional({ description: 'SMTP Port', example: 587 })
+  @IsOptional()
   @IsInt()
-  port: number;
+  @Min(1)
+  @Max(65535)
+  port?: number;
 
-  @ApiProperty({ description: 'Use Secure/SSL', example: false })
+  @ApiPropertyOptional({ description: 'Use Secure/SSL', example: false })
+  @IsOptional()
   @IsBoolean()
-  secure: boolean;
+  secure?: boolean;
 
-  @ApiProperty({ description: 'SMTP User', example: 'user@example.com' })
+  @ApiPropertyOptional({
+    description: 'SMTP User',
+    example: 'user@example.com',
+  })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  user: string;
+  user?: string;
 
-  @ApiProperty({ description: 'SMTP Password (will be encrypted)' })
+  @ApiPropertyOptional({ description: 'SMTP Password (will be encrypted)' })
   @IsString()
   @IsOptional()
   pass?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'From Email Address',
     example: 'noreply@example.com',
   })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  from: string;
+  from?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  brandName?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUrl({ require_tld: false })
+  brandLogoUrl?: string;
+
+  @ApiPropertyOptional({ example: '#2563eb' })
+  @IsOptional()
+  @Matches(/^#[0-9a-fA-F]{6}$/)
+  brandPrimaryColor?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  brandFooterText?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUrl({ require_tld: false })
+  brandPublicBaseUrl?: string;
 }

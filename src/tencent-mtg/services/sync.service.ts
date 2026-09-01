@@ -1,8 +1,6 @@
-import { Injectable, Logger, Inject } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-import { ConfigType } from '@nestjs/config';
-import { tencentMeetingConfig } from '@/configs/tencent-mtg.config';
 import { TencentApiService } from '@/integrations/tencent-meeting/services/api.service';
 import { Meeting } from '@prisma/client';
 import type {
@@ -12,6 +10,7 @@ import type {
 import { TencentMtgMeetingCoreService } from './meeting-core.service';
 import { TencentMtgTranscriptCoreService } from './transcript-core.service';
 import { TencentMtgSummaryCoreService } from './summary-core.service';
+import { SystemConfigService } from '@/admin/system-config/services/system-config.service';
 
 @Injectable()
 export class TencentMtgSyncService {
@@ -23,8 +22,7 @@ export class TencentMtgSyncService {
     private readonly meetingCoreService: TencentMtgMeetingCoreService,
     private readonly transcriptCoreService: TencentMtgTranscriptCoreService,
     private readonly summaryCoreService: TencentMtgSummaryCoreService,
-    @Inject(tencentMeetingConfig.KEY)
-    private config: ConfigType<typeof tencentMeetingConfig>,
+    private readonly systemConfigService: SystemConfigService,
   ) {}
 
   /**
@@ -273,7 +271,9 @@ export class TencentMtgSyncService {
     }
 
     const actualEndTime = Math.min(endTime, now);
-    const effectiveOperatorId = operatorId || this.config.api.userId;
+    const { value: activeConfig } =
+      await this.systemConfigService.getEffectiveConfig('tencent-meeting');
+    const effectiveOperatorId = operatorId || String(activeConfig.userId ?? '');
 
     // 1. 获取指定时间段内的所有企业录制记录
     const recordMeetings = await this.tencentApi.getAllCorpRecords(

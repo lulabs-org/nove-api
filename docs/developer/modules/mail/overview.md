@@ -9,10 +9,10 @@
 - **框架**: NestJS + TypeScript
 - **邮件服务**: Nodemailer
 - **队列系统**: BullMQ + Redis
-- **配置管理**: NestJS Config Module
+- **配置管理**: 全局系统配置（数据库加密存储）
 - **API文档**: Swagger/OpenAPI 3.0
 
-## 环境配置
+## 首次配置
 
 1. 复制 `.env.example` 文件为 `.env`
 2. 配置SMTP邮件服务参数：
@@ -21,7 +21,7 @@
 cp .env.example .env
 ```
 
-在 `.env` 文件中配置你的邮件服务信息：
+这些环境变量只在全新数据库首次启动时导入。导入完成后，邮件配置统一在后台“平台治理 → 服务配置”中维护，运行时不再读取这些变量：
 
 ```text
 SMTP_HOST=smtp.gmail.com

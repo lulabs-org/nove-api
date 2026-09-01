@@ -17,7 +17,6 @@ import {
   Logger,
   Req,
   Res,
-  Inject,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Public } from '@/auth/decorators/public.decorator';
@@ -27,25 +26,26 @@ import { MeetingEndedEventData } from '../types/lark-meeting.types';
 import { Response, Request } from 'express';
 import { LarkMeetingService } from '../services/lark-meeting.service';
 import { LarkEvent } from '../enums/lark-event.enum';
-import { ConfigType } from '@nestjs/config';
-import { larkConfig } from '@/configs/lark.config';
+import { SystemConfigService } from '@/admin/system-config/services/system-config.service';
+import { SystemConfigValues } from '@/admin/system-config/registries/system-config.registry';
 
 @ApiTags('Webhooks')
 @Controller('webhooks/lark')
 export class LarkWebhookController {
   private readonly logger = new Logger(LarkWebhookController.name);
   private readonly larkMeetingService: LarkMeetingService;
-  private readonly eventDispatcher: EventDispatcher;
 
   constructor(
     larkMeetingService: LarkMeetingService,
-    @Inject(larkConfig.KEY)
-    private readonly larkConf: ConfigType<typeof larkConfig>,
+    private readonly systemConfigService: SystemConfigService,
   ) {
     this.larkMeetingService = larkMeetingService;
-    this.eventDispatcher = new EventDispatcher({
-      encryptKey: this.larkConf.event.encryptKey,
-      verificationToken: this.larkConf.event.verificationToken,
+  }
+
+  private createEventDispatcher(config: SystemConfigValues) {
+    return new EventDispatcher({
+      encryptKey: String(config.eventEncryptKey ?? ''),
+      verificationToken: String(config.eventVerificationToken ?? ''),
     }).register({
       [LarkEvent.VC_MEETING_ALL_ENDED_V1]: (data: MeetingEndedEventData) => {
         this.larkMeetingService
@@ -77,11 +77,15 @@ export class LarkWebhookController {
   ): Promise<void> {
     this.logger.log('收到 Lark Webhook 请求');
 
-    // 创建适配器处理函数
-    const handleLarkEvent = createLarkAdapter(this.eventDispatcher, {
-      autoChallenge: true, // 自动处理飞书的URL验证
-      needCheck: true, // 是否启用事件安全验证，生产环境建议设为true
-    });
+    const { value: config } =
+      await this.systemConfigService.getEffectiveConfig('lark');
+    const handleLarkEvent = createLarkAdapter(
+      this.createEventDispatcher(config),
+      {
+        autoChallenge: true, // 自动处理飞书的URL验证
+        needCheck: true, // 是否启用事件安全验证，生产环境建议设为true
+      },
+    );
 
     // 处理事件
     await handleLarkEvent(request, response);

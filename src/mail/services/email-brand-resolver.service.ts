@@ -1,23 +1,22 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { ConfigType } from '@nestjs/config';
-import { emailConfig } from '@/configs/email.config';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { EmailBrand, EmailBrandContext } from '@/mail/templates';
 import {
   sanitizeEmailColor,
   sanitizeEmailLogoUrl,
 } from '@/mail/templates/helpers';
+import { SystemConfigService } from '@/admin/system-config/services/system-config.service';
 
 @Injectable()
 export class EmailBrandResolverService {
   constructor(
     private readonly prisma: PrismaService,
-    @Inject(emailConfig.KEY)
-    private readonly config: ConfigType<typeof emailConfig>,
+    private readonly systemConfigService: SystemConfigService,
   ) {}
 
   async resolve(context?: EmailBrandContext): Promise<EmailBrand> {
-    const fallback = this.getPlatformBrand();
+    const platform = await this.getPlatformBrand();
+    const fallback = platform.brand;
     if (!context?.orgId) return fallback;
 
     const organization = await this.prisma.org.findFirst({
@@ -37,24 +36,40 @@ export class EmailBrandResolverService {
     return {
       ...fallback,
       name: organizationName,
-      logoUrl: this.resolveLogoUrl(organization.logo),
+      logoUrl: this.resolveLogoUrl(organization.logo, platform.publicBaseUrl),
       footerText: `此邮件由 ${organizationName} 通过 ${fallback.name} 发送，请勿回复。`,
     };
   }
 
-  private getPlatformBrand(): EmailBrand {
+  private async getPlatformBrand(): Promise<{
+    brand: EmailBrand;
+    publicBaseUrl: string | null;
+  }> {
+    const { value } = await this.systemConfigService.getEffectiveConfig('mail');
+    const publicBaseUrl = String(value.brandPublicBaseUrl ?? '') || null;
     return {
-      name: this.config.brand.name,
-      logoUrl: this.resolveLogoUrl(this.config.brand.logoUrl),
-      primaryColor: sanitizeEmailColor(this.config.brand.primaryColor),
-      footerText: this.config.brand.footerText,
+      publicBaseUrl,
+      brand: {
+        name: String(value.brandName ?? 'Nove System'),
+        logoUrl: this.resolveLogoUrl(
+          String(value.brandLogoUrl ?? '') || null,
+          publicBaseUrl,
+        ),
+        primaryColor: sanitizeEmailColor(
+          String(value.brandPrimaryColor ?? '#2563eb'),
+        ),
+        footerText: String(value.brandFooterText ?? ''),
+      },
     };
   }
 
-  private resolveLogoUrl(value: string | null): string | null {
+  private resolveLogoUrl(
+    value: string | null,
+    configuredBaseUrl: string | null = null,
+  ): string | null {
     if (!value) return null;
     if (value.startsWith('/')) {
-      const baseUrl = this.config.brand.publicBaseUrl?.replace(/\/+$/, '');
+      const baseUrl = configuredBaseUrl?.replace(/\/+$/, '');
       if (!baseUrl) return null;
       return sanitizeEmailLogoUrl(`${baseUrl}${value}`);
     }

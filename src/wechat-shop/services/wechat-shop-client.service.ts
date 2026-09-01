@@ -1,6 +1,5 @@
 import { HttpService } from '@nestjs/axios';
 import {
-  Inject,
   Injectable,
   Logger,
   ServiceUnavailableException,
@@ -10,7 +9,6 @@ import { AxiosError } from 'axios';
 import { firstValueFrom } from 'rxjs';
 import { OnEvent } from '@nestjs/event-emitter';
 
-import { wechatShopConfig, WechatShopConfig } from '@/configs';
 import {
   AftersaleOrderDetailResponse,
   GetOrderListParams,
@@ -19,7 +17,7 @@ import {
   WechatShopApiResponse,
 } from '../types';
 import { WechatShopTokenService } from './wechat-shop-token.service';
-import { SystemConfigService } from '@/admin/system-config/system-config.service';
+import { SystemConfigService } from '@/admin/system-config/services/system-config.service';
 
 @Injectable()
 export class WechatShopClientService implements OnModuleInit {
@@ -27,12 +25,11 @@ export class WechatShopClientService implements OnModuleInit {
   private baseUrl: string;
 
   constructor(
-    @Inject(wechatShopConfig.KEY) private readonly config: WechatShopConfig,
     private readonly httpService: HttpService,
     private readonly wechatShopTokenService: WechatShopTokenService,
     private readonly systemConfigService: SystemConfigService,
   ) {
-    this.baseUrl = this.config.apiBaseUrl;
+    this.baseUrl = 'https://api.weixin.qq.com';
   }
 
   async onModuleInit() {
@@ -47,14 +44,15 @@ export class WechatShopClientService implements OnModuleInit {
     await this.reloadConfig();
   }
 
-  private async reloadConfig() {
-    const rawConfig =
-      await this.systemConfigService.getRawConfig('wechat-shop');
+  @OnEvent('config.wechat-shop.deleted')
+  async handleConfigDelete() {
+    await this.reloadConfig();
+  }
 
-    if (rawConfig && rawConfig.value) {
-      const dbConfig = rawConfig.value as Record<string, string>;
-      this.baseUrl = dbConfig.apiBaseUrl ?? this.config.apiBaseUrl;
-    }
+  private async reloadConfig() {
+    const { value } =
+      await this.systemConfigService.getEffectiveConfig('wechat-shop');
+    this.baseUrl = String(value.apiBaseUrl ?? 'https://api.weixin.qq.com');
   }
 
   /**

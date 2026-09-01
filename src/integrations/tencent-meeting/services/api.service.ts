@@ -1,6 +1,4 @@
-import { Injectable, Inject, Logger } from '@nestjs/common';
-import { ConfigType } from '@nestjs/config';
-import { tencentMeetingConfig } from '@/configs/tencent-mtg.config';
+import { Injectable, Logger } from '@nestjs/common';
 import { generateSignature } from '../utils/crypto.util';
 import {
   RecordingDetail,
@@ -13,6 +11,7 @@ import {
   SmartMeetingMinutesResponse,
   TranscriptResponse,
 } from '../types';
+import { SystemConfigService } from '@/admin/system-config/services/system-config.service';
 
 /**
  * Tencent Meeting API Service
@@ -24,22 +23,21 @@ export class TencentApiService {
   private readonly BASE_URL = 'https://api.meeting.qq.com';
   private readonly logger = new Logger(TencentApiService.name);
 
-  constructor(
-    @Inject(tencentMeetingConfig.KEY)
-    private config: ConfigType<typeof tencentMeetingConfig>,
-  ) {}
+  constructor(private readonly systemConfigService: SystemConfigService) {}
 
   /**
    * Retrieves Tencent Meeting API configuration from injected config
    * @returns Configuration object containing API credentials and settings
    */
-  private getConfig() {
+  private async getConfig() {
+    const { value } =
+      await this.systemConfigService.getEffectiveConfig('tencent-meeting');
     return {
-      secretId: this.config.api.secretId,
-      secretKey: this.config.api.secretKey,
-      appId: this.config.api.appId,
-      sdkId: this.config.api.sdkId,
-      userId: this.config.api.userId,
+      secretId: String(value.secretId ?? ''),
+      secretKey: String(value.secretKey ?? ''),
+      appId: String(value.appId ?? ''),
+      sdkId: String(value.sdkId ?? ''),
+      userId: String(value.userId ?? ''),
     };
   }
 
@@ -72,7 +70,7 @@ export class TencentApiService {
 
       const timestamp = Math.floor(Date.now() / 1000).toString();
       const nonce = Math.floor(Math.random() * 100000).toString();
-      const config = this.getConfig();
+      const config = await this.getConfig();
 
       const signature = generateSignature(
         config.secretKey,

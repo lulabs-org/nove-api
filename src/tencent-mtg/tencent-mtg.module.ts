@@ -1,6 +1,4 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { tencentMeetingConfig } from '@/configs/tencent-mtg.config';
 import { TencentModule } from '@/integrations';
 import { MeetingModule } from '@/meeting/meeting.module';
 import { MinuteModule } from '@/minute/minute.module';
@@ -11,6 +9,7 @@ import { UserPlatformModule } from '@/user-platform/user-platform.module';
 import { BullModule } from '@nestjs/bullmq';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
+import { SystemConfigModule } from '@/admin/system-config/system-config.module';
 
 import { TencentMtgController } from './controllers/tencent-mtg.controller';
 import { TencentWebhookController } from './controllers/tencent-webhook.controller';
@@ -46,7 +45,7 @@ import {
 
 @Module({
   imports: [
-    ConfigModule.forFeature(tencentMeetingConfig),
+    SystemConfigModule,
     LarkModule,
     TencentModule,
     PrismaModule,

@@ -10,8 +10,6 @@
  */
 
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { tencentMeetingConfig } from '@/configs/tencent-mtg.config';
 import { ParticipantService } from './services/meeting-participant.service';
 import {
   TencentApiService,
@@ -19,9 +17,10 @@ import {
   SummaryService,
   TranscriptFormatterService,
 } from './services';
+import { SystemConfigModule } from '@/admin/system-config/system-config.module';
 
 @Module({
-  imports: [ConfigModule.forFeature(tencentMeetingConfig)],
+  imports: [SystemConfigModule],
   providers: [
     TencentApiService,
     TranscriptFormatterService,
