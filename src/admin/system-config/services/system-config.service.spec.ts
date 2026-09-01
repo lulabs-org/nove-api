@@ -125,6 +125,7 @@ describe('SystemConfigService', () => {
   it('deletes database config and falls back to environment values', async () => {
     delete process.env.ARK_API_KEY;
     process.env.OPENAI_API_KEY = 'env-key';
+    process.env.OPENAI_MODEL = 'env-model';
     records[`${orgId}:AI_CONFIG`] = {
       value: { apiKey: encrypt('db-key'), model: 'db-model' },
       updatedAt: new Date('2026-09-01T00:00:00Z'),
@@ -139,7 +140,7 @@ describe('SystemConfigService', () => {
       value: {
         provider: 'openai',
         baseUrl: 'https://ark.cn-beijing.volces.com/api/v3',
-        model: 'deepseek-v4-flash-ga-260731',
+        model: 'env-model',
         apiKey: 'env-key',
         maxTokens: 16000,
         temperature: 0.7,
