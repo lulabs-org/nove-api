@@ -6,8 +6,7 @@ import {
   SystemConfigService,
 } from '@/admin/system-config/services';
 import { OnEvent } from '@nestjs/event-emitter';
-import { SystemConfigRegistry } from '@/admin/system-config/configs';
-import { getDefaultValues } from '@/admin/system-config/configs';
+import { SystemConfigRegistry, getDefaultValues } from '@/admin/system-config';
 
 @Injectable()
 export class LlmService implements OnModuleInit {

@@ -1,5 +1,5 @@
 import { UpdateLarkConfigDto } from '../dto/lark-config.dto';
-import { defineSystemConfig, environment } from './system-config.definition';
+import { defineSystemConfig, environment } from '../core';
 
 export const larkConfig = defineSystemConfig(UpdateLarkConfigDto, {
   description: 'Organization Lark Configuration',
@@ -43,4 +43,5 @@ export const larkConfig = defineSystemConfig(UpdateLarkConfigDto, {
       environment: environment.string('LARK_TABLE_PERSONAL_MEETING_SUMMARY'),
     },
   },
+  restartRequiredOn: ['appId', 'appSecret'],
 });

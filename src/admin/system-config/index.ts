@@ -1,3 +1,4 @@
 export * from './system-config.module';
-export * from './configs';
+export * from './core';
+export * from './definitions';
 export * from './services';

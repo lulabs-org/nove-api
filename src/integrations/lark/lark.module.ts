@@ -19,7 +19,7 @@ import {
   NumberRecordBitableRepository,
 } from './repositories';
 import { SystemConfigModule } from '@/admin/system-config/system-config.module';
-
+import { LarkTesterService } from './lark.tester';
 @Module({
   imports: [SystemConfigModule],
   providers: [
@@ -31,6 +31,7 @@ import { SystemConfigModule } from '@/admin/system-config/system-config.module';
     RecordingFileBitableRepository,
     NumberRecordBitableRepository,
     MinuteService,
+    LarkTesterService,
   ],
   exports: [
     LarkClient,

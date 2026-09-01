@@ -30,7 +30,7 @@ import {
   SingleOrgContextService,
   SystemConfigService,
 } from '@/admin/system-config/services';
-import { SystemConfigValues } from '@/admin/system-config/configs';
+import { SystemConfigValues } from '@/admin/system-config';
 
 @ApiTags('Webhooks')
 @Controller('webhooks/lark')

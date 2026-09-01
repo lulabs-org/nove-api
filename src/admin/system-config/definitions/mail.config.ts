@@ -1,5 +1,5 @@
 import { UpdateMailConfigDto } from '../dto/mail-config.dto';
-import { defineSystemConfig, environment } from './system-config.definition';
+import { defineSystemConfig, environment } from '../core';
 
 export const mailConfig = defineSystemConfig(UpdateMailConfigDto, {
   description: 'Organization Mail Configuration',

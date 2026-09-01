@@ -122,7 +122,7 @@ describe('SystemConfigService', () => {
     });
   });
 
-  it('deletes database config without restoring environment values', async () => {
+  it('deletes database config and falls back to environment values', async () => {
     delete process.env.ARK_API_KEY;
     process.env.OPENAI_API_KEY = 'env-key';
     records[`${orgId}:AI_CONFIG`] = {
@@ -139,7 +139,8 @@ describe('SystemConfigService', () => {
       value: {
         provider: 'openai',
         baseUrl: 'https://ark.cn-beijing.volces.com/api/v3',
-        model: '{TEMPLATE_ENDPOINT_ID}',
+        model: 'deepseek-v4-flash-ga-260731',
+        apiKey: 'env-key',
         maxTokens: 16000,
         temperature: 0.7,
       },
@@ -162,7 +163,7 @@ describe('SystemConfigService', () => {
     });
   });
 
-  it('returns safe import metadata and masks Tencent Secret ID', async () => {
+  it('returns effective config and masks Tencent Secret ID', async () => {
     records[`${orgId}:TENCENT-MEETING_CONFIG`] = {
       value: {
         appId: 'app-id',
@@ -171,28 +172,12 @@ describe('SystemConfigService', () => {
       },
       updatedAt: new Date('2026-09-01T00:00:00Z'),
     };
-    records[`${orgId}:SYSTEM_CONFIG_ENV_IMPORT_V1`] = {
-      value: {
-        version: 1,
-        completedAt: '2026-09-01T01:00:00.000Z',
-        modules: {
-          'tencent-meeting': {
-            status: 'imported',
-            fields: ['appId', 'secretId'],
-            configured: false,
-          },
-        },
-      },
-      updatedAt: new Date('2026-09-01T01:00:00Z'),
-    };
 
     await expect(
       service.getConfig(orgId, 'tencent-meeting'),
     ).resolves.toMatchObject({
       orgId,
       source: 'database',
-      environmentImportedAt: '2026-09-01T01:00:00.000Z',
-      environmentImportedFields: ['appId', 'secretId'],
       value: { secretId: '********', secretKey: '********' },
     });
   });

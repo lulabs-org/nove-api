@@ -12,10 +12,11 @@
 import { Module } from '@nestjs/common';
 import { LlmService } from './llm.service';
 import { SystemConfigModule } from '@/admin/system-config/system-config.module';
+import { LlmTesterService } from './llm.tester';
 
 @Module({
   imports: [SystemConfigModule],
-  providers: [LlmService],
+  providers: [LlmService, LlmTesterService],
   exports: [LlmService],
 })
 export class LlmModule {}

@@ -23,7 +23,7 @@ import {
   SystemConfigService,
 } from '@/admin/system-config/services';
 import { OnEvent } from '@nestjs/event-emitter';
-import { SystemConfigValues } from '@/admin/system-config/configs';
+import { SystemConfigValues } from '@/admin/system-config';
 
 /**
  * Repository layer for Number Record Bitable operations

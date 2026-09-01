@@ -14,7 +14,7 @@ import { WechatShopClientService } from './services/wechat-shop-client.service';
 import { WechatShopTokenService } from './services/wechat-shop-token.service';
 import { WechatShopProcessor } from './processor/wechat-shop.processor';
 import { UserModule } from '@/user/user.module';
-
+import { WechatShopTesterService } from './wechat-shop.tester';
 import { SystemConfigModule } from '@/admin/system-config/system-config.module';
 
 @Module({
@@ -38,6 +38,7 @@ import { SystemConfigModule } from '@/admin/system-config/system-config.module';
     WechatShopClientService,
     WechatShopTokenService,
     WechatShopProcessor,
+    WechatShopTesterService,
   ],
   exports: [WechatShopOrderService, WechatShopRepository],
 })

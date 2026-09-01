@@ -18,6 +18,7 @@ import {
   TranscriptFormatterService,
 } from './services';
 import { SystemConfigModule } from '@/admin/system-config/system-config.module';
+import { TencentMeetingTesterService } from './tencent-meeting.tester';
 
 @Module({
   imports: [SystemConfigModule],
@@ -27,6 +28,7 @@ import { SystemConfigModule } from '@/admin/system-config/system-config.module';
     TranscriptService,
     SummaryService,
     ParticipantService,
+    TencentMeetingTesterService,
   ],
   exports: [
     TencentApiService,

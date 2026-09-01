@@ -1,5 +1,5 @@
 import { UpdateAiConfigDto } from '../dto/ai-config.dto';
-import { defineSystemConfig, environment } from './system-config.definition';
+import { defineSystemConfig, environment } from '../core';
 
 export const aiConfig = defineSystemConfig(UpdateAiConfigDto, {
   description: 'Organization AI Model Configuration',

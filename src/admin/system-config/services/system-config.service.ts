@@ -10,17 +10,16 @@ import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { SystemConfigRepository } from '../repositories/system-config.repository';
 import {
-  SYSTEM_CONFIG_ENV_IMPORT_KEY,
-  SystemConfigEnvironmentImportMetadata,
-} from '../configs';
+  readEnvironment,
+  SystemConfigValues,
+} from '../core';
 import {
   ConfigSource,
   isSystemConfigModule,
   SYSTEM_CONFIG_MODULES,
   SystemConfigModuleName,
   SystemConfigRegistry,
-  SystemConfigValues,
-} from '../configs';
+} from '../definitions';
 import { ConfigCodecService } from './config-codec.service';
 
 export interface EffectiveSystemConfig {
@@ -30,8 +29,6 @@ export interface EffectiveSystemConfig {
   configured: boolean;
   source: ConfigSource;
   updatedAt: Date | null;
-  environmentImportedAt: string | null;
-  environmentImportedFields: string[];
 }
 
 export interface SystemConfigChangeEvent {
@@ -57,6 +54,9 @@ export class SystemConfigService {
     return `${module.toUpperCase()}_CONFIG`;
   }
 
+  /**
+   * 运行时安全检查：防止恶意传入未知的 module 字符串导致空指针或配置泄漏
+   */
   private assertModule(module: string): SystemConfigModuleName {
     if (!isSystemConfigModule(module)) {
       throw new NotFoundException(
@@ -74,6 +74,10 @@ export class SystemConfigService {
     );
   }
 
+  /**
+   * 核心逻辑：获取当前模块的“最终生效”配置
+   * 合并策略：数据库配置 (最高优) > 环境变量 (中优) > 代码默认值 (兜底)
+   */
   async getEffectiveConfig(
     orgId: string,
     module: string,
@@ -93,15 +97,13 @@ export class SystemConfigService {
           `Failed to decrypt ${moduleName}.${field}; database override ignored`,
         ),
     );
+    const environmentValues = readEnvironment(entry);
     const value = {
       ...this.codec.defaults(entry),
+      ...environmentValues,
       ...decryptedDatabaseValue,
     };
     const source: ConfigSource = stored ? 'database' : 'default';
-    const importMetadata = await this.getEnvironmentImportMetadata(
-      orgId,
-      moduleName,
-    );
 
     const configured = this.codec.isConfigured(entry, value);
 
@@ -112,9 +114,6 @@ export class SystemConfigService {
       configured,
       source,
       updatedAt: stored?.updatedAt ?? null,
-      environmentImportedAt:
-        importMetadata.fields.length > 0 ? importMetadata.completedAt : null,
-      environmentImportedFields: importMetadata.fields,
     };
   }
 
@@ -128,8 +127,6 @@ export class SystemConfigService {
           configured: config.configured,
           source: config.source,
           updatedAt: config.updatedAt,
-          environmentImportedAt: config.environmentImportedAt,
-          environmentImportedFields: config.environmentImportedFields,
         };
       }),
     );
@@ -141,6 +138,10 @@ export class SystemConfigService {
     return { ...effective, value: this.codec.mask(entry, effective.value) };
   }
 
+  /**
+   * 生成草稿配置（不入库）
+   * 场景：用户在后台填写了表单，点击“测试连接”，需要用这份未保存的数据和环境变量混合后进行测试
+   */
   async resolveDraftConfig(
     orgId: string,
     module: string,
@@ -160,6 +161,10 @@ export class SystemConfigService {
     return { ...current, value };
   }
 
+  /**
+   * 更新或保存配置
+   * 1. 验证格式 -> 2. 差异对比 -> 3. 密码加密入库 -> 4. 触发更新事件及重启检测
+   */
   async updateConfig(
     orgId: string,
     module: string,
@@ -184,10 +189,11 @@ export class SystemConfigService {
     );
 
     const after = await this.getEffectiveConfig(orgId, moduleName);
-    const restartRequired =
-      moduleName === 'lark' &&
-      (before.value.appId !== after.value.appId ||
-        before.value.appSecret !== after.value.appSecret);
+    
+    const restartRequiredOn = entry.restartRequiredOn ?? [];
+    const restartRequired = restartRequiredOn.some(
+      (field) => before.value[field] !== after.value[field]
+    );
 
     this.eventEmitter.emit(`config.${moduleName}.updated`, {
       orgId,
@@ -199,12 +205,15 @@ export class SystemConfigService {
       orgId,
       success: true,
       message: restartRequired
-        ? '配置已保存；飞书事件长连接需重启 API 后生效'
+        ? '配置已保存；部分关键配置项变更，需重启 API 后生效'
         : '配置已保存并生效',
       restartRequired,
     };
   }
 
+  /**
+   * 删除数据库中的配置，退回到使用“环境变量”或“默认值”的状态
+   */
   async deleteConfig(orgId: string, module: string) {
     const moduleName = this.assertModule(module);
     const key = this.getModuleKey(moduleName);
@@ -218,49 +227,30 @@ export class SystemConfigService {
 
     await this.configRepository.delete(orgId, key);
     const fallback = await this.getEffectiveConfig(orgId, moduleName);
-    const restartRequired = moduleName === 'lark';
+    
+    const entry = SystemConfigRegistry[moduleName];
+    const restartRequiredOn = entry.restartRequiredOn ?? [];
+    const restartRequired = restartRequiredOn.length > 0;
+
     this.eventEmitter.emit(`config.${moduleName}.deleted`, {
       orgId,
       value: fallback.value,
     } satisfies SystemConfigChangeEvent);
-    this.logger.log(
-      `${SystemConfigRegistry[moduleName].description} deleted by admin.`,
-    );
+    this.logger.log(`${entry.description} deleted by admin.`);
 
     return {
       orgId,
       success: true,
       message: restartRequired
-        ? '配置已删除；飞书事件长连接需重启 API'
+        ? '配置已删除；需重启 API 彻底卸载相关长连接'
         : '配置已删除，服务已变为未配置',
       restartRequired,
     };
   }
 
-  private async getEnvironmentImportMetadata(
-    orgId: string,
-    module: SystemConfigModuleName,
-  ): Promise<{ completedAt: string | null; fields: string[] }> {
-    const marker = await this.configRepository.findByKey(
-      orgId,
-      SYSTEM_CONFIG_ENV_IMPORT_KEY,
-    );
-    if (!marker) return { completedAt: null, fields: [] };
-
-    const metadata =
-      marker.value as unknown as Partial<SystemConfigEnvironmentImportMetadata>;
-    const moduleMetadata = metadata.modules?.[module];
-    return {
-      completedAt:
-        typeof metadata.completedAt === 'string' ? metadata.completedAt : null,
-      fields: Array.isArray(moduleMetadata?.fields)
-        ? moduleMetadata.fields.filter(
-            (field): field is string => typeof field === 'string',
-          )
-        : [],
-    };
-  }
-
+  /**
+   * 使用 class-validator 和 DTO 进行严格的运行时格式验证
+   */
   private async validateData(
     module: SystemConfigModuleName,
     data: Record<string, unknown>,

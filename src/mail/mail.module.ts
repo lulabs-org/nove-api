@@ -15,6 +15,7 @@ import { MailService } from './services/mail.service';
 import { AuthMailService } from './services/auth-mail.service';
 import { EmailBrandResolverService } from './services/email-brand-resolver.service';
 import { MailController } from './mail.controller';
+import { MailTesterService } from './mail.tester';
 import { BullModule } from '@nestjs/bullmq';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
@@ -39,6 +40,7 @@ import { SystemConfigModule } from '@/admin/system-config/system-config.module';
     EmailBrandResolverService,
     AuthMailService,
     MailProcessor,
+    MailTesterService,
   ],
   exports: [MailService, AuthMailService, EmailBrandResolverService],
 })

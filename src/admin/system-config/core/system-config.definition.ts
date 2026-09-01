@@ -1,6 +1,5 @@
 import { Type } from '@nestjs/common';
 import {
-  BootstrapEnvironmentConfig,
   ConfigDefinition,
   ConfigRegistryEntry,
   EnvironmentSource,
@@ -8,7 +7,6 @@ import {
 } from './system-config.types';
 
 export * from './system-config.types';
-export * from './system-config.constants';
 
 export function defineSystemConfig<TDto extends object>(
   dto: Type<TDto>,
@@ -39,25 +37,20 @@ export function getSecretFields(entry: ConfigRegistryEntry): string[] {
     .map(([name]) => name);
 }
 
-export function readBootstrapEnvironment(
+export function readEnvironment(
   entry: ConfigRegistryEntry,
   environment: NodeJS.ProcessEnv = process.env,
-): BootstrapEnvironmentConfig {
+): SystemConfigValues {
   const values: SystemConfigValues = {};
-  const fields: string[] = [];
 
   for (const [name, field] of Object.entries(entry.fields)) {
     if (!field.environment) continue;
-
-    const rawValue = environment[field.environment.key];
-    const isExplicit = rawValue !== undefined && rawValue.trim() !== '';
-    if (isExplicit) fields.push(name);
 
     const value = field.environment.read(environment);
     if (value !== undefined && value !== '') values[name] = value;
   }
 
-  return { values, fields };
+  return values;
 }
 
 export const environment = {
