@@ -60,23 +60,20 @@ describe('system config definitions', () => {
       EMAIL_BRAND_NAME: 'Acme',
       SMTP_USER: 'mail@example.com',
       SMTP_PASS: 'mail-secret',
-      ARK_API_KEY: 'ark-secret',
-      OPENAI_API_KEY: 'ignored-openai-secret',
+      OPENAI_API_KEY: 'openai-secret',
     };
 
     expect(readBootstrapEnvironment(SystemConfigRegistry.mail)).toEqual({
       values: {
         user: 'mail@example.com',
         pass: 'mail-secret',
-        from: 'mail@example.com',
         brandName: 'Acme',
-        brandFooterText: '此邮件由 Acme 自动发送，请勿回复。',
       },
-      fields: ['user', 'pass', 'from', 'brandName'],
+      fields: ['user', 'pass', 'brandName'],
     });
     expect(readBootstrapEnvironment(SystemConfigRegistry.ai)).toMatchObject({
-      values: { provider: 'ark', apiKey: 'ark-secret' },
-      fields: ['provider', 'apiKey'],
+      values: { apiKey: 'openai-secret' },
+      fields: ['apiKey'],
     });
   });
 });

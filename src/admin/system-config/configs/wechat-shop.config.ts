@@ -11,31 +11,19 @@ export const wechatShopConfig = defineSystemConfig(UpdateWechatShopConfigDto, {
     appSecret: {
       required: true,
       secret: true,
-      environment: environment.string('WECHAT_SHOP_APP_SECRET', {
-        trim: false,
-      }),
+      environment: environment.string('WECHAT_SHOP_APP_SECRET'),
     },
     webhookToken: {
       secret: true,
-      environment: environment.string('WECHAT_SHOP_WEBHOOK_TOKEN', {
-        trim: false,
-      }),
+      environment: environment.string('WECHAT_SHOP_WEBHOOK_TOKEN'),
     },
     encodingAesKey: {
       secret: true,
-      environment: environment.string('WECHAT_SHOP_ENCODING_AES_KEY', {
-        trim: false,
-      }),
+      environment: environment.string('WECHAT_SHOP_ENCODING_AES_KEY'),
     },
     apiBaseUrl: {
       default: 'https://api.weixin.qq.com',
-      environment: environment.custom(
-        ['WECHAT_SHOP_API_BASE_URL', 'WECHAT_API_BASE_URL'],
-        (values) =>
-          (
-            values.WECHAT_SHOP_API_BASE_URL ?? values.WECHAT_API_BASE_URL
-          )?.trim(),
-      ),
+      environment: environment.string('WECHAT_SHOP_API_BASE_URL'),
     },
   },
 });

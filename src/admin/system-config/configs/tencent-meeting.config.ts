@@ -17,16 +17,12 @@ export const tencentMeetingConfig = defineSystemConfig(
       secretId: {
         required: true,
         secret: true,
-        environment: environment.string('TENCENT_MEETING_SECRET_ID', {
-          trim: false,
-        }),
+        environment: environment.string('TENCENT_MEETING_SECRET_ID'),
       },
       secretKey: {
         required: true,
         secret: true,
-        environment: environment.string('TENCENT_MEETING_SECRET_KEY', {
-          trim: false,
-        }),
+        environment: environment.string('TENCENT_MEETING_SECRET_KEY'),
       },
       userId: {
         required: true,
@@ -34,15 +30,11 @@ export const tencentMeetingConfig = defineSystemConfig(
       },
       webhookToken: {
         secret: true,
-        environment: environment.string('TENCENT_MEETING_TOKEN', {
-          trim: false,
-        }),
+        environment: environment.string('TENCENT_MEETING_TOKEN'),
       },
       encodingAesKey: {
         secret: true,
-        environment: environment.string('TENCENT_MEETING_ENCODING_AES_KEY', {
-          trim: false,
-        }),
+        environment: environment.string('TENCENT_MEETING_ENCODING_AES_KEY'),
       },
     },
   },

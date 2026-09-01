@@ -14,7 +14,7 @@ import {
   SystemConfigService,
 } from '@/admin/system-config/services';
 import { OnEvent } from '@nestjs/event-emitter';
-import { SystemConfigValues } from '@/admin/system-config/registries/system-config.registry';
+import { SystemConfigValues } from '@/admin/system-config/configs';
 
 /**
  * Repository for recording file-related Bitable operations

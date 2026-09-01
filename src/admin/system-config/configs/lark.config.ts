@@ -11,26 +11,20 @@ export const larkConfig = defineSystemConfig(UpdateLarkConfigDto, {
     appSecret: {
       required: true,
       secret: true,
-      environment: environment.string('LARK_APP_SECRET', { trim: false }),
+      environment: environment.string('LARK_APP_SECRET'),
     },
     eventEncryptKey: {
       secret: true,
-      environment: environment.string('LARK_EVENT_ENCRYPT_KEY', {
-        trim: false,
-      }),
+      environment: environment.string('LARK_EVENT_ENCRYPT_KEY'),
     },
     eventVerificationToken: {
       secret: true,
-      environment: environment.string('LARK_EVENT_VERIFICATION_TOKEN', {
-        trim: false,
-      }),
+      environment: environment.string('LARK_EVENT_VERIFICATION_TOKEN'),
     },
     bitableAppToken: {
       required: true,
       secret: true,
-      environment: environment.string('LARK_BITABLE_APP_TOKEN', {
-        trim: false,
-      }),
+      environment: environment.string('LARK_BITABLE_APP_TOKEN'),
     },
     meetingTableId: {
       required: true,
