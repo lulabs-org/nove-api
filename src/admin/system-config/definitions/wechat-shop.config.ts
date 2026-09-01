@@ -1,5 +1,5 @@
 import { UpdateWechatShopConfigDto } from '../dto/wechat-shop-config.dto';
-import { defineSystemConfig, environment } from './system-config.definition';
+import { defineSystemConfig, environment } from '../core';
 
 export const wechatShopConfig = defineSystemConfig(UpdateWechatShopConfigDto, {
   description: 'Organization Wechat Shop Configuration',

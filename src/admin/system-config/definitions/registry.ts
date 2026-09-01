@@ -3,7 +3,7 @@ import { larkConfig } from './lark.config';
 import { mailConfig } from './mail.config';
 import { tencentMeetingConfig } from './tencent-meeting.config';
 import { wechatShopConfig } from './wechat-shop.config';
-import { ConfigRegistryEntry } from './system-config.definition';
+import { ConfigRegistryEntry } from '../core';
 
 export type ConfigSource = 'database' | 'default';
 

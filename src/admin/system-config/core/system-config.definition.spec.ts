@@ -2,9 +2,9 @@ import {
   getDefaultValues,
   getRequiredFields,
   getSecretFields,
-  readBootstrapEnvironment,
+  readEnvironment,
 } from './system-config.definition';
-import { SystemConfigRegistry } from './index';
+import { SystemConfigRegistry } from '../definitions';
 
 describe('system config definitions', () => {
   const originalEnv = process.env;
@@ -63,17 +63,13 @@ describe('system config definitions', () => {
       OPENAI_API_KEY: 'openai-secret',
     };
 
-    expect(readBootstrapEnvironment(SystemConfigRegistry.mail)).toEqual({
-      values: {
-        user: 'mail@example.com',
-        pass: 'mail-secret',
-        brandName: 'Acme',
-      },
-      fields: ['user', 'pass', 'brandName'],
+    expect(readEnvironment(SystemConfigRegistry.mail)).toEqual({
+      user: 'mail@example.com',
+      pass: 'mail-secret',
+      brandName: 'Acme',
     });
-    expect(readBootstrapEnvironment(SystemConfigRegistry.ai)).toMatchObject({
-      values: { apiKey: 'openai-secret' },
-      fields: ['apiKey'],
+    expect(readEnvironment(SystemConfigRegistry.ai)).toMatchObject({
+      apiKey: 'openai-secret',
     });
   });
 });

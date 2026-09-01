@@ -32,27 +32,17 @@ export interface ConfigDefinition<TDto extends object> {
   dto: Type<TDto>;
   description: string;
   fields: ConfigFields<TDto>;
+  restartRequiredOn?: Extract<keyof TDto, string>[];
 }
 
 export interface ConfigRegistryEntry {
   dto: Type<object>;
   description: string;
   fields: Record<string, ConfigFieldDefinition>;
+  restartRequiredOn?: string[];
 }
 
-export interface BootstrapEnvironmentConfig {
-  values: SystemConfigValues;
-  fields: string[];
+export interface ConfigTestProvider {
+  test(value: SystemConfigValues): Promise<void>;
 }
 
-export interface SystemConfigEnvironmentImportModule {
-  status: 'imported' | 'existing' | 'skipped';
-  fields: string[];
-  configured: boolean;
-}
-
-export interface SystemConfigEnvironmentImportMetadata {
-  version: 1;
-  completedAt: string;
-  modules: Record<string, SystemConfigEnvironmentImportModule>;
-}

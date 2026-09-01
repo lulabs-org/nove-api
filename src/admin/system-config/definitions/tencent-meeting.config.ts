@@ -1,5 +1,5 @@
 import { UpdateTencentMeetingConfigDto } from '../dto/tencent-meeting-config.dto';
-import { defineSystemConfig, environment } from './system-config.definition';
+import { defineSystemConfig, environment } from '../core';
 
 export const tencentMeetingConfig = defineSystemConfig(
   UpdateTencentMeetingConfigDto,

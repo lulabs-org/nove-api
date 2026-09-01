@@ -6,10 +6,9 @@ import {
   getRequiredFields,
   getSecretFields,
   SystemConfigValues,
-} from '../configs';
+} from '../core';
 
 const MASKED_SECRET = '********';
-const ENCRYPTED_VALUE_PATTERN = /^[0-9a-f]{32}:[0-9a-f]{32}:[0-9a-f]*$/i;
 
 @Injectable()
 export class ConfigCodecService {
@@ -87,40 +86,6 @@ export class ConfigCodecService {
     return value as SystemConfigValues;
   }
 
-  normalizeBootstrap(
-    module: string,
-    entry: ConfigRegistryEntry,
-    plainValue: SystemConfigValues,
-    storedValue: SystemConfigValues,
-  ): { plainValue: SystemConfigValues; storedValue: SystemConfigValues } {
-    const normalizedPlainValue = { ...plainValue };
-    const normalizedStoredValue = { ...plainValue };
-
-    for (const field of getSecretFields(entry)) {
-      const storedSecret = storedValue[field];
-      if (this.hasValue(storedSecret)) {
-        const normalized = this.normalizeStoredSecret(
-          module,
-          field,
-          storedSecret,
-        );
-        normalizedPlainValue[field] = normalized.plaintext;
-        normalizedStoredValue[field] = normalized.encrypted;
-        continue;
-      }
-
-      const importedSecret = normalizedPlainValue[field];
-      if (typeof importedSecret === 'string' && importedSecret) {
-        normalizedStoredValue[field] = encrypt(importedSecret);
-      }
-    }
-
-    return {
-      plainValue: normalizedPlainValue,
-      storedValue: normalizedStoredValue,
-    };
-  }
-
   isConfigured(entry: ConfigRegistryEntry, value: SystemConfigValues): boolean {
     return this.missingRequiredFields(entry, value).length === 0;
   }
@@ -139,27 +104,6 @@ export class ConfigCodecService {
     value: SystemConfigValues,
   ): boolean {
     return getSecretFields(entry).some((field) => this.hasValue(value[field]));
-  }
-
-  private normalizeStoredSecret(
-    module: string,
-    field: string,
-    value: unknown,
-  ): { plaintext: string; encrypted: string } {
-    if (typeof value !== 'string') {
-      throw new Error(`Invalid stored secret type for ${module}.${field}`);
-    }
-    if (!ENCRYPTED_VALUE_PATTERN.test(value)) {
-      return { plaintext: value, encrypted: encrypt(value) };
-    }
-
-    try {
-      return { plaintext: decrypt(value), encrypted: value };
-    } catch {
-      throw new Error(
-        `Stored encrypted secret is unreadable: ${module}.${field}`,
-      );
-    }
   }
 
   private hasValue(value: unknown): boolean {
