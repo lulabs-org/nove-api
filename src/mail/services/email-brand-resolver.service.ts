@@ -5,13 +5,17 @@ import {
   sanitizeEmailColor,
   sanitizeEmailLogoUrl,
 } from '@/mail/templates/helpers';
-import { SystemConfigService } from '@/admin/system-config/services/system-config.service';
+import {
+  SingleOrgContextService,
+  SystemConfigService,
+} from '@/admin/system-config/services';
 
 @Injectable()
 export class EmailBrandResolverService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly systemConfigService: SystemConfigService,
+    private readonly orgContext: SingleOrgContextService,
   ) {}
 
   async resolve(context?: EmailBrandContext): Promise<EmailBrand> {
@@ -45,7 +49,10 @@ export class EmailBrandResolverService {
     brand: EmailBrand;
     publicBaseUrl: string | null;
   }> {
-    const { value } = await this.systemConfigService.getEffectiveConfig('mail');
+    const { value } = await this.systemConfigService.getEffectiveConfig(
+      this.orgContext.getOrgId(),
+      'mail',
+    );
     const publicBaseUrl = String(value.brandPublicBaseUrl ?? '') || null;
     return {
       publicBaseUrl,

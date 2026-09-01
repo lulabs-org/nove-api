@@ -10,7 +10,10 @@ import type {
 import { TencentMtgMeetingCoreService } from './meeting-core.service';
 import { TencentMtgTranscriptCoreService } from './transcript-core.service';
 import { TencentMtgSummaryCoreService } from './summary-core.service';
-import { SystemConfigService } from '@/admin/system-config/services/system-config.service';
+import {
+  SingleOrgContextService,
+  SystemConfigService,
+} from '@/admin/system-config/services';
 
 @Injectable()
 export class TencentMtgSyncService {
@@ -23,6 +26,7 @@ export class TencentMtgSyncService {
     private readonly transcriptCoreService: TencentMtgTranscriptCoreService,
     private readonly summaryCoreService: TencentMtgSummaryCoreService,
     private readonly systemConfigService: SystemConfigService,
+    private readonly orgContext: SingleOrgContextService,
   ) {}
 
   /**
@@ -272,7 +276,10 @@ export class TencentMtgSyncService {
 
     const actualEndTime = Math.min(endTime, now);
     const { value: activeConfig } =
-      await this.systemConfigService.getEffectiveConfig('tencent-meeting');
+      await this.systemConfigService.getEffectiveConfig(
+        this.orgContext.getOrgId(),
+        'tencent-meeting',
+      );
     const effectiveOperatorId = operatorId || String(activeConfig.userId ?? '');
 
     // 1. 获取指定时间段内的所有企业录制记录

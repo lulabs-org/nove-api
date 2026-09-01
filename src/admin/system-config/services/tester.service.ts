@@ -7,6 +7,7 @@ import { SystemConfigService } from './system-config.service';
 import { SystemConfigValues } from '../registries/system-config.registry';
 
 export interface TestResult {
+  orgId: string;
   success: boolean;
   message: string;
 }
@@ -16,19 +17,22 @@ export class TesterService {
   constructor(private readonly systemConfigService: SystemConfigService) {}
 
   async testConfig(
+    orgId: string,
     module: string,
     draft: Record<string, unknown>,
   ): Promise<TestResult> {
     const { value } = await this.systemConfigService.resolveDraftConfig(
+      orgId,
       module,
       draft,
     );
 
     try {
       await this.withTimeout(this.runTest(module, value), 15_000);
-      return { success: true, message: '连接测试成功' };
+      return { orgId, success: true, message: '连接测试成功' };
     } catch (error) {
       return {
+        orgId,
         success: false,
         message: this.safeFailureMessage(error),
       };

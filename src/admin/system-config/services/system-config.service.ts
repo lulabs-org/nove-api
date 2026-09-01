@@ -22,6 +22,7 @@ import {
 } from '../registries/system-config.registry';
 
 export interface EffectiveSystemConfig {
+  orgId: string;
   module: SystemConfigModuleName;
   value: SystemConfigValues;
   configured: boolean;
@@ -29,6 +30,11 @@ export interface EffectiveSystemConfig {
   updatedAt: Date | null;
   environmentImportedAt: string | null;
   environmentImportedFields: string[];
+}
+
+export interface SystemConfigChangeEvent {
+  orgId: string;
+  value: SystemConfigValues;
 }
 
 export interface PublicSystemConfig extends EffectiveSystemConfig {
@@ -57,15 +63,22 @@ export class SystemConfigService {
     return module;
   }
 
-  async getRawConfig(module: string) {
+  async getRawConfig(orgId: string, module: string) {
     const moduleName = this.assertModule(module);
-    return this.configRepository.findByKey(this.getModuleKey(moduleName));
+    return this.configRepository.findByKey(
+      orgId,
+      this.getModuleKey(moduleName),
+    );
   }
 
-  async getEffectiveConfig(module: string): Promise<EffectiveSystemConfig> {
+  async getEffectiveConfig(
+    orgId: string,
+    module: string,
+  ): Promise<EffectiveSystemConfig> {
     const moduleName = this.assertModule(module);
     const entry = SystemConfigRegistry[moduleName];
     const stored = await this.configRepository.findByKey(
+      orgId,
       this.getModuleKey(moduleName),
     );
     const databaseValue = (stored?.value ?? {}) as SystemConfigValues;
@@ -87,13 +100,17 @@ export class SystemConfigService {
 
     const value = { ...entry.defaults, ...decryptedDatabaseValue };
     const source: ConfigSource = stored ? 'database' : 'default';
-    const importMetadata = await this.getEnvironmentImportMetadata(moduleName);
+    const importMetadata = await this.getEnvironmentImportMetadata(
+      orgId,
+      moduleName,
+    );
 
     const configured = entry.requiredFields.every((field) =>
       this.hasValue(value[field]),
     );
 
     return {
+      orgId,
       module: moduleName,
       value,
       configured,
@@ -105,22 +122,25 @@ export class SystemConfigService {
     };
   }
 
-  async listConfigs() {
+  async listConfigs(orgId: string) {
     return Promise.all(
       SYSTEM_CONFIG_MODULES.map(async (module) => {
-        const config = await this.getEffectiveConfig(module);
+        const config = await this.getEffectiveConfig(orgId, module);
         return {
+          orgId: config.orgId,
           module: config.module,
           configured: config.configured,
           source: config.source,
           updatedAt: config.updatedAt,
+          environmentImportedAt: config.environmentImportedAt,
+          environmentImportedFields: config.environmentImportedFields,
         };
       }),
     );
   }
 
-  async getConfig(module: string): Promise<PublicSystemConfig> {
-    const effective = await this.getEffectiveConfig(module);
+  async getConfig(orgId: string, module: string): Promise<PublicSystemConfig> {
+    const effective = await this.getEffectiveConfig(orgId, module);
     const value = { ...effective.value };
     const entry = SystemConfigRegistry[effective.module];
 
@@ -132,10 +152,11 @@ export class SystemConfigService {
   }
 
   async resolveDraftConfig(
+    orgId: string,
     module: string,
     data: Record<string, unknown>,
   ): Promise<EffectiveSystemConfig> {
-    const current = await this.getEffectiveConfig(module);
+    const current = await this.getEffectiveConfig(orgId, module);
     await this.validateData(current.module, data);
     const entry = SystemConfigRegistry[current.module];
     const draft = { ...data };
@@ -162,14 +183,18 @@ export class SystemConfigService {
     return { ...current, value };
   }
 
-  async updateConfig(module: string, data: Record<string, unknown>) {
+  async updateConfig(
+    orgId: string,
+    module: string,
+    data: Record<string, unknown>,
+  ) {
     const moduleName = this.assertModule(module);
     const entry = SystemConfigRegistry[moduleName];
     await this.validateData(moduleName, data);
 
-    const before = await this.getEffectiveConfig(moduleName);
+    const before = await this.getEffectiveConfig(orgId, moduleName);
     const key = this.getModuleKey(moduleName);
-    const existing = await this.configRepository.findByKey(key);
+    const existing = await this.configRepository.findByKey(orgId, key);
     const currentConfig = (existing?.value ?? {}) as Record<string, unknown>;
     const normalizedData = Object.fromEntries(
       Object.entries(data).filter(([, value]) => value !== undefined),
@@ -187,22 +212,27 @@ export class SystemConfigService {
     }
 
     await this.configRepository.upsert(
+      orgId,
       key,
       newConfig as Prisma.InputJsonValue,
       entry.secretFields.length > 0,
       entry.description,
     );
 
-    const after = await this.getEffectiveConfig(moduleName);
+    const after = await this.getEffectiveConfig(orgId, moduleName);
     const restartRequired =
       moduleName === 'lark' &&
       (before.value.appId !== after.value.appId ||
         before.value.appSecret !== after.value.appSecret);
 
-    this.eventEmitter.emit(`config.${moduleName}.updated`, after.value);
+    this.eventEmitter.emit(`config.${moduleName}.updated`, {
+      orgId,
+      value: after.value,
+    } satisfies SystemConfigChangeEvent);
     this.logger.log(`${entry.description} updated by admin.`);
 
     return {
+      orgId,
       success: true,
       message: restartRequired
         ? '配置已保存；飞书事件长连接需重启 API 后生效'
@@ -211,10 +241,10 @@ export class SystemConfigService {
     };
   }
 
-  async deleteConfig(module: string) {
+  async deleteConfig(orgId: string, module: string) {
     const moduleName = this.assertModule(module);
     const key = this.getModuleKey(moduleName);
-    const existing = await this.configRepository.findByKey(key);
+    const existing = await this.configRepository.findByKey(orgId, key);
 
     if (!existing) {
       throw new NotFoundException(
@@ -222,15 +252,19 @@ export class SystemConfigService {
       );
     }
 
-    await this.configRepository.delete(key);
-    const fallback = await this.getEffectiveConfig(moduleName);
+    await this.configRepository.delete(orgId, key);
+    const fallback = await this.getEffectiveConfig(orgId, moduleName);
     const restartRequired = moduleName === 'lark';
-    this.eventEmitter.emit(`config.${moduleName}.deleted`, fallback.value);
+    this.eventEmitter.emit(`config.${moduleName}.deleted`, {
+      orgId,
+      value: fallback.value,
+    } satisfies SystemConfigChangeEvent);
     this.logger.log(
       `${SystemConfigRegistry[moduleName].description} deleted by admin.`,
     );
 
     return {
+      orgId,
       success: true,
       message: restartRequired
         ? '配置已删除；飞书事件长连接需重启 API'
@@ -240,9 +274,11 @@ export class SystemConfigService {
   }
 
   private async getEnvironmentImportMetadata(
+    orgId: string,
     module: SystemConfigModuleName,
   ): Promise<{ completedAt: string | null; fields: string[] }> {
     const marker = await this.configRepository.findByKey(
+      orgId,
       SYSTEM_CONFIG_ENV_IMPORT_KEY,
     );
     if (!marker) return { completedAt: null, fields: [] };

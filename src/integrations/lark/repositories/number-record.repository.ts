@@ -17,7 +17,11 @@ import {
   SearchFilter,
 } from '../types/lark-bitable.types';
 import { NumberRecordData, UpdateNumberRecordData } from '../types';
-import { SystemConfigService } from '@/admin/system-config/services/system-config.service';
+import {
+  SingleOrgContextService,
+  SystemConfigChangeEvent,
+  SystemConfigService,
+} from '@/admin/system-config/services';
 import { OnEvent } from '@nestjs/event-emitter';
 import { SystemConfigValues } from '@/admin/system-config/registries/system-config.registry';
 
@@ -34,19 +38,28 @@ export class NumberRecordBitableRepository implements OnModuleInit {
   constructor(
     private readonly bitableService: BitableService,
     private readonly systemConfigService: SystemConfigService,
+    private readonly orgContext: SingleOrgContextService,
   ) {
     this.appToken = '';
     this.tableId = '';
   }
 
   async onModuleInit() {
-    const { value } = await this.systemConfigService.getEffectiveConfig('lark');
+    const { value } = await this.systemConfigService.getEffectiveConfig(
+      this.orgContext.getOrgId(),
+      'lark',
+    );
     this.applyConfig(value);
   }
 
   @OnEvent('config.lark.updated')
   @OnEvent('config.lark.deleted')
-  applyConfig(value: SystemConfigValues) {
+  handleConfigChange(event: SystemConfigChangeEvent) {
+    if (!this.orgContext.matches(event.orgId)) return;
+    this.applyConfig(event.value);
+  }
+
+  private applyConfig(value: SystemConfigValues) {
     this.appToken = String(value.bitableAppToken ?? '');
     this.tableId = String(value.personalSummaryTableId ?? '');
   }

@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { TencentApiService } from './api.service';
 import { tencentMeetingConfig } from '@/configs';
 import { SystemConfigService } from '@/admin/system-config/services/system-config.service';
+import { SingleOrgContextService } from '@/admin/system-config/services';
 
 const mockConfigService = {
   get: jest.fn((key: string) => {
@@ -43,6 +44,15 @@ const jsonResponse = (data: unknown) => ({
 
 describe('TencentApiService', () => {
   let service: TencentApiService;
+  const getEffectiveConfig = jest.fn().mockResolvedValue({
+    value: {
+      secretId: 'mock-secret-id',
+      secretKey: 'mock-secret-key',
+      appId: 'mock-app-id',
+      sdkId: 'mock-sdk-id',
+      userId: 'mock-user-id',
+    },
+  });
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -56,16 +66,12 @@ describe('TencentApiService', () => {
         {
           provide: SystemConfigService,
           useValue: {
-            getEffectiveConfig: jest.fn().mockResolvedValue({
-              value: {
-                secretId: 'mock-secret-id',
-                secretKey: 'mock-secret-key',
-                appId: 'mock-app-id',
-                sdkId: 'mock-sdk-id',
-                userId: 'mock-user-id',
-              },
-            }),
+            getEffectiveConfig,
           },
+        },
+        {
+          provide: SingleOrgContextService,
+          useValue: { getOrgId: jest.fn(() => 'org-1') },
         },
       ],
     }).compile();
@@ -108,6 +114,10 @@ describe('TencentApiService', () => {
         }) as unknown as Record<string, unknown>,
       );
       expect(result).toEqual(mockResponse);
+      expect(getEffectiveConfig).toHaveBeenCalledWith(
+        'org-1',
+        'tencent-meeting',
+      );
     });
 
     it('should handle API errors', async () => {

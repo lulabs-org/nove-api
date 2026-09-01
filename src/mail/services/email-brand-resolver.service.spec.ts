@@ -14,12 +14,14 @@ describe('EmailBrandResolverService', () => {
       },
     }),
   };
+  const orgContext = { getOrgId: jest.fn(() => 'org-1') };
 
   beforeEach(() => {
     jest.clearAllMocks();
     service = new EmailBrandResolverService(
       prisma as never,
       systemConfigService as never,
+      orgContext as never,
     );
   });
 

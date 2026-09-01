@@ -7,13 +7,13 @@ import {
 } from '../registries/system-config.registry';
 
 interface UpsertArgs {
-  where: { key: string };
+  where: { orgId_key: { orgId: string; key: string } };
   update: { value: Record<string, unknown> };
-  create: { value: Record<string, unknown> };
+  create: { orgId: string; key: string; value: Record<string, unknown> };
 }
 
 interface CreateArgs {
-  data: { key: string; value: Record<string, unknown> };
+  data: { orgId: string; key: string; value: Record<string, unknown> };
 }
 
 const SERVICE_ENVIRONMENT_KEYS = [
@@ -59,6 +59,7 @@ const SERVICE_ENVIRONMENT_KEYS = [
 ] as const;
 
 describe('BootstrapService', () => {
+  const orgId = 'org-1';
   const originalEnv = process.env;
   let records: Record<string, { value: Record<string, unknown> }>;
   let prisma: PrismaService;
@@ -70,18 +71,23 @@ describe('BootstrapService', () => {
     records = {};
 
     const systemConfig = {
-      findUnique: jest.fn(({ where }: { where: { key: string } }) =>
-        Promise.resolve(records[where.key] ?? null),
+      findUnique: jest.fn(
+        ({ where }: { where: { orgId_key: { orgId: string; key: string } } }) =>
+          Promise.resolve(
+            records[`${where.orgId_key.orgId}:${where.orgId_key.key}`] ?? null,
+          ),
       ),
       upsert: jest.fn(({ where, update, create }: UpsertArgs) => {
-        records[where.key] = records[where.key]
+        const storageKey = `${where.orgId_key.orgId}:${where.orgId_key.key}`;
+        records[storageKey] = records[storageKey]
           ? { value: update.value }
           : { value: create.value };
-        return Promise.resolve(records[where.key]);
+        return Promise.resolve(records[storageKey]);
       }),
       create: jest.fn(({ data }: CreateArgs) => {
-        records[data.key] = { value: data.value };
-        return Promise.resolve(records[data.key]);
+        const storageKey = `${data.orgId}:${data.key}`;
+        records[storageKey] = { value: data.value };
+        return Promise.resolve(records[storageKey]);
       }),
     };
     prisma = {
@@ -98,21 +104,25 @@ describe('BootstrapService', () => {
   });
 
   it('imports environment fields once, preserves database fields, and encrypts secrets', async () => {
-    records.MAIL_CONFIG = { value: { host: 'db.smtp.example.com' } };
+    records[`${orgId}:MAIL_CONFIG`] = {
+      value: { host: 'db.smtp.example.com' },
+    };
     process.env.SMTP_HOST = 'ignored.smtp.example.com';
     process.env.SMTP_USER = 'mail@example.com';
     process.env.SMTP_PASS = 'mail-secret';
 
-    await service.run();
+    await service.run(orgId);
 
-    expect(records.MAIL_CONFIG.value).toMatchObject({
+    expect(records[`${orgId}:MAIL_CONFIG`].value).toMatchObject({
       host: 'db.smtp.example.com',
       user: 'mail@example.com',
       from: 'mail@example.com',
     });
-    expect(decrypt(String(records.MAIL_CONFIG.value.pass))).toBe('mail-secret');
-    expect(records[SYSTEM_CONFIG_ENV_IMPORT_KEY]).toBeDefined();
-    const metadata = records[SYSTEM_CONFIG_ENV_IMPORT_KEY]
+    expect(decrypt(String(records[`${orgId}:MAIL_CONFIG`].value.pass))).toBe(
+      'mail-secret',
+    );
+    expect(records[`${orgId}:${SYSTEM_CONFIG_ENV_IMPORT_KEY}`]).toBeDefined();
+    const metadata = records[`${orgId}:${SYSTEM_CONFIG_ENV_IMPORT_KEY}`]
       .value as unknown as SystemConfigEnvironmentImportMetadata;
     expect(metadata.version).toBe(1);
     expect(metadata.modules.mail).toMatchObject({
@@ -124,19 +134,21 @@ describe('BootstrapService', () => {
     );
 
     process.env.SMTP_USER = 'changed@example.com';
-    await service.run();
-    expect(records.MAIL_CONFIG.value.user).toBe('mail@example.com');
+    await service.run(orgId);
+    expect(records[`${orgId}:MAIL_CONFIG`].value.user).toBe('mail@example.com');
   });
 
   it('keeps partial environment configuration for completion in admin', async () => {
     process.env.TENCENT_MEETING_APP_ID = 'partial-app';
 
-    await service.run();
+    await service.run(orgId);
 
-    expect(records['TENCENT-MEETING_CONFIG'].value).toEqual({
+    expect(records[`${orgId}:TENCENT-MEETING_CONFIG`].value).toEqual({
       appId: 'partial-app',
     });
-    expect(records[SYSTEM_CONFIG_ENV_IMPORT_KEY].value).toMatchObject({
+    expect(
+      records[`${orgId}:${SYSTEM_CONFIG_ENV_IMPORT_KEY}`].value,
+    ).toMatchObject({
       modules: {
         'tencent-meeting': {
           status: 'imported',
@@ -148,7 +160,7 @@ describe('BootstrapService', () => {
   });
 
   it('upgrades a legacy plaintext Tencent Secret ID without replacing other fields', async () => {
-    records['TENCENT-MEETING_CONFIG'] = {
+    records[`${orgId}:TENCENT-MEETING_CONFIG`] = {
       value: {
         appId: 'db-app',
         secretId: 'legacy-secret-id',
@@ -156,13 +168,17 @@ describe('BootstrapService', () => {
       },
     };
 
-    await service.run();
+    await service.run(orgId);
 
     expect(
-      decrypt(String(records['TENCENT-MEETING_CONFIG'].value.secretId)),
+      decrypt(
+        String(records[`${orgId}:TENCENT-MEETING_CONFIG`].value.secretId),
+      ),
     ).toBe('legacy-secret-id');
     expect(
-      decrypt(String(records['TENCENT-MEETING_CONFIG'].value.secretKey)),
+      decrypt(
+        String(records[`${orgId}:TENCENT-MEETING_CONFIG`].value.secretKey),
+      ),
     ).toBe('existing-key');
   });
 
@@ -170,9 +186,24 @@ describe('BootstrapService', () => {
     delete process.env.SYSTEM_ENCRYPTION_KEY;
     process.env.WECHAT_SHOP_APP_SECRET = 'secret';
 
-    await expect(service.run()).rejects.toThrow(
+    await expect(service.run(orgId)).rejects.toThrow(
       'SYSTEM_ENCRYPTION_KEY is not configured',
     );
-    expect(records[SYSTEM_CONFIG_ENV_IMPORT_KEY]).toBeUndefined();
+    expect(records[`${orgId}:${SYSTEM_CONFIG_ENV_IMPORT_KEY}`]).toBeUndefined();
+  });
+
+  it('keeps import markers organization-scoped and does not restore deleted config', async () => {
+    process.env.SMTP_USER = 'org-one@example.com';
+    process.env.SMTP_PASS = 'org-one-secret';
+    await service.run('org-1');
+
+    delete records['org-1:MAIL_CONFIG'];
+    process.env.SMTP_USER = 'changed@example.com';
+    await service.run('org-1');
+    expect(records['org-1:MAIL_CONFIG']).toBeUndefined();
+
+    await service.run('org-2');
+    expect(records['org-2:MAIL_CONFIG'].value.user).toBe('changed@example.com');
+    expect(records[`org-2:${SYSTEM_CONFIG_ENV_IMPORT_KEY}`]).toBeDefined();
   });
 });

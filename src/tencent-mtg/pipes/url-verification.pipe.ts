@@ -13,7 +13,10 @@ import { Injectable, Scope, Inject, PipeTransform } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import type { Request } from 'express';
 import { verifyWebhookUrl } from '@/integrations/tencent-meeting';
-import { SystemConfigService } from '@/admin/system-config/services/system-config.service';
+import {
+  SingleOrgContextService,
+  SystemConfigService,
+} from '@/admin/system-config/services';
 
 @Injectable({ scope: Scope.REQUEST })
 export class UrlVerificationPipe
@@ -21,6 +24,7 @@ export class UrlVerificationPipe
 {
   constructor(
     private readonly systemConfigService: SystemConfigService,
+    private readonly orgContext: SingleOrgContextService,
     @Inject(REQUEST)
     private readonly req: Request,
   ) {}
@@ -29,8 +33,10 @@ export class UrlVerificationPipe
     const timestamp = this.req.headers['timestamp'] as string;
     const nonce = this.req.headers['nonce'] as string;
     const signature = this.req.headers['signature'] as string;
-    const { value: config } =
-      await this.systemConfigService.getEffectiveConfig('tencent-meeting');
+    const { value: config } = await this.systemConfigService.getEffectiveConfig(
+      this.orgContext.getOrgId(),
+      'tencent-meeting',
+    );
 
     return await verifyWebhookUrl(
       value,

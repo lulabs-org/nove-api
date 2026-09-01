@@ -1,7 +1,11 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import * as lark from '@larksuiteoapi/node-sdk';
 import { LarkClientConfig } from './types/lark-bitable.types';
-import { SystemConfigService } from '@/admin/system-config/services/system-config.service';
+import {
+  SingleOrgContextService,
+  SystemConfigChangeEvent,
+  SystemConfigService,
+} from '@/admin/system-config/services';
 import { OnEvent } from '@nestjs/event-emitter';
 import { SystemConfigValues } from '@/admin/system-config/registries/system-config.registry';
 
@@ -38,7 +42,10 @@ export class LarkClient implements OnModuleInit {
   public minutes: lark.Client['minutes'];
   public wsClient: lark.WSClient;
 
-  constructor(private readonly systemConfigService: SystemConfigService) {
+  constructor(
+    private readonly systemConfigService: SystemConfigService,
+    private readonly orgContext: SingleOrgContextService,
+  ) {
     const config: LarkClientConfig = {
       appId: '',
       appSecret: '',
@@ -86,7 +93,10 @@ export class LarkClient implements OnModuleInit {
   }
 
   async onModuleInit() {
-    const { value } = await this.systemConfigService.getEffectiveConfig('lark');
+    const { value } = await this.systemConfigService.getEffectiveConfig(
+      this.orgContext.getOrgId(),
+      'lark',
+    );
     this.applyHttpConfig(value);
     this.wsClient = new lark.WSClient({
       appId: String(value.appId ?? ''),
@@ -95,13 +105,15 @@ export class LarkClient implements OnModuleInit {
   }
 
   @OnEvent('config.lark.updated')
-  handleConfigUpdated(value: SystemConfigValues) {
-    this.applyHttpConfig(value);
+  handleConfigUpdated(event: SystemConfigChangeEvent) {
+    if (!this.orgContext.matches(event.orgId)) return;
+    this.applyHttpConfig(event.value);
   }
 
   @OnEvent('config.lark.deleted')
-  handleConfigDeleted(value: SystemConfigValues) {
-    this.applyHttpConfig(value);
+  handleConfigDeleted(event: SystemConfigChangeEvent) {
+    if (!this.orgContext.matches(event.orgId)) return;
+    this.applyHttpConfig(event.value);
   }
 
   private applyHttpConfig(value: SystemConfigValues) {
