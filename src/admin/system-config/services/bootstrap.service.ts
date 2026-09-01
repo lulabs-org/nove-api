@@ -2,8 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
-import { decrypt, encrypt } from '@/common/utils/crypto.util';
 import { PrismaService } from '@/prisma/prisma.service';
+import { readBootstrapEnvironment } from '../configs';
 import {
   SYSTEM_CONFIG_ENV_IMPORT_KEY,
   SYSTEM_CONFIG_MODULES,
@@ -12,15 +12,18 @@ import {
   SystemConfigRegistry,
   SystemConfigValues,
 } from '../registries/system-config.registry';
+import { ConfigCodecService } from './config-codec.service';
 
 const MAX_TRANSACTION_ATTEMPTS = 3;
-const ENCRYPTED_VALUE_PATTERN = /^[0-9a-f]{32}:[0-9a-f]{32}:[0-9a-f]*$/i;
 
 @Injectable()
 export class BootstrapService {
   private readonly logger = new Logger(BootstrapService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly codec: ConfigCodecService,
+  ) {}
 
   async run(orgId: string): Promise<void> {
     const completed = await this.prisma.systemConfig.findUnique({
@@ -119,49 +122,34 @@ export class BootstrapService {
     }
 
     const plainValue = {
-      ...entry.defaults,
+      ...this.codec.defaults(entry),
       ...environment.values,
       ...storedValue,
     } as SystemConfigValues;
-    const encryptedValue = { ...plainValue };
-
-    for (const field of entry.secretFields) {
-      const storedSecret = storedValue[field];
-      if (this.hasValue(storedSecret)) {
-        const normalized = this.normalizeStoredSecret(
-          module,
-          field,
-          storedSecret,
-        );
-        plainValue[field] = normalized.plaintext;
-        encryptedValue[field] = normalized.encrypted;
-        continue;
-      }
-
-      const importedSecret = plainValue[field];
-      if (typeof importedSecret === 'string' && importedSecret) {
-        encryptedValue[field] = encrypt(importedSecret);
-      }
-    }
-
-    const configured = entry.requiredFields.every((field) =>
-      this.hasValue(plainValue[field]),
+    const normalized = this.codec.normalizeBootstrap(
+      module,
+      entry,
+      plainValue,
+      storedValue,
     );
+    const configured = this.codec.isConfigured(entry, normalized.plainValue);
 
     await transaction.systemConfig.upsert({
       where: { orgId_key: { orgId, key } },
       update: {
-        value: encryptedValue as Prisma.InputJsonValue,
-        isEncrypted: entry.secretFields.some((field) =>
-          this.hasValue(encryptedValue[field]),
+        value: normalized.storedValue as Prisma.InputJsonValue,
+        isEncrypted: this.codec.containsEncryptedValues(
+          entry,
+          normalized.storedValue,
         ),
       },
       create: {
         orgId,
         key,
-        value: encryptedValue as Prisma.InputJsonValue,
-        isEncrypted: entry.secretFields.some((field) =>
-          this.hasValue(encryptedValue[field]),
+        value: normalized.storedValue as Prisma.InputJsonValue,
+        isEncrypted: this.codec.containsEncryptedValues(
+          entry,
+          normalized.storedValue,
         ),
         description: entry.description,
       },
@@ -184,7 +172,7 @@ export class BootstrapService {
     explicitFieldCount: number;
   }> {
     const entry = SystemConfigRegistry[module];
-    const environment = entry.bootstrapEnvironment();
+    const environment = readBootstrapEnvironment(entry);
     const values = { ...environment.values };
     const instance = plainToInstance(entry.dto, values);
     const errors = await validate(instance, {
@@ -205,27 +193,6 @@ export class BootstrapService {
       fields: environment.fields.filter((field) => !invalidFields.has(field)),
       explicitFieldCount: environment.fields.length,
     };
-  }
-
-  private normalizeStoredSecret(
-    module: SystemConfigModuleName,
-    field: string,
-    value: unknown,
-  ): { plaintext: string; encrypted: string } {
-    if (typeof value !== 'string') {
-      throw new Error(`Invalid stored secret type for ${module}.${field}`);
-    }
-    if (!ENCRYPTED_VALUE_PATTERN.test(value)) {
-      return { plaintext: value, encrypted: encrypt(value) };
-    }
-
-    try {
-      return { plaintext: decrypt(value), encrypted: value };
-    } catch {
-      throw new Error(
-        `Stored encrypted secret is unreadable: ${module}.${field}`,
-      );
-    }
   }
 
   private isRetryableTransactionError(error: unknown): boolean {

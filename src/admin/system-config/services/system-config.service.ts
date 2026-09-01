@@ -8,7 +8,6 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Prisma } from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
-import { decrypt, encrypt } from '@/common/utils/crypto.util';
 import { SystemConfigRepository } from '../repositories/system-config.repository';
 import {
   ConfigSource,
@@ -20,6 +19,7 @@ import {
   SystemConfigRegistry,
   SystemConfigValues,
 } from '../registries/system-config.registry';
+import { ConfigCodecService } from './config-codec.service';
 
 export interface EffectiveSystemConfig {
   orgId: string;
@@ -48,6 +48,7 @@ export class SystemConfigService {
   constructor(
     private readonly configRepository: SystemConfigRepository,
     private readonly eventEmitter: EventEmitter2,
+    private readonly codec: ConfigCodecService,
   ) {}
 
   private getModuleKey(module: SystemConfigModuleName): string {
@@ -82,32 +83,25 @@ export class SystemConfigService {
       this.getModuleKey(moduleName),
     );
     const databaseValue = (stored?.value ?? {}) as SystemConfigValues;
-    const decryptedDatabaseValue = { ...databaseValue };
-
-    for (const field of entry.secretFields) {
-      const value = decryptedDatabaseValue[field];
-      if (typeof value === 'string' && value) {
-        try {
-          decryptedDatabaseValue[field] = decrypt(value);
-        } catch {
-          this.logger.error(
-            `Failed to decrypt ${moduleName}.${field}; database override ignored`,
-          );
-          delete decryptedDatabaseValue[field];
-        }
-      }
-    }
-
-    const value = { ...entry.defaults, ...decryptedDatabaseValue };
+    const decryptedDatabaseValue = this.codec.decode(
+      entry,
+      databaseValue,
+      (field) =>
+        this.logger.error(
+          `Failed to decrypt ${moduleName}.${field}; database override ignored`,
+        ),
+    );
+    const value = {
+      ...this.codec.defaults(entry),
+      ...decryptedDatabaseValue,
+    };
     const source: ConfigSource = stored ? 'database' : 'default';
     const importMetadata = await this.getEnvironmentImportMetadata(
       orgId,
       moduleName,
     );
 
-    const configured = entry.requiredFields.every((field) =>
-      this.hasValue(value[field]),
-    );
+    const configured = this.codec.isConfigured(entry, value);
 
     return {
       orgId,
@@ -141,14 +135,8 @@ export class SystemConfigService {
 
   async getConfig(orgId: string, module: string): Promise<PublicSystemConfig> {
     const effective = await this.getEffectiveConfig(orgId, module);
-    const value = { ...effective.value };
     const entry = SystemConfigRegistry[effective.module];
-
-    for (const field of entry.secretFields) {
-      if (this.hasValue(value[field])) value[field] = '********';
-    }
-
-    return { ...effective, value };
+    return { ...effective, value: this.codec.mask(entry, effective.value) };
   }
 
   async resolveDraftConfig(
@@ -159,21 +147,8 @@ export class SystemConfigService {
     const current = await this.getEffectiveConfig(orgId, module);
     await this.validateData(current.module, data);
     const entry = SystemConfigRegistry[current.module];
-    const draft = { ...data };
-
-    for (const field of entry.secretFields) {
-      if (
-        draft[field] === '********' ||
-        (typeof draft[field] === 'string' && !draft[field].trim())
-      ) {
-        delete draft[field];
-      }
-    }
-
-    const value = { ...current.value, ...draft } as SystemConfigValues;
-    const missingFields = entry.requiredFields.filter(
-      (field) => !this.hasValue(value[field]),
-    );
+    const value = this.codec.mergeDraft(entry, current.value, data);
+    const missingFields = this.codec.missingRequiredFields(entry, value);
     if (missingFields.length > 0) {
       throw new BadRequestException(
         `Missing required configuration: ${missingFields.join(', ')}`,
@@ -196,26 +171,13 @@ export class SystemConfigService {
     const key = this.getModuleKey(moduleName);
     const existing = await this.configRepository.findByKey(orgId, key);
     const currentConfig = (existing?.value ?? {}) as Record<string, unknown>;
-    const normalizedData = Object.fromEntries(
-      Object.entries(data).filter(([, value]) => value !== undefined),
-    );
-    const newConfig = { ...currentConfig, ...normalizedData };
-
-    for (const field of entry.secretFields) {
-      const value = normalizedData[field];
-      if (value === '********' || value === '') {
-        if (currentConfig[field] === undefined) delete newConfig[field];
-        else newConfig[field] = currentConfig[field];
-      } else if (typeof value === 'string') {
-        newConfig[field] = encrypt(value);
-      }
-    }
+    const newConfig = this.codec.encodeUpdate(entry, currentConfig, data);
 
     await this.configRepository.upsert(
       orgId,
       key,
       newConfig as Prisma.InputJsonValue,
-      entry.secretFields.length > 0,
+      this.codec.containsEncryptedValues(entry, newConfig),
       entry.description,
     );
 
@@ -312,9 +274,5 @@ export class SystemConfigService {
       .flatMap((error) => Object.values(error.constraints ?? {}))
       .join('; ');
     throw new BadRequestException(`Validation failed: ${messages}`);
-  }
-
-  private hasValue(value: unknown): boolean {
-    return value !== undefined && value !== null && value !== '';
   }
 }

@@ -2,6 +2,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { encrypt } from '@/common/utils/crypto.util';
 import { SystemConfigRepository } from '../repositories/system-config.repository';
 import { SystemConfigService } from './system-config.service';
+import { ConfigCodecService } from './config-codec.service';
 
 describe('SystemConfigService', () => {
   const orgId = 'org-1';
@@ -46,7 +47,11 @@ describe('SystemConfigService', () => {
     } as unknown as jest.Mocked<SystemConfigRepository>;
     emit = jest.fn();
     emitter = { emit } as unknown as jest.Mocked<EventEmitter2>;
-    service = new SystemConfigService(repository, emitter);
+    service = new SystemConfigService(
+      repository,
+      emitter,
+      new ConfigCodecService(),
+    );
   });
 
   afterEach(() => {
