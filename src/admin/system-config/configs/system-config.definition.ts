@@ -1,49 +1,15 @@
 import { Type } from '@nestjs/common';
+import {
+  BootstrapEnvironmentConfig,
+  ConfigDefinition,
+  ConfigRegistryEntry,
+  EnvironmentSource,
+  SystemConfigValue,
+  SystemConfigValues,
+} from './system-config.types';
 
-export type SystemConfigValue = string | number | boolean;
-export type SystemConfigValues = Record<string, SystemConfigValue>;
-
-export interface EnvironmentSource<
-  TValue extends SystemConfigValue = SystemConfigValue,
-> {
-  keys: readonly string[];
-  read: (environment: NodeJS.ProcessEnv) => TValue | undefined;
-}
-
-export interface ConfigFieldDefinition<
-  TValue extends SystemConfigValue = SystemConfigValue,
-> {
-  required?: boolean;
-  secret?: boolean;
-  default?: TValue;
-  environment?: EnvironmentSource<TValue>;
-}
-
-type DtoFieldValue<TValue> =
-  Exclude<TValue, null | undefined> extends SystemConfigValue
-    ? Exclude<TValue, null | undefined>
-    : SystemConfigValue;
-
-type ConfigFields<TDto extends object> = {
-  [TKey in keyof TDto]-?: ConfigFieldDefinition<DtoFieldValue<TDto[TKey]>>;
-};
-
-export interface ConfigDefinition<TDto extends object> {
-  dto: Type<TDto>;
-  description: string;
-  fields: ConfigFields<TDto>;
-}
-
-export interface ConfigRegistryEntry {
-  dto: Type<object>;
-  description: string;
-  fields: Record<string, ConfigFieldDefinition>;
-}
-
-export interface BootstrapEnvironmentConfig {
-  values: SystemConfigValues;
-  fields: string[];
-}
+export * from './system-config.types';
+export * from './system-config.constants';
 
 export function defineSystemConfig<TDto extends object>(
   dto: Type<TDto>,
@@ -136,16 +102,3 @@ export const environment = {
   },
 };
 
-export const SYSTEM_CONFIG_ENV_IMPORT_KEY = 'SYSTEM_CONFIG_ENV_IMPORT_V1';
-
-export interface SystemConfigEnvironmentImportModule {
-  status: 'imported' | 'existing' | 'skipped';
-  fields: string[];
-  configured: boolean;
-}
-
-export interface SystemConfigEnvironmentImportMetadata {
-  version: 1;
-  completedAt: string;
-  modules: Record<string, SystemConfigEnvironmentImportModule>;
-}
