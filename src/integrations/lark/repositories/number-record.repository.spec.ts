@@ -8,6 +8,7 @@ import { BitableService } from '../services/bitable.service';
 import { larkConfig } from '../../../configs/lark.config';
 import { ConfigModule, ConfigType } from '@nestjs/config';
 import { SystemConfigService } from '@/admin/system-config/services/system-config.service';
+import { SingleOrgContextService } from '@/admin/system-config/services';
 
 // Mock config
 const mockConfig: ConfigType<typeof larkConfig> = {
@@ -71,6 +72,13 @@ describe('NumberRecordBitableRepository', () => {
             }),
           },
         },
+        {
+          provide: SingleOrgContextService,
+          useValue: {
+            getOrgId: jest.fn(() => 'org-1'),
+            matches: jest.fn((orgId: string) => orgId === 'org-1'),
+          },
+        },
       ],
     }).compile();
 
@@ -102,6 +110,7 @@ describe('NumberRecordBitableRepository', () => {
           new NumberRecordBitableRepository(
             mockBitableService,
             {} as SystemConfigService,
+            {} as SingleOrgContextService,
           ),
       ).not.toThrow();
     });

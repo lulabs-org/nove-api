@@ -1,5 +1,9 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { SystemConfigService } from '@/admin/system-config/services/system-config.service';
+import {
+  SingleOrgContextService,
+  SystemConfigChangeEvent,
+  SystemConfigService,
+} from '@/admin/system-config/services';
 import { OnEvent } from '@nestjs/event-emitter';
 import * as nodemailer from 'nodemailer';
 import type SMTPTransport from 'nodemailer/lib/smtp-transport';
@@ -20,14 +24,18 @@ export class MailerService implements OnModuleInit {
   private transporter?: nodemailer.Transporter<SMTPTransport.SentMessageInfo>;
   private activeConfig: Record<string, string> | null = null;
 
-  constructor(private readonly systemConfigService: SystemConfigService) {}
+  constructor(
+    private readonly systemConfigService: SystemConfigService,
+    private readonly orgContext: SingleOrgContextService,
+  ) {}
 
   async onModuleInit() {
     await this.reloadTransporter();
   }
 
   @OnEvent('config.mail.updated')
-  async handleMailConfigUpdate() {
+  async handleMailConfigUpdate(event: SystemConfigChangeEvent) {
+    if (!this.orgContext.matches(event.orgId)) return;
     this.logger.log(
       'Received config.mail.updated event, reloading transporter...',
     );
@@ -35,12 +43,16 @@ export class MailerService implements OnModuleInit {
   }
 
   @OnEvent('config.mail.deleted')
-  async handleMailConfigDelete() {
+  async handleMailConfigDelete(event: SystemConfigChangeEvent) {
+    if (!this.orgContext.matches(event.orgId)) return;
     await this.reloadTransporter();
   }
 
   private async reloadTransporter() {
-    const { value } = await this.systemConfigService.getEffectiveConfig('mail');
+    const { value } = await this.systemConfigService.getEffectiveConfig(
+      this.orgContext.getOrgId(),
+      'mail',
+    );
     const smtpUser = String(value.user ?? '');
     const smtpPass = String(value.pass ?? '');
     const smtpHost = String(value.host ?? '');

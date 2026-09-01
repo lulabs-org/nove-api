@@ -16,6 +16,7 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import * as cookieParser from 'cookie-parser';
 import { BootstrapService } from './admin/system-config/services/bootstrap.service';
+import { SingleOrgContextService } from './admin/system-config/services/single-org-context.service';
 
 function parseCsv(value?: string): string[] {
   return (value ?? '')
@@ -30,7 +31,8 @@ function parseRegexCsv(value?: string): RegExp[] {
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  await app.get(BootstrapService).run();
+  const orgId = await app.get(SingleOrgContextService).initialize();
+  await app.get(BootstrapService).run(orgId);
 
   const allowedOrigins = new Set(parseCsv(process.env.CORS_ORIGINS));
   const originRegexes = parseRegexCsv(process.env.CORS_ORIGIN_REGEXES);

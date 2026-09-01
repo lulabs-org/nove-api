@@ -11,7 +11,10 @@ import {
   SmartMeetingMinutesResponse,
   TranscriptResponse,
 } from '../types';
-import { SystemConfigService } from '@/admin/system-config/services/system-config.service';
+import {
+  SingleOrgContextService,
+  SystemConfigService,
+} from '@/admin/system-config/services';
 
 /**
  * Tencent Meeting API Service
@@ -23,15 +26,20 @@ export class TencentApiService {
   private readonly BASE_URL = 'https://api.meeting.qq.com';
   private readonly logger = new Logger(TencentApiService.name);
 
-  constructor(private readonly systemConfigService: SystemConfigService) {}
+  constructor(
+    private readonly systemConfigService: SystemConfigService,
+    private readonly orgContext: SingleOrgContextService,
+  ) {}
 
   /**
    * Retrieves Tencent Meeting API configuration from injected config
    * @returns Configuration object containing API credentials and settings
    */
   private async getConfig() {
-    const { value } =
-      await this.systemConfigService.getEffectiveConfig('tencent-meeting');
+    const { value } = await this.systemConfigService.getEffectiveConfig(
+      this.orgContext.getOrgId(),
+      'tencent-meeting',
+    );
     return {
       secretId: String(value.secretId ?? ''),
       secretKey: String(value.secretKey ?? ''),

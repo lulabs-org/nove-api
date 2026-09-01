@@ -16,7 +16,11 @@ import { Public } from '@/auth/decorators/public.decorator';
 import { WechatEventBodyDto, WechatEventQueryDto } from '../dto';
 import { WechatShopEventService } from '../services';
 import { decryptWechatMessage, generateSignature } from '../utils';
-import { SystemConfigService } from '@/admin/system-config/services/system-config.service';
+import {
+  SingleOrgContextService,
+  SystemConfigChangeEvent,
+  SystemConfigService,
+} from '@/admin/system-config/services';
 
 @ApiTags('Wechat Shop')
 @Controller('webhooks/wechat-shop/events')
@@ -29,6 +33,7 @@ export class WechatShopEventController implements OnModuleInit {
   constructor(
     private readonly wechatShopEventService: WechatShopEventService,
     private readonly systemConfigService: SystemConfigService,
+    private readonly orgContext: SingleOrgContextService,
   ) {
     this.webhookToken = '';
     this.encodingAesKey = '';
@@ -40,7 +45,8 @@ export class WechatShopEventController implements OnModuleInit {
   }
 
   @OnEvent('config.wechat-shop.updated')
-  async handleConfigUpdate() {
+  async handleConfigUpdate(event: SystemConfigChangeEvent) {
+    if (!this.orgContext.matches(event.orgId)) return;
     this.logger.log(
       'Received config.wechat-shop.updated event, reloading controller config...',
     );
@@ -48,13 +54,16 @@ export class WechatShopEventController implements OnModuleInit {
   }
 
   @OnEvent('config.wechat-shop.deleted')
-  async handleConfigDelete() {
+  async handleConfigDelete(event: SystemConfigChangeEvent) {
+    if (!this.orgContext.matches(event.orgId)) return;
     await this.reloadConfig();
   }
 
   private async reloadConfig() {
-    const { value } =
-      await this.systemConfigService.getEffectiveConfig('wechat-shop');
+    const { value } = await this.systemConfigService.getEffectiveConfig(
+      this.orgContext.getOrgId(),
+      'wechat-shop',
+    );
     this.appId = String(value.appId ?? '');
     this.webhookToken = String(value.webhookToken ?? '');
     this.encodingAesKey = String(value.encodingAesKey ?? '');

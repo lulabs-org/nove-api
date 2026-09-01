@@ -6,25 +6,27 @@ import { PrismaService } from '@/prisma/prisma.service';
 export class SystemConfigRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findByKey(key: string): Promise<SystemConfig | null> {
+  async findByKey(orgId: string, key: string): Promise<SystemConfig | null> {
     return this.prisma.systemConfig.findUnique({
-      where: { key },
+      where: { orgId_key: { orgId, key } },
     });
   }
 
   async upsert(
+    orgId: string,
     key: string,
     value: Prisma.InputJsonValue,
     isEncrypted: boolean,
     description: string,
   ): Promise<SystemConfig> {
     return this.prisma.systemConfig.upsert({
-      where: { key },
+      where: { orgId_key: { orgId, key } },
       update: {
         value,
         isEncrypted,
       },
       create: {
+        orgId,
         key,
         value,
         isEncrypted,
@@ -33,10 +35,10 @@ export class SystemConfigRepository {
     });
   }
 
-  async delete(key: string): Promise<SystemConfig | null> {
+  async delete(orgId: string, key: string): Promise<SystemConfig | null> {
     try {
       return await this.prisma.systemConfig.delete({
-        where: { key },
+        where: { orgId_key: { orgId, key } },
       });
     } catch {
       // Return null if the record does not exist

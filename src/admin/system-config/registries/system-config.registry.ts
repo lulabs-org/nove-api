@@ -69,7 +69,7 @@ export const SystemConfigRegistry: Record<
     dto: UpdateMailConfigDto,
     secretFields: ['pass'],
     requiredFields: ['host', 'port', 'user', 'pass', 'from'],
-    description: 'Global Mail Configuration',
+    description: 'Organization Mail Configuration',
     defaults: {
       host: 'smtp.gmail.com',
       port: 587,
@@ -124,7 +124,7 @@ export const SystemConfigRegistry: Record<
     dto: UpdateAiConfigDto,
     secretFields: ['apiKey'],
     requiredFields: ['apiKey', 'baseUrl', 'model'],
-    description: 'Global AI Model Configuration',
+    description: 'Organization AI Model Configuration',
     defaults: {
       provider: 'custom',
       baseUrl: 'https://ark.cn-beijing.volces.com/api/v3',
@@ -164,7 +164,7 @@ export const SystemConfigRegistry: Record<
     dto: UpdateTencentMeetingConfigDto,
     secretFields: ['secretId', 'secretKey', 'webhookToken', 'encodingAesKey'],
     requiredFields: ['appId', 'sdkId', 'secretId', 'secretKey', 'userId'],
-    description: 'Global Tencent Meeting Configuration',
+    description: 'Organization Tencent Meeting Configuration',
     defaults: {},
     bootstrapEnvironment: () =>
       compactEnvironment(
@@ -205,7 +205,7 @@ export const SystemConfigRegistry: Record<
       'recordingFileTableId',
       'personalSummaryTableId',
     ],
-    description: 'Global Lark Configuration',
+    description: 'Organization Lark Configuration',
     defaults: {},
     bootstrapEnvironment: () =>
       compactEnvironment(
@@ -240,7 +240,7 @@ export const SystemConfigRegistry: Record<
     dto: UpdateWechatShopConfigDto,
     secretFields: ['appSecret', 'webhookToken', 'encodingAesKey'],
     requiredFields: ['appId', 'appSecret'],
-    description: 'Global Wechat Shop Configuration',
+    description: 'Organization Wechat Shop Configuration',
     defaults: { apiBaseUrl: 'https://api.weixin.qq.com' },
     bootstrapEnvironment: () =>
       compactEnvironment(

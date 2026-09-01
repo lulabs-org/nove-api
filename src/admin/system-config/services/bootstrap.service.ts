@@ -18,15 +18,15 @@ const ENCRYPTED_VALUE_PATTERN = /^[0-9a-f]{32}:[0-9a-f]{32}:[0-9a-f]*$/i;
 
 @Injectable()
 export class BootstrapService {
-  private readonly logger = new Logger(
-    BootstrapService.name,
-  );
+  private readonly logger = new Logger(BootstrapService.name);
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async run(): Promise<void> {
+  async run(orgId: string): Promise<void> {
     const completed = await this.prisma.systemConfig.findUnique({
-      where: { key: SYSTEM_CONFIG_ENV_IMPORT_KEY },
+      where: {
+        orgId_key: { orgId, key: SYSTEM_CONFIG_ENV_IMPORT_KEY },
+      },
     });
     if (completed) {
       this.logger.log(
@@ -37,13 +37,15 @@ export class BootstrapService {
 
     for (let attempt = 1; attempt <= MAX_TRANSACTION_ATTEMPTS; attempt += 1) {
       try {
-        await this.importInTransaction();
+        await this.importInTransaction(orgId);
         return;
       } catch (error) {
         if (!this.isRetryableTransactionError(error)) throw error;
 
         const marker = await this.prisma.systemConfig.findUnique({
-          where: { key: SYSTEM_CONFIG_ENV_IMPORT_KEY },
+          where: {
+            orgId_key: { orgId, key: SYSTEM_CONFIG_ENV_IMPORT_KEY },
+          },
         });
         if (marker) {
           this.logger.log(
@@ -56,18 +58,20 @@ export class BootstrapService {
     }
   }
 
-  private async importInTransaction(): Promise<void> {
+  private async importInTransaction(orgId: string): Promise<void> {
     await this.prisma.$transaction(
       async (transaction) => {
         const existingMarker = await transaction.systemConfig.findUnique({
-          where: { key: SYSTEM_CONFIG_ENV_IMPORT_KEY },
+          where: {
+            orgId_key: { orgId, key: SYSTEM_CONFIG_ENV_IMPORT_KEY },
+          },
         });
         if (existingMarker) return;
 
         const modules = {} as SystemConfigEnvironmentImportMetadata['modules'];
 
         for (const module of SYSTEM_CONFIG_MODULES) {
-          modules[module] = await this.importModule(transaction, module);
+          modules[module] = await this.importModule(transaction, orgId, module);
         }
 
         const metadata: SystemConfigEnvironmentImportMetadata = {
@@ -77,6 +81,7 @@ export class BootstrapService {
         };
         await transaction.systemConfig.create({
           data: {
+            orgId,
             key: SYSTEM_CONFIG_ENV_IMPORT_KEY,
             value: metadata as unknown as Prisma.InputJsonValue,
             isEncrypted: false,
@@ -92,6 +97,7 @@ export class BootstrapService {
 
   private async importModule(
     transaction: Prisma.TransactionClient,
+    orgId: string,
     module: SystemConfigModuleName,
   ): Promise<
     SystemConfigEnvironmentImportMetadata['modules'][SystemConfigModuleName]
@@ -99,7 +105,7 @@ export class BootstrapService {
     const entry = SystemConfigRegistry[module];
     const key = this.getModuleKey(module);
     const stored = await transaction.systemConfig.findUnique({
-      where: { key },
+      where: { orgId_key: { orgId, key } },
     });
     const storedValue = (stored?.value ?? {}) as SystemConfigValues;
     const environment = await this.sanitizeEnvironment(module);
@@ -143,7 +149,7 @@ export class BootstrapService {
     );
 
     await transaction.systemConfig.upsert({
-      where: { key },
+      where: { orgId_key: { orgId, key } },
       update: {
         value: encryptedValue as Prisma.InputJsonValue,
         isEncrypted: entry.secretFields.some((field) =>
@@ -151,6 +157,7 @@ export class BootstrapService {
         ),
       },
       create: {
+        orgId,
         key,
         value: encryptedValue as Prisma.InputJsonValue,
         isEncrypted: entry.secretFields.some((field) =>

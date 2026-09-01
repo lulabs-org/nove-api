@@ -10,7 +10,11 @@ import { firstValueFrom } from 'rxjs';
 import { OnEvent } from '@nestjs/event-emitter';
 import { RedisService } from '@/redis/redis.service';
 import { WechatShopApiResponse } from '../types';
-import { SystemConfigService } from '@/admin/system-config/services/system-config.service';
+import {
+  SingleOrgContextService,
+  SystemConfigChangeEvent,
+  SystemConfigService,
+} from '@/admin/system-config/services';
 
 @Injectable()
 export class WechatShopTokenService implements OnModuleInit {
@@ -26,6 +30,7 @@ export class WechatShopTokenService implements OnModuleInit {
     private readonly httpService: HttpService,
     private readonly redisService: RedisService,
     private readonly systemConfigService: SystemConfigService,
+    private readonly orgContext: SingleOrgContextService,
   ) {
     this.appId = '';
     this.appSecret = '';
@@ -38,7 +43,8 @@ export class WechatShopTokenService implements OnModuleInit {
   }
 
   @OnEvent('config.wechat-shop.updated')
-  async handleConfigUpdate() {
+  async handleConfigUpdate(event: SystemConfigChangeEvent) {
+    if (!this.orgContext.matches(event.orgId)) return;
     this.logger.log(
       'Received config.wechat-shop.updated event, reloading config...',
     );
@@ -49,14 +55,17 @@ export class WechatShopTokenService implements OnModuleInit {
   }
 
   @OnEvent('config.wechat-shop.deleted')
-  async handleConfigDelete() {
+  async handleConfigDelete(event: SystemConfigChangeEvent) {
+    if (!this.orgContext.matches(event.orgId)) return;
     await this.clearTokenCache();
     await this.reloadConfig();
   }
 
   private async reloadConfig() {
-    const { value } =
-      await this.systemConfigService.getEffectiveConfig('wechat-shop');
+    const { value } = await this.systemConfigService.getEffectiveConfig(
+      this.orgContext.getOrgId(),
+      'wechat-shop',
+    );
     this.appId = String(value.appId ?? '');
     this.appSecret = String(value.appSecret ?? '');
     this.baseUrl = String(value.apiBaseUrl ?? 'https://api.weixin.qq.com');

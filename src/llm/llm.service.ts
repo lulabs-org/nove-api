@@ -1,6 +1,10 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import OpenAI from 'openai';
-import { SystemConfigService } from '@/admin/system-config/services/system-config.service';
+import {
+  SingleOrgContextService,
+  SystemConfigChangeEvent,
+  SystemConfigService,
+} from '@/admin/system-config/services';
 import { OnEvent } from '@nestjs/event-emitter';
 import { SystemConfigRegistry } from '@/admin/system-config/registries/system-config.registry';
 
@@ -14,7 +18,10 @@ export class LlmService implements OnModuleInit {
     temperature: number;
   };
 
-  constructor(private readonly systemConfigService: SystemConfigService) {
+  constructor(
+    private readonly systemConfigService: SystemConfigService,
+    private readonly orgContext: SingleOrgContextService,
+  ) {
     this.openai = new OpenAI({
       apiKey: '',
       baseURL: String(SystemConfigRegistry.ai.defaults.baseUrl),
@@ -31,12 +38,14 @@ export class LlmService implements OnModuleInit {
   }
 
   @OnEvent('config.ai.updated')
-  async handleConfigUpdated() {
+  async handleConfigUpdated(event: SystemConfigChangeEvent) {
+    if (!this.orgContext.matches(event.orgId)) return;
     await this.reloadConfig();
   }
 
   @OnEvent('config.ai.deleted')
-  async handleConfigDeleted() {
+  async handleConfigDeleted(event: SystemConfigChangeEvent) {
+    if (!this.orgContext.matches(event.orgId)) return;
     await this.reloadConfig();
   }
 
@@ -45,7 +54,10 @@ export class LlmService implements OnModuleInit {
   }
 
   private async reloadConfig() {
-    const { value } = await this.systemConfigService.getEffectiveConfig('ai');
+    const { value } = await this.systemConfigService.getEffectiveConfig(
+      this.orgContext.getOrgId(),
+      'ai',
+    );
     const apiKey = String(value.apiKey ?? '');
     this.openai = new OpenAI({
       apiKey,
