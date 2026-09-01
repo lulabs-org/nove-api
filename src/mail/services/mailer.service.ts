@@ -1,9 +1,6 @@
-import { Injectable, Logger, Inject, OnModuleInit } from '@nestjs/common';
-import { ConfigType } from '@nestjs/config';
-import { emailConfig } from '@/configs';
-import { SystemConfigService } from '@/admin/system-config/system-config.service';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { SystemConfigService } from '@/admin/system-config/services/system-config.service';
 import { OnEvent } from '@nestjs/event-emitter';
-import { decrypt } from '@/common/utils/crypto.util';
 import * as nodemailer from 'nodemailer';
 import type SMTPTransport from 'nodemailer/lib/smtp-transport';
 
@@ -23,11 +20,7 @@ export class MailerService implements OnModuleInit {
   private transporter?: nodemailer.Transporter<SMTPTransport.SentMessageInfo>;
   private activeConfig: Record<string, string> | null = null;
 
-  constructor(
-    @Inject(emailConfig.KEY)
-    private config: ConfigType<typeof emailConfig>,
-    private readonly systemConfigService: SystemConfigService,
-  ) {}
+  constructor(private readonly systemConfigService: SystemConfigService) {}
 
   async onModuleInit() {
     await this.reloadTransporter();
@@ -41,43 +34,19 @@ export class MailerService implements OnModuleInit {
     await this.reloadTransporter();
   }
 
+  @OnEvent('config.mail.deleted')
+  async handleMailConfigDelete() {
+    await this.reloadTransporter();
+  }
+
   private async reloadTransporter() {
-    // 1. Try to load from database first
-    const dbConfig = await this.systemConfigService.getConfig('mail');
-
-    let smtpUser = this.config.smtp.user;
-    let smtpPass = this.config.smtp.pass;
-    let smtpHost = this.config.smtp.host;
-    let smtpPort = this.config.smtp.port;
-    let smtpSecure = this.config.smtp.secure;
-    let smtpFrom = this.config.smtp.from;
-
-    if (dbConfig) {
-      smtpHost = (dbConfig.host as string) ?? smtpHost;
-      smtpPort = (dbConfig.port as number) ?? smtpPort;
-      smtpSecure = (dbConfig.secure as boolean) ?? smtpSecure;
-      smtpUser = (dbConfig.user as string) ?? smtpUser;
-      smtpFrom = (dbConfig.from as string) ?? smtpFrom;
-
-      // dbConfig.pass returned by getMailConfig is masked.
-      // We must query the raw DB value to get the encrypted password.
-      // Alternatively, we can use a raw prisma call here, but let's just
-      // create a specific method in SystemConfigService or use Prisma directly.
-      // Since MailerService shouldn't know about Prisma, let's fetch raw config.
-    }
-
-    // To keep it simple, we will fetch raw from SystemConfigService here:
-    const rawConfig = await this.systemConfigService.getRawConfig('mail');
-    if (rawConfig && rawConfig.value) {
-      const val = rawConfig.value as Record<string, string>;
-      if (val.pass) {
-        try {
-          smtpPass = decrypt(val.pass);
-        } catch {
-          this.logger.error('Failed to decrypt SMTP password from DB');
-        }
-      }
-    }
+    const { value } = await this.systemConfigService.getEffectiveConfig('mail');
+    const smtpUser = String(value.user ?? '');
+    const smtpPass = String(value.pass ?? '');
+    const smtpHost = String(value.host ?? '');
+    const smtpPort = Number(value.port ?? 587);
+    const smtpSecure = Boolean(value.secure ?? false);
+    const smtpFrom = String(value.from ?? '');
 
     this.activeConfig = {
       from: smtpFrom,
@@ -127,8 +96,7 @@ export class MailerService implements OnModuleInit {
       return null;
     }
 
-    const defaultFrom =
-      options.from || this.activeConfig?.from || this.config.smtp.from;
+    const defaultFrom = options.from || this.activeConfig?.from || '';
 
     const mailOptions: nodemailer.SendMailOptions = {
       from: defaultFrom,

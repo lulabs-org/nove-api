@@ -12,17 +12,15 @@
 import { Injectable, Scope, Inject, PipeTransform } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import type { Request } from 'express';
-import type { ConfigType } from '@nestjs/config';
-import { tencentMeetingConfig } from '@/configs/tencent-mtg.config';
 import { verifyWebhookUrl } from '@/integrations/tencent-meeting';
+import { SystemConfigService } from '@/admin/system-config/services/system-config.service';
 
 @Injectable({ scope: Scope.REQUEST })
 export class UrlVerificationPipe
   implements PipeTransform<string, Promise<string>>
 {
   constructor(
-    @Inject(tencentMeetingConfig.KEY)
-    private readonly tencentConfig: ConfigType<typeof tencentMeetingConfig>,
+    private readonly systemConfigService: SystemConfigService,
     @Inject(REQUEST)
     private readonly req: Request,
   ) {}
@@ -31,15 +29,16 @@ export class UrlVerificationPipe
     const timestamp = this.req.headers['timestamp'] as string;
     const nonce = this.req.headers['nonce'] as string;
     const signature = this.req.headers['signature'] as string;
-    const { token, encodingAesKey } = this.tencentConfig.webhook;
+    const { value: config } =
+      await this.systemConfigService.getEffectiveConfig('tencent-meeting');
 
     return await verifyWebhookUrl(
       value,
       timestamp,
       nonce,
       signature,
-      token,
-      encodingAesKey,
+      String(config.webhookToken ?? ''),
+      String(config.encodingAesKey ?? ''),
     );
   }
 }

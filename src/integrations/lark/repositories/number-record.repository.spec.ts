@@ -7,6 +7,7 @@ import { NumberRecordBitableRepository } from './number-record.repository';
 import { BitableService } from '../services/bitable.service';
 import { larkConfig } from '../../../configs/lark.config';
 import { ConfigModule, ConfigType } from '@nestjs/config';
+import { SystemConfigService } from '@/admin/system-config/services/system-config.service';
 
 // Mock config
 const mockConfig: ConfigType<typeof larkConfig> = {
@@ -58,12 +59,25 @@ describe('NumberRecordBitableRepository', () => {
           provide: larkConfig.KEY,
           useValue: mockConfig,
         },
+        {
+          provide: SystemConfigService,
+          useValue: {
+            getEffectiveConfig: jest.fn().mockResolvedValue({
+              value: {
+                bitableAppToken: mockConfig.bitable.appToken,
+                personalSummaryTableId:
+                  mockConfig.bitable.tableIds.numberRecord,
+              },
+            }),
+          },
+        },
       ],
     }).compile();
 
     repository = module.get<NumberRecordBitableRepository>(
       NumberRecordBitableRepository,
     );
+    await repository.onModuleInit();
     bitableService = module.get(BitableService);
 
     // Clear all mocks before each test
@@ -75,18 +89,7 @@ describe('NumberRecordBitableRepository', () => {
   });
 
   describe('constructor', () => {
-    it('should throw when required config is missing', () => {
-      const invalidConfig: ConfigType<typeof larkConfig> = {
-        ...mockConfig,
-        bitable: {
-          appToken: '',
-          tableIds: {
-            ...mockConfig.bitable.tableIds,
-            numberRecord: '',
-          },
-        },
-      };
-
+    it('allows missing environment config so database config can load later', () => {
       const mockBitableService = {
         createRecord: jest.fn(),
         upsertRecord: jest.fn(),
@@ -96,10 +99,11 @@ describe('NumberRecordBitableRepository', () => {
 
       expect(
         () =>
-          new NumberRecordBitableRepository(mockBitableService, invalidConfig),
-      ).toThrow(
-        'LARK_BITABLE_APP_TOKEN and LARK_TABLE_NUMBER_RECORD must be configured in environment variables',
-      );
+          new NumberRecordBitableRepository(
+            mockBitableService,
+            {} as SystemConfigService,
+          ),
+      ).not.toThrow();
     });
   });
 

@@ -1,18 +1,36 @@
-import { Controller, Get, Put, Delete, Body, Param } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Put,
+  Delete,
+  Body,
+  Param,
+  Post,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiBearerAuth,
   ApiParam,
 } from '@nestjs/swagger';
-import { SystemConfigService } from './system-config.service';
 import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
+import { SystemConfigService, SystemConfigTesterService } from '../services';
 
 @ApiTags('Admin / System Config')
 @ApiBearerAuth()
 @Controller('admin/system-config')
 export class SystemConfigController {
-  constructor(private readonly systemConfigService: SystemConfigService) {}
+  constructor(
+    private readonly systemConfigService: SystemConfigService,
+    private readonly systemConfigTester: SystemConfigTesterService,
+  ) {}
+
+  @Get()
+  @ApiOperation({ summary: 'List global service configuration status' })
+  @RequirePermissions('system:config:read')
+  async listConfigs() {
+    return this.systemConfigService.listConfigs();
+  }
 
   @Get(':module')
   @ApiOperation({ summary: 'Get global configuration for a specific module' })
@@ -41,6 +59,16 @@ export class SystemConfigController {
     @Body() data: Record<string, unknown>,
   ) {
     return this.systemConfigService.updateConfig(module, data);
+  }
+
+  @Post(':module/test')
+  @ApiOperation({ summary: 'Test a draft service configuration' })
+  @RequirePermissions('system:config:write')
+  async testConfig(
+    @Param('module') module: string,
+    @Body() data: Record<string, unknown>,
+  ) {
+    return this.systemConfigTester.testConfig(module, data);
   }
 
   @Delete(':module')

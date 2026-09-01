@@ -2,14 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { TencentApiService } from './api.service';
 import { tencentMeetingConfig } from '@/configs';
-
-type TMConfig = {
-  secretId: string;
-  secretKey: string;
-  appId: string;
-  sdkId: string;
-  userId: string;
-};
+import { SystemConfigService } from '@/admin/system-config/services/system-config.service';
 
 const mockConfigService = {
   get: jest.fn((key: string) => {
@@ -60,6 +53,20 @@ describe('TencentApiService', () => {
           provide: tencentMeetingConfig.KEY,
           useValue: mockTencentMeetingConfig,
         },
+        {
+          provide: SystemConfigService,
+          useValue: {
+            getEffectiveConfig: jest.fn().mockResolvedValue({
+              value: {
+                secretId: 'mock-secret-id',
+                secretKey: 'mock-secret-key',
+                appId: 'mock-app-id',
+                sdkId: 'mock-sdk-id',
+                userId: 'mock-user-id',
+              },
+            }),
+          },
+        },
       ],
     }).compile();
 
@@ -69,22 +76,6 @@ describe('TencentApiService', () => {
 
   it('should be defined', () => {
     expect(service).toBeDefined();
-  });
-
-  describe('getConfig', () => {
-    it('returns correct config', () => {
-      const getConfig = Reflect.get(service as object, 'getConfig') as (
-        this: TencentApiService,
-      ) => TMConfig;
-      const config: TMConfig = getConfig.call(service) as unknown as TMConfig;
-      expect(config).toEqual({
-        secretId: 'mock-secret-id',
-        secretKey: 'mock-secret-key',
-        appId: 'mock-app-id',
-        sdkId: 'mock-sdk-id',
-        userId: 'mock-user-id',
-      });
-    });
   });
 
   describe('getRecordingFileDetail', () => {

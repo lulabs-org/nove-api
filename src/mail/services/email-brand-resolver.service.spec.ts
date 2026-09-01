@@ -2,20 +2,25 @@ import { EmailBrandResolverService } from './email-brand-resolver.service';
 
 describe('EmailBrandResolverService', () => {
   const prisma = { org: { findFirst: jest.fn() } };
-  const config = {
-    brand: {
-      name: 'Nove Platform',
-      logoUrl: 'https://cdn.example.com/platform.png',
-      primaryColor: '#123456',
-      footerText: '平台自动邮件',
-      publicBaseUrl: 'https://assets.example.com/',
-    },
-  };
   let service: EmailBrandResolverService;
+  const systemConfigService = {
+    getEffectiveConfig: jest.fn().mockResolvedValue({
+      value: {
+        brandName: 'Nove Platform',
+        brandLogoUrl: 'https://cdn.example.com/platform.png',
+        brandPrimaryColor: '#123456',
+        brandFooterText: '平台自动邮件',
+        brandPublicBaseUrl: 'https://assets.example.com/',
+      },
+    }),
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new EmailBrandResolverService(prisma as never, config as never);
+    service = new EmailBrandResolverService(
+      prisma as never,
+      systemConfigService as never,
+    );
   });
 
   it('returns the platform brand when no organization context exists', async () => {

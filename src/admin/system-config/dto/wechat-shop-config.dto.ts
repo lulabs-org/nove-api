@@ -1,35 +1,38 @@
-import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsString, IsOptional, IsUrl } from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UpdateWechatShopConfigDto {
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'Wechat Shop App ID',
     example: 'wx1234567890abcdef',
   })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  appId: string;
+  appId?: string;
 
-  @ApiProperty({ description: 'Wechat Shop App Secret (will be encrypted)' })
+  @ApiPropertyOptional({
+    description: 'Wechat Shop App Secret (will be encrypted)',
+  })
   @IsString()
   @IsOptional()
   appSecret?: string;
 
-  @ApiProperty({ description: 'Webhook Token (will be encrypted)' })
+  @ApiPropertyOptional({ description: 'Webhook Token (will be encrypted)' })
   @IsString()
   @IsOptional()
   webhookToken?: string;
 
-  @ApiProperty({ description: 'Encoding AES Key (will be encrypted)' })
+  @ApiPropertyOptional({ description: 'Encoding AES Key (will be encrypted)' })
   @IsString()
   @IsOptional()
   encodingAesKey?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'API Base URL',
     example: 'https://api.weixin.qq.com',
   })
   @IsString()
   @IsOptional()
+  @IsUrl({ require_tld: false })
   apiBaseUrl?: string;
 }

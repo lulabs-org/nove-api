@@ -9,15 +9,13 @@
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
-import { Injectable, Logger, Inject, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { GenerationMethod } from '@prisma/client';
-import { ConfigType } from '@nestjs/config';
 import { formatToTimezone, formatTimeMs } from '@/common/utils/time.util';
 import { LlmService } from '@/llm/llm.service';
 import { SpeakerSummaryRepository } from '../repositories';
 import { GenerateParticipantSummaryDto } from '../dto/speaker-summary.dto';
 import { SummarySegment } from '@/meeting/types';
-import { openaiConfig } from '@/configs/openai.config';
 import { generatePrompt } from '@/common/utils';
 import {
   MeetingRecordNotFoundException,
@@ -32,8 +30,6 @@ export class SpeakerSummaryService {
   constructor(
     private readonly llmService: LlmService,
     private readonly partSummaryRepo: SpeakerSummaryRepository,
-    @Inject(openaiConfig.KEY)
-    private readonly config: ConfigType<typeof openaiConfig>,
   ) {}
 
   async generateSummaries({
@@ -136,7 +132,7 @@ export class SpeakerSummaryService {
       minuteId: recordId,
       partSummary: summary,
       generatedBy: GenerationMethod.AI,
-      aiModel: this.config.model,
+      aiModel: this.llmService.getActiveModel(),
     });
 
     this.logger.log(`成功生成参会者: ${userName}总结`);

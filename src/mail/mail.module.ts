@@ -10,8 +10,6 @@
  */
 
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { emailConfig } from '@/configs/email.config';
 import { MailerService } from './services/mailer.service';
 import { MailService } from './services/mail.service';
 import { AuthMailService } from './services/auth-mail.service';
@@ -25,7 +23,6 @@ import { SystemConfigModule } from '@/admin/system-config/system-config.module';
 
 @Module({
   imports: [
-    ConfigModule.forFeature(emailConfig),
     BullModule.registerQueue({
       name: 'mail', // 队列名称
     }),

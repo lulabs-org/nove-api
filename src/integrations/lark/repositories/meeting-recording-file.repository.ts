@@ -1,5 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import { ConfigType } from '@nestjs/config';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { BitableService } from '../services/bitable.service';
 import {
   CreateRecordResponse,
@@ -8,31 +7,39 @@ import {
   BitableField,
   SearchFilter,
 } from '../types/lark-bitable.types';
-import { larkConfig } from '@/configs';
 import { RecordingFileData } from '../types';
+import { SystemConfigService } from '@/admin/system-config/services/system-config.service';
+import { OnEvent } from '@nestjs/event-emitter';
+import { SystemConfigValues } from '@/admin/system-config/registries/system-config.registry';
 
 /**
  * Repository for recording file-related Bitable operations
  * Provides data access abstraction for recording file record management
  */
 @Injectable()
-export class RecordingFileBitableRepository {
+export class RecordingFileBitableRepository implements OnModuleInit {
   private readonly logger = new Logger(RecordingFileBitableRepository.name);
-  private readonly appToken: string;
-  private readonly tableId: string;
+  private appToken: string;
+  private tableId: string;
 
   constructor(
     private readonly bitableService: BitableService,
-    @Inject(larkConfig.KEY) private readonly cfg: ConfigType<typeof larkConfig>,
+    private readonly systemConfigService: SystemConfigService,
   ) {
-    this.appToken = this.cfg.bitable.appToken;
-    this.tableId = this.cfg.bitable.tableIds.recordingFile;
+    this.appToken = '';
+    this.tableId = '';
+  }
 
-    if (!this.appToken || !this.tableId) {
-      throw new Error(
-        'LARK_BITABLE_APP_TOKEN and LARK_TABLE_MEETING_RECORD_FILE must be configured in environment variables',
-      );
-    }
+  async onModuleInit() {
+    const { value } = await this.systemConfigService.getEffectiveConfig('lark');
+    this.applyConfig(value);
+  }
+
+  @OnEvent('config.lark.updated')
+  @OnEvent('config.lark.deleted')
+  applyConfig(value: SystemConfigValues) {
+    this.appToken = String(value.bitableAppToken ?? '');
+    this.tableId = String(value.recordingFileTableId ?? '');
   }
 
   /**

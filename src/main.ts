@@ -15,6 +15,7 @@ import { RedocModule, RedocOptions } from 'nestjs-redoc';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import * as cookieParser from 'cookie-parser';
+import { SystemConfigEnvironmentBootstrapService } from './admin/system-config/services/system-config-environment-bootstrap.service';
 
 function parseCsv(value?: string): string[] {
   return (value ?? '')
@@ -29,6 +30,7 @@ function parseRegexCsv(value?: string): RegExp[] {
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  await app.get(SystemConfigEnvironmentBootstrapService).run();
 
   const allowedOrigins = new Set(parseCsv(process.env.CORS_ORIGINS));
   const originRegexes = parseRegexCsv(process.env.CORS_ORIGIN_REGEXES);

@@ -1,8 +1,6 @@
 import { Module } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
 import { PrismaModule } from '@/prisma/prisma.module';
-import { ConfigModule } from '@nestjs/config';
-import { wechatShopConfig } from '@/configs';
 import { BullModule } from '@nestjs/bullmq';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
@@ -24,7 +22,6 @@ import { SystemConfigModule } from '@/admin/system-config/system-config.module';
     PrismaModule,
     HttpModule,
     UserModule,
-    ConfigModule.forFeature(wechatShopConfig),
     BullModule.registerQueue({ name: 'wechat-order-sync' }),
     BullBoardModule.forFeature({
       name: 'wechat-order-sync',

@@ -58,6 +58,6 @@ flowchart LR
 
 ## 动态系统配置
 
-管理员通过 `GET/PUT/DELETE /admin/system-config/:module` 读写配置。Service 按 Registry 选择 DTO，校验后加密敏感字段并保存到 `system_configs`。成功更新或删除会发送 `config.<module>.updated/deleted` 事件，邮件或微信小店服务据此刷新运行时配置。
+API 首次启动时把五个服务模块的环境变量一次性导入 `system_configs`，随后只读取数据库值和非敏感代码默认值。管理员通过 `GET/PUT/DELETE /admin/system-config/:module` 读写配置。Service 按 Registry 选择 DTO，校验后加密敏感字段；成功更新或删除会发送 `config.<module>.updated/deleted` 事件，各集成消费者据此刷新运行时配置。
 
-读取敏感字段只返回 `********`；PUT 原样提交该掩码代表保留现有密文。
+读取敏感字段只返回 `********`；PUT 原样提交该掩码代表保留现有密文。删除配置后不会恢复环境变量，后续重启也不会再次导入。
