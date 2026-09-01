@@ -1,6 +1,6 @@
 import { decrypt, encrypt } from '@/common/utils/crypto.util';
 import { PrismaService } from '@/prisma/prisma.service';
-import { SystemConfigEnvironmentBootstrapService } from './system-config-environment-bootstrap.service';
+import { BootstrapService } from './bootstrap.service';
 import {
   SYSTEM_CONFIG_ENV_IMPORT_KEY,
   SystemConfigEnvironmentImportMetadata,
@@ -58,11 +58,11 @@ const SERVICE_ENVIRONMENT_KEYS = [
   'WECHAT_API_BASE_URL',
 ] as const;
 
-describe('SystemConfigEnvironmentBootstrapService', () => {
+describe('BootstrapService', () => {
   const originalEnv = process.env;
   let records: Record<string, { value: Record<string, unknown> }>;
   let prisma: PrismaService;
-  let service: SystemConfigEnvironmentBootstrapService;
+  let service: BootstrapService;
 
   beforeEach(() => {
     process.env = { ...originalEnv, SYSTEM_ENCRYPTION_KEY: 'test-key' };
@@ -90,7 +90,7 @@ describe('SystemConfigEnvironmentBootstrapService', () => {
         callback({ systemConfig }),
       ),
     } as unknown as PrismaService;
-    service = new SystemConfigEnvironmentBootstrapService(prisma);
+    service = new BootstrapService(prisma);
   });
 
   afterEach(() => {
