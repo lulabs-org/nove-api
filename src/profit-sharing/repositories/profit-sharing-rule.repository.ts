@@ -59,7 +59,11 @@ export class ProfitSharingRuleRepository {
     });
   }
 
-  findActiveRulesForOrder(financialClosedAt: Date, productId: string | null, channelId: number | null) {
+  findActiveRulesForOrder(
+    financialClosedAt: Date,
+    productId: string | null,
+    channelId: number | null,
+  ) {
     return this.prisma.profitShareRule.findMany({
       where: {
         status: 'ACTIVE',

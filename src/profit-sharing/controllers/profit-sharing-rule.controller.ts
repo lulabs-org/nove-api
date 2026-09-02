@@ -5,6 +5,7 @@ import { ProfitSharingRuleService } from '../services/profit-sharing-rule.servic
 import { ProfitSharingService } from '../services/profit-sharing.service';
 import { CreateProfitShareRuleDto } from '../dto/create-profit-share-rule.dto';
 import { UpdateProfitShareRuleDto } from '../dto/update-profit-share-rule.dto';
+import * as fs from 'fs';
 
 @ApiTags('分润规则 (Rules)')
 @ApiBearerAuth()
@@ -45,8 +46,18 @@ export class ProfitSharingRuleController {
   ) {
     try {
       return await this.ruleService.updateRule(id, updateDto);
-    } catch (e: any) {
-      require('fs').writeFileSync('/tmp/error.json', JSON.stringify({ message: e.message, stack: e.stack }, null, 2));
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        fs.writeFileSync(
+          '/tmp/error.json',
+          JSON.stringify({ message: e.message, stack: e.stack }, null, 2),
+        );
+      } else {
+        fs.writeFileSync(
+          '/tmp/error.json',
+          JSON.stringify({ message: String(e) }, null, 2),
+        );
+      }
       throw e;
     }
   }

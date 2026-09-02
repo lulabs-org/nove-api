@@ -1,9 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import * as Lark from '@larksuiteoapi/node-sdk';
-import {
-  ConfigTestProvider,
-  SystemConfigValues,
-} from '@/admin/system-config';
+import { ConfigTestProvider, SystemConfigValues } from '@/admin/system-config';
 import { TesterService } from '@/admin/system-config/services/tester.service';
 
 @Injectable()

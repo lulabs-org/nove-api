@@ -1,4 +1,5 @@
 import { Controller, Get, Query } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
 import { ProfitSharingRecordService } from '../services/profit-sharing-record.service';
@@ -19,7 +20,7 @@ export class ProfitSharingRecordController {
   @Get()
   @RequirePermissions('profit-sharing:read')
   @ApiOperation({ summary: '获取分润明细流水列表' })
-  async getRecords(@Query() query: any) {
+  async getRecords(@Query() query: Prisma.ProfitShareRecordWhereInput) {
     return this.recordService.getRecords(query);
   }
 }

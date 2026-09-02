@@ -1,9 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
-import {
-  ConfigTestProvider,
-  SystemConfigValues,
-} from '@/admin/system-config';
+import { ConfigTestProvider, SystemConfigValues } from '@/admin/system-config';
 import { TesterService } from '@/admin/system-config/services/tester.service';
 
 @Injectable()

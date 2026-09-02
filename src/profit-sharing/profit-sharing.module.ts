@@ -12,10 +12,7 @@ import { PrismaModule } from '../prisma/prisma.module'; // 假设存在 PrismaMo
 
 @Module({
   imports: [PrismaModule],
-  controllers: [
-    ProfitSharingRuleController, 
-    ProfitSharingRecordController
-  ],
+  controllers: [ProfitSharingRuleController, ProfitSharingRecordController],
   providers: [
     ProfitSharingRuleRepository,
     ProfitSharingRecordRepository,
