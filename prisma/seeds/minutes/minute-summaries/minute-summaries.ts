@@ -27,8 +27,14 @@ export async function createMinuteSummary(
   },
   minute: { id: string },
 ): Promise<CreatedMinuteSummaries['teamSummary']> {
-  return prisma.minuteSummary.create({
-    data: {
+  return prisma.minuteSummary.upsert({
+    where: {
+      minuteId: minute.id,
+    },
+    update: {
+      ...MINUTE_SUMMARY_CONFIGS.teamSummary,
+    },
+    create: {
       minuteId: minute.id,
       ...MINUTE_SUMMARY_CONFIGS.teamSummary,
     },

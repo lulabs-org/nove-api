@@ -126,6 +126,13 @@ export class AdminUserService {
                   },
                 },
               },
+              {
+                profile: {
+                  is: {
+                    fullName: { contains: keyword, mode: 'insensitive' },
+                  },
+                },
+              },
             ],
           }
         : {}),
@@ -549,6 +556,7 @@ export class AdminUserService {
       countryCode: user.countryCode,
       phone: user.phone,
       displayName: user.profile?.displayName ?? null,
+      fullName: user.profile?.fullName ?? null,
       avatar: user.profile?.avatar ?? null,
       active: user.active,
       emailVerified: Boolean(user.emailVerifiedAt),

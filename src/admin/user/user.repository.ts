@@ -46,6 +46,7 @@ export const adminUserListSelect = {
   profile: {
     select: {
       displayName: true,
+      fullName: true,
       avatar: true,
     },
   },

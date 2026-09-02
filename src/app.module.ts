@@ -58,7 +58,7 @@ import { OrderRefundModule } from './order-refund/order-refund.module';
 import { TrackingReportModule } from './tracking-report/tracking-report.module';
 import { OAuthClientAdminModule } from './admin/oauth-client/oauth-client-admin.module';
 import { ProjectModule } from './project/project.module';
-
+import { ProfitSharingModule } from './profit-sharing/profit-sharing.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -132,6 +132,7 @@ import { ProjectModule } from './project/project.module';
     TrackingReportModule,
     OAuthClientAdminModule,
     ProjectModule,
+    ProfitSharingModule,
   ],
   controllers: [AppController],
   providers: [
