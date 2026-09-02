@@ -15,8 +15,12 @@ export class ProfitSharingRecordService {
   /**
    * 获取流水分页列表
    */
-  async getRecords(query: Prisma.ProfitShareRecordWhereInput = {}) {
-    return this.recordRepository.findRecordsWithDetails(query);
+  async getRecords(args: { where?: Prisma.ProfitShareRecordWhereInput, skip?: number, take?: number } = {}) {
+    const [data, total] = await Promise.all([
+      this.recordRepository.findRecordsWithDetails(args),
+      this.recordRepository.countRecords(args.where),
+    ]);
+    return { data, total };
   }
 
   /**
@@ -140,5 +144,73 @@ export class ProfitSharingRecordService {
       }
       throw error;
     }
+  }
+
+  /**
+   * 手动结算单条分润记录
+   */
+  async settleRecord(id: string) {
+    const record = await this.prisma.profitShareRecord.findUnique({ where: { id } });
+    if (!record) {
+      throw new Error('分润记录不存在');
+    }
+    if (record.status !== 'PENDING') {
+      throw new Error('只有待结算的记录可以手动结算');
+    }
+    return this.prisma.profitShareRecord.update({
+      where: { id },
+      data: { status: 'SETTLED' },
+    });
+  }
+
+  /**
+   * 撤销结算（将已结算的记录恢复为待结算）
+   */
+  async undoSettleRecord(id: string) {
+    const record = await this.prisma.profitShareRecord.findUnique({ where: { id } });
+    if (!record) {
+      throw new Error('分润记录不存在');
+    }
+    if (record.status !== 'SETTLED') {
+      throw new Error('只有已结算的记录可以撤销结算');
+    }
+    return this.prisma.profitShareRecord.update({
+      where: { id },
+      data: { status: 'PENDING' },
+    });
+  }
+
+  /**
+   * 手动取消单条分润记录
+   */
+  async cancelRecord(id: string) {
+    const record = await this.prisma.profitShareRecord.findUnique({ where: { id } });
+    if (!record) {
+      throw new Error('分润记录不存在');
+    }
+    if (record.status !== 'PENDING') {
+      throw new Error('只有待结算的记录可以手动取消');
+    }
+    return this.prisma.profitShareRecord.update({
+      where: { id },
+      data: { status: 'CANCELLED' },
+    });
+  }
+
+  /**
+   * 恢复被取消的分润记录（撤销取消）
+   */
+  async restoreRecord(id: string) {
+    const record = await this.prisma.profitShareRecord.findUnique({ where: { id } });
+    if (!record) {
+      throw new Error('分润记录不存在');
+    }
+    if (record.status !== 'CANCELLED') {
+      throw new Error('只有已取消的记录可以恢复');
+    }
+    return this.prisma.profitShareRecord.update({
+      where: { id },
+      data: { status: 'PENDING' },
+    });
   }
 }

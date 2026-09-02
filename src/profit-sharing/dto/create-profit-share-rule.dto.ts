@@ -10,6 +10,7 @@ import {
   IsOptional,
   IsString,
   ValidateNested,
+  ValidateIf,
 } from 'class-validator';
 import { ProfitShareRuleStatus } from '@prisma/client';
 
@@ -92,14 +93,16 @@ export class CreateProfitShareRuleDto {
   @IsNotEmpty()
   name: string;
 
-  @ApiPropertyOptional({ description: '关联产品品类/ID，为空则不限产品' })
+  @ApiPropertyOptional({ description: '关联产品品类/ID，必须与 channelId 至少填一项' })
   @IsString()
-  @IsOptional()
+  @ValidateIf((o) => !o.channelId)
+  @IsNotEmpty({ message: '限制品类和限制渠道必须至少选择一项' })
   productId?: string;
 
-  @ApiPropertyOptional({ description: '关联渠道ID，为空则不限渠道' })
+  @ApiPropertyOptional({ description: '关联渠道ID，必须与 productId 至少填一项' })
   @IsNumber()
-  @IsOptional()
+  @ValidateIf((o) => !o.productId)
+  @IsNotEmpty({ message: '限制品类和限制渠道必须至少选择一项' })
   channelId?: number;
 
   @ApiProperty({ description: '生效开始时间' })

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { CreateProfitShareRuleDto } from '../dto/create-profit-share-rule.dto';
 import { UpdateProfitShareRuleDto } from '../dto/update-profit-share-rule.dto';
 import { Decimal } from '@prisma/client/runtime/library';
@@ -14,6 +14,13 @@ export class ProfitSharingRuleService {
    * 创建新的分润规则
    */
   async createRule(dto: CreateProfitShareRuleDto) {
+    if (dto.productId && dto.channelId) {
+      throw new BadRequestException('限制品类和限制渠道只能选择一项，不能同时选择');
+    }
+    if (!dto.productId && !dto.channelId) {
+      throw new BadRequestException('限制品类和限制渠道必须选择一项');
+    }
+
     return this.ruleRepository.createWithDetails({
       name: dto.name,
       productId: dto.productId,
@@ -43,6 +50,18 @@ export class ProfitSharingRuleService {
    */
   async updateRule(id: string, dto: UpdateProfitShareRuleDto) {
     try {
+      if (dto.productId !== undefined || dto.channelId !== undefined) {
+        const existing = await this.ruleRepository.findByIdWithDetails(id);
+        const finalProductId = dto.productId !== undefined ? dto.productId : existing?.productId;
+        const finalChannelId = dto.channelId !== undefined ? dto.channelId : existing?.channelId;
+        if (finalProductId && finalChannelId) {
+          throw new BadRequestException('限制品类和限制渠道只能选择一项，不能同时选择');
+        }
+        if (!finalProductId && !finalChannelId) {
+          throw new BadRequestException('限制品类和限制渠道必须选择一项');
+        }
+      }
+
       return await this.ruleRepository.updateWithDetails(id, {
         name: dto.name,
         productId: dto.productId,

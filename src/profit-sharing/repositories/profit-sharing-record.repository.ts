@@ -36,9 +36,11 @@ export class ProfitSharingRecordRepository {
     return this.prisma.profitShareRecord.updateMany<T>(args);
   }
 
-  findRecordsWithDetails(where: Prisma.ProfitShareRecordWhereInput = {}) {
+  findRecordsWithDetails(args: { where?: Prisma.ProfitShareRecordWhereInput, skip?: number, take?: number } = {}) {
     return this.prisma.profitShareRecord.findMany({
-      where,
+      where: args.where,
+      skip: args.skip,
+      take: args.take || 100,
       include: {
         order: {
           select: { orderNumber: true, amount: true },
@@ -47,8 +49,11 @@ export class ProfitSharingRecordRepository {
         module: { select: { name: true } },
       },
       orderBy: { createdAt: 'desc' },
-      take: 100,
     });
+  }
+
+  countRecords(where?: Prisma.ProfitShareRecordWhereInput) {
+    return this.prisma.profitShareRecord.count({ where });
   }
 
   findRecordsForRefund(orderId: string) {
