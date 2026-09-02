@@ -14,9 +14,6 @@ export class ProfitSharingRuleService {
    * 创建新的分润规则
    */
   async createRule(dto: CreateProfitShareRuleDto) {
-    if (dto.productId && dto.channelId) {
-      throw new BadRequestException('限制品类和限制渠道只能选择一项，不能同时选择');
-    }
     if (!dto.productId && !dto.channelId) {
       throw new BadRequestException('限制品类和限制渠道必须选择一项');
     }
@@ -54,9 +51,6 @@ export class ProfitSharingRuleService {
         const existing = await this.ruleRepository.findByIdWithDetails(id);
         const finalProductId = dto.productId !== undefined ? dto.productId : existing?.productId;
         const finalChannelId = dto.channelId !== undefined ? dto.channelId : existing?.channelId;
-        if (finalProductId && finalChannelId) {
-          throw new BadRequestException('限制品类和限制渠道只能选择一项，不能同时选择');
-        }
         if (!finalProductId && !finalChannelId) {
           throw new BadRequestException('限制品类和限制渠道必须选择一项');
         }

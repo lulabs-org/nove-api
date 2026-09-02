@@ -16,10 +16,45 @@ export class ProfitSharingRecordService {
    * 获取流水分页列表
    */
   async getRecords(args: { where?: Prisma.ProfitShareRecordWhereInput, skip?: number, take?: number } = {}) {
-    const [data, total] = await Promise.all([
+    const [records, total] = await Promise.all([
       this.recordRepository.findRecordsWithDetails(args),
       this.recordRepository.countRecords(args.where),
     ]);
+
+    const memberIds = Array.from(new Set(records.map((r) => r.memberId).filter(Boolean)));
+    const users = memberIds.length > 0
+      ? await this.prisma.user.findMany({
+          where: { id: { in: memberIds } },
+          include: {
+            profile: true,
+            orgMembers: {
+              include: {
+                memberRoles: {
+                  include: { role: true },
+                },
+              },
+            },
+          },
+        })
+      : [];
+
+    const userMap = new Map<string, { name: string; role?: string }>();
+    for (const u of users) {
+      const name = u.profile?.displayName || u.profile?.fullName || u.username || u.id;
+      const roles = u.orgMembers.flatMap((m) => m.memberRoles.map((mr) => mr.role.name));
+      const role = roles.length > 0 ? roles[0] : undefined;
+      userMap.set(u.id, { name, role });
+    }
+
+    const data = records.map((r) => {
+      const userInfo = userMap.get(r.memberId);
+      return {
+        ...r,
+        memberName: userInfo?.name || r.memberId,
+        memberRole: userInfo?.role,
+      };
+    });
+
     return { data, total };
   }
 
@@ -112,15 +147,33 @@ export class ProfitSharingRecordService {
       }> = [];
       for (const mg of memberGroups) {
         const amount = (mg._sum.profitAmount || 0) / 100;
-        // Fetch user detail
+        // Fetch user detail with profile and roles
         const user = await prisma.user.findUnique({
           where: { id: mg.memberId },
-          select: { username: true },
+          include: {
+            profile: true,
+            orgMembers: {
+              include: {
+                memberRoles: {
+                  include: { role: true },
+                },
+              },
+            },
+          },
         });
-        // Fetch role context if possible, or just default to something generic for now
+        const name =
+          user?.profile?.displayName ||
+          user?.profile?.fullName ||
+          user?.username ||
+          mg.memberId;
+        const roles = user?.orgMembers.flatMap((m) =>
+          m.memberRoles.map((mr) => mr.role.name),
+        );
+        const role = roles && roles.length > 0 ? roles.join(' / ') : '平台成员';
+
         memberRankings.push({
-          name: user?.username || mg.memberId,
-          role: '平台成员', // 这里如果要取准确的 roleName，需要更复杂的连表或查 userRoles，简化处理
+          name,
+          role,
           amount,
         });
       }
