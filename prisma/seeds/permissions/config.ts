@@ -466,6 +466,36 @@ export const REAL_PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     action: 'manage',
   },
 
+  // ========== 分润管理 ==========
+  {
+    name: '查看分润',
+    code: 'profit-sharing:read',
+    description: '查看分润规则和明细',
+    resource: 'profit-sharing',
+    action: 'read',
+  },
+  {
+    name: '创建分润规则',
+    code: 'profit-sharing:create',
+    description: '创建分润规则',
+    resource: 'profit-sharing',
+    action: 'create',
+  },
+  {
+    name: '更新分润规则',
+    code: 'profit-sharing:update',
+    description: '更新分润规则',
+    resource: 'profit-sharing',
+    action: 'update',
+  },
+  {
+    name: '删除分润规则',
+    code: 'profit-sharing:delete',
+    description: '删除分润规则',
+    resource: 'profit-sharing',
+    action: 'delete',
+  },
+
   // ========== MCP Tool 使用权限 ==========
   {
     name: '使用问候工具',
@@ -1228,6 +1258,36 @@ export const PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     description: '管理仪表板配置',
     resource: 'dashboard',
     action: 'manage',
+  },
+
+  // ========== 分润管理 ==========
+  {
+    name: '查看分润',
+    code: 'profit-sharing:read',
+    description: '查看分润规则和明细',
+    resource: 'profit-sharing',
+    action: 'read',
+  },
+  {
+    name: '创建分润规则',
+    code: 'profit-sharing:create',
+    description: '创建分润规则',
+    resource: 'profit-sharing',
+    action: 'create',
+  },
+  {
+    name: '更新分润规则',
+    code: 'profit-sharing:update',
+    description: '更新分润规则',
+    resource: 'profit-sharing',
+    action: 'update',
+  },
+  {
+    name: '删除分润规则',
+    code: 'profit-sharing:delete',
+    description: '删除分润规则',
+    resource: 'profit-sharing',
+    action: 'delete',
   },
 
   // ========== MCP Tool 使用权限 ==========

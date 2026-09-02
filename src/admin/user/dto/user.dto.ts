@@ -354,6 +354,9 @@ export class AdminUserListItemDto {
   displayName: string | null;
 
   @ApiPropertyOptional({ nullable: true, type: String })
+  fullName: string | null;
+
+  @ApiPropertyOptional({ nullable: true, type: String })
   avatar: string | null;
 
   @ApiProperty()

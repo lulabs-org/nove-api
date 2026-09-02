@@ -62,6 +62,7 @@ model Order {
   currentOwner    User?         @relation("CurrentOwnerOrders", fields: [currentOwnerId], references: [id], onDelete: SetNull) // 当前负责人
   financialCloser User?         @relation("FinancialCloserOrders", fields: [financialCloserId], references: [id], onDelete: SetNull) // 财务结单人
   refunds         OrderRefund[] // 订单的退款记录
+  profitShareRecords ProfitShareRecord[] // 分润明细流水记录
 
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6) // 创建时间
   updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6) // 更新时间
