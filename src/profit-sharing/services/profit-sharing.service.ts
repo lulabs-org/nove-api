@@ -87,7 +87,28 @@ export class ProfitSharingService {
       return { success: false, message: '规则不存在或未启用' };
     }
 
-    // 查找符合条件且尚未分润（没有任何关联 ProfitShareRecord）的订单
+    // 1. 找出该规则下已经有结算 (SETTLED) 或退回 (CLAWBACK) 流水的订单（这些订单被视为“已锁定”，不能再重算，也不能删除它们剩下的 PENDING 流水）
+    const lockedRecords = await this.prisma.profitShareRecord.findMany({
+      where: {
+        ruleId: ruleId,
+        status: { in: [ProfitShareRecordStatus.SETTLED, ProfitShareRecordStatus.CLAWBACK] },
+      },
+      select: { orderId: true },
+      distinct: ['orderId'],
+    });
+    const lockedOrderIds = lockedRecords.map(r => r.orderId);
+
+    // 2. 删除该规则下所有尚未结算（PENDING）的流水，但必须排除掉那些“已锁定”的订单
+    const deleted = await this.prisma.profitShareRecord.deleteMany({
+      where: {
+        ruleId: ruleId,
+        status: ProfitShareRecordStatus.PENDING,
+        ...(lockedOrderIds.length > 0 && { orderId: { notIn: lockedOrderIds } }),
+      },
+    });
+    this.logger.log(`Deleted ${deleted.count} pending records for rule ${ruleId} before recalculation. Skipped locked orders: ${lockedOrderIds.length}`);
+
+    // 3. 查找符合条件且可以重算的订单（排除掉名下有 PENDING/SETTLED/CLAWBACK 的订单）
     const orders = await this.prisma.order.findMany({
       where: {
         financialClosedAt: {
@@ -97,7 +118,10 @@ export class ProfitSharingService {
         ...(rule.productId && { productId: rule.productId }),
         ...(rule.channelId && { channelId: rule.channelId }),
         profitShareRecords: {
-          none: {},
+          none: {
+            ruleId: ruleId,
+            status: { not: ProfitShareRecordStatus.CANCELLED } // 如果这个订单在这个规则下只有 CANCELLED 流水，是可以被重新计算的
+          },
         },
       },
     });
