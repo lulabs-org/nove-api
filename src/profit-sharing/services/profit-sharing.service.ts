@@ -1,6 +1,21 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { ProfitShareRecordStatus, ProfitShareRuleStatus, Prisma } from '@prisma/client';
+import {
+  ProfitShareRecordStatus,
+  ProfitShareRuleStatus,
+  Prisma,
+  Order,
+} from '@prisma/client';
+
+type RuleWithDetails = Prisma.ProfitShareRuleGetPayload<{
+  include: {
+    modules: {
+      include: {
+        allocations: true;
+      };
+    };
+  };
+}>;
 import { ProfitSharingRuleRepository } from '../repositories/profit-sharing-rule.repository';
 import { ProfitSharingRecordRepository } from '../repositories/profit-sharing-record.repository';
 
@@ -12,7 +27,7 @@ export class ProfitSharingService {
     private readonly prisma: PrismaService,
     private readonly ruleRepository: ProfitSharingRuleRepository,
     private readonly recordRepository: ProfitSharingRecordRepository,
-  ) { }
+  ) {}
 
   /**
    * 订单核算完成时触发的分润计算逻辑
@@ -55,7 +70,9 @@ export class ProfitSharingService {
       await this.recordRepository.createMany({
         data: recordsData,
       });
-      this.logger.log(`Successfully created ${recordsData.length} profit share records for order ${orderId}`);
+      this.logger.log(
+        `Successfully created ${recordsData.length} profit share records for order ${orderId}`,
+      );
     }
   }
 
@@ -80,13 +97,15 @@ export class ProfitSharingService {
         ...(rule.productId && { productId: rule.productId }),
         ...(rule.channelId && { channelId: rule.channelId }),
         profitShareRecords: {
-          none: {}
-        }
+          none: {},
+        },
       },
     });
 
-    this.logger.log(`Found ${orders.length} orders eligible for rule ${ruleId}`);
-    
+    this.logger.log(
+      `Found ${orders.length} orders eligible for rule ${ruleId}`,
+    );
+
     let processedCount = 0;
     for (const order of orders) {
       const recordsData = this.generateRecordsForOrder(order, rule);
@@ -99,14 +118,20 @@ export class ProfitSharingService {
       }
     }
 
-    return { success: true, processedOrders: processedCount, totalFound: orders.length };
+    return {
+      success: true,
+      processedOrders: processedCount,
+      totalFound: orders.length,
+    };
   }
 
   /**
    * 处理退款回扣逻辑（按比例缩小）
    */
   async handleRefundClawback(orderId: string, refundAmount: number) {
-    this.logger.log(`Handling refund clawback for order: ${orderId}, amount: ${refundAmount}`);
+    this.logger.log(
+      `Handling refund clawback for order: ${orderId}, amount: ${refundAmount}`,
+    );
 
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
@@ -128,7 +153,10 @@ export class ProfitSharingService {
         if (newProfitAmount <= 0) {
           await this.recordRepository.update({
             where: { id: record.id },
-            data: { status: ProfitShareRecordStatus.CANCELLED, profitAmount: 0 },
+            data: {
+              status: ProfitShareRecordStatus.CANCELLED,
+              profitAmount: 0,
+            },
           });
         } else {
           await this.recordRepository.update({
@@ -158,13 +186,16 @@ export class ProfitSharingService {
   /**
    * 生成单个订单的所有分润流水
    */
-  private generateRecordsForOrder(order: any, rule: any): Prisma.ProfitShareRecordCreateManyInput[] {
+  private generateRecordsForOrder(
+    order: Order,
+    rule: RuleWithDetails,
+  ): Prisma.ProfitShareRecordCreateManyInput[] {
     const recordsData: Prisma.ProfitShareRecordCreateManyInput[] = [];
     const baseAmount = order.amount;
 
     for (const module of rule.modules) {
       const isAmortized = module.amortizationType === 'MONTHLY';
-      
+
       let durationMonths = 1;
       let benefitStartTime = order.financialClosedAt || new Date();
 
@@ -173,17 +204,29 @@ export class ProfitSharingService {
         const dEnd = new Date(order.benefitEnd);
         const dStart = new Date(order.benefitStart);
         // 按实际相差月份计算 (例如: 1月1日 到 2月1日 = 1个月)
-        const months = (dEnd.getFullYear() - dStart.getFullYear()) * 12 + (dEnd.getMonth() - dStart.getMonth());
+        const months =
+          (dEnd.getFullYear() - dStart.getFullYear()) * 12 +
+          (dEnd.getMonth() - dStart.getMonth());
         durationMonths = months > 0 ? months : 1;
       }
 
       for (const allocation of module.allocations) {
         if (!allocation.memberId) continue;
 
-        const shareRatioNum = typeof module.shareRatio.toNumber === 'function' ? module.shareRatio.toNumber() : Number(module.shareRatio);
-        const allocRatioNum = typeof allocation.allocationRatio.toNumber === 'function' ? allocation.allocationRatio.toNumber() : Number(allocation.allocationRatio);
-        
-        const totalProfitAmount = Math.round(baseAmount * shareRatioNum * allocRatioNum);
+        const shareRatioNum =
+          'toNumber' in module.shareRatio &&
+          typeof module.shareRatio.toNumber === 'function'
+            ? module.shareRatio.toNumber()
+            : Number(module.shareRatio);
+        const allocRatioNum =
+          'toNumber' in allocation.allocationRatio &&
+          typeof allocation.allocationRatio.toNumber === 'function'
+            ? allocation.allocationRatio.toNumber()
+            : Number(allocation.allocationRatio);
+
+        const totalProfitAmount = Math.round(
+          baseAmount * shareRatioNum * allocRatioNum,
+        );
 
         if (isAmortized && durationMonths > 1) {
           const monthlyProfit = Math.floor(totalProfitAmount / durationMonths);
@@ -193,7 +236,7 @@ export class ProfitSharingService {
             const isLastMonth = i === durationMonths - 1;
             const currentProfit = isLastMonth ? remainingProfit : monthlyProfit;
             remainingProfit -= currentProfit;
-            
+
             const settlementTime = new Date(benefitStartTime);
             settlementTime.setMonth(settlementTime.getMonth() + i);
 
@@ -202,7 +245,9 @@ export class ProfitSharingService {
               ruleId: rule.id,
               moduleId: module.id,
               memberId: allocation.memberId,
-              ruleSnapshot: JSON.parse(JSON.stringify(rule)),
+              ruleSnapshot: JSON.parse(
+                JSON.stringify(rule),
+              ) as Prisma.InputJsonValue,
               baseAmount,
               profitAmount: currentProfit,
               settlementTime,
@@ -210,10 +255,14 @@ export class ProfitSharingService {
             });
           }
         } else {
-          let settlementTime = new Date(benefitStartTime.getTime() + 7 * 24 * 60 * 60 * 1000); 
+          let settlementTime = new Date(
+            benefitStartTime.getTime() + 7 * 24 * 60 * 60 * 1000,
+          );
           if (module.amortizationType === 'END_OF_TERM' && order.benefitEnd) {
             // 服务结束后结算 (T+7)
-            settlementTime = new Date(order.benefitEnd.getTime() + 7 * 24 * 60 * 60 * 1000);
+            settlementTime = new Date(
+              order.benefitEnd.getTime() + 7 * 24 * 60 * 60 * 1000,
+            );
           }
 
           recordsData.push({
@@ -221,7 +270,9 @@ export class ProfitSharingService {
             ruleId: rule.id,
             moduleId: module.id,
             memberId: allocation.memberId,
-            ruleSnapshot: JSON.parse(JSON.stringify(rule)),
+            ruleSnapshot: JSON.parse(
+              JSON.stringify(rule),
+            ) as Prisma.InputJsonValue,
             baseAmount,
             profitAmount: totalProfitAmount,
             settlementTime,

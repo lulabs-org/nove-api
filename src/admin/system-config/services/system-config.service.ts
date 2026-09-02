@@ -9,10 +9,7 @@ import { Prisma } from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { SystemConfigRepository } from '../repositories/system-config.repository';
-import {
-  readEnvironment,
-  SystemConfigValues,
-} from '../core';
+import { readEnvironment, SystemConfigValues } from '../core';
 import {
   ConfigSource,
   isSystemConfigModule,
@@ -189,10 +186,10 @@ export class SystemConfigService {
     );
 
     const after = await this.getEffectiveConfig(orgId, moduleName);
-    
+
     const restartRequiredOn = entry.restartRequiredOn ?? [];
     const restartRequired = restartRequiredOn.some(
-      (field) => before.value[field] !== after.value[field]
+      (field) => before.value[field] !== after.value[field],
     );
 
     this.eventEmitter.emit(`config.${moduleName}.updated`, {
@@ -227,7 +224,7 @@ export class SystemConfigService {
 
     await this.configRepository.delete(orgId, key);
     const fallback = await this.getEffectiveConfig(orgId, moduleName);
-    
+
     const entry = SystemConfigRegistry[moduleName];
     const restartRequiredOn = entry.restartRequiredOn ?? [];
     const restartRequired = restartRequiredOn.length > 0;

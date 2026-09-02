@@ -6,23 +6,33 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class ProfitSharingRecordRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  findMany<T extends Prisma.ProfitShareRecordFindManyArgs>(args?: Prisma.SelectSubset<T, Prisma.ProfitShareRecordFindManyArgs>) {
+  findMany<T extends Prisma.ProfitShareRecordFindManyArgs>(
+    args?: Prisma.SelectSubset<T, Prisma.ProfitShareRecordFindManyArgs>,
+  ) {
     return this.prisma.profitShareRecord.findMany<T>(args);
   }
 
-  createMany<T extends Prisma.ProfitShareRecordCreateManyArgs>(args: Prisma.SelectSubset<T, Prisma.ProfitShareRecordCreateManyArgs>) {
+  createMany<T extends Prisma.ProfitShareRecordCreateManyArgs>(
+    args: Prisma.SelectSubset<T, Prisma.ProfitShareRecordCreateManyArgs>,
+  ) {
     return this.prisma.profitShareRecord.createMany<T>(args);
   }
 
-  create<T extends Prisma.ProfitShareRecordCreateArgs>(args: Prisma.SelectSubset<T, Prisma.ProfitShareRecordCreateArgs>) {
+  create<T extends Prisma.ProfitShareRecordCreateArgs>(
+    args: Prisma.SelectSubset<T, Prisma.ProfitShareRecordCreateArgs>,
+  ) {
     return this.prisma.profitShareRecord.create<T>(args);
   }
 
-  update<T extends Prisma.ProfitShareRecordUpdateArgs>(args: Prisma.SelectSubset<T, Prisma.ProfitShareRecordUpdateArgs>) {
+  update<T extends Prisma.ProfitShareRecordUpdateArgs>(
+    args: Prisma.SelectSubset<T, Prisma.ProfitShareRecordUpdateArgs>,
+  ) {
     return this.prisma.profitShareRecord.update<T>(args);
   }
 
-  updateMany<T extends Prisma.ProfitShareRecordUpdateManyArgs>(args: Prisma.SelectSubset<T, Prisma.ProfitShareRecordUpdateManyArgs>) {
+  updateMany<T extends Prisma.ProfitShareRecordUpdateManyArgs>(
+    args: Prisma.SelectSubset<T, Prisma.ProfitShareRecordUpdateManyArgs>,
+  ) {
     return this.prisma.profitShareRecord.updateMany<T>(args);
   }
 

@@ -14,11 +14,16 @@ export class ProfitSharingSubscriber {
    */
   @OnEvent('order.financial_closed', { async: true })
   async handleOrderFinancialClosedEvent(payload: { orderId: string }) {
-    this.logger.log(`Received order.financial_closed event for order ${payload.orderId}`);
+    this.logger.log(
+      `Received order.financial_closed event for order ${payload.orderId}`,
+    );
     try {
       await this.profitSharingService.calculateProfitShare(payload.orderId);
     } catch (error) {
-      this.logger.error(`Error calculating profit share for order ${payload.orderId}`, error);
+      this.logger.error(
+        `Error calculating profit share for order ${payload.orderId}`,
+        error,
+      );
     }
   }
 
@@ -27,12 +32,23 @@ export class ProfitSharingSubscriber {
    * 假设事件 payload 为 { orderId: string, refundAmount: number }
    */
   @OnEvent('order.refunded', { async: true })
-  async handleOrderRefundedEvent(payload: { orderId: string; refundAmount: number }) {
-    this.logger.log(`Received order.refunded event for order ${payload.orderId}, refundAmount: ${payload.refundAmount}`);
+  async handleOrderRefundedEvent(payload: {
+    orderId: string;
+    refundAmount: number;
+  }) {
+    this.logger.log(
+      `Received order.refunded event for order ${payload.orderId}, refundAmount: ${payload.refundAmount}`,
+    );
     try {
-      await this.profitSharingService.handleRefundClawback(payload.orderId, payload.refundAmount);
+      await this.profitSharingService.handleRefundClawback(
+        payload.orderId,
+        payload.refundAmount,
+      );
     } catch (error) {
-      this.logger.error(`Error handling refund clawback for order ${payload.orderId}`, error);
+      this.logger.error(
+        `Error handling refund clawback for order ${payload.orderId}`,
+        error,
+      );
     }
   }
 }

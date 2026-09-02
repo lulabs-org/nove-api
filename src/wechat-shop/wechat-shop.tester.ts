@@ -1,12 +1,11 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import {
-  ConfigTestProvider,
-  SystemConfigValues,
-} from '@/admin/system-config';
+import { ConfigTestProvider, SystemConfigValues } from '@/admin/system-config';
 import { TesterService } from '@/admin/system-config/services/tester.service';
 
 @Injectable()
-export class WechatShopTesterService implements ConfigTestProvider, OnModuleInit {
+export class WechatShopTesterService
+  implements ConfigTestProvider, OnModuleInit
+{
   constructor(private readonly testerService: TesterService) {}
 
   onModuleInit() {

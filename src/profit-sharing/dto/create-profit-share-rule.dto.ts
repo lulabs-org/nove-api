@@ -29,7 +29,10 @@ export class CreateProfitShareAllocationDto {
   @IsOptional()
   roleId?: string;
 
-  @ApiProperty({ description: '在当前模块内的分配比例，例如 0.5', example: 0.5 })
+  @ApiProperty({
+    description: '在当前模块内的分配比例，例如 0.5',
+    example: 0.5,
+  })
   @IsNumber()
   @IsNotEmpty()
   allocationRatio: number;
@@ -46,23 +49,37 @@ export class CreateProfitShareModuleDto {
   @IsNotEmpty()
   name: string;
 
-  @ApiProperty({ description: '该模块占总基数的比例，例如 0.04', example: 0.04 })
+  @ApiProperty({
+    description: '该模块占总基数的比例，例如 0.04',
+    example: 0.04,
+  })
   @IsNumber()
   @IsNotEmpty()
   shareRatio: number;
 
-  @ApiPropertyOptional({ description: '发生退款时是否需要按比例扣回', default: true })
+  @ApiPropertyOptional({
+    description: '发生退款时是否需要按比例扣回',
+    default: true,
+  })
   @IsBoolean()
   @IsOptional()
   isRefundable?: boolean;
 
-  @ApiPropertyOptional({ description: '结算模式，NONE: 不分摊, MONTHLY: 按月分摊, END_OF_TERM: 服务结束后结算', default: 'NONE', enum: ['NONE', 'MONTHLY', 'END_OF_TERM'] })
+  @ApiPropertyOptional({
+    description:
+      '结算模式，NONE: 不分摊, MONTHLY: 按月分摊, END_OF_TERM: 服务结束后结算',
+    default: 'NONE',
+    enum: ['NONE', 'MONTHLY', 'END_OF_TERM'],
+  })
   @IsString()
   @IsOptional()
   @IsEnum(['NONE', 'MONTHLY', 'END_OF_TERM'])
   amortizationType?: 'NONE' | 'MONTHLY' | 'END_OF_TERM';
 
-  @ApiProperty({ type: [CreateProfitShareAllocationDto], description: '成员分配规则列表' })
+  @ApiProperty({
+    type: [CreateProfitShareAllocationDto],
+    description: '成员分配规则列表',
+  })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreateProfitShareAllocationDto)
@@ -95,12 +112,19 @@ export class CreateProfitShareRuleDto {
   @IsNotEmpty()
   validEndTime: string;
 
-  @ApiPropertyOptional({ enum: ProfitShareRuleStatus, description: '状态', default: ProfitShareRuleStatus.ACTIVE })
+  @ApiPropertyOptional({
+    enum: ProfitShareRuleStatus,
+    description: '状态',
+    default: ProfitShareRuleStatus.ACTIVE,
+  })
   @IsEnum(ProfitShareRuleStatus)
   @IsOptional()
   status?: ProfitShareRuleStatus;
 
-  @ApiProperty({ type: [CreateProfitShareModuleDto], description: '分润模块配置列表' })
+  @ApiProperty({
+    type: [CreateProfitShareModuleDto],
+    description: '分润模块配置列表',
+  })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CreateProfitShareModuleDto)

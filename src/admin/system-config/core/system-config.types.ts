@@ -45,4 +45,3 @@ export interface ConfigRegistryEntry {
 export interface ConfigTestProvider {
   test(value: SystemConfigValues): Promise<void>;
 }
-
