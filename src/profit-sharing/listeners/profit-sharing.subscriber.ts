@@ -46,6 +46,7 @@ export class ProfitSharingSubscriber {
       await this.profitSharingService.handleRefundClawback(
         payload.orderId,
         payload.refundAmount,
+        payload.settledAt,
       );
     } catch (error) {
       this.logger.error(

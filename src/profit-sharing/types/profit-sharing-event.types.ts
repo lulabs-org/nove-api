@@ -15,4 +15,5 @@ export interface OrderFinancialClosedEventPayload {
 export interface OrderRefundedEventPayload {
   orderId: string;
   refundAmount: number;
+  settledAt?: Date | string;
 }

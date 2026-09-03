@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Prisma, RefundStatus } from '@prisma/client';
 import {
   CreateOrderRefundDto,
@@ -34,7 +35,10 @@ const SORT_FIELDS: Record<
 
 @Injectable()
 export class OrderRefundService {
-  constructor(private readonly repository: OrderRefundRepository) {}
+  constructor(
+    private readonly repository: OrderRefundRepository,
+    private readonly eventEmitter?: EventEmitter2,
+  ) {}
 
   async create(
     dto: CreateOrderRefundDto,
@@ -65,6 +69,20 @@ export class OrderRefundService {
         : undefined,
       creator: actorId ? { connect: { id: actorId } } : undefined,
     });
+
+    if (
+      item.status === RefundStatus.SETTLED &&
+      item.orderId &&
+      item.refundAmount &&
+      item.refundAmount > 0
+    ) {
+      this.eventEmitter?.emit('order.refunded', {
+        orderId: item.orderId,
+        refundAmount: item.refundAmount,
+        settledAt: item.financialSettledAt ?? new Date(),
+      });
+    }
+
     return this.toDto(item);
   }
 
@@ -123,20 +141,33 @@ export class OrderRefundService {
     await this.findActive(id);
     const status = dto.status ?? RefundStatus.SETTLED;
     const now = new Date();
-    return this.toDto(
-      await this.repository.update(id, {
-        status,
-        financialNote: this.trimNullable(dto.financialNote),
-        refundedAt:
-          status === RefundStatus.SETTLED
-            ? (this.toDate(dto.refundedAt) ?? now)
-            : null,
-        financialSettledAt:
-          status === RefundStatus.SETTLED
-            ? (this.toDate(dto.financialSettledAt) ?? now)
-            : null,
-      }),
-    );
+    const updated = await this.repository.update(id, {
+      status,
+      financialNote: this.trimNullable(dto.financialNote),
+      refundedAt:
+        status === RefundStatus.SETTLED
+          ? (this.toDate(dto.refundedAt) ?? now)
+          : null,
+      financialSettledAt:
+        status === RefundStatus.SETTLED
+          ? (this.toDate(dto.financialSettledAt) ?? now)
+          : null,
+    });
+
+    if (
+      status === RefundStatus.SETTLED &&
+      updated.orderId &&
+      updated.refundAmount &&
+      updated.refundAmount > 0
+    ) {
+      this.eventEmitter?.emit('order.refunded', {
+        orderId: updated.orderId,
+        refundAmount: updated.refundAmount,
+        settledAt: updated.financialSettledAt ?? now,
+      });
+    }
+
+    return this.toDto(updated);
   }
 
   async delete(id: string): Promise<void> {
