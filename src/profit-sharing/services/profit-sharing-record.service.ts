@@ -1,6 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
+import { RecordQueryOptions } from '../types';
 import { ProfitSharingRecordRepository } from '../repositories/profit-sharing-record.repository';
 
 @Injectable()
@@ -15,13 +16,7 @@ export class ProfitSharingRecordService {
   /**
    * 获取流水分页列表
    */
-  async getRecords(
-    args: {
-      where?: Prisma.ProfitShareRecordWhereInput;
-      skip?: number;
-      take?: number;
-    } = {},
-  ) {
+  async getRecords(args: RecordQueryOptions = {}) {
     const [records, total] = await Promise.all([
       this.recordRepository.findRecordsWithDetails(args),
       this.recordRepository.countRecords(args.where),

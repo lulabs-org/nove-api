@@ -8,15 +8,7 @@ import {
   Order,
 } from '@prisma/client';
 
-type RuleWithDetails = Prisma.ProfitShareRuleGetPayload<{
-  include: {
-    modules: {
-      include: {
-        allocations: true;
-      };
-    };
-  };
-}>;
+import { RuleWithDetails } from '../types';
 import { ProfitSharingRuleRepository } from '../repositories/profit-sharing-rule.repository';
 import { ProfitSharingRecordRepository } from '../repositories/profit-sharing-record.repository';
 
@@ -378,26 +370,38 @@ export class ProfitSharingService {
     const end = new Date(rule.validEndTime);
     const now = new Date();
 
-    // 确定计算的月份范围（长期有效时最多计算至当前月份）
-    const maxDate =
-      end.getFullYear() >= 2090
-        ? new Date(now.getFullYear(), now.getMonth(), 1)
-        : new Date(end.getFullYear(), end.getMonth(), 1);
+    // 统一以东八区（Asia/Shanghai / UTC+8）换算年月，防止 UTC 服务器因跨时区产生起始月偏移
+    const getBeijingYearMonth = (d: Date) => {
+      const bjDate = new Date(d.getTime() + 8 * 3600 * 1000);
+      return {
+        year: bjDate.getUTCFullYear(),
+        month: bjDate.getUTCMonth() + 1,
+      };
+    };
+
+    const startYM = getBeijingYearMonth(start);
+    const endYM = getBeijingYearMonth(end);
+    const nowYM = getBeijingYearMonth(now);
+
+    const isPermanent = endYM.year >= 2090;
+    const targetEndY = isPermanent ? nowYM.year : endYM.year;
+    const targetEndM = isPermanent ? nowYM.month : endYM.month;
 
     const months: string[] = [];
-    const curr = new Date(start.getFullYear(), start.getMonth(), 1);
+    let curY = startYM.year;
+    let curM = startYM.month;
 
-    while (curr <= maxDate) {
-      const y = curr.getFullYear();
-      const m = String(curr.getMonth() + 1).padStart(2, '0');
-      months.push(`${y}-${m}`);
-      curr.setMonth(curr.getMonth() + 1);
+    while (curY < targetEndY || (curY === targetEndY && curM <= targetEndM)) {
+      months.push(`${curY}-${String(curM).padStart(2, '0')}`);
+      curM++;
+      if (curM > 12) {
+        curM = 1;
+        curY++;
+      }
     }
 
     if (months.length === 0) {
-      const y = start.getFullYear();
-      const m = String(start.getMonth() + 1).padStart(2, '0');
-      months.push(`${y}-${m}`);
+      months.push(`${startYM.year}-${String(startYM.month).padStart(2, '0')}`);
     }
 
     const recordsToCreate: Prisma.ProfitShareRecordCreateManyInput[] = [];

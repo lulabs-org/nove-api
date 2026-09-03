@@ -29,11 +29,8 @@ export class DuplicateProfitShareRuleDto {
   status?: ProfitShareRuleStatus;
 }
 
-export type PeriodStrategy =
-  | 'NEXT_MONTH'
-  | 'SPECIFIC_MONTH'
-  | 'CUSTOM_RANGE'
-  | 'KEEP';
+import { PeriodStrategy } from '../types';
+export type { PeriodStrategy };
 
 export class BatchDuplicateProfitShareRuleDto {
   @ApiProperty({ description: '待复制的规则ID列表', type: [String] })

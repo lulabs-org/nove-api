@@ -269,14 +269,24 @@ export class ProfitSharingRuleService {
       let newName = '';
 
       if (strategy === 'NEXT_MONTH') {
-        targetStart = new Date(sourceStart);
-        targetStart.setMonth(targetStart.getMonth() + 1);
+        const bjStart = new Date(sourceStart.getTime() + 8 * 3600 * 1000);
+        const nextMonthY =
+          bjStart.getUTCMonth() === 11
+            ? bjStart.getUTCFullYear() + 1
+            : bjStart.getUTCFullYear();
+        const nextMonthM = (bjStart.getUTCMonth() + 1) % 12;
+
+        const nextStartUtc =
+          Date.UTC(nextMonthY, nextMonthM, 1) - 8 * 3600 * 1000;
+        targetStart = new Date(nextStartUtc);
 
         if (isPermanent) {
           targetEnd = sourceEnd;
         } else {
-          targetEnd = new Date(sourceEnd);
-          targetEnd.setMonth(targetEnd.getMonth() + 1);
+          const nextEndUtc =
+            Date.UTC(nextMonthY, nextMonthM + 1, 0, 23, 59, 59, 999) -
+            8 * 3600 * 1000;
+          targetEnd = new Date(nextEndUtc);
         }
         newName = this.shiftMonthInName(
           source.name,
@@ -286,8 +296,12 @@ export class ProfitSharingRuleService {
         );
       } else if (strategy === 'SPECIFIC_MONTH' && dto.targetMonth) {
         const [y, m] = dto.targetMonth.split('-').map(Number);
-        targetStart = new Date(y, m - 1, 1, 0, 0, 0, 0);
-        targetEnd = new Date(y, m, 0, 23, 59, 59, 999);
+        targetStart = new Date(
+          Date.UTC(y, m - 1, 1, 0, 0, 0, 0) - 8 * 3600 * 1000,
+        );
+        targetEnd = new Date(
+          Date.UTC(y, m, 0, 23, 59, 59, 999) - 8 * 3600 * 1000,
+        );
         newName = this.shiftMonthInName(
           source.name,
           sourceStart,
@@ -358,10 +372,20 @@ export class ProfitSharingRuleService {
       return `${name}${nameSuffix}`;
     }
 
-    const fromYear = fromStart.getFullYear();
-    const fromMonth = fromStart.getMonth() + 1;
-    const toYear = toStart.getFullYear();
-    const toMonth = toStart.getMonth() + 1;
+    const getBeijingYearMonth = (d: Date) => {
+      const bjDate = new Date(d.getTime() + 8 * 3600 * 1000);
+      return {
+        year: bjDate.getUTCFullYear(),
+        month: bjDate.getUTCMonth() + 1,
+      };
+    };
+
+    const fromYM = getBeijingYearMonth(fromStart);
+    const toYM = getBeijingYearMonth(toStart);
+    const fromYear = fromYM.year;
+    const fromMonth = fromYM.month;
+    const toYear = toYM.year;
+    const toMonth = toYM.month;
 
     const newName = name;
     if (newName.includes(`${fromYear}年${fromMonth}月`)) {
