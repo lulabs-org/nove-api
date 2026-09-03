@@ -41,7 +41,9 @@ export class ProfitSharingCron {
    */
   @Cron(CronExpression.EVERY_DAY_AT_2AM)
   async handleMonthlyFixedGeneration() {
-    this.logger.log('Start automatic monthly fixed profit sharing generation...');
+    this.logger.log(
+      'Start automatic monthly fixed profit sharing generation...',
+    );
 
     try {
       const activeFixedRules = await this.prisma.profitShareRule.findMany({

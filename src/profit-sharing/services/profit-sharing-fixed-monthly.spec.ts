@@ -1,5 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/unbound-method */
 import { BadRequestException } from '@nestjs/common';
-import { ProfitShareRuleStatus, ProfitShareRuleType, ProfitShareRecordStatus } from '@prisma/client';
+import {
+  ProfitShareRuleStatus,
+  ProfitShareRuleType,
+  ProfitShareRecordStatus,
+} from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { ProfitSharingRuleService } from './profit-sharing-rule.service';
 import { ProfitSharingService } from './profit-sharing.service';
@@ -175,7 +180,8 @@ describe('ProfitSharing Fixed Monthly Payout', () => {
       prismaService.profitShareRecord.findFirst.mockResolvedValue(null);
       recordRepository.createMany.mockResolvedValue({ count: 2 });
 
-      const res = await profitSharingService.calculateForSpecificRule('rule-fixed-1');
+      const res =
+        await profitSharingService.calculateForSpecificRule('rule-fixed-1');
 
       expect(res.success).toBe(true);
       expect(res.processedOrders).toBe(2); // 2 months (2026-09, 2026-10)
@@ -250,7 +256,8 @@ describe('ProfitSharing Fixed Monthly Payout', () => {
         status: ProfitShareRecordStatus.PENDING,
       });
 
-      const res = await profitSharingService.calculateForSpecificRule('rule-fixed-1');
+      const res =
+        await profitSharingService.calculateForSpecificRule('rule-fixed-1');
 
       expect(res.success).toBe(true);
       expect(res.processedOrders).toBe(0); // 0 new records created
@@ -319,7 +326,9 @@ describe('ProfitSharing Fixed Monthly Payout', () => {
       };
 
       prismaService.order.findUnique.mockResolvedValue(order1);
-      ruleRepository.findActiveRulesForOrder.mockResolvedValue([orderRule as any]);
+      ruleRepository.findActiveRulesForOrder.mockResolvedValue([
+        orderRule as any,
+      ]);
       recordRepository.createMany.mockResolvedValue({ count: 2 });
 
       await profitSharingService.calculateProfitShare('order-1001');
@@ -397,7 +406,9 @@ describe('ProfitSharing Fixed Monthly Payout', () => {
       };
 
       prismaService.order.findUnique.mockResolvedValue(orderWithoutOwner);
-      ruleRepository.findActiveRulesForOrder.mockResolvedValue([orderRule as any]);
+      ruleRepository.findActiveRulesForOrder.mockResolvedValue([
+        orderRule as any,
+      ]);
       recordRepository.createMany.mockResolvedValue({ count: 1 });
 
       await profitSharingService.calculateProfitShare('order-1002');
@@ -448,8 +459,8 @@ describe('ProfitSharing Fixed Monthly Payout', () => {
       };
 
       ruleRepository.findByIdWithDetails.mockResolvedValue(sourceRule as any);
-      (ruleRepository.createWithDetails as any).mockImplementation((data: any) =>
-        Promise.resolve({ id: 'rule-dup-1', ...data }),
+      (ruleRepository.createWithDetails as any).mockImplementation(
+        (data: any) => Promise.resolve({ id: 'rule-dup-1', ...data }),
       );
 
       const duplicated = await ruleService.duplicateRule('rule-src-1');
@@ -503,8 +514,8 @@ describe('ProfitSharing Fixed Monthly Payout', () => {
       };
 
       ruleRepository.findByIdWithDetails.mockResolvedValue(sourceRule as any);
-      (ruleRepository.createWithDetails as any).mockImplementation((data: any) =>
-        Promise.resolve({ id: 'rule-dup-2', ...data }),
+      (ruleRepository.createWithDetails as any).mockImplementation(
+        (data: any) => Promise.resolve({ id: 'rule-dup-2', ...data }),
       );
 
       const res = await ruleService.batchDuplicateRules({

@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Query,
-  Param,
-  Res,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, Param, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
@@ -46,7 +38,9 @@ export class ProfitSharingPayslipController {
 
   @Get('historical-stats')
   @RequirePermissions('profit-sharing:read')
-  @ApiOperation({ summary: '获取成员/全员过往各月薪资与分润统计数据（供看板统计图表使用）' })
+  @ApiOperation({
+    summary: '获取成员/全员过往各月薪资与分润统计数据（供看板统计图表使用）',
+  })
   async getHistoricalSalaryStats(
     @Query('memberId') memberId?: string,
     @Query('months') months?: string,
@@ -69,7 +63,9 @@ export class ProfitSharingPayslipController {
 
   @Post('adjustments')
   @RequirePermissions('profit-sharing:create')
-  @ApiOperation({ summary: '手工录入员工当月薪资调整项（各类奖金、津贴补贴、扣除项等）' })
+  @ApiOperation({
+    summary: '手工录入员工当月薪资调整项（各类奖金、津贴补贴、扣除项等）',
+  })
   async createAdjustment(@Body() dto: CreatePayslipAdjustmentDto) {
     return this.payslipService.createAdjustment(dto);
   }

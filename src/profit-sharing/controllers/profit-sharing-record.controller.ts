@@ -1,4 +1,12 @@
-import { Controller, Get, Query, Post, Delete, Param, Body } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Query,
+  Post,
+  Delete,
+  Param,
+  Body,
+} from '@nestjs/common';
 import { Prisma, ProfitShareRecordStatus } from '@prisma/client';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
@@ -52,7 +60,11 @@ export class ProfitSharingRecordController {
       if (endDate) where.createdAt.lte = new Date(endDate);
     }
 
-    const { data, total } = await this.recordService.getRecords({ where, skip, take: pageSize });
+    const { data, total } = await this.recordService.getRecords({
+      where,
+      skip,
+      take: pageSize,
+    });
     return { data, total, page, pageSize };
   }
 

@@ -63,7 +63,7 @@ export class ProfitSharingPayslipService {
    * 识别流水记录归属的薪酬板块类别
    */
   classifyRecord(r: {
-    ruleSnapshot?: any;
+    ruleSnapshot?: unknown;
     status: ProfitShareRecordStatus;
     profitAmount: number;
     orderId?: string | null;
@@ -71,8 +71,18 @@ export class ProfitSharingPayslipService {
     rule?: { name: string; ruleType?: ProfitShareRuleType } | null;
   }): PayslipItemCategory {
     // 1. 优先读取快照中的显式类别定义
-    const snapshotCategory = (r.ruleSnapshot as any)?.category;
-    if (snapshotCategory && Object.values(PayslipItemCategory).includes(snapshotCategory)) {
+    const snapshot = r.ruleSnapshot as
+      | Record<string, unknown>
+      | null
+      | undefined;
+    const snapshotCategory =
+      typeof snapshot?.category === 'string' ? snapshot.category : undefined;
+    if (
+      snapshotCategory &&
+      (Object.values(PayslipItemCategory) as string[]).includes(
+        snapshotCategory,
+      )
+    ) {
       return snapshotCategory as PayslipItemCategory;
     }
 
@@ -91,17 +101,26 @@ export class ProfitSharingPayslipService {
     }
 
     // 3. 各类奖金：含“奖”、“绩效”、“销冠”、“全勤”、“激励”、“分红”等关键字
-    if (/奖|绩效|销冠|全勤|激励|优秀|年终|分红|bonus|incentive/.test(combined)) {
+    if (
+      /奖|绩效|销冠|全勤|激励|优秀|年终|分红|bonus|incentive/.test(combined)
+    ) {
       return PayslipItemCategory.BONUS;
     }
 
     // 4. 津贴补贴：含“补”、“津贴”、“餐”、“车”、“房”、“交通”、“通讯”、“话费”等关键字
-    if (/补|津贴|餐|车|房|交通|话费|通讯|差旅|住宿|subsidy|allowance/.test(combined)) {
+    if (
+      /补|津贴|餐|车|房|交通|话费|通讯|差旅|住宿|subsidy|allowance/.test(
+        combined,
+      )
+    ) {
       return PayslipItemCategory.SUBSIDY;
     }
 
     // 5. 订单提成：关联订单或 ORDER_PERCENTAGE 规则
-    if (r.orderId !== null || r.rule?.ruleType === ProfitShareRuleType.ORDER_PERCENTAGE) {
+    if (
+      r.orderId !== null ||
+      r.rule?.ruleType === ProfitShareRuleType.ORDER_PERCENTAGE
+    ) {
       return PayslipItemCategory.COMMISSION;
     }
 
@@ -112,7 +131,11 @@ export class ProfitSharingPayslipService {
   /**
    * 解析月份时间边界
    */
-  private getMonthRange(monthStr?: string): { month: string; start: Date; end: Date } {
+  private getMonthRange(monthStr?: string): {
+    month: string;
+    start: Date;
+    end: Date;
+  } {
     let month = monthStr;
     if (!month) {
       const now = new Date();
@@ -187,11 +210,20 @@ export class ProfitSharingPayslipService {
 
     const userMap = new Map<
       string,
-      { name: string; username?: string; role?: string; department?: string; phone?: string }
+      {
+        name: string;
+        username?: string;
+        role?: string;
+        department?: string;
+        phone?: string;
+      }
     >();
     for (const u of users) {
-      const name = u.profile?.displayName || u.profile?.fullName || u.username || u.id;
-      const roles = u.orgMembers.flatMap((m) => m.memberRoles.map((mr) => mr.role.name));
+      const name =
+        u.profile?.displayName || u.profile?.fullName || u.username || u.id;
+      const roles = u.orgMembers.flatMap((m) =>
+        m.memberRoles.map((mr) => mr.role.name),
+      );
       const role = roles.length > 0 ? roles[0] : undefined;
       const department = u.orgMembers?.[0]?.primaryDept?.name;
       userMap.set(u.id, {
@@ -215,7 +247,7 @@ export class ProfitSharingPayslipService {
       let deductionAmount = 0;
       let settledAmount = 0;
       let pendingAmount = 0;
-      
+
       const orderIds = new Set<string>();
       let bonusCount = 0;
       let subsidyCount = 0;
@@ -256,7 +288,12 @@ export class ProfitSharingPayslipService {
         }
       }
 
-      const totalGrossAmount = baseSalaryAmount + commissionAmount + bonusAmount + subsidyAmount - deductionAmount;
+      const totalGrossAmount =
+        baseSalaryAmount +
+        commissionAmount +
+        bonusAmount +
+        subsidyAmount -
+        deductionAmount;
 
       let status: 'SETTLED' | 'PENDING' | 'PARTIALLY_SETTLED' = 'PENDING';
       if (pendingAmount === 0 && settledAmount > 0) {
@@ -310,11 +347,20 @@ export class ProfitSharingPayslipService {
     const summary: PayslipMonthStats = {
       month,
       totalGrossAmount: items.reduce((sum, i) => sum + i.totalGrossAmount, 0),
-      totalBaseSalaryAmount: items.reduce((sum, i) => sum + i.baseSalaryAmount, 0),
-      totalCommissionAmount: items.reduce((sum, i) => sum + i.commissionAmount, 0),
+      totalBaseSalaryAmount: items.reduce(
+        (sum, i) => sum + i.baseSalaryAmount,
+        0,
+      ),
+      totalCommissionAmount: items.reduce(
+        (sum, i) => sum + i.commissionAmount,
+        0,
+      ),
       totalBonusAmount: items.reduce((sum, i) => sum + i.bonusAmount, 0),
       totalSubsidyAmount: items.reduce((sum, i) => sum + i.subsidyAmount, 0),
-      totalDeductionAmount: items.reduce((sum, i) => sum + i.deductionAmount, 0),
+      totalDeductionAmount: items.reduce(
+        (sum, i) => sum + i.deductionAmount,
+        0,
+      ),
       totalSettledAmount: items.reduce((sum, i) => sum + i.settledAmount, 0),
       totalPendingAmount: items.reduce((sum, i) => sum + i.pendingAmount, 0),
       totalMembers: items.length,
@@ -383,8 +429,13 @@ export class ProfitSharingPayslipService {
     }
 
     const memberName =
-      user.profile?.displayName || user.profile?.fullName || user.username || user.id;
-    const roles = user.orgMembers.flatMap((m) => m.memberRoles.map((mr) => mr.role.name));
+      user.profile?.displayName ||
+      user.profile?.fullName ||
+      user.username ||
+      user.id;
+    const roles = user.orgMembers.flatMap((m) =>
+      m.memberRoles.map((mr) => mr.role.name),
+    );
     const memberRole = roles.length > 0 ? roles[0] : '员工';
     const departmentName = user.orgMembers?.[0]?.primaryDept?.name;
 
@@ -418,7 +469,11 @@ export class ProfitSharingPayslipService {
         orderNumber: r.order?.orderNumber,
         orderAmount: r.order?.amount,
         channelName: r.order?.channel?.name,
-        remark: (r.ruleSnapshot as any)?.remark,
+        remark:
+          typeof (r.ruleSnapshot as Record<string, unknown> | null)?.remark ===
+          'string'
+            ? ((r.ruleSnapshot as Record<string, unknown>).remark as string)
+            : undefined,
       };
 
       switch (category) {
@@ -453,7 +508,11 @@ export class ProfitSharingPayslipService {
     }
 
     const totalGrossAmount =
-      baseSalaryAmount + commissionAmount + bonusAmount + subsidyAmount - deductionAmount;
+      baseSalaryAmount +
+      commissionAmount +
+      bonusAmount +
+      subsidyAmount -
+      deductionAmount;
 
     return {
       member: {
@@ -535,7 +594,9 @@ export class ProfitSharingPayslipService {
     }
 
     const isDeduction = dto.category === PayslipItemCategory.DEDUCTION;
-    const profitAmount = isDeduction ? -Math.abs(dto.amount) : Math.abs(dto.amount);
+    const profitAmount = isDeduction
+      ? -Math.abs(dto.amount)
+      : Math.abs(dto.amount);
     const status = isDeduction
       ? ProfitShareRecordStatus.CLAWBACK
       : ProfitShareRecordStatus.PENDING;
@@ -618,7 +679,7 @@ export class ProfitSharingPayslipService {
    * 导出月度工资条 CSV
    */
   async exportPayslipsCsv(monthStr?: string): Promise<string> {
-    const { month, items } = await this.getPayslips({ month: monthStr });
+    const { items } = await this.getPayslips({ month: monthStr });
 
     const headers = [
       '员工姓名',
@@ -653,12 +714,17 @@ export class ProfitSharingPayslipService {
       (item.totalGrossAmount / 100).toFixed(2),
       (item.settledAmount / 100).toFixed(2),
       (item.pendingAmount / 100).toFixed(2),
-      item.status === 'SETTLED' ? '全部已结' : item.status === 'PARTIALLY_SETTLED' ? '部分已结' : '待结算',
+      item.status === 'SETTLED'
+        ? '全部已结'
+        : item.status === 'PARTIALLY_SETTLED'
+          ? '部分已结'
+          : '待结算',
     ]);
 
     // UTF-8 BOM (\uFEFF) 防止 Excel 打开中文乱码
     const csvContent =
-      '\uFEFF' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\r\n');
+      '\uFEFF' +
+      [headers.join(','), ...rows.map((r) => r.join(','))].join('\r\n');
     return csvContent;
   }
 
@@ -787,7 +853,18 @@ export class ProfitSharingPayslipService {
 
       // 初始化该成员的数据容器
       if (!memberMonthDataMap.has(r.memberId)) {
-        const mmap = new Map();
+        const mmap = new Map<
+          string,
+          {
+            baseSalaryAmount: number;
+            commissionAmount: number;
+            bonusAmount: number;
+            subsidyAmount: number;
+            deductionAmount: number;
+            settledAmount: number;
+            pendingAmount: number;
+          }
+        >();
         for (const m of monthList) {
           mmap.set(m, {
             baseSalaryAmount: 0,
@@ -872,7 +949,7 @@ export class ProfitSharingPayslipService {
       catSubsidy += d.subsidyAmount;
       catDeduction += d.deductionAmount;
 
-      const [y, mm] = m.split('-');
+      const [, mm] = m.split('-');
       const label = `${parseInt(mm, 10)}月`;
 
       return {
@@ -912,9 +989,14 @@ export class ProfitSharingPayslipService {
 
     const members = users.map((u) => {
       const name =
-        u.profile?.displayName || u.profile?.fullName || u.username || u.phone || u.id;
+        u.profile?.displayName ||
+        u.profile?.fullName ||
+        u.username ||
+        u.phone ||
+        u.id;
       const roles =
-        u.orgMembers?.flatMap((m) => m.memberRoles.map((mr) => mr.role.name)) || [];
+        u.orgMembers?.flatMap((m) => m.memberRoles.map((mr) => mr.role.name)) ||
+        [];
       const role = roles.length > 0 ? roles[0] : undefined;
       const department = u.orgMembers?.[0]?.primaryDept?.name;
       return {
@@ -967,7 +1049,7 @@ export class ProfitSharingPayslipService {
         totalSettled += d.settledAmount;
         totalPending += d.pendingAmount;
 
-        const [y, mm] = m.split('-');
+        const [, mm] = m.split('-');
         return {
           month: m,
           label: `${parseInt(mm, 10)}月`,
