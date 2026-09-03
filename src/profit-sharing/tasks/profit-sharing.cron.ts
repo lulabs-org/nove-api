@@ -63,4 +63,24 @@ export class ProfitSharingCron {
       );
     }
   }
+
+  /**
+   * 每天凌晨 3 点执行：全局退款回扣巡检与对账补偿兜底
+   */
+  @Cron(CronExpression.EVERY_DAY_AT_3AM)
+  async handleRefundReconciliation() {
+    this.logger.log('Start automatic refund reconciliation cron job...');
+
+    try {
+      const res = await this.profitSharingService.reconcileRefundClawbacks();
+      this.logger.log(
+        `Automatic refund reconciliation completed: scanned ${res.scannedRefunds} refunds, compensated ${res.compensatedOrders} orders, amount: ¥${res.totalCompensatedAmount}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        'Failed to execute automatic refund reconciliation cron job',
+        error,
+      );
+    }
+  }
 }
