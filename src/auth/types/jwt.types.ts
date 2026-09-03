@@ -67,6 +67,13 @@ export interface JwtTokenBlacklist {
     jti: string,
     scope?: TokenBlacklistScope,
   ): Promise<boolean> | boolean;
+
+  // 用户级撤销边界：签发时间（iat，秒）不晚于该边界的 token 均视为已撤销。
+  // 用于全端登出/密码重置等需要批量失效 access token 的场景。
+  isUserRevokedBefore?(
+    userId: string,
+    iatSec: number,
+  ): Promise<boolean> | boolean;
 }
 
 // Injection token for providing a token blacklist implementation from the app layer

@@ -240,6 +240,7 @@ export class AuthController {
       accessTokenRevoked: boolean;
       refreshTokenRevoked: boolean;
       allDevicesLoggedOut?: boolean;
+      allAccessTokensRevoked?: boolean;
       revokedTokensCount?: number;
     };
   }> {
@@ -313,6 +314,7 @@ export class AuthController {
           accessTokenRevoked: logoutResult.accessTokenRevoked,
           refreshTokenRevoked: logoutResult.refreshTokenRevoked,
           allDevicesLoggedOut: logoutResult.allDevicesLoggedOut,
+          allAccessTokensRevoked: logoutResult.allAccessTokensRevoked,
           revokedTokensCount: logoutResult.revokedTokensCount,
         },
       };

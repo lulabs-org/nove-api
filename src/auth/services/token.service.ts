@@ -210,11 +210,17 @@ export class TokenService {
     };
 
     try {
-      const accessTokenResult = await this.tokenBlacklist.add(
-        accessToken,
-        TokenBlacklistScope.AccessToken,
-      );
-      result.accessTokenRevoked = accessTokenResult.added;
+      // revokeAllDevices 时不预先拉黑当前 jti：若用户级撤销标记写入失败，
+      // 当前 access token 必须保持可用，客户端才能携带同一 token 重试
+      // （jti 一旦入黑名单，重试请求会在 JwtStrategy 校验处被 401 拦截）。
+      // 成功路径下用户级标记本身即覆盖当前 token（iat <= 撤销时间点）。
+      if (!options.revokeAllDevices) {
+        const accessTokenResult = await this.tokenBlacklist.add(
+          accessToken,
+          TokenBlacklistScope.AccessToken,
+        );
+        result.accessTokenRevoked = accessTokenResult.added;
+      }
 
       if (options.refreshToken) {
         try {
@@ -228,9 +234,29 @@ export class TokenService {
       }
 
       if (options.revokeAllDevices) {
+        // 先撤销全部 refresh token（封死新签发），再写入用户级撤销标记，
+        // 令所有已签发的 access token 在自然过期前立即失效。
+        // setUserRevokedBefore 是 fail-closed：Redis 抖动不抛错，而是返回
+        // added=false；此时当前 token 未被拉黑（见上方跳过 jti 拉黑的注释），
+        // 据此提前返回失败，客户端可携带同一 access token 重试（操作幂等）。
         const revokedCount =
           await this.refreshTokenRepo.revokeAllTokensByUserId(userId);
+        const userRevocation =
+          await this.tokenBlacklist.setUserRevokedBefore(userId);
+
+        if (!userRevocation.added) {
+          result.revokedTokensCount = revokedCount;
+          result.message =
+            '退出登录未完全成功：刷新令牌已全部撤销，但访问令牌撤销失败，请重试';
+          this.logger.warn(
+            `User ${userId} logout: refresh tokens revoked (${revokedCount}), but user-level revocation marker not written`,
+          );
+          return result;
+        }
+
+        result.accessTokenRevoked = true;
         result.allDevicesLoggedOut = true;
+        result.allAccessTokensRevoked = true;
         result.revokedTokensCount = revokedCount;
       } else if (options.deviceId) {
         const revokedCount = await this.refreshTokenRepo.revokeTokensByDeviceId(
