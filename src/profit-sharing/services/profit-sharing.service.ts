@@ -302,10 +302,13 @@ export class ProfitSharingService {
             remainingProfit -= currentProfit;
 
             const settlementTime = new Date(benefitStartTime);
-            settlementTime.setMonth(settlementTime.getMonth() + i);
+            const pMonth = `${settlementTime.getFullYear()}-${String(
+              settlementTime.getMonth() + 1,
+            ).padStart(2, '0')}`;
 
             recordsData.push({
               orderId: order.id,
+              periodMonth: pMonth,
               ruleId: rule.id,
               moduleId: module.id,
               memberId: allocation.memberId,
@@ -329,8 +332,14 @@ export class ProfitSharingService {
             );
           }
 
+          const bTime = new Date(benefitStartTime);
+          const pMonth = `${bTime.getFullYear()}-${String(
+            bTime.getMonth() + 1,
+          ).padStart(2, '0')}`;
+
           recordsData.push({
             orderId: order.id,
+            periodMonth: pMonth,
             ruleId: rule.id,
             moduleId: module.id,
             memberId: allocation.memberId,
