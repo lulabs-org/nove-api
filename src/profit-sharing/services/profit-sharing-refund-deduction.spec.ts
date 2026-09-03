@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/unbound-method */
 import {
   ProfitShareRuleStatus,
   ProfitShareRuleType,
@@ -120,11 +120,14 @@ describe('ProfitSharing Refund Deduction in Calculations', () => {
     await profitSharingService.calculateProfitShare('order-part-refund');
 
     expect(recordRepository.createMany).toHaveBeenCalledTimes(1);
-    const createdData = recordRepository.createMany.mock.calls[0][0].data as any[];
+    const createdData = recordRepository.createMany.mock.calls[0][0]
+      .data as any[];
 
     // 1. 可退模块：正数提成流水 100000 * 4% = 4000 分
     const salesCommission = createdData.find(
-      (r: any) => r.moduleId === 'mod-sales' && r.status === ProfitShareRecordStatus.PENDING,
+      (r: any) =>
+        r.moduleId === 'mod-sales' &&
+        r.status === ProfitShareRecordStatus.PENDING,
     );
     expect(salesCommission).toBeDefined();
     expect(salesCommission.baseAmount).toBe(100000);
@@ -132,7 +135,9 @@ describe('ProfitSharing Refund Deduction in Calculations', () => {
 
     // 2. 可退模块：显式生成一条已回扣 (CLAWBACK) 负数流水：40000 * 4% = -1600 分 (-16 元)
     const salesClawback = createdData.find(
-      (r: any) => r.moduleId === 'mod-sales' && r.status === ProfitShareRecordStatus.CLAWBACK,
+      (r: any) =>
+        r.moduleId === 'mod-sales' &&
+        r.status === ProfitShareRecordStatus.CLAWBACK,
     );
     expect(salesClawback).toBeDefined();
     expect(salesClawback.baseAmount).toBe(40000);
@@ -140,14 +145,18 @@ describe('ProfitSharing Refund Deduction in Calculations', () => {
 
     // 3. 不可退模块：只生成正数提成流水，不生成 CLAWBACK 回扣
     const bonusCommission = createdData.find(
-      (r: any) => r.moduleId === 'mod-fixed-bonus' && r.status === ProfitShareRecordStatus.PENDING,
+      (r: any) =>
+        r.moduleId === 'mod-fixed-bonus' &&
+        r.status === ProfitShareRecordStatus.PENDING,
     );
     expect(bonusCommission).toBeDefined();
     expect(bonusCommission.baseAmount).toBe(100000);
     expect(bonusCommission.profitAmount).toBe(2000);
 
     const bonusClawback = createdData.find(
-      (r: any) => r.moduleId === 'mod-fixed-bonus' && r.status === ProfitShareRecordStatus.CLAWBACK,
+      (r: any) =>
+        r.moduleId === 'mod-fixed-bonus' &&
+        r.status === ProfitShareRecordStatus.CLAWBACK,
     );
     expect(bonusClawback).toBeUndefined();
   });
@@ -171,17 +180,22 @@ describe('ProfitSharing Refund Deduction in Calculations', () => {
     await profitSharingService.calculateProfitShare('order-full-refund');
 
     expect(recordRepository.createMany).toHaveBeenCalledTimes(1);
-    const createdData = recordRepository.createMany.mock.calls[0][0].data as any[];
+    const createdData = recordRepository.createMany.mock.calls[0][0]
+      .data as any[];
 
     // 可退模块正数流水 +4000
     const salesCommission = createdData.find(
-      (r: any) => r.moduleId === 'mod-sales' && r.status === ProfitShareRecordStatus.PENDING,
+      (r: any) =>
+        r.moduleId === 'mod-sales' &&
+        r.status === ProfitShareRecordStatus.PENDING,
     );
     expect(salesCommission.profitAmount).toBe(4000);
 
     // 可退模块全额回扣流水 -4000 (净值为 0)
     const salesClawback = createdData.find(
-      (r: any) => r.moduleId === 'mod-sales' && r.status === ProfitShareRecordStatus.CLAWBACK,
+      (r: any) =>
+        r.moduleId === 'mod-sales' &&
+        r.status === ProfitShareRecordStatus.CLAWBACK,
     );
     expect(salesClawback.profitAmount).toBe(-4000);
     expect(salesCommission.profitAmount + salesClawback.profitAmount).toBe(0);
@@ -205,20 +219,26 @@ describe('ProfitSharing Refund Deduction in Calculations', () => {
       },
     ]);
 
-    const result = await profitSharingService.calculateForSpecificRule('rule-order-test');
+    const result =
+      await profitSharingService.calculateForSpecificRule('rule-order-test');
     expect(result.success).toBe(true);
     expect(result.processedOrders).toBe(1);
 
-    const createdData = recordRepository.createMany.mock.calls[0][0].data as any[];
+    const createdData = recordRepository.createMany.mock.calls[0][0]
+      .data as any[];
     // 正数流水 50000 * 4% = 2000 分 (20 元)
     const salesCommission = createdData.find(
-      (r: any) => r.moduleId === 'mod-sales' && r.status === ProfitShareRecordStatus.PENDING,
+      (r: any) =>
+        r.moduleId === 'mod-sales' &&
+        r.status === ProfitShareRecordStatus.PENDING,
     );
     expect(salesCommission.profitAmount).toBe(2000);
 
     // 负数回扣流水 - (20000 * 4%) = -800 分 (-8 元)
     const salesClawback = createdData.find(
-      (r: any) => r.moduleId === 'mod-sales' && r.status === ProfitShareRecordStatus.CLAWBACK,
+      (r: any) =>
+        r.moduleId === 'mod-sales' &&
+        r.status === ProfitShareRecordStatus.CLAWBACK,
     );
     expect(salesClawback.profitAmount).toBe(-800);
   });

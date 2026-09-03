@@ -234,9 +234,10 @@ export class ProfitSharingService {
       this.logger.log(
         `Auto refund reconciliation on rule ${ruleId} completed: scanned ${reconcileRes.scannedRefunds}, compensated ${compensatedRefundOrders} orders`,
       );
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err);
       this.logger.warn(
-        `Auto refund reconciliation on rule ${ruleId} encountered non-critical error: ${err?.message}`,
+        `Auto refund reconciliation on rule ${ruleId} encountered non-critical error: ${errMsg}`,
       );
     }
 
@@ -256,8 +257,14 @@ export class ProfitSharingService {
     refundAmount: number,
     settledAt?: Date | string,
   ) {
+    const settledStr =
+      settledAt instanceof Date
+        ? settledAt.toISOString()
+        : settledAt
+          ? String(settledAt)
+          : 'now';
     this.logger.log(
-      `Handling refund clawback for order: ${orderId}, amount: ${refundAmount}, settledAt: ${settledAt}`,
+      `Handling refund clawback for order: ${orderId}, amount: ${refundAmount}, settledAt: ${settledStr}`,
     );
 
     const order = await this.prisma.order.findUnique({
@@ -295,7 +302,9 @@ export class ProfitSharingService {
       );
 
       // 2. 计算基于累计退款比例应扣减的总额
-      const targetTotalDeduction = Math.round(record.profitAmount * refundRatio);
+      const targetTotalDeduction = Math.round(
+        record.profitAmount * refundRatio,
+      );
 
       // 3. 计算本次需要增量追加的回扣金额（Incremental Clawback）
       const incrementalDeduction = targetTotalDeduction - alreadyClawedBack;
@@ -390,9 +399,10 @@ export class ProfitSharingService {
         );
         try {
           await this.calculateProfitShare(orderId);
-        } catch (err: any) {
+        } catch (err: unknown) {
+          const errMsg = err instanceof Error ? err.message : String(err);
           this.logger.warn(
-            `Failed to auto-calculate profit share for order ${orderId}: ${err?.message}`,
+            `Failed to auto-calculate profit share for order ${orderId}: ${errMsg}`,
           );
         }
       }
@@ -464,8 +474,10 @@ export class ProfitSharingService {
     order: Order & {
       refunds?: Array<{
         refundAmount?: number | null;
-        status?: RefundStatus | string;
+        status?: RefundStatus;
         deletedAt?: Date | null;
+        financialSettledAt?: Date | null;
+        createdAt?: Date | null;
       }>;
     },
     rule: RuleWithDetails,
@@ -480,7 +492,6 @@ export class ProfitSharingService {
     for (const module of rule.modules) {
       const isAmortized = module.amortizationType === 'MONTHLY';
       const isRefundable = module.isRefundable ?? true;
-
 
       let durationMonths = 1;
       let benefitStartTime = order.financialClosedAt || new Date();
@@ -619,24 +630,20 @@ export class ProfitSharingService {
           if (clawbackProfitAmount > 0) {
             // 获取已结算退款的发生时间或当前时间，作为回扣归属账期
             const sortedSettledRefunds = (order.refunds || [])
-              .filter(
-                (r) =>
-                  r.status === RefundStatus.SETTLED && !r.deletedAt,
-              )
-              .sort(
-                (a, b) =>
-                  new Date(
-                    (b as any).financialSettledAt ||
-                      (b as any).createdAt,
-                  ).getTime() -
-                  new Date(
-                    (a as any).financialSettledAt ||
-                      (a as any).createdAt,
-                  ).getTime(),
-              );
+              .filter((r) => r.status === RefundStatus.SETTLED && !r.deletedAt)
+              .sort((a, b) => {
+                const timeA = new Date(
+                  a.financialSettledAt || a.createdAt || 0,
+                ).getTime();
+                const timeB = new Date(
+                  b.financialSettledAt || b.createdAt || 0,
+                ).getTime();
+                return timeB - timeA;
+              });
+            const firstRefund = sortedSettledRefunds[0];
             const refundTime =
-              (sortedSettledRefunds[0] as any)?.financialSettledAt ||
-              (sortedSettledRefunds[0] as any)?.createdAt ||
+              firstRefund?.financialSettledAt ||
+              firstRefund?.createdAt ||
               new Date();
             const rDate = new Date(refundTime);
             const refundPeriodMonth = `${rDate.getFullYear()}-${String(

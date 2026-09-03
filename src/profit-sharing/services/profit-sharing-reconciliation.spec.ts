@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
 import { Test, TestingModule } from '@nestjs/testing';
 import { ProfitSharingService } from './profit-sharing.service';
 import { ProfitSharingRuleRepository } from '../repositories/profit-sharing-rule.repository';
@@ -47,7 +48,8 @@ describe('ProfitSharingService - Reconciliation Engine', () => {
       ],
     }).compile();
 
-    profitSharingService = module.get<ProfitSharingService>(ProfitSharingService);
+    profitSharingService =
+      module.get<ProfitSharingService>(ProfitSharingService);
   });
 
   it('should scan settled refunds and compensate missing clawback records', async () => {
@@ -85,7 +87,11 @@ describe('ProfitSharingService - Reconciliation Engine', () => {
         // before: no clawback; after: 1 clawback (-2000)
         if (recordRepository.create.mock.calls.length > 0) {
           return Promise.resolve([
-            { id: 'clawback-1', profitAmount: -2000, status: ProfitShareRecordStatus.CLAWBACK },
+            {
+              id: 'clawback-1',
+              profitAmount: -2000,
+              status: ProfitShareRecordStatus.CLAWBACK,
+            },
           ]);
         }
         return Promise.resolve([]);
@@ -125,8 +131,12 @@ describe('ProfitSharingService - Reconciliation Engine', () => {
 
     // 验证调用了 create 补充生成 CLAWBACK 记录
     expect(recordRepository.create).toHaveBeenCalledTimes(1);
-    expect(recordRepository.create.mock.calls[0][0].data.status).toBe(ProfitShareRecordStatus.CLAWBACK);
-    expect(recordRepository.create.mock.calls[0][0].data.profitAmount).toBe(-2000);
+    expect(recordRepository.create.mock.calls[0][0].data.status).toBe(
+      ProfitShareRecordStatus.CLAWBACK,
+    );
+    expect(recordRepository.create.mock.calls[0][0].data.profitAmount).toBe(
+      -2000,
+    );
   });
 
   it('should not compensate when clawback is already complete', async () => {
@@ -148,7 +158,11 @@ describe('ProfitSharingService - Reconciliation Engine', () => {
 
     // 历史已有 2500 分 CLAWBACK
     prismaService.profitShareRecord.findMany.mockResolvedValue([
-      { id: 'c-1', profitAmount: -2500, status: ProfitShareRecordStatus.CLAWBACK },
+      {
+        id: 'c-1',
+        profitAmount: -2500,
+        status: ProfitShareRecordStatus.CLAWBACK,
+      },
     ]);
 
     recordRepository.findRecordsForRefund.mockResolvedValue([
