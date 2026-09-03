@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Post, Param } from '@nestjs/common';
+import { Controller, Get, Query, Post, Delete, Param, Body } from '@nestjs/common';
 import { Prisma, ProfitShareRecordStatus } from '@prisma/client';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
@@ -15,6 +15,13 @@ export class ProfitSharingRecordController {
   @ApiOperation({ summary: '获取分润看板实时统计数据' })
   async getDashboardStats(@Query('month') month?: string) {
     return this.recordService.getDashboardStats(month);
+  }
+
+  @Post('batch-delete')
+  @RequirePermissions('profit-sharing:update')
+  @ApiOperation({ summary: '批量删除分润记录' })
+  async batchDeleteRecords(@Body('ids') ids: string[]) {
+    return this.recordService.batchDeleteRecords(ids);
   }
 
   @Get()
@@ -47,6 +54,13 @@ export class ProfitSharingRecordController {
 
     const { data, total } = await this.recordService.getRecords({ where, skip, take: pageSize });
     return { data, total, page, pageSize };
+  }
+
+  @Delete(':id')
+  @RequirePermissions('profit-sharing:update')
+  @ApiOperation({ summary: '删除单条分润记录' })
+  async deleteRecord(@Param('id') id: string) {
+    return this.recordService.deleteRecord(id);
   }
 
   @Post(':id/settle')

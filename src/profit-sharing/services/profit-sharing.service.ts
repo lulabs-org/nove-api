@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import {
   ProfitShareRecordStatus,
   ProfitShareRuleStatus,
+  ProfitShareRuleType,
   Prisma,
   Order,
 } from '@prisma/client';
@@ -77,14 +78,18 @@ export class ProfitSharingService {
   }
 
   /**
-   * 手动按规则批量补算历史订单分润
+   * 手动按规则批量补算历史订单分润或月度固定分账
    */
   async calculateForSpecificRule(ruleId: string) {
-    this.logger.log(`Start manual retroactive calculation for rule: ${ruleId}`);
+    this.logger.log(`Start manual calculation for rule: ${ruleId}`);
     const rule = await this.ruleRepository.findByIdWithDetails(ruleId);
     if (!rule || rule.status !== ProfitShareRuleStatus.ACTIVE) {
       this.logger.warn(`Rule ${ruleId} is not active or not found.`);
       return { success: false, message: '规则不存在或未启用' };
+    }
+
+    if (rule.ruleType === ProfitShareRuleType.FIXED_MONTHLY) {
+      return this.calculateFixedMonthlyRule(rule);
     }
 
     // 1. 找出该规则下已经有结算 (SETTLED) 或退回 (CLAWBACK) 流水的订单（这些订单被视为“已锁定”，不能再重算，也不能删除它们剩下的 PENDING 流水）
@@ -96,7 +101,9 @@ export class ProfitSharingService {
       select: { orderId: true },
       distinct: ['orderId'],
     });
-    const lockedOrderIds = lockedRecords.map(r => r.orderId);
+    const lockedOrderIds = lockedRecords
+      .map((r) => r.orderId)
+      .filter((id): id is string => Boolean(id));
 
     // 2. 删除该规则下所有尚未结算（PENDING）的流水，但必须排除掉那些“已锁定”的订单
     const deleted = await this.prisma.profitShareRecord.deleteMany({
@@ -234,22 +241,55 @@ export class ProfitSharingService {
         durationMonths = months > 0 ? months : 1;
       }
 
-      for (const allocation of module.allocations) {
-        if (!allocation.memberId) continue;
+      // 根据模块分配模式动态确定收益人与分配比例
+      let effectiveAllocations: Array<{ memberId: string; ratio: number }> = [];
 
+      if (module.allocationMode === 'ORDER_OWNER') {
+        const ownerId = order.currentOwnerId || module.allocations?.[0]?.memberId;
+        if (ownerId) {
+          effectiveAllocations = [{ memberId: ownerId, ratio: 1.0 }];
+        } else {
+          this.logger.warn(
+            `Order ${order.id} has no currentOwnerId and module ${module.id} (${module.name}) has no fallback member. Skipping.`,
+          );
+          continue;
+        }
+      } else if (module.allocationMode === 'FINANCIAL_CLOSER') {
+        const closerId = order.financialCloserId || module.allocations?.[0]?.memberId;
+        if (closerId) {
+          effectiveAllocations = [{ memberId: closerId, ratio: 1.0 }];
+        } else {
+          this.logger.warn(
+            `Order ${order.id} has no financialCloserId and module ${module.id} (${module.name}) has no fallback member. Skipping.`,
+          );
+          continue;
+        }
+      } else {
+        // 默认 FIXED 固定人员比例分配
+        effectiveAllocations = (module.allocations || [])
+          .filter((a) => Boolean(a.memberId))
+          .map((a) => {
+            const allocRatioNum =
+              'toNumber' in a.allocationRatio &&
+              typeof a.allocationRatio.toNumber === 'function'
+                ? a.allocationRatio.toNumber()
+                : Number(a.allocationRatio);
+            return {
+              memberId: a.memberId!,
+              ratio: allocRatioNum,
+            };
+          });
+      }
+
+      for (const allocation of effectiveAllocations) {
         const shareRatioNum =
           'toNumber' in module.shareRatio &&
           typeof module.shareRatio.toNumber === 'function'
             ? module.shareRatio.toNumber()
             : Number(module.shareRatio);
-        const allocRatioNum =
-          'toNumber' in allocation.allocationRatio &&
-          typeof allocation.allocationRatio.toNumber === 'function'
-            ? allocation.allocationRatio.toNumber()
-            : Number(allocation.allocationRatio);
 
         const totalProfitAmount = Math.round(
-          baseAmount * shareRatioNum * allocRatioNum,
+          baseAmount * shareRatioNum * allocation.ratio,
         );
 
         if (isAmortized && durationMonths > 1) {
@@ -306,5 +346,99 @@ export class ProfitSharingService {
       }
     }
     return recordsData;
+  }
+
+  /**
+   * 按月度固定规则批量生成分账流水
+   */
+  private async calculateFixedMonthlyRule(rule: RuleWithDetails) {
+    this.logger.log(`Executing fixed monthly calculation for rule: ${rule.id}`);
+
+    const start = new Date(rule.validStartTime);
+    const end = new Date(rule.validEndTime);
+    const now = new Date();
+
+    // 确定计算的月份范围（长期有效时最多计算至当前月份）
+    const maxDate =
+      end.getFullYear() >= 2090
+        ? new Date(now.getFullYear(), now.getMonth(), 1)
+        : new Date(end.getFullYear(), end.getMonth(), 1);
+
+    const months: string[] = [];
+    const curr = new Date(start.getFullYear(), start.getMonth(), 1);
+
+    while (curr <= maxDate) {
+      const y = curr.getFullYear();
+      const m = String(curr.getMonth() + 1).padStart(2, '0');
+      months.push(`${y}-${m}`);
+      curr.setMonth(curr.getMonth() + 1);
+    }
+
+    if (months.length === 0) {
+      const y = start.getFullYear();
+      const m = String(start.getMonth() + 1).padStart(2, '0');
+      months.push(`${y}-${m}`);
+    }
+
+    const recordsToCreate: Prisma.ProfitShareRecordCreateManyInput[] = [];
+
+    for (const periodMonth of months) {
+      const [yStr, mStr] = periodMonth.split('-');
+      const year = parseInt(yStr, 10);
+      const month = parseInt(mStr, 10);
+      const monthEnd = new Date(year, month, 0, 23, 59, 59, 999);
+
+      for (const module of rule.modules) {
+        for (const allocation of module.allocations) {
+          if (!allocation.memberId) continue;
+          const fixedAmount = allocation.fixedAmount ?? module.fixedAmount ?? 0;
+          if (fixedAmount <= 0) continue;
+
+          // 幂等检查：该规则 + 模块 + 成员在当前业务月度是否已存在非取消流水
+          const existing = await this.prisma.profitShareRecord.findFirst({
+            where: {
+              ruleId: rule.id,
+              moduleId: module.id,
+              memberId: allocation.memberId,
+              periodMonth,
+              status: { not: ProfitShareRecordStatus.CANCELLED },
+            },
+          });
+
+          if (!existing) {
+            recordsToCreate.push({
+              orderId: null,
+              periodMonth,
+              ruleId: rule.id,
+              moduleId: module.id,
+              memberId: allocation.memberId,
+              ruleSnapshot: JSON.parse(
+                JSON.stringify(rule),
+              ) as Prisma.InputJsonValue,
+              baseAmount: fixedAmount,
+              profitAmount: fixedAmount,
+              settlementTime: monthEnd,
+              status: ProfitShareRecordStatus.PENDING,
+            });
+          }
+        }
+      }
+    }
+
+    if (recordsToCreate.length > 0) {
+      await this.recordRepository.createMany({
+        data: recordsToCreate,
+      });
+      this.logger.log(
+        `Created ${recordsToCreate.length} fixed monthly records for rule ${rule.id} across ${months.length} months`,
+      );
+    }
+
+    return {
+      success: true,
+      processedOrders: recordsToCreate.length,
+      totalFound: months.length,
+      isFixedMonthly: true,
+    };
   }
 }

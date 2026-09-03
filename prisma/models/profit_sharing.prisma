@@ -3,6 +3,8 @@ model ProfitShareRule {
   id              String    @id @default(cuid())
   name            String    @map("name") // 规则名称（如：2023年9月核心分账规则）
   
+  ruleType        ProfitShareRuleType @default(ORDER_PERCENTAGE) @map("rule_type")
+  
   // 匹配条件（可空代表不限）
   productId       String?   @map("product_id") // 对应产品ID/品类ID
   channelId       Int?      @map("channel_id") // 对应渠道ID
@@ -25,20 +27,27 @@ model ProfitShareRule {
   @@map("profit_share_rules")
 }
 
+enum ProfitShareRuleType {
+  ORDER_PERCENTAGE // 按订单比例分润
+  FIXED_MONTHLY    // 月度固定分账
+}
+
 enum ProfitShareRuleStatus {
   DRAFT
   ACTIVE
   INACTIVE
 }
 
-// 分润模块配置表（如：关单 4%，运营 3%）
+// 分润模块配置表（如：关单 4%，运营 3%，或月度固定课酬）
 model ProfitShareModule {
   id             String    @id @default(cuid())
   ruleId         String    @map("rule_id")
-  name           String    @map("name") // 模块名称（关单、运营对接等）
-  shareRatio     Decimal   @map("share_ratio") @db.Decimal(8, 4) // 模块占订单比例（例如 0.0400 表示 4%）
+  name           String    @map("name") // 模块名称（关单、运营对接、教师课酬等）
+  shareRatio     Decimal   @default(0) @map("share_ratio") @db.Decimal(8, 4) // 模块占订单比例（例如 0.0400 表示 4%）
+  fixedAmount    Int?      @map("fixed_amount") // 固定金额（分，例如 500000 表示 5000 元/月）
   isRefundable   Boolean   @default(true) @map("is_refundable") // 退款时是否需要扣回
   amortizationType String  @default("NONE") @map("amortization_type") // 结算模式: NONE (不分摊), MONTHLY (按月摊销)
+  allocationMode   String  @default("FIXED") @map("allocation_mode") // 收益人确定方式: FIXED (固定人员比例), ORDER_OWNER (随订单负责人), FINANCIAL_CLOSER (随订单关单人)
   
   rule           ProfitShareRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
   allocations    ProfitShareAllocation[]
@@ -51,7 +60,7 @@ model ProfitShareModule {
   @@map("profit_share_modules")
 }
 
-// 分润模块成员分配表（该模块下的比例分配，如张三和李四平分模块收益）
+// 分润模块成员分配表（该模块下的比例分配，如张三和李四平分模块收益，或指定某成员固定金额）
 model ProfitShareAllocation {
   id               String    @id @default(cuid())
   moduleId         String    @map("module_id")
@@ -60,7 +69,8 @@ model ProfitShareAllocation {
   memberId         String?   @map("member_id") 
   roleId           String?   @map("role_id")
   
-  allocationRatio  Decimal   @map("allocation_ratio") @db.Decimal(8, 4) // 成员在模块内的分配比例（例如 0.5000 表示 50%）
+  allocationRatio  Decimal   @default(1.0000) @map("allocation_ratio") @db.Decimal(8, 4) // 成员在模块内的分配比例（例如 0.5000 表示 50%）
+  fixedAmount      Int?      @map("fixed_amount") // 该成员每月固定金额（分，例如 500000 表示 5000 元/月）
   
   module           ProfitShareModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
 
@@ -74,21 +84,22 @@ model ProfitShareAllocation {
 // 分润明细流水表（最终结算单）
 model ProfitShareRecord {
   id               String    @id @default(cuid())
-  orderId          String    @map("order_id")
+  orderId          String?   @map("order_id") // 对应订单ID（月度固定分账等非单笔分润可为空）
+  periodMonth      String?   @map("period_month") // 业务期号（如 2026-09，便于月度固定对账和幂等防重）
   ruleId           String    @map("rule_id")
   moduleId         String    @map("module_id")
   memberId         String    @map("member_id") // 最终收益成员
   
   ruleSnapshot     Json      @map("rule_snapshot") @db.JsonB // 生成时的规则快照（防篡改与追溯）
   
-  baseAmount       Int       @map("base_amount") // 计算基数（分，通常是订单总额）
+  baseAmount       Int       @map("base_amount") // 计算基数（分，订单总额或固定分账基数）
   profitAmount     Int       @map("profit_amount") // 实际分润金额（分，正数为收益，负数为退回）
   
   settlementTime   DateTime? @map("settlement_time") @db.Timestamptz(6) // 预计结算时间
   status           ProfitShareRecordStatus @default(PENDING) @map("status")
   
   // 关联
-  order            Order             @relation(fields: [orderId], references: [id])
+  order            Order?            @relation(fields: [orderId], references: [id])
   rule             ProfitShareRule   @relation(fields: [ruleId], references: [id])
   module           ProfitShareModule @relation(fields: [moduleId], references: [id])
   
@@ -99,6 +110,7 @@ model ProfitShareRecord {
   @@index([orderId], map: "idx_profit_records_order_id")
   @@index([memberId, status], map: "idx_profit_records_member_status")
   @@index([status, settlementTime], map: "idx_profit_records_status_time")
+  @@index([ruleId, memberId, periodMonth], map: "idx_profit_records_rule_member_period")
   @@map("profit_share_records")
 }
 

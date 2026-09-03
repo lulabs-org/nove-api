@@ -48,6 +48,7 @@ export class ProfitSharingRuleRepository {
 
   findAllWithDetails() {
     return this.prisma.profitShareRule.findMany({
+      where: { deletedAt: null },
       include: {
         modules: {
           include: {
@@ -59,6 +60,23 @@ export class ProfitSharingRuleRepository {
     });
   }
 
+  delete(id: string) {
+    return this.prisma.profitShareRule.update({
+      where: { id },
+      data: {
+        deletedAt: new Date(),
+        status: 'INACTIVE',
+      },
+    });
+  }
+
+  updateStatus(id: string, status: 'DRAFT' | 'ACTIVE' | 'INACTIVE') {
+    return this.prisma.profitShareRule.update({
+      where: { id },
+      data: { status },
+    });
+  }
+
   findActiveRulesForOrder(
     financialClosedAt: Date,
     productId: string | null,
@@ -66,6 +84,7 @@ export class ProfitSharingRuleRepository {
   ) {
     return this.prisma.profitShareRule.findMany({
       where: {
+        ruleType: 'ORDER_PERCENTAGE',
         status: 'ACTIVE',
         validStartTime: { lte: financialClosedAt },
         validEndTime: { gte: financialClosedAt },
