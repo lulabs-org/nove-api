@@ -43,9 +43,9 @@ export class ProfitSharingRecordRepository {
       take: args.take || 100,
       include: {
         order: {
-          select: { orderNumber: true, amount: true },
+          select: { orderNumber: true, amount: true, financialClosedAt: true },
         },
-        rule: { select: { name: true } },
+        rule: { select: { id: true, name: true, validStartTime: true, validEndTime: true } },
         module: { select: { name: true } },
       },
       orderBy: { createdAt: 'desc' },

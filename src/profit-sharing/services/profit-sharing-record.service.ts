@@ -61,26 +61,57 @@ export class ProfitSharingRecordService {
   /**
    * 获取实时看板统计数据
    */
-  async getDashboardStats() {
+  async getDashboardStats(month?: string) {
     try {
       const prisma = this.prisma;
 
-      // 1. 本月累计处理订单数 (有分润记录的关联订单)
-      const startOfMonth = new Date();
-      startOfMonth.setDate(1);
-      startOfMonth.setHours(0, 0, 0, 0);
+      // 确定时间范围
+      let dateFilter: { gte: Date; lte: Date } | undefined;
+      let monthLabel = '全部历史';
 
-      const totalOrders = await prisma.order.count({
-        where: {
-          financialClosedAt: { gte: startOfMonth },
-          profitShareRecords: { some: {} },
-        },
-      });
+      if (month && month !== 'ALL') {
+        const parts = month.split('-');
+        if (parts.length === 2) {
+          const y = parseInt(parts[0], 10);
+          const m = parseInt(parts[1], 10);
+          if (!isNaN(y) && !isNaN(m) && m >= 1 && m <= 12) {
+            const start = new Date(y, m - 1, 1, 0, 0, 0, 0);
+            const end = new Date(y, m, 0, 23, 59, 59, 999);
+            dateFilter = { gte: start, lte: end };
+            monthLabel = `${y}-${String(m).padStart(2, '0')}`;
+          }
+        }
+      } else if (!month) {
+        const now = new Date();
+        const start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+        const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+        dateFilter = { gte: start, lte: end };
+        monthLabel = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      }
+
+      // 1. 对应月份/累计处理订单数 (有分润记录的关联订单)
+      const orderWhere: Prisma.OrderWhereInput = {
+        profitShareRecords: { some: {} },
+      };
+      if (dateFilter) {
+        orderWhere.financialClosedAt = dateFilter;
+      }
+      const totalOrders = await prisma.order.count({ where: orderWhere });
+
+      // 流水关联过滤
+      const recordWhere: Prisma.ProfitShareRecordWhereInput = {};
+      if (dateFilter) {
+        recordWhere.OR = [
+          { order: { financialClosedAt: dateFilter } },
+          { order: { financialClosedAt: null }, createdAt: dateFilter },
+        ];
+      }
 
       // 2. 状态金额统计
       const statusStats = await prisma.profitShareRecord.groupBy({
         by: ['status'],
         _sum: { profitAmount: true },
+        where: recordWhere,
       });
 
       let totalSettled = 0;
@@ -95,10 +126,15 @@ export class ProfitSharingRecordService {
       }
 
       // 3. 各模块金额占比
+      const moduleWhere: Prisma.ProfitShareRecordWhereInput = {
+        ...recordWhere,
+        status: { in: ['SETTLED', 'PENDING'] },
+      };
+
       const moduleGroups = await prisma.profitShareRecord.groupBy({
         by: ['moduleId'],
         _sum: { profitAmount: true },
-        where: { status: { in: ['SETTLED', 'PENDING'] } },
+        where: moduleWhere,
       });
 
       // 获取模块详情 (假设总模块数不多)
@@ -135,7 +171,7 @@ export class ProfitSharingRecordService {
       const memberGroups = await prisma.profitShareRecord.groupBy({
         by: ['memberId'],
         _sum: { profitAmount: true },
-        where: { status: { in: ['SETTLED', 'PENDING'] } },
+        where: moduleWhere,
         orderBy: { _sum: { profitAmount: 'desc' } },
         take: 5,
       });
@@ -179,6 +215,7 @@ export class ProfitSharingRecordService {
       }
 
       return {
+        month: monthLabel,
         totalOrders,
         totalSettled,
         totalPending,
