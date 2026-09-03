@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
 import { Test, TestingModule } from '@nestjs/testing';
 import { ProfitSharingService } from './profit-sharing.service';
 import { ProfitSharingRuleRepository } from '../repositories/profit-sharing-rule.repository';
@@ -44,7 +45,8 @@ describe('ProfitSharingService - Cross Period and Incremental Refunds', () => {
       ],
     }).compile();
 
-    profitSharingService = module.get<ProfitSharingService>(ProfitSharingService);
+    profitSharingService =
+      module.get<ProfitSharingService>(ProfitSharingService);
   });
 
   it('should assign periodMonth to August when January settled order is refunded in August', async () => {
@@ -151,8 +153,16 @@ describe('ProfitSharingService - Cross Period and Incremental Refunds', () => {
 
     // 第三次重复调用相同退款（100000 分）：已扣 5000 分，增量为 0，不产生多余流水
     prismaService.profitShareRecord.findMany.mockResolvedValueOnce([
-      { id: 'clawback-1', profitAmount: -2000, status: ProfitShareRecordStatus.CLAWBACK },
-      { id: 'clawback-2', profitAmount: -3000, status: ProfitShareRecordStatus.CLAWBACK },
+      {
+        id: 'clawback-1',
+        profitAmount: -2000,
+        status: ProfitShareRecordStatus.CLAWBACK,
+      },
+      {
+        id: 'clawback-2',
+        profitAmount: -3000,
+        status: ProfitShareRecordStatus.CLAWBACK,
+      },
     ]);
 
     await profitSharingService.handleRefundClawback(
