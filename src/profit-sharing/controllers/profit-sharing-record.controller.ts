@@ -13,8 +13,8 @@ export class ProfitSharingRecordController {
   @Get('dashboard-stats')
   @RequirePermissions('profit-sharing:read')
   @ApiOperation({ summary: '获取分润看板实时统计数据' })
-  async getDashboardStats() {
-    return this.recordService.getDashboardStats();
+  async getDashboardStats(@Query('month') month?: string) {
+    return this.recordService.getDashboardStats(month);
   }
 
   @Get()
@@ -24,6 +24,7 @@ export class ProfitSharingRecordController {
     @Query('page') pageStr?: string,
     @Query('pageSize') pageSizeStr?: string,
     @Query('status') status?: string,
+    @Query('ruleId') ruleId?: string,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
   ) {
@@ -34,6 +35,9 @@ export class ProfitSharingRecordController {
     const where: Prisma.ProfitShareRecordWhereInput = {};
     if (status) {
       where.status = status as ProfitShareRecordStatus;
+    }
+    if (ruleId) {
+      where.ruleId = ruleId;
     }
     if (startDate || endDate) {
       where.createdAt = {};
