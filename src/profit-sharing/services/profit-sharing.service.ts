@@ -144,15 +144,25 @@ export class ProfitSharingService {
           (sum, r) => sum + (r.refundAmount || 0),
           0,
         );
-        const hasExistingClawback = lockedOrder.profitShareRecords.some(
-          (r) => r.status === ProfitShareRecordStatus.CLAWBACK,
+        const sortedRefunds = (lockedOrder.refunds || []).sort(
+          (a, b) =>
+            new Date(b.financialSettledAt || b.createdAt).getTime() -
+            new Date(a.financialSettledAt || a.createdAt).getTime(),
         );
+        const latestSettledAt =
+          sortedRefunds[0]?.financialSettledAt ||
+          sortedRefunds[0]?.createdAt ||
+          new Date();
 
-        if (totalSettledRefund > 0 && !hasExistingClawback) {
+        if (totalSettledRefund > 0) {
           this.logger.log(
-            `Found locked order ${lockedOrder.id} with settled refund ${totalSettledRefund} missing clawback, triggering clawback`,
+            `Checking locked order ${lockedOrder.id} with settled refund ${totalSettledRefund} for clawback`,
           );
-          await this.handleRefundClawback(lockedOrder.id, totalSettledRefund);
+          await this.handleRefundClawback(
+            lockedOrder.id,
+            totalSettledRefund,
+            latestSettledAt,
+          );
         }
       }
     }
@@ -224,60 +234,76 @@ export class ProfitSharingService {
   }
 
   /**
-   * 处理退款回扣逻辑（按比例缩小）
+   * 处理退款回扣逻辑（支持跨期账期归属与多笔退款增量补扣）
    */
-  async handleRefundClawback(orderId: string, refundAmount: number) {
+  async handleRefundClawback(
+    orderId: string,
+    refundAmount: number,
+    settledAt?: Date | string,
+  ) {
     this.logger.log(
-      `Handling refund clawback for order: ${orderId}, amount: ${refundAmount}`,
+      `Handling refund clawback for order: ${orderId}, amount: ${refundAmount}, settledAt: ${settledAt}`,
     );
 
     const order = await this.prisma.order.findUnique({
       where: { id: orderId },
     });
 
-    if (!order) return;
+    if (!order || order.amount <= 0) return;
 
-    const refundRatio = refundAmount / order.amount;
+    // 确定退款结算生效日期与当期账期（如 "2026-08"）
+    const targetDate = settledAt ? new Date(settledAt) : new Date();
+    const periodMonth = `${targetDate.getFullYear()}-${String(
+      targetDate.getMonth() + 1,
+    ).padStart(2, '0')}`;
 
-    // 查出该订单所有需要回扣的流水
+    const refundRatio = Math.min(1.0, refundAmount / order.amount);
+
+    // 查出该订单所有需要回扣的流水（模块可退且为 PENDING 或 SETTLED）
     const records = await this.recordRepository.findRecordsForRefund(orderId);
 
     for (const record of records) {
-      const deductionAmount = Math.round(record.profitAmount * refundRatio);
+      // 1. 查询该订单下该模块、该成员历史上已生成的 CLAWBACK 扣减总额（取正数累计）
+      const existingClawbacks = await this.prisma.profitShareRecord.findMany({
+        where: {
+          orderId: record.orderId,
+          ruleId: record.ruleId,
+          moduleId: record.moduleId,
+          memberId: record.memberId,
+          status: ProfitShareRecordStatus.CLAWBACK,
+        },
+      });
 
-      if (record.status === ProfitShareRecordStatus.PENDING) {
-        // 未结算，直接缩小原流水金额
-        const newProfitAmount = record.profitAmount - deductionAmount;
-        if (newProfitAmount <= 0) {
-          await this.recordRepository.update({
-            where: { id: record.id },
-            data: {
-              status: ProfitShareRecordStatus.CANCELLED,
-              profitAmount: 0,
-            },
-          });
-        } else {
-          await this.recordRepository.update({
-            where: { id: record.id },
-            data: { profitAmount: newProfitAmount },
-          });
-        }
-      } else if (record.status === ProfitShareRecordStatus.SETTLED) {
-        // 已结算，生成一条负数的 CLAWBACK 流水
-        await this.recordRepository.create({
-          data: {
-            orderId: record.orderId,
-            ruleId: record.ruleId,
-            moduleId: record.moduleId,
-            memberId: record.memberId,
-            ruleSnapshot: record.ruleSnapshot as Prisma.InputJsonValue, // 沿用原快照
-            baseAmount: record.baseAmount,
-            profitAmount: -deductionAmount,
-            settlementTime: new Date(),
-            status: ProfitShareRecordStatus.CLAWBACK,
-          },
-        });
+      const alreadyClawedBack = existingClawbacks.reduce(
+        (sum, c) => sum + Math.abs(c.profitAmount),
+        0,
+      );
+
+      // 2. 计算基于累计退款比例应扣减的总额
+      const targetTotalDeduction = Math.round(record.profitAmount * refundRatio);
+
+      // 3. 计算本次需要增量追加的回扣金额（Incremental Clawback）
+      const incrementalDeduction = targetTotalDeduction - alreadyClawedBack;
+      if (incrementalDeduction <= 0) {
+        continue;
       }
+
+      // 4. 无论原流水是 SETTLED（已结算）还是 PENDING（待结算），均生成一条归属退款当月的显式 CLAWBACK 负数流水
+      // 这样既保留原提成事实，又让看板、流水列表及退款当期工资条拥有清晰可追溯的负数扣除明细
+      await this.recordRepository.create({
+        data: {
+          orderId: record.orderId,
+          periodMonth, // 核心：归入退款发生的当期月份，避免污染历史已封账月份
+          ruleId: record.ruleId,
+          moduleId: record.moduleId,
+          memberId: record.memberId,
+          ruleSnapshot: record.ruleSnapshot as Prisma.InputJsonValue,
+          baseAmount: Math.round(order.amount * refundRatio),
+          profitAmount: -incrementalDeduction,
+          settlementTime: targetDate,
+          status: ProfitShareRecordStatus.CLAWBACK,
+        },
+      });
     }
   }
 
@@ -441,14 +467,35 @@ export class ProfitSharingService {
           );
 
           if (clawbackProfitAmount > 0) {
-            const bTime = new Date(benefitStartTime);
-            const pMonth = `${bTime.getFullYear()}-${String(
-              bTime.getMonth() + 1,
+            // 获取已结算退款的发生时间或当前时间，作为回扣归属账期
+            const sortedSettledRefunds = (order.refunds || [])
+              .filter(
+                (r) =>
+                  r.status === RefundStatus.SETTLED && !r.deletedAt,
+              )
+              .sort(
+                (a, b) =>
+                  new Date(
+                    (b as any).financialSettledAt ||
+                      (b as any).createdAt,
+                  ).getTime() -
+                  new Date(
+                    (a as any).financialSettledAt ||
+                      (a as any).createdAt,
+                  ).getTime(),
+              );
+            const refundTime =
+              (sortedSettledRefunds[0] as any)?.financialSettledAt ||
+              (sortedSettledRefunds[0] as any)?.createdAt ||
+              new Date();
+            const rDate = new Date(refundTime);
+            const refundPeriodMonth = `${rDate.getFullYear()}-${String(
+              rDate.getMonth() + 1,
             ).padStart(2, '0')}`;
 
             recordsData.push({
               orderId: order.id,
-              periodMonth: pMonth,
+              periodMonth: refundPeriodMonth,
               ruleId: rule.id,
               moduleId: module.id,
               memberId: allocation.memberId,
@@ -457,7 +504,7 @@ export class ProfitSharingService {
               ) as Prisma.InputJsonValue,
               baseAmount: settledRefundAmount,
               profitAmount: -clawbackProfitAmount,
-              settlementTime: new Date(),
+              settlementTime: rDate,
               status: ProfitShareRecordStatus.CLAWBACK,
             });
           }
