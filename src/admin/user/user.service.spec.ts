@@ -92,6 +92,7 @@ describe('AdminUserService', () => {
       countryCode: '+86',
       phone: '13800138000',
       displayName: 'Alice',
+      fullName: 'Alice',
       avatar: 'https://example.com/avatar.png',
       active: true,
       emailVerified: true,
@@ -106,6 +107,7 @@ describe('AdminUserService', () => {
   it('does not select detailed profile fields for the user list', () => {
     expect(adminUserListSelect.profile.select).toEqual({
       displayName: true,
+      fullName: true,
       avatar: true,
     });
   });

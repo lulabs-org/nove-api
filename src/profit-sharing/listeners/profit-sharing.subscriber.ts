@@ -1,6 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { ProfitSharingService } from '../services/profit-sharing.service';
+import {
+  OrderFinancialClosedEventPayload,
+  OrderRefundedEventPayload,
+} from '../types';
 
 @Injectable()
 export class ProfitSharingSubscriber {
@@ -13,7 +17,9 @@ export class ProfitSharingSubscriber {
    * 假设事件 paylaod 为 { orderId: string }
    */
   @OnEvent('order.financial_closed', { async: true })
-  async handleOrderFinancialClosedEvent(payload: { orderId: string }) {
+  async handleOrderFinancialClosedEvent(
+    payload: OrderFinancialClosedEventPayload,
+  ) {
     this.logger.log(
       `Received order.financial_closed event for order ${payload.orderId}`,
     );
@@ -32,10 +38,7 @@ export class ProfitSharingSubscriber {
    * 假设事件 payload 为 { orderId: string, refundAmount: number }
    */
   @OnEvent('order.refunded', { async: true })
-  async handleOrderRefundedEvent(payload: {
-    orderId: string;
-    refundAmount: number;
-  }) {
+  async handleOrderRefundedEvent(payload: OrderRefundedEventPayload) {
     this.logger.log(
       `Received order.refunded event for order ${payload.orderId}, refundAmount: ${payload.refundAmount}`,
     );
