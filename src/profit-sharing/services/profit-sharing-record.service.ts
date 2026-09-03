@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 import { ProfitSharingRecordRepository } from '../repositories/profit-sharing-record.repository';
@@ -104,6 +104,8 @@ export class ProfitSharingRecordService {
         recordWhere.OR = [
           { order: { financialClosedAt: dateFilter } },
           { order: { financialClosedAt: null }, createdAt: dateFilter },
+          ...(month && month !== 'ALL' ? [{ periodMonth: month }] : []),
+          { orderId: null, createdAt: dateFilter },
         ];
       }
 
@@ -302,5 +304,29 @@ export class ProfitSharingRecordService {
       where: { id },
       data: { status: 'PENDING' },
     });
+  }
+
+  /**
+   * 删除单条分润记录
+   */
+  async deleteRecord(id: string) {
+    const record = await this.prisma.profitShareRecord.findUnique({ where: { id } });
+    if (!record) {
+      throw new NotFoundException('分润记录不存在');
+    }
+    return this.prisma.profitShareRecord.delete({ where: { id } });
+  }
+
+  /**
+   * 批量删除分润记录
+   */
+  async batchDeleteRecords(ids: string[]) {
+    if (!ids || ids.length === 0) {
+      return { success: true, count: 0 };
+    }
+    const res = await this.prisma.profitShareRecord.deleteMany({
+      where: { id: { in: ids } },
+    });
+    return { success: true, count: res.count };
   }
 }
