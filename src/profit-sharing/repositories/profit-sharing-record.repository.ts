@@ -36,7 +36,13 @@ export class ProfitSharingRecordRepository {
     return this.prisma.profitShareRecord.updateMany<T>(args);
   }
 
-  findRecordsWithDetails(args: { where?: Prisma.ProfitShareRecordWhereInput, skip?: number, take?: number } = {}) {
+  findRecordsWithDetails(
+    args: {
+      where?: Prisma.ProfitShareRecordWhereInput;
+      skip?: number;
+      take?: number;
+    } = {},
+  ) {
     return this.prisma.profitShareRecord.findMany({
       where: args.where,
       skip: args.skip,
@@ -45,7 +51,14 @@ export class ProfitSharingRecordRepository {
         order: {
           select: { orderNumber: true, amount: true, financialClosedAt: true },
         },
-        rule: { select: { id: true, name: true, validStartTime: true, validEndTime: true } },
+        rule: {
+          select: {
+            id: true,
+            name: true,
+            validStartTime: true,
+            validEndTime: true,
+          },
+        },
         module: { select: { name: true } },
       },
       orderBy: { createdAt: 'desc' },

@@ -39,7 +39,8 @@ export class CreateProfitShareAllocationDto {
   allocationRatio?: number;
 
   @ApiPropertyOptional({
-    description: '指定成员每月的固定分账金额（分），例如 500000 代表 5000 元（月度固定模式使用）',
+    description:
+      '指定成员每月的固定分账金额（分），例如 500000 代表 5000 元（月度固定模式使用）',
     example: 500000,
   })
   @IsNumber()
@@ -67,7 +68,8 @@ export class CreateProfitShareModuleDto {
   shareRatio?: number;
 
   @ApiPropertyOptional({
-    description: '该模块的固定金额（分），例如 500000 代表 5000 元（月度固定模式使用）',
+    description:
+      '该模块的固定金额（分），例如 500000 代表 5000 元（月度固定模式使用）',
     example: 500000,
   })
   @IsNumber()
@@ -106,7 +108,8 @@ export class CreateProfitShareModuleDto {
 
   @ApiPropertyOptional({
     type: [CreateProfitShareAllocationDto],
-    description: '成员分配规则列表（固定分配模式必填，按订单动态分配模式可选填兜底人员）',
+    description:
+      '成员分配规则列表（固定分配模式必填，按订单动态分配模式可选填兜底人员）',
   })
   @IsArray()
   @IsOptional()
@@ -123,23 +126,38 @@ export class CreateProfitShareRuleDto {
 
   @ApiPropertyOptional({
     enum: ProfitShareRuleType,
-    description: '规则类型: ORDER_PERCENTAGE (按订单比例分润), FIXED_MONTHLY (月度固定分账)',
+    description:
+      '规则类型: ORDER_PERCENTAGE (按订单比例分润), FIXED_MONTHLY (月度固定分账)',
     default: ProfitShareRuleType.ORDER_PERCENTAGE,
   })
   @IsEnum(ProfitShareRuleType)
   @IsOptional()
   ruleType?: ProfitShareRuleType;
 
-  @ApiPropertyOptional({ description: '关联产品品类/ID，按订单比例模式下必须与 channelId 至少填一项' })
+  @ApiPropertyOptional({
+    description: '关联产品品类/ID，按订单比例模式下必须与 channelId 至少填一项',
+  })
   @IsString()
-  @ValidateIf((o) => o.ruleType !== ProfitShareRuleType.FIXED_MONTHLY && !o.channelId)
-  @IsNotEmpty({ message: '按订单比例模式下，限制品类和限制渠道必须至少选择一项' })
+  @ValidateIf(
+    (o: CreateProfitShareRuleDto) =>
+      o.ruleType !== ProfitShareRuleType.FIXED_MONTHLY && !o.channelId,
+  )
+  @IsNotEmpty({
+    message: '按订单比例模式下，限制品类和限制渠道必须至少选择一项',
+  })
   productId?: string;
 
-  @ApiPropertyOptional({ description: '关联渠道ID，按订单比例模式下必须与 productId 至少填一项' })
+  @ApiPropertyOptional({
+    description: '关联渠道ID，按订单比例模式下必须与 productId 至少填一项',
+  })
   @IsNumber()
-  @ValidateIf((o) => o.ruleType !== ProfitShareRuleType.FIXED_MONTHLY && !o.productId)
-  @IsNotEmpty({ message: '按订单比例模式下，限制品类和限制渠道必须至少选择一项' })
+  @ValidateIf(
+    (o: CreateProfitShareRuleDto) =>
+      o.ruleType !== ProfitShareRuleType.FIXED_MONTHLY && !o.productId,
+  )
+  @IsNotEmpty({
+    message: '按订单比例模式下，限制品类和限制渠道必须至少选择一项',
+  })
   channelId?: number;
 
   @ApiProperty({ description: '生效开始时间' })

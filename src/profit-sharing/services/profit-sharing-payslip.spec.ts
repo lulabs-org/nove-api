@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
 import { ProfitSharingPayslipService } from './profit-sharing-payslip.service';
 import { ProfitShareRecordStatus, ProfitShareRuleType } from '@prisma/client';
 
@@ -31,7 +32,10 @@ describe('ProfitSharingPayslipService', () => {
           profitAmount: 500000,
           status: ProfitShareRecordStatus.SETTLED,
           orderId: null,
-          rule: { ruleType: ProfitShareRuleType.FIXED_MONTHLY, name: '固定课酬规则' },
+          rule: {
+            ruleType: ProfitShareRuleType.FIXED_MONTHLY,
+            name: '固定课酬规则',
+          },
           module: { name: '固定底薪' },
           order: null,
         },
@@ -43,7 +47,10 @@ describe('ProfitSharingPayslipService', () => {
           profitAmount: 30000,
           status: ProfitShareRecordStatus.PENDING,
           orderId: 'order-101',
-          rule: { ruleType: ProfitShareRuleType.ORDER_PERCENTAGE, name: '9月订单分润规则' },
+          rule: {
+            ruleType: ProfitShareRuleType.ORDER_PERCENTAGE,
+            name: '9月订单分润规则',
+          },
           module: { name: '转化提成' },
           order: { id: 'order-101', orderNumber: 'ORD101' },
         },
@@ -55,7 +62,10 @@ describe('ProfitSharingPayslipService', () => {
           profitAmount: -5000,
           status: ProfitShareRecordStatus.CLAWBACK,
           orderId: 'order-102',
-          rule: { ruleType: ProfitShareRuleType.ORDER_PERCENTAGE, name: '9月订单分润规则' },
+          rule: {
+            ruleType: ProfitShareRuleType.ORDER_PERCENTAGE,
+            name: '9月订单分润规则',
+          },
           module: { name: '转化提成' },
           order: { id: 'order-102', orderNumber: 'ORD102' },
         },
@@ -123,7 +133,10 @@ describe('ProfitSharingPayslipService', () => {
           profitAmount: 400000,
           status: ProfitShareRecordStatus.SETTLED,
           orderId: null,
-          rule: { ruleType: ProfitShareRuleType.FIXED_MONTHLY, name: '基本薪资' },
+          rule: {
+            ruleType: ProfitShareRuleType.FIXED_MONTHLY,
+            name: '基本薪资',
+          },
           module: { name: '基本底薪' },
         },
         // 餐补 + 交通补贴: 500 元
@@ -134,7 +147,10 @@ describe('ProfitSharingPayslipService', () => {
           profitAmount: 50000,
           status: ProfitShareRecordStatus.SETTLED,
           orderId: null,
-          rule: { ruleType: ProfitShareRuleType.FIXED_MONTHLY, name: '全员福利' },
+          rule: {
+            ruleType: ProfitShareRuleType.FIXED_MONTHLY,
+            name: '全员福利',
+          },
           module: { name: '餐费交通补贴' },
         },
         // 9月销冠奖金: 1000 元
@@ -145,7 +161,10 @@ describe('ProfitSharingPayslipService', () => {
           profitAmount: 100000,
           status: ProfitShareRecordStatus.PENDING,
           orderId: null,
-          rule: { ruleType: ProfitShareRuleType.FIXED_MONTHLY, name: '激励奖金' },
+          rule: {
+            ruleType: ProfitShareRuleType.FIXED_MONTHLY,
+            name: '激励奖金',
+          },
           module: { name: '9月销冠激励奖' },
         },
         // 迟到早退考勤扣款: 100 元
@@ -156,7 +175,10 @@ describe('ProfitSharingPayslipService', () => {
           profitAmount: -10000,
           status: ProfitShareRecordStatus.CLAWBACK,
           orderId: null,
-          rule: { ruleType: ProfitShareRuleType.FIXED_MONTHLY, name: '考勤调整' },
+          rule: {
+            ruleType: ProfitShareRuleType.FIXED_MONTHLY,
+            name: '考勤调整',
+          },
           module: { name: '迟到事假扣款' },
         },
       ];
@@ -193,9 +215,14 @@ describe('ProfitSharingPayslipService', () => {
         { id: 'rec-p1' },
         { id: 'rec-p2' },
       ]);
-      prismaService.profitShareRecord.updateMany.mockResolvedValue({ count: 2 });
+      prismaService.profitShareRecord.updateMany.mockResolvedValue({
+        count: 2,
+      });
 
-      const res = await payslipService.settleMemberPayslip('teacher-1', '2026-09');
+      const res = await payslipService.settleMemberPayslip(
+        'teacher-1',
+        '2026-09',
+      );
 
       expect(res.success).toBe(true);
       expect(res.count).toBe(2);
@@ -220,7 +247,10 @@ describe('ProfitSharingPayslipService', () => {
           profitAmount: 400000,
           status: ProfitShareRecordStatus.SETTLED,
           orderId: null,
-          rule: { ruleType: ProfitShareRuleType.FIXED_MONTHLY, name: '基本底薪' },
+          rule: {
+            ruleType: ProfitShareRuleType.FIXED_MONTHLY,
+            name: '基本底薪',
+          },
           module: { name: '基本底薪' },
         },
         {

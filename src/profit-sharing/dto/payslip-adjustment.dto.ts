@@ -1,12 +1,19 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, IsNumber, IsEnum, IsOptional, Min } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsNumber,
+  IsEnum,
+  IsOptional,
+  Min,
+} from 'class-validator';
 
 export enum PayslipItemCategory {
   BASE_SALARY = 'BASE_SALARY', // 基本底薪 / 固定课酬
-  COMMISSION = 'COMMISSION',   // 订单提成 / 销售分润
-  BONUS = 'BONUS',             // 各类奖金（绩效、销冠、全勤等）
-  SUBSIDY = 'SUBSIDY',         // 津贴与补贴（餐补、车补、话费等）
-  DEDUCTION = 'DEDUCTION',     // 扣减项（考勤迟到、缺勤、代扣等）
+  COMMISSION = 'COMMISSION', // 订单提成 / 销售分润
+  BONUS = 'BONUS', // 各类奖金（绩效、销冠、全勤等）
+  SUBSIDY = 'SUBSIDY', // 津贴与补贴（餐补、车补、话费等）
+  DEDUCTION = 'DEDUCTION', // 扣减项（考勤迟到、缺勤、代扣等）
 }
 
 export class CreatePayslipAdjustmentDto {

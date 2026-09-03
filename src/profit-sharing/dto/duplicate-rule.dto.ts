@@ -3,7 +3,9 @@ import { ProfitShareRuleStatus } from '@prisma/client';
 import { IsArray, IsEnum, IsOptional, IsString } from 'class-validator';
 
 export class DuplicateProfitShareRuleDto {
-  @ApiPropertyOptional({ description: '新规则名称，未填写则默认为原规则名 + (副本)' })
+  @ApiPropertyOptional({
+    description: '新规则名称，未填写则默认为原规则名 + (副本)',
+  })
   @IsOptional()
   @IsString()
   name?: string;
@@ -50,24 +52,32 @@ export class BatchDuplicateProfitShareRuleDto {
   periodStrategy?: PeriodStrategy;
 
   @ApiPropertyOptional({
-    description: '目标自然月份（例如 2026-10，当 periodStrategy 为 SPECIFIC_MONTH 时使用）',
+    description:
+      '目标自然月份（例如 2026-10，当 periodStrategy 为 SPECIFIC_MONTH 时使用）',
     example: '2026-10',
   })
   @IsOptional()
   @IsString()
   targetMonth?: string;
 
-  @ApiPropertyOptional({ description: '自定义开始时间 (当 periodStrategy 为 CUSTOM_RANGE 时使用)' })
+  @ApiPropertyOptional({
+    description: '自定义开始时间 (当 periodStrategy 为 CUSTOM_RANGE 时使用)',
+  })
   @IsOptional()
   @IsString()
   customStartTime?: string;
 
-  @ApiPropertyOptional({ description: '自定义结束时间 (当 periodStrategy 为 CUSTOM_RANGE 时使用)' })
+  @ApiPropertyOptional({
+    description: '自定义结束时间 (当 periodStrategy 为 CUSTOM_RANGE 时使用)',
+  })
   @IsOptional()
   @IsString()
   customEndTime?: string;
 
-  @ApiPropertyOptional({ description: '名称后缀，未传且顺延时会自动智能替换月份名称', example: ' (副本)' })
+  @ApiPropertyOptional({
+    description: '名称后缀，未传且顺延时会自动智能替换月份名称',
+    example: ' (副本)',
+  })
   @IsOptional()
   @IsString()
   nameSuffix?: string;

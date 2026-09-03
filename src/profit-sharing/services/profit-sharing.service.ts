@@ -96,7 +96,12 @@ export class ProfitSharingService {
     const lockedRecords = await this.prisma.profitShareRecord.findMany({
       where: {
         ruleId: ruleId,
-        status: { in: [ProfitShareRecordStatus.SETTLED, ProfitShareRecordStatus.CLAWBACK] },
+        status: {
+          in: [
+            ProfitShareRecordStatus.SETTLED,
+            ProfitShareRecordStatus.CLAWBACK,
+          ],
+        },
       },
       select: { orderId: true },
       distinct: ['orderId'],
@@ -110,10 +115,14 @@ export class ProfitSharingService {
       where: {
         ruleId: ruleId,
         status: ProfitShareRecordStatus.PENDING,
-        ...(lockedOrderIds.length > 0 && { orderId: { notIn: lockedOrderIds } }),
+        ...(lockedOrderIds.length > 0 && {
+          orderId: { notIn: lockedOrderIds },
+        }),
       },
     });
-    this.logger.log(`Deleted ${deleted.count} pending records for rule ${ruleId} before recalculation. Skipped locked orders: ${lockedOrderIds.length}`);
+    this.logger.log(
+      `Deleted ${deleted.count} pending records for rule ${ruleId} before recalculation. Skipped locked orders: ${lockedOrderIds.length}`,
+    );
 
     // 3. 查找符合条件且可以重算的订单（排除掉名下有 PENDING/SETTLED/CLAWBACK 的订单）
     const orders = await this.prisma.order.findMany({
@@ -127,7 +136,7 @@ export class ProfitSharingService {
         profitShareRecords: {
           none: {
             ruleId: ruleId,
-            status: { not: ProfitShareRecordStatus.CANCELLED } // 如果这个订单在这个规则下只有 CANCELLED 流水，是可以被重新计算的
+            status: { not: ProfitShareRecordStatus.CANCELLED }, // 如果这个订单在这个规则下只有 CANCELLED 流水，是可以被重新计算的
           },
         },
       },
@@ -245,7 +254,8 @@ export class ProfitSharingService {
       let effectiveAllocations: Array<{ memberId: string; ratio: number }> = [];
 
       if (module.allocationMode === 'ORDER_OWNER') {
-        const ownerId = order.currentOwnerId || module.allocations?.[0]?.memberId;
+        const ownerId =
+          order.currentOwnerId || module.allocations?.[0]?.memberId;
         if (ownerId) {
           effectiveAllocations = [{ memberId: ownerId, ratio: 1.0 }];
         } else {
@@ -255,7 +265,8 @@ export class ProfitSharingService {
           continue;
         }
       } else if (module.allocationMode === 'FINANCIAL_CLOSER') {
-        const closerId = order.financialCloserId || module.allocations?.[0]?.memberId;
+        const closerId =
+          order.financialCloserId || module.allocations?.[0]?.memberId;
         if (closerId) {
           effectiveAllocations = [{ memberId: closerId, ratio: 1.0 }];
         } else {

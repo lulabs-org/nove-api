@@ -22,7 +22,9 @@ export class ProfitSharingRuleService {
   async createRule(dto: CreateProfitShareRuleDto) {
     const isFixedMonthly = dto.ruleType === ProfitShareRuleType.FIXED_MONTHLY;
     if (!isFixedMonthly && !dto.productId && !dto.channelId) {
-      throw new BadRequestException('按订单比例分润模式下，限制品类和限制渠道必须选择一项');
+      throw new BadRequestException(
+        '按订单比例分润模式下，限制品类和限制渠道必须选择一项',
+      );
     }
 
     return this.ruleRepository.createWithDetails({
@@ -60,14 +62,23 @@ export class ProfitSharingRuleService {
   async updateRule(id: string, dto: UpdateProfitShareRuleDto) {
     try {
       const existing = await this.ruleRepository.findByIdWithDetails(id);
-      const targetRuleType = dto.ruleType !== undefined ? dto.ruleType : existing?.ruleType;
-      const isFixedMonthly = targetRuleType === ProfitShareRuleType.FIXED_MONTHLY;
+      const targetRuleType =
+        dto.ruleType !== undefined ? dto.ruleType : existing?.ruleType;
+      const isFixedMonthly =
+        targetRuleType === ProfitShareRuleType.FIXED_MONTHLY;
 
-      if (!isFixedMonthly && (dto.productId !== undefined || dto.channelId !== undefined)) {
-        const finalProductId = dto.productId !== undefined ? dto.productId : existing?.productId;
-        const finalChannelId = dto.channelId !== undefined ? dto.channelId : existing?.channelId;
+      if (
+        !isFixedMonthly &&
+        (dto.productId !== undefined || dto.channelId !== undefined)
+      ) {
+        const finalProductId =
+          dto.productId !== undefined ? dto.productId : existing?.productId;
+        const finalChannelId =
+          dto.channelId !== undefined ? dto.channelId : existing?.channelId;
         if (!finalProductId && !finalChannelId) {
-          throw new BadRequestException('按订单比例分润模式下，限制品类和限制渠道必须选择一项');
+          throw new BadRequestException(
+            '按订单比例分润模式下，限制品类和限制渠道必须选择一项',
+          );
         }
       }
 
@@ -178,12 +189,15 @@ export class ProfitSharingRuleService {
   /**
    * 单条规则复制
    */
-  async duplicateRule(id: string, dto?: {
-    name?: string;
-    validStartTime?: string;
-    validEndTime?: string;
-    status?: ProfitShareRuleStatus;
-  }) {
+  async duplicateRule(
+    id: string,
+    dto?: {
+      name?: string;
+      validStartTime?: string;
+      validEndTime?: string;
+      status?: ProfitShareRuleStatus;
+    },
+  ) {
     const source = await this.ruleRepository.findByIdWithDetails(id);
     if (!source) {
       throw new NotFoundException(`规则 ${id} 不存在`);
@@ -264,13 +278,27 @@ export class ProfitSharingRuleService {
           targetEnd = new Date(sourceEnd);
           targetEnd.setMonth(targetEnd.getMonth() + 1);
         }
-        newName = this.shiftMonthInName(source.name, sourceStart, targetStart, dto.nameSuffix);
+        newName = this.shiftMonthInName(
+          source.name,
+          sourceStart,
+          targetStart,
+          dto.nameSuffix,
+        );
       } else if (strategy === 'SPECIFIC_MONTH' && dto.targetMonth) {
         const [y, m] = dto.targetMonth.split('-').map(Number);
         targetStart = new Date(y, m - 1, 1, 0, 0, 0, 0);
         targetEnd = new Date(y, m, 0, 23, 59, 59, 999);
-        newName = this.shiftMonthInName(source.name, sourceStart, targetStart, dto.nameSuffix);
-      } else if (strategy === 'CUSTOM_RANGE' && dto.customStartTime && dto.customEndTime) {
+        newName = this.shiftMonthInName(
+          source.name,
+          sourceStart,
+          targetStart,
+          dto.nameSuffix,
+        );
+      } else if (
+        strategy === 'CUSTOM_RANGE' &&
+        dto.customStartTime &&
+        dto.customEndTime
+      ) {
         targetStart = new Date(dto.customStartTime);
         targetEnd = new Date(dto.customEndTime);
         newName = `${source.name}${dto.nameSuffix || ' (副本)'}`;
@@ -335,7 +363,7 @@ export class ProfitSharingRuleService {
     const toYear = toStart.getFullYear();
     const toMonth = toStart.getMonth() + 1;
 
-    let newName = name;
+    const newName = name;
     if (newName.includes(`${fromYear}年${fromMonth}月`)) {
       return newName.replace(
         `${fromYear}年${fromMonth}月`,

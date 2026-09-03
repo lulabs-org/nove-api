@@ -15,33 +15,45 @@ export class ProfitSharingRecordService {
   /**
    * 获取流水分页列表
    */
-  async getRecords(args: { where?: Prisma.ProfitShareRecordWhereInput, skip?: number, take?: number } = {}) {
+  async getRecords(
+    args: {
+      where?: Prisma.ProfitShareRecordWhereInput;
+      skip?: number;
+      take?: number;
+    } = {},
+  ) {
     const [records, total] = await Promise.all([
       this.recordRepository.findRecordsWithDetails(args),
       this.recordRepository.countRecords(args.where),
     ]);
 
-    const memberIds = Array.from(new Set(records.map((r) => r.memberId).filter(Boolean)));
-    const users = memberIds.length > 0
-      ? await this.prisma.user.findMany({
-          where: { id: { in: memberIds } },
-          include: {
-            profile: true,
-            orgMembers: {
-              include: {
-                memberRoles: {
-                  include: { role: true },
+    const memberIds = Array.from(
+      new Set(records.map((r) => r.memberId).filter(Boolean)),
+    );
+    const users =
+      memberIds.length > 0
+        ? await this.prisma.user.findMany({
+            where: { id: { in: memberIds } },
+            include: {
+              profile: true,
+              orgMembers: {
+                include: {
+                  memberRoles: {
+                    include: { role: true },
+                  },
                 },
               },
             },
-          },
-        })
-      : [];
+          })
+        : [];
 
     const userMap = new Map<string, { name: string; role?: string }>();
     for (const u of users) {
-      const name = u.profile?.displayName || u.profile?.fullName || u.username || u.id;
-      const roles = u.orgMembers.flatMap((m) => m.memberRoles.map((mr) => mr.role.name));
+      const name =
+        u.profile?.displayName || u.profile?.fullName || u.username || u.id;
+      const roles = u.orgMembers.flatMap((m) =>
+        m.memberRoles.map((mr) => mr.role.name),
+      );
       const role = roles.length > 0 ? roles[0] : undefined;
       userMap.set(u.id, { name, role });
     }
@@ -83,8 +95,24 @@ export class ProfitSharingRecordService {
         }
       } else if (!month) {
         const now = new Date();
-        const start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
-        const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+        const start = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          1,
+          0,
+          0,
+          0,
+          0,
+        );
+        const end = new Date(
+          now.getFullYear(),
+          now.getMonth() + 1,
+          0,
+          23,
+          59,
+          59,
+          999,
+        );
         dateFilter = { gte: start, lte: end };
         monthLabel = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
       }
@@ -242,7 +270,9 @@ export class ProfitSharingRecordService {
    * 手动结算单条分润记录
    */
   async settleRecord(id: string) {
-    const record = await this.prisma.profitShareRecord.findUnique({ where: { id } });
+    const record = await this.prisma.profitShareRecord.findUnique({
+      where: { id },
+    });
     if (!record) {
       throw new Error('分润记录不存在');
     }
@@ -259,7 +289,9 @@ export class ProfitSharingRecordService {
    * 撤销结算（将已结算的记录恢复为待结算）
    */
   async undoSettleRecord(id: string) {
-    const record = await this.prisma.profitShareRecord.findUnique({ where: { id } });
+    const record = await this.prisma.profitShareRecord.findUnique({
+      where: { id },
+    });
     if (!record) {
       throw new Error('分润记录不存在');
     }
@@ -276,7 +308,9 @@ export class ProfitSharingRecordService {
    * 手动取消单条分润记录
    */
   async cancelRecord(id: string) {
-    const record = await this.prisma.profitShareRecord.findUnique({ where: { id } });
+    const record = await this.prisma.profitShareRecord.findUnique({
+      where: { id },
+    });
     if (!record) {
       throw new Error('分润记录不存在');
     }
@@ -293,7 +327,9 @@ export class ProfitSharingRecordService {
    * 恢复被取消的分润记录（撤销取消）
    */
   async restoreRecord(id: string) {
-    const record = await this.prisma.profitShareRecord.findUnique({ where: { id } });
+    const record = await this.prisma.profitShareRecord.findUnique({
+      where: { id },
+    });
     if (!record) {
       throw new Error('分润记录不存在');
     }
@@ -310,7 +346,9 @@ export class ProfitSharingRecordService {
    * 删除单条分润记录
    */
   async deleteRecord(id: string) {
-    const record = await this.prisma.profitShareRecord.findUnique({ where: { id } });
+    const record = await this.prisma.profitShareRecord.findUnique({
+      where: { id },
+    });
     if (!record) {
       throw new NotFoundException('分润记录不存在');
     }
