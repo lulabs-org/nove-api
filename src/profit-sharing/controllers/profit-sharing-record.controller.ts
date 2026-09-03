@@ -11,12 +11,23 @@ import { Prisma, ProfitShareRecordStatus } from '@prisma/client';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
 import { ProfitSharingRecordService } from '../services/profit-sharing-record.service';
+import { ProfitSharingService } from '../services/profit-sharing.service';
 
 @ApiTags('分润明细流水 (Records)')
 @ApiBearerAuth()
 @Controller('profit-sharing/records')
 export class ProfitSharingRecordController {
-  constructor(private readonly recordService: ProfitSharingRecordService) {}
+  constructor(
+    private readonly recordService: ProfitSharingRecordService,
+    private readonly profitSharingService: ProfitSharingService,
+  ) {}
+
+  @Post('reconcile-refunds')
+  @RequirePermissions('profit-sharing:update')
+  @ApiOperation({ summary: '全局退款回扣对账与兜底补偿' })
+  async reconcileRefunds() {
+    return this.profitSharingService.reconcileRefundClawbacks();
+  }
 
   @Get('dashboard-stats')
   @RequirePermissions('profit-sharing:read')

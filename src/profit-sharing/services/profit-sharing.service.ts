@@ -226,10 +226,25 @@ export class ProfitSharingService {
       }
     }
 
+    // 4. 自动触发全局退款回扣兜底对账，确保历史与跨期退款 100% 得到补偿与回扣
+    let compensatedRefundOrders = 0;
+    try {
+      const reconcileRes = await this.reconcileRefundClawbacks();
+      compensatedRefundOrders = reconcileRes.compensatedOrders;
+      this.logger.log(
+        `Auto refund reconciliation on rule ${ruleId} completed: scanned ${reconcileRes.scannedRefunds}, compensated ${compensatedRefundOrders} orders`,
+      );
+    } catch (err: any) {
+      this.logger.warn(
+        `Auto refund reconciliation on rule ${ruleId} encountered non-critical error: ${err?.message}`,
+      );
+    }
+
     return {
       success: true,
       processedOrders: processedCount,
       totalFound: orders.length,
+      compensatedRefundOrders,
     };
   }
 
@@ -305,6 +320,141 @@ export class ProfitSharingService {
         },
       });
     }
+  }
+
+  /**
+   * 全局退款回扣对账与兜底补偿引擎
+   * 自动扫描全库所有已结算的有效退款单，与分润流水核对，自动补齐遗漏的回扣流水
+   */
+  async reconcileRefundClawbacks() {
+    this.logger.log('Starting global refund clawback reconciliation...');
+
+    if (!this.prisma.orderRefund?.findMany) {
+      return {
+        success: true,
+        scannedRefunds: 0,
+        compensatedOrders: 0,
+        totalCompensatedAmount: 0,
+        details: [],
+      };
+    }
+
+    // 1. 查找全库所有已结算、未被软删除且关联了有效订单的退款单
+    const settledRefunds = await this.prisma.orderRefund.findMany({
+      where: {
+        status: RefundStatus.SETTLED,
+        deletedAt: null,
+        orderId: { not: null },
+        refundAmount: { gt: 0 },
+      },
+      include: {
+        order: true,
+      },
+    });
+
+    let compensatedOrdersCount = 0;
+    let totalCompensatedAmountCents = 0;
+    const details: Array<{
+      orderId: string;
+      orderNumber: string;
+      afterSaleCode: string;
+      refundAmount: number;
+      compensatedAmount: number;
+    }> = [];
+
+    for (const refund of settledRefunds) {
+      if (!refund.orderId || !refund.refundAmount || !refund.order) continue;
+
+      const orderId = refund.orderId;
+      const order = refund.order;
+
+      // 检查该订单名下是否已存在正向可退分润流水
+      const existingCommissionRecords =
+        await this.prisma.profitShareRecord.findMany({
+          where: {
+            orderId,
+            module: { isRefundable: true },
+            status: {
+              in: [
+                ProfitShareRecordStatus.PENDING,
+                ProfitShareRecordStatus.SETTLED,
+              ],
+            },
+          },
+        });
+
+      // 如果连正向提成流水都没有，先尝试自动计算该订单的初始分润
+      if (existingCommissionRecords.length === 0) {
+        this.logger.log(
+          `Order ${orderId} (${order.orderNumber}) has settled refund but missing commission records. Calculating profit share first...`,
+        );
+        try {
+          await this.calculateProfitShare(orderId);
+        } catch (err: any) {
+          this.logger.warn(
+            `Failed to auto-calculate profit share for order ${orderId}: ${err?.message}`,
+          );
+        }
+      }
+
+      // 统计执行补扣前已存在的 CLAWBACK 金额
+      const recordsBefore = await this.prisma.profitShareRecord.findMany({
+        where: {
+          orderId,
+          status: ProfitShareRecordStatus.CLAWBACK,
+        },
+      });
+      const beforeSum = recordsBefore.reduce(
+        (sum, r) => sum + Math.abs(r.profitAmount),
+        0,
+      );
+
+      // 执行增量补扣
+      const settledDate =
+        refund.financialSettledAt || refund.createdAt || new Date();
+      await this.handleRefundClawback(
+        orderId,
+        refund.refundAmount,
+        settledDate,
+      );
+
+      // 统计执行补扣后新增的 CLAWBACK 金额
+      const recordsAfter = await this.prisma.profitShareRecord.findMany({
+        where: {
+          orderId,
+          status: ProfitShareRecordStatus.CLAWBACK,
+        },
+      });
+      const afterSum = recordsAfter.reduce(
+        (sum, r) => sum + Math.abs(r.profitAmount),
+        0,
+      );
+
+      const delta = afterSum - beforeSum;
+      if (delta > 0) {
+        compensatedOrdersCount++;
+        totalCompensatedAmountCents += delta;
+        details.push({
+          orderId,
+          orderNumber: order.orderNumber,
+          afterSaleCode: refund.afterSaleCode,
+          refundAmount: refund.refundAmount / 100,
+          compensatedAmount: delta / 100,
+        });
+      }
+    }
+
+    this.logger.log(
+      `Reconciliation finished: scanned ${settledRefunds.length} refunds, compensated ${compensatedOrdersCount} orders, total deducted ¥${totalCompensatedAmountCents / 100}`,
+    );
+
+    return {
+      success: true,
+      scannedRefunds: settledRefunds.length,
+      compensatedOrders: compensatedOrdersCount,
+      totalCompensatedAmount: totalCompensatedAmountCents / 100,
+      details,
+    };
   }
 
   /**
