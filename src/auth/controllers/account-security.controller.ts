@@ -18,8 +18,13 @@ import {
 } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
 import { NoPermissionRequired } from '@/admin/permission/decorators/permissions.decorator';
-import { RequireAuth } from '@/auth/decorators/require-auth.decorator';
-import { Auth } from '@/auth/decorators/auth.decorator';
+import {
+  Auth,
+  ClientInfo,
+  type ClientInfoContext,
+  RequireAuth,
+} from '@/auth/decorators';
+import { AuthCookieHelper } from '@/auth/utils/auth-cookie.helper';
 import { HttpUtil } from '@/common/utils/http.util';
 import { AccountSecurityService } from '@/auth/services/account-security.service';
 import {
@@ -77,7 +82,9 @@ export class AccountSecurityController {
       dto,
       this.getRefreshToken(req),
     );
-    if (!result.currentSessionPreserved) this.clearRefreshCookie(res);
+    if (!result.currentSessionPreserved) {
+      AuthCookieHelper.clearRefreshToken(res);
+    }
     return result;
   }
 
@@ -88,12 +95,15 @@ export class AccountSecurityController {
     @Auth('userId') userId: string,
     @Body() dto: SendIdentityCodeDto,
     @Req() req: Request,
+    @ClientInfo() clientInfo?: ClientInfoContext,
   ) {
+    const ip = clientInfo?.ip || HttpUtil.getClientIp(req);
+    const userAgent = clientInfo?.userAgent || req.get('User-Agent');
     return this.service.sendIdentityCode(
       this.resolveUserId(userId),
       dto.channel,
-      HttpUtil.getClientIp(req),
-      req.get('User-Agent'),
+      ip,
+      userAgent,
     );
   }
 
@@ -104,12 +114,15 @@ export class AccountSecurityController {
     @Auth('userId') userId: string,
     @Body() dto: SendEmailChangeCodeDto,
     @Req() req: Request,
+    @ClientInfo() clientInfo?: ClientInfoContext,
   ) {
+    const ip = clientInfo?.ip || HttpUtil.getClientIp(req);
+    const userAgent = clientInfo?.userAgent || req.get('User-Agent');
     return this.service.sendEmailChangeCode(
       this.resolveUserId(userId),
       dto.email,
-      HttpUtil.getClientIp(req),
-      req.get('User-Agent'),
+      ip,
+      userAgent,
     );
   }
 
@@ -121,17 +134,22 @@ export class AccountSecurityController {
     @Body() dto: ChangeEmailDto,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
+    @ClientInfo() clientInfo?: ClientInfoContext,
   ) {
+    const ip = clientInfo?.ip || HttpUtil.getClientIp(req);
+    const userAgent = clientInfo?.userAgent || req.get('User-Agent');
     const result = await this.service.changeEmail(
       this.resolveUserId(userId),
       dto,
       {
-        ip: HttpUtil.getClientIp(req),
-        userAgent: req.get('User-Agent'),
+        ip,
+        userAgent,
         currentRefreshToken: this.getRefreshToken(req),
       },
     );
-    if (!result.currentSessionPreserved) this.clearRefreshCookie(res);
+    if (!result.currentSessionPreserved) {
+      AuthCookieHelper.clearRefreshToken(res);
+    }
     return result;
   }
 
@@ -142,13 +160,16 @@ export class AccountSecurityController {
     @Auth('userId') userId: string,
     @Body() dto: SendPhoneChangeCodeDto,
     @Req() req: Request,
+    @ClientInfo() clientInfo?: ClientInfoContext,
   ) {
+    const ip = clientInfo?.ip || HttpUtil.getClientIp(req);
+    const userAgent = clientInfo?.userAgent || req.get('User-Agent');
     return this.service.sendPhoneChangeCode(
       this.resolveUserId(userId),
       dto.countryCode,
       dto.phone,
-      HttpUtil.getClientIp(req),
-      req.get('User-Agent'),
+      ip,
+      userAgent,
     );
   }
 
@@ -160,17 +181,22 @@ export class AccountSecurityController {
     @Body() dto: ChangePhoneDto,
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
+    @ClientInfo() clientInfo?: ClientInfoContext,
   ) {
+    const ip = clientInfo?.ip || HttpUtil.getClientIp(req);
+    const userAgent = clientInfo?.userAgent || req.get('User-Agent');
     const result = await this.service.changePhone(
       this.resolveUserId(userId),
       dto,
       {
-        ip: HttpUtil.getClientIp(req),
-        userAgent: req.get('User-Agent'),
+        ip,
+        userAgent,
         currentRefreshToken: this.getRefreshToken(req),
       },
     );
-    if (!result.currentSessionPreserved) this.clearRefreshCookie(res);
+    if (!result.currentSessionPreserved) {
+      AuthCookieHelper.clearRefreshToken(res);
+    }
     return result;
   }
 
@@ -223,14 +249,5 @@ export class AccountSecurityController {
 
   private getRefreshToken(req: Request): string | undefined {
     return req.cookies?.refreshToken as string | undefined;
-  }
-
-  private clearRefreshCookie(res: Response): void {
-    res.clearCookie('refreshToken', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      path: '/',
-    });
   }
 }

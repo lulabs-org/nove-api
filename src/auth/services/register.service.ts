@@ -1,8 +1,7 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { OtpService } from '@/auth/services/otp.service';
 import { AuthMailService } from '@/mail/services/auth-mail.service';
-import { RegisterDto } from '../dto/register.dto';
-import { AuthResponseDto } from '../dto/auth-response.dto';
+import { RegisterDto, AuthResponseDto } from '../dto';
 import { AuthType } from '@/auth/enums';
 import { CodeType } from '@/common/enums';
 import { UserQueryRepository } from '@/user/repositories/user-query.repository';
