@@ -216,9 +216,6 @@ export class AuthController {
       throw new UnauthorizedException('未找到访问令牌');
     }
 
-    const uid =
-      typeof userId === 'object' ? (userId as { id: string }).id : userId;
-
     const isWebClient = logoutDto.clientType === ClientType.Web;
     const refreshToken =
       logoutDto.refreshToken ||
@@ -226,7 +223,7 @@ export class AuthController {
         ? (req.cookies?.refreshToken as string | undefined)
         : undefined);
 
-    const logoutResult = await this.authService.logout(uid, token, {
+    const logoutResult = await this.authService.logout(userId, token, {
       refreshToken,
       deviceId: logoutDto.deviceId,
       revokeAllDevices: logoutDto.revokeAllDevices,

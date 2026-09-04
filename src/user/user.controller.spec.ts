@@ -18,18 +18,18 @@ describe('UserController avatar endpoints', () => {
     };
     profileService.uploadAvatar.mockResolvedValue({ id: 'user-1' });
 
-    await expect(
-      controller.uploadAvatar({ id: 'user-1' } as never, file),
-    ).resolves.toEqual({ id: 'user-1' });
+    await expect(controller.uploadAvatar('user-1', file)).resolves.toEqual({
+      id: 'user-1',
+    });
     expect(profileService.uploadAvatar.mock.calls[0]).toEqual(['user-1', file]);
   });
 
   it('delegates avatar deletion for the authenticated user', async () => {
     profileService.deleteAvatar.mockResolvedValue({ id: 'user-1' });
 
-    await expect(
-      controller.deleteAvatar({ id: 'user-1' } as never),
-    ).resolves.toEqual({ id: 'user-1' });
+    await expect(controller.deleteAvatar('user-1')).resolves.toEqual({
+      id: 'user-1',
+    });
     expect(profileService.deleteAvatar.mock.calls[0]).toEqual(['user-1']);
   });
 

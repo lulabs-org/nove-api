@@ -120,7 +120,7 @@ describe('ApiKeyController', () => {
         .spyOn(apiKeyService, 'createKey')
         .mockResolvedValue(mockCreateApiKeyResponse);
 
-      const result = await controller.createKey(mockUser, createDto);
+      const result = await controller.createKey(mockUser.id, createDto);
 
       expect(getPrimaryOrgIdSpy).toHaveBeenCalledWith(mockUser.id);
       expect(createKeySpy).toHaveBeenCalledWith(
@@ -143,7 +143,7 @@ describe('ApiKeyController', () => {
         .spyOn(apiKeyService, 'createKey')
         .mockResolvedValue(mockCreateApiKeyResponse);
 
-      const result = await controller.createKey(mockUser, createDto);
+      const result = await controller.createKey(mockUser.id, createDto);
 
       expect(createKeySpy).toHaveBeenCalledWith(
         mockOrganizationId,
@@ -168,9 +168,9 @@ describe('ApiKeyController', () => {
           new BadRequestException('Expiration date must be in the future'),
         );
 
-      await expect(controller.createKey(mockUser, createDto)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        controller.createKey(mockUser.id, createDto),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -185,7 +185,7 @@ describe('ApiKeyController', () => {
         .spyOn(apiKeyService, 'listKeys')
         .mockResolvedValue(mockApiKeyListResponse);
 
-      const result = await controller.listKeys(mockUser, pagination);
+      const result = await controller.listKeys(mockUser.id, pagination);
 
       expect(getPrimaryOrgIdSpy).toHaveBeenCalledWith(mockUser.id);
       expect(listKeysSpy).toHaveBeenCalledWith(
@@ -215,7 +215,7 @@ describe('ApiKeyController', () => {
         .spyOn(apiKeyService, 'listKeys')
         .mockResolvedValue(customListResponse);
 
-      const result = await controller.listKeys(mockUser, pagination);
+      const result = await controller.listKeys(mockUser.id, pagination);
 
       expect(listKeysSpy).toHaveBeenCalledWith(
         mockOrganizationId,
@@ -241,7 +241,7 @@ describe('ApiKeyController', () => {
         .spyOn(apiKeyService, 'listKeys')
         .mockResolvedValue(emptyListResponse);
 
-      const result = await controller.listKeys(mockUser, {});
+      const result = await controller.listKeys(mockUser.id, {});
 
       expect(result).toEqual(emptyListResponse);
     });
@@ -265,7 +265,11 @@ describe('ApiKeyController', () => {
         .spyOn(apiKeyService, 'updateKey')
         .mockResolvedValue(updatedKey);
 
-      const result = await controller.updateKey(mockUser, 'key-123', updateDto);
+      const result = await controller.updateKey(
+        mockUser.id,
+        'key-123',
+        updateDto,
+      );
 
       expect(getPrimaryOrgIdSpy).toHaveBeenCalledWith(mockUser.id);
       expect(updateKeySpy).toHaveBeenCalledWith(
@@ -294,7 +298,11 @@ describe('ApiKeyController', () => {
         .spyOn(apiKeyService, 'updateKey')
         .mockResolvedValue(updatedKey);
 
-      const result = await controller.updateKey(mockUser, 'key-123', updateDto);
+      const result = await controller.updateKey(
+        mockUser.id,
+        'key-123',
+        updateDto,
+      );
 
       expect(updateKeySpy).toHaveBeenCalledWith(
         mockOrganizationId,
@@ -322,7 +330,11 @@ describe('ApiKeyController', () => {
         .spyOn(apiKeyService, 'updateKey')
         .mockResolvedValue(updatedKey);
 
-      const result = await controller.updateKey(mockUser, 'key-123', updateDto);
+      const result = await controller.updateKey(
+        mockUser.id,
+        'key-123',
+        updateDto,
+      );
 
       expect(updateKeySpy).toHaveBeenCalledWith(
         mockOrganizationId,
@@ -346,7 +358,7 @@ describe('ApiKeyController', () => {
         .mockRejectedValue(new NotFoundException('API Key not found'));
 
       await expect(
-        controller.updateKey(mockUser, 'non-existent-key', updateDto),
+        controller.updateKey(mockUser.id, 'non-existent-key', updateDto),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -365,7 +377,7 @@ describe('ApiKeyController', () => {
         );
 
       await expect(
-        controller.updateKey(mockUser, 'key-123', updateDto),
+        controller.updateKey(mockUser.id, 'key-123', updateDto),
       ).rejects.toThrow(BadRequestException);
     });
   });
@@ -379,7 +391,7 @@ describe('ApiKeyController', () => {
         .spyOn(apiKeyService, 'revokeKey')
         .mockResolvedValue(undefined);
 
-      await controller.revokeKey(mockUser, 'key-123');
+      await controller.revokeKey(mockUser.id, 'key-123');
 
       expect(getPrimaryOrgIdSpy).toHaveBeenCalledWith(mockUser.id);
       expect(revokeKeySpy).toHaveBeenCalledWith(
@@ -398,7 +410,7 @@ describe('ApiKeyController', () => {
         .mockRejectedValue(new NotFoundException('API Key not found'));
 
       await expect(
-        controller.revokeKey(mockUser, 'non-existent-key'),
+        controller.revokeKey(mockUser.id, 'non-existent-key'),
       ).rejects.toThrow(NotFoundException);
     });
   });
@@ -412,7 +424,7 @@ describe('ApiKeyController', () => {
         .spyOn(apiKeyService, 'rotateKey')
         .mockResolvedValue(mockRotateApiKeyResponse);
 
-      const result = await controller.rotateKey(mockUser, 'key-123');
+      const result = await controller.rotateKey(mockUser.id, 'key-123');
 
       expect(getPrimaryOrgIdSpy).toHaveBeenCalledWith(mockUser.id);
       expect(rotateKeySpy).toHaveBeenCalledWith(
@@ -434,7 +446,7 @@ describe('ApiKeyController', () => {
         .mockRejectedValue(new NotFoundException('API Key not found'));
 
       await expect(
-        controller.rotateKey(mockUser, 'non-existent-key'),
+        controller.rotateKey(mockUser.id, 'non-existent-key'),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -451,7 +463,7 @@ describe('ApiKeyController', () => {
         .mockResolvedValue(mockOrganizationId);
       jest.spyOn(apiKeyService, 'rotateKey').mockResolvedValue(rotateResponse);
 
-      const result = await controller.rotateKey(mockUser, 'key-123');
+      const result = await controller.rotateKey(mockUser.id, 'key-123');
 
       expect(result.name).toBe(mockApiKeyDto.name);
       expect(result.scopes).toEqual(mockApiKeyDto.scopes);

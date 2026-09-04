@@ -17,9 +17,9 @@ describe('AccountSecurityController', () => {
     };
     const controller = new AccountSecurityController(service as never);
 
-    await expect(
-      controller.getSecurity({ id: 'user-1' } as never),
-    ).resolves.toEqual({ hasPassword: true });
+    await expect(controller.getSecurity('user-1')).resolves.toEqual({
+      hasPassword: true,
+    });
     expect(service.getSecurity).toHaveBeenCalledWith('user-1');
   });
 
@@ -33,9 +33,9 @@ describe('AccountSecurityController', () => {
       currentPassword: 'current-password',
     } as never;
 
-    await expect(
-      controller.verifyIdentity({ id: 'user-1' } as never, dto),
-    ).resolves.toEqual({ verified: true });
+    await expect(controller.verifyIdentity('user-1', dto)).resolves.toEqual({
+      verified: true,
+    });
     expect(service.verifyIdentity).toHaveBeenCalledWith('user-1', dto);
   });
 
@@ -58,7 +58,7 @@ describe('AccountSecurityController', () => {
     const dto = { email: 'new@example.com' } as never;
 
     await controller.changeEmail(
-      { id: 'user-1' } as never,
+      'user-1',
       dto,
       request as never,
       { clearCookie } as never,

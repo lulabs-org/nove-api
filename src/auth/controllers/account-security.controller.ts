@@ -56,7 +56,7 @@ export class AccountSecurityController {
   @ApiOperation({ summary: '获取当前用户安全状态' })
   @ApiOkResponse({ type: AccountSecurityResponseDto })
   getSecurity(@Auth('userId') userId: string) {
-    return this.service.getSecurity(this.resolveUserId(userId));
+    return this.service.getSecurity(userId);
   }
 
   @Post('verify-identity')
@@ -66,7 +66,7 @@ export class AccountSecurityController {
     @Auth('userId') userId: string,
     @Body() dto: SecurityProofDto,
   ) {
-    return this.service.verifyIdentity(this.resolveUserId(userId), dto);
+    return this.service.verifyIdentity(userId, dto);
   }
 
   @Put('password')
@@ -78,7 +78,7 @@ export class AccountSecurityController {
     @Res({ passthrough: true }) res: Response,
   ) {
     const result = await this.service.changePassword(
-      this.resolveUserId(userId),
+      userId,
       dto,
       this.getRefreshToken(req),
     );
@@ -99,12 +99,7 @@ export class AccountSecurityController {
   ) {
     const ip = clientInfo?.ip || HttpUtil.getClientIp(req);
     const userAgent = clientInfo?.userAgent || req.get('User-Agent');
-    return this.service.sendIdentityCode(
-      this.resolveUserId(userId),
-      dto.channel,
-      ip,
-      userAgent,
-    );
+    return this.service.sendIdentityCode(userId, dto.channel, ip, userAgent);
   }
 
   @Post('email/code')
@@ -118,12 +113,7 @@ export class AccountSecurityController {
   ) {
     const ip = clientInfo?.ip || HttpUtil.getClientIp(req);
     const userAgent = clientInfo?.userAgent || req.get('User-Agent');
-    return this.service.sendEmailChangeCode(
-      this.resolveUserId(userId),
-      dto.email,
-      ip,
-      userAgent,
-    );
+    return this.service.sendEmailChangeCode(userId, dto.email, ip, userAgent);
   }
 
   @Put('email')
@@ -138,15 +128,11 @@ export class AccountSecurityController {
   ) {
     const ip = clientInfo?.ip || HttpUtil.getClientIp(req);
     const userAgent = clientInfo?.userAgent || req.get('User-Agent');
-    const result = await this.service.changeEmail(
-      this.resolveUserId(userId),
-      dto,
-      {
-        ip,
-        userAgent,
-        currentRefreshToken: this.getRefreshToken(req),
-      },
-    );
+    const result = await this.service.changeEmail(userId, dto, {
+      ip,
+      userAgent,
+      currentRefreshToken: this.getRefreshToken(req),
+    });
     if (!result.currentSessionPreserved) {
       AuthCookieHelper.clearRefreshToken(res);
     }
@@ -165,7 +151,7 @@ export class AccountSecurityController {
     const ip = clientInfo?.ip || HttpUtil.getClientIp(req);
     const userAgent = clientInfo?.userAgent || req.get('User-Agent');
     return this.service.sendPhoneChangeCode(
-      this.resolveUserId(userId),
+      userId,
       dto.countryCode,
       dto.phone,
       ip,
@@ -185,15 +171,11 @@ export class AccountSecurityController {
   ) {
     const ip = clientInfo?.ip || HttpUtil.getClientIp(req);
     const userAgent = clientInfo?.userAgent || req.get('User-Agent');
-    const result = await this.service.changePhone(
-      this.resolveUserId(userId),
-      dto,
-      {
-        ip,
-        userAgent,
-        currentRefreshToken: this.getRefreshToken(req),
-      },
-    );
+    const result = await this.service.changePhone(userId, dto, {
+      ip,
+      userAgent,
+      currentRefreshToken: this.getRefreshToken(req),
+    });
     if (!result.currentSessionPreserved) {
       AuthCookieHelper.clearRefreshToken(res);
     }
@@ -204,19 +186,13 @@ export class AccountSecurityController {
   @ApiOperation({ summary: '获取当前用户活跃会话' })
   @ApiOkResponse({ type: SecuritySessionDto, isArray: true })
   listSessions(@Auth('userId') userId: string, @Req() req: Request) {
-    return this.service.listSessions(
-      this.resolveUserId(userId),
-      this.getRefreshToken(req),
-    );
+    return this.service.listSessions(userId, this.getRefreshToken(req));
   }
 
   @Delete('sessions/others')
   @ApiOperation({ summary: '撤销当前用户的其他会话' })
   revokeOtherSessions(@Auth('userId') userId: string, @Req() req: Request) {
-    return this.service.revokeOtherSessions(
-      this.resolveUserId(userId),
-      this.getRefreshToken(req),
-    );
+    return this.service.revokeOtherSessions(userId, this.getRefreshToken(req));
   }
 
   @Delete('sessions/:id')
@@ -226,11 +202,7 @@ export class AccountSecurityController {
     @Param('id') id: string,
     @Req() req: Request,
   ) {
-    return this.service.revokeSession(
-      this.resolveUserId(userId),
-      id,
-      this.getRefreshToken(req),
-    );
+    return this.service.revokeSession(userId, id, this.getRefreshToken(req));
   }
 
   @Get('login-activities')
@@ -240,11 +212,7 @@ export class AccountSecurityController {
     @Auth('userId') userId: string,
     @Query() query: LoginActivitiesQueryDto,
   ) {
-    return this.service.getLoginActivities(this.resolveUserId(userId), query);
-  }
-
-  private resolveUserId(userId: string | { id?: string }): string {
-    return typeof userId === 'string' ? userId : userId?.id || '';
+    return this.service.getLoginActivities(userId, query);
   }
 
   private getRefreshToken(req: Request): string | undefined {

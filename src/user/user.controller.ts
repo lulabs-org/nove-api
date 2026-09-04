@@ -49,7 +49,7 @@ export class UserController {
   async getProfile(
     @Auth('userId') userId: string,
   ): Promise<UserProfileResponseDto> {
-    return await this.profileService.getProfile(this.resolveUserId(userId));
+    return await this.profileService.getProfile(userId);
   }
 
   @Put('profile')
@@ -63,7 +63,7 @@ export class UserController {
     const ip = this.getClientIp(req);
     const userAgent = req.get('User-Agent');
     return await this.profileService.updateProfile(
-      this.resolveUserId(userId),
+      userId,
       updateProfileDto,
       ip,
       userAgent,
@@ -82,7 +82,7 @@ export class UserController {
     @Auth('userId') userId: string,
     @UploadedFile() file?: AvatarUploadFile,
   ): Promise<UserProfileResponseDto> {
-    return this.profileService.uploadAvatar(this.resolveUserId(userId), file);
+    return this.profileService.uploadAvatar(userId, file);
   }
 
   @Delete('profile/avatar')
@@ -91,11 +91,7 @@ export class UserController {
   deleteAvatar(
     @Auth('userId') userId: string,
   ): Promise<UserProfileResponseDto> {
-    return this.profileService.deleteAvatar(this.resolveUserId(userId));
-  }
-
-  private resolveUserId(userId: string | { id?: string }): string {
-    return typeof userId === 'string' ? userId : userId?.id || '';
+    return this.profileService.deleteAvatar(userId);
   }
 
   private getClientIp(req: Request): string {
