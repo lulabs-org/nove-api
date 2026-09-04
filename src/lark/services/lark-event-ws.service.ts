@@ -11,7 +11,7 @@
 
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import * as Lark from '@larksuiteoapi/node-sdk';
-import { LarkClient } from '@/integrations/lark/lark.client';
+import { LarkClient } from '../client/lark.client';
 import { LarkMeetingService } from './lark-meeting.service';
 import { MeetingEndedEventData } from '../types/lark-meeting.types';
 import { LarkEvent } from '../enums/lark-event.enum';

@@ -1,6 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import * as lark from '@larksuiteoapi/node-sdk';
-import { LarkClientConfig } from './types';
+import { LarkClientConfig } from '../types';
 import {
   SingleOrgContextService,
   SystemConfigChangeEvent,
