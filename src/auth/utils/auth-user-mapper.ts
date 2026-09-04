@@ -61,7 +61,11 @@ export function formatAuthUserResponse(
     'User';
   const roles =
     user.roles && user.roles.length > 0
-      ? user.roles.map((r) => r.role.code)
+      ? user.roles.map((r: unknown) =>
+          typeof r === 'string'
+            ? r
+            : (r as { role?: { code?: string } })?.role?.code || 'USER',
+        )
       : ['USER'];
 
   return {

@@ -20,7 +20,6 @@ import { MailModule } from './mail/mail.module';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { UnifiedAuthGuard } from '@/auth/guards/unified-auth.guard';
-import { ScopeGuard } from '@/auth/guards/scope.guard';
 import { PermissionGuard } from '@/admin/permission/guards/permission.guard';
 import { PrismaModule } from './prisma/prisma.module';
 import { MeetingModule } from './meeting/meeting.module';
@@ -141,10 +140,6 @@ import { ProfitSharingModule } from './profit-sharing/profit-sharing.module';
     {
       provide: APP_GUARD,
       useClass: UnifiedAuthGuard,
-    },
-    {
-      provide: APP_GUARD,
-      useClass: ScopeGuard,
     },
     {
       provide: APP_GUARD,

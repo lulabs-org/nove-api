@@ -2,11 +2,11 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-10-01 06:58:19
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-14 10:21:11
- * @FilePath: /lulab_backend/src/auth/auth.module.ts
- * @Description:
+ * @LastEditTime: 2026-09-04 18:00:00
+ * @FilePath: /nove_api/src/auth/auth.module.ts
+ * @Description: 认证模块配置与提供者装配
  *
- * Copyright (c) 2025 by ${git_name_email}, All Rights Reserved.
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
 import { Module } from '@nestjs/common';
@@ -17,11 +17,7 @@ import { AuthController } from './controllers/auth.controller';
 import { AccountSecurityController } from './controllers/account-security.controller';
 import { OtpController } from './controllers/otp.controller';
 import { AuthService } from './services/auth.service';
-import { RegisterService } from './services/register.service';
-import { LoginService } from './services/login.service';
-import { PasswordService } from './services/password.service';
 import { TokenService } from './services/token.service';
-import { AuthPolicyService } from './services/auth-policy.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JWT_USER_LOOKUP, JWT_TOKEN_BLACKLIST } from './types/jwt.types';
 import { RedisModule } from '@/redis/redis.module';
@@ -64,11 +60,7 @@ import { VerificationCodeRepository } from './repositories/verification-code.rep
   controllers: [AuthController, AccountSecurityController, OtpController],
   providers: [
     AuthService,
-    RegisterService,
-    LoginService,
-    PasswordService,
     TokenService,
-    AuthPolicyService,
     JwtStrategy,
     RefreshTokenRepository,
     LoginLogRepository,
@@ -82,15 +74,6 @@ import { VerificationCodeRepository } from './repositories/verification-code.rep
     OtpService,
     VerificationCodeRepository,
   ],
-  exports: [
-    AuthService,
-    RegisterService,
-    LoginService,
-    PasswordService,
-    TokenService,
-    AuthPolicyService,
-    TokenBlacklistService,
-    UnifiedAuthGuard,
-  ],
+  exports: [AuthService, TokenService, TokenBlacklistService, UnifiedAuthGuard],
 })
 export class AuthModule {}
