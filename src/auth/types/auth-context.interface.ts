@@ -5,6 +5,8 @@
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
+import type { AuthenticatedUser } from './jwt.types';
+
 /**
  * 认证方式枚举
  */
@@ -32,6 +34,9 @@ export interface AuthContext {
 
   /** OAuth client ID（仅 OAuth delegated access token 时有值） */
   oauthClientId?: string;
+
+  /** 当前鉴权的用户实体镜像（仅在 JWT / OAuth 认证时存在） */
+  user?: AuthenticatedUser;
 }
 
 /**

@@ -14,7 +14,7 @@ import {
   AuthUserWithPermissionsDto,
   PermissionsResponseDto,
 } from '@/auth/dto';
-import { CurrentUser } from '@/auth/decorators/user.decorator';
+import type { AuthenticatedUser } from '@/auth/types/jwt.types';
 import { DesensitizationUtil } from '@/common/utils/desensitization.util';
 
 /**
@@ -76,7 +76,7 @@ export function formatAuthUserResponse(
  * 格式化带权限的完整用户信息（用于 /auth/me 接口）
  */
 export function formatAuthUserWithPermissions(
-  user: CurrentUser,
+  user: AuthenticatedUser,
   perm: string[],
   currentOrgId?: string,
   avatar?: string,
@@ -95,8 +95,15 @@ export function formatAuthUserWithPermissions(
     active: user.active,
     emailVerified: user.emailVerified,
     phoneVerified: user.phoneVerified,
-    createdAt: user.createdAt.toISOString(),
-    lastLoginAt: user.lastLoginAt?.toISOString(),
+    createdAt:
+      user.createdAt instanceof Date
+        ? user.createdAt.toISOString()
+        : new Date(user.createdAt).toISOString(),
+    lastLoginAt: user.lastLoginAt
+      ? user.lastLoginAt instanceof Date
+        ? user.lastLoginAt.toISOString()
+        : new Date(user.lastLoginAt).toISOString()
+      : undefined,
   };
 }
 
@@ -104,7 +111,7 @@ export function formatAuthUserWithPermissions(
  * 格式化用户权限响应（用于 /auth/permissions 接口）
  */
 export function formatPermissionsResponse(
-  user: CurrentUser,
+  user: AuthenticatedUser,
   perm: string[],
 ): PermissionsResponseDto {
   return {
