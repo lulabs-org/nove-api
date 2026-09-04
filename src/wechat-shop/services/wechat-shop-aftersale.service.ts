@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { RefundChannel, RefundStatus } from '@prisma/client';
 import { WechatShopRepository } from '../repositories';
-import { WechatShopAftersaleOrder } from '../types/wechat-shop.types';
+import { WechatShopAftersaleOrder } from '../types';
 import { WechatShopClientService } from './wechat-shop-client.service';
 
 const SETTLED_AFTERSALE_STATUSES = new Set([
@@ -16,15 +16,14 @@ export class WechatShopAftersaleService {
   constructor(
     private readonly wechatShopClient: WechatShopClientService,
     private readonly wechatShopRepository: WechatShopRepository,
-  ) {}
+  ) { }
 
   /**
    * 以微信售后详情接口的结果为准，幂等同步一张售后单。
    */
   async syncSingle(afterSaleOrderId: string) {
-    const response =
-      //获取完整的售后信息
-      await this.wechatShopClient.getAftersaleOrder(afterSaleOrderId);
+    //获取完整的售后信息
+    const response = await this.wechatShopClient.getAftersaleOrder(afterSaleOrderId);
     const aftersaleOrder = response.after_sale_order!;
     // 根据售后单的订单ID，查询本地订单
     const order = await this.wechatShopRepository.findLatestByExternalId(
@@ -34,7 +33,7 @@ export class WechatShopAftersaleService {
     if (!order) {
       this.logger.warn(
         `Local order not found for WeChat aftersale: ` +
-          `afterSaleOrderId=${afterSaleOrderId}, orderId=${aftersaleOrder.order_id}`,
+        `afterSaleOrderId=${afterSaleOrderId}, orderId=${aftersaleOrder.order_id}`,
       );
     }
 
