@@ -14,8 +14,13 @@ import {
   UnauthorizedException,
   Logger,
   Inject,
-  InternalServerErrorException,
 } from '@nestjs/common';
+import {
+  InvalidRefreshTokenException,
+  AuthUserNotFoundException,
+  TokenGenerationFailedException,
+  TokenRotationFailedException,
+} from '../exceptions';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigType } from '@nestjs/config';
 import { jwtConfig } from '@/configs/jwt.config';
@@ -97,7 +102,7 @@ export class TokenService {
       });
     } catch (error) {
       this.logger.error('Failed to store refresh token', error);
-      throw new InternalServerErrorException('生成刷新令牌失败');
+      throw new TokenGenerationFailedException();
     }
 
     return {
@@ -121,12 +126,12 @@ export class TokenService {
       const oldTokenRecord =
         await this.refreshTokenRepo.findByToken(refreshToken);
       if (!oldTokenRecord || oldTokenRecord.revokedAt) {
-        throw new UnauthorizedException('刷新令牌无效或已过期');
+        throw new InvalidRefreshTokenException();
       }
 
       const user = await this.userRepo.byId(oldTokenRecord.userId);
       if (!user) {
-        throw new UnauthorizedException('用户不存在');
+        throw new AuthUserNotFoundException();
       }
 
       const accessToken = this.jwtService.sign(
@@ -170,7 +175,7 @@ export class TokenService {
           'Failed to store new refresh token during rotation',
           error,
         );
-        throw new InternalServerErrorException('刷新令牌轮换失败');
+        throw new TokenRotationFailedException();
       }
 
       try {
@@ -191,7 +196,7 @@ export class TokenService {
         throw error;
       }
       this.logger.error('Refresh token validation failed', error);
-      throw new UnauthorizedException('刷新令牌无效');
+      throw new InvalidRefreshTokenException('刷新令牌无效');
     }
   }
 

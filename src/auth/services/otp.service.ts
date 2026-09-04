@@ -1,9 +1,9 @@
+import { Injectable, BadRequestException } from '@nestjs/common';
 import {
-  Injectable,
-  BadRequestException,
-  HttpException,
-  HttpStatus,
-} from '@nestjs/common';
+  VerificationCodeScopeException,
+  InvalidVerificationTargetException,
+  OtpRateLimitException,
+} from '../exceptions';
 import { VerificationCodeRepository } from '@/auth/repositories/verification-code.repository';
 import { AuthMailService } from '@/mail/services/auth-mail.service';
 import { SmsDeliveryError, SmsService } from '@/sms/sms.service';
@@ -35,7 +35,7 @@ export class OtpService {
       type === CodeType.CHANGE_EMAIL ||
       type === CodeType.CHANGE_PHONE
     ) {
-      throw new BadRequestException('该验证码用途仅允许在登录后使用');
+      throw new VerificationCodeScopeException();
     }
     return this.sendCodeInternal(target, type, ip, userAgent, countryCode);
   }
@@ -64,7 +64,7 @@ export class OtpService {
     const isPhone = isValidCnPhone(target);
 
     if (!isEmail && !isPhone) {
-      throw new BadRequestException('目标必须是有效的邮箱或手机号');
+      throw new InvalidVerificationTargetException();
     }
 
     await this.checkSendLimit(target, ip);
@@ -144,18 +144,12 @@ export class OtpService {
       oneHourAgo,
     );
     if (targetCount >= 5) {
-      throw new HttpException(
-        '发送过于频繁，请1小时后再试',
-        HttpStatus.TOO_MANY_REQUESTS,
-      );
+      throw new OtpRateLimitException('发送过于频繁，请1小时后再试');
     }
 
     const ipCount = await this.repo.countSentFromIpSince(ip, oneDayAgo);
     if (ipCount >= 20) {
-      throw new HttpException(
-        '发送过于频繁，请明天再试',
-        HttpStatus.TOO_MANY_REQUESTS,
-      );
+      throw new OtpRateLimitException('发送过于频繁，请明天再试');
     }
   }
 

@@ -17,9 +17,13 @@ import {
   Res,
   HttpCode,
   HttpStatus,
-  UnauthorizedException,
   Get,
 } from '@nestjs/common';
+import {
+  MissingRefreshTokenException,
+  MissingAccessTokenException,
+  MissingAuthUserException,
+} from '../exceptions';
 import { Request, Response } from 'express';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import {
@@ -157,7 +161,7 @@ export class AuthController {
       (req.cookies?.refreshToken as string | undefined);
 
     if (!refreshToken) {
-      throw new UnauthorizedException('刷新令牌不能为空');
+      throw new MissingRefreshTokenException();
     }
 
     const result = await this.authService.refreshToken(
@@ -213,7 +217,7 @@ export class AuthController {
         : undefined);
 
     if (!token) {
-      throw new UnauthorizedException('未找到访问令牌');
+      throw new MissingAccessTokenException();
     }
 
     const isWebClient = logoutDto.clientType === ClientType.Web;
@@ -259,7 +263,7 @@ export class AuthController {
   ): Promise<AuthUserWithPermissionsDto> {
     const currentUser = user || auth?.user;
     if (!currentUser) {
-      throw new UnauthorizedException('未找到当前用户信息');
+      throw new MissingAuthUserException();
     }
 
     const roles = currentUser.roles || ['USER'];
@@ -303,7 +307,7 @@ export class AuthController {
   ): Promise<PermissionsResponseDto> {
     const currentUser = user || auth?.user;
     if (!currentUser) {
-      throw new UnauthorizedException('未找到当前用户信息');
+      throw new MissingAuthUserException();
     }
 
     const roles = currentUser.roles || ['USER'];

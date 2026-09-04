@@ -8,9 +8,13 @@
  *
  * Copyright (c) 2025 by ${git_name_email}, All Rights Reserved.
  */
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import type { AuthenticatedUser, JwtUserLookup } from '../types/jwt.types';
 import { UserQueryRepository } from '@/user/repositories/user-query.repository';
+import {
+  AccountDisabledException,
+  AccountDeletedException,
+} from '../exceptions';
 
 @Injectable()
 export class JwtUserLookupService implements JwtUserLookup {
@@ -23,11 +27,11 @@ export class JwtUserLookupService implements JwtUserLookup {
     if (!user) return null;
 
     if (!user.active) {
-      throw new UnauthorizedException('账户已被禁用');
+      throw new AccountDisabledException();
     }
 
     if (user.deletedAt) {
-      throw new UnauthorizedException('账户已被删除');
+      throw new AccountDeletedException();
     }
 
     const roles =

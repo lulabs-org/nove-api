@@ -10,10 +10,20 @@ import {
   Injectable,
   UnauthorizedException,
   BadRequestException,
-  HttpException,
-  HttpStatus,
   Logger,
 } from '@nestjs/common';
+import {
+  InvalidCredentialsException,
+  AccountLockedException,
+  MissingIdentityTargetException,
+  ResetPasswordUserNotFoundException,
+  InvalidRegistrationTypeException,
+  UnsupportedRegistrationTypeException,
+  MissingRegistrationCredentialsException,
+  UsernameAlreadyExistsException,
+  EmailAlreadyExistsException,
+  PhoneAlreadyExistsException,
+} from '../exceptions';
 import * as bcrypt from 'bcryptjs';
 import { UserQueryRepository } from '@/user/repositories/user-query.repository';
 import { UserCommandRepository } from '@/user/repositories/user-command.repository';
@@ -78,7 +88,7 @@ export class AuthService {
         throw new BadRequestException(verifyResult.message);
       }
     } else {
-      throw new BadRequestException('无效的注册方式');
+      throw new InvalidRegistrationTypeException();
     }
 
     const hashedPassword = password ? await hashPassword(password) : null;
@@ -145,7 +155,7 @@ export class AuthService {
     const target = username || email || phone;
 
     if (!target) {
-      throw new BadRequestException('请提供用户名、邮箱或手机号');
+      throw new MissingIdentityTargetException();
     }
 
     await this.checkLoginLockout(target, ip);
@@ -161,7 +171,7 @@ export class AuthService {
         userAgent,
         failReason: '用户不存在',
       });
-      throw new UnauthorizedException('用户名或密码错误');
+      throw new InvalidCredentialsException();
     }
 
     let failureReason = '';
@@ -188,7 +198,7 @@ export class AuthService {
         );
         if (!isPasswordValid) {
           failureReason = '密码错误';
-          throw new UnauthorizedException('用户名或密码错误');
+          throw new InvalidCredentialsException();
         }
       }
 
@@ -256,7 +266,7 @@ export class AuthService {
 
     const user = await this.userQueryRepo.byTarget(target);
     if (!user) {
-      throw new BadRequestException('用户不存在');
+      throw new ResetPasswordUserNotFoundException();
     }
 
     validatePassword(newPassword);
@@ -379,16 +389,14 @@ export class AuthService {
     );
 
     if (targetFailures >= this.maxLoginAttempts) {
-      throw new HttpException(
+      throw new AccountLockedException(
         `登录失败次数过多，请${this.lockoutDuration / 60000}分钟后再试`,
-        HttpStatus.TOO_MANY_REQUESTS,
       );
     }
 
     if (ipFailures >= this.maxLoginAttempts * 2) {
-      throw new HttpException(
+      throw new AccountLockedException(
         `该IP登录失败次数过多，请${this.lockoutDuration / 60000}分钟后再试`,
-        HttpStatus.TOO_MANY_REQUESTS,
       );
     }
   }
@@ -425,37 +433,45 @@ export class AuthService {
 
     switch (type) {
       case AuthType.USERNAME_PASSWORD:
-        throw new BadRequestException(
+        throw new UnsupportedRegistrationTypeException(
           '为了账户安全，注册需要邮箱或手机号验证，请使用邮箱验证码或手机验证码注册',
         );
       case AuthType.EMAIL_PASSWORD:
         if (!email || !password) {
-          throw new BadRequestException('邮箱和密码不能为空');
+          throw new MissingRegistrationCredentialsException(
+            '邮箱和密码不能为空',
+          );
         }
         validatePassword(password);
-        throw new BadRequestException(
+        throw new UnsupportedRegistrationTypeException(
           '为了账户安全，请先通过邮箱验证码验证您的邮箱地址',
         );
       case AuthType.EMAIL_CODE:
         if (!email || !code) {
-          throw new BadRequestException('邮箱和验证码不能为空');
+          throw new MissingRegistrationCredentialsException(
+            '邮箱和验证码不能为空',
+          );
         }
         break;
       case AuthType.PHONE_PASSWORD:
         if (!phone || !password) {
-          throw new BadRequestException('手机号和密码不能为空');
+          throw new MissingRegistrationCredentialsException(
+            '手机号和密码不能为空',
+          );
         }
         validatePassword(password);
-        throw new BadRequestException(
+        throw new UnsupportedRegistrationTypeException(
           '为了账户安全，请先通过手机验证码验证您的手机号码',
         );
       case AuthType.PHONE_CODE:
         if (!phone || !code) {
-          throw new BadRequestException('手机号和验证码不能为空');
+          throw new MissingRegistrationCredentialsException(
+            '手机号和验证码不能为空',
+          );
         }
         break;
       default:
-        throw new BadRequestException('不支持的注册方式');
+        throw new UnsupportedRegistrationTypeException('不支持的注册方式');
     }
   }
 
@@ -477,10 +493,10 @@ export class AuthService {
 
     if (existingUser) {
       if (username && existingUser.username === username) {
-        throw new BadRequestException('用户名已被注册');
+        throw new UsernameAlreadyExistsException();
       }
       if (email && existingUser.email === email) {
-        throw new BadRequestException('邮箱已被注册');
+        throw new EmailAlreadyExistsException();
       }
       if (
         phone &&
@@ -488,7 +504,7 @@ export class AuthService {
         existingUser.phone === phone &&
         existingUser.countryCode === countryCode
       ) {
-        throw new BadRequestException('手机号已被注册');
+        throw new PhoneAlreadyExistsException();
       }
     }
   }
