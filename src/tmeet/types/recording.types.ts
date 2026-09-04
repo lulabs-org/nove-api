@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
-export interface TencentRecordingFile {
+export interface TMeetRecordingFile {
   record_file_id: string;
 }
 

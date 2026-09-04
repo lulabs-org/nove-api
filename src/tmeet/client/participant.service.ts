@@ -10,7 +10,7 @@
  */
 
 import { Injectable, Logger } from '@nestjs/common';
-import { TencentApiService } from './api.service';
+import { TMeetApiService } from './api.service';
 import { ParticipantDetail, ParticipantsList } from '../types';
 
 /**
@@ -21,7 +21,7 @@ import { ParticipantDetail, ParticipantsList } from '../types';
 export class ParticipantService {
   private readonly logger = new Logger(ParticipantService.name);
 
-  constructor(private readonly api: TencentApiService) {}
+  constructor(private readonly api: TMeetApiService) {}
 
   /**
    * 获取唯一的会议参与者列表

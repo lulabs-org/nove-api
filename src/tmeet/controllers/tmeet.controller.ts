@@ -24,7 +24,7 @@ import { SyncRecordingsDto } from '../dto/sync-recordings.dto';
  */
 @ApiTags('TMeet')
 @ApiBearerAuth()
-@Controller(['tmeet', 'tencent-mtg'])
+@Controller('tmeet')
 @RequirePermissions('system:config')
 export class TMeetController {
   private readonly logger = new Logger(TMeetController.name);
@@ -113,5 +113,3 @@ export class TMeetController {
     };
   }
 }
-
-export { TMeetController as TencentMtgController };

@@ -10,7 +10,7 @@ import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { SystemConfigModule } from '@/admin/system-config/system-config.module';
 
 import {
-  TencentApiService,
+  TMeetApiService,
   TranscriptFormatterService,
   TranscriptService,
   SummaryService,
@@ -68,7 +68,7 @@ import {
   controllers: [TMeetController, TMeetWebhookController],
   providers: [
     // Client SDK Services
-    TencentApiService,
+    TMeetApiService,
     TranscriptFormatterService,
     TranscriptService,
     SummaryService,
@@ -135,7 +135,7 @@ import {
   ],
   exports: [
     // Client SDK Exports
-    TencentApiService,
+    TMeetApiService,
     TranscriptFormatterService,
     TranscriptService,
     SummaryService,

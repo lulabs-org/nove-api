@@ -84,5 +84,4 @@ export class TMeetEventHandlerService {
   }
 }
 
-export { TMeetEventHandlerService as TencentEventHandlerService };
 

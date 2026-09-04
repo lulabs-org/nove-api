@@ -17,7 +17,7 @@ import type {
   RecordMeeting,
   RecordFile,
 } from '../types';
-import { TencentApiService } from '../client';
+import { TMeetApiService } from '../client';
 import {
   TENCENT_MEETING_TYPE_RECURRING,
   computeSubMeetingId,
@@ -45,7 +45,7 @@ export class TMeetMeetingCoreService {
     private readonly ptUserRepo: PlatformUserRepository,
     private readonly meetingRepo: MeetingRepository,
     private readonly recordingRepo: MinuteRepository,
-    private readonly tencentApi: TencentApiService,
+    private readonly tencentApi: TMeetApiService,
   ) {}
 
   // ==========================================
@@ -218,5 +218,4 @@ export class TMeetMeetingCoreService {
   }
 }
 
-export { TMeetMeetingCoreService as TencentMtgMeetingCoreService };
 

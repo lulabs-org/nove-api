@@ -1,6 +1,6 @@
 import {
   MeetingCreateFrom,
-  MeetingType as TencentMeetingType,
+  MeetingType as TMeetMeetingType,
   InstanceType,
   MeetingEventType,
 } from '../enums/tmeet.enum';
@@ -9,7 +9,7 @@ import {
   MeetingSessionInfo as MeetInfo,
   Meetuser,
 } from '../types';
-import { MeetingType } from '@prisma/client';
+import { MeetingType as SystemMeetingType } from '@prisma/client';
 
 // 类型工具函数
 export class TMeetEventUtils {
@@ -17,7 +17,7 @@ export class TMeetEventUtils {
    * 判断是否为周期性会议
    */
   static isRecurring(meetingInfo: MeetInfo): boolean {
-    return meetingInfo.meeting_type === TencentMeetingType.RECURRING;
+    return meetingInfo.meeting_type === TMeetMeetingType.RECURRING;
   }
 
   /**
@@ -74,17 +74,17 @@ export class TMeetEventUtils {
   /**
    * 获取会议类型的描述文本
    */
-  static getMeetingTypeDesc(meetingType: TencentMeetingType): string {
+  static getMeetingTypeDesc(meetingType: TMeetMeetingType): string {
     switch (meetingType) {
-      case TencentMeetingType.ONE_TIME:
+      case TMeetMeetingType.ONE_TIME:
         return '一次性会议';
-      case TencentMeetingType.RECURRING:
+      case TMeetMeetingType.RECURRING:
         return '周期性会议';
-      case TencentMeetingType.WECHAT_EXCLUSIVE:
+      case TMeetMeetingType.WECHAT_EXCLUSIVE:
         return '微信专属会议';
-      case TencentMeetingType.ROOMS_SCREEN_SHARE:
+      case TMeetMeetingType.ROOMS_SCREEN_SHARE:
         return 'Rooms投屏会议';
-      case TencentMeetingType.PERSONAL_MEETING_ID:
+      case TMeetMeetingType.PERSONAL_MEETING_ID:
         return '个人会议号会议';
       default:
         return '未知会议类型';
@@ -183,21 +183,21 @@ export class TMeetEventUtils {
   /**
    * 将腾讯会议类型转换为系统会议类型
    */
-  static convertMeetingType(tencentMeetingType: number): MeetingType {
-    const meetingType = tencentMeetingType as TencentMeetingType;
+  static convertMeetingType(tmeetType: number): SystemMeetingType {
+    const meetingType = tmeetType as TMeetMeetingType;
 
     switch (meetingType) {
-      case TencentMeetingType.ONE_TIME: // 一次性会议
-        return MeetingType.ONE_TIME;
-      case TencentMeetingType.RECURRING: // 周期性会议
-        return MeetingType.RECURRING;
-      case TencentMeetingType.WECHAT_EXCLUSIVE: // 微信专属会议
-      case TencentMeetingType.ROOMS_SCREEN_SHARE: // rooms 投屏会议
-        return MeetingType.INSTANT;
-      case TencentMeetingType.PERSONAL_MEETING_ID: // 个人会议号会议
-        return MeetingType.SCHEDULED;
+      case TMeetMeetingType.ONE_TIME: // 一次性会议
+        return SystemMeetingType.ONE_TIME;
+      case TMeetMeetingType.RECURRING: // 周期性会议
+        return SystemMeetingType.RECURRING;
+      case TMeetMeetingType.WECHAT_EXCLUSIVE: // 微信专属会议
+      case TMeetMeetingType.ROOMS_SCREEN_SHARE: // rooms 投屏会议
+        return SystemMeetingType.INSTANT;
+      case TMeetMeetingType.PERSONAL_MEETING_ID: // 个人会议号会议
+        return SystemMeetingType.SCHEDULED;
       default:
-        return MeetingType.SCHEDULED;
+        return SystemMeetingType.SCHEDULED;
     }
   }
 
@@ -272,4 +272,3 @@ export class TMeetEventUtils {
   }
 }
 
-export { TMeetEventUtils as TencentEventUtils };

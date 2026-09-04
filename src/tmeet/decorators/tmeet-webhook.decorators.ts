@@ -127,7 +127,3 @@ export function ApiTMeetEventReceiverDocs() {
   );
 }
 
-export {
-  ApiTMeetUrlVerificationDocs as ApiTencentUrlVerificationDocs,
-  ApiTMeetEventReceiverDocs as ApiTencentEventReceiverDocs,
-};

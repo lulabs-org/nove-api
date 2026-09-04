@@ -23,4 +23,3 @@ export class TMeetWebhookEventBodyDto {
   data: string;
 }
 
-export { TMeetWebhookEventBodyDto as TencentWebhookEventBodyDto };

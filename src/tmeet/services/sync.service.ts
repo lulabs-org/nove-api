@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-import { TencentApiService } from '../client';
+import { TMeetApiService } from '../client';
 import { Meeting } from '@prisma/client';
 import type {
   RecordMeeting,
@@ -21,7 +21,7 @@ export class TMeetSyncService {
 
   constructor(
     @InjectQueue('tmeet-sync') private readonly syncQueue: Queue,
-    private readonly tencentApi: TencentApiService,
+    private readonly tencentApi: TMeetApiService,
     private readonly meetingCoreService: TMeetMeetingCoreService,
     private readonly transcriptCoreService: TMeetTranscriptCoreService,
     private readonly summaryCoreService: TMeetSummaryCoreService,
@@ -318,5 +318,4 @@ export class TMeetSyncService {
   }
 }
 
-export { TMeetSyncService as TencentMtgSyncService };
 

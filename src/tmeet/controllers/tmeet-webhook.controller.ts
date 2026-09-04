@@ -37,7 +37,7 @@ import { UrlVerificationPipe, BodyDecryptionPipe } from '../pipes';
  * Specifically handles Tencent Meeting webhook requests
  */
 @ApiTags('Webhooks')
-@Controller(['webhooks/tmeet', 'webhooks/tencent'])
+@Controller('webhooks/tmeet')
 @Public()
 @UseInterceptors(WebhookLoggingInterceptor)
 export class TMeetWebhookController {
@@ -48,8 +48,8 @@ export class TMeetWebhookController {
   ) {}
 
   /**
-   * Tencent Meeting Webhook URL verification endpoint (GET)
-   * Used for Tencent Meeting webhook URL validity verification
+   * TMeet Webhook URL verification endpoint (GET)
+   * Used for TMeet webhook URL validity verification
    *
    * 腾讯会议通过GET请求验证URL有效性，参数通过Header传递：
    * - timestamp: 时间戳
@@ -60,18 +60,18 @@ export class TMeetWebhookController {
   @Get()
   @HttpCode(HttpStatus.OK)
   @ApiTMeetUrlVerificationDocs()
-  async verifyTencentWebhook(
+  async verifyWebhook(
     @Query('check_str', UrlVerificationPipe) decryptedStr: string,
   ): Promise<string> {
     this.logger.log(
-      'Received Tencent Meeting Webhook URL verification request',
+      'Received TMeet Webhook URL verification request',
     );
     await Promise.resolve();
     return decryptedStr;
   }
 
   /**
-   * Tencent Meeting Webhook event receiving endpoint (POST)
+   * TMeet Webhook event receiving endpoint (POST)
    * Supports event reception
    *
    * 根据腾讯会议文档要求：
@@ -84,7 +84,7 @@ export class TMeetWebhookController {
   @Post()
   @HttpCode(HttpStatus.OK)
   @ApiTMeetEventReceiverDocs()
-  async handleTencentWebhook(
+  async handleWebhook(
     @Body(
       new ValidationPipe({ transform: true, whitelist: true }),
       BodyDecryptionPipe,
@@ -106,5 +106,4 @@ export class TMeetWebhookController {
   }
 }
 
-export { TMeetWebhookController as TencentWebhookController };
 

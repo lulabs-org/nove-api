@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
-import { TencentApiService } from './api.service';
+import { TMeetApiService } from './api.service';
 import { tencentMeetingConfig } from '@/configs';
 import { SystemConfigService } from '@/admin/system-config/services/system-config.service';
 import { SingleOrgContextService } from '@/admin/system-config/services';
@@ -42,8 +42,8 @@ const jsonResponse = (data: unknown) => ({
   json: jest.fn().mockResolvedValueOnce(data),
 });
 
-describe('TencentApiService', () => {
-  let service: TencentApiService;
+describe('TMeetApiService', () => {
+  let service: TMeetApiService;
   const getEffectiveConfig = jest.fn().mockResolvedValue({
     value: {
       secretId: 'mock-secret-id',
@@ -57,7 +57,7 @@ describe('TencentApiService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        TencentApiService,
+        TMeetApiService,
         { provide: ConfigService, useValue: mockConfigService },
         {
           provide: tencentMeetingConfig.KEY,
@@ -76,7 +76,7 @@ describe('TencentApiService', () => {
       ],
     }).compile();
 
-    service = module.get<TencentApiService>(TencentApiService);
+    service = module.get<TMeetApiService>(TMeetApiService);
     jest.clearAllMocks();
   });
 

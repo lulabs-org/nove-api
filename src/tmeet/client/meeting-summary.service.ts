@@ -10,7 +10,7 @@
  */
 
 import { Injectable, Logger } from '@nestjs/common';
-import { TencentApiService } from './api.service';
+import { TMeetApiService } from './api.service';
 import { ContentUtils } from '../utils/content.utils';
 
 export interface MeetingContent {
@@ -23,7 +23,7 @@ export interface MeetingContent {
 export class SummaryService {
   private readonly logger = new Logger(SummaryService.name);
 
-  constructor(private readonly api: TencentApiService) {}
+  constructor(private readonly api: TMeetApiService) {}
 
   /**
    * 获取会议内容（摘要、纪要等）

@@ -32,22 +32,22 @@ describe('TMeetWebhookController', () => {
     jest.spyOn(Logger.prototype, 'error').mockImplementation();
   });
 
-  describe('verifyTencentWebhook', () => {
+  describe('verifyWebhook', () => {
     it('should return decrypted string and log request', async () => {
       const logSpy = jest.spyOn(Logger.prototype, 'log');
 
-      const result = await controller.verifyTencentWebhook(
+      const result = await controller.verifyWebhook(
         'decrypted_check_str',
       );
 
       expect(result).toBe('decrypted_check_str');
       expect(logSpy).toHaveBeenCalledWith(
-        'Received Tencent Meeting Webhook URL verification request',
+        'Received TMeet Webhook URL verification request',
       );
     });
   });
 
-  describe('handleTencentWebhook', () => {
+  describe('handleWebhook', () => {
     const mockEvent: MeetingEvent = {
       event: 'meeting.ended',
       trace_id: 'trace-123',
@@ -57,7 +57,7 @@ describe('TMeetWebhookController', () => {
     it('should return success and call event handler', async () => {
       eventHandlerService.handleEvent.mockResolvedValue(undefined);
 
-      const result = await controller.handleTencentWebhook(mockEvent);
+      const result = await controller.handleWebhook(mockEvent);
 
       expect(result).toBe('successfully received callback');
       expect(eventHandlerService.handleEvent).toHaveBeenCalledTimes(1);
@@ -69,7 +69,7 @@ describe('TMeetWebhookController', () => {
       const errorSpy = jest.spyOn(Logger.prototype, 'error');
       eventHandlerService.handleEvent.mockRejectedValue(error);
 
-      const result = await controller.handleTencentWebhook(mockEvent);
+      const result = await controller.handleWebhook(mockEvent);
       expect(result).toBe('successfully received callback');
 
       await new Promise((resolve) => setTimeout(resolve, 0));

@@ -5,4 +5,3 @@ export * from './transcript.service';
 export * from './participant.service';
 export * from './tmeet.tester';
 
-export { TencentApiService as TMeetApiService } from './api.service';

@@ -10,7 +10,7 @@
  */
 
 import { Injectable, Logger } from '@nestjs/common';
-import { TencentApiService } from './api.service';
+import { TMeetApiService } from './api.service';
 import { TranscriptFormatterService } from './transcript-formatter.service';
 import { TranscriptResult } from '../types';
 
@@ -29,7 +29,7 @@ export class TranscriptService {
   };
 
   constructor(
-    private readonly api: TencentApiService,
+    private readonly api: TMeetApiService,
     private readonly formatter: TranscriptFormatterService,
   ) {}
 

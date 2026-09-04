@@ -22,9 +22,9 @@ import {
  * Handles authentication, request signing, and error handling
  */
 @Injectable()
-export class TencentApiService {
+export class TMeetApiService {
   private readonly BASE_URL = 'https://api.meeting.qq.com';
-  private readonly logger = new Logger(TencentApiService.name);
+  private readonly logger = new Logger(TMeetApiService.name);
 
   constructor(
     private readonly systemConfigService: SystemConfigService,

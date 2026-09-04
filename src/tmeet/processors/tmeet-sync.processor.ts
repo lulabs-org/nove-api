@@ -68,4 +68,3 @@ export class TMeetSyncProcessor extends WorkerHost {
   }
 }
 
-export { TMeetSyncProcessor as TencentMtgSyncProcessor };

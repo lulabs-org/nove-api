@@ -66,5 +66,4 @@ export class TMeetSummaryCoreService {
   }
 }
 
-export { TMeetSummaryCoreService as TencentMtgSummaryCoreService };
 

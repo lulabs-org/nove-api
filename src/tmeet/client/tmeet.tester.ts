@@ -57,4 +57,3 @@ export class TMeetTesterService
   }
 }
 
-export { TMeetTesterService as TencentMeetingTesterService };

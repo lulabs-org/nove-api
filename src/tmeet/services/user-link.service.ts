@@ -109,5 +109,4 @@ export class TMeetUserLinkService {
   }
 }
 
-export { TMeetUserLinkService as TencentMtgUserLinkService };
 

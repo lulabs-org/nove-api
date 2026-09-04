@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TencentApiService } from '@/tmeet/client';
+import { TMeetApiService } from '@/tmeet/client';
 import { tencentMeetingConfig } from '@/configs/tencent-mtg.config';
 import { config } from 'dotenv';
 import {
@@ -116,7 +116,7 @@ const classifyApiError = (error: unknown): ApiError => {
  * USER_ID=测试用户ID
  */
 describe('Tencent Meeting Real API Integration Tests', () => {
-  let apiService: TencentApiService;
+  let apiService: TMeetApiService;
   let configService: ConfigService;
 
   // 测试数据配置
@@ -139,10 +139,10 @@ describe('Tencent Meeting Real API Integration Tests', () => {
           isGlobal: true,
         }),
       ],
-      providers: [TencentApiService],
+      providers: [TMeetApiService],
     }).compile();
 
-    apiService = moduleRef.get(TencentApiService);
+    apiService = moduleRef.get(TMeetApiService);
     configService = moduleRef.get(ConfigService);
 
     // 验证配置
