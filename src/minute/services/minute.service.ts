@@ -78,7 +78,8 @@ export class MinuteService {
   }
 
   requireOrgId(orgId?: string | null): string {
-    if (!orgId) throw new ForbiddenException('Current organization is required');
+    if (!orgId)
+      throw new ForbiddenException('Current organization is required');
     return orgId;
   }
 }

@@ -6,7 +6,7 @@ export class MeetingOrganizationService {
   constructor(private readonly prisma: PrismaService) {}
 
   async resolveDefaultOrgId(): Promise<string> {
-    const config = await this.prisma.systemConfig.findUnique({
+    const config = await this.prisma.systemConfig.findFirst({
       where: { key: 'DRIVE_CONFIG' },
       select: { value: true },
     });

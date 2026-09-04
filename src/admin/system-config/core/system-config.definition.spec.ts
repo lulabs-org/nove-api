@@ -52,6 +52,7 @@ describe('system config definitions', () => {
         'bitableAppToken',
       ],
       'wechat-shop': ['appSecret', 'webhookToken', 'encodingAesKey'],
+      drive: [],
     });
   });
 

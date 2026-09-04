@@ -27,7 +27,13 @@ export const driveConfig = defineSystemConfig(UpdateDriveConfigDto, {
       default: 20480,
     },
     malwareScanProvider: {
-      environment: environment.string('DRIVE_MALWARE_SCAN_PROVIDER'),
+      environment: {
+        key: 'DRIVE_MALWARE_SCAN_PROVIDER',
+        read: (values) => {
+          const val = values.DRIVE_MALWARE_SCAN_PROVIDER?.trim();
+          return val === 'ALIYUN_SAS' || val === 'CLAMAV' ? val : undefined;
+        },
+      },
     },
     aliyunSasRegionId: {
       default: 'cn-beijing',
