@@ -52,11 +52,7 @@ export class WechatShopOrderController {
 
   @RequireRoles('SUPER_ADMIN')
   @NoPermissionRequired()
-  @Post([
-    'aftersale/history-sync',
-    'aftersales/history-sync',
-    'aftersale-history-sync',
-  ])
+  @Post('aftersale/history-sync')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Sync historical aftersale orders',
@@ -78,7 +74,7 @@ export class WechatShopOrderController {
 
   @RequireRoles('SUPER_ADMIN')
   @NoPermissionRequired()
-  @Post(['aftersale/list', 'aftersales/list', 'aftersale-list'])
+  @Post('aftersale/list')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Get aftersale orders list',
