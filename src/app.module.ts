@@ -27,7 +27,7 @@ import { MeetingModule } from './meeting/meeting.module';
 import { MinuteModule } from './minute/minute.module';
 
 import { TencentMtgModule } from './tencent-mtg/tencent-mtg.module';
-import { LarkMeetingModule } from './lark-meeting/lark-meeting.module';
+import { LarkModule } from './lark/lark.module';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { AppResolver } from './app.resolver';
@@ -111,7 +111,7 @@ import { ProfitSharingModule } from './profit-sharing/profit-sharing.module';
     MinuteModule,
 
     TencentMtgModule,
-    LarkMeetingModule,
+    LarkModule,
     LlmModule,
     ApiKeyModule,
     PermissionModule,

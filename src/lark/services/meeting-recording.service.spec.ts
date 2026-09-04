@@ -11,7 +11,7 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { MinuteService, GetMinuteResponse } from './meeting-recording.service';
-import { LarkClient } from '../lark.client';
+import { LarkClient } from '../client/lark.client';
 
 describe('MinuteService', () => {
   let service: MinuteService; // 测试的服务实例
