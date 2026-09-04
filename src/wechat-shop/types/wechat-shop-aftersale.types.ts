@@ -17,6 +17,35 @@ export interface AftersaleOrderDetailResponse extends WechatShopApiResponse {
 }
 
 /**
+ * 获取售后单列表请求参数
+ * @see https://developers.weixin.qq.com/doc/store/shop/API/channels-shop-aftersale/aftersale/api_getaftersalelist.html
+ */
+export interface GetAftersaleListParams {
+  /** 售后单创建起始时间（秒级时间戳）；begin_create_time/end_create_time 和 begin_update_time/end_update_time 成对使用，必选其一 */
+  begin_create_time?: number;
+  /** 售后单创建结束时间（秒级时间戳），end_create_time 减去 begin_create_time 不得大于 24 小时 */
+  end_create_time?: number;
+  /** 售后单更新起始时间（秒级时间戳） */
+  begin_update_time?: number;
+  /** 售后单更新结束时间（秒级时间戳），end_update_time 减去 begin_update_time 不得大于 24 小时 */
+  end_update_time?: number;
+  /** 翻页参数，从第二页开始传，来源于上一页的返回值 */
+  next_key?: string;
+}
+
+/**
+ * 获取售后单列表响应结果
+ */
+export interface GetAftersaleListResponse extends WechatShopApiResponse {
+  /** 售后单号列表 */
+  after_sale_order_id_list?: string[];
+  /** 是否还有数据 */
+  has_more?: boolean;
+  /** 翻页参数，供下一页查询使用 */
+  next_key?: string;
+}
+
+/**
  * 微信小店售后单完整结构
  * @see https://developers.weixin.qq.com/doc/store/shop/API/channels-shop-aftersale/aftersale/api_getaftersaleorder.html
  */
@@ -262,7 +291,8 @@ export interface WechatShopAftersaleExchangeDeliveryInfo {
 /**
  * 换货地址信息
  */
-export interface WechatShopAftersaleExchangeAddressInfo extends WechatShopAftersaleAddressInfo {
+export interface WechatShopAftersaleExchangeAddressInfo
+  extends WechatShopAftersaleAddressInfo {
   /** 虚拟商品订单联系方式，虚拟商品订单必填 (deliver_method=1) */
   virtual_order_tel_number?: string;
 }

@@ -40,6 +40,14 @@ export class WechatShopProcessor extends WorkerHost {
           break;
         }
 
+        case 'sync-aftersale-history-range': {
+          const data = job.data as Parameters<
+            WechatShopAftersaleService['processHistoryRange']
+          >[0];
+          await this.wechatShopAftersaleService.processHistoryRange(data);
+          break;
+        }
+
         default:
           this.logger.warn(`Unknown job name: ${job.name}`);
       }
