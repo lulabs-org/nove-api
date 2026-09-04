@@ -19,7 +19,6 @@ import { UserQueryRepository } from '@/user/repositories/user-query.repository';
 import { UserCommandRepository } from '@/user/repositories/user-command.repository';
 import { OtpService } from './otp.service';
 import { TokenService } from './token.service';
-import { TokenBlacklistService } from './token-blacklist.service';
 import { LoginLogRepository } from '../repositories/login-log.repository';
 import { AuthMailService } from '@/mail/services/auth-mail.service';
 import { PermService } from '@/admin/permission/services/permission.service';
@@ -48,7 +47,6 @@ export class AuthService {
     private readonly userCommandRepo: UserCommandRepository,
     private readonly otpService: OtpService,
     private readonly tokenService: TokenService,
-    private readonly tokenBlacklist: TokenBlacklistService,
     private readonly loginLogRepo: LoginLogRepository,
     private readonly authMailService: AuthMailService,
     private readonly permService: PermService,
@@ -320,50 +318,27 @@ export class AuthService {
   }
 
   /**
-   * 登出流程（含黑名单兜底与结构化日志）
+   * 登出流程（含结构化日志）
    */
   async logout(
     userId: string,
     accessToken: string,
     options: LogoutOptions = {},
   ): Promise<LogoutResult> {
-    try {
-      const result = await this.tokenService.logout(
-        userId,
-        accessToken,
-        options,
-      );
+    const result = await this.tokenService.logout(userId, accessToken, options);
 
-      this.logger.log(
-        `User ${userId} logout: ${JSON.stringify({
-          accessRevoked: result.accessTokenRevoked,
-          refreshRevoked: result.refreshTokenRevoked,
-          allDevices: result.allDevicesLoggedOut,
-          revokedCount: result.revokedTokensCount,
-          ip: options.ip,
-          userAgent: options.userAgent,
-        })}`,
-      );
+    this.logger.log(
+      `User ${userId} logout: ${JSON.stringify({
+        accessRevoked: result.accessTokenRevoked,
+        refreshRevoked: result.refreshTokenRevoked,
+        allDevices: result.allDevicesLoggedOut,
+        revokedCount: result.revokedTokensCount,
+        ip: options.ip,
+        userAgent: options.userAgent,
+      })}`,
+    );
 
-      return result;
-    } catch (error) {
-      this.logger.error(
-        `Logout failed for user ${userId}, applying fallback revocation`,
-        error,
-      );
-
-      try {
-        await this.tokenBlacklist.add(accessToken);
-      } catch {
-        // 忽略黑名单兜底异常
-      }
-
-      return {
-        accessTokenRevoked: true,
-        refreshTokenRevoked: false,
-        message: '退出登录部分成功，当前会话已终止',
-      };
-    }
+    return result;
   }
 
   /**

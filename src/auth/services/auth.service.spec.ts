@@ -16,7 +16,6 @@ describe('AuthService', () => {
     refreshToken: jest.Mock;
     logout: jest.Mock;
   };
-  let tokenBlacklist: { add: jest.Mock };
   let loginLogRepo: {
     countLoginFailuresByTargetSince: jest.Mock;
     countLoginFailuresByIpSince: jest.Mock;
@@ -52,7 +51,6 @@ describe('AuthService', () => {
       refreshToken: jest.fn(),
       logout: jest.fn(),
     };
-    tokenBlacklist = { add: jest.fn() };
     loginLogRepo = {
       countLoginFailuresByTargetSince: jest.fn().mockResolvedValue(0),
       countLoginFailuresByIpSince: jest.fn().mockResolvedValue(0),
@@ -70,7 +68,6 @@ describe('AuthService', () => {
       userCommandRepo as never,
       otpService as never,
       tokenService as never,
-      tokenBlacklist as never,
       loginLogRepo as never,
       authMailService as never,
       permService as never,
@@ -223,20 +220,8 @@ describe('AuthService', () => {
         ip: '127.0.0.1',
       });
       expect(result.accessTokenRevoked).toBe(true);
-    });
-
-    it('falls back to tokenBlacklist when tokenService.logout throws', async () => {
-      tokenService.logout.mockRejectedValue(
-        new Error('Redis connection failed'),
-      );
-      tokenBlacklist.add.mockResolvedValue({ added: true });
-
-      const result = await authService.logout('u1', 'token-1');
-
-      expect(tokenBlacklist.add).toHaveBeenCalledWith('token-1');
-      expect(result.accessTokenRevoked).toBe(true);
-      expect(result.refreshTokenRevoked).toBe(false);
-      expect(result.message).toContain('退出登录部分成功');
+      expect(result.refreshTokenRevoked).toBe(true);
+      expect(result.message).toBe('登出成功');
     });
   });
 
