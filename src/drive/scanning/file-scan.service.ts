@@ -20,7 +20,11 @@ export class FileScanService {
 
   async resolveProvider(requiresScan: boolean): Promise<FileScanProvider> {
     if (!requiresScan) return FileScanProvider.POLICY_BYPASS;
-    const config = ((await this.systemConfig.getConfig('drive')) ?? {}) as {
+    const raw = (await this.systemConfig.getConfig('drive')) as
+      | { value?: Record<string, unknown> }
+      | Record<string, unknown>
+      | null;
+    const config = (raw?.value ?? raw ?? {}) as {
       malwareScanProvider?: 'ALIYUN_SAS' | 'CLAMAV';
     };
     if (config.malwareScanProvider) return config.malwareScanProvider;

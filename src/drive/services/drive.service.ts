@@ -458,7 +458,11 @@ export class DriveService {
       record.node!.id,
       record.id,
     );
-    const config = ((await this.systemConfig.getConfig('drive')) ?? {}) as {
+    const raw = (await this.systemConfig.getConfig('drive')) as
+      | { value?: Record<string, unknown> }
+      | Record<string, unknown>
+      | null;
+    const config = (raw?.value ?? raw ?? {}) as {
       downloadUrlExpiresSeconds?: number;
     };
     const expiresSeconds = config.downloadUrlExpiresSeconds ?? 10 * 60;
@@ -589,7 +593,11 @@ export class DriveService {
     const bindingCount = await this.files.countActiveBindingsForNodes(ids);
     if (bindingCount) throw new ConflictException('文件仍被业务实体引用');
     const now = new Date();
-    const config = ((await this.systemConfig.getConfig('drive')) ?? {}) as {
+    const raw = (await this.systemConfig.getConfig('drive')) as
+      | { value?: Record<string, unknown> }
+      | Record<string, unknown>
+      | null;
+    const config = (raw?.value ?? raw ?? {}) as {
       recycleRetentionDays?: number;
     };
     const retentionDays = config.recycleRetentionDays ?? 30;

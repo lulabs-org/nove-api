@@ -101,7 +101,11 @@ export class AliyunFileScannerService implements FileScannerProvider {
   }
 
   private async getConfig() {
-    const config = ((await this.systemConfig.getConfig('drive')) ?? {}) as {
+    const raw = (await this.systemConfig.getConfig('drive')) as
+      | { value?: Record<string, unknown> }
+      | Record<string, unknown>
+      | null;
+    const config = (raw?.value ?? raw ?? {}) as {
       aliyunSasRegionId?: string;
       scanTimeoutMs?: number;
       scanPollIntervalMs?: number;
