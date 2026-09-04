@@ -1,3 +1,4 @@
+export { AuthService } from './auth.service';
 export { AuthPolicyService } from './auth-policy.service';
 export { JwtUserLookupService } from './jwt-user-lookup.service';
 export { LoginService } from './login.service';
