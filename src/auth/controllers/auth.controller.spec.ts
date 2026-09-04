@@ -207,7 +207,7 @@ describe('AuthController', () => {
       } as never;
 
       const result = await controller.logout(
-        { id: 'u1' } as never,
+        'u1',
         'bearer-token-123',
         req,
         { clientType: ClientType.Web },

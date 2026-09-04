@@ -60,9 +60,7 @@ export class OAuthController {
     @Param('requestId', new ParseUUIDPipe({ version: '4' })) requestId: string,
     @Auth('userId') userId: string,
   ) {
-    const uid =
-      typeof userId === 'object' ? (userId as { id: string }).id : userId;
-    return this.grantService.getAuthorizationRequest(requestId, uid);
+    return this.grantService.getAuthorizationRequest(requestId, userId);
   }
 
   @Post('authorization-requests/:requestId/approve')
@@ -73,9 +71,11 @@ export class OAuthController {
     @Body(ValidationPipe) body: AuthorizationDecisionDto,
     @Auth('userId') userId: string,
   ) {
-    const uid =
-      typeof userId === 'object' ? (userId as { id: string }).id : userId;
-    return this.grantService.approveAuthorizationRequest(requestId, uid, body);
+    return this.grantService.approveAuthorizationRequest(
+      requestId,
+      userId,
+      body,
+    );
   }
 
   @Post('authorization-requests/:requestId/deny')

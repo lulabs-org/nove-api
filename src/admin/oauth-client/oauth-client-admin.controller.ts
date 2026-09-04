@@ -47,7 +47,7 @@ export class OAuthClientAdminController {
   @RequirePermissions('oauth-client:create')
   @ApiResponse({ type: CreateOAuthClientResponseDto })
   create(@Body() dto: CreateOAuthClientDto, @Auth('userId') userId: string) {
-    return this.service.create(dto, this.resolveUserId(userId));
+    return this.service.create(dto, userId);
   }
 
   @Get('delegatable-scopes')
@@ -72,7 +72,7 @@ export class OAuthClientAdminController {
     @Body() dto: UpdateOAuthClientDto,
     @Auth('userId') userId: string,
   ) {
-    return this.service.update(id, dto, this.resolveUserId(userId));
+    return this.service.update(id, dto, userId);
   }
 
   @Post(':id/disable')
@@ -80,24 +80,20 @@ export class OAuthClientAdminController {
   @ApiOperation({ summary: 'Disable a client and revoke all delegated grants' })
   @ApiResponse({ type: OAuthClientDto })
   disable(@Param('id') id: string, @Auth('userId') userId: string) {
-    return this.service.disable(id, this.resolveUserId(userId));
+    return this.service.disable(id, userId);
   }
 
   @Post(':id/enable')
   @RequirePermissions('oauth-client:disable')
   @ApiResponse({ type: OAuthClientDto })
   enable(@Param('id') id: string, @Auth('userId') userId: string) {
-    return this.service.enable(id, this.resolveUserId(userId));
+    return this.service.enable(id, userId);
   }
 
   @Post(':id/rotate-secret')
   @RequirePermissions('oauth-client:rotate-secret')
   @ApiResponse({ type: RotateOAuthClientSecretResponseDto })
   rotateSecret(@Param('id') id: string, @Auth('userId') userId: string) {
-    return this.service.rotateSecret(id, this.resolveUserId(userId));
-  }
-
-  private resolveUserId(userId: string | { id?: string }): string {
-    return typeof userId === 'string' ? userId : userId?.id || '';
+    return this.service.rotateSecret(id, userId);
   }
 }

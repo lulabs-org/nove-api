@@ -81,13 +81,12 @@ export class ApiKeyController {
   })
   @RequirePermissions('api-key:create')
   async createKey(
-    @Auth('userId') userId: string | { id?: string },
+    @Auth('userId') userId: string,
     @Body() dto: CreateApiKeyDto,
   ): Promise<CreateApiKeyResponse> {
-    const uid = this.resolveUserId(userId);
-    const organizationId = await this.userOrgService.getPrimaryOrgId(uid);
+    const organizationId = await this.userOrgService.getPrimaryOrgId(userId);
 
-    return this.apiKeyService.createKey(organizationId, uid, dto);
+    return this.apiKeyService.createKey(organizationId, userId, dto);
   }
 
   /**
@@ -109,13 +108,12 @@ export class ApiKeyController {
   })
   @RequirePermissions('api-key:read')
   async listKeys(
-    @Auth('userId') userId: string | { id?: string },
+    @Auth('userId') userId: string,
     @Query() pagination: PaginationDto,
   ): Promise<ApiKeyListResponse> {
-    const uid = this.resolveUserId(userId);
-    const organizationId = await this.userOrgService.getPrimaryOrgId(uid);
+    const organizationId = await this.userOrgService.getPrimaryOrgId(userId);
 
-    return this.apiKeyService.listKeys(organizationId, pagination, uid);
+    return this.apiKeyService.listKeys(organizationId, pagination, userId);
   }
 
   /**
@@ -150,14 +148,13 @@ export class ApiKeyController {
   })
   @RequirePermissions('api-key:update')
   async updateKey(
-    @Auth('userId') userId: string | { id?: string },
+    @Auth('userId') userId: string,
     @Param('id') id: string,
     @Body() dto: UpdateApiKeyDto,
   ): Promise<ApiKeyDto> {
-    const uid = this.resolveUserId(userId);
-    const organizationId = await this.userOrgService.getPrimaryOrgId(uid);
+    const organizationId = await this.userOrgService.getPrimaryOrgId(userId);
 
-    return this.apiKeyService.updateKey(organizationId, id, dto, uid);
+    return this.apiKeyService.updateKey(organizationId, id, dto, userId);
   }
 
   /**
@@ -188,13 +185,12 @@ export class ApiKeyController {
   })
   @RequirePermissions('api-key:revoke')
   async revokeKey(
-    @Auth('userId') userId: string | { id?: string },
+    @Auth('userId') userId: string,
     @Param('id') id: string,
   ): Promise<void> {
-    const uid = this.resolveUserId(userId);
-    const organizationId = await this.userOrgService.getPrimaryOrgId(uid);
+    const organizationId = await this.userOrgService.getPrimaryOrgId(userId);
 
-    await this.apiKeyService.revokeKey(organizationId, id, uid);
+    await this.apiKeyService.revokeKey(organizationId, id, userId);
   }
 
   /**
@@ -226,16 +222,11 @@ export class ApiKeyController {
   })
   @RequirePermissions('api-key:rotate')
   async rotateKey(
-    @Auth('userId') userId: string | { id?: string },
+    @Auth('userId') userId: string,
     @Param('id') id: string,
   ): Promise<RotateApiKeyResponse> {
-    const uid = this.resolveUserId(userId);
-    const organizationId = await this.userOrgService.getPrimaryOrgId(uid);
+    const organizationId = await this.userOrgService.getPrimaryOrgId(userId);
 
-    return this.apiKeyService.rotateKey(organizationId, id, uid);
-  }
-
-  private resolveUserId(userId: string | { id?: string }): string {
-    return typeof userId === 'string' ? userId : userId?.id || '';
+    return this.apiKeyService.rotateKey(organizationId, id, userId);
   }
 }
