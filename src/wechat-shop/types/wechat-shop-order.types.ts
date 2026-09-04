@@ -1,3 +1,9 @@
+import { WechatShopApiResponse } from './wechat-shop-common.types';
+
+/**
+ * 微信小店订单状态枚举
+ * @see https://developers.weixin.qq.com/doc/store/shop/API/channels-shop-order/order/api_getorder.html
+ */
 export enum WechatShopOrderStatus {
   /** 待付款 */
   PENDING_PAYMENT = 10,
@@ -22,16 +28,6 @@ export enum WechatShopOrderStatus {
 }
 
 /**
- * 微信小店 API 通用响应结果
- */
-export interface WechatShopApiResponse {
-  /** 错误码，0 为成功 */
-  errcode?: number;
-  /** 错误信息 */
-  errmsg?: string;
-}
-
-/**
  * 获取订单列表的请求参数
  */
 export interface GetOrderListParams {
@@ -52,7 +48,7 @@ export interface GetOrderListParams {
 /**
  * 订单列表响应结果
  */
-export interface OrderListResponse {
+export interface OrderListResponse extends WechatShopApiResponse {
   /** 订单 ID 列表 */
   order_id_list?: string[];
   /** 下一页游标 */
@@ -64,48 +60,14 @@ export interface OrderListResponse {
 /**
  * 订单详情响应结果
  */
-export interface OrderDetailResponse {
+export interface OrderDetailResponse extends WechatShopApiResponse {
   /** 订单详细数据 */
   order?: WechatShopOrder;
 }
 
 /**
- * 获取售后单详情响应结果
- */
-export interface AftersaleOrderDetailResponse {
-  after_sale_order?: WechatShopAftersaleOrder;
-}
-
-/**
- * 微信小店售后单核心字段。
- *
- * 微信会持续扩展售后详情字段；这里只声明当前同步到本地退款表所需的字段，
- * 未使用的返回字段由 JSON 反序列化自然忽略。
- */
-export interface WechatShopAftersaleOrder {
-  after_sale_order_id: string;
-  status: string;
-  order_id: string;
-  openid?: string;
-  create_time?: number;
-  update_time?: number;
-  complete_time?: number;
-  reason?: string;
-  reason_text?: string;
-  type?: string;
-  refund_info?: {
-    amount?: number;
-    refund_reason?: number;
-  };
-  product_info?: {
-    product_id?: string;
-    sku_id?: string;
-    count?: number;
-  };
-}
-
-/**
  * 微信小店订单结构
+ * @see https://developers.weixin.qq.com/doc/store/shop/API/channels-shop-order/order/api_getorder.html
  */
 export interface WechatShopOrder {
   /** 订单ID */
