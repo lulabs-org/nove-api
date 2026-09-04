@@ -11,6 +11,8 @@ import { OnEvent } from '@nestjs/event-emitter';
 
 import {
   AftersaleOrderDetailResponse,
+  GetAftersaleListParams,
+  GetAftersaleListResponse,
   GetOrderListParams,
   OrderDetailResponse,
   OrderListResponse,
@@ -136,6 +138,24 @@ export class WechatShopClientService implements OnModuleInit {
     }
 
     return response;
+  }
+
+  /**
+   * 获取售后单列表
+   *
+   * @see https://developers.weixin.qq.com/doc/store/shop/API/channels-shop-aftersale/aftersale/api_getaftersalelist.html
+   * @param params 请求参数。注意：begin_create_time/end_create_time 与 begin_update_time/end_update_time 至少需要传入一对，且每次请求时间跨度不可超过 24 小时
+   * @returns 微信售后单 ID 列表及分页游标
+   */
+  async getAftersaleList(
+    params: GetAftersaleListParams,
+  ): Promise<GetAftersaleListResponse> {
+    return this.request<GetAftersaleListResponse>(
+      '/channels/ec/aftersale/getaftersalelist',
+      {
+        data: params as Record<string, unknown>,
+      },
+    );
   }
 
   /**
