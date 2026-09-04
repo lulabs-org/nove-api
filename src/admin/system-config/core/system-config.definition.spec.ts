@@ -49,7 +49,6 @@ describe('system config definitions', () => {
         'appSecret',
         'eventEncryptKey',
         'eventVerificationToken',
-        'bitableAppToken',
       ],
       'wechat-shop': ['appSecret', 'webhookToken', 'encodingAesKey'],
     });

@@ -20,15 +20,6 @@ export const larkConfig = registerAs('lark', () => ({
     | 'warn'
     | 'error',
   baseUrl: process.env.LARK_BASE_URL ?? 'https://open.larksuite.com',
-  bitable: {
-    appToken: process.env.LARK_BITABLE_APP_TOKEN ?? '',
-    tableIds: {
-      meeting: process.env.LARK_TABLE_MEETING_RECORD ?? '',
-      meetingUser: process.env.LARK_TABLE_MEETING_USER ?? '',
-      recordingFile: process.env.LARK_TABLE_MEETING_RECORDING ?? '',
-      numberRecord: process.env.LARK_TABLE_PERSONAL_MEETING_SUMMARY ?? '',
-    },
-  },
   event: {
     encryptKey: process.env.LARK_EVENT_ENCRYPT_KEY ?? '',
     verificationToken: process.env.LARK_EVENT_VERIFICATION_TOKEN ?? '',

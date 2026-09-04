@@ -17,24 +17,5 @@ export class LarkTesterService implements ConfigTestProvider, OnModuleInit {
       appSecret: String(value.appSecret),
     });
     await client.auth.tenantAccessToken.create();
-
-    const appToken = String(value.bitableAppToken);
-    const tableIds = [
-      value.meetingTableId,
-      value.meetingUserTableId,
-      value.recordingFileTableId,
-      value.personalSummaryTableId,
-    ];
-    await Promise.all(
-      tableIds.map((tableId) =>
-        client.bitable.v1.appTableField.list({
-          path: {
-            app_token: appToken,
-            table_id: String(tableId),
-          },
-          params: { page_size: 1 },
-        }),
-      ),
-    );
   }
 }

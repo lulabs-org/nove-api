@@ -14,9 +14,7 @@ import { BaseEventHandler } from '../base/base-event.handler';
 import { RecordingCompletedPayload } from '../../types';
 import {
   MeetingParticipantService,
-  // MeetingBitableService,
   SpeakerService,
-  // ParticipantSummaryBitableService,
   TencentMtgMeetingCoreService,
   TencentMtgSummaryCoreService,
   TencentMtgTranscriptCoreService,
@@ -34,13 +32,10 @@ export class RecordingCompletedHandler extends BaseEventHandler {
   private readonly SUPPORTED_EVENT = 'recording.completed';
 
   constructor(
-    // private readonly bitableService: MeetingBitableService,
     private readonly speakerSvc: SpeakerService,
-
     private readonly meetingCoreSvc: TencentMtgMeetingCoreService,
     private readonly summaryCoreSvc: TencentMtgSummaryCoreService,
     private readonly transcriptCoreSvc: TencentMtgTranscriptCoreService,
-    // private readonly participantSummaryBitableSvc: ParticipantSummaryBitableService,
     private readonly participantSvc: MeetingParticipantService,
     private readonly tencentParticipantSvc: ParticipantService,
     private readonly transcriptRepo: TranscriptRepository,
@@ -113,8 +108,6 @@ export class RecordingCompletedHandler extends BaseEventHandler {
     // 将参会者的 JOIN/LEAVE 行为落库，并更新他们的总参会时长
     await this.participantSvc.syncParticipants(meeting, rawParticipants!);
 
-    // 确保参会者在我们的用户表中存在，并推送到飞书的人员表格中
-    // await this.bitableService.safeUpsertMeetingUserRecords(uniqueParticipants);
 
     // 3. 循环处理每一个录音文件 (一场会议可能会被分段录制出多个文件)
     for (const file of recording_files) {
@@ -175,26 +168,6 @@ export class RecordingCompletedHandler extends BaseEventHandler {
           );
         }
       }
-
-      // 4. 将上述已经落库（Prisma）的最新的纪要和转写数据，组装并推送到飞书 Bitable
-      // 注意：此处的服务已改造为直接查数据库，所以必须放在 summaryCoreSvc 和 transcriptCoreSvc 之后
-      // await this.bitableService.upsertRecording(
-      //   meeting.id,
-      //   meeting_info.subject || '',
-      //   sub_meeting_id || '__ROOT__',
-      //   meeting_info.start_time || 0,
-      //   meeting_info.end_time || 0,
-      //   recording.id,
-      //   file.record_file_id,
-      // );
-
-      // 5. 生成个人专属总结，并推送到飞书
-      // 遍历 uniqueParticipants，如果是发言人，则调用大模型为他们生成个人总结
-      // await this.participantSummaryBitableSvc.processSummary(
-      //   recording.id,
-      //   file.record_file_id,
-      //   uniqueParticipants,
-      // );
     }
   }
 }
