@@ -2,11 +2,11 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-09-23 06:15:34
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-09 01:33:12
- * @FilePath: /lulab_backend/src/user/user.controller.ts
- * @Description:
+ * @LastEditTime: 2026-09-04 16:35:00
+ * @FilePath: /nove_api/src/user/user.controller.ts
+ * @Description: 用户控制器
  *
- * Copyright (c) 2025 by ${git_name_email}, All Rights Reserved.
+ * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
  */
 
 import {
@@ -25,7 +25,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { NoPermissionRequired } from '@/admin/permission/decorators/permissions.decorator';
 import { Request } from 'express';
 import { ProfileService } from './services/profile.service';
-import { User, CurrentUser } from '@/auth/decorators/user.decorator';
+import { Auth } from '@/auth/decorators/auth.decorator';
 import { UpdateProfileDto } from '@/user/dto/update-profile.dto';
 import { UserProfileResponseDto } from '@/user/dto/user-profile-response.dto';
 import {
@@ -46,22 +46,24 @@ export class UserController {
   @Get('profile')
   @RequireAuth('jwt')
   @ApiGetUserProfileDocs()
-  async getProfile(@User() user: CurrentUser): Promise<UserProfileResponseDto> {
-    return await this.profileService.getProfile(user.id);
+  async getProfile(
+    @Auth('userId') userId: string,
+  ): Promise<UserProfileResponseDto> {
+    return await this.profileService.getProfile(this.resolveUserId(userId));
   }
 
   @Put('profile')
   @RequireAuth('jwt')
   @ApiUpdateUserProfileDocs()
   async updateProfile(
-    @User() user: CurrentUser,
+    @Auth('userId') userId: string,
     @Body(ValidationPipe) updateProfileDto: UpdateProfileDto,
     @Req() req: Request,
   ): Promise<UserProfileResponseDto> {
     const ip = this.getClientIp(req);
     const userAgent = req.get('User-Agent');
     return await this.profileService.updateProfile(
-      user.id,
+      this.resolveUserId(userId),
       updateProfileDto,
       ip,
       userAgent,
@@ -77,17 +79,23 @@ export class UserController {
   )
   @ApiUploadUserAvatarDocs()
   uploadAvatar(
-    @User() user: CurrentUser,
+    @Auth('userId') userId: string,
     @UploadedFile() file?: AvatarUploadFile,
   ): Promise<UserProfileResponseDto> {
-    return this.profileService.uploadAvatar(user.id, file);
+    return this.profileService.uploadAvatar(this.resolveUserId(userId), file);
   }
 
   @Delete('profile/avatar')
   @RequireAuth('jwt')
   @ApiDeleteUserAvatarDocs()
-  deleteAvatar(@User() user: CurrentUser): Promise<UserProfileResponseDto> {
-    return this.profileService.deleteAvatar(user.id);
+  deleteAvatar(
+    @Auth('userId') userId: string,
+  ): Promise<UserProfileResponseDto> {
+    return this.profileService.deleteAvatar(this.resolveUserId(userId));
+  }
+
+  private resolveUserId(userId: string | { id?: string }): string {
+    return typeof userId === 'string' ? userId : userId?.id || '';
   }
 
   private getClientIp(req: Request): string {

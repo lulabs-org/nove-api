@@ -1,3 +1,14 @@
+/*
+ * @Author: 杨仕明 shiming.y@qq.com
+ * @Date: 2026-03-04 18:05:33
+ * @LastEditors: 杨仕明 shiming.y@qq.com
+ * @LastEditTime: 2026-09-04 16:35:00
+ * @FilePath: /nove_api/src/admin/api-key/controllers/api-key.controller.ts
+ * @Description: API Key 管理控制器
+ *
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
+ */
+
 import {
   Controller,
   Get,
@@ -17,9 +28,8 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
-
 import { RequireAuth } from '@/auth/decorators/require-auth.decorator';
-import { User, CurrentUser } from '@/auth/decorators/user.decorator';
+import { Auth } from '@/auth/decorators/auth.decorator';
 import { ApiKeyService } from '../services/api-key.service';
 import { UserOrgService } from '../services/user-organization.service';
 import {
@@ -33,13 +43,14 @@ import {
 } from '../dto';
 
 /**
- * API Key 管理控制器（管理端）
- * 需要 JWT 认证和 api_keys:manage 权限
+ * API Key 控制器
+ * 处理 API Key 的 CRUD 操作
+ * 所有接口都需要 JWT 认证和相应的权限
  */
-@ApiTags('Admin / API Keys')
-@Controller('admin/api-keys')
-@RequireAuth('jwt')
+@ApiTags('Admin / API Key')
 @ApiBearerAuth()
+@RequireAuth('jwt')
+@Controller('admin/api-keys')
 export class ApiKeyController {
   constructor(
     private readonly apiKeyService: ApiKeyService,
@@ -52,7 +63,8 @@ export class ApiKeyController {
   @Post()
   @ApiOperation({
     summary: '创建 API Key',
-    description: '为当前组织创建新的 API Key。明文 key 仅在此响应中返回一次。',
+    description:
+      '为当前用户在主组织下创建新的 API Key。明文 key 仅在创建成功时返回一次，之后无法再次查看。',
   })
   @ApiResponse({
     status: 201,
@@ -69,12 +81,13 @@ export class ApiKeyController {
   })
   @RequirePermissions('api-key:create')
   async createKey(
-    @User() user: CurrentUser,
+    @Auth('userId') userId: string | { id?: string },
     @Body() dto: CreateApiKeyDto,
   ): Promise<CreateApiKeyResponse> {
-    const organizationId = await this.userOrgService.getPrimaryOrgId(user.id);
+    const uid = this.resolveUserId(userId);
+    const organizationId = await this.userOrgService.getPrimaryOrgId(uid);
 
-    return this.apiKeyService.createKey(organizationId, user.id, dto);
+    return this.apiKeyService.createKey(organizationId, uid, dto);
   }
 
   /**
@@ -96,12 +109,13 @@ export class ApiKeyController {
   })
   @RequirePermissions('api-key:read')
   async listKeys(
-    @User() user: CurrentUser,
+    @Auth('userId') userId: string | { id?: string },
     @Query() pagination: PaginationDto,
   ): Promise<ApiKeyListResponse> {
-    const organizationId = await this.userOrgService.getPrimaryOrgId(user.id);
+    const uid = this.resolveUserId(userId);
+    const organizationId = await this.userOrgService.getPrimaryOrgId(uid);
 
-    return this.apiKeyService.listKeys(organizationId, pagination, user.id);
+    return this.apiKeyService.listKeys(organizationId, pagination, uid);
   }
 
   /**
@@ -136,13 +150,14 @@ export class ApiKeyController {
   })
   @RequirePermissions('api-key:update')
   async updateKey(
-    @User() user: CurrentUser,
+    @Auth('userId') userId: string | { id?: string },
     @Param('id') id: string,
     @Body() dto: UpdateApiKeyDto,
   ): Promise<ApiKeyDto> {
-    const organizationId = await this.userOrgService.getPrimaryOrgId(user.id);
+    const uid = this.resolveUserId(userId);
+    const organizationId = await this.userOrgService.getPrimaryOrgId(uid);
 
-    return this.apiKeyService.updateKey(organizationId, id, dto, user.id);
+    return this.apiKeyService.updateKey(organizationId, id, dto, uid);
   }
 
   /**
@@ -173,12 +188,13 @@ export class ApiKeyController {
   })
   @RequirePermissions('api-key:revoke')
   async revokeKey(
-    @User() user: CurrentUser,
+    @Auth('userId') userId: string | { id?: string },
     @Param('id') id: string,
   ): Promise<void> {
-    const organizationId = await this.userOrgService.getPrimaryOrgId(user.id);
+    const uid = this.resolveUserId(userId);
+    const organizationId = await this.userOrgService.getPrimaryOrgId(uid);
 
-    await this.apiKeyService.revokeKey(organizationId, id, user.id);
+    await this.apiKeyService.revokeKey(organizationId, id, uid);
   }
 
   /**
@@ -210,11 +226,16 @@ export class ApiKeyController {
   })
   @RequirePermissions('api-key:rotate')
   async rotateKey(
-    @User() user: CurrentUser,
+    @Auth('userId') userId: string | { id?: string },
     @Param('id') id: string,
   ): Promise<RotateApiKeyResponse> {
-    const organizationId = await this.userOrgService.getPrimaryOrgId(user.id);
+    const uid = this.resolveUserId(userId);
+    const organizationId = await this.userOrgService.getPrimaryOrgId(uid);
 
-    return this.apiKeyService.rotateKey(organizationId, id, user.id);
+    return this.apiKeyService.rotateKey(organizationId, id, uid);
+  }
+
+  private resolveUserId(userId: string | { id?: string }): string {
+    return typeof userId === 'string' ? userId : userId?.id || '';
   }
 }

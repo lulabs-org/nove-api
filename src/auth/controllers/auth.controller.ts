@@ -32,8 +32,6 @@ import {
   ApiGetPermissionsDocs,
   Public,
   RequireAuth,
-  User,
-  CurrentUser,
   Auth,
   ClientInfo,
   ClientInfoContext,
@@ -52,7 +50,7 @@ import {
 import { AuthService } from '../services/auth.service';
 import { ProfileService } from '@/user/services/profile.service';
 import { AuthContext } from '../types/auth-context.interface';
-import { ClientType } from '../types/jwt.types';
+import { AuthenticatedUser, ClientType } from '../types/jwt.types';
 import { AuthCookieHelper } from '../utils/auth-cookie.helper';
 import {
   formatAuthUserWithPermissions,
@@ -191,7 +189,7 @@ export class AuthController {
   @ApiBearerAuth()
   @RequireAuth('jwt')
   async logout(
-    @User() user: CurrentUser,
+    @Auth('userId') userId: string,
     @BearerToken() accessToken: string | undefined,
     @Req() req: Request,
     @Body() logoutDto: LogoutDto = {},
@@ -218,6 +216,9 @@ export class AuthController {
       throw new UnauthorizedException('未找到访问令牌');
     }
 
+    const uid =
+      typeof userId === 'object' ? (userId as { id: string }).id : userId;
+
     const isWebClient = logoutDto.clientType === ClientType.Web;
     const refreshToken =
       logoutDto.refreshToken ||
@@ -225,7 +226,7 @@ export class AuthController {
         ? (req.cookies?.refreshToken as string | undefined)
         : undefined);
 
-    const logoutResult = await this.authService.logout(user.id, token, {
+    const logoutResult = await this.authService.logout(uid, token, {
       refreshToken,
       deviceId: logoutDto.deviceId,
       revokeAllDevices: logoutDto.revokeAllDevices,
@@ -256,24 +257,30 @@ export class AuthController {
   @ApiBearerAuth()
   @RequireAuth('jwt')
   async getMe(
-    @User() user: CurrentUser,
+    @Auth('user') user?: AuthenticatedUser,
     @Auth() auth?: AuthContext,
   ): Promise<AuthUserWithPermissionsDto> {
-    const roles = user.roles || ['USER'];
+    const currentUser = user || auth?.user;
+    if (!currentUser) {
+      throw new UnauthorizedException('未找到当前用户信息');
+    }
+
+    const roles = currentUser.roles || ['USER'];
     const perm =
       auth?.permissions && auth.permissions.length > 0
         ? auth.permissions
         : await this.authService.getPermissionsByRoles(roles);
 
     const currentOrgId =
-      auth?.orgId ?? (await this.authService.resolveCurrentOrgId(user.id));
+      auth?.orgId ??
+      (await this.authService.resolveCurrentOrgId(currentUser.id));
 
     const avatar = this.profileService.getReadableAvatarUrl(
-      user.profile?.avatar as string | undefined,
+      currentUser.profile?.avatar as string | undefined,
     );
 
     return formatAuthUserWithPermissions(
-      user,
+      currentUser,
       perm,
       currentOrgId ?? undefined,
       avatar,
@@ -294,15 +301,20 @@ export class AuthController {
   @ApiBearerAuth()
   @RequireAuth('jwt')
   async getPermissions(
-    @User() user: CurrentUser,
+    @Auth('user') user?: AuthenticatedUser,
     @Auth() auth?: AuthContext,
   ): Promise<PermissionsResponseDto> {
-    const roles = user.roles || ['USER'];
+    const currentUser = user || auth?.user;
+    if (!currentUser) {
+      throw new UnauthorizedException('未找到当前用户信息');
+    }
+
+    const roles = currentUser.roles || ['USER'];
     const perm =
       auth?.permissions && auth.permissions.length > 0
         ? auth.permissions
         : await this.authService.getPermissionsByRoles(roles);
 
-    return formatPermissionsResponse(user, perm);
+    return formatPermissionsResponse(currentUser, perm);
   }
 }

@@ -180,6 +180,7 @@ export class UnifiedAuthGuard extends AuthGuard('jwt') implements CanActivate {
         orgId: user.organizationId ?? null,
         permissions: currentScopes,
         oauthClientId: user.clientId,
+        user,
       };
       return true;
     }
@@ -216,6 +217,7 @@ export class UnifiedAuthGuard extends AuthGuard('jwt') implements CanActivate {
       userId: user.id,
       orgId,
       permissions,
+      user,
     };
 
     request.authContext = authContext;

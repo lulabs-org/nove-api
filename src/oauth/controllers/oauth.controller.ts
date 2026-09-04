@@ -18,7 +18,7 @@ import { Response } from 'express';
 import { NoPermissionRequired } from '@/admin/permission/decorators/permissions.decorator';
 import { Public } from '@/auth/decorators/public.decorator';
 import { RequireAuth } from '@/auth/decorators/require-auth.decorator';
-import { CurrentUser, User } from '@/auth/decorators/user.decorator';
+import { Auth } from '@/auth/decorators/auth.decorator';
 import {
   AuthorizeDto,
   AuthorizationDecisionDto,
@@ -58,9 +58,11 @@ export class OAuthController {
   @RequireAuth('jwt')
   getAuthorizationRequest(
     @Param('requestId', new ParseUUIDPipe({ version: '4' })) requestId: string,
-    @User() user: CurrentUser,
+    @Auth('userId') userId: string,
   ) {
-    return this.grantService.getAuthorizationRequest(requestId, user.id);
+    const uid =
+      typeof userId === 'object' ? (userId as { id: string }).id : userId;
+    return this.grantService.getAuthorizationRequest(requestId, uid);
   }
 
   @Post('authorization-requests/:requestId/approve')
@@ -69,13 +71,11 @@ export class OAuthController {
   approveAuthorizationRequest(
     @Param('requestId', new ParseUUIDPipe({ version: '4' })) requestId: string,
     @Body(ValidationPipe) body: AuthorizationDecisionDto,
-    @User() user: CurrentUser,
+    @Auth('userId') userId: string,
   ) {
-    return this.grantService.approveAuthorizationRequest(
-      requestId,
-      user.id,
-      body,
-    );
+    const uid =
+      typeof userId === 'object' ? (userId as { id: string }).id : userId;
+    return this.grantService.approveAuthorizationRequest(requestId, uid, body);
   }
 
   @Post('authorization-requests/:requestId/deny')
