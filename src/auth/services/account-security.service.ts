@@ -1,9 +1,22 @@
+import { ConflictException, Injectable } from '@nestjs/common';
 import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+  NoVerifiedEmailException,
+  NoVerifiedPhoneException,
+  SameEmailException,
+  EmailAlreadyInUseException,
+  SamePhoneException,
+  PhoneAlreadyInUseException,
+  ContactInfoChangedException,
+  SamePasswordException,
+  CannotRevokeCurrentSessionException,
+  SessionNotFoundException,
+  InvalidIdentityConfirmationException,
+  PasswordNotSetException,
+  CurrentPasswordIncorrectException,
+  VerificationCodeInvalidOrExpiredException,
+  VerificationCodeAlreadyUsedException,
+  UserNotFoundException,
+} from '../exceptions';
 import {
   Prisma,
   SecurityNotificationChannel,
@@ -74,7 +87,7 @@ export class AccountSecurityService {
     const user = await this.requireUser(userId);
     if (channel === SecurityCodeChannel.EMAIL) {
       if (!user.email || !user.emailVerifiedAt) {
-        throw new BadRequestException('当前账号没有已验证邮箱');
+        throw new NoVerifiedEmailException();
       }
       const result = await this.otpService.sendSecurityCode(
         user.email,
@@ -86,7 +99,7 @@ export class AccountSecurityService {
     }
 
     if (!user.phone || !user.phoneVerifiedAt) {
-      throw new BadRequestException('当前账号没有已验证手机号');
+      throw new NoVerifiedPhoneException();
     }
     const result = await this.otpService.sendSecurityCode(
       user.phone,
@@ -106,10 +119,10 @@ export class AccountSecurityService {
   ) {
     const user = await this.requireUser(userId);
     if (user.email === email) {
-      throw new BadRequestException('新邮箱不能与当前邮箱相同');
+      throw new SameEmailException();
     }
     const existing = await this.prisma.user.findUnique({ where: { email } });
-    if (existing) throw new ConflictException('邮箱已被使用');
+    if (existing) throw new EmailAlreadyInUseException();
     return this.otpService.sendSecurityCode(
       email,
       CodeType.CHANGE_EMAIL,
@@ -127,14 +140,14 @@ export class AccountSecurityService {
   ) {
     const user = await this.requireUser(userId);
     if (user.countryCode === countryCode && user.phone === phone) {
-      throw new BadRequestException('新手机号不能与当前手机号相同');
+      throw new SamePhoneException();
     }
     const existing = await this.prisma.user.findUnique({
       where: {
         uq_users_country_code_phone: { countryCode, phone },
       },
     });
-    if (existing) throw new ConflictException('手机号已被使用');
+    if (existing) throw new PhoneAlreadyInUseException();
     return this.otpService.sendSecurityCode(
       phone,
       CodeType.CHANGE_PHONE,
@@ -151,7 +164,7 @@ export class AccountSecurityService {
   ) {
     const user = await this.requireUser(userId);
     if (user.email === dto.email) {
-      throw new BadRequestException('新邮箱不能与当前邮箱相同');
+      throw new SameEmailException();
     }
     const proofCodeId = await this.verifyProof(user, dto);
     const newCodeId = await this.requireValidCode(
@@ -185,7 +198,7 @@ export class AccountSecurityService {
           data: { email: dto.email, emailVerifiedAt: changedAt },
         });
         if (update.count !== 1) {
-          throw new ConflictException('联系方式已发生变化，请刷新后重试');
+          throw new ContactInfoChangedException();
         }
         const result = await tx.user.findUniqueOrThrow({
           where: { id: userId },
@@ -252,7 +265,7 @@ export class AccountSecurityService {
   ) {
     const user = await this.requireUser(userId);
     if (user.countryCode === dto.countryCode && user.phone === dto.phone) {
-      throw new BadRequestException('新手机号不能与当前手机号相同');
+      throw new SamePhoneException();
     }
     const proofCodeId = await this.verifyProof(user, dto);
     const newCodeId = await this.requireValidCode(
@@ -297,7 +310,7 @@ export class AccountSecurityService {
           },
         });
         if (update.count !== 1) {
-          throw new ConflictException('联系方式已发生变化，请刷新后重试');
+          throw new ContactInfoChangedException();
         }
         const result = await tx.user.findUniqueOrThrow({
           where: { id: userId },
@@ -374,7 +387,7 @@ export class AccountSecurityService {
       user.passwordHash &&
       (await bcrypt.compare(dto.newPassword, user.passwordHash))
     ) {
-      throw new BadRequestException('新密码不能与当前密码相同');
+      throw new SamePasswordException();
     }
     const proofCodeId = await this.verifyProof(user, dto);
     const passwordHash = await hashPassword(dto.newPassword);
@@ -444,13 +457,13 @@ export class AccountSecurityService {
       ? await this.refreshTokenRepo.findByToken(currentRefreshToken)
       : null;
     if (current?.id === sessionId) {
-      throw new BadRequestException('当前会话请使用退出登录功能');
+      throw new CannotRevokeCurrentSessionException();
     }
     const revoked = await this.refreshTokenRepo.revokeByIdForUser(
       userId,
       sessionId,
     );
-    if (!revoked) throw new NotFoundException('会话不存在');
+    if (!revoked) throw new SessionNotFoundException();
     return { success: true };
   }
 
@@ -511,25 +524,27 @@ export class AccountSecurityService {
   ): Promise<string | null> {
     if (proof.verificationMethod === SecurityVerificationMethod.PASSWORD) {
       if (!proof.currentPassword || proof.identityCode) {
-        throw new BadRequestException('请仅提供当前密码进行身份确认');
-      }
-      if (!user.passwordHash) {
-        throw new BadRequestException(
-          '当前账号未设置密码，请使用验证码确认身份',
+        throw new InvalidIdentityConfirmationException(
+          '请仅提供当前密码进行身份确认',
         );
       }
+      if (!user.passwordHash) {
+        throw new PasswordNotSetException();
+      }
       if (!(await bcrypt.compare(proof.currentPassword, user.passwordHash))) {
-        throw new BadRequestException('当前密码不正确');
+        throw new CurrentPasswordIncorrectException();
       }
       return null;
     }
 
     if (!proof.identityCode || proof.currentPassword) {
-      throw new BadRequestException('请仅提供身份验证码进行身份确认');
+      throw new InvalidIdentityConfirmationException(
+        '请仅提供身份验证码进行身份确认',
+      );
     }
     if (proof.verificationMethod === SecurityVerificationMethod.EMAIL_CODE) {
       if (!user.email || !user.emailVerifiedAt) {
-        throw new BadRequestException('当前账号没有已验证邮箱');
+        throw new NoVerifiedEmailException();
       }
       return this.requireValidCode(
         user.email,
@@ -538,7 +553,7 @@ export class AccountSecurityService {
       );
     }
     if (!user.phone || !user.phoneVerifiedAt) {
-      throw new BadRequestException('当前账号没有已验证手机号');
+      throw new NoVerifiedPhoneException();
     }
     return this.requireValidCode(
       user.phone,
@@ -557,7 +572,7 @@ export class AccountSecurityService {
       orderBy: { createdAt: 'desc' },
     });
     if (!record || record.attemptCount >= MAX_CODE_ATTEMPTS) {
-      throw new BadRequestException('验证码无效或已过期');
+      throw new VerificationCodeInvalidOrExpiredException();
     }
     if (record.code !== code) {
       const nextAttempts = record.attemptCount + 1;
@@ -568,7 +583,7 @@ export class AccountSecurityService {
           ...(nextAttempts >= MAX_CODE_ATTEMPTS ? { used: true } : {}),
         },
       });
-      throw new BadRequestException('验证码无效或已过期');
+      throw new VerificationCodeInvalidOrExpiredException();
     }
     return record.id;
   }
@@ -584,7 +599,7 @@ export class AccountSecurityService {
       data: { used: true },
     });
     if (result.count !== validIds.length) {
-      throw new BadRequestException('验证码已被使用，请重新获取');
+      throw new VerificationCodeAlreadyUsedException();
     }
   }
 
@@ -592,7 +607,7 @@ export class AccountSecurityService {
     const user = await this.prisma.user.findFirst({
       where: { id: userId, active: true, deletedAt: null },
     });
-    if (!user) throw new NotFoundException('用户不存在');
+    if (!user) throw new UserNotFoundException();
     return user;
   }
 
