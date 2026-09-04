@@ -3,7 +3,6 @@ import { TencentModule } from '@/integrations';
 import { MeetingModule } from '@/meeting/meeting.module';
 import { MinuteModule } from '@/minute/minute.module';
 import { PrismaModule } from '@/prisma/prisma.module';
-import { LarkModule } from '@/integrations/lark/lark.module';
 import { UserModule } from '@/user/user.module';
 import { UserPlatformModule } from '@/user-platform/user-platform.module';
 import { BullModule } from '@nestjs/bullmq';
@@ -21,11 +20,9 @@ import { TencentMtgUserLinkService } from './services/user-link.service';
 
 import {
   TencentEventHandlerService,
-  MeetingBitableService,
   TencentMtgMeetingCoreService,
   TencentMtgSummaryCoreService,
   TencentMtgTranscriptCoreService,
-  ParticipantSummaryBitableService,
   SpeakerService,
   MeetingParticipantService,
 } from './services';
@@ -46,7 +43,6 @@ import {
 @Module({
   imports: [
     SystemConfigModule,
-    LarkModule,
     TencentModule,
     PrismaModule,
     UserModule,
@@ -74,10 +70,8 @@ import {
     // Webhook & Shared Services
     TencentEventHandlerService,
     EventHandlerFactory,
-    MeetingBitableService,
 
     SpeakerService,
-    ParticipantSummaryBitableService,
     MeetingParticipantService,
 
     // Handlers

@@ -21,29 +21,4 @@ export class UpdateLarkConfigDto {
   @IsOptional()
   @IsString()
   eventVerificationToken?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  bitableAppToken?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  meetingTableId?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  meetingUserTableId?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  recordingFileTableId?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  personalSummaryTableId?: string;
 }

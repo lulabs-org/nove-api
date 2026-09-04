@@ -12,7 +12,6 @@
 import { Injectable } from '@nestjs/common';
 import { BaseEventHandler } from '../base/base-event.handler';
 import { StartedPayload } from '../../types';
-import { MeetingBitableService } from '../../services/meeting-bitable.service';
 import { TencentMtgMeetingCoreService } from '../../services/meeting-core.service';
 
 /**
@@ -23,7 +22,6 @@ export class MeetingStartedHandler extends BaseEventHandler {
   private readonly SUPPORTED_EVENT = 'meeting.started';
 
   constructor(
-    private readonly meetingBitableService: MeetingBitableService,
     private readonly meetingCoreSvc: TencentMtgMeetingCoreService,
   ) {
     super();
@@ -44,25 +42,12 @@ export class MeetingStartedHandler extends BaseEventHandler {
     }
 
     const tasks = [
-      this.meetingBitableService.upsertMeetingUserRecord(operator),
-      this.meetingBitableService.updateMeetingParticipants(
-        meeting_info,
-        operator,
-      ),
       this.meetingCoreSvc.upsertMeetingFromWebhook(
         payload,
         this.SUPPORTED_EVENT,
       ),
       this.meetingCoreSvc.upsertPtUser(operator),
     ];
-
-    if (operator.uuid !== meeting_info.creator.uuid) {
-      tasks.push(
-        this.meetingBitableService.upsertMeetingUserRecord(
-          meeting_info.creator,
-        ),
-      );
-    }
 
     await Promise.allSettled(tasks);
   }

@@ -11,36 +11,19 @@
 
 import { Module } from '@nestjs/common';
 import { LarkClient } from './lark.client';
-import { BitableService, MinuteService } from './services';
-import {
-  MeetingBitableRepository,
-  MeetingUserBitableRepository,
-  RecordingFileBitableRepository,
-  NumberRecordBitableRepository,
-} from './repositories';
+import { MinuteService } from './services';
 import { SystemConfigModule } from '@/admin/system-config/system-config.module';
 import { LarkTesterService } from './lark.tester';
+
 @Module({
   imports: [SystemConfigModule],
   providers: [
     LarkClient,
-    BitableService,
-    MinuteService,
-    MeetingBitableRepository,
-    MeetingUserBitableRepository,
-    RecordingFileBitableRepository,
-    NumberRecordBitableRepository,
     MinuteService,
     LarkTesterService,
   ],
   exports: [
     LarkClient,
-    BitableService,
-    MinuteService,
-    MeetingBitableRepository,
-    MeetingUserBitableRepository,
-    RecordingFileBitableRepository,
-    NumberRecordBitableRepository,
     MinuteService,
   ],
 })

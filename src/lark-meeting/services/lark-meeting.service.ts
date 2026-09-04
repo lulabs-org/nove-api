@@ -9,9 +9,7 @@
  * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
  */
 
-// src/lark-meeting/services/lark-meeting.service.ts
 import { Injectable, Logger } from '@nestjs/common';
-import { MeetingBitableRepository } from '@/integrations/lark';
 import { MeetingEndedEventData } from '../types/lark-meeting.types';
 import { toMs } from '../util/time.util';
 import { InjectQueue } from '@nestjs/bullmq';
@@ -30,7 +28,6 @@ export class LarkMeetingService {
   private readonly logger = new Logger(LarkMeetingService.name);
 
   constructor(
-    private readonly meetingBitable: MeetingBitableRepository,
     @InjectQueue('lark-events') private readonly queue: Queue,
     private readonly prisma: PrismaService,
   ) {}
@@ -144,17 +141,5 @@ export class LarkMeetingService {
     } catch (err) {
       this.logger.error('upsert_meeting_failed', err);
     }
-
-    // 4. 同步至 Bitable (保留原有逻辑)
-    await this.meetingBitable
-      .upsertMeetingRecord({
-        platform: '飞书会议',
-        meeting_id: m.id,
-        ...(m.topic && { subject: m.topic }),
-        ...(m.meeting_no && { meeting_code: m.meeting_no }),
-        ...(startTimeMs !== undefined && { start_time: startTimeMs }),
-        ...(endTimeMs !== undefined && { end_time: endTimeMs }),
-      })
-      .catch((err) => this.logger.error('upsertMeetingRecord_failed', err));
   }
 }

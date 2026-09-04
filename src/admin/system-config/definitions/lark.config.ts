@@ -21,27 +21,6 @@ export const larkConfig = defineSystemConfig(UpdateLarkConfigDto, {
       secret: true,
       environment: environment.string('LARK_EVENT_VERIFICATION_TOKEN'),
     },
-    bitableAppToken: {
-      required: true,
-      secret: true,
-      environment: environment.string('LARK_BITABLE_APP_TOKEN'),
-    },
-    meetingTableId: {
-      required: true,
-      environment: environment.string('LARK_TABLE_MEETING_RECORD'),
-    },
-    meetingUserTableId: {
-      required: true,
-      environment: environment.string('LARK_TABLE_MEETING_USER'),
-    },
-    recordingFileTableId: {
-      required: true,
-      environment: environment.string('LARK_TABLE_MEETING_RECORDING'),
-    },
-    personalSummaryTableId: {
-      required: true,
-      environment: environment.string('LARK_TABLE_PERSONAL_MEETING_SUMMARY'),
-    },
   },
   restartRequiredOn: ['appId', 'appSecret'],
 });
