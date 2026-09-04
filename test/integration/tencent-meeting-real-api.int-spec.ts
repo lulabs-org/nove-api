@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TencentApiService } from '@/integrations/tencent-meeting/services/api.service';
+import { TencentApiService } from '@/tmeet/client';
 import { tencentMeetingConfig } from '@/configs/tencent-mtg.config';
 import { config } from 'dotenv';
 import {
@@ -12,7 +12,7 @@ import {
   SmartMeetingMinutesResponse,
   TranscriptResponse,
   MeetingParticipantsResponse,
-} from '@/integrations/tencent-meeting/types';
+} from '@/tmeet/types';
 
 // 加载测试环境变量
 config({ path: '.env.test' });

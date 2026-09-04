@@ -1,6 +1,6 @@
 import { ConfigModule } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
-import { TencentApiService } from '../../src/integrations/tencent-meeting/services/api.service';
+import { TencentApiService } from '../../src/tmeet/client';
 import { tencentMeetingConfig } from '../../src/configs/tencent-mtg.config';
 import { PrismaClient } from '@prisma/client';
 

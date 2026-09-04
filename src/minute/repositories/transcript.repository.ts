@@ -11,7 +11,7 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
-import { PrismaTransaction } from '@/tencent-mtg/types';
+import { PrismaTransaction } from '@/tmeet/types';
 
 const transcriptDetailsSelect = {
   id: true,
