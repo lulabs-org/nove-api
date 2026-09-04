@@ -9,7 +9,7 @@
  * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
  */
 
-import { MeetingType } from '../enums/tencent-mtg.enum';
+import { MeetingType } from '../enums/tmeet.enum';
 
 export interface EventBase {
   trace_id: string;

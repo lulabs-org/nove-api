@@ -1,2 +1,2 @@
-export * from './tencent-mtg.controller';
-export * from './tencent-webhook.controller';
+export * from './tmeet.controller';
+export * from './tmeet-webhook.controller';

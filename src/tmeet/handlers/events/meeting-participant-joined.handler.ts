@@ -12,7 +12,7 @@
 import { Injectable } from '@nestjs/common';
 import { BaseEventHandler } from '../base/base-event.handler';
 import { ParticipantJoinedPayload } from '../../types';
-import { TencentMtgMeetingCoreService } from '../../services/meeting-core.service';
+import { TMeetMeetingCoreService } from '../../services/meeting-core.service';
 
 /**
  * Meeting participant joined event handler
@@ -23,7 +23,7 @@ export class MeetingParticipantJoinedHandler extends BaseEventHandler {
   private readonly SUPPORTED_EVENT = 'meeting.participant-joined';
 
   constructor(
-    private readonly meetingCoreSvc: TencentMtgMeetingCoreService,
+    private readonly meetingCoreSvc: TMeetMeetingCoreService,
   ) {
     super();
   }

@@ -3,7 +3,7 @@ import {
   MeetingType as TencentMeetingType,
   InstanceType,
   MeetingEventType,
-} from '../enums/tencent-mtg.enum';
+} from '../enums/tmeet.enum';
 import {
   MeetingEvent,
   MeetingSessionInfo as MeetInfo,
@@ -12,7 +12,7 @@ import {
 import { MeetingType } from '@prisma/client';
 
 // 类型工具函数
-export class TencentEventUtils {
+export class TMeetEventUtils {
   /**
    * 判断是否为周期性会议
    */
@@ -271,3 +271,5 @@ export class TencentEventUtils {
     }
   }
 }
+
+export { TMeetEventUtils as TencentEventUtils };

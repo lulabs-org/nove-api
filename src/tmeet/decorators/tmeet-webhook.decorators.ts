@@ -17,18 +17,18 @@ import {
   ApiResponse,
   ApiBody,
 } from '@nestjs/swagger';
-import { TencentWebhookEventBodyDto } from '../dto/tencent-webhook-body.dto';
+import { TMeetWebhookEventBodyDto } from '../dto/tmeet-webhook-body.dto';
 
 /**
- * 腾讯会议Webhook URL验证装饰器
+ * TMeet Webhook URL验证装饰器
  * 用于腾讯会议webhook URL有效性验证
  */
-export function ApiTencentUrlVerificationDocs() {
+export function ApiTMeetUrlVerificationDocs() {
   return applyDecorators(
     ApiOperation({
-      summary: '腾讯会议Webhook URL验证',
+      summary: 'TMeet Webhook URL验证',
       description: '用于腾讯会议webhook URL有效性验证',
-      tags: ['Tencent Meeting'],
+      tags: ['TMeet'],
     }),
     ApiQuery({
       name: 'check_str',
@@ -71,13 +71,13 @@ export function ApiTencentUrlVerificationDocs() {
  * 腾讯会议Webhook事件接收装饰器
  * 接收腾讯会议的Webhook事件通知
  */
-export function ApiTencentEventReceiverDocs() {
+export function ApiTMeetEventReceiverDocs() {
   return applyDecorators(
     ApiOperation({
-      summary: '腾讯会议Webhook事件接收',
+      summary: 'TMeet Webhook事件接收',
       description:
         '接收腾讯会议的Webhook事件通知。支持会议创建、开始、结束、录制完成等事件。请求体中的data字段是Base64编码的加密事件数据，需要使用EncodingAESKey进行解密。',
-      tags: ['Tencent Meeting'],
+      tags: ['TMeet'],
     }),
     ApiHeader({
       name: 'timestamp',
@@ -99,8 +99,8 @@ export function ApiTencentEventReceiverDocs() {
       example: 'b4f6b42fa2a5d73a9b089061edf0c8791a414e58',
     }),
     ApiBody({
-      description: '腾讯会议Webhook事件请求体',
-      type: TencentWebhookEventBodyDto,
+      description: 'TMeet Webhook事件请求体',
+      type: TMeetWebhookEventBodyDto,
       required: true,
     }),
     ApiResponse({
@@ -126,3 +126,8 @@ export function ApiTencentEventReceiverDocs() {
     }),
   );
 }
+
+export {
+  ApiTMeetUrlVerificationDocs as ApiTencentUrlVerificationDocs,
+  ApiTMeetEventReceiverDocs as ApiTencentEventReceiverDocs,
+};

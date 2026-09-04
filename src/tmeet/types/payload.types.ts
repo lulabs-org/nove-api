@@ -9,7 +9,7 @@
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
-import { MeetingEndType } from '../enums/tencent-mtg.enum';
+import { MeetingEndType } from '../enums/tmeet.enum';
 import { PayloadBase } from './meet-base.types';
 import {
   MeetingSessionInfo,

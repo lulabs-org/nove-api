@@ -9,8 +9,8 @@ import { MeetingParticipantService } from './meeting-participant.service';
 import type { ParticipantDetail, NewTranscriptParagraph } from '../types';
 
 @Injectable()
-export class TencentMtgTranscriptCoreService {
-  private readonly logger = new Logger(TencentMtgTranscriptCoreService.name);
+export class TMeetTranscriptCoreService {
+  private readonly logger = new Logger(TMeetTranscriptCoreService.name);
   private readonly PARAGRAPH_BATCH_SIZE = 100;
 
   constructor(
@@ -301,3 +301,6 @@ export class TencentMtgTranscriptCoreService {
     return allParagraphs;
   }
 }
+
+export { TMeetTranscriptCoreService as TencentMtgTranscriptCoreService };
+

@@ -10,12 +10,12 @@
  */
 
 import { Logger } from '@nestjs/common';
-import { TencentWebhookController } from './tencent-webhook.controller';
-import { TencentEventHandlerService } from '../services/event-handler.service';
+import { TMeetWebhookController } from './tmeet-webhook.controller';
+import { TMeetEventHandlerService } from '../services/event-handler.service';
 import { MeetingEvent } from '../types';
 
-describe('TencentWebhookController', () => {
-  let controller: TencentWebhookController;
+describe('TMeetWebhookController', () => {
+  let controller: TMeetWebhookController;
   let eventHandlerService: { handleEvent: jest.Mock };
 
   beforeEach(() => {
@@ -23,8 +23,8 @@ describe('TencentWebhookController', () => {
     jest.clearAllMocks();
 
     eventHandlerService = { handleEvent: jest.fn() };
-    controller = new TencentWebhookController(
-      eventHandlerService as unknown as TencentEventHandlerService,
+    controller = new TMeetWebhookController(
+      eventHandlerService as unknown as TMeetEventHandlerService,
     );
 
     // Mock logger to avoid console output during tests

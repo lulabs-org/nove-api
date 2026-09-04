@@ -1,1 +1,1 @@
-export * from './tencent-mtg-record.mapper';
+export * from './tmeet-record.mapper';

@@ -5,8 +5,8 @@ import { GenerationMethod } from '@prisma/client';
 import { SummaryService as ApiSummaryService } from '../client';
 
 @Injectable()
-export class TencentMtgSummaryCoreService {
-  private readonly logger = new Logger(TencentMtgSummaryCoreService.name);
+export class TMeetSummaryCoreService {
+  private readonly logger = new Logger(TMeetSummaryCoreService.name);
 
   constructor(
     private readonly meetingSummaryService: MinuteSummaryService,
@@ -65,3 +65,6 @@ export class TencentMtgSummaryCoreService {
     this.logger.log(`Successfully synced summary for file ${fileId}`);
   }
 }
+
+export { TMeetSummaryCoreService as TencentMtgSummaryCoreService };
+

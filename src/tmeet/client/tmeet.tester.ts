@@ -4,7 +4,7 @@ import { TesterService } from '@/admin/system-config/services/tester.service';
 import { generateSignature } from '../utils/crypto.util';
 
 @Injectable()
-export class TencentMeetingTesterService
+export class TMeetTesterService
   implements ConfigTestProvider, OnModuleInit
 {
   constructor(private readonly testerService: TesterService) {}
@@ -56,3 +56,5 @@ export class TencentMeetingTesterService
     }
   }
 }
+
+export { TMeetTesterService as TencentMeetingTesterService };

@@ -1,1 +1,1 @@
-export * from './tencent-mtg-sync.processor';
+export * from './tmeet-sync.processor';

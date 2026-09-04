@@ -4,8 +4,8 @@ import { UserPhoneHashRepository } from '@/user/repositories/user-phone-hash.rep
 import { Platform } from '@prisma/client';
 
 @Injectable()
-export class TencentMtgUserLinkService {
-  private readonly logger = new Logger(TencentMtgUserLinkService.name);
+export class TMeetUserLinkService {
+  private readonly logger = new Logger(TMeetUserLinkService.name);
 
   constructor(
     private readonly prisma: PrismaService,
@@ -108,3 +108,6 @@ export class TencentMtgUserLinkService {
     return { total, linked, skipped };
   }
 }
+
+export { TMeetUserLinkService as TencentMtgUserLinkService };
+

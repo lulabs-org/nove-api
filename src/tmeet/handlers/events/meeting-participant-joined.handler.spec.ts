@@ -12,19 +12,19 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { MeetingParticipantJoinedHandler } from './meeting-participant-joined.handler';
-import { TencentMtgMeetingCoreService } from '../../services/meeting-core.service';
+import { TMeetMeetingCoreService } from '../../services/meeting-core.service';
 import { ParticipantJoinedPayload } from '../../types';
 
 describe('MeetingParticipantJoinedHandler', () => {
   let handler: MeetingParticipantJoinedHandler;
-  let meetingCoreSvc: jest.Mocked<TencentMtgMeetingCoreService>;
+  let meetingCoreSvc: jest.Mocked<TMeetMeetingCoreService>;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         MeetingParticipantJoinedHandler,
         {
-          provide: TencentMtgMeetingCoreService,
+          provide: TMeetMeetingCoreService,
           useValue: {
             upsertPtUser: jest.fn().mockResolvedValue({ id: 'user-1' }),
           },
@@ -35,7 +35,7 @@ describe('MeetingParticipantJoinedHandler', () => {
     handler = module.get<MeetingParticipantJoinedHandler>(
       MeetingParticipantJoinedHandler,
     );
-    meetingCoreSvc = module.get(TencentMtgMeetingCoreService);
+    meetingCoreSvc = module.get(TMeetMeetingCoreService);
   });
 
   it('should be defined', () => {

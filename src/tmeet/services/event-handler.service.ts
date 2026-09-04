@@ -20,8 +20,8 @@ import { EventHandlerFactory } from '../handlers/factories/event-handler.factory
  */
 
 @Injectable()
-export class TencentEventHandlerService {
-  private readonly logger = new Logger(TencentEventHandlerService.name);
+export class TMeetEventHandlerService {
+  private readonly logger = new Logger(TMeetEventHandlerService.name);
 
   constructor(private readonly eventHandlerFactory: EventHandlerFactory) {}
 
@@ -83,3 +83,6 @@ export class TencentEventHandlerService {
     return this.eventHandlerFactory.getSupportedEvents();
   }
 }
+
+export { TMeetEventHandlerService as TencentEventHandlerService };
+

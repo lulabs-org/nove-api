@@ -15,23 +15,23 @@ import {
   TranscriptService,
   SummaryService,
   ParticipantService,
-  TencentMeetingTesterService,
+  TMeetTesterService,
 } from './client';
 
 import {
-  TencentMtgController,
-  TencentWebhookController,
+  TMeetController,
+  TMeetWebhookController,
 } from './controllers';
 
-import { TencentMtgSyncProcessor } from './processors/tencent-mtg-sync.processor';
+import { TMeetSyncProcessor } from './processors/tmeet-sync.processor';
 
 import {
-  TencentMtgSyncService,
-  TencentMtgUserLinkService,
-  TencentEventHandlerService,
-  TencentMtgMeetingCoreService,
-  TencentMtgSummaryCoreService,
-  TencentMtgTranscriptCoreService,
+  TMeetSyncService,
+  TMeetUserLinkService,
+  TMeetEventHandlerService,
+  TMeetMeetingCoreService,
+  TMeetSummaryCoreService,
+  TMeetTranscriptCoreService,
   SpeakerService,
   MeetingParticipantService,
 } from './services';
@@ -58,14 +58,14 @@ import {
     MeetingModule,
     MinuteModule,
     BullModule.registerQueue({
-      name: 'tencent-mtg-sync',
+      name: 'tmeet-sync',
     }),
     BullBoardModule.forFeature({
-      name: 'tencent-mtg-sync',
+      name: 'tmeet-sync',
       adapter: BullMQAdapter,
     }),
   ],
-  controllers: [TencentMtgController, TencentWebhookController],
+  controllers: [TMeetController, TMeetWebhookController],
   providers: [
     // Client SDK Services
     TencentApiService,
@@ -73,18 +73,18 @@ import {
     TranscriptService,
     SummaryService,
     ParticipantService,
-    TencentMeetingTesterService,
+    TMeetTesterService,
 
     // Sync & Business Services
-    TencentMtgSyncService,
-    TencentMtgMeetingCoreService,
-    TencentMtgSummaryCoreService,
-    TencentMtgTranscriptCoreService,
-    TencentMtgUserLinkService,
-    TencentMtgSyncProcessor,
+    TMeetSyncService,
+    TMeetMeetingCoreService,
+    TMeetSummaryCoreService,
+    TMeetTranscriptCoreService,
+    TMeetUserLinkService,
+    TMeetSyncProcessor,
 
     // Webhook & Shared Services
-    TencentEventHandlerService,
+    TMeetEventHandlerService,
     EventHandlerFactory,
     SpeakerService,
     MeetingParticipantService,
@@ -142,10 +142,10 @@ import {
     ParticipantService,
 
     // Business Service Exports
-    TencentMtgSyncService,
-    TencentMtgMeetingCoreService,
-    TencentMtgSummaryCoreService,
-    TencentMtgTranscriptCoreService,
+    TMeetSyncService,
+    TMeetMeetingCoreService,
+    TMeetSummaryCoreService,
+    TMeetTranscriptCoreService,
     SpeakerService,
     MeetingParticipantService,
   ],

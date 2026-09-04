@@ -1,1 +1,1 @@
-export * from './tencent-webhook.decorators';
+export * from './tmeet-webhook.decorators';

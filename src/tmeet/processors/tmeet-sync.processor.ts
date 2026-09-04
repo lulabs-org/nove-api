@@ -1,7 +1,7 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
-import { TencentMtgSyncService } from '../services/sync.service';
+import { TMeetSyncService } from '../services/sync.service';
 
 interface SyncJobData {
   startTime: number;
@@ -13,17 +13,17 @@ interface SyncJobData {
   forceReSyncTranscript?: boolean;
 }
 
-@Processor('tencent-mtg-sync', {
+@Processor('tmeet-sync', {
   concurrency: 1,
   limiter: {
     max: 5,
     duration: 60000,
   },
 })
-export class TencentMtgSyncProcessor extends WorkerHost {
-  private readonly logger = new Logger(TencentMtgSyncProcessor.name);
+export class TMeetSyncProcessor extends WorkerHost {
+  private readonly logger = new Logger(TMeetSyncProcessor.name);
 
-  constructor(private readonly syncService: TencentMtgSyncService) {
+  constructor(private readonly syncService: TMeetSyncService) {
     super();
   }
 
@@ -67,3 +67,5 @@ export class TencentMtgSyncProcessor extends WorkerHost {
     return result;
   }
 }
+
+export { TMeetSyncProcessor as TencentMtgSyncProcessor };

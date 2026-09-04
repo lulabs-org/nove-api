@@ -22,29 +22,29 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import {
-  ApiTencentUrlVerificationDocs,
-  ApiTencentEventReceiverDocs,
-} from '../decorators/tencent-webhook.decorators';
+  ApiTMeetUrlVerificationDocs,
+  ApiTMeetEventReceiverDocs,
+} from '../decorators/tmeet-webhook.decorators';
 import { ApiTags } from '@nestjs/swagger';
 import { Public } from '@/auth/decorators/public.decorator';
-import { TencentEventHandlerService } from '../services/event-handler.service';
+import { TMeetEventHandlerService } from '../services/event-handler.service';
 import { WebhookLoggingInterceptor } from '../interceptors/webhook-logging.interceptor';
 import { MeetingEvent } from '../types';
 import { UrlVerificationPipe, BodyDecryptionPipe } from '../pipes';
 
 /**
- * Tencent Meeting Webhook Controller
+ * TMeet Webhook Controller
  * Specifically handles Tencent Meeting webhook requests
  */
 @ApiTags('Webhooks')
-@Controller('webhooks/tencent')
+@Controller(['webhooks/tmeet', 'webhooks/tencent'])
 @Public()
 @UseInterceptors(WebhookLoggingInterceptor)
-export class TencentWebhookController {
-  private readonly logger = new Logger(TencentWebhookController.name);
+export class TMeetWebhookController {
+  private readonly logger = new Logger(TMeetWebhookController.name);
 
   constructor(
-    private readonly tencentEventHandlerService: TencentEventHandlerService,
+    private readonly eventHandlerService: TMeetEventHandlerService,
   ) {}
 
   /**
@@ -59,7 +59,7 @@ export class TencentWebhookController {
    */
   @Get()
   @HttpCode(HttpStatus.OK)
-  @ApiTencentUrlVerificationDocs()
+  @ApiTMeetUrlVerificationDocs()
   async verifyTencentWebhook(
     @Query('check_str', UrlVerificationPipe) decryptedStr: string,
   ): Promise<string> {
@@ -83,7 +83,7 @@ export class TencentWebhookController {
    */
   @Post()
   @HttpCode(HttpStatus.OK)
-  @ApiTencentEventReceiverDocs()
+  @ApiTMeetEventReceiverDocs()
   async handleTencentWebhook(
     @Body(
       new ValidationPipe({ transform: true, whitelist: true }),
@@ -92,7 +92,7 @@ export class TencentWebhookController {
     eventData: MeetingEvent,
   ): Promise<string> {
     // 异步处理业务逻辑，不阻塞主流程
-    this.tencentEventHandlerService
+    this.eventHandlerService
       .handleEvent(eventData)
       .catch((error: unknown) => {
         this.logger.error(
@@ -105,3 +105,6 @@ export class TencentWebhookController {
     return 'successfully received callback';
   }
 }
+
+export { TMeetWebhookController as TencentWebhookController };
+

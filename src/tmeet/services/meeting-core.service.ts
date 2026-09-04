@@ -12,7 +12,7 @@ import {
   RecordingSource,
 } from '@prisma/client';
 import { Meetuser, EventPayload, MeetingSessionInfo } from '../types';
-import { TencentEventUtils } from '../utils/tencent-event.utils';
+import { TMeetEventUtils } from '../utils/tmeet-event.utils';
 import type {
   RecordMeeting,
   RecordFile,
@@ -24,7 +24,7 @@ import {
   mergeDateTime,
   convertMeetingType,
   mapRecordingFileStatus,
-} from '../mappers/tencent-mtg-record.mapper';
+} from '../mappers/tmeet-record.mapper';
 
 type MeetingData = Omit<
   Prisma.MeetingUncheckedCreateInput,
@@ -38,8 +38,8 @@ type MeetingData = Omit<
 >;
 
 @Injectable()
-export class TencentMtgMeetingCoreService {
-  private readonly logger = new Logger(TencentMtgMeetingCoreService.name);
+export class TMeetMeetingCoreService {
+  private readonly logger = new Logger(TMeetMeetingCoreService.name);
 
   constructor(
     private readonly ptUserRepo: PlatformUserRepository,
@@ -61,7 +61,7 @@ export class TencentMtgMeetingCoreService {
     }
 
     const { creator } = meeting_info;
-    const meetingType = TencentEventUtils.convertMeetingType(
+    const meetingType = TMeetEventUtils.convertMeetingType(
       meeting_info.meeting_type as number,
     );
     const creatorUser = await this.upsertPtUser(creator as Meetuser);
@@ -217,3 +217,6 @@ export class TencentMtgMeetingCoreService {
     });
   }
 }
+
+export { TMeetMeetingCoreService as TencentMtgMeetingCoreService };
+

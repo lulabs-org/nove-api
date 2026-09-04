@@ -15,9 +15,9 @@ import { RecordingCompletedPayload } from '../../types';
 import {
   MeetingParticipantService,
   SpeakerService,
-  TencentMtgMeetingCoreService,
-  TencentMtgSummaryCoreService,
-  TencentMtgTranscriptCoreService,
+  TMeetMeetingCoreService,
+  TMeetSummaryCoreService,
+  TMeetTranscriptCoreService,
 } from '../../services';
 import { TranscriptRepository } from '@/minute/repositories';
 import { ParticipantService } from '../../client';
@@ -33,9 +33,9 @@ export class RecordingCompletedHandler extends BaseEventHandler {
 
   constructor(
     private readonly speakerSvc: SpeakerService,
-    private readonly meetingCoreSvc: TencentMtgMeetingCoreService,
-    private readonly summaryCoreSvc: TencentMtgSummaryCoreService,
-    private readonly transcriptCoreSvc: TencentMtgTranscriptCoreService,
+    private readonly meetingCoreSvc: TMeetMeetingCoreService,
+    private readonly summaryCoreSvc: TMeetSummaryCoreService,
+    private readonly transcriptCoreSvc: TMeetTranscriptCoreService,
     private readonly participantSvc: MeetingParticipantService,
     private readonly tencentParticipantSvc: ParticipantService,
     private readonly transcriptRepo: TranscriptRepository,

@@ -1,1 +1,1 @@
-export * from './tencent-mtg.enum';
+export * from './tmeet.enum';

@@ -12,7 +12,7 @@
 import {
   MeetingCreateMode,
   MeetingCreateFrom,
-} from '../enums/tencent-mtg.enum';
+} from '../enums/tmeet.enum';
 import { MeetingInfoBase } from './meet-base.types';
 import { Meetuser } from './payload.types';
 

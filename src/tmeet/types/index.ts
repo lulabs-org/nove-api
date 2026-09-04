@@ -8,4 +8,4 @@ export * from './meet-base.types';
 export * from './meeting-info.types';
 export * from './payload.types';
 export * from './speaker.types';
-export * from './tencent-event.types';
+export * from './tmeet-event.types';

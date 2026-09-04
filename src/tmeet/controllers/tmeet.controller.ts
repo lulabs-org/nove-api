@@ -14,24 +14,24 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
-import { TencentMtgSyncService } from '../services/sync.service';
-import { TencentMtgUserLinkService } from '../services/user-link.service';
+import { TMeetSyncService } from '../services/sync.service';
+import { TMeetUserLinkService } from '../services/user-link.service';
 import { SyncRecordingsDto } from '../dto/sync-recordings.dto';
 
 /**
  * 腾讯会议管理控制器
  * 提供主动拉取腾讯会议数据的接口
  */
-@ApiTags('Tencent Meeting')
+@ApiTags('TMeet')
 @ApiBearerAuth()
-@Controller('tencent-mtg')
+@Controller(['tmeet', 'tencent-mtg'])
 @RequirePermissions('system:config')
-export class TencentMtgController {
-  private readonly logger = new Logger(TencentMtgController.name);
+export class TMeetController {
+  private readonly logger = new Logger(TMeetController.name);
 
   constructor(
-    private readonly syncService: TencentMtgSyncService,
-    private readonly userLinkService: TencentMtgUserLinkService,
+    private readonly syncService: TMeetSyncService,
+    private readonly userLinkService: TMeetUserLinkService,
   ) {}
 
   /**
@@ -113,3 +113,5 @@ export class TencentMtgController {
     };
   }
 }
+
+export { TMeetController as TencentMtgController };

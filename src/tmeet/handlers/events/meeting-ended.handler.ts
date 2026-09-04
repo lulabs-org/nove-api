@@ -12,7 +12,7 @@
 import { Injectable } from '@nestjs/common';
 import { BaseEventHandler } from '../base/base-event.handler';
 import { MeetingEndPayload } from '../../types';
-import { TencentMtgMeetingCoreService } from '../../services/meeting-core.service';
+import { TMeetMeetingCoreService } from '../../services/meeting-core.service';
 
 /**
  * 会议结束事件处理器
@@ -22,7 +22,7 @@ export class MeetingEndedHandler extends BaseEventHandler {
   private readonly SUPPORTED_EVENT = 'meeting.end';
 
   constructor(
-    private readonly meetingCoreSvc: TencentMtgMeetingCoreService,
+    private readonly meetingCoreSvc: TMeetMeetingCoreService,
   ) {
     super();
   }

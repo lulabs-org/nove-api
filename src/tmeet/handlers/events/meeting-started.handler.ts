@@ -12,7 +12,7 @@
 import { Injectable } from '@nestjs/common';
 import { BaseEventHandler } from '../base/base-event.handler';
 import { StartedPayload } from '../../types';
-import { TencentMtgMeetingCoreService } from '../../services/meeting-core.service';
+import { TMeetMeetingCoreService } from '../../services/meeting-core.service';
 
 /**
  * 会议开始事件处理器
@@ -22,7 +22,7 @@ export class MeetingStartedHandler extends BaseEventHandler {
   private readonly SUPPORTED_EVENT = 'meeting.started';
 
   constructor(
-    private readonly meetingCoreSvc: TencentMtgMeetingCoreService,
+    private readonly meetingCoreSvc: TMeetMeetingCoreService,
   ) {
     super();
   }

@@ -3,4 +3,6 @@ export * from './transcript-formatter.service';
 export * from './meeting-summary.service';
 export * from './transcript.service';
 export * from './participant.service';
-export * from './tencent-meeting.tester';
+export * from './tmeet.tester';
+
+export { TencentApiService as TMeetApiService } from './api.service';

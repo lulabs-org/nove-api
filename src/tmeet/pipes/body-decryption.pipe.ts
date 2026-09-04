@@ -23,7 +23,7 @@ import {
 } from '../exceptions';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express'; // 或 fastify
-import { TencentWebhookEventBodyDto } from '../dto/tencent-webhook-body.dto';
+import { TMeetWebhookEventBodyDto } from '../dto/tmeet-webhook-body.dto';
 import { MeetingEvent } from '../types';
 import {
   SingleOrgContextService,
@@ -38,7 +38,7 @@ export class BodyDecryptionPipe implements PipeTransform {
     private readonly orgContext: SingleOrgContextService,
   ) {}
 
-  async transform(value: TencentWebhookEventBodyDto): Promise<MeetingEvent> {
+  async transform(value: TMeetWebhookEventBodyDto): Promise<MeetingEvent> {
     // 1. 基础参数校验
     if (!value || !value.data) {
       throw new BadRequestException(

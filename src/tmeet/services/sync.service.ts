@@ -7,24 +7,24 @@ import type {
   RecordMeeting,
   RecordFile,
 } from '../types';
-import { TencentMtgMeetingCoreService } from './meeting-core.service';
-import { TencentMtgTranscriptCoreService } from './transcript-core.service';
-import { TencentMtgSummaryCoreService } from './summary-core.service';
+import { TMeetMeetingCoreService } from './meeting-core.service';
+import { TMeetTranscriptCoreService } from './transcript-core.service';
+import { TMeetSummaryCoreService } from './summary-core.service';
 import {
   SingleOrgContextService,
   SystemConfigService,
 } from '@/admin/system-config/services';
 
 @Injectable()
-export class TencentMtgSyncService {
-  private readonly logger = new Logger(TencentMtgSyncService.name);
+export class TMeetSyncService {
+  private readonly logger = new Logger(TMeetSyncService.name);
 
   constructor(
-    @InjectQueue('tencent-mtg-sync') private readonly syncQueue: Queue,
+    @InjectQueue('tmeet-sync') private readonly syncQueue: Queue,
     private readonly tencentApi: TencentApiService,
-    private readonly meetingCoreService: TencentMtgMeetingCoreService,
-    private readonly transcriptCoreService: TencentMtgTranscriptCoreService,
-    private readonly summaryCoreService: TencentMtgSummaryCoreService,
+    private readonly meetingCoreService: TMeetMeetingCoreService,
+    private readonly transcriptCoreService: TMeetTranscriptCoreService,
+    private readonly summaryCoreService: TMeetSummaryCoreService,
     private readonly systemConfigService: SystemConfigService,
     private readonly orgContext: SingleOrgContextService,
   ) {}
@@ -317,3 +317,6 @@ export class TencentMtgSyncService {
     };
   }
 }
+
+export { TMeetSyncService as TencentMtgSyncService };
+
