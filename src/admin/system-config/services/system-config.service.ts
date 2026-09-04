@@ -3,6 +3,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Prisma } from '@prisma/client';
@@ -18,6 +19,7 @@ import {
   SystemConfigRegistry,
 } from '../definitions';
 import { ConfigCodecService } from './config-codec.service';
+import { SingleOrgContextService } from './single-org-context.service';
 
 export interface EffectiveSystemConfig {
   orgId: string;
@@ -45,6 +47,7 @@ export class SystemConfigService {
     private readonly configRepository: SystemConfigRepository,
     private readonly eventEmitter: EventEmitter2,
     private readonly codec: ConfigCodecService,
+    @Optional() private readonly orgContext?: SingleOrgContextService,
   ) {}
 
   private getModuleKey(module: SystemConfigModuleName): string {
@@ -129,7 +132,23 @@ export class SystemConfigService {
     );
   }
 
-  async getConfig(orgId: string, module: string): Promise<PublicSystemConfig> {
+  async getConfig(
+    orgIdOrModule: string,
+    maybeModule?: string,
+  ): Promise<PublicSystemConfig> {
+    let orgId = '';
+    let module = '';
+    if (maybeModule) {
+      orgId = orgIdOrModule;
+      module = maybeModule;
+    } else {
+      module = orgIdOrModule;
+      try {
+        orgId = this.orgContext?.getOrgId() ?? '';
+      } catch {
+        orgId = '';
+      }
+    }
     const effective = await this.getEffectiveConfig(orgId, module);
     const entry = SystemConfigRegistry[effective.module];
     return { ...effective, value: this.codec.mask(entry, effective.value) };

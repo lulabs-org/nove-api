@@ -24,6 +24,7 @@ import {
   WebhookStatus,
   Prisma,
 } from '@prisma/client';
+import { MeetingOrganizationService } from '@/meeting/services/meeting-organization.service';
 
 @Injectable()
 export class LarkMeetingService {
@@ -33,6 +34,7 @@ export class LarkMeetingService {
     private readonly meetingBitable: MeetingBitableRepository,
     @InjectQueue('lark-events') private readonly queue: Queue,
     private readonly prisma: PrismaService,
+    private readonly meetingOrganization: MeetingOrganizationService,
   ) {}
 
   async enqueueMeetingEnded(data: MeetingEndedEventData): Promise<void> {
@@ -109,6 +111,7 @@ export class LarkMeetingService {
         startTimeMs && endTimeMs
           ? Math.floor((endTimeMs - startTimeMs) / 1000)
           : undefined;
+      const orgId = await this.meetingOrganization.resolveDefaultOrgId();
 
       await this.prisma.meeting.upsert({
         where: {
@@ -119,6 +122,7 @@ export class LarkMeetingService {
           },
         },
         create: {
+          orgId,
           platform: MeetingPlatform.FEISHU,
           meetingId: m.id,
           title: m.topic || '飞书会议',
@@ -131,6 +135,7 @@ export class LarkMeetingService {
           metadata: m as unknown as Prisma.InputJsonValue,
         },
         update: {
+          orgId,
           title: m.topic || '飞书会议',
           meetingCode: m.meeting_no,
           startAt: startTime,

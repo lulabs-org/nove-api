@@ -1,4 +1,5 @@
 import { RecordingSource } from '@prisma/client';
+import { PrismaService } from '@/prisma/prisma.service';
 import { MinuteSummaryRepository } from '../repositories/minute-summary.repository';
 import { MinuteRepository } from '../repositories/minute.repository';
 import { MinuteService } from './minute.service';
@@ -13,6 +14,7 @@ describe('MinuteService list', () => {
     const service = new MinuteService(
       repository as unknown as MinuteRepository,
       {} as MinuteSummaryRepository,
+      {} as PrismaService,
     );
 
     await expect(

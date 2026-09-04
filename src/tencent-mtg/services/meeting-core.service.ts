@@ -25,6 +25,7 @@ import {
   convertMeetingType,
   mapRecordingFileStatus,
 } from '../mappers/tencent-mtg-record.mapper';
+import { MeetingOrganizationService } from '@/meeting/services/meeting-organization.service';
 
 type MeetingData = Omit<
   Prisma.MeetingUncheckedCreateInput,
@@ -46,6 +47,7 @@ export class TencentMtgMeetingCoreService {
     private readonly meetingRepo: MeetingRepository,
     private readonly recordingRepo: MinuteRepository,
     private readonly tencentApi: TencentApiService,
+    private readonly meetingOrganization: MeetingOrganizationService,
   ) {}
 
   // ==========================================
@@ -67,6 +69,7 @@ export class TencentMtgMeetingCoreService {
     const creatorUser = await this.upsertPtUser(creator as Meetuser);
 
     const meetingData: Partial<MeetingData> = {
+      orgId: await this.meetingOrganization.resolveDefaultOrgId(),
       title: meeting_info.subject,
       meetingCode: meeting_info.meeting_code,
       type: meetingType,
@@ -134,6 +137,7 @@ export class TencentMtgMeetingCoreService {
       record.meeting_id,
       subMeetingId,
       {
+        orgId: await this.meetingOrganization.resolveDefaultOrgId(),
         title: meetingInfo?.subject ?? record.subject,
         meetingCode: meetingInfo?.meeting_code ?? record.meeting_code,
         type: systemMeetingType,

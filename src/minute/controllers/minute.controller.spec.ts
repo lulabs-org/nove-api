@@ -3,10 +3,23 @@ import { PATH_METADATA } from '@nestjs/common/constants';
 import { MinuteService } from '../services/minute.service';
 import { TranscriptService } from '../services/transcript.service';
 import { MinuteController } from './minute.controller';
+import { MinuteFileDriveService } from '../services/minute-file-drive.service';
+import type { AuthContext } from '@/auth/types/auth-context.interface';
+
+const auth = {
+  authMethod: 'jwt',
+  userId: 'user-1',
+  orgId: 'org-1',
+  permissions: ['minute:read'],
+} satisfies AuthContext;
 
 describe('MinuteController transcript routes', () => {
   let transcriptService: { getJson: jest.Mock; getText: jest.Mock };
   let controller: MinuteController;
+  const minuteService = {
+    getById: jest.fn().mockResolvedValue({ id: 'minute-1' }),
+    requireOrgId: jest.fn((orgId: string) => orgId),
+  };
 
   beforeEach(() => {
     transcriptService = {
@@ -14,8 +27,9 @@ describe('MinuteController transcript routes', () => {
       getText: jest.fn(),
     };
     controller = new MinuteController(
-      {} as MinuteService,
+      minuteService as unknown as MinuteService,
       transcriptService as unknown as TranscriptService,
+      {} as MinuteFileDriveService,
     );
   });
 
@@ -33,7 +47,7 @@ describe('MinuteController transcript routes', () => {
     transcriptService.getJson.mockResolvedValue(response);
 
     await expect(
-      controller.getTranscript('minute-1', { includeLocalUser: true }),
+      controller.getTranscript('minute-1', { includeLocalUser: true }, auth),
     ).resolves.toBe(response);
     expect(transcriptService.getJson).toHaveBeenCalledWith('minute-1', true);
     expect(transcriptService.getText).not.toHaveBeenCalled();
@@ -42,7 +56,9 @@ describe('MinuteController transcript routes', () => {
   it('returns only rendered text from the text route', async () => {
     transcriptService.getText.mockResolvedValue('转写文本');
 
-    await expect(controller.getTranscriptText('minute-1')).resolves.toEqual({
+    await expect(
+      controller.getTranscriptText('minute-1', auth),
+    ).resolves.toEqual({
       text: '转写文本',
     });
     expect(transcriptService.getText).toHaveBeenCalledWith('minute-1');

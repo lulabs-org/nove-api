@@ -19,7 +19,10 @@ import {
   ApiResponse,
   ApiParam,
 } from '@nestjs/swagger';
-import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
+import {
+  RequireAllPermissions,
+  RequirePermissions,
+} from '@/admin/permission/decorators/permissions.decorator';
 import { MinuteService } from '../services/minute.service';
 import { TranscriptService } from '../services/transcript.service';
 import { CuidPipe } from '@/common/pipes/cuid.pipe';
@@ -42,6 +45,10 @@ import {
   MinuteDto,
   MinuteDeleteResponseDto,
 } from '../dto/minute.dto';
+import { Auth } from '@/auth/decorators/auth.decorator';
+import { AuthContext } from '@/auth/types/auth-context.interface';
+import { MinuteFileDriveService } from '../services/minute-file-drive.service';
+import { AttachMinuteFileDto } from '../dto/minute-file.dto';
 
 @ApiTags('Minute')
 @Controller('minutes')
@@ -52,7 +59,35 @@ export class MinuteController {
   constructor(
     private readonly minuteService: MinuteService,
     private readonly transcriptService: TranscriptService,
+    private readonly minuteFileDriveService: MinuteFileDriveService,
   ) {}
+
+  @Get(':id/files')
+  @RequireAllPermissions('minute:read', 'drive:read')
+  @ApiOperation({ summary: '获取 Minute 的云盘文件' })
+  listMinuteFiles(
+    @Param('id', CuidPipe) id: string,
+    @Auth() auth: AuthContext,
+  ) {
+    return this.minuteFileDriveService.list(id, this.organizationScope(auth));
+  }
+
+  @Post(':id/files')
+  @RequireAllPermissions('minute:update', 'drive:read', 'drive:update')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: '将组织云盘文件关联到 Minute' })
+  attachMinuteFile(
+    @Param('id', CuidPipe) id: string,
+    @Body(new ValidationPipe()) dto: AttachMinuteFileDto,
+    @Auth() auth: AuthContext,
+  ) {
+    return this.minuteFileDriveService.attach(
+      id,
+      dto,
+      auth,
+      this.minuteService.requireOrgId(auth.orgId),
+    );
+  }
 
   /**
    * 创建录制记录
@@ -68,9 +103,13 @@ export class MinuteController {
   })
   async createMinute(
     @Body(new ValidationPipe()) createParams: CreateMinuteDto,
+    @Auth() auth: AuthContext,
   ) {
     this.logger.log(`创建录制记录: ${createParams.meetingId}`);
-    return this.minuteService.create(createParams);
+    return this.minuteService.create(
+      createParams,
+      this.minuteService.requireOrgId(auth.orgId),
+    );
   }
 
   /**
@@ -83,8 +122,9 @@ export class MinuteController {
   async getMinutes(
     @Query(new ValidationPipe({ transform: true }))
     query: QueryMinuteDto,
+    @Auth() auth: AuthContext,
   ) {
-    return this.minuteService.findMany(query);
+    return this.minuteService.findMany(query, this.organizationScope(auth));
   }
 
   /**
@@ -99,8 +139,11 @@ export class MinuteController {
     description: '获取成功',
     type: MinuteDto,
   })
-  async getMinuteById(@Param('id', CuidPipe) id: string) {
-    return this.minuteService.getById(id);
+  async getMinuteById(
+    @Param('id', CuidPipe) id: string,
+    @Auth() auth: AuthContext,
+  ) {
+    return this.minuteService.getById(id, this.organizationScope(auth));
   }
 
   /**
@@ -119,8 +162,10 @@ export class MinuteController {
   async createTranscript(
     @Param('id', CuidPipe) id: string,
     @Body(new ValidationPipe()) createParams: CreateTranscriptBodyDto,
+    @Auth() auth: AuthContext,
   ) {
     this.logger.log(`创建录制转写记录: ${id}`);
+    await this.minuteService.getById(id, this.organizationScope(auth));
     return this.transcriptService.create({
       ...createParams,
       minuteId: id,
@@ -137,6 +182,7 @@ export class MinuteController {
   async getTranscript(
     @Param('id', CuidPipe) minuteId: string,
     @Query(new ValidationPipe({ transform: true })) query: QueryTranscriptDto,
+    @Auth() auth: AuthContext,
   ): Promise<TranscriptJsonResponseDto> {
     const { includeLocalUser = false } = query;
     this.logger.log(
@@ -144,6 +190,7 @@ export class MinuteController {
     );
 
     try {
+      await this.minuteService.getById(minuteId, this.organizationScope(auth));
       const result = await this.transcriptService.getJson(
         minuteId,
         includeLocalUser,
@@ -169,10 +216,12 @@ export class MinuteController {
   @ApiGetTranscriptTextDocs()
   async getTranscriptText(
     @Param('id', CuidPipe) minuteId: string,
+    @Auth() auth: AuthContext,
   ): Promise<TranscriptTextResponseDto> {
     this.logger.log(`获取录制转写文本: ${minuteId}`);
 
     try {
+      await this.minuteService.getById(minuteId, this.organizationScope(auth));
       const text = await this.transcriptService.getText(minuteId);
 
       this.logger.log(`获取录制的转写文本成功: ${minuteId}`);
@@ -200,8 +249,13 @@ export class MinuteController {
   async updateMinute(
     @Param('id', CuidPipe) id: string,
     @Body(new ValidationPipe()) updateParams: UpdateMinuteDto,
+    @Auth() auth: AuthContext,
   ) {
-    return this.minuteService.update(id, updateParams);
+    return this.minuteService.update(
+      id,
+      updateParams,
+      this.organizationScope(auth),
+    );
   }
 
   /**
@@ -215,7 +269,16 @@ export class MinuteController {
     description: '删除成功',
     type: MinuteDeleteResponseDto,
   })
-  async deleteMinute(@Param('id', CuidPipe) id: string) {
-    return this.minuteService.delete(id);
+  async deleteMinute(
+    @Param('id', CuidPipe) id: string,
+    @Auth() auth: AuthContext,
+  ) {
+    return this.minuteService.delete(id, this.organizationScope(auth));
+  }
+
+  private organizationScope(auth: AuthContext): string | undefined {
+    return auth.permissions.includes('drive:admin')
+      ? undefined
+      : this.minuteService.requireOrgId(auth.orgId);
   }
 }

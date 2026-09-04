@@ -59,6 +59,7 @@ import { TrackingReportModule } from './tracking-report/tracking-report.module';
 import { OAuthClientAdminModule } from './admin/oauth-client/oauth-client-admin.module';
 import { ProjectModule } from './project/project.module';
 import { ProfitSharingModule } from './profit-sharing/profit-sharing.module';
+import { DriveModule } from './drive/drive.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -133,6 +134,7 @@ import { ProfitSharingModule } from './profit-sharing/profit-sharing.module';
     OAuthClientAdminModule,
     ProjectModule,
     ProfitSharingModule,
+    DriveModule,
   ],
   controllers: [AppController],
   providers: [

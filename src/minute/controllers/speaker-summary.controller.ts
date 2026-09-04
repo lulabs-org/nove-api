@@ -29,6 +29,9 @@ import {
   UpdateSpeakerSummaryDto,
   GenerateParticipantSummaryDto,
 } from '../dto/speaker-summary.dto';
+import { MinuteService } from '../services/minute.service';
+import { Auth } from '@/auth/decorators/auth.decorator';
+import { AuthContext } from '@/auth/types/auth-context.interface';
 
 @ApiTags('Minute Speaker Summary')
 @ApiBearerAuth()
@@ -37,6 +40,7 @@ export class SpeakerSummaryController {
   constructor(
     private readonly service: SpeakerSummaryCrudService,
     private readonly aiService: SpeakerSummaryService,
+    private readonly minuteService: MinuteService,
   ) {}
 
   @Get()
@@ -46,11 +50,13 @@ export class SpeakerSummaryController {
     status: HttpStatus.OK,
     type: SpeakerSummaryListResponseDto,
   })
-  list(
+  async list(
     @Param('minuteId', CuidPipe) minuteId: string,
     @Query(new ValidationPipe({ transform: true }))
     query: QuerySpeakerSummaryDto,
+    @Auth() auth: AuthContext,
   ) {
+    await this.assertMinute(minuteId, auth);
     return this.service.findMany(minuteId, query.page, query.limit);
   }
 
@@ -58,10 +64,12 @@ export class SpeakerSummaryController {
   @RequirePermissions('speaker-summary:read')
   @ApiOperation({ summary: '获取参会者总结详情' })
   @ApiResponse({ status: HttpStatus.OK, type: SpeakerSummaryDto })
-  get(
+  async get(
     @Param('minuteId', CuidPipe) minuteId: string,
     @Param('summaryId', CuidPipe) summaryId: string,
+    @Auth() auth: AuthContext,
   ) {
+    await this.assertMinute(minuteId, auth);
     return this.service.findById(minuteId, summaryId);
   }
 
@@ -69,31 +77,37 @@ export class SpeakerSummaryController {
   @RequirePermissions('speaker-summary:create')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '创建参会者总结' })
-  create(
+  async create(
     @Param('minuteId', CuidPipe) minuteId: string,
     @Body(new ValidationPipe()) dto: CreateSpeakerSummaryDto,
+    @Auth() auth: AuthContext,
   ) {
+    await this.assertMinute(minuteId, auth);
     return this.service.create(minuteId, dto);
   }
 
   @Put(':summaryId')
   @RequirePermissions('speaker-summary:update')
   @ApiOperation({ summary: '更新参会者总结' })
-  update(
+  async update(
     @Param('minuteId', CuidPipe) minuteId: string,
     @Param('summaryId', CuidPipe) summaryId: string,
     @Body(new ValidationPipe()) dto: UpdateSpeakerSummaryDto,
+    @Auth() auth: AuthContext,
   ) {
+    await this.assertMinute(minuteId, auth);
     return this.service.update(minuteId, summaryId, dto);
   }
 
   @Delete(':summaryId')
   @RequirePermissions('speaker-summary:delete')
   @ApiOperation({ summary: '删除参会者总结' })
-  delete(
+  async delete(
     @Param('minuteId', CuidPipe) minuteId: string,
     @Param('summaryId', CuidPipe) summaryId: string,
+    @Auth() auth: AuthContext,
   ) {
+    await this.assertMinute(minuteId, auth);
     return this.service.delete(minuteId, summaryId);
   }
 
@@ -104,7 +118,9 @@ export class SpeakerSummaryController {
   async generateSummaries(
     @Param('minuteId', CuidPipe) minuteId: string,
     @Body(new ValidationPipe()) dto: GenerateParticipantSummaryDto,
+    @Auth() auth: AuthContext,
   ) {
+    await this.assertMinute(minuteId, auth);
     return {
       success: true,
       message: '参会者总结生成完成',
@@ -113,5 +129,14 @@ export class SpeakerSummaryController {
         ...dto,
       }),
     };
+  }
+
+  private assertMinute(minuteId: string, auth: AuthContext) {
+    return this.minuteService.getById(
+      minuteId,
+      auth.permissions.includes('drive:admin')
+        ? undefined
+        : this.minuteService.requireOrgId(auth.orgId),
+    );
   }
 }

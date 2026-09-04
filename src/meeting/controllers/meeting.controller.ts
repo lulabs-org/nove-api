@@ -39,8 +39,11 @@ import {
   QueryMeetingStatsDto,
   QueryMeetingParticipantsDto,
   MeetingParticipantListResponseDto,
+  AssignMeetingOrganizationDto,
 } from '../dto';
 import { CuidPipe } from '@/common/pipes/cuid.pipe';
+import { Auth } from '@/auth/decorators/auth.decorator';
+import { AuthContext } from '@/auth/types/auth-context.interface';
 
 /**
  * 会议记录控制器
@@ -54,6 +57,13 @@ export class MeetingController {
 
   constructor(private readonly meetingService: MeetingService) {}
 
+  @Get('organization/unassigned')
+  @RequirePermissions('drive:admin')
+  @ApiOperation({ summary: '获取待分配组织的历史会议' })
+  listUnassignedMeetings() {
+    return this.meetingService.listUnassigned();
+  }
+
   /**
    * 获取会议记录列表
    */
@@ -63,9 +73,13 @@ export class MeetingController {
   @ApiGetMeetingRecordsDocs()
   async getMeetingRecords(
     @Query() query: QueryMeetingRecordsDto,
+    @Auth() auth: AuthContext,
   ): Promise<MeetingRecordListResponseDto> {
     this.logger.log('获取会议记录列表', { query });
-    const result = await this.meetingService.findMany(query);
+    const result = await this.meetingService.findMany(
+      query,
+      this.organizationScope(auth),
+    );
 
     this.logger.log(`获取会议记录成功，共 ${result.total} 条记录`);
     return {
@@ -86,10 +100,14 @@ export class MeetingController {
   @ApiGetMeetingRecordByIdDocs()
   async getMeetingRecordById(
     @Param('id', CuidPipe) id: string,
+    @Auth() auth: AuthContext,
   ): Promise<MeetingRecordResponseDto> {
     this.logger.log(`获取会议记录详情: ${id}`);
 
-    const record = await this.meetingService.findById(id);
+    const record = await this.meetingService.findById(
+      id,
+      this.organizationScope(auth),
+    );
 
     this.logger.log(`获取会议记录详情成功: ${record.id}`);
     return record;
@@ -109,8 +127,13 @@ export class MeetingController {
   async getMeetingParticipants(
     @Param('id', CuidPipe) id: string,
     @Query() query: QueryMeetingParticipantsDto,
+    @Auth() auth: AuthContext,
   ): Promise<MeetingParticipantListResponseDto> {
-    return this.meetingService.findParticipants(id, query);
+    return this.meetingService.findParticipants(
+      id,
+      query,
+      this.organizationScope(auth),
+    );
   }
 
   /**
@@ -122,12 +145,16 @@ export class MeetingController {
   @ApiCreateMeetingRecordDocs()
   async createMeetingRecord(
     @Body() createParams: CreateMeetingRecordDto,
+    @Auth() auth: AuthContext,
   ): Promise<MeetingRecordResponseDto> {
     this.logger.log('创建会议记录', {
       meetingId: createParams.platformMeetingId,
     });
 
-    const record = await this.meetingService.create(createParams);
+    const record = await this.meetingService.create(
+      createParams,
+      this.meetingService.requireOrgId(auth.orgId),
+    );
 
     this.logger.log(`创建会议记录成功: ${record.id}`);
     return record;
@@ -143,9 +170,14 @@ export class MeetingController {
   async updateMeetingRecord(
     @Param('id', CuidPipe) id: string,
     @Body() updateParams: UpdateMeetingRecordDto,
+    @Auth() auth: AuthContext,
   ): Promise<MeetingRecordResponseDto> {
     this.logger.log(`更新会议记录: ${id}`);
-    const record = await this.meetingService.update(id, updateParams);
+    const record = await this.meetingService.update(
+      id,
+      updateParams,
+      this.organizationScope(auth),
+    );
 
     this.logger.log(`更新会议记录成功: ${record.id}`);
     return record;
@@ -160,10 +192,14 @@ export class MeetingController {
   @ApiDeleteMeetingRecordDocs()
   async deleteMeetingRecord(
     @Param('id', CuidPipe) id: string,
+    @Auth() auth: AuthContext,
   ): Promise<DeleteMeetingRecordResponseDto> {
     this.logger.log(`删除会议记录: ${id}`);
 
-    const record = await this.meetingService.delete(id);
+    const record = await this.meetingService.delete(
+      id,
+      this.organizationScope(auth),
+    );
 
     this.logger.log(`删除会议记录成功: ${record.id}`);
 
@@ -183,6 +219,7 @@ export class MeetingController {
   @ApiGetMeetingStatsDocs()
   async getMeetingStats(
     @Query() query: QueryMeetingStatsDto,
+    @Auth() auth: AuthContext,
   ): Promise<MeetingStatsResponseDto> {
     const startDate = query.startDate ? new Date(query.startDate) : undefined;
     const endDate = query.endDate ? new Date(query.endDate) : undefined;
@@ -192,9 +229,26 @@ export class MeetingController {
     }
 
     this.logger.log('获取会议统计信息', query);
-    const stats = await this.meetingService.getStats({ startDate, endDate });
+    const stats = await this.meetingService.getStats({
+      startDate,
+      endDate,
+      orgId: this.organizationScope(auth),
+    });
 
     this.logger.log('获取会议统计信息成功');
     return stats;
+  }
+
+  @Patch('organization/assign')
+  @RequirePermissions('drive:admin')
+  @ApiOperation({ summary: '批量设置历史会议的组织归属' })
+  assignOrganization(@Body() dto: AssignMeetingOrganizationDto) {
+    return this.meetingService.assignOrganization(dto.meetingIds, dto.orgId);
+  }
+
+  private organizationScope(auth: AuthContext): string | undefined {
+    return auth.permissions.includes('drive:admin')
+      ? undefined
+      : this.meetingService.requireOrgId(auth.orgId);
   }
 }

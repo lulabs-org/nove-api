@@ -53,10 +53,12 @@ export class PlatformUserTranscriptRepository {
     platformUserId: string,
     startDate: Date,
     endDate: Date,
+    orgId?: string,
   ) {
     return this.prisma.minute.findMany({
       where: {
         deletedAt: null,
+        ...(orgId ? { meeting: { orgId, deletedAt: null } } : {}),
         startAt: { gte: startDate, lt: endDate },
         OR: [
           { meeting: { is: null } },
@@ -107,12 +109,16 @@ export class PlatformUserTranscriptRepository {
     });
   }
 
-  findMinuteContextSource(minuteId: string, platformUserId: string) {
+  findMinuteContextSource(
+    minuteId: string,
+    platformUserId: string,
+    orgId?: string,
+  ) {
     return this.prisma.minute.findFirst({
       where: {
         id: minuteId,
         deletedAt: null,
-        meeting: { is: { deletedAt: null } },
+        meeting: { is: { deletedAt: null, ...(orgId ? { orgId } : {}) } },
       },
       select: {
         ...minuteContextSelect,

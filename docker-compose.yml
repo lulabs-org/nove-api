@@ -25,15 +25,20 @@ services:
       - redis_data:/data
     command:
       [
-      "redis-server",
-      "--appendonly","yes",
-      "--requirepass","${REDIS_PASSWORD}",
-      "--databases","${REDIS_DATABASES:-16}",
-      "--maxmemory","${REDIS_MAXMEMORY:-256mb}",
-      "--maxmemory-policy","noeviction"
-    ]
+        'redis-server',
+        '--appendonly',
+        'yes',
+        '--requirepass',
+        '${REDIS_PASSWORD}',
+        '--databases',
+        '${REDIS_DATABASES:-16}',
+        '--maxmemory',
+        '${REDIS_MAXMEMORY:-256mb}',
+        '--maxmemory-policy',
+        'noeviction',
+      ]
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      test: ['CMD', 'redis-cli', '-a', '${REDIS_PASSWORD}', 'ping']
       interval: 5s
       timeout: 3s
       retries: 10
@@ -52,13 +57,16 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-lulab}"]
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-lulab}',
+        ]
       interval: 5s
       timeout: 3s
       retries: 10
     networks:
       - nove_net
-
 volumes:
   redis_data:
   postgres_data:

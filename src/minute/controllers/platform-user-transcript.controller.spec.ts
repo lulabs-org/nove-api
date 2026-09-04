@@ -7,6 +7,15 @@ import {
 } from '@/admin/permission/decorators/permissions.decorator';
 import { PlatformUserTranscriptService } from '../services/platform-user-transcript.service';
 import { PlatformUserTranscriptController } from './platform-user-transcript.controller';
+import { MinuteService } from '../services/minute.service';
+import type { AuthContext } from '@/auth/types/auth-context.interface';
+
+const auth = {
+  authMethod: 'jwt',
+  userId: 'user-1',
+  orgId: 'org-1',
+  permissions: ['platform-user:read', 'minute:read'],
+} satisfies AuthContext;
 
 describe('PlatformUserTranscriptController', () => {
   const service = {
@@ -15,6 +24,7 @@ describe('PlatformUserTranscriptController', () => {
   };
   const controller = new PlatformUserTranscriptController(
     service as unknown as PlatformUserTranscriptService,
+    { requireOrgId: (orgId: string) => orgId } as unknown as MinuteService,
   );
 
   beforeEach(() => jest.clearAllMocks());
@@ -47,15 +57,20 @@ describe('PlatformUserTranscriptController', () => {
   it('delegates minute transcript queries', async () => {
     service.getMinuteTranscripts.mockResolvedValue({ minutes: [] });
 
-    await controller.getMinuteTranscripts('platform-user-1', {
-      startDate: '2026-08-01T00:00:00Z',
-      endDate: '2026-09-01T00:00:00Z',
-    });
+    await controller.getMinuteTranscripts(
+      'platform-user-1',
+      {
+        startDate: '2026-08-01T00:00:00Z',
+        endDate: '2026-09-01T00:00:00Z',
+      },
+      auth,
+    );
 
     expect(service.getMinuteTranscripts).toHaveBeenCalledWith(
       'platform-user-1',
       '2026-08-01T00:00:00Z',
       '2026-09-01T00:00:00Z',
+      'org-1',
     );
   });
 });
