@@ -2,9 +2,9 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2026-03-04 18:05:33
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-03-19 11:36:32
+ * @LastEditTime: 2026-09-04 16:00:00
  * @FilePath: /nove_api/src/auth/controllers/auth.controller.ts
- * @Description:
+ * @Description: 认证控制器（已遵循 Skinny Controller 重构）
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
@@ -17,9 +17,7 @@ import {
   Res,
   HttpCode,
   HttpStatus,
-  ValidationPipe,
   UnauthorizedException,
-  Logger,
   Get,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
@@ -32,6 +30,14 @@ import {
   ApiLogoutDocs,
   ApiGetMeDocs,
   ApiGetPermissionsDocs,
+  Public,
+  RequireAuth,
+  User,
+  CurrentUser,
+  Auth,
+  ClientInfo,
+  ClientInfoContext,
+  BearerToken,
 } from '../decorators';
 import {
   RegisterDto,
@@ -39,23 +45,20 @@ import {
   LogoutDto,
   AuthResponseDto,
   RefreshTokenDto,
+  ResetPasswordDto,
   AuthUserWithPermissionsDto,
   PermissionsResponseDto,
 } from '@/auth/dto';
-import { LoginService, RegisterService, TokenService } from '@/auth/services';
-import { PasswordService } from '../services/password.service';
-import { Public } from '@/auth/decorators/public.decorator';
-import { ResetPasswordDto } from '../dto/reset-password.dto';
-import { TokenBlacklistService } from '../services/token-blacklist.service';
-import { User, CurrentUser } from '@/auth/decorators/user.decorator';
-import { RequireAuth } from '@/auth/decorators/require-auth.decorator';
-import { ClientType } from '@/auth/types/jwt.types';
-import { PermService } from '@/admin/permission/services/permission.service';
-import { HttpUtil } from '@/common/utils/http.util';
-import { DesensitizationUtil } from '@/common/utils/desensitization.util';
-import { UserOrgService } from '@/admin/api-key/services/user-organization.service';
-import { NoPermissionRequired } from '@/admin/permission/decorators/permissions.decorator';
+import { AuthService } from '../services/auth.service';
 import { ProfileService } from '@/user/services/profile.service';
+import { AuthContext } from '../types/auth-context.interface';
+import { ClientType } from '../types/jwt.types';
+import { AuthCookieHelper } from '../utils/auth-cookie.helper';
+import {
+  formatAuthUserWithPermissions,
+  formatPermissionsResponse,
+} from '../utils/auth-user-mapper';
+import { NoPermissionRequired } from '@/admin/permission/decorators/permissions.decorator';
 
 @ApiTags('Auth')
 @Controller({
@@ -64,16 +67,8 @@ import { ProfileService } from '@/user/services/profile.service';
 })
 @NoPermissionRequired()
 export class AuthController {
-  private readonly logger = new Logger(AuthController.name);
-
   constructor(
-    private readonly registerService: RegisterService,
-    private readonly loginService: LoginService,
-    private readonly passwordService: PasswordService,
-    private readonly tokenService: TokenService,
-    private readonly tokenBlacklist: TokenBlacklistService,
-    private readonly permService: PermService,
-    private readonly userOrgService: UserOrgService,
+    private readonly authService: AuthService,
     private readonly profileService: ProfileService,
   ) {}
 
@@ -82,40 +77,27 @@ export class AuthController {
   @HttpCode(HttpStatus.CREATED)
   @ApiRegisterDocs()
   async register(
-    @Body(ValidationPipe) registerDto: RegisterDto,
-    @Req() req: Request,
+    @Body() registerDto: RegisterDto,
+    @ClientInfo() { ip, userAgent }: ClientInfoContext,
     @Res({ passthrough: true }) res: Response,
   ): Promise<AuthResponseDto> {
-    const ip = HttpUtil.getClientIp(req);
-    const userAgent = req.get('User-Agent');
-    const result = await this.registerService.register(
-      registerDto,
-      ip,
-      userAgent,
-    );
-    const user = {
-      ...result.user,
-      currentOrgId: await this.resolveCurrentOrgId(result.user.id),
-    };
+    const result = await this.authService.register(registerDto, ip, userAgent);
 
-    const isWebClient = registerDto.clientType === ClientType.Web;
-    if (isWebClient) {
-      res.cookie('refreshToken', result.refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        maxAge: (result.refreshExpiresIn || 0) * 1000,
-        path: '/',
-      });
+    if (registerDto.clientType === ClientType.Web) {
+      AuthCookieHelper.setRefreshToken(
+        res,
+        result.refreshToken!,
+        result.refreshExpiresIn,
+      );
 
       return {
         accessToken: result.accessToken,
         expiresIn: result.expiresIn,
-        user,
-      } as AuthResponseDto;
+        user: result.user,
+      };
     }
 
-    return { ...result, user };
+    return result;
   }
 
   @Public()
@@ -123,36 +105,27 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiLoginDocs()
   async login(
-    @Body(ValidationPipe) loginDto: LoginDto,
-    @Req() req: Request,
+    @Body() loginDto: LoginDto,
+    @ClientInfo() { ip, userAgent }: ClientInfoContext,
     @Res({ passthrough: true }) res: Response,
   ): Promise<AuthResponseDto> {
-    const ip = HttpUtil.getClientIp(req);
-    const userAgent = req.get('User-Agent');
-    const result = await this.loginService.login(loginDto, ip, userAgent);
-    const user = {
-      ...result.user,
-      currentOrgId: await this.resolveCurrentOrgId(result.user.id),
-    };
+    const result = await this.authService.login(loginDto, ip, userAgent);
 
-    const isWebClient = loginDto.clientType === ClientType.Web;
-    if (isWebClient) {
-      res.cookie('refreshToken', result.refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        maxAge: (result.refreshExpiresIn || 0) * 1000,
-        path: '/',
-      });
+    if (loginDto.clientType === ClientType.Web) {
+      AuthCookieHelper.setRefreshToken(
+        res,
+        result.refreshToken!,
+        result.refreshExpiresIn,
+      );
 
       return {
         accessToken: result.accessToken,
         expiresIn: result.expiresIn,
-        user,
-      } as AuthResponseDto;
+        user: result.user,
+      };
     }
 
-    return { ...result, user };
+    return result;
   }
 
   @Public()
@@ -160,16 +133,10 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiResetPasswordDocs()
   async resetPassword(
-    @Body(ValidationPipe) resetPasswordDto: ResetPasswordDto,
-    @Req() req: Request,
+    @Body() resetPasswordDto: ResetPasswordDto,
+    @ClientInfo() { ip, userAgent }: ClientInfoContext,
   ): Promise<{ success: boolean; message: string }> {
-    const ip = HttpUtil.getClientIp(req);
-    const userAgent = req.get('User-Agent');
-    return await this.passwordService.resetPassword(
-      resetPasswordDto,
-      ip,
-      userAgent,
-    );
+    return this.authService.resetPassword(resetPasswordDto, ip, userAgent);
   }
 
   @Public()
@@ -177,8 +144,9 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiRefreshTokenDocs()
   async refreshToken(
-    @Body(ValidationPipe) refreshTokenDto: RefreshTokenDto,
+    @Body() refreshTokenDto: RefreshTokenDto,
     @Req() req: Request,
+    @ClientInfo() { ip, userAgent }: ClientInfoContext,
     @Res({ passthrough: true }) res: Response,
   ): Promise<{
     accessToken: string;
@@ -186,10 +154,6 @@ export class AuthController {
     refreshToken?: string;
     refreshExpiresIn?: number;
   }> {
-    const ip = HttpUtil.getClientIp(req);
-    const userAgent = req.get('User-Agent');
-
-    // 优先从请求体中读取，如果没有则从 Cookie 中读取
     const refreshToken =
       refreshTokenDto.refreshToken ||
       (req.cookies?.refreshToken as string | undefined);
@@ -198,22 +162,20 @@ export class AuthController {
       throw new UnauthorizedException('刷新令牌不能为空');
     }
 
-    const result = await this.tokenService.refreshToken(refreshToken, {
+    const result = await this.authService.refreshToken(
+      refreshToken,
+      refreshTokenDto,
       ip,
       userAgent,
-      deviceInfo: refreshTokenDto.deviceInfo,
-      deviceId: refreshTokenDto.deviceId,
-    });
+    );
 
-    const isWebClient = refreshTokenDto.clientType === ClientType.Web;
-    if (isWebClient) {
-      res.cookie('refreshToken', result.refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        maxAge: (result.refreshExpiresIn || 0) * 1000,
-        path: '/',
-      });
+    if (refreshTokenDto.clientType === ClientType.Web) {
+      AuthCookieHelper.setRefreshToken(
+        res,
+        result.refreshToken,
+        result.refreshExpiresIn,
+      );
+
       return {
         accessToken: result.accessToken,
         expiresIn: result.expiresIn,
@@ -230,8 +192,10 @@ export class AuthController {
   @RequireAuth('jwt')
   async logout(
     @User() user: CurrentUser,
+    @BearerToken() accessToken: string | undefined,
     @Req() req: Request,
-    @Body(ValidationPipe) logoutDto: LogoutDto = {},
+    @Body() logoutDto: LogoutDto = {},
+    @ClientInfo() { ip, userAgent }: ClientInfoContext,
     @Res({ passthrough: true }) res: Response,
   ): Promise<{
     success: boolean;
@@ -244,104 +208,46 @@ export class AuthController {
       revokedTokensCount?: number;
     };
   }> {
-    try {
-      // 获取当前访问令牌
-      const authHeader = req.get('authorization') || req.get('Authorization');
-      const accessToken = authHeader?.startsWith('Bearer ')
-        ? authHeader.slice('Bearer '.length).trim()
-        : undefined;
+    const token =
+      accessToken ||
+      (req.get('authorization')?.startsWith('Bearer ')
+        ? req.get('authorization')!.slice('Bearer '.length).trim()
+        : undefined);
 
-      if (!accessToken) {
-        throw new UnauthorizedException('未找到访问令牌');
-      }
-
-      // 获取请求上下文
-      const ip = HttpUtil.getClientIp(req);
-      const userAgent = req.get('User-Agent');
-      const isWebClient = logoutDto.clientType === ClientType.Web;
-
-      // 如果是Web客户端，从cookie中获取refreshToken
-      if (isWebClient && !logoutDto.refreshToken) {
-        const cookies = req.cookies as unknown;
-
-        if (cookies && typeof cookies === 'object') {
-          const rt = (cookies as Record<string, unknown>).refreshToken;
-          if (typeof rt === 'string') {
-            logoutDto.refreshToken = rt;
-          }
-        }
-      }
-
-      // 执行全面登出
-      const logoutResult = await this.tokenService.logout(
-        user.id,
-        accessToken,
-        {
-          refreshToken: logoutDto.refreshToken,
-          deviceId: logoutDto.deviceId,
-          revokeAllDevices: logoutDto.revokeAllDevices,
-          userAgent,
-          ip,
-        },
-      );
-
-      // 如果是Web客户端，清除refreshToken cookie
-      if (isWebClient) {
-        res.clearCookie('refreshToken', {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-          path: '/',
-        });
-      }
-
-      this.logger.log(
-        `User ${user.id} logout: ${JSON.stringify({
-          accessRevoked: logoutResult.accessTokenRevoked,
-          refreshRevoked: logoutResult.refreshTokenRevoked,
-          allDevices: logoutResult.allDevicesLoggedOut,
-          revokedCount: logoutResult.revokedTokensCount,
-          ip,
-          userAgent,
-          isWebClient,
-        })}`,
-      );
-
-      return {
-        success: true,
-        message: logoutResult.message,
-        details: {
-          accessTokenRevoked: logoutResult.accessTokenRevoked,
-          refreshTokenRevoked: logoutResult.refreshTokenRevoked,
-          allDevicesLoggedOut: logoutResult.allDevicesLoggedOut,
-          allAccessTokensRevoked: logoutResult.allAccessTokensRevoked,
-          revokedTokensCount: logoutResult.revokedTokensCount,
-        },
-      };
-    } catch (error) {
-      this.logger.error('Logout failed', error);
-      // 即使出错，也要尽力撤销当前访问令牌
-      const authHeader = req.get('authorization') || req.get('Authorization');
-      const token = authHeader?.startsWith('Bearer ')
-        ? authHeader.slice('Bearer '.length).trim()
-        : undefined;
-      if (token) {
-        try {
-          await this.tokenBlacklist.add(token);
-        } catch {
-          // 忽略错误
-        }
-      }
-
-      return {
-        success: true, // 返回成功，因为至少访问令牌被撤销了
-        message: '退出登录部分成功，当前会话已终止',
-        details: {
-          accessTokenRevoked: !!token,
-          refreshTokenRevoked: false,
-        },
-      };
+    if (!token) {
+      throw new UnauthorizedException('未找到访问令牌');
     }
+
+    const isWebClient = logoutDto.clientType === ClientType.Web;
+    const refreshToken =
+      logoutDto.refreshToken ||
+      (isWebClient
+        ? (req.cookies?.refreshToken as string | undefined)
+        : undefined);
+
+    const logoutResult = await this.authService.logout(user.id, token, {
+      refreshToken,
+      deviceId: logoutDto.deviceId,
+      revokeAllDevices: logoutDto.revokeAllDevices,
+      userAgent,
+      ip,
+    });
+
+    if (isWebClient) {
+      AuthCookieHelper.clearRefreshToken(res);
+    }
+
+    return {
+      success: true,
+      message: logoutResult.message,
+      details: {
+        accessTokenRevoked: logoutResult.accessTokenRevoked,
+        refreshTokenRevoked: logoutResult.refreshTokenRevoked,
+        allDevicesLoggedOut: logoutResult.allDevicesLoggedOut,
+        allAccessTokensRevoked: logoutResult.allAccessTokensRevoked,
+        revokedTokensCount: logoutResult.revokedTokensCount,
+      },
+    };
   }
 
   @Get('me')
@@ -349,35 +255,29 @@ export class AuthController {
   @ApiGetMeDocs()
   @ApiBearerAuth()
   @RequireAuth('jwt')
-  async getMe(@User() user: CurrentUser): Promise<AuthUserWithPermissionsDto> {
+  async getMe(
+    @User() user: CurrentUser,
+    @Auth() auth?: AuthContext,
+  ): Promise<AuthUserWithPermissionsDto> {
     const roles = user.roles || ['USER'];
-    const perm = await this.permService.getPermByRoleCodes(roles);
-    const currentOrgId = await this.resolveCurrentOrgId(user.id);
+    const perm =
+      auth?.permissions && auth.permissions.length > 0
+        ? auth.permissions
+        : await this.authService.getPermissionsByRoles(roles);
 
-    return {
-      id: user.id,
-      username: user.username || undefined,
-      email: user.email,
-      phone: DesensitizationUtil.maskPhone(user.phone),
-      countryCode: user.countryCode || undefined,
-      name:
-        (user.profile?.displayName as string) ||
-        user.username ||
-        user.email ||
-        DesensitizationUtil.maskPhone(user.phone) ||
-        'Unknown',
-      avatar: this.profileService.getReadableAvatarUrl(
-        user.profile?.avatar as string | undefined,
-      ),
-      roles,
-      currentOrgId,
+    const currentOrgId =
+      auth?.orgId ?? (await this.authService.resolveCurrentOrgId(user.id));
+
+    const avatar = this.profileService.getReadableAvatarUrl(
+      user.profile?.avatar as string | undefined,
+    );
+
+    return formatAuthUserWithPermissions(
+      user,
       perm,
-      active: user.active,
-      emailVerified: user.emailVerified,
-      phoneVerified: user.phoneVerified,
-      createdAt: user.createdAt.toISOString(),
-      lastLoginAt: user.lastLoginAt?.toISOString(),
-    };
+      currentOrgId ?? undefined,
+      avatar,
+    );
   }
 
   @Get('api-key/validate')
@@ -395,30 +295,14 @@ export class AuthController {
   @RequireAuth('jwt')
   async getPermissions(
     @User() user: CurrentUser,
+    @Auth() auth?: AuthContext,
   ): Promise<PermissionsResponseDto> {
     const roles = user.roles || ['USER'];
-    const perm = await this.permService.getPermByRoleCodes(roles);
+    const perm =
+      auth?.permissions && auth.permissions.length > 0
+        ? auth.permissions
+        : await this.authService.getPermissionsByRoles(roles);
 
-    return {
-      id: user.id,
-      name:
-        (user.profile?.displayName as string) ||
-        user.username ||
-        user.email ||
-        DesensitizationUtil.maskPhone(user.phone) ||
-        'Unknown',
-      roles,
-      perm,
-    };
-  }
-
-  private async resolveCurrentOrgId(
-    userId: string,
-  ): Promise<string | undefined> {
-    try {
-      return await this.userOrgService.getPrimaryOrgId(userId);
-    } catch {
-      return undefined;
-    }
+    return formatPermissionsResponse(user, perm);
   }
 }

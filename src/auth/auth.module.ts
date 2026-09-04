@@ -16,6 +16,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AuthController } from './controllers/auth.controller';
 import { AccountSecurityController } from './controllers/account-security.controller';
 import { OtpController } from './controllers/otp.controller';
+import { AuthService } from './services/auth.service';
 import { RegisterService } from './services/register.service';
 import { LoginService } from './services/login.service';
 import { PasswordService } from './services/password.service';
@@ -62,6 +63,7 @@ import { VerificationCodeRepository } from './repositories/verification-code.rep
   ],
   controllers: [AuthController, AccountSecurityController, OtpController],
   providers: [
+    AuthService,
     RegisterService,
     LoginService,
     PasswordService,
@@ -81,6 +83,7 @@ import { VerificationCodeRepository } from './repositories/verification-code.rep
     VerificationCodeRepository,
   ],
   exports: [
+    AuthService,
     RegisterService,
     LoginService,
     PasswordService,
