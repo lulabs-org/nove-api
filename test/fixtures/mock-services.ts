@@ -80,9 +80,9 @@ export const mockMeetingService = {
 };
 
 /**
- * Mock TencentApiService for testing
+ * Mock TMeetApiService for testing
  */
-export const mockTencentApiService = {
+export const mockTMeetApiService = {
   getRecordingFileDetail: jest.fn(),
   getCorpRecords: jest.fn(),
   createMeeting: jest.fn(),
@@ -106,7 +106,7 @@ interface MockProviders {
   authMail?: Partial<typeof mockAuthMailService>;
   user?: Partial<typeof mockUserService>;
   meeting?: Partial<typeof mockMeetingService>;
-  tencent?: Partial<typeof mockTencentApiService>;
+  tmeet?: Partial<typeof mockTMeetApiService>;
   otp?: Partial<typeof mockOtpService>;
 }
 
@@ -135,8 +135,8 @@ export const createMockProviders = (customMocks: MockProviders = {}) => [
     useValue: { ...mockMeetingService, ...customMocks.meeting },
   },
   {
-    provide: 'TencentApiService',
-    useValue: { ...mockTencentApiService, ...customMocks.tencent },
+    provide: 'TMeetApiService',
+    useValue: { ...mockTMeetApiService, ...customMocks.tmeet },
   },
   {
     provide: 'OtpService',

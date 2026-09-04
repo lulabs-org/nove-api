@@ -1,6 +1,6 @@
 import { ConfigModule } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
-import { TencentApiService } from '../../src/integrations/tencent-meeting/services/api.service';
+import { TMeetApiService } from '../../src/tmeet/client';
 import { tencentMeetingConfig } from '../../src/configs/tencent-mtg.config';
 import { PrismaClient } from '@prisma/client';
 
@@ -12,10 +12,10 @@ async function bootstrap() {
         load: [tencentMeetingConfig],
       }),
     ],
-    providers: [TencentApiService],
+    providers: [TMeetApiService],
   }).compile();
 
-  const tencentApi = moduleRef.get(TencentApiService);
+  const tencentApi = moduleRef.get(TMeetApiService);
   const prisma = new PrismaClient();
 
   const minutes = await prisma.minute.findMany({
