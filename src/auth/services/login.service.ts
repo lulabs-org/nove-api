@@ -5,8 +5,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { OtpService } from '@/auth/services/otp.service';
-import { LoginDto } from '../dto/login.dto';
-import { AuthResponseDto } from '../dto/auth-response.dto';
+import { LoginDto, AuthResponseDto } from '../dto';
 import { AuthType } from '@/auth/enums';
 import { CodeType } from '@/common/enums';
 import * as bcrypt from 'bcryptjs';

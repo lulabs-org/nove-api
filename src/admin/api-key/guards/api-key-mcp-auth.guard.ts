@@ -18,7 +18,7 @@ import {
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { ApiKeyService } from '@/admin/api-key/services/api-key.service';
-import type { ApiKeyUser } from '@/auth/decorators/api-key-user.decorator';
+import type { ApiKeyUser } from '@/auth/types';
 import { RoleService } from '@/admin/role/services/role.service';
 import { PermService } from '@/admin/permission/services/permission.service';
 

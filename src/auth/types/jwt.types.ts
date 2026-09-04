@@ -28,6 +28,16 @@ export interface AuthenticatedUser {
   credentialVersion?: number;
 }
 
+export interface ApiKeyUser {
+  id: string;
+  sub: string; // user_id
+  orgId: string;
+  apiKeyId: string;
+  scopes: string[];
+  roles?: string[];
+  authType: 'api_key';
+}
+
 export interface JwtPayload {
   sub: string;
   username?: string;

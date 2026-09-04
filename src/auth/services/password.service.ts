@@ -9,7 +9,7 @@
  * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
  */
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
-import { ResetPasswordDto } from '../dto/reset-password.dto';
+import { ResetPasswordDto } from '../dto';
 import { OtpService } from '@/auth/services/otp.service';
 import { CodeType } from '@/common/enums';
 import { UserQueryRepository } from '@/user/repositories/user-query.repository';
