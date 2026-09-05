@@ -184,20 +184,10 @@ export class CreateOrderDto {
   @IsDateString()
   cancelledAt?: string;
 
-  @ApiPropertyOptional({ description: '退款时间' })
-  @IsOptional()
-  @IsDateString()
-  refundedAt?: string;
-
   @ApiPropertyOptional({ description: '完成时间' })
   @IsOptional()
   @IsDateString()
   completedAt?: string;
-
-  @ApiPropertyOptional({ description: '生效时间' })
-  @IsOptional()
-  @IsDateString()
-  effectiveAt?: string;
 
   @ApiPropertyOptional({ description: '权益开始时间' })
   @IsOptional()

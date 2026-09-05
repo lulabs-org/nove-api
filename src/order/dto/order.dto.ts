@@ -88,14 +88,8 @@ export class OrderDto {
   @ApiPropertyOptional({ description: '取消时间', nullable: true })
   cancelledAt: Date | null;
 
-  @ApiPropertyOptional({ description: '退款时间', nullable: true })
-  refundedAt: Date | null;
-
   @ApiPropertyOptional({ description: '完成时间', nullable: true })
   completedAt: Date | null;
-
-  @ApiPropertyOptional({ description: '生效时间', nullable: true })
-  effectiveAt: Date | null;
 
   @ApiPropertyOptional({ description: '权益开始时间', nullable: true })
   benefitStart: Date | null;
