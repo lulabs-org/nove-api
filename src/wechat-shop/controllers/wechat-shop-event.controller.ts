@@ -15,7 +15,11 @@ import { OnEvent } from '@nestjs/event-emitter';
 import { Public } from '@/auth/decorators/public.decorator';
 import { WechatEventBodyDto, WechatEventQueryDto } from '../dto';
 import { WechatShopEventService } from '../services';
-import { decryptWechatMessage, generateSignature } from '../utils';
+import {
+  decryptWechatMessage,
+  generateSignature,
+  isSignatureEqual,
+} from '../utils';
 import {
   SingleOrgContextService,
   SystemConfigChangeEvent,
@@ -134,7 +138,7 @@ export class WechatShopEventController implements OnModuleInit {
       token,
     );
 
-    if (hash !== query.msg_signature) {
+    if (!isSignatureEqual(query.msg_signature, hash)) {
       throw new UnauthorizedException('Invalid msg_signature');
     }
 
