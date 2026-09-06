@@ -43,11 +43,9 @@ model Order {
   // 支付与生命周期关键时间（统一用 timestamptz）
   paidAt      DateTime? @map("paid_at") @db.Timestamptz(6) // 支付时间
   cancelledAt DateTime? @map("cancelled_at") @db.Timestamptz(6) // 取消时间
-  refundedAt  DateTime? @map("refunded_at") @db.Timestamptz(6) // 退款时间
   completedAt DateTime? @map("completed_at") @db.Timestamptz(6) // 完成时间
 
-  // 生效/权益（建议存"确定性边界"，不要存每天变化的 remaining/activeDays）
-  effectiveAt  DateTime? @map("effective_at") @db.Timestamptz(6) // 生效时间
+  // 权益周期（确定性边界）
   benefitStart DateTime? @map("benefit_start") @db.Timestamptz(6) // 权益开始时间
   benefitEnd   DateTime? @map("benefit_end") @db.Timestamptz(6) // 权益结束时间
 
@@ -56,12 +54,12 @@ model Order {
   providerTradeNo String?          @map("provider_trade_no") // 支付平台流水号/交易号
 
   // 关联关系
-  product         Product?      @relation(fields: [productId], references: [id], onDelete: SetNull) // 产品
-  purchaser       User?         @relation("UserOrders", fields: [purchaserId], references: [id], onDelete: SetNull) // 购买者
-  channel         Channel?      @relation(fields: [channelId], references: [id], onDelete: SetNull) // 渠道
-  currentOwner    User?         @relation("CurrentOwnerOrders", fields: [currentOwnerId], references: [id], onDelete: SetNull) // 当前负责人
-  financialCloser User?         @relation("FinancialCloserOrders", fields: [financialCloserId], references: [id], onDelete: SetNull) // 财务结单人
-  refunds         OrderRefund[] // 订单的退款记录
+  product            Product?            @relation(fields: [productId], references: [id], onDelete: SetNull) // 产品
+  purchaser          User?               @relation("UserOrders", fields: [purchaserId], references: [id], onDelete: SetNull) // 购买者
+  channel            Channel?            @relation(fields: [channelId], references: [id], onDelete: SetNull) // 渠道
+  currentOwner       User?               @relation("CurrentOwnerOrders", fields: [currentOwnerId], references: [id], onDelete: SetNull) // 当前负责人
+  financialCloser    User?               @relation("FinancialCloserOrders", fields: [financialCloserId], references: [id], onDelete: SetNull) // 财务结单人
+  refunds            OrderRefund[] // 订单的退款记录
   profitShareRecords ProfitShareRecord[] // 分润明细流水记录
 
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6) // 创建时间
@@ -114,7 +112,7 @@ enum OrderStatus {
   UNPAID // 未支付
   PAID // 已支付
   CANCELLED // 已取消
-  REFUNDED // 已退款（全额）
+  REFUNDED // 已退款
   COMPLETED // 已完成/已交付
 }
 
