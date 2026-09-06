@@ -112,7 +112,6 @@ enum OrderStatus {
   UNPAID // 未支付
   PAID // 已支付
   CANCELLED // 已取消
-  REFUNDED // 已退款
   COMPLETED // 已完成/已交付
 }
 
