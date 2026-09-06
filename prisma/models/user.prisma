@@ -1,5 +1,5 @@
 model User {
-  id       String  @id @default(cuid())
+  id       String @id @default(cuid())
   username String @unique @db.VarChar(50) // 登录用户名，如 john_doe
 
   // password 密码相关字段
@@ -43,15 +43,16 @@ model User {
   ledDepartments       Dept[]                @relation("DepartmentLeader")
 
   // 个人详细信息
-  profile     UserProfile?
-  settings    UserSettings?
-  preferences UserPreference?
+  profile           UserProfile?
+  settings          UserSettings?
+  preferences       UserPreference?
+  identityDocuments UserIdentityDocument[] // 用户证件与实名认证信息
 
   // 登录日志关联
-  loginLogs LoginLog[] // 登录日志
+  loginLogs         LoginLog[] // 登录日志
   securityAuditLogs UserSecurityAuditLog[]
   // API Key 关联
-  createdApiKeys ApiKey[] // 创建的 API Keys
+  createdApiKeys    ApiKey[] // 创建的 API Keys
 
   // 订单相关关联
   orders                Order[]       @relation("UserOrders") // 用户的订单
