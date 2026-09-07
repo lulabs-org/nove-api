@@ -31,6 +31,7 @@ export class ParticipantService {
    * @returns 包含去重和未去重的参与者列表
    */
   async list(
+    orgId: string,
     meetingId: string,
     userId: string,
     subMeetingId?: string,
@@ -39,6 +40,7 @@ export class ParticipantService {
   ): Promise<ParticipantsList> {
     try {
       const response = await this.api.getParticipants(
+        orgId,
         meetingId,
         userId,
         subMeetingId,

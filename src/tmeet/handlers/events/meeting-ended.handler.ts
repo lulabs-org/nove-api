@@ -21,9 +21,7 @@ import { TMeetMeetingCoreService } from '../../services/meeting-core.service';
 export class MeetingEndedHandler extends BaseEventHandler {
   private readonly SUPPORTED_EVENT = 'meeting.end';
 
-  constructor(
-    private readonly meetingCoreSvc: TMeetMeetingCoreService,
-  ) {
+  constructor(private readonly meetingCoreSvc: TMeetMeetingCoreService) {
     super();
   }
 
@@ -31,7 +29,11 @@ export class MeetingEndedHandler extends BaseEventHandler {
     return event === this.SUPPORTED_EVENT;
   }
 
-  async handle(payload: MeetingEndPayload, index: number): Promise<void> {
+  async handle(
+    payload: MeetingEndPayload,
+    index: number,
+    orgId: string,
+  ): Promise<void> {
     const { meeting_info, operator } = payload;
 
     this.logEventProcessing(this.SUPPORTED_EVENT, payload, index);
@@ -45,6 +47,7 @@ export class MeetingEndedHandler extends BaseEventHandler {
       this.meetingCoreSvc.upsertMeetingFromWebhook(
         payload,
         this.SUPPORTED_EVENT,
+        orgId,
       ),
     ];
 

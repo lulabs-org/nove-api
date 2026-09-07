@@ -46,14 +46,14 @@ export class LarkWebhookController {
     this.larkMeetingService = larkMeetingService;
   }
 
-  private createEventDispatcher(config: SystemConfigValues) {
+  private createEventDispatcher(orgId: string, config: SystemConfigValues) {
     return new EventDispatcher({
       encryptKey: String(config.eventEncryptKey ?? ''),
       verificationToken: String(config.eventVerificationToken ?? ''),
     }).register({
       [LarkEvent.VC_MEETING_ALL_ENDED_V1]: (data: MeetingEndedEventData) => {
         this.larkMeetingService
-          .enqueueMeetingEnded(data)
+          .enqueueMeetingEnded(orgId, data)
           .catch((err) => this.logger.error('enqueueMeetingEnded_failed', err));
         return 'success';
       },
@@ -81,12 +81,13 @@ export class LarkWebhookController {
   ): Promise<void> {
     this.logger.log('收到 Lark Webhook 请求');
 
+    const orgId = this.orgContext.getOrgId();
     const { value: config } = await this.systemConfigService.getEffectiveConfig(
-      this.orgContext.getOrgId(),
+      orgId,
       'lark',
     );
     const handleLarkEvent = createLarkAdapter(
-      this.createEventDispatcher(config),
+      this.createEventDispatcher(orgId, config),
       {
         autoChallenge: true, // 自动处理飞书的URL验证
         needCheck: true, // 是否启用事件安全验证，生产环境建议设为true

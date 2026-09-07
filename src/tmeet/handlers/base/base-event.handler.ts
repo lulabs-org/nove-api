@@ -32,7 +32,11 @@ export abstract class BaseEventHandler {
    * @param payload Event payload
    * @param index Payload index in batch processing
    */
-  abstract handle(payload: EventPayload, index: number): Promise<void>;
+  abstract handle(
+    payload: EventPayload,
+    index: number,
+    orgId: string,
+  ): Promise<void>;
 
   /**
    * Log event processing details

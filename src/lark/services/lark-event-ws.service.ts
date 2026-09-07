@@ -15,21 +15,24 @@ import { LarkClient } from '../client/lark.client';
 import { LarkMeetingService } from './lark-meeting.service';
 import { MeetingEndedEventData } from '../types/lark-meeting.types';
 import { LarkEvent } from '../enums/lark-event.enum';
+import { SingleOrgContextService } from '@/admin/system-config/services';
 
 @Injectable()
 export class LarkEventWsService implements OnModuleInit {
   constructor(
     private readonly larkClient: LarkClient,
     private readonly larkMeetingService: LarkMeetingService,
+    private readonly orgContext: SingleOrgContextService,
   ) {}
 
   onModuleInit() {
+    const orgId = this.orgContext.getOrgId();
     const dispatcher = new Lark.EventDispatcher({}).register({
       [LarkEvent.VC_MEETING_ALL_ENDED_V1]: async (
         data: MeetingEndedEventData,
       ) => {
         try {
-          await this.larkMeetingService.enqueueMeetingEnded(data);
+          await this.larkMeetingService.enqueueMeetingEnded(orgId, data);
         } catch {
           return;
         }

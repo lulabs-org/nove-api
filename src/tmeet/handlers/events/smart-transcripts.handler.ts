@@ -28,7 +28,12 @@ export class SmartTranscriptsHandler extends BaseEventHandler {
     return event === this.SUPPORTED_EVENT;
   }
 
-  async handle(payload: SmartTranscriptsPayload, index: number): Promise<void> {
+  async handle(
+    payload: SmartTranscriptsPayload,
+    index: number,
+    _orgId: string,
+  ): Promise<void> {
+    void _orgId;
     this.logEventProcessing(this.SUPPORTED_EVENT, payload, index);
 
     await Promise.resolve();

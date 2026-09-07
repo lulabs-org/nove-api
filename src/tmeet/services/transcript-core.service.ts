@@ -27,6 +27,7 @@ export class TMeetTranscriptCoreService {
   // 从 API 数据中拉取处理转写入库
   // ==========================================
   async syncFromApi(
+    orgId: string,
     meetid: string,
     subid: string,
     minuteId: string,
@@ -63,6 +64,7 @@ export class TMeetTranscriptCoreService {
 
     // 步骤 2: 准备参会者数据 (去重后的明细)，主要用于后续给每一段话匹配对应的“说话人(Speaker)”
     const deduplicated = await this.syncParticipantsForTranscript(
+      orgId,
       meetid,
       subid,
       operatorId,
@@ -73,6 +75,7 @@ export class TMeetTranscriptCoreService {
 
     // 步骤 3: 循环分页拉取腾讯 API 中的全量逐字稿片段，并在内部利用 deduplicated 完成说话人的映射
     const allParagraphs = await this.fetchTranscriptParagraphs(
+      orgId,
       recordFileId,
       operatorId,
       deduplicated,
@@ -182,6 +185,7 @@ export class TMeetTranscriptCoreService {
   // 私有辅助方法：拉取参会者与匹配
   // ==========================================
   public async syncParticipantsForTranscript(
+    orgId: string,
     meetid: string,
     subid: string,
     operatorId: string,
@@ -196,6 +200,7 @@ export class TMeetTranscriptCoreService {
     const actualSubid = subid === '__ROOT__' ? undefined : subid;
     try {
       participantResult = await this.participantSvc.list(
+        orgId,
         meetid,
         operatorId,
         actualSubid,
@@ -210,6 +215,7 @@ export class TMeetTranscriptCoreService {
         );
         try {
           participantResult = await this.participantSvc.list(
+            orgId,
             meetid,
             operatorId,
             undefined,
@@ -240,6 +246,7 @@ export class TMeetTranscriptCoreService {
     ) {
       const meeting = await this.prisma.meeting.findFirst({
         where: {
+          orgId,
           platform: Platform.TENCENT_MEETING,
           meetingId: meetid,
           subMeetingId: actualSubid || '__ROOT__',
@@ -257,6 +264,7 @@ export class TMeetTranscriptCoreService {
   }
 
   public async fetchTranscriptParagraphs(
+    orgId: string,
     recordFileId: string,
     operatorId: string,
     deduplicated: ParticipantDetail[],
@@ -269,6 +277,7 @@ export class TMeetTranscriptCoreService {
     while (hasMore) {
       try {
         const res = await this.tencentApi.getTranscript({
+          orgId,
           recordFileId,
           operatorId,
           operatorIdType: 1,
@@ -301,5 +310,3 @@ export class TMeetTranscriptCoreService {
     return allParagraphs;
   }
 }
-
-

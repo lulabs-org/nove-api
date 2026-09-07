@@ -29,7 +29,12 @@ export class SmartFullsummaryHandler extends BaseEventHandler {
     return event === this.SUPPORTED_EVENT;
   }
 
-  async handle(payload: SmartFullSummaryPayload, index: number): Promise<void> {
+  async handle(
+    payload: SmartFullSummaryPayload,
+    index: number,
+    _orgId: string,
+  ): Promise<void> {
+    void _orgId;
     const { recording_files = [] } = payload;
 
     this.logEventProcessing(this.SUPPORTED_EVENT, payload, index);

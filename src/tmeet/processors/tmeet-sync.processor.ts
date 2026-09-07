@@ -2,8 +2,10 @@ import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
 import { TMeetSyncService } from '../services/sync.service';
+import { SingleOrgContextService } from '@/admin/system-config/services';
 
 interface SyncJobData {
+  orgId?: string;
   startTime: number;
   endTime: number;
   operatorId?: string;
@@ -23,7 +25,10 @@ interface SyncJobData {
 export class TMeetSyncProcessor extends WorkerHost {
   private readonly logger = new Logger(TMeetSyncProcessor.name);
 
-  constructor(private readonly syncService: TMeetSyncService) {
+  constructor(
+    private readonly syncService: TMeetSyncService,
+    private readonly orgContext: SingleOrgContextService,
+  ) {
     super();
   }
 
@@ -37,6 +42,12 @@ export class TMeetSyncProcessor extends WorkerHost {
       syncParticipants,
       forceReSyncTranscript,
     } = job.data;
+    const orgId = job.data.orgId ?? this.orgContext.getOrgId();
+    if (!job.data.orgId) {
+      this.logger.warn(
+        `Processing legacy Tencent Meeting sync job ${job.id ?? 'unknown'} without orgId`,
+      );
+    }
 
     this.logger.log(
       `Processing job ${job.id}: Syncing ${new Date(startTime * 1000).toISOString()} ~ ${new Date(endTime * 1000).toISOString()} (syncTranscripts=${syncTranscripts ?? true}, syncSummaries=${syncSummaries ?? true}, syncParticipants=${syncParticipants ?? true})`,
@@ -47,6 +58,7 @@ export class TMeetSyncProcessor extends WorkerHost {
     );
 
     const result = await this.syncService.syncRecords(
+      orgId,
       startTime,
       endTime,
       operatorId,
@@ -67,4 +79,3 @@ export class TMeetSyncProcessor extends WorkerHost {
     return result;
   }
 }
-
