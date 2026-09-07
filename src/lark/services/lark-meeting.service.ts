@@ -10,7 +10,10 @@
  */
 
 import { Injectable, Logger } from '@nestjs/common';
-import { MeetingEndedEventData } from '../types/lark-meeting.types';
+import {
+  LarkMeetingEndedJobData,
+  MeetingEndedEventData,
+} from '../types/lark-meeting.types';
 import { toMs } from '../util/time.util';
 import { InjectQueue } from '@nestjs/bullmq';
 import type { Queue } from 'bullmq';
@@ -32,14 +35,21 @@ export class LarkMeetingService {
     private readonly prisma: PrismaService,
   ) {}
 
-  async enqueueMeetingEnded(data: MeetingEndedEventData): Promise<void> {
-    await this.queue.add('meetingEnded', data, {
+  async enqueueMeetingEnded(
+    orgId: string,
+    event: MeetingEndedEventData,
+  ): Promise<void> {
+    const jobData: LarkMeetingEndedJobData = { orgId, event };
+    await this.queue.add('meetingEnded', jobData, {
       removeOnComplete: { age: 3600, count: 1000 },
       removeOnFail: { age: 24 * 3600, count: 1000 },
     });
   }
 
-  async handleMeetingEnded(data: MeetingEndedEventData): Promise<void> {
+  async handleMeetingEnded(
+    data: MeetingEndedEventData,
+    orgId: string,
+  ): Promise<void> {
     const meetingId = data?.meeting?.id;
     this.logger.log({
       event: 'meeting_ended',
@@ -116,6 +126,7 @@ export class LarkMeetingService {
           },
         },
         create: {
+          orgId,
           platform: MeetingPlatform.FEISHU,
           meetingId: m.id,
           title: m.topic || '飞书会议',
@@ -128,6 +139,7 @@ export class LarkMeetingService {
           metadata: m as unknown as Prisma.InputJsonValue,
         },
         update: {
+          orgId,
           title: m.topic || '飞书会议',
           meetingCode: m.meeting_no,
           startAt: startTime,

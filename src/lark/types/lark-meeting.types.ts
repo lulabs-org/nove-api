@@ -58,3 +58,8 @@ export interface MeetingEndedEventData {
     user_type: number;
   };
 }
+
+export interface LarkMeetingEndedJobData {
+  orgId: string;
+  event: MeetingEndedEventData;
+}
