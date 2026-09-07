@@ -22,6 +22,7 @@ const meetingHostSelect = {
 
 const meetingResponseSelect = {
   id: true,
+  orgId: true,
   platform: true,
   meetingId: true,
   subMeetingId: true,
@@ -218,6 +219,7 @@ export class MeetingRepository {
 
     return {
       id: record.id,
+      orgId: record.orgId,
       platform: record.platform,
       meetingId: record.meetingId,
       subMeetingId: record.subMeetingId,
@@ -283,18 +285,18 @@ export class MeetingRepository {
   /**
    * Find meeting record by ID
    */
-  async findById(id: string) {
+  async findById(id: string, orgId: string) {
     const record = await this.prisma.meeting.findUnique({
-      where: { id, deletedAt: null },
+      where: { id, orgId, deletedAt: null },
       select: meetingResponseSelect,
     });
 
     return record ? this.toResponseRecord(record) : null;
   }
 
-  async exists(id: string): Promise<boolean> {
+  async exists(id: string, orgId: string): Promise<boolean> {
     const record = await this.prisma.meeting.findUnique({
-      where: { id, deletedAt: null },
+      where: { id, orgId, deletedAt: null },
       select: { id: true },
     });
 
@@ -315,9 +317,9 @@ export class MeetingRepository {
   /**
    * Update meeting record
    */
-  async update(id: string, data: UpdateMeetingRecordData) {
+  async update(id: string, data: UpdateMeetingRecordData, orgId: string) {
     const record = await this.prisma.meeting.update({
-      where: { id, deletedAt: null },
+      where: { id, orgId, deletedAt: null },
       data,
       select: meetingResponseSelect,
     });
@@ -367,9 +369,9 @@ export class MeetingRepository {
   /**
    * Soft delete meeting record
    */
-  async softDelete(id: string) {
+  async softDelete(id: string, orgId: string) {
     const record = await this.prisma.meeting.update({
-      where: { id, deletedAt: null },
+      where: { id, orgId, deletedAt: null },
       data: {
         deletedAt: new Date(),
       },
@@ -415,11 +417,13 @@ export class MeetingRepository {
       page = 1,
       limit = 10,
       search,
+      orgId,
     } = params;
     const skip = (page - 1) * limit;
 
     const where: Prisma.MeetingWhereInput = {
       deletedAt: null,
+      orgId,
     };
 
     if (platform) {
@@ -482,9 +486,11 @@ export class MeetingRepository {
   async getStats(params: {
     startDate?: Date;
     endDate?: Date;
+    orgId: string;
   }): Promise<MeetingStatsResponseDto> {
     const where: Prisma.MeetingWhereInput = {
       deletedAt: null,
+      orgId: params.orgId,
       ...(params.startDate || params.endDate
         ? {
             startAt: {

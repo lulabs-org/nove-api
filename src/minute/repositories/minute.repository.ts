@@ -60,9 +60,9 @@ export class MinuteRepository {
     });
   }
 
-  async findById(id: string) {
+  async findById(id: string, orgId: string) {
     const minute = await this.prisma.minute.findUnique({
-      where: { id, deletedAt: null },
+      where: { id, deletedAt: null, meeting: { orgId } },
       omit: { deletedAt: true },
       include: {
         meeting: { select: this.meetingSummary },
@@ -101,6 +101,7 @@ export class MinuteRepository {
     source?: RecordingSource;
     skip: number;
     take: number;
+    orgId: string;
   }) {
     const where: Prisma.MinuteWhereInput = {
       deletedAt: null,
@@ -129,6 +130,7 @@ export class MinuteRepository {
         : {}),
       ...(query.meetingId ? { meetingId: query.meetingId } : {}),
       ...(query.source ? { source: query.source } : {}),
+      meeting: { orgId: query.orgId },
     };
 
     const [total, records] = await this.prisma.$transaction([
@@ -150,16 +152,16 @@ export class MinuteRepository {
     };
   }
 
-  async update(id: string, data: Prisma.MinuteUpdateInput) {
+  async update(id: string, data: Prisma.MinuteUpdateInput, orgId: string) {
     return this.prisma.minute.update({
-      where: { id },
+      where: { id, meeting: { orgId } },
       data,
     });
   }
 
-  async delete(id: string) {
+  async delete(id: string, orgId: string) {
     return this.prisma.minute.update({
-      where: { id },
+      where: { id, meeting: { orgId } },
       data: { deletedAt: new Date() },
     });
   }

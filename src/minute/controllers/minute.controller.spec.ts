@@ -6,6 +6,7 @@ import { MinuteController } from './minute.controller';
 
 describe('MinuteController transcript routes', () => {
   let transcriptService: { getJson: jest.Mock; getText: jest.Mock };
+  let minuteService: { getById: jest.Mock; requireOrgId: jest.Mock };
   let controller: MinuteController;
 
   beforeEach(() => {
@@ -13,8 +14,12 @@ describe('MinuteController transcript routes', () => {
       getJson: jest.fn(),
       getText: jest.fn(),
     };
+    minuteService = {
+      getById: jest.fn().mockResolvedValue({ id: 'minute-1' }),
+      requireOrgId: jest.fn((orgId: string) => orgId),
+    };
     controller = new MinuteController(
-      {} as MinuteService,
+      minuteService as unknown as MinuteService,
       transcriptService as unknown as TranscriptService,
     );
   });
@@ -33,19 +38,21 @@ describe('MinuteController transcript routes', () => {
     transcriptService.getJson.mockResolvedValue(response);
 
     await expect(
-      controller.getTranscript('minute-1', { includeLocalUser: true }),
+      controller.getTranscript('minute-1', { includeLocalUser: true }, 'org-1'),
     ).resolves.toBe(response);
     expect(transcriptService.getJson).toHaveBeenCalledWith('minute-1', true);
+    expect(minuteService.getById).toHaveBeenCalledWith('minute-1', 'org-1');
     expect(transcriptService.getText).not.toHaveBeenCalled();
   });
 
   it('returns only rendered text from the text route', async () => {
     transcriptService.getText.mockResolvedValue('转写文本');
 
-    await expect(controller.getTranscriptText('minute-1')).resolves.toEqual({
-      text: '转写文本',
-    });
+    await expect(
+      controller.getTranscriptText('minute-1', 'org-1'),
+    ).resolves.toEqual({ text: '转写文本' });
     expect(transcriptService.getText).toHaveBeenCalledWith('minute-1');
+    expect(minuteService.getById).toHaveBeenCalledWith('minute-1', 'org-1');
     expect(transcriptService.getJson).not.toHaveBeenCalled();
   });
 });

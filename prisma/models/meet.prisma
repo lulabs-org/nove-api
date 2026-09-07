@@ -1,5 +1,7 @@
 model Meeting {
-  id String @id @default(cuid())
+  id    String  @id @default(cuid())
+  orgId String? @map("org_id")
+  org   Org?    @relation(fields: [orgId], references: [id], onDelete: SetNull)
 
   // 平台和来源信息
   platform     MeetingPlatform // 会议平台
@@ -45,6 +47,8 @@ model Meeting {
 
   @@unique([platform, meetingId, subMeetingId])
   @@index([platform])
+  @@index([orgId])
+  @@index([orgId, startAt])
   @@index([startAt])
   @@index([endAt])
   @@index([tags])

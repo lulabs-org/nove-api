@@ -40,6 +40,7 @@ describe('MinuteRepository list and meeting context', () => {
       source: RecordingSource.PLATFORM_AUTO,
       skip: 10,
       take: 10,
+      orgId: 'org-1',
     });
 
     const expectedWhere = {
@@ -65,6 +66,7 @@ describe('MinuteRepository list and meeting context', () => {
       ],
       meetingId: 'meeting-1',
       source: RecordingSource.PLATFORM_AUTO,
+      meeting: { orgId: 'org-1' },
     };
     expect(count).toHaveBeenCalledWith({ where: expectedWhere });
     expect(findMany).toHaveBeenCalledWith(
@@ -92,13 +94,19 @@ describe('MinuteRepository list and meeting context', () => {
       minute: { findUnique },
     } as unknown as PrismaService);
 
-    const result = await repository.findById('minute-1');
+    const result = await repository.findById('minute-1', 'org-1');
 
     expect(result?.id).toBe('minute-1');
     expect(result?.source).toBe(RecordingSource.PLATFORM_AUTO);
     expect(result?.meeting?.id).toBe('meeting-1');
     expect(findUnique).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: 'minute-1', deletedAt: null } }),
+      expect.objectContaining({
+        where: {
+          id: 'minute-1',
+          deletedAt: null,
+          meeting: { orgId: 'org-1' },
+        },
+      }),
     );
   });
 });

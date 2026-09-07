@@ -61,26 +61,16 @@ describe('PlatformUserTranscriptService', () => {
           { id: 'transcript-1', segments: [segment('s1', 'target', 0)] },
         ],
       },
-      {
-        id: 'minute-2',
-        externalId: 'external-2',
-        source: RecordingSource.THIRD_PARTY,
-        startAt: new Date('2026-08-01T01:00:00Z'),
-        endAt: null,
-        meeting: null,
-        transcripts: [
-          { id: 'transcript-2', segments: [segment('s2', 'target', 1_000)] },
-        ],
-      },
     ]);
 
     const result = await service.getMinuteTranscripts(
       'target',
       '2026-08-01T00:00:00Z',
       '2026-09-01T00:00:00Z',
+      'org-1',
     );
 
-    expect(result.minutes).toHaveLength(2);
+    expect(result.minutes).toHaveLength(1);
     expect(result.minutes[0].meeting?.type).toBe(MeetingType.ONE_TIME);
     expect(result.minutes[0].transcripts[0].segments[0]).toEqual({
       id: 's1',
@@ -90,7 +80,13 @@ describe('PlatformUserTranscriptService', () => {
       text: 'text-s1',
       platformUser: { id: 'target', displayName: 'user-target' },
     });
-    expect(result.minutes[1].meeting).toBeNull();
+    expect(repository.findMinuteTranscripts).toHaveBeenCalledWith(
+      'target',
+      expect.any(Date),
+      expect.any(Date),
+      'org-1',
+    );
+    expect(repository.findPlatformUser).toHaveBeenCalledWith('target', 'org-1');
   });
 
   it('rejects reversed and longer-than-31-day ranges', async () => {
@@ -99,6 +95,7 @@ describe('PlatformUserTranscriptService', () => {
         'target',
         '2026-08-02T00:00:00Z',
         '2026-08-01T00:00:00Z',
+        'org-1',
       ),
     ).rejects.toBeInstanceOf(BadRequestException);
 
@@ -107,6 +104,7 @@ describe('PlatformUserTranscriptService', () => {
         'target',
         '2026-08-01T00:00:00Z',
         '2026-09-02T00:00:00Z',
+        'org-1',
       ),
     ).rejects.toBeInstanceOf(BadRequestException);
   });
@@ -134,7 +132,12 @@ describe('PlatformUserTranscriptService', () => {
       ],
     });
 
-    const result = await service.getTranscriptContext('target', 'minute-1', 1);
+    const result = await service.getTranscriptContext(
+      'target',
+      'minute-1',
+      1,
+      'org-1',
+    );
 
     expect(result.transcripts[0].segments.map(({ id }) => id)).toEqual([
       's0',
@@ -163,7 +166,12 @@ describe('PlatformUserTranscriptService', () => {
       ],
     });
 
-    const result = await service.getTranscriptContext('target', 'minute-1', 20);
+    const result = await service.getTranscriptContext(
+      'target',
+      'minute-1',
+      20,
+      'org-1',
+    );
 
     expect(result.transcripts).toEqual([
       { transcriptId: 'transcript-1', segments: [] },
@@ -196,7 +204,7 @@ describe('PlatformUserTranscriptService', () => {
     repository.findMinuteContextSource.mockResolvedValue(minute);
 
     await expect(
-      service.getTranscriptContext('target', 'minute-1', 1),
+      service.getTranscriptContext('target', 'minute-1', 1, 'org-1'),
     ).rejects.toBeInstanceOf(NotFoundException);
   });
 });

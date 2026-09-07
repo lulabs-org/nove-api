@@ -13,10 +13,7 @@ import {
 } from '@prisma/client';
 import { Meetuser, EventPayload, MeetingSessionInfo } from '../types';
 import { TMeetEventUtils } from '../utils/tmeet-event.utils';
-import type {
-  RecordMeeting,
-  RecordFile,
-} from '../types';
+import type { RecordMeeting, RecordFile } from '../types';
 import { TMeetApiService } from '../client';
 import {
   TENCENT_MEETING_TYPE_RECURRING,
@@ -25,6 +22,7 @@ import {
   convertMeetingType,
   mapRecordingFileStatus,
 } from '../mappers/tmeet-record.mapper';
+import { MeetingOrganizationService } from '@/meeting/services/meeting-organization.service';
 
 type MeetingData = Omit<
   Prisma.MeetingUncheckedCreateInput,
@@ -46,6 +44,7 @@ export class TMeetMeetingCoreService {
     private readonly meetingRepo: MeetingRepository,
     private readonly recordingRepo: MinuteRepository,
     private readonly tencentApi: TMeetApiService,
+    private readonly meetingOrganization: MeetingOrganizationService,
   ) {}
 
   // ==========================================
@@ -67,6 +66,7 @@ export class TMeetMeetingCoreService {
     const creatorUser = await this.upsertPtUser(creator as Meetuser);
 
     const meetingData: Partial<MeetingData> = {
+      orgId: this.meetingOrganization.resolveDefaultOrgId(),
       title: meeting_info.subject,
       meetingCode: meeting_info.meeting_code,
       type: meetingType,
@@ -134,6 +134,7 @@ export class TMeetMeetingCoreService {
       record.meeting_id,
       subMeetingId,
       {
+        orgId: this.meetingOrganization.resolveDefaultOrgId(),
         title: meetingInfo?.subject ?? record.subject,
         meetingCode: meetingInfo?.meeting_code ?? record.meeting_code,
         type: systemMeetingType,
@@ -217,5 +218,3 @@ export class TMeetMeetingCoreService {
     });
   }
 }
-
-

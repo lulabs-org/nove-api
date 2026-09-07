@@ -41,6 +41,7 @@ export interface UpdateMeetingRecordParams {
  * 会议记录查询参数
  */
 export interface GetMeetingRecordsParams {
+  orgId?: string;
   platform?: MeetingPlatform;
   status?: ProcessingStatus;
   type?: MeetingType;

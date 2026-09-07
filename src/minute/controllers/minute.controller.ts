@@ -42,6 +42,7 @@ import {
   MinuteDto,
   MinuteDeleteResponseDto,
 } from '../dto/minute.dto';
+import { Auth } from '@/auth/decorators/auth.decorator';
 
 @ApiTags('Minute')
 @Controller('minutes')
@@ -68,9 +69,13 @@ export class MinuteController {
   })
   async createMinute(
     @Body(new ValidationPipe()) createParams: CreateMinuteDto,
+    @Auth('orgId') orgId?: string | null,
   ) {
     this.logger.log(`创建录制记录: ${createParams.meetingId}`);
-    return this.minuteService.create(createParams);
+    return this.minuteService.create(
+      createParams,
+      this.minuteService.requireOrgId(orgId),
+    );
   }
 
   /**
@@ -83,8 +88,12 @@ export class MinuteController {
   async getMinutes(
     @Query(new ValidationPipe({ transform: true }))
     query: QueryMinuteDto,
+    @Auth('orgId') orgId?: string | null,
   ) {
-    return this.minuteService.findMany(query);
+    return this.minuteService.findMany(
+      query,
+      this.minuteService.requireOrgId(orgId),
+    );
   }
 
   /**
@@ -99,8 +108,14 @@ export class MinuteController {
     description: '获取成功',
     type: MinuteDto,
   })
-  async getMinuteById(@Param('id', CuidPipe) id: string) {
-    return this.minuteService.getById(id);
+  async getMinuteById(
+    @Param('id', CuidPipe) id: string,
+    @Auth('orgId') orgId?: string | null,
+  ) {
+    return this.minuteService.getById(
+      id,
+      this.minuteService.requireOrgId(orgId),
+    );
   }
 
   /**
@@ -119,8 +134,13 @@ export class MinuteController {
   async createTranscript(
     @Param('id', CuidPipe) id: string,
     @Body(new ValidationPipe()) createParams: CreateTranscriptBodyDto,
+    @Auth('orgId') orgId?: string | null,
   ) {
     this.logger.log(`创建录制转写记录: ${id}`);
+    await this.minuteService.getById(
+      id,
+      this.minuteService.requireOrgId(orgId),
+    );
     return this.transcriptService.create({
       ...createParams,
       minuteId: id,
@@ -137,6 +157,7 @@ export class MinuteController {
   async getTranscript(
     @Param('id', CuidPipe) minuteId: string,
     @Query(new ValidationPipe({ transform: true })) query: QueryTranscriptDto,
+    @Auth('orgId') orgId?: string | null,
   ): Promise<TranscriptJsonResponseDto> {
     const { includeLocalUser = false } = query;
     this.logger.log(
@@ -144,6 +165,10 @@ export class MinuteController {
     );
 
     try {
+      await this.minuteService.getById(
+        minuteId,
+        this.minuteService.requireOrgId(orgId),
+      );
       const result = await this.transcriptService.getJson(
         minuteId,
         includeLocalUser,
@@ -169,10 +194,15 @@ export class MinuteController {
   @ApiGetTranscriptTextDocs()
   async getTranscriptText(
     @Param('id', CuidPipe) minuteId: string,
+    @Auth('orgId') orgId?: string | null,
   ): Promise<TranscriptTextResponseDto> {
     this.logger.log(`获取录制转写文本: ${minuteId}`);
 
     try {
+      await this.minuteService.getById(
+        minuteId,
+        this.minuteService.requireOrgId(orgId),
+      );
       const text = await this.transcriptService.getText(minuteId);
 
       this.logger.log(`获取录制的转写文本成功: ${minuteId}`);
@@ -200,8 +230,13 @@ export class MinuteController {
   async updateMinute(
     @Param('id', CuidPipe) id: string,
     @Body(new ValidationPipe()) updateParams: UpdateMinuteDto,
+    @Auth('orgId') orgId?: string | null,
   ) {
-    return this.minuteService.update(id, updateParams);
+    return this.minuteService.update(
+      id,
+      updateParams,
+      this.minuteService.requireOrgId(orgId),
+    );
   }
 
   /**
@@ -215,7 +250,13 @@ export class MinuteController {
     description: '删除成功',
     type: MinuteDeleteResponseDto,
   })
-  async deleteMinute(@Param('id', CuidPipe) id: string) {
-    return this.minuteService.delete(id);
+  async deleteMinute(
+    @Param('id', CuidPipe) id: string,
+    @Auth('orgId') orgId?: string | null,
+  ) {
+    return this.minuteService.delete(
+      id,
+      this.minuteService.requireOrgId(orgId),
+    );
   }
 }

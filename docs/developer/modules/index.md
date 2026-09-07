@@ -5,6 +5,7 @@
 - [认证](./authentication/overview.md)：登录方式、令牌与统一认证。
 - [API Key](./api-key/overview.md)：程序化凭据、Scope 和管理接口。
 - [组织与成员](./org-management/overview.md)：组织、部门、成员与权限。
+- [会议组织范围](./meeting/organization-scope.md)：会议归属、组织隔离与历史数据回填。
 - [系统配置](./system-config/overview.md)：动态配置、加密字段与热更新。
 - [邮件](./mail/overview.md)：SMTP 发送、连接检查与 BullMQ 延迟任务。
 - [短信](./sms/overview.md)：短信验证码发送能力与验证模块的依赖边界。

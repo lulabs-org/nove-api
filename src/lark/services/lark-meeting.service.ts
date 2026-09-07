@@ -22,6 +22,7 @@ import {
   WebhookStatus,
   Prisma,
 } from '@prisma/client';
+import { MeetingOrganizationService } from '@/meeting/services/meeting-organization.service';
 
 @Injectable()
 export class LarkMeetingService {
@@ -30,6 +31,7 @@ export class LarkMeetingService {
   constructor(
     @InjectQueue('lark-events') private readonly queue: Queue,
     private readonly prisma: PrismaService,
+    private readonly meetingOrganization: MeetingOrganizationService,
   ) {}
 
   async enqueueMeetingEnded(data: MeetingEndedEventData): Promise<void> {
@@ -100,6 +102,7 @@ export class LarkMeetingService {
 
     // 3. 插入或更新会议信息
     try {
+      const orgId = this.meetingOrganization.resolveDefaultOrgId();
       const startTime = startTimeMs ? new Date(startTimeMs) : undefined;
       const endTime = endTimeMs ? new Date(endTimeMs) : undefined;
       const durationSeconds =
@@ -116,6 +119,7 @@ export class LarkMeetingService {
           },
         },
         create: {
+          orgId,
           platform: MeetingPlatform.FEISHU,
           meetingId: m.id,
           title: m.topic || '飞书会议',
@@ -128,6 +132,7 @@ export class LarkMeetingService {
           metadata: m as unknown as Prisma.InputJsonValue,
         },
         update: {
+          orgId,
           title: m.topic || '飞书会议',
           meetingCode: m.meeting_no,
           startAt: startTime,
