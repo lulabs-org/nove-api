@@ -1,13 +1,13 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import OpenAI from 'openai';
 import {
-  SingleOrgContextService,
   IntegrationChangeEvent,
   INTEGRATION_EVENT_PATTERNS,
   IntegrationsService,
   IntegrationRegistry,
   getDefaultValues,
 } from '@/admin/integrations';
+import { SingleOrgContextService } from '@/admin/org';
 import { OnEvent } from '@nestjs/event-emitter';
 
 @Injectable()

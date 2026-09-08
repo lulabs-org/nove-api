@@ -13,7 +13,7 @@ import { Logger } from '@nestjs/common';
 import { TMeetWebhookController } from './tmeet-webhook.controller';
 import { TMeetEventHandlerService } from '../services/event-handler.service';
 import { MeetingEvent } from '../types';
-import { SingleOrgContextService } from '@/admin/integrations';
+import { SingleOrgContextService } from '@/admin/org';
 
 describe('TMeetWebhookController', () => {
   let controller: TMeetWebhookController;

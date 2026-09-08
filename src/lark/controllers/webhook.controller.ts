@@ -27,10 +27,10 @@ import { Response, Request } from 'express';
 import { LarkMeetingService } from '../services/lark-meeting.service';
 import { LarkEvent } from '../enums/lark-event.enum';
 import {
-  SingleOrgContextService,
   IntegrationsService,
   IntegrationValues,
 } from '@/admin/integrations';
+import { SingleOrgContextService } from '@/admin/org';
 
 @ApiTags('Webhooks')
 @Controller('webhooks/lark')

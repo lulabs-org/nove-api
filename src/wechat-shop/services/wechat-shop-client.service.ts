@@ -20,11 +20,11 @@ import {
 } from '../types';
 import { WechatShopTokenService } from './wechat-shop-token.service';
 import {
-  SingleOrgContextService,
   IntegrationChangeEvent,
   INTEGRATION_EVENT_PATTERNS,
   IntegrationsService,
 } from '@/admin/integrations';
+import { SingleOrgContextService } from '@/admin/org';
 
 @Injectable()
 export class WechatShopClientService implements OnModuleInit {

@@ -1,10 +1,10 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import {
-  SingleOrgContextService,
   IntegrationChangeEvent,
   INTEGRATION_EVENT_PATTERNS,
   IntegrationsService,
 } from '@/admin/integrations';
+import { SingleOrgContextService } from '@/admin/org';
 import { OnEvent } from '@nestjs/event-emitter';
 import * as nodemailer from 'nodemailer';
 import type SMTPTransport from 'nodemailer/lib/smtp-transport';

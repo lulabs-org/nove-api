@@ -13,10 +13,8 @@ import { Injectable, Scope, Inject, PipeTransform } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import type { Request } from 'express';
 import { verifyWebhookUrl } from '../utils/crypto.util';
-import {
-  SingleOrgContextService,
-  IntegrationsService,
-} from '@/admin/integrations';
+import { IntegrationsService } from '@/admin/integrations';
+import { SingleOrgContextService } from '@/admin/org';
 
 @Injectable({ scope: Scope.REQUEST })
 export class UrlVerificationPipe

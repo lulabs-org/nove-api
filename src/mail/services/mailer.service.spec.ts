@@ -1,8 +1,6 @@
 import { MailerService } from './mailer.service';
-import {
-  IntegrationsService,
-  SingleOrgContextService,
-} from '@/admin/integrations';
+import { IntegrationsService } from '@/admin/integrations';
+import { SingleOrgContextService } from '@/admin/org';
 import * as nodemailer from 'nodemailer';
 
 jest.mock('nodemailer', () => ({

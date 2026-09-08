@@ -4,7 +4,7 @@ import { LarkClient } from '../client/lark.client';
 import { LarkMeetingService } from '../services/lark-meeting.service';
 import { MeetingEndedEventData } from '../types/lark-meeting.types';
 import { LarkEvent } from '../enums/lark-event.enum';
-import { SingleOrgContextService } from '@/admin/integrations';
+import { SingleOrgContextService } from '@/admin/org';
 
 @Injectable()
 export class LarkWsEventListener implements OnModuleInit {

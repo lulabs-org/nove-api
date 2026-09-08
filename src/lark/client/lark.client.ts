@@ -2,12 +2,12 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import * as lark from '@larksuiteoapi/node-sdk';
 import { LarkClientConfig } from '../types';
 import {
-  SingleOrgContextService,
   IntegrationChangeEvent,
   INTEGRATION_EVENT_PATTERNS,
   IntegrationsService,
   IntegrationValues,
 } from '@/admin/integrations';
+import { SingleOrgContextService } from '@/admin/org';
 import { OnEvent } from '@nestjs/event-emitter';
 
 @Injectable()

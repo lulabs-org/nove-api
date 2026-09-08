@@ -2,7 +2,7 @@ import * as Lark from '@larksuiteoapi/node-sdk';
 import { LarkWsEventListener } from './lark-ws-event.listener';
 import { LarkClient } from '../client/lark.client';
 import { LarkMeetingService } from '../services/lark-meeting.service';
-import { SingleOrgContextService } from '@/admin/integrations';
+import { SingleOrgContextService } from '@/admin/org';
 import { LarkEvent } from '../enums/lark-event.enum';
 import { MeetingEndedEventData } from '../types/lark-meeting.types';
 

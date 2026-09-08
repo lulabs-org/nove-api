@@ -5,10 +5,8 @@ import {
   sanitizeEmailColor,
   sanitizeEmailLogoUrl,
 } from '@/mail/templates/helpers';
-import {
-  SingleOrgContextService,
-  IntegrationsService,
-} from '@/admin/integrations';
+import { IntegrationsService } from '@/admin/integrations';
+import { SingleOrgContextService } from '@/admin/org';
 
 @Injectable()
 export class EmailBrandResolverService {

@@ -25,10 +25,8 @@ import { REQUEST } from '@nestjs/core';
 import { Request } from 'express'; // 或 fastify
 import { TMeetWebhookEventBodyDto } from '../dto/tmeet-webhook-body.dto';
 import { MeetingEvent } from '../types';
-import {
-  SingleOrgContextService,
-  IntegrationsService,
-} from '@/admin/integrations';
+import { IntegrationsService } from '@/admin/integrations';
+import { SingleOrgContextService } from '@/admin/org';
 
 @Injectable({ scope: Scope.REQUEST }) // 需要获取 Request Headers，所以必须是 Request Scope
 export class BodyDecryptionPipe implements PipeTransform {

@@ -4,10 +4,8 @@ import { of } from 'rxjs';
 import { AxiosResponse } from 'axios';
 import { WechatShopClientService } from './wechat-shop-client.service';
 import { WechatShopTokenService } from './wechat-shop-token.service';
-import {
-  SingleOrgContextService,
-  IntegrationsService,
-} from '@/admin/integrations';
+import { IntegrationsService } from '@/admin/integrations';
+import { SingleOrgContextService } from '@/admin/org';
 
 describe('WechatShopClientService', () => {
   let service: WechatShopClientService;

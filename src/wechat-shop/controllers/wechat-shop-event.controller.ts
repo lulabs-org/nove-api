@@ -17,10 +17,10 @@ import { WechatEventBodyDto, WechatEventQueryDto } from '../dto';
 import { WechatShopEventService } from '../services';
 import { decryptWechatMessage, generateSignature } from '../utils';
 import {
-  SingleOrgContextService,
   IntegrationChangeEvent,
   IntegrationsService,
 } from '@/admin/integrations';
+import { SingleOrgContextService } from '@/admin/org';
 
 @ApiTags('Wechat Shop')
 @Controller('webhooks/wechat-shop/events')

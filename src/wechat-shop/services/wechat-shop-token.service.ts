@@ -11,11 +11,11 @@ import { OnEvent } from '@nestjs/event-emitter';
 import { RedisService } from '@/redis/redis.service';
 import { WechatShopApiResponse } from '../types';
 import {
-  SingleOrgContextService,
   IntegrationChangeEvent,
   INTEGRATION_EVENT_PATTERNS,
   IntegrationsService,
 } from '@/admin/integrations';
+import { SingleOrgContextService } from '@/admin/org';
 
 @Injectable()
 export class WechatShopTokenService implements OnModuleInit {
