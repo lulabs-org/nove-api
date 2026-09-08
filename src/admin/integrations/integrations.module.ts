@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { IntegrationsController } from './controllers';
 import { IntegrationsRepository } from './repositories';
 import {
-  SingleOrgContextService,
   IntegrationsService,
   IntegrationTesterService,
 } from './services';
@@ -13,8 +12,8 @@ import {
     IntegrationsService,
     IntegrationsRepository,
     IntegrationTesterService,
-    SingleOrgContextService,
   ],
-  exports: [IntegrationsService, SingleOrgContextService, IntegrationTesterService],
+  exports: [IntegrationsService, IntegrationTesterService],
 })
-export class IntegrationsModule { }
+export class IntegrationsModule {}
+

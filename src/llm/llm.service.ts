@@ -3,6 +3,7 @@ import OpenAI from 'openai';
 import {
   SingleOrgContextService,
   IntegrationChangeEvent,
+  INTEGRATION_EVENT_PATTERNS,
   IntegrationsService,
   IntegrationRegistry,
   getDefaultValues,
@@ -39,13 +40,13 @@ export class LlmService implements OnModuleInit {
     await this.reloadConfig();
   }
 
-  @OnEvent('config.ai.updated')
+  @OnEvent(INTEGRATION_EVENT_PATTERNS.AI_UPDATED)
   async handleConfigUpdated(event: IntegrationChangeEvent) {
     if (!this.orgContext.matches(event.orgId)) return;
     await this.reloadConfig();
   }
 
-  @OnEvent('config.ai.deleted')
+  @OnEvent(INTEGRATION_EVENT_PATTERNS.AI_DELETED)
   async handleConfigDeleted(event: IntegrationChangeEvent) {
     if (!this.orgContext.matches(event.orgId)) return;
     await this.reloadConfig();

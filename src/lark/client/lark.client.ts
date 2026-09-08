@@ -4,6 +4,7 @@ import { LarkClientConfig } from '../types';
 import {
   SingleOrgContextService,
   IntegrationChangeEvent,
+  INTEGRATION_EVENT_PATTERNS,
   IntegrationsService,
   IntegrationValues,
 } from '@/admin/integrations';
@@ -104,13 +105,13 @@ export class LarkClient implements OnModuleInit {
     });
   }
 
-  @OnEvent('config.lark.updated')
+  @OnEvent(INTEGRATION_EVENT_PATTERNS.LARK_UPDATED)
   handleConfigUpdated(event: IntegrationChangeEvent) {
     if (!this.orgContext.matches(event.orgId)) return;
     this.applyHttpConfig(event.value);
   }
 
-  @OnEvent('config.lark.deleted')
+  @OnEvent(INTEGRATION_EVENT_PATTERNS.LARK_DELETED)
   handleConfigDeleted(event: IntegrationChangeEvent) {
     if (!this.orgContext.matches(event.orgId)) return;
     this.applyHttpConfig(event.value);

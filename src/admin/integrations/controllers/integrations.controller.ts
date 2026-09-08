@@ -12,10 +12,17 @@ import {
   ApiOperation,
   ApiBearerAuth,
   ApiParam,
+  ApiResponse,
 } from '@nestjs/swagger';
 import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
 import { CurrentOrg } from '@/auth/decorators';
 import { IntegrationsService, IntegrationTesterService } from '../services';
+import {
+  IntegrationDetailResponseDto,
+  IntegrationMutationResponseDto,
+  IntegrationSummaryResponseDto,
+  TestIntegrationResponseDto,
+} from '../dto';
 
 @ApiTags('Admin / Integrations')
 @ApiBearerAuth()
@@ -28,6 +35,11 @@ export class IntegrationsController {
 
   @Get()
   @ApiOperation({ summary: 'List organization integrations configuration status' })
+  @ApiResponse({
+    status: 200,
+    description: '返回所有集成模块的配置状态列表',
+    type: [IntegrationSummaryResponseDto],
+  })
   @RequirePermissions('system:config:read')
   async list(@CurrentOrg() orgId: string) {
     return this.integrationsService.listIntegrations(orgId);
@@ -39,6 +51,11 @@ export class IntegrationsController {
     name: 'module',
     description: 'Module name (e.g., mail, wechat-shop)',
     example: 'mail',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '返回掩码后的模块有效配置详情',
+    type: IntegrationDetailResponseDto,
   })
   @RequirePermissions('system:config:read')
   async get(
@@ -57,6 +74,11 @@ export class IntegrationsController {
     description: 'Module name (e.g., mail, wechat-shop)',
     example: 'mail',
   })
+  @ApiResponse({
+    status: 200,
+    description: '更新并持久化模块配置，返回生效状态',
+    type: IntegrationMutationResponseDto,
+  })
   @RequirePermissions('system:config:write')
   async update(
     @CurrentOrg() orgId: string,
@@ -72,6 +94,16 @@ export class IntegrationsController {
 
   @Post(':module/test')
   @ApiOperation({ summary: 'Test a draft integration configuration' })
+  @ApiParam({
+    name: 'module',
+    description: 'Module name (e.g., mail, wechat-shop)',
+    example: 'mail',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '草稿连通性测试结果',
+    type: TestIntegrationResponseDto,
+  })
   @RequirePermissions('system:config:write')
   async test(
     @CurrentOrg() orgId: string,
@@ -91,6 +123,11 @@ export class IntegrationsController {
     name: 'module',
     description: 'Module name (e.g., mail, wechat-shop)',
     example: 'mail',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '已删除数据库配置并重置为默认值',
+    type: IntegrationMutationResponseDto,
   })
   @RequirePermissions('system:config:write')
   async remove(

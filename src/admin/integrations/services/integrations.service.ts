@@ -9,12 +9,18 @@ import { Prisma } from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { IntegrationsRepository } from '../repositories/integrations.repository';
-import { IntegrationValues } from '../types';
 import {
   ConfigSource,
+  EffectiveIntegration,
+  IntegrationChangeEvent,
+  IntegrationEvents,
+  IntegrationModuleName,
+  IntegrationValues,
+  PublicIntegration,
+} from '../types';
+import {
   isIntegrationModule,
   INTEGRATION_MODULES,
-  IntegrationModuleName,
   IntegrationRegistry,
 } from '../definitions';
 import {
@@ -28,23 +34,7 @@ import {
   missingRequiredFields,
 } from '../utils';
 
-export interface EffectiveIntegration {
-  orgId: string;
-  module: IntegrationModuleName;
-  value: IntegrationValues;
-  configured: boolean;
-  source: ConfigSource;
-  updatedAt: Date | null;
-}
-
-export interface IntegrationChangeEvent {
-  orgId: string;
-  value: IntegrationValues;
-}
-
-export interface PublicIntegration extends EffectiveIntegration {
-  value: IntegrationValues;
-}
+export { EffectiveIntegration, IntegrationChangeEvent, PublicIntegration };
 
 @Injectable()
 export class IntegrationsService {
@@ -198,7 +188,7 @@ export class IntegrationsService {
       (field) => before.value[field] !== after.value[field],
     );
 
-    this.eventEmitter.emit(`config.${moduleName}.updated`, {
+    this.eventEmitter.emit(IntegrationEvents.updated(moduleName), {
       orgId,
       value: after.value,
     } satisfies IntegrationChangeEvent);
@@ -235,7 +225,7 @@ export class IntegrationsService {
     const restartRequiredOn = entry.restartRequiredOn ?? [];
     const restartRequired = restartRequiredOn.length > 0;
 
-    this.eventEmitter.emit(`config.${moduleName}.deleted`, {
+    this.eventEmitter.emit(IntegrationEvents.deleted(moduleName), {
       orgId,
       value: fallback.value,
     } satisfies IntegrationChangeEvent);

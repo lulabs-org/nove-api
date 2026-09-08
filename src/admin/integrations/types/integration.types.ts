@@ -24,3 +24,32 @@ export interface IntegrationRegistryEntry {
 export interface IntegrationTestProvider {
   test(value: IntegrationValues): Promise<void>;
 }
+
+export type ConfigSource = 'database' | 'default';
+
+export type IntegrationModuleName =
+  | 'mail'
+  | 'ai'
+  | 'tencent-meeting'
+  | 'lark'
+  | 'wechat-shop';
+
+export interface EffectiveIntegration {
+  orgId: string;
+  module: IntegrationModuleName;
+  value: IntegrationValues;
+  configured: boolean;
+  source: ConfigSource;
+  updatedAt: Date | null;
+}
+
+export interface PublicIntegration extends EffectiveIntegration {
+  value: IntegrationValues;
+}
+
+export interface TestResult {
+  orgId: string;
+  success: boolean;
+  message: string;
+}
+

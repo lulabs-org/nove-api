@@ -13,6 +13,7 @@ import { WechatShopApiResponse } from '../types';
 import {
   SingleOrgContextService,
   IntegrationChangeEvent,
+  INTEGRATION_EVENT_PATTERNS,
   IntegrationsService,
 } from '@/admin/integrations';
 
@@ -42,7 +43,7 @@ export class WechatShopTokenService implements OnModuleInit {
     await this.reloadConfig();
   }
 
-  @OnEvent('config.wechat-shop.updated')
+  @OnEvent(INTEGRATION_EVENT_PATTERNS.WECHAT_SHOP_UPDATED)
   async handleConfigUpdate(event: IntegrationChangeEvent) {
     if (!this.orgContext.matches(event.orgId)) return;
     this.logger.log(
@@ -54,7 +55,7 @@ export class WechatShopTokenService implements OnModuleInit {
     await this.reloadConfig();
   }
 
-  @OnEvent('config.wechat-shop.deleted')
+  @OnEvent(INTEGRATION_EVENT_PATTERNS.WECHAT_SHOP_DELETED)
   async handleConfigDelete(event: IntegrationChangeEvent) {
     if (!this.orgContext.matches(event.orgId)) return;
     await this.clearTokenCache();

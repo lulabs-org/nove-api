@@ -3,9 +3,13 @@ import { larkConfig } from './lark.config';
 import { mailConfig } from './mail.config';
 import { tencentMeetingConfig } from './tencent-meeting.config';
 import { wechatShopConfig } from './wechat-shop.config';
-import { IntegrationRegistryEntry } from '../types';
+import {
+  ConfigSource,
+  IntegrationModuleName,
+  IntegrationRegistryEntry,
+} from '../types';
 
-export type ConfigSource = 'database' | 'default';
+export { ConfigSource, IntegrationModuleName };
 
 export const IntegrationRegistry = {
   mail: mailConfig,
@@ -13,9 +17,7 @@ export const IntegrationRegistry = {
   'tencent-meeting': tencentMeetingConfig,
   lark: larkConfig,
   'wechat-shop': wechatShopConfig,
-} as const satisfies Record<string, IntegrationRegistryEntry>;
-
-export type IntegrationModuleName = keyof typeof IntegrationRegistry;
+} as const satisfies Record<IntegrationModuleName, IntegrationRegistryEntry>;
 
 export const INTEGRATION_MODULES = Object.keys(
   IntegrationRegistry,

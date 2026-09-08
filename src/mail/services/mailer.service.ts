@@ -2,6 +2,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import {
   SingleOrgContextService,
   IntegrationChangeEvent,
+  INTEGRATION_EVENT_PATTERNS,
   IntegrationsService,
 } from '@/admin/integrations';
 import { OnEvent } from '@nestjs/event-emitter';
@@ -33,7 +34,7 @@ export class MailerService implements OnModuleInit {
     await this.reloadTransporter();
   }
 
-  @OnEvent('config.mail.updated')
+  @OnEvent(INTEGRATION_EVENT_PATTERNS.MAIL_UPDATED)
   async handleMailConfigUpdate(event: IntegrationChangeEvent) {
     if (!this.orgContext.matches(event.orgId)) return;
     this.logger.log(
@@ -42,7 +43,7 @@ export class MailerService implements OnModuleInit {
     await this.reloadTransporter();
   }
 
-  @OnEvent('config.mail.deleted')
+  @OnEvent(INTEGRATION_EVENT_PATTERNS.MAIL_DELETED)
   async handleMailConfigDelete(event: IntegrationChangeEvent) {
     if (!this.orgContext.matches(event.orgId)) return;
     await this.reloadTransporter();
