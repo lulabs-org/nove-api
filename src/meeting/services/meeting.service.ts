@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { MeetingRepository } from '../repositories/meeting.repository';
 import { MeetingParticipantRepository } from '../repositories/meeting-participant.repository';
@@ -33,21 +33,30 @@ export class MeetingService {
   /**
    * 获取会议记录列表
    */
-  async findMany(params: GetMeetingRecordsParams): Promise<{
+  async findMany(
+    params: GetMeetingRecordsParams,
+    orgId: string,
+  ): Promise<{
     records: MeetingListItemResponseDto[];
     total: number;
     page: number;
     limit: number;
     totalPages: number;
   }> {
-    return this.meetingRepository.get(params);
+    return this.meetingRepository.get({
+      ...params,
+      orgId: this.requireOrgId(orgId),
+    });
   }
 
   /**
    * 获取会议记录详情
    */
-  async findById(id: string): Promise<MeetingRecordResponseDto> {
-    const record = await this.meetingRepository.findById(id);
+  async findById(id: string, orgId: string): Promise<MeetingRecordResponseDto> {
+    const record = await this.meetingRepository.findById(
+      id,
+      this.requireOrgId(orgId),
+    );
     if (!record) {
       throw new MeetingRecordNotFoundException(id);
     }
@@ -57,8 +66,9 @@ export class MeetingService {
   async findParticipants(
     id: string,
     query: QueryMeetingParticipantsDto,
+    orgId: string,
   ): Promise<MeetingParticipantListResponseDto> {
-    if (!(await this.meetingRepository.exists(id))) {
+    if (!(await this.meetingRepository.exists(id, this.requireOrgId(orgId)))) {
       throw new MeetingRecordNotFoundException(id);
     }
     const page = query.page ?? 1;
@@ -86,8 +96,10 @@ export class MeetingService {
    */
   async create(
     params: CreateMeetingRecordDto,
+    orgId: string,
   ): Promise<MeetingRecordResponseDto> {
     // 检查是否已存在
+    this.requireOrgId(orgId);
     const existing = await this.meetingRepository.findByPt(
       params.platform,
       params.platformMeetingId,
@@ -103,6 +115,7 @@ export class MeetingService {
 
     // 转换DTO到repository数据格式
     const createData = {
+      orgId,
       platform: params.platform,
       meetingId: params.platformMeetingId,
       subMeetingId: ROOT_SUB_MEETING_ID,
@@ -128,8 +141,12 @@ export class MeetingService {
   async update(
     id: string,
     params: UpdateMeetingRecordDto,
+    orgId: string,
   ): Promise<MeetingRecordResponseDto> {
-    const record = await this.meetingRepository.findById(id);
+    const record = await this.meetingRepository.findById(
+      id,
+      this.requireOrgId(orgId),
+    );
     if (!record) {
       throw new MeetingRecordNotFoundException(id);
     }
@@ -165,7 +182,7 @@ export class MeetingService {
       updateData.metadata = params.metadata as Prisma.InputJsonValue;
     }
 
-    return this.meetingRepository.update(id, updateData);
+    return this.meetingRepository.update(id, updateData, orgId);
   }
 
   /**
@@ -173,12 +190,16 @@ export class MeetingService {
    */
   async delete(
     id: string,
+    orgId: string,
   ): Promise<MeetingRecordResponseDto & { deletedAt: Date }> {
-    const record = await this.meetingRepository.findById(id);
+    const record = await this.meetingRepository.findById(
+      id,
+      this.requireOrgId(orgId),
+    );
     if (!record) {
       throw new MeetingRecordNotFoundException(id);
     }
-    return this.meetingRepository.softDelete(id);
+    return this.meetingRepository.softDelete(id, orgId);
   }
 
   /**
@@ -187,7 +208,18 @@ export class MeetingService {
   async getStats(params: {
     startDate?: Date;
     endDate?: Date;
+    orgId: string;
   }): Promise<MeetingStatsResponseDto> {
-    return this.meetingRepository.getStats(params);
+    return this.meetingRepository.getStats({
+      ...params,
+      orgId: this.requireOrgId(params.orgId),
+    });
+  }
+
+  requireOrgId(orgId?: string | null): string {
+    if (!orgId?.trim()) {
+      throw new ForbiddenException('Current organization is required');
+    }
+    return orgId;
   }
 }

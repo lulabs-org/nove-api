@@ -8,6 +8,10 @@ describe('MeetingController', () => {
     delete: jest.fn(),
     getStats: jest.fn(),
     findParticipants: jest.fn(),
+    requireOrgId: jest.fn((orgId?: string | null) => {
+      if (!orgId) throw new Error('Current organization is required');
+      return orgId;
+    }),
   };
   let controller: MeetingController;
 
@@ -30,20 +34,26 @@ describe('MeetingController', () => {
 
   it('rejects an inverted statistics date range before querying', async () => {
     await expect(
-      controller.getMeetingStats({
-        startDate: '2026-08-31T23:59:59.999+08:00',
-        endDate: '2026-08-01T00:00:00.000+08:00',
-      }),
+      controller.getMeetingStats(
+        {
+          startDate: '2026-08-31T23:59:59.999+08:00',
+          endDate: '2026-08-01T00:00:00.000+08:00',
+        },
+        'org-1',
+      ),
     ).rejects.toBeInstanceOf(BadRequestException);
     expect(meetingService.getStats).not.toHaveBeenCalled();
   });
 
   it('rejects an empty statistics date range before querying', async () => {
     await expect(
-      controller.getMeetingStats({
-        startDate: '2026-08-24T00:00:00.000+08:00',
-        endDate: '2026-08-24T00:00:00.000+08:00',
-      }),
+      controller.getMeetingStats(
+        {
+          startDate: '2026-08-24T00:00:00.000+08:00',
+          endDate: '2026-08-24T00:00:00.000+08:00',
+        },
+        'org-1',
+      ),
     ).rejects.toBeInstanceOf(BadRequestException);
     expect(meetingService.getStats).not.toHaveBeenCalled();
   });
@@ -53,11 +63,14 @@ describe('MeetingController', () => {
     const deletedRecord = { id: 'meeting-1', deletedAt };
     meetingService.delete.mockResolvedValue(deletedRecord);
 
-    await expect(controller.deleteMeetingRecord('meeting-1')).resolves.toEqual({
+    await expect(
+      controller.deleteMeetingRecord('meeting-1', 'org-1'),
+    ).resolves.toEqual({
       success: true,
       data: deletedRecord,
       deletedAt,
     });
+    expect(meetingService.delete).toHaveBeenCalledWith('meeting-1', 'org-1');
   });
 
   it('returns participants from the meeting service', async () => {
@@ -65,11 +78,16 @@ describe('MeetingController', () => {
     meetingService.findParticipants.mockResolvedValue(result);
 
     await expect(
-      controller.getMeetingParticipants('meeting-1', { page: 1, limit: 50 }),
+      controller.getMeetingParticipants(
+        'meeting-1',
+        { page: 1, limit: 50 },
+        'org-1',
+      ),
     ).resolves.toBe(result);
-    expect(meetingService.findParticipants).toHaveBeenCalledWith('meeting-1', {
-      page: 1,
-      limit: 50,
-    });
+    expect(meetingService.findParticipants).toHaveBeenCalledWith(
+      'meeting-1',
+      { page: 1, limit: 50 },
+      'org-1',
+    );
   });
 });
