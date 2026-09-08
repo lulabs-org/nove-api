@@ -484,6 +484,67 @@ export class DriveService {
     }));
   }
 
+  async ensureFolderPath(
+    spaceId: string,
+    pathSegments: string[],
+  ): Promise<string> {
+    return this.nodes.ensureFolderPath(spaceId, pathSegments);
+  }
+
+  async bindFileToTarget(
+    params: BindDriveFileToTargetParams,
+  ): Promise<BindDriveFileToTargetResult> {
+    await this.getFile(params.fileId, params.auth);
+
+    const file = await this.files.findDetailsForBinding(params.fileId);
+    if (!file?.node || !file.versions[0]) {
+      throw new NotFoundException('云盘文件或活动版本不存在');
+    }
+    if (
+      file.node.space.type !== DriveSpaceType.ORG ||
+      file.node.space.orgId !== params.orgId
+    ) {
+      throw new ForbiddenException('文件必须位于当前组织空间');
+    }
+    if (
+      file.managedBy === DriveFileManagedBy.SYSTEM &&
+      file.bindings.some(
+        (binding) =>
+          binding.targetType !== params.targetType ||
+          binding.targetId !== params.targetId,
+      )
+    ) {
+      throw new ConflictException('系统文件已绑定其他业务实体');
+    }
+
+    const duplicate = await this.nodes.findNameConflict({
+      spaceId: file.node.spaceId,
+      parentId: params.targetFolderId,
+      name: file.node.name,
+      excludeId: file.node.id,
+    });
+    if (duplicate) {
+      throw new ConflictException('目标目录已存在同名文件');
+    }
+
+    const result = await this.files.bindFileToTarget({
+      fileId: file.id,
+      nodeId: file.node.id,
+      spaceId: file.node.spaceId,
+      targetFolderId: params.targetFolderId,
+      targetType: params.targetType,
+      targetId: params.targetId,
+      purpose: params.purpose,
+      actorId: params.auth.userId,
+    });
+
+    return {
+      bindingId: result.binding.id,
+      storageObjectId: file.versions[0].storageObjectId,
+      alreadyBound: result.alreadyBound,
+    };
+  }
+
   async listGrants(nodeId: string, auth: DriveAuthContext) {
     const node = await this.findNode(nodeId);
     await this.policy.assertNodeAction(node, DriveAction.MANAGE_ACL, auth);
@@ -830,4 +891,20 @@ export class DriveService {
     }
     throw error;
   }
+}
+
+export interface BindDriveFileToTargetParams {
+  fileId: string;
+  targetType: FileBindingTargetType;
+  targetId: string;
+  targetFolderId: string;
+  purpose: string;
+  auth: DriveAuthContext;
+  orgId: string;
+}
+
+export interface BindDriveFileToTargetResult {
+  bindingId: string;
+  storageObjectId: string;
+  alreadyBound: boolean;
 }

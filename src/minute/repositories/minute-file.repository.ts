@@ -9,6 +9,7 @@
  * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
  */
 import { Injectable } from '@nestjs/common';
+import { FileVersionStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { CreateMinuteFileData, UpdateMinuteFileData } from '../types';
 
@@ -32,6 +33,41 @@ export class MinuteFileRepository {
     return this.prisma.minuteFile.update({
       where: { id },
       data,
+    });
+  }
+
+  /**
+   * 查询 Minute 关联的所有有效云盘文件
+   */
+  async findAttachedFiles(minuteId: string) {
+    return this.prisma.minuteFile.findMany({
+      where: { minuteId, deletedAt: null, fileBindingId: { not: null } },
+      orderBy: { createdAt: 'asc' },
+      include: {
+        fileBinding: {
+          include: {
+            file: {
+              include: {
+                node: true,
+                versions: {
+                  where: { status: FileVersionStatus.ACTIVE },
+                  orderBy: { version: 'desc' },
+                  take: 1,
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  /**
+   * 根据云盘绑定 ID 查询 MinuteFile
+   */
+  async findByBindingId(fileBindingId: string) {
+    return this.prisma.minuteFile.findUnique({
+      where: { fileBindingId },
     });
   }
 }

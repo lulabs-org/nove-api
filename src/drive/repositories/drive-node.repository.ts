@@ -155,6 +155,63 @@ export class DriveNodeRepository {
       include: latestFileVersionInclude,
     });
   }
+
+  async ensureFolderPath(
+    spaceId: string,
+    pathSegments: string[],
+  ): Promise<string> {
+    let parentId: string | null = null;
+    for (const name of pathSegments) {
+      const found: { id: string } | null =
+        await this.prisma.driveNode.findFirst({
+          where: {
+            spaceId,
+            parentId,
+            type: DriveNodeType.FOLDER,
+            deletedAt: null,
+            name: { equals: name, mode: 'insensitive' },
+          },
+          select: { id: true },
+        });
+      if (found) {
+        parentId = found.id;
+        continue;
+      }
+      try {
+        const created: { id: string } = await this.prisma.driveNode.create({
+          data: {
+            spaceId,
+            parentId,
+            type: DriveNodeType.FOLDER,
+            name,
+            createdById: null,
+          },
+          select: { id: true },
+        });
+        parentId = created.id;
+      } catch (error) {
+        if (
+          !(error instanceof Prisma.PrismaClientKnownRequestError) ||
+          error.code !== 'P2002'
+        ) {
+          throw error;
+        }
+        const existing: { id: string } =
+          await this.prisma.driveNode.findFirstOrThrow({
+            where: {
+              spaceId,
+              parentId,
+              type: DriveNodeType.FOLDER,
+              deletedAt: null,
+              name: { equals: name, mode: 'insensitive' },
+            },
+            select: { id: true },
+          });
+        parentId = existing.id;
+      }
+    }
+    return parentId!;
+  }
 }
 
 export type NodeDtoSource = {

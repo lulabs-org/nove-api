@@ -16,6 +16,7 @@ import { RecordingFileType } from '@prisma/client';
 export interface CreateMinuteFileParams {
   minuteId: string;
   fileObjectId: string;
+  fileBindingId?: string | null;
   fileType: RecordingFileType;
   durationMs?: number | bigint;
   resolution?: string;
@@ -29,6 +30,7 @@ export type CreateMinuteFileData = CreateMinuteFileParams;
  */
 export interface UpdateMinuteFileData {
   fileObjectId?: string;
+  fileBindingId?: string | null;
   fileType?: RecordingFileType;
   durationMs?: number | bigint;
   resolution?: string;

@@ -3,6 +3,7 @@ import {
   DriveAuditAction,
   DriveFileManagedBy,
   DriveNodeType,
+  FileBindingTargetType,
   FileVersionStatus,
   FileScanProvider,
   Prisma,
@@ -152,5 +153,118 @@ export class DriveFileRepository {
       });
       return { node, versionId: version.id };
     });
+  }
+
+  findDetailsForBinding(id: string) {
+    return this.prisma.driveFile.findUnique({
+      where: { id },
+      include: {
+        node: { include: { space: true } },
+        versions: {
+          where: { status: FileVersionStatus.ACTIVE },
+          orderBy: { version: 'desc' },
+          take: 1,
+        },
+        bindings: { where: { active: true } },
+      },
+    });
+  }
+
+  findBinding(options: {
+    fileId: string;
+    targetType: FileBindingTargetType;
+    targetId: string;
+    fieldKey?: string;
+    purpose?: string;
+  }) {
+    return this.prisma.fileBinding.findUnique({
+      where: {
+        fileId_targetType_targetId_fieldKey_purpose: {
+          fileId: options.fileId,
+          targetType: options.targetType,
+          targetId: options.targetId,
+          fieldKey: options.fieldKey ?? '',
+          purpose: options.purpose ?? '',
+        },
+      },
+    });
+  }
+
+  async bindFileToTarget(params: {
+    fileId: string;
+    nodeId: string;
+    spaceId: string;
+    targetFolderId: string;
+    targetType: FileBindingTargetType;
+    targetId: string;
+    purpose: string;
+    actorId?: string | null;
+  }) {
+    const existing = await this.findBinding({
+      fileId: params.fileId,
+      targetType: params.targetType,
+      targetId: params.targetId,
+      purpose: params.purpose,
+    });
+
+    if (existing?.active) {
+      return { binding: existing, alreadyBound: true };
+    }
+
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        const binding = existing
+          ? await tx.fileBinding.update({
+              where: { id: existing.id },
+              data: { active: true },
+            })
+          : await tx.fileBinding.create({
+              data: {
+                fileId: params.fileId,
+                targetType: params.targetType,
+                targetId: params.targetId,
+                purpose: params.purpose,
+              },
+            });
+        await tx.driveFile.update({
+          where: { id: params.fileId },
+          data: { managedBy: DriveFileManagedBy.SYSTEM },
+        });
+        await tx.driveNode.update({
+          where: { id: params.nodeId },
+          data: { parentId: params.targetFolderId },
+        });
+        await tx.driveAuditLog.create({
+          data: {
+            spaceId: params.spaceId,
+            nodeId: params.nodeId,
+            fileId: params.fileId,
+            actorId: params.actorId ?? null,
+            action: DriveAuditAction.BIND,
+            metadata: {
+              targetType: params.targetType,
+              targetId: params.targetId,
+            },
+          },
+        });
+        return { binding, alreadyBound: false };
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        const concurrent = await this.findBinding({
+          fileId: params.fileId,
+          targetType: params.targetType,
+          targetId: params.targetId,
+          purpose: params.purpose,
+        });
+        if (concurrent?.active) {
+          return { binding: concurrent, alreadyBound: true };
+        }
+      }
+      throw error;
+    }
   }
 }
