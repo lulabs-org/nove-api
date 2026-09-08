@@ -52,9 +52,8 @@ export class TranscriptService {
     this.logger.log('开始获取录音转写', context);
 
     try {
-      const res = await (
-        await this.api.forOrg(orgId)
-      ).getTranscript({
+      const tmeetApi = await this.api.forOrg(orgId);
+      const res = await tmeetApi.getTranscript({
         recordFileId: fileId,
         operatorId: userId,
         operatorIdType: 1,
