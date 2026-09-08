@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { MeetingRepository } from '../repositories/meeting.repository';
 import { MeetingParticipantRepository } from '../repositories/meeting-participant.repository';
@@ -45,7 +45,7 @@ export class MeetingService {
   }> {
     return this.meetingRepository.get({
       ...params,
-      orgId: this.requireOrgId(orgId),
+      orgId,
     });
   }
 
@@ -53,10 +53,7 @@ export class MeetingService {
    * 获取会议记录详情
    */
   async findById(id: string, orgId: string): Promise<MeetingRecordResponseDto> {
-    const record = await this.meetingRepository.findById(
-      id,
-      this.requireOrgId(orgId),
-    );
+    const record = await this.meetingRepository.findById(id, orgId);
     if (!record) {
       throw new MeetingRecordNotFoundException(id);
     }
@@ -68,7 +65,7 @@ export class MeetingService {
     query: QueryMeetingParticipantsDto,
     orgId: string,
   ): Promise<MeetingParticipantListResponseDto> {
-    if (!(await this.meetingRepository.exists(id, this.requireOrgId(orgId)))) {
+    if (!(await this.meetingRepository.exists(id, orgId))) {
       throw new MeetingRecordNotFoundException(id);
     }
     const page = query.page ?? 1;
@@ -99,7 +96,6 @@ export class MeetingService {
     orgId: string,
   ): Promise<MeetingRecordResponseDto> {
     // 检查是否已存在
-    this.requireOrgId(orgId);
     const existing = await this.meetingRepository.findByPt(
       params.platform,
       params.platformMeetingId,
@@ -143,10 +139,7 @@ export class MeetingService {
     params: UpdateMeetingRecordDto,
     orgId: string,
   ): Promise<MeetingRecordResponseDto> {
-    const record = await this.meetingRepository.findById(
-      id,
-      this.requireOrgId(orgId),
-    );
+    const record = await this.meetingRepository.findById(id, orgId);
     if (!record) {
       throw new MeetingRecordNotFoundException(id);
     }
@@ -192,10 +185,7 @@ export class MeetingService {
     id: string,
     orgId: string,
   ): Promise<MeetingRecordResponseDto & { deletedAt: Date }> {
-    const record = await this.meetingRepository.findById(
-      id,
-      this.requireOrgId(orgId),
-    );
+    const record = await this.meetingRepository.findById(id, orgId);
     if (!record) {
       throw new MeetingRecordNotFoundException(id);
     }
@@ -210,16 +200,6 @@ export class MeetingService {
     endDate?: Date;
     orgId: string;
   }): Promise<MeetingStatsResponseDto> {
-    return this.meetingRepository.getStats({
-      ...params,
-      orgId: this.requireOrgId(params.orgId),
-    });
-  }
-
-  requireOrgId(orgId?: string | null): string {
-    if (!orgId?.trim()) {
-      throw new ForbiddenException('Current organization is required');
-    }
-    return orgId;
+    return this.meetingRepository.getStats(params);
   }
 }

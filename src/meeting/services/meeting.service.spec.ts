@@ -130,13 +130,6 @@ describe('MeetingService', () => {
     expect(participantRepository.findMany).not.toHaveBeenCalled();
   });
 
-  it('requires an organization context', () => {
-    expect(() => service.requireOrgId(null)).toThrow(
-      'Current organization is required',
-    );
-    expect(service.requireOrgId('org-1')).toBe('org-1');
-  });
-
   it('rejects detail, mutation and participants for an inaccessible meeting', async () => {
     repository.findById.mockResolvedValue(null);
     repository.exists.mockResolvedValue(false);
@@ -155,30 +148,5 @@ describe('MeetingService', () => {
     expect(repository.update).not.toHaveBeenCalled();
     expect(repository.softDelete).not.toHaveBeenCalled();
     expect(participantRepository.findMany).not.toHaveBeenCalled();
-  });
-
-  it('rejects missing organization before any database call', async () => {
-    await expect(service.findMany({}, '')).rejects.toThrow(
-      'Current organization is required',
-    );
-    await expect(service.findById('meeting-1', '')).rejects.toThrow(
-      'Current organization is required',
-    );
-    await expect(service.update('meeting-1', {}, '')).rejects.toThrow(
-      'Current organization is required',
-    );
-    await expect(service.delete('meeting-1', '')).rejects.toThrow(
-      'Current organization is required',
-    );
-    await expect(service.findParticipants('meeting-1', {}, '')).rejects.toThrow(
-      'Current organization is required',
-    );
-    await expect(service.getStats({ orgId: '' })).rejects.toThrow(
-      'Current organization is required',
-    );
-    expect(repository.get).not.toHaveBeenCalled();
-    expect(repository.findById).not.toHaveBeenCalled();
-    expect(repository.exists).not.toHaveBeenCalled();
-    expect(repository.getStats).not.toHaveBeenCalled();
   });
 });

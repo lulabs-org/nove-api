@@ -8,10 +8,6 @@ describe('MeetingController', () => {
     delete: jest.fn(),
     getStats: jest.fn(),
     findParticipants: jest.fn(),
-    requireOrgId: jest.fn((orgId?: string | null) => {
-      if (!orgId) throw new Error('Current organization is required');
-      return orgId;
-    }),
   };
   let controller: MeetingController;
 

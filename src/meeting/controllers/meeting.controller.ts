@@ -41,7 +41,7 @@ import {
   MeetingParticipantListResponseDto,
 } from '../dto';
 import { CuidPipe } from '@/common/pipes/cuid.pipe';
-import { Auth } from '@/auth/decorators/auth.decorator';
+import { CurrentOrg } from '@/auth/decorators';
 
 /**
  * 会议记录控制器
@@ -64,13 +64,10 @@ export class MeetingController {
   @ApiGetMeetingRecordsDocs()
   async getMeetingRecords(
     @Query() query: QueryMeetingRecordsDto,
-    @Auth('orgId') orgId?: string | null,
+    @CurrentOrg() orgId: string,
   ): Promise<MeetingRecordListResponseDto> {
     this.logger.log('获取会议记录列表', { query });
-    const result = await this.meetingService.findMany(
-      query,
-      this.meetingService.requireOrgId(orgId),
-    );
+    const result = await this.meetingService.findMany(query, orgId);
 
     this.logger.log(`获取会议记录成功，共 ${result.total} 条记录`);
     return {
@@ -91,14 +88,11 @@ export class MeetingController {
   @ApiGetMeetingRecordByIdDocs()
   async getMeetingRecordById(
     @Param('id', CuidPipe) id: string,
-    @Auth('orgId') orgId?: string | null,
+    @CurrentOrg() orgId: string,
   ): Promise<MeetingRecordResponseDto> {
     this.logger.log(`获取会议记录详情: ${id}`);
 
-    const record = await this.meetingService.findById(
-      id,
-      this.meetingService.requireOrgId(orgId),
-    );
+    const record = await this.meetingService.findById(id, orgId);
 
     this.logger.log(`获取会议记录详情成功: ${record.id}`);
     return record;
@@ -118,13 +112,9 @@ export class MeetingController {
   async getMeetingParticipants(
     @Param('id', CuidPipe) id: string,
     @Query() query: QueryMeetingParticipantsDto,
-    @Auth('orgId') orgId?: string | null,
+    @CurrentOrg() orgId: string,
   ): Promise<MeetingParticipantListResponseDto> {
-    return this.meetingService.findParticipants(
-      id,
-      query,
-      this.meetingService.requireOrgId(orgId),
-    );
+    return this.meetingService.findParticipants(id, query, orgId);
   }
 
   /**
@@ -136,16 +126,13 @@ export class MeetingController {
   @ApiCreateMeetingRecordDocs()
   async createMeetingRecord(
     @Body() createParams: CreateMeetingRecordDto,
-    @Auth('orgId') orgId?: string | null,
+    @CurrentOrg() orgId: string,
   ): Promise<MeetingRecordResponseDto> {
     this.logger.log('创建会议记录', {
       meetingId: createParams.platformMeetingId,
     });
 
-    const record = await this.meetingService.create(
-      createParams,
-      this.meetingService.requireOrgId(orgId),
-    );
+    const record = await this.meetingService.create(createParams, orgId);
 
     this.logger.log(`创建会议记录成功: ${record.id}`);
     return record;
@@ -161,14 +148,10 @@ export class MeetingController {
   async updateMeetingRecord(
     @Param('id', CuidPipe) id: string,
     @Body() updateParams: UpdateMeetingRecordDto,
-    @Auth('orgId') orgId?: string | null,
+    @CurrentOrg() orgId: string,
   ): Promise<MeetingRecordResponseDto> {
     this.logger.log(`更新会议记录: ${id}`);
-    const record = await this.meetingService.update(
-      id,
-      updateParams,
-      this.meetingService.requireOrgId(orgId),
-    );
+    const record = await this.meetingService.update(id, updateParams, orgId);
 
     this.logger.log(`更新会议记录成功: ${record.id}`);
     return record;
@@ -183,14 +166,11 @@ export class MeetingController {
   @ApiDeleteMeetingRecordDocs()
   async deleteMeetingRecord(
     @Param('id', CuidPipe) id: string,
-    @Auth('orgId') orgId?: string | null,
+    @CurrentOrg() orgId: string,
   ): Promise<DeleteMeetingRecordResponseDto> {
     this.logger.log(`删除会议记录: ${id}`);
 
-    const record = await this.meetingService.delete(
-      id,
-      this.meetingService.requireOrgId(orgId),
-    );
+    const record = await this.meetingService.delete(id, orgId);
 
     this.logger.log(`删除会议记录成功: ${record.id}`);
 
@@ -210,7 +190,7 @@ export class MeetingController {
   @ApiGetMeetingStatsDocs()
   async getMeetingStats(
     @Query() query: QueryMeetingStatsDto,
-    @Auth('orgId') orgId?: string | null,
+    @CurrentOrg() orgId: string,
   ): Promise<MeetingStatsResponseDto> {
     const startDate = query.startDate ? new Date(query.startDate) : undefined;
     const endDate = query.endDate ? new Date(query.endDate) : undefined;
@@ -223,7 +203,7 @@ export class MeetingController {
     const stats = await this.meetingService.getStats({
       startDate,
       endDate,
-      orgId: this.meetingService.requireOrgId(orgId),
+      orgId,
     });
 
     this.logger.log('获取会议统计信息成功');
