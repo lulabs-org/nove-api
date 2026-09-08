@@ -44,10 +44,10 @@ export class SummaryService {
       todo: '',
     };
 
+    const tmeetApi = await this.api.forOrg(orgId);
+
     try {
-      const response = await (
-        await this.api.forOrg(orgId)
-      ).getSmartFullSummary(fileId, userId);
+      const response = await tmeetApi.getSmartFullSummary(fileId, userId);
 
       result.fullSummary = ContentUtils.decodeBase64Content(
         response.ai_summary,
@@ -61,9 +61,7 @@ export class SummaryService {
     }
 
     try {
-      const response = await (
-        await this.api.forOrg(orgId)
-      ).getSmartMeetingMinutes(fileId, userId);
+      const response = await tmeetApi.getSmartMeetingMinutes(fileId, userId);
       const { minute, todo } = response.meeting_minute ?? {};
 
       result.aiMinutes = minute ?? '';

@@ -2,10 +2,8 @@ import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
 import { TMeetSyncService } from '../services/sync.service';
-import { SingleOrgContextService } from '@/admin/system-config/services';
-
 interface SyncJobData {
-  orgId?: string;
+  orgId: string;
   startTime: number;
   endTime: number;
   operatorId?: string;
@@ -25,15 +23,13 @@ interface SyncJobData {
 export class TMeetSyncProcessor extends WorkerHost {
   private readonly logger = new Logger(TMeetSyncProcessor.name);
 
-  constructor(
-    private readonly syncService: TMeetSyncService,
-    private readonly orgContext: SingleOrgContextService,
-  ) {
+  constructor(private readonly syncService: TMeetSyncService) {
     super();
   }
 
   async process(job: Job<SyncJobData>) {
     const {
+      orgId,
       startTime,
       endTime,
       operatorId,
@@ -42,11 +38,9 @@ export class TMeetSyncProcessor extends WorkerHost {
       syncParticipants,
       forceReSyncTranscript,
     } = job.data;
-    const orgId = job.data.orgId ?? this.orgContext.getOrgId();
-    if (!job.data.orgId) {
-      this.logger.warn(
-        `Processing legacy Tencent Meeting sync job ${job.id ?? 'unknown'} without orgId`,
-      );
+
+    if (!orgId) {
+      throw new Error(`Sync job ${job.id ?? 'unknown'} missing required orgId`);
     }
 
     this.logger.log(

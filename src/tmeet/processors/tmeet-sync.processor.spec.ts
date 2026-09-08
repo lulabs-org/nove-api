@@ -1,8 +1,6 @@
 import type { Job } from 'bullmq';
 import { TMeetSyncService } from '../services/sync.service';
 import { TMeetSyncProcessor } from './tmeet-sync.processor';
-import { SingleOrgContextService } from '@/admin/system-config/services';
-
 describe('TMeetSyncProcessor organization context', () => {
   it('forwards the queued orgId to syncRecords', async () => {
     const result = {
@@ -15,7 +13,6 @@ describe('TMeetSyncProcessor organization context', () => {
     };
     const processor = new TMeetSyncProcessor(
       syncService as unknown as TMeetSyncService,
-      { getOrgId: () => 'fallback-org' } as SingleOrgContextService,
     );
     const job = {
       id: 'job-1',
@@ -40,39 +37,26 @@ describe('TMeetSyncProcessor organization context', () => {
     );
   });
 
-  it('uses the single-org context for legacy sync jobs', async () => {
-    const result = {
-      meetingsUpserted: 0,
-      recordingsUpserted: 0,
-      errors: [],
-    };
+  it('throws an error if orgId is missing', async () => {
     const syncService = {
-      syncRecords: jest.fn().mockResolvedValue(result),
+      syncRecords: jest.fn(),
     };
     const processor = new TMeetSyncProcessor(
       syncService as unknown as TMeetSyncService,
-      { getOrgId: () => 'fallback-org' } as SingleOrgContextService,
     );
     const job = {
-      id: 'legacy-job',
+      id: 'job-without-org',
       data: { startTime: 1000, endTime: 2000 },
       log: jest.fn().mockResolvedValue(undefined),
     } as unknown as Job<{
+      orgId: string;
       startTime: number;
       endTime: number;
     }>;
 
-    await processor.process(job);
-
-    expect(syncService.syncRecords).toHaveBeenCalledWith(
-      'fallback-org',
-      1000,
-      2000,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
+    await expect(processor.process(job)).rejects.toThrow(
+      'Sync job job-without-org missing required orgId',
     );
+    expect(syncService.syncRecords).not.toHaveBeenCalled();
   });
 });
