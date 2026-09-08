@@ -1,4 +1,5 @@
 import * as Lark from '@larksuiteoapi/node-sdk';
+import { Test } from '@nestjs/testing';
 import { LarkWsEventListener } from './lark-ws-event.listener';
 import { LarkClient } from '../client/lark.client';
 import { LarkMeetingService } from '../services/lark-meeting.service';
@@ -8,12 +9,13 @@ import { MeetingEndedEventData } from '../types/lark-meeting.types';
 
 describe('LarkWsEventListener', () => {
   let listener: LarkWsEventListener;
-  let larkClient: { wsClient: { start: jest.Mock } };
+  let larkClient: { isConfigured: boolean; wsClient: { start: jest.Mock } };
   let meetingService: { enqueueMeetingEnded: jest.Mock };
   let orgContext: { getOrgId: jest.Mock };
 
   beforeEach(() => {
     larkClient = {
+      isConfigured: true,
       wsClient: {
         start: jest.fn(),
       },
@@ -44,7 +46,7 @@ describe('LarkWsEventListener', () => {
         return {} as Lark.EventDispatcher;
       });
 
-    listener.onModuleInit();
+    listener.onApplicationBootstrap();
 
     expect(orgContext.getOrgId).toHaveBeenCalled();
     expect(larkClient.wsClient.start).toHaveBeenCalled();
@@ -82,7 +84,7 @@ describe('LarkWsEventListener', () => {
       new Error('Redis connection failed'),
     );
 
-    listener.onModuleInit();
+    listener.onApplicationBootstrap();
 
     const mockEventData = {
       event_id: 'evt-err',
@@ -93,5 +95,36 @@ describe('LarkWsEventListener', () => {
     ).resolves.not.toThrow();
 
     registerSpy.mockRestore();
+  });
+
+  it('skips wsClient start if larkClient is not configured', () => {
+    larkClient.isConfigured = false;
+    listener.onApplicationBootstrap();
+    expect(larkClient.wsClient.start).not.toHaveBeenCalled();
+  });
+
+  it('waits for asynchronous client configuration before starting WebSocket', async () => {
+    larkClient.isConfigured = false;
+    const clientWithInit = Object.assign(larkClient, {
+      async onModuleInit() {
+        await Promise.resolve();
+        larkClient.isConfigured = true;
+      },
+    });
+    const module = await Test.createTestingModule({
+      providers: [
+        { provide: LarkClient, useValue: clientWithInit },
+        { provide: LarkMeetingService, useValue: meetingService },
+        { provide: SingleOrgContextService, useValue: orgContext },
+        LarkWsEventListener,
+      ],
+    }).compile();
+
+    try {
+      await module.init();
+      expect(larkClient.wsClient.start).toHaveBeenCalledTimes(1);
+    } finally {
+      await module.close();
+    }
   });
 });

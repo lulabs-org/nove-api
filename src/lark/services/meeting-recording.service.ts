@@ -27,9 +27,11 @@ export class MinuteService {
    * @param meetingId 会议ID
    */
   async getMinuteInfo(meetingId: string): Promise<GetMinuteResponse> {
+    this.larkClient.assertConfigured();
+
     try {
       // 直接调用 VC 接口，SDK 自动管理 token
-      const response = await this.larkClient.vc.v1.meetingRecording.get({
+      const response = await this.larkClient.client.vc.v1.meetingRecording.get({
         path: { meeting_id: meetingId },
       });
 
