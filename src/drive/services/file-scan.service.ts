@@ -4,7 +4,7 @@ import { FileScanProvider, FileVersionStatus, Prisma } from '@prisma/client';
 import type { Queue } from 'bullmq';
 import { FileScanningService } from '@/file-scanning';
 import { FileScanRepository } from '../repositories';
-import { DRIVE_SCAN_QUEUE } from './file-scan.constants';
+import { DRIVE_SCAN_QUEUE } from '../constants';
 
 @Injectable()
 export class FileScanService {

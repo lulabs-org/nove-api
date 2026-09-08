@@ -12,9 +12,9 @@ import { FilePolicyService } from './services/file-policy.service';
 import { DriveCleanupService } from './services/drive-cleanup.service';
 import { IntegrationsModule } from '@/admin/integrations';
 import { DriveConfigService } from './services/drive-config.service';
-import { FileScanService } from './scanning/file-scan.service';
-import { FileScanProcessor } from './scanning/file-scan.processor';
-import { DRIVE_SCAN_QUEUE } from './scanning/file-scan.constants';
+import { FileScanService } from './services/file-scan.service';
+import { FileScanProcessor } from './processors/file-scan.processor';
+import { DRIVE_SCAN_QUEUE } from './constants/file-scan.constants';
 import {
   DriveAccessRepository,
   DriveCleanupRepository,

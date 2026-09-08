@@ -38,7 +38,7 @@ import {
 import { DriveAuthContext, DrivePolicyService } from './drive-policy.service';
 import { FilePolicyService } from './file-policy.service';
 import { DriveConfigService } from '@/drive/services/drive-config.service';
-import { FileScanService } from '../scanning/file-scan.service';
+import { FileScanService } from './file-scan.service';
 import {
   DriveAccessRepository,
   DriveFileDetails,

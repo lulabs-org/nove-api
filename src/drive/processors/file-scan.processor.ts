@@ -1,8 +1,8 @@
 import { Logger } from '@nestjs/common';
 import { OnWorkerEvent, Processor, WorkerHost } from '@nestjs/bullmq';
 import type { Job } from 'bullmq';
-import { FileScanService } from './file-scan.service';
-import { DRIVE_SCAN_QUEUE } from './file-scan.constants';
+import { FileScanService } from '../services/file-scan.service';
+import { DRIVE_SCAN_QUEUE } from '../constants';
 
 interface FileScanJobData {
   fileVersionId: string;
