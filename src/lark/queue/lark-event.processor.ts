@@ -25,9 +25,7 @@ export class LarkEventProcessor extends WorkerHost {
     super();
   }
 
-  override async process(
-    job: Job<LarkMeetingEndedJobData>,
-  ): Promise<unknown> {
+  override async process(job: Job<LarkMeetingEndedJobData>): Promise<unknown> {
     switch (job.name) {
       case 'meetingEnded': {
         const { event, orgId } = job.data;
