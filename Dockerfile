@@ -20,10 +20,10 @@ WORKDIR /usr/src/app
 # Copy package manager files first for better layer caching
 # This allows Docker to cache the dependency installation layer
 # when only source code changes
-COPY package*.json pnpm-lock.yaml ./
+COPY package*.json pnpm-lock.yaml pnpm-workspace.yaml* ./
 
-# pnpm 11 requires explicit permission for dependency build scripts
-RUN pnpm install --no-frozen-lockfile --config.dangerouslyAllowAllBuilds=true
+# Install dependencies with permissions defined in pnpm-workspace.yaml
+RUN pnpm install --no-frozen-lockfile
 
 # Copy source code after dependencies are installed
 COPY . .
