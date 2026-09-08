@@ -26,12 +26,12 @@ export class LlmService implements OnModuleInit {
     const defaults = getDefaultValues(IntegrationRegistry.ai);
     this.openai = new OpenAI({
       apiKey: '',
-      baseURL: String(defaults.baseUrl),
+      baseURL: defaults.baseUrl ? String(defaults.baseUrl) : undefined,
     });
     this.activeConfig = {
-      model: String(defaults.model),
-      maxTokens: Number(defaults.maxTokens),
-      temperature: Number(defaults.temperature),
+      model: String(defaults.model ?? ''),
+      maxTokens: Number(defaults.maxTokens ?? 16000),
+      temperature: Number(defaults.temperature ?? 0.7),
     };
   }
 
@@ -63,7 +63,7 @@ export class LlmService implements OnModuleInit {
     const apiKey = String(value.apiKey ?? '');
     this.openai = new OpenAI({
       apiKey,
-      baseURL: String(value.baseUrl ?? ''),
+      baseURL: value.baseUrl ? String(value.baseUrl) : undefined,
     });
     this.activeConfig = {
       model: String(value.model ?? ''),

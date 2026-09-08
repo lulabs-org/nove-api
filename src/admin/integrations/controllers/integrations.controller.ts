@@ -6,7 +6,6 @@ import {
   Body,
   Param,
   Post,
-  ForbiddenException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -15,7 +14,7 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
-import { Auth } from '@/auth/decorators/auth.decorator';
+import { CurrentOrg } from '@/auth/decorators';
 import { IntegrationsService, IntegrationTesterService } from '../services';
 
 @ApiTags('Admin / Integrations')
@@ -30,8 +29,8 @@ export class IntegrationsController {
   @Get()
   @ApiOperation({ summary: 'List organization integrations configuration status' })
   @RequirePermissions('system:config:read')
-  async list(@Auth('orgId') orgId: string | null | undefined) {
-    return this.integrationsService.listIntegrations(this.requireOrgId(orgId));
+  async list(@CurrentOrg() orgId: string) {
+    return this.integrationsService.listIntegrations(orgId);
   }
 
   @Get(':module')
@@ -43,10 +42,10 @@ export class IntegrationsController {
   })
   @RequirePermissions('system:config:read')
   async get(
-    @Auth('orgId') orgId: string | null | undefined,
+    @CurrentOrg() orgId: string,
     @Param('module') module: string,
   ) {
-    return this.integrationsService.getIntegration(this.requireOrgId(orgId), module);
+    return this.integrationsService.getIntegration(orgId, module);
   }
 
   @Put(':module')
@@ -60,12 +59,12 @@ export class IntegrationsController {
   })
   @RequirePermissions('system:config:write')
   async update(
-    @Auth('orgId') orgId: string | null | undefined,
+    @CurrentOrg() orgId: string,
     @Param('module') module: string,
     @Body() data: Record<string, unknown>,
   ) {
     return this.integrationsService.updateIntegration(
-      this.requireOrgId(orgId),
+      orgId,
       module,
       data,
     );
@@ -75,12 +74,12 @@ export class IntegrationsController {
   @ApiOperation({ summary: 'Test a draft integration configuration' })
   @RequirePermissions('system:config:write')
   async test(
-    @Auth('orgId') orgId: string | null | undefined,
+    @CurrentOrg() orgId: string,
     @Param('module') module: string,
     @Body() data: Record<string, unknown>,
   ) {
     return this.integrationTester.testIntegration(
-      this.requireOrgId(orgId),
+      orgId,
       module,
       data,
     );
@@ -95,19 +94,13 @@ export class IntegrationsController {
   })
   @RequirePermissions('system:config:write')
   async remove(
-    @Auth('orgId') orgId: string | null | undefined,
+    @CurrentOrg() orgId: string,
     @Param('module') module: string,
   ) {
     return this.integrationsService.deleteIntegration(
-      this.requireOrgId(orgId),
+      orgId,
       module,
     );
   }
-
-  private requireOrgId(orgId: string | null | undefined): string {
-    if (!orgId) {
-      throw new ForbiddenException('Organization context is required');
-    }
-    return orgId;
-  }
 }
+

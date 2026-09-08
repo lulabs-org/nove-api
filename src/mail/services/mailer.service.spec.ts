@@ -1,6 +1,4 @@
 import { MailerService } from './mailer.service';
-import type { ConfigType } from '@nestjs/config';
-import { emailConfig } from '@/configs/email.config';
 import {
   IntegrationsService,
   SingleOrgContextService,
@@ -34,9 +32,25 @@ function makeTransporter(options?: { verifyCbError?: Error | null }) {
   return t;
 }
 
-function makeConfig(
-  map: Partial<ConfigType<typeof emailConfig>>,
-): ConfigType<typeof emailConfig> {
+interface MockMailConfig {
+  smtp: {
+    host: string;
+    port: number;
+    secure: boolean;
+    user: string;
+    pass: string;
+    from: string;
+  };
+  brand?: {
+    name?: string;
+    logoUrl?: string | null;
+    primaryColor?: string;
+    footerText?: string;
+    publicBaseUrl?: string | null;
+  };
+}
+
+function makeConfig(map: Partial<MockMailConfig>): MockMailConfig {
   return {
     smtp: {
       host: map.smtp?.host ?? 'smtp.gmail.com',
@@ -61,7 +75,7 @@ describe('MailerService', () => {
   const createTransport = nodemailer.createTransport as unknown as jest.Mock;
   const getEffectiveConfig = jest.fn();
 
-  const useMailConfig = (config: ConfigType<typeof emailConfig>) => {
+  const useMailConfig = (config: MockMailConfig) => {
     getEffectiveConfig.mockResolvedValue({
       value: {
         host: config.smtp.host,

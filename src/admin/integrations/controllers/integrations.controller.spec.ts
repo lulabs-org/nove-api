@@ -1,4 +1,3 @@
-import { ForbiddenException } from '@nestjs/common';
 import { IntegrationsService, IntegrationTesterService } from '../services';
 import { IntegrationsController } from './integrations.controller';
 
@@ -41,13 +40,4 @@ describe('IntegrationsController', () => {
     expect(testIntegration).toHaveBeenCalledWith('org-1', 'mail', {});
     expect(deleteIntegration).toHaveBeenCalledWith('org-1', 'mail');
   });
-
-  it.each([null, undefined, ''])(
-    'rejects a missing organization context',
-    async (orgId) => {
-      await expect(controller.list(orgId)).rejects.toThrow(
-        ForbiddenException,
-      );
-    },
-  );
 });

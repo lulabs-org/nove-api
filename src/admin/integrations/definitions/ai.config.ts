@@ -49,12 +49,10 @@ export class UpdateAiConfigDto {
 export const aiConfig = defineIntegrationConfig(UpdateAiConfigDto, {
   description: 'Organization AI Model Configuration',
   defaults: {
-    provider: 'openai',
-    baseUrl: 'https://ark.cn-beijing.volces.com/api/v3',
-    model: '{TEMPLATE_ENDPOINT_ID}',
     maxTokens: 16000,
     temperature: 0.7,
   },
   required: ['apiKey', 'baseUrl', 'model'],
   secrets: ['apiKey'],
 });
+

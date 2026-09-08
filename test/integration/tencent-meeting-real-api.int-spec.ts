@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TMeetApiService } from '@/tmeet/client';
-import { tencentMeetingConfig } from '@/configs/tencent-mtg.config';
 import { config } from 'dotenv';
 import {
   RecordMeetingsResponse,
@@ -135,7 +134,6 @@ describe('Tencent Meeting Real API Integration Tests', () => {
     const moduleRef: TestingModule = await Test.createTestingModule({
       imports: [
         ConfigModule.forRoot({
-          load: [tencentMeetingConfig],
           isGlobal: true,
         }),
       ],

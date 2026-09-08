@@ -17,4 +17,4 @@ import {
   ],
   exports: [IntegrationsService, SingleOrgContextService, IntegrationTesterService],
 })
-export class IntegrationsModule {}
+export class IntegrationsModule { }
