@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-import { TMeetApiService } from '../client';
+import { TMeetApiClientFactory } from '../client';
 import { Meeting } from '@prisma/client';
 import type { RecordMeeting, RecordFile } from '../types';
 import { TMeetMeetingCoreService } from './meeting-core.service';
@@ -15,7 +15,7 @@ export class TMeetSyncService {
 
   constructor(
     @InjectQueue('tmeet-sync') private readonly syncQueue: Queue,
-    private readonly tencentApi: TMeetApiService,
+    private readonly tencentApi: TMeetApiClientFactory,
     private readonly meetingCoreService: TMeetMeetingCoreService,
     private readonly transcriptCoreService: TMeetTranscriptCoreService,
     private readonly summaryCoreService: TMeetSummaryCoreService,
@@ -286,13 +286,9 @@ export class TMeetSyncService {
     const effectiveOperatorId = operatorId || String(activeConfig.userId ?? '');
 
     // 1. 获取指定时间段内的所有企业录制记录
-    const recordMeetings = await this.tencentApi.getAllCorpRecords(
-      orgId,
-      startTime,
-      actualEndTime,
-      effectiveOperatorId,
-      1,
-    );
+    const recordMeetings = await (
+      await this.tencentApi.forOrg(orgId)
+    ).getAllCorpRecords(startTime, actualEndTime, effectiveOperatorId, 1);
 
     let totalMeetingsUpserted = 0;
     let totalRecordingsUpserted = 0;

@@ -3,7 +3,7 @@ import { Platform, PlatformUser } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
 import { TranscriptRepository } from '@/minute/repositories';
-import { TMeetApiService, ParticipantService } from '../client';
+import { TMeetApiClientFactory, ParticipantService } from '../client';
 import { SpeakerService } from './speaker.service';
 import { MeetingParticipantService } from './meeting-participant.service';
 import type { ParticipantDetail, NewTranscriptParagraph } from '../types';
@@ -17,7 +17,7 @@ export class TMeetTranscriptCoreService {
     private readonly prisma: PrismaService,
     private readonly ptUserRepo: PlatformUserRepository,
     private readonly transcriptRepo: TranscriptRepository,
-    private readonly tencentApi: TMeetApiService,
+    private readonly tencentApi: TMeetApiClientFactory,
     private readonly participantSvc: ParticipantService,
     private readonly speakerSvc: SpeakerService,
     private readonly meetingParticipantSvc: MeetingParticipantService,
@@ -276,8 +276,9 @@ export class TMeetTranscriptCoreService {
 
     while (hasMore) {
       try {
-        const res = await this.tencentApi.getTranscript({
-          orgId,
+        const res = await (
+          await this.tencentApi.forOrg(orgId)
+        ).getTranscript({
           recordFileId,
           operatorId,
           operatorIdType: 1,

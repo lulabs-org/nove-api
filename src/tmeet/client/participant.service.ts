@@ -10,7 +10,7 @@
  */
 
 import { Injectable, Logger } from '@nestjs/common';
-import { TMeetApiService } from './api.service';
+import { TMeetApiClientFactory } from './api-client.factory';
 import { ParticipantDetail, ParticipantsList } from '../types';
 
 /**
@@ -21,7 +21,7 @@ import { ParticipantDetail, ParticipantsList } from '../types';
 export class ParticipantService {
   private readonly logger = new Logger(ParticipantService.name);
 
-  constructor(private readonly api: TMeetApiService) {}
+  constructor(private readonly api: TMeetApiClientFactory) {}
 
   /**
    * 获取唯一的会议参与者列表
@@ -39,8 +39,9 @@ export class ParticipantService {
     endTime?: number,
   ): Promise<ParticipantsList> {
     try {
-      const response = await this.api.getParticipants(
-        orgId,
+      const response = await (
+        await this.api.forOrg(orgId)
+      ).getParticipants(
         meetingId,
         userId,
         subMeetingId,

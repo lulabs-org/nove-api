@@ -1,6 +1,6 @@
 import type { Queue } from 'bullmq';
 import { SystemConfigService } from '@/admin/system-config/services';
-import { TMeetApiService } from '../client';
+import { TMeetApiClientFactory } from '../client';
 import { TMeetMeetingCoreService } from './meeting-core.service';
 import { TMeetSummaryCoreService } from './summary-core.service';
 import { TMeetSyncService } from './sync.service';
@@ -11,7 +11,7 @@ describe('TMeetSyncService organization context', () => {
     const queue = { add: jest.fn().mockResolvedValue({ id: 'job-1' }) };
     const service = new TMeetSyncService(
       queue as unknown as Queue,
-      {} as TMeetApiService,
+      {} as TMeetApiClientFactory,
       {} as TMeetMeetingCoreService,
       {} as TMeetTranscriptCoreService,
       {} as TMeetSummaryCoreService,

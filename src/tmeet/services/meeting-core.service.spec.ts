@@ -2,7 +2,7 @@ import { Platform } from '@prisma/client';
 import { MinuteRepository } from '@/minute/repositories';
 import { MeetingRepository } from '@/meeting/repositories/meeting.repository';
 import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
-import { TMeetApiService } from '../client';
+import { TMeetApiClientFactory } from '../client';
 import { StartedPayload } from '../types';
 import { TMeetMeetingCoreService } from './meeting-core.service';
 
@@ -18,7 +18,7 @@ describe('TMeetMeetingCoreService organization context', () => {
       platformUserRepository as unknown as PlatformUserRepository,
       meetingRepository as unknown as MeetingRepository,
       {} as MinuteRepository,
-      {} as TMeetApiService,
+      {} as TMeetApiClientFactory,
     );
     const payload = {
       operate_time: Date.now(),

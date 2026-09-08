@@ -14,7 +14,7 @@ import {
 import { Meetuser, EventPayload, MeetingSessionInfo } from '../types';
 import { TMeetEventUtils } from '../utils/tmeet-event.utils';
 import type { RecordMeeting, RecordFile } from '../types';
-import { TMeetApiService } from '../client';
+import { TMeetApiClientFactory } from '../client';
 import {
   TENCENT_MEETING_TYPE_RECURRING,
   computeSubMeetingId,
@@ -42,7 +42,7 @@ export class TMeetMeetingCoreService {
     private readonly ptUserRepo: PlatformUserRepository,
     private readonly meetingRepo: MeetingRepository,
     private readonly recordingRepo: MinuteRepository,
-    private readonly tencentApi: TMeetApiService,
+    private readonly tencentApi: TMeetApiClientFactory,
   ) {}
 
   // ==========================================
@@ -102,11 +102,9 @@ export class TMeetMeetingCoreService {
     operatorId: string,
     orgId: string,
   ) {
-    const detail = await this.tencentApi.getMeetingDetail(
-      orgId,
-      record.meeting_id,
-      operatorId,
-    );
+    const detail = await (
+      await this.tencentApi.forOrg(orgId)
+    ).getMeetingDetail(record.meeting_id, operatorId);
     const meetingInfo = detail.meeting_info_list?.[0];
 
     const meetingType = meetingInfo?.meeting_type;

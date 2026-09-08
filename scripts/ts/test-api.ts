@@ -3,7 +3,6 @@ import { Test } from '@nestjs/testing';
 import { TMeetApiService } from '../../src/tmeet/client';
 import { tencentMeetingConfig } from '../../src/configs/tencent-mtg.config';
 import { PrismaClient } from '@prisma/client';
-import { SystemConfigService } from '../../src/admin/system-config/services';
 
 async function bootstrap() {
   const moduleRef = await Test.createTestingModule({
@@ -14,28 +13,17 @@ async function bootstrap() {
       }),
     ],
     providers: [
-      TMeetApiService,
       {
-        provide: SystemConfigService,
+        provide: TMeetApiService,
         inject: [ConfigService],
-        useFactory: (configService: ConfigService) => ({
-          getEffectiveConfig: (orgId: string, module: string) =>
-            Promise.resolve({
-              orgId,
-              module,
-              value: {
-                appId: configService.get<string>('TENCENT_MEETING_APP_ID'),
-                sdkId: configService.get<string>('TENCENT_MEETING_SDK_ID'),
-                secretId: configService.get<string>(
-                  'TENCENT_MEETING_SECRET_ID',
-                ),
-                secretKey: configService.get<string>(
-                  'TENCENT_MEETING_SECRET_KEY',
-                ),
-                userId: configService.get<string>('USER_ID'),
-              },
-            }),
-        }),
+        useFactory: (config: ConfigService) =>
+          new TMeetApiService({
+            appId: config.get<string>('TENCENT_MEETING_APP_ID') ?? '',
+            sdkId: config.get<string>('TENCENT_MEETING_SDK_ID') ?? '',
+            secretId: config.get<string>('TENCENT_MEETING_SECRET_ID') ?? '',
+            secretKey: config.get<string>('TENCENT_MEETING_SECRET_KEY') ?? '',
+            userId: config.get<string>('USER_ID') ?? '',
+          }),
       },
     ],
   }).compile();
@@ -55,16 +43,10 @@ async function bootstrap() {
 
   const recordFileId = minutes[0].externalId;
   const operatorId = 'woaJARCQAA65b_BO6kq2pTSG-yvvjc_g';
-  const orgId = process.env.ORG_ID;
-
-  if (!orgId) {
-    throw new Error('ORG_ID is required');
-  }
 
   try {
     console.log('=== Testing getTranscript with limit=200 ===');
     const res = await tencentApi.getTranscript({
-      orgId,
       recordFileId,
       operatorId,
       operatorIdType: 1,

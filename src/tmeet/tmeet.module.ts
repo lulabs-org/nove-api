@@ -10,7 +10,7 @@ import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { SystemConfigModule } from '@/admin/system-config/system-config.module';
 
 import {
-  TMeetApiService,
+  TMeetApiClientFactory,
   TranscriptFormatterService,
   TranscriptService,
   SummaryService,
@@ -18,10 +18,7 @@ import {
   TMeetTesterService,
 } from './client';
 
-import {
-  TMeetController,
-  TMeetWebhookController,
-} from './controllers';
+import { TMeetController, TMeetWebhookController } from './controllers';
 
 import { TMeetSyncProcessor } from './processors/tmeet-sync.processor';
 
@@ -68,7 +65,7 @@ import {
   controllers: [TMeetController, TMeetWebhookController],
   providers: [
     // Client SDK Services
-    TMeetApiService,
+    TMeetApiClientFactory,
     TranscriptFormatterService,
     TranscriptService,
     SummaryService,
@@ -135,7 +132,7 @@ import {
   ],
   exports: [
     // Client SDK Exports
-    TMeetApiService,
+    TMeetApiClientFactory,
     TranscriptFormatterService,
     TranscriptService,
     SummaryService,

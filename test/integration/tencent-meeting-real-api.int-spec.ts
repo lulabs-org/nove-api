@@ -3,7 +3,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TMeetApiService } from '@/tmeet/client';
 import { tencentMeetingConfig } from '@/configs/tencent-mtg.config';
 import { config } from 'dotenv';
-import { SystemConfigService } from '@/admin/system-config/services';
 import {
   RecordMeetingsResponse,
   MeetingDetailResponse,
@@ -117,7 +116,6 @@ const classifyApiError = (error: unknown): ApiError => {
  * USER_ID=测试用户ID
  */
 describe('Tencent Meeting Real API Integration Tests', () => {
-  const TEST_ORG_ID = 'integration-test-org';
   let apiService: TMeetApiService;
   let configService: ConfigService;
 
@@ -142,28 +140,17 @@ describe('Tencent Meeting Real API Integration Tests', () => {
         }),
       ],
       providers: [
-        TMeetApiService,
         {
-          provide: SystemConfigService,
+          provide: TMeetApiService,
           inject: [ConfigService],
-          useFactory: (configService: ConfigService) => ({
-            getEffectiveConfig: (orgId: string, module: string) =>
-              Promise.resolve({
-                orgId,
-                module,
-                value: {
-                  appId: configService.get<string>('TENCENT_MEETING_APP_ID'),
-                  sdkId: configService.get<string>('TENCENT_MEETING_SDK_ID'),
-                  secretId: configService.get<string>(
-                    'TENCENT_MEETING_SECRET_ID',
-                  ),
-                  secretKey: configService.get<string>(
-                    'TENCENT_MEETING_SECRET_KEY',
-                  ),
-                  userId: configService.get<string>('USER_ID'),
-                },
-              }),
-          }),
+          useFactory: (config: ConfigService) =>
+            new TMeetApiService({
+              appId: config.get<string>('TENCENT_MEETING_APP_ID') ?? '',
+              sdkId: config.get<string>('TENCENT_MEETING_SDK_ID') ?? '',
+              secretId: config.get<string>('TENCENT_MEETING_SECRET_ID') ?? '',
+              secretKey: config.get<string>('TENCENT_MEETING_SECRET_KEY') ?? '',
+              userId: config.get<string>('USER_ID') ?? '',
+            }),
         },
       ],
     }).compile();
@@ -219,7 +206,6 @@ describe('Tencent Meeting Real API Integration Tests', () => {
       try {
         const response: RecordMeetingsResponse =
           await apiService.getCorpRecords(
-            TEST_ORG_ID,
             startTime,
             endTime,
             TEST_CONFIG.PAGE_SIZE,
@@ -280,9 +266,9 @@ describe('Tencent Meeting Real API Integration Tests', () => {
       const now = Math.floor(Date.now() / 1000);
       const tooFarBack = now - 32 * 24 * 60 * 60; // 32天前
 
-      await expect(
-        apiService.getCorpRecords(TEST_ORG_ID, tooFarBack, now),
-      ).rejects.toThrow('时间区间不允许超过31天');
+      await expect(apiService.getCorpRecords(tooFarBack, now)).rejects.toThrow(
+        '时间区间不允许超过31天',
+      );
     });
   });
 
@@ -296,7 +282,6 @@ describe('Tencent Meeting Real API Integration Tests', () => {
 
       try {
         const recordsResponse = await apiService.getCorpRecords(
-          TEST_ORG_ID,
           startTime,
           endTime,
           1,
@@ -311,11 +296,7 @@ describe('Tencent Meeting Real API Integration Tests', () => {
           const meetingId = recordsResponse.record_meetings[0].meeting_id;
 
           const meetingDetail: MeetingDetailResponse =
-            await apiService.getMeetingDetail(
-              TEST_ORG_ID,
-              meetingId,
-              userId || '',
-            );
+            await apiService.getMeetingDetail(meetingId, userId || '');
 
           const meetingInfo = meetingDetail.meeting_info_list?.[0];
 
@@ -367,11 +348,7 @@ describe('Tencent Meeting Real API Integration Tests', () => {
       if (testFileId && testFileId !== 'test-recording-file-id') {
         try {
           const recordingDetail: RecordingDetail =
-            await apiService.getRecordingFileDetail(
-              TEST_ORG_ID,
-              testFileId,
-              userId || '',
-            );
+            await apiService.getRecordingFileDetail(testFileId, userId || '');
 
           console.log('🎬 录制文件详情:', {
             record_file_id: recordingDetail.record_file_id,
@@ -403,7 +380,6 @@ describe('Tencent Meeting Real API Integration Tests', () => {
         try {
           const transcriptDetail: TranscriptResponse =
             await apiService.getTranscript({
-              orgId: TEST_ORG_ID,
               recordFileId: testFileId,
               operatorId: userId || '',
               operatorIdType: 1,
@@ -464,7 +440,6 @@ describe('Tencent Meeting Real API Integration Tests', () => {
         try {
           const smartMinutes: SmartMeetingMinutesResponse =
             await apiService.getSmartMeetingMinutes(
-              TEST_ORG_ID,
               testFileId,
               userId || '',
               1,
@@ -514,11 +489,7 @@ describe('Tencent Meeting Real API Integration Tests', () => {
       if (testFileId && testFileId !== 'test-recording-file-id') {
         try {
           const smartTopics: SmartTopicsResponse =
-            await apiService.getSmartTopics(
-              TEST_ORG_ID,
-              testFileId,
-              userId || '',
-            );
+            await apiService.getSmartTopics(testFileId, userId || '');
 
           console.log('🏷️ AI讨论主题:', {
             topics_count: smartTopics.ai_topic_list?.length || 0,
@@ -573,7 +544,6 @@ describe('Tencent Meeting Real API Integration Tests', () => {
           // 测试中文
           const chineseSummary: SmartFullSummaryResponse =
             await apiService.getSmartFullSummary(
-              TEST_ORG_ID,
               testFileId,
               userId || '',
               1,
@@ -596,7 +566,6 @@ describe('Tencent Meeting Real API Integration Tests', () => {
           // 测试英文
           const englishSummary: SmartFullSummaryResponse =
             await apiService.getSmartFullSummary(
-              TEST_ORG_ID,
               testFileId,
               userId || '',
               1,
@@ -653,7 +622,6 @@ describe('Tencent Meeting Real API Integration Tests', () => {
           // 测试按章节分类的会议纪要
           const chapterMinutes: SmartMeetingMinutesResponse =
             await apiService.getSmartMeetingMinutes(
-              TEST_ORG_ID,
               testFileId,
               userId || '',
               1, // operatorIdType
@@ -678,7 +646,6 @@ describe('Tencent Meeting Real API Integration Tests', () => {
           // 测试按主题分类的会议纪要
           const topicMinutes: SmartMeetingMinutesResponse =
             await apiService.getSmartMeetingMinutes(
-              TEST_ORG_ID,
               testFileId,
               userId || '',
               1, // operatorIdType
@@ -703,7 +670,6 @@ describe('Tencent Meeting Real API Integration Tests', () => {
           // 测试按发言人分类的会议纪要
           const speakerMinutes: SmartMeetingMinutesResponse =
             await apiService.getSmartMeetingMinutes(
-              TEST_ORG_ID,
               testFileId,
               userId || '',
               1, // operatorIdType
@@ -764,7 +730,6 @@ describe('Tencent Meeting Real API Integration Tests', () => {
 
       try {
         const recordsResponse = await apiService.getCorpRecords(
-          TEST_ORG_ID,
           startTime,
           endTime,
           1,
@@ -781,7 +746,6 @@ describe('Tencent Meeting Real API Integration Tests', () => {
           // 测试基本参与者查询
           const participants: MeetingParticipantsResponse =
             await apiService.getParticipants(
-              TEST_ORG_ID,
               meetingId,
               userId || '',
               null, // subMeetingId
@@ -803,7 +767,6 @@ describe('Tencent Meeting Real API Integration Tests', () => {
           // 测试带时间过滤的参与者查询
           const filteredParticipants: MeetingParticipantsResponse =
             await apiService.getParticipants(
-              TEST_ORG_ID,
               meetingId,
               userId || '',
               null, // subMeetingId
@@ -890,7 +853,6 @@ describe('Tencent Meeting Real API Integration Tests', () => {
 
       try {
         const recordsResponse = await apiService.getCorpRecords(
-          TEST_ORG_ID,
           startTime,
           endTime,
           1,
@@ -907,7 +869,6 @@ describe('Tencent Meeting Real API Integration Tests', () => {
           // 测试分页查询
           const firstPage: MeetingParticipantsResponse =
             await apiService.getParticipants(
-              TEST_ORG_ID,
               meetingId,
               userId || '',
               null, // subMeetingId
@@ -927,7 +888,6 @@ describe('Tencent Meeting Real API Integration Tests', () => {
           if (firstPage.has_remaining && firstPage.total_count > 5) {
             const secondPage: MeetingParticipantsResponse =
               await apiService.getParticipants(
-                TEST_ORG_ID,
                 meetingId,
                 userId || '',
                 null, // subMeetingId
@@ -1005,11 +965,7 @@ describe('Tencent Meeting Real API Integration Tests', () => {
       const invalidMeetingId = 'invalid-meeting-id-12345';
 
       try {
-        await apiService.getMeetingDetail(
-          TEST_ORG_ID,
-          invalidMeetingId,
-          userId || '',
-        );
+        await apiService.getMeetingDetail(invalidMeetingId, userId || '');
         fail('应该抛出错误');
       } catch (error: unknown) {
         const errorMessage = getErrorMessage(error);

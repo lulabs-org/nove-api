@@ -10,7 +10,7 @@
  */
 
 import { Injectable, Logger } from '@nestjs/common';
-import { TMeetApiService } from './api.service';
+import { TMeetApiClientFactory } from './api-client.factory';
 import { ContentUtils } from '../utils/content.utils';
 
 export interface MeetingContent {
@@ -23,7 +23,7 @@ export interface MeetingContent {
 export class SummaryService {
   private readonly logger = new Logger(SummaryService.name);
 
-  constructor(private readonly api: TMeetApiService) {}
+  constructor(private readonly api: TMeetApiClientFactory) {}
 
   /**
    * 获取会议内容（摘要、纪要等）
@@ -45,11 +45,9 @@ export class SummaryService {
     };
 
     try {
-      const response = await this.api.getSmartFullSummary(
-        orgId,
-        fileId,
-        userId,
-      );
+      const response = await (
+        await this.api.forOrg(orgId)
+      ).getSmartFullSummary(fileId, userId);
 
       result.fullSummary = ContentUtils.decodeBase64Content(
         response.ai_summary,
@@ -63,11 +61,9 @@ export class SummaryService {
     }
 
     try {
-      const response = await this.api.getSmartMeetingMinutes(
-        orgId,
-        fileId,
-        userId,
-      );
+      const response = await (
+        await this.api.forOrg(orgId)
+      ).getSmartMeetingMinutes(fileId, userId);
       const { minute, todo } = response.meeting_minute ?? {};
 
       result.aiMinutes = minute ?? '';
