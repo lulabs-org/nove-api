@@ -15,7 +15,7 @@ import { WechatShopTokenService } from './services/wechat-shop-token.service';
 import { WechatShopProcessor } from './processor/wechat-shop.processor';
 import { UserModule } from '@/user/user.module';
 import { WechatShopTesterService } from './wechat-shop.tester';
-import { SystemConfigModule } from '@/admin/system-config/system-config.module';
+import { IntegrationsModule } from '@/admin/integrations';
 
 @Module({
   imports: [
@@ -27,7 +27,7 @@ import { SystemConfigModule } from '@/admin/system-config/system-config.module';
       name: 'wechat-order-sync',
       adapter: BullMQAdapter,
     }),
-    SystemConfigModule,
+    IntegrationsModule,
   ],
   controllers: [WechatShopOrderController, WechatShopEventController],
   providers: [

@@ -30,7 +30,7 @@ flowchart LR
 - **组织域**：`org`、`dept`、`org-member`、`user`、`user-platform`。
 - **会议域**：`meeting` 负责会议、录制、转写和总结 CRUD；`meet-ai` 负责生成参会者与周期总结。
 - **集成域**：`tencent-mtg`、`tencent-mtg-hook`、`lark-meeting`、`wechat-shop`。
-- **基础能力**：`prisma`、`task`、`webhook-log`、`mail`、`sms`、`llm`、`admin/system-config`。
+- **基础能力**：`prisma`、`task`、`webhook-log`、`mail`、`sms`、`llm`、`admin/integrations`。
 
 模块清单见[模块地图](./module-map.md)，目录约定见[项目结构](./project-structure.md)，真实脚本以[命令说明](../guides/development/package-scripts.md)为准。
 

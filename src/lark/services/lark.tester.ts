@@ -1,17 +1,22 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import * as Lark from '@larksuiteoapi/node-sdk';
-import { ConfigTestProvider, SystemConfigValues } from '@/admin/system-config';
-import { TesterService } from '@/admin/system-config/services/tester.service';
+import {
+  IntegrationTestProvider,
+  IntegrationValues,
+  IntegrationTesterService,
+} from '@/admin/integrations';
 
 @Injectable()
-export class LarkTesterService implements ConfigTestProvider, OnModuleInit {
-  constructor(private readonly testerService: TesterService) {}
+export class LarkTesterService
+  implements IntegrationTestProvider, OnModuleInit
+{
+  constructor(private readonly testerService: IntegrationTesterService) {}
 
   onModuleInit() {
     this.testerService.registerProvider('lark', this);
   }
 
-  async test(value: SystemConfigValues): Promise<void> {
+  async test(value: IntegrationValues): Promise<void> {
     const client = new Lark.Client({
       appId: String(value.appId),
       appSecret: String(value.appSecret),

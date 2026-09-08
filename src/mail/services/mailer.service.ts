@@ -1,9 +1,10 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import {
-  SingleOrgContextService,
-  SystemConfigChangeEvent,
-  SystemConfigService,
-} from '@/admin/system-config/services';
+  IntegrationChangeEvent,
+  INTEGRATION_EVENT_PATTERNS,
+  IntegrationsService,
+} from '@/admin/integrations';
+import { SingleOrgContextService } from '@/admin/org';
 import { OnEvent } from '@nestjs/event-emitter';
 import * as nodemailer from 'nodemailer';
 import type SMTPTransport from 'nodemailer/lib/smtp-transport';
@@ -25,7 +26,7 @@ export class MailerService implements OnModuleInit {
   private activeConfig: Record<string, string> | null = null;
 
   constructor(
-    private readonly systemConfigService: SystemConfigService,
+    private readonly integrationsService: IntegrationsService,
     private readonly orgContext: SingleOrgContextService,
   ) {}
 
@@ -33,8 +34,8 @@ export class MailerService implements OnModuleInit {
     await this.reloadTransporter();
   }
 
-  @OnEvent('config.mail.updated')
-  async handleMailConfigUpdate(event: SystemConfigChangeEvent) {
+  @OnEvent(INTEGRATION_EVENT_PATTERNS.MAIL_UPDATED)
+  async handleMailConfigUpdate(event: IntegrationChangeEvent) {
     if (!this.orgContext.matches(event.orgId)) return;
     this.logger.log(
       'Received config.mail.updated event, reloading transporter...',
@@ -42,14 +43,14 @@ export class MailerService implements OnModuleInit {
     await this.reloadTransporter();
   }
 
-  @OnEvent('config.mail.deleted')
-  async handleMailConfigDelete(event: SystemConfigChangeEvent) {
+  @OnEvent(INTEGRATION_EVENT_PATTERNS.MAIL_DELETED)
+  async handleMailConfigDelete(event: IntegrationChangeEvent) {
     if (!this.orgContext.matches(event.orgId)) return;
     await this.reloadTransporter();
   }
 
   private async reloadTransporter() {
-    const { value } = await this.systemConfigService.getEffectiveConfig(
+    const { value } = await this.integrationsService.getEffectiveConfig(
       this.orgContext.getOrgId(),
       'mail',
     );

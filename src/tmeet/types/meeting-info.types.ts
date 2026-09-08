@@ -9,10 +9,7 @@
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
-import {
-  MeetingCreateMode,
-  MeetingCreateFrom,
-} from '../enums/tmeet.enum';
+import { MeetingCreateMode, MeetingCreateFrom } from '../enums/tmeet.enum';
 import { MeetingInfoBase } from './meet-base.types';
 import { Meetuser } from './payload.types';
 

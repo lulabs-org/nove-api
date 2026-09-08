@@ -1,7 +1,6 @@
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 import { TMeetApiService } from '../../src/tmeet/client';
-import { tencentMeetingConfig } from '../../src/configs/tencent-mtg.config';
 import { PrismaClient } from '@prisma/client';
 
 async function bootstrap() {
@@ -9,7 +8,6 @@ async function bootstrap() {
     imports: [
       ConfigModule.forRoot({
         isGlobal: true,
-        load: [tencentMeetingConfig],
       }),
     ],
     providers: [

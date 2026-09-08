@@ -4,10 +4,8 @@ import { of } from 'rxjs';
 import { AxiosResponse } from 'axios';
 import { WechatShopClientService } from './wechat-shop-client.service';
 import { WechatShopTokenService } from './wechat-shop-token.service';
-import {
-  SingleOrgContextService,
-  SystemConfigService,
-} from '@/admin/system-config/services';
+import { IntegrationsService } from '@/admin/integrations';
+import { SingleOrgContextService } from '@/admin/org';
 
 describe('WechatShopClientService', () => {
   let service: WechatShopClientService;
@@ -32,7 +30,7 @@ describe('WechatShopClientService', () => {
     });
     const mockConfig = {
       getEffectiveConfig,
-    } as unknown as SystemConfigService;
+    } as unknown as IntegrationsService;
     getOrgId.mockReturnValue('org-1');
     matches.mockReturnValue(true);
     const mockOrg = {
@@ -45,7 +43,7 @@ describe('WechatShopClientService', () => {
         WechatShopClientService,
         { provide: HttpService, useValue: mockHttp },
         { provide: WechatShopTokenService, useValue: mockToken },
-        { provide: SystemConfigService, useValue: mockConfig },
+        { provide: IntegrationsService, useValue: mockConfig },
         { provide: SingleOrgContextService, useValue: mockOrg },
       ],
     }).compile();

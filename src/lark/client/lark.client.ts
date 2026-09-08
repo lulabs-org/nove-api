@@ -2,12 +2,13 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import * as lark from '@larksuiteoapi/node-sdk';
 import { LarkClientConfig } from '../types';
 import {
-  SingleOrgContextService,
-  SystemConfigChangeEvent,
-  SystemConfigService,
-} from '@/admin/system-config/services';
+  IntegrationChangeEvent,
+  INTEGRATION_EVENT_PATTERNS,
+  IntegrationsService,
+  IntegrationValues,
+} from '@/admin/integrations';
+import { SingleOrgContextService } from '@/admin/org';
 import { OnEvent } from '@nestjs/event-emitter';
-import { SystemConfigValues } from '@/admin/system-config';
 
 @Injectable()
 export class LarkClient implements OnModuleInit {
@@ -43,7 +44,7 @@ export class LarkClient implements OnModuleInit {
   public wsClient: lark.WSClient;
 
   constructor(
-    private readonly systemConfigService: SystemConfigService,
+    private readonly integrationsService: IntegrationsService,
     private readonly orgContext: SingleOrgContextService,
   ) {
     const config: LarkClientConfig = {
@@ -93,7 +94,7 @@ export class LarkClient implements OnModuleInit {
   }
 
   async onModuleInit() {
-    const { value } = await this.systemConfigService.getEffectiveConfig(
+    const { value } = await this.integrationsService.getEffectiveConfig(
       this.orgContext.getOrgId(),
       'lark',
     );
@@ -104,19 +105,19 @@ export class LarkClient implements OnModuleInit {
     });
   }
 
-  @OnEvent('config.lark.updated')
-  handleConfigUpdated(event: SystemConfigChangeEvent) {
+  @OnEvent(INTEGRATION_EVENT_PATTERNS.LARK_UPDATED)
+  handleConfigUpdated(event: IntegrationChangeEvent) {
     if (!this.orgContext.matches(event.orgId)) return;
     this.applyHttpConfig(event.value);
   }
 
-  @OnEvent('config.lark.deleted')
-  handleConfigDeleted(event: SystemConfigChangeEvent) {
+  @OnEvent(INTEGRATION_EVENT_PATTERNS.LARK_DELETED)
+  handleConfigDeleted(event: IntegrationChangeEvent) {
     if (!this.orgContext.matches(event.orgId)) return;
     this.applyHttpConfig(event.value);
   }
 
-  private applyHttpConfig(value: SystemConfigValues) {
+  private applyHttpConfig(value: IntegrationValues) {
     this.client = new lark.Client({
       appId: String(value.appId ?? ''),
       appSecret: String(value.appSecret ?? ''),

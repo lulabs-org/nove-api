@@ -20,7 +20,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { MailProcessor } from './mail.processor';
-import { SystemConfigModule } from '@/admin/system-config/system-config.module';
+import { IntegrationsModule } from '@/admin/integrations';
 
 @Module({
   imports: [
@@ -31,7 +31,7 @@ import { SystemConfigModule } from '@/admin/system-config/system-config.module';
       name: 'mail',
       adapter: BullMQAdapter,
     }),
-    SystemConfigModule,
+    IntegrationsModule,
   ],
   controllers: [MailController],
   providers: [

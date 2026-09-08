@@ -24,9 +24,7 @@ import { CurrentOrg } from '@/auth/decorators';
 @ApiBearerAuth()
 @Controller('platform-users/:platformUserId')
 export class PlatformUserTranscriptController {
-  constructor(
-    private readonly service: PlatformUserTranscriptService,
-  ) {}
+  constructor(private readonly service: PlatformUserTranscriptService) {}
 
   @Get('minutes/transcripts')
   @RequireAllPermissions('platform-user:read', 'minute:read')

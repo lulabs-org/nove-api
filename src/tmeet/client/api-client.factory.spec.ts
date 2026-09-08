@@ -1,4 +1,4 @@
-import { SystemConfigService } from '@/admin/system-config/services';
+import { IntegrationsService } from '@/admin/integrations';
 import { TMeetApiClientFactory } from './api-client.factory';
 
 describe('TMeetApiClientFactory', () => {
@@ -13,7 +13,7 @@ describe('TMeetApiClientFactory', () => {
     );
     const factory = new TMeetApiClientFactory({
       getEffectiveConfig,
-    } as unknown as SystemConfigService);
+    } as unknown as IntegrationsService);
     const fetchMock = jest
       .spyOn(globalThis, 'fetch')
       .mockImplementation(() =>
@@ -48,7 +48,7 @@ describe('TMeetApiClientFactory', () => {
     const getEffectiveConfig = jest.fn();
     const factory = new TMeetApiClientFactory({
       getEffectiveConfig,
-    } as unknown as SystemConfigService);
+    } as unknown as IntegrationsService);
     await expect(factory.forOrg(' ')).rejects.toThrow(
       'Organization is required',
     );

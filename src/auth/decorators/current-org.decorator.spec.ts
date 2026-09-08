@@ -42,13 +42,17 @@ describe('CurrentOrg Decorator', () => {
   it('throws ForbiddenException when authContext is undefined', () => {
     const ctx = createMockContext(undefined);
     expect(() => factory(null, ctx)).toThrow(ForbiddenException);
-    expect(() => factory(null, ctx)).toThrow('Current organization is required');
+    expect(() => factory(null, ctx)).toThrow(
+      'Current organization is required',
+    );
   });
 
   it('throws ForbiddenException when orgId is null', () => {
     const ctx = createMockContext({ orgId: null });
     expect(() => factory(null, ctx)).toThrow(ForbiddenException);
-    expect(() => factory(null, ctx)).toThrow('Current organization is required');
+    expect(() => factory(null, ctx)).toThrow(
+      'Current organization is required',
+    );
   });
 
   it('throws ForbiddenException when orgId is empty or whitespace', () => {

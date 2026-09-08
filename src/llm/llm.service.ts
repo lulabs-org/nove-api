@@ -1,12 +1,14 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import OpenAI from 'openai';
 import {
-  SingleOrgContextService,
-  SystemConfigChangeEvent,
-  SystemConfigService,
-} from '@/admin/system-config/services';
+  IntegrationChangeEvent,
+  INTEGRATION_EVENT_PATTERNS,
+  IntegrationsService,
+  IntegrationRegistry,
+  getDefaultValues,
+} from '@/admin/integrations';
+import { SingleOrgContextService } from '@/admin/org';
 import { OnEvent } from '@nestjs/event-emitter';
-import { SystemConfigRegistry, getDefaultValues } from '@/admin/system-config';
 
 @Injectable()
 export class LlmService implements OnModuleInit {
@@ -19,18 +21,18 @@ export class LlmService implements OnModuleInit {
   };
 
   constructor(
-    private readonly systemConfigService: SystemConfigService,
+    private readonly integrationsService: IntegrationsService,
     private readonly orgContext: SingleOrgContextService,
   ) {
-    const defaults = getDefaultValues(SystemConfigRegistry.ai);
+    const defaults = getDefaultValues(IntegrationRegistry.ai);
     this.openai = new OpenAI({
       apiKey: '',
-      baseURL: String(defaults.baseUrl),
+      baseURL: defaults.baseUrl ? String(defaults.baseUrl) : undefined,
     });
     this.activeConfig = {
-      model: String(defaults.model),
-      maxTokens: Number(defaults.maxTokens),
-      temperature: Number(defaults.temperature),
+      model: String(defaults.model ?? ''),
+      maxTokens: Number(defaults.maxTokens ?? 16000),
+      temperature: Number(defaults.temperature ?? 0.7),
     };
   }
 
@@ -38,14 +40,14 @@ export class LlmService implements OnModuleInit {
     await this.reloadConfig();
   }
 
-  @OnEvent('config.ai.updated')
-  async handleConfigUpdated(event: SystemConfigChangeEvent) {
+  @OnEvent(INTEGRATION_EVENT_PATTERNS.AI_UPDATED)
+  async handleConfigUpdated(event: IntegrationChangeEvent) {
     if (!this.orgContext.matches(event.orgId)) return;
     await this.reloadConfig();
   }
 
-  @OnEvent('config.ai.deleted')
-  async handleConfigDeleted(event: SystemConfigChangeEvent) {
+  @OnEvent(INTEGRATION_EVENT_PATTERNS.AI_DELETED)
+  async handleConfigDeleted(event: IntegrationChangeEvent) {
     if (!this.orgContext.matches(event.orgId)) return;
     await this.reloadConfig();
   }
@@ -55,14 +57,14 @@ export class LlmService implements OnModuleInit {
   }
 
   private async reloadConfig() {
-    const { value } = await this.systemConfigService.getEffectiveConfig(
+    const { value } = await this.integrationsService.getEffectiveConfig(
       this.orgContext.getOrgId(),
       'ai',
     );
     const apiKey = String(value.apiKey ?? '');
     this.openai = new OpenAI({
       apiKey,
-      baseURL: String(value.baseUrl ?? ''),
+      baseURL: value.baseUrl ? String(value.baseUrl) : undefined,
     });
     this.activeConfig = {
       model: String(value.model ?? ''),

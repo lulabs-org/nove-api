@@ -15,7 +15,7 @@ import { RedocModule, RedocOptions } from 'nestjs-redoc';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import * as cookieParser from 'cookie-parser';
-import { SingleOrgContextService } from './admin/system-config/services/single-org-context.service';
+import { SingleOrgContextService } from './admin/org';
 
 function parseCsv(value?: string): string[] {
   return (value ?? '')

@@ -20,10 +20,11 @@ import {
 } from '../types';
 import { WechatShopTokenService } from './wechat-shop-token.service';
 import {
-  SingleOrgContextService,
-  SystemConfigChangeEvent,
-  SystemConfigService,
-} from '@/admin/system-config/services';
+  IntegrationChangeEvent,
+  INTEGRATION_EVENT_PATTERNS,
+  IntegrationsService,
+} from '@/admin/integrations';
+import { SingleOrgContextService } from '@/admin/org';
 
 @Injectable()
 export class WechatShopClientService implements OnModuleInit {
@@ -33,7 +34,7 @@ export class WechatShopClientService implements OnModuleInit {
   constructor(
     private readonly httpService: HttpService,
     private readonly wechatShopTokenService: WechatShopTokenService,
-    private readonly systemConfigService: SystemConfigService,
+    private readonly integrationsService: IntegrationsService,
     private readonly orgContext: SingleOrgContextService,
   ) {
     this.baseUrl = 'https://api.weixin.qq.com';
@@ -43,8 +44,8 @@ export class WechatShopClientService implements OnModuleInit {
     await this.reloadConfig();
   }
 
-  @OnEvent('config.wechat-shop.updated')
-  async handleConfigUpdate(event: SystemConfigChangeEvent) {
+  @OnEvent(INTEGRATION_EVENT_PATTERNS.WECHAT_SHOP_UPDATED)
+  async handleConfigUpdate(event: IntegrationChangeEvent) {
     if (!this.orgContext.matches(event.orgId)) return;
     this.logger.log(
       'Received config.wechat-shop.updated event, reloading baseUrl...',
@@ -52,14 +53,14 @@ export class WechatShopClientService implements OnModuleInit {
     await this.reloadConfig();
   }
 
-  @OnEvent('config.wechat-shop.deleted')
-  async handleConfigDelete(event: SystemConfigChangeEvent) {
+  @OnEvent(INTEGRATION_EVENT_PATTERNS.WECHAT_SHOP_DELETED)
+  async handleConfigDelete(event: IntegrationChangeEvent) {
     if (!this.orgContext.matches(event.orgId)) return;
     await this.reloadConfig();
   }
 
   private async reloadConfig() {
-    const { value } = await this.systemConfigService.getEffectiveConfig(
+    const { value } = await this.integrationsService.getEffectiveConfig(
       this.orgContext.getOrgId(),
       'wechat-shop',
     );

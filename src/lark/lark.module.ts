@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
-import { SystemConfigModule } from '@/admin/system-config/system-config.module';
+import { IntegrationsModule } from '@/admin/integrations';
 
 import { LarkClient } from './client/lark.client';
 import { LarkWebhookController } from './controllers/webhook.controller';
@@ -16,7 +16,7 @@ import { LarkEventProcessor } from './queue/lark-event.processor';
 
 @Module({
   imports: [
-    SystemConfigModule,
+    IntegrationsModule,
     BullModule.registerQueue({ name: 'lark-events' }),
     BullBoardModule.forFeature({
       name: 'lark-events',

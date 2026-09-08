@@ -1,18 +1,21 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { ConfigTestProvider, SystemConfigValues } from '@/admin/system-config';
-import { TesterService } from '@/admin/system-config/services/tester.service';
+import {
+  IntegrationTestProvider,
+  IntegrationValues,
+  IntegrationTesterService,
+} from '@/admin/integrations';
 
 @Injectable()
 export class WechatShopTesterService
-  implements ConfigTestProvider, OnModuleInit
+  implements IntegrationTestProvider, OnModuleInit
 {
-  constructor(private readonly testerService: TesterService) {}
+  constructor(private readonly testerService: IntegrationTesterService) {}
 
   onModuleInit() {
     this.testerService.registerProvider('wechat-shop', this);
   }
 
-  async test(value: SystemConfigValues): Promise<void> {
+  async test(value: IntegrationValues): Promise<void> {
     const response = await fetch(
       `${String(value.apiBaseUrl).replace(/\/$/, '')}/cgi-bin/stable_token`,
       {

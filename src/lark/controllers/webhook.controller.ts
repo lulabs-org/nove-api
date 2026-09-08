@@ -26,11 +26,8 @@ import { MeetingEndedEventData } from '../types/lark-meeting.types';
 import { Response, Request } from 'express';
 import { LarkMeetingService } from '../services/lark-meeting.service';
 import { LarkEvent } from '../enums/lark-event.enum';
-import {
-  SingleOrgContextService,
-  SystemConfigService,
-} from '@/admin/system-config/services';
-import { SystemConfigValues } from '@/admin/system-config';
+import { IntegrationsService, IntegrationValues } from '@/admin/integrations';
+import { SingleOrgContextService } from '@/admin/org';
 
 @ApiTags('Webhooks')
 @Controller('webhooks/lark')
@@ -40,13 +37,13 @@ export class LarkWebhookController {
 
   constructor(
     larkMeetingService: LarkMeetingService,
-    private readonly systemConfigService: SystemConfigService,
+    private readonly integrationsService: IntegrationsService,
     private readonly orgContext: SingleOrgContextService,
   ) {
     this.larkMeetingService = larkMeetingService;
   }
 
-  private createEventDispatcher(orgId: string, config: SystemConfigValues) {
+  private createEventDispatcher(orgId: string, config: IntegrationValues) {
     return new EventDispatcher({
       encryptKey: String(config.eventEncryptKey ?? ''),
       verificationToken: String(config.eventVerificationToken ?? ''),
@@ -82,7 +79,7 @@ export class LarkWebhookController {
     this.logger.log('收到 Lark Webhook 请求');
 
     const orgId = this.orgContext.getOrgId();
-    const { value: config } = await this.systemConfigService.getEffectiveConfig(
+    const { value: config } = await this.integrationsService.getEffectiveConfig(
       orgId,
       'lark',
     );
