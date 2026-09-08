@@ -1,30 +1,60 @@
-import { UpdateAiConfigDto } from '../dto/ai-config.dto';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsIn,
+  IsInt,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUrl,
+  Max,
+  Min,
+} from 'class-validator';
 import { defineSystemConfig } from '../core';
+
+export class UpdateAiConfigDto {
+  @ApiPropertyOptional({ enum: ['ark', 'openai', 'custom'] })
+  @IsOptional()
+  @IsIn(['ark', 'openai', 'custom'])
+  provider?: 'ark' | 'openai' | 'custom';
+
+  @ApiPropertyOptional({ description: 'OpenAI-compatible API key' })
+  @IsOptional()
+  @IsString()
+  apiKey?: string;
+
+  @ApiPropertyOptional({ description: 'OpenAI-compatible API base URL' })
+  @IsOptional()
+  @IsUrl({ require_tld: false })
+  baseUrl?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  model?: string;
+
+  @ApiPropertyOptional({ minimum: 1 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  maxTokens?: number;
+
+  @ApiPropertyOptional({ minimum: 0, maximum: 2 })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(2)
+  temperature?: number;
+}
 
 export const aiConfig = defineSystemConfig(UpdateAiConfigDto, {
   description: 'Organization AI Model Configuration',
-  fields: {
-    provider: {
-      default: 'openai',
-    },
-    apiKey: {
-      required: true,
-      secret: true,
-    },
-    baseUrl: {
-      required: true,
-      default: 'https://ark.cn-beijing.volces.com/api/v3',
-    },
-    model: {
-      required: true,
-      default: '{TEMPLATE_ENDPOINT_ID}',
-    },
-    maxTokens: {
-      default: 16000,
-    },
-    temperature: {
-      default: 0.7,
-    },
+  defaults: {
+    provider: 'openai',
+    baseUrl: 'https://ark.cn-beijing.volces.com/api/v3',
+    model: '{TEMPLATE_ENDPOINT_ID}',
+    maxTokens: 16000,
+    temperature: 0.7,
   },
+  required: ['apiKey', 'baseUrl', 'model'],
+  secrets: ['apiKey'],
 });
-

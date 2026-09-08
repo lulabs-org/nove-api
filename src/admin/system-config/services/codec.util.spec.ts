@@ -1,14 +1,16 @@
 import { decrypt, encrypt } from '@/common/utils/crypto.util';
 import { SystemConfigRegistry } from '../definitions';
-import { ConfigCodecService } from './config-codec.service';
+import {
+  decodeConfig,
+  encodeUpdateConfig,
+  maskConfig,
+} from './codec.util';
 
-describe('ConfigCodecService', () => {
+describe('codec.util', () => {
   const originalEnv = process.env;
-  let codec: ConfigCodecService;
 
   beforeEach(() => {
     process.env = { ...originalEnv, SYSTEM_ENCRYPTION_KEY: 'test-key' };
-    codec = new ConfigCodecService();
   });
 
   afterEach(() => {
@@ -19,7 +21,7 @@ describe('ConfigCodecService', () => {
     const entry = SystemConfigRegistry['wechat-shop'];
     const existingSecret = encrypt('existing-secret');
 
-    const updated = codec.encodeUpdate(
+    const updated = encodeUpdateConfig(
       entry,
       { appId: 'old-app', appSecret: existingSecret },
       {
@@ -41,7 +43,7 @@ describe('ConfigCodecService', () => {
   it('decodes runtime values, masks public secrets, and ignores unreadable data', () => {
     const entry = SystemConfigRegistry['tencent-meeting'];
     const unreadable = jest.fn();
-    const decoded = codec.decode(
+    const decoded = decodeConfig(
       entry,
       {
         appId: 'app-id',
@@ -53,7 +55,7 @@ describe('ConfigCodecService', () => {
 
     expect(decoded).toEqual({ appId: 'app-id', secretId: 'secret-id' });
     expect(unreadable).toHaveBeenCalledWith('secretKey');
-    expect(codec.mask(entry, decoded)).toEqual({
+    expect(maskConfig(entry, decoded)).toEqual({
       appId: 'app-id',
       secretId: '********',
     });

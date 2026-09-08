@@ -17,22 +17,15 @@ export function defineSystemConfig<TDto extends object>(
 export function getDefaultValues(
   entry: ConfigRegistryEntry,
 ): SystemConfigValues {
-  return Object.fromEntries(
-    Object.entries(entry.fields)
-      .filter(([, field]) => field.default !== undefined)
-      .map(([name, field]) => [name, field.default]),
-  ) as SystemConfigValues;
+  return { ...(entry.defaults ?? {}) };
 }
 
 export function getRequiredFields(entry: ConfigRegistryEntry): string[] {
-  return Object.entries(entry.fields)
-    .filter(([, field]) => field.required)
-    .map(([name]) => name);
+  return entry.required ?? [];
 }
 
 export function getSecretFields(entry: ConfigRegistryEntry): string[] {
-  return Object.entries(entry.fields)
-    .filter(([, field]) => field.secret)
-    .map(([name]) => name);
+  return entry.secrets ?? [];
 }
+
 

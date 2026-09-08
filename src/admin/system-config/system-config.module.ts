@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { SystemConfigController } from './controllers';
 import { SystemConfigRepository } from './repositories';
 import {
-  ConfigCodecService,
   SingleOrgContextService,
   SystemConfigService,
   TesterService,
@@ -14,7 +13,6 @@ import {
     SystemConfigService,
     SystemConfigRepository,
     TesterService,
-    ConfigCodecService,
     SingleOrgContextService,
   ],
   exports: [SystemConfigService, SingleOrgContextService, TesterService],

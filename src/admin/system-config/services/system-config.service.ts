@@ -9,7 +9,7 @@ import { Prisma } from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { SystemConfigRepository } from '../repositories/system-config.repository';
-import { SystemConfigValues } from '../core';
+import { getDefaultValues, SystemConfigValues } from '../core';
 import {
   ConfigSource,
   isSystemConfigModule,
@@ -17,7 +17,15 @@ import {
   SystemConfigModuleName,
   SystemConfigRegistry,
 } from '../definitions';
-import { ConfigCodecService } from './config-codec.service';
+import {
+  containsEncryptedValues,
+  decodeConfig,
+  encodeUpdateConfig,
+  isConfigured,
+  maskConfig,
+  mergeDraftConfig,
+  missingRequiredFields,
+} from './codec.util';
 
 export interface EffectiveSystemConfig {
   orgId: string;
@@ -44,7 +52,6 @@ export class SystemConfigService {
   constructor(
     private readonly configRepository: SystemConfigRepository,
     private readonly eventEmitter: EventEmitter2,
-    private readonly codec: ConfigCodecService,
   ) {}
 
   private getModuleKey(module: SystemConfigModuleName): string {
@@ -86,7 +93,7 @@ export class SystemConfigService {
       this.getModuleKey(moduleName),
     );
     const databaseValue = (stored?.value ?? {}) as SystemConfigValues;
-    const decryptedDatabaseValue = this.codec.decode(
+    const decryptedDatabaseValue = decodeConfig(
       entry,
       databaseValue,
       (field) =>
@@ -95,12 +102,12 @@ export class SystemConfigService {
         ),
     );
     const value = {
-      ...this.codec.defaults(entry),
+      ...getDefaultValues(entry),
       ...decryptedDatabaseValue,
     };
     const source: ConfigSource = stored ? 'database' : 'default';
 
-    const configured = this.codec.isConfigured(entry, value);
+    const configured = isConfigured(entry, value);
 
     return {
       orgId,
@@ -130,7 +137,7 @@ export class SystemConfigService {
   async getConfig(orgId: string, module: string): Promise<PublicSystemConfig> {
     const effective = await this.getEffectiveConfig(orgId, module);
     const entry = SystemConfigRegistry[effective.module];
-    return { ...effective, value: this.codec.mask(entry, effective.value) };
+    return { ...effective, value: maskConfig(entry, effective.value) };
   }
 
   /**
@@ -145,11 +152,11 @@ export class SystemConfigService {
     const current = await this.getEffectiveConfig(orgId, module);
     await this.validateData(current.module, data);
     const entry = SystemConfigRegistry[current.module];
-    const value = this.codec.mergeDraft(entry, current.value, data);
-    const missingFields = this.codec.missingRequiredFields(entry, value);
-    if (missingFields.length > 0) {
+    const value = mergeDraftConfig(entry, current.value, data);
+    const missing = missingRequiredFields(entry, value);
+    if (missing.length > 0) {
       throw new BadRequestException(
-        `Missing required configuration: ${missingFields.join(', ')}`,
+        `Missing required configuration: ${missing.join(', ')}`,
       );
     }
 
@@ -173,13 +180,13 @@ export class SystemConfigService {
     const key = this.getModuleKey(moduleName);
     const existing = await this.configRepository.findByKey(orgId, key);
     const currentConfig = (existing?.value ?? {}) as Record<string, unknown>;
-    const newConfig = this.codec.encodeUpdate(entry, currentConfig, data);
+    const newConfig = encodeUpdateConfig(entry, currentConfig, data);
 
     await this.configRepository.upsert(
       orgId,
       key,
       newConfig as Prisma.InputJsonValue,
-      this.codec.containsEncryptedValues(entry, newConfig),
+      containsEncryptedValues(entry, newConfig),
       entry.description,
     );
 
