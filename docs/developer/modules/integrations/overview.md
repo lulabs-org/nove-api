@@ -1,6 +1,6 @@
-# 全局系统配置
+# 第三方服务集成 (Integrations)
 
-`src/admin/system-config` 提供可校验、可加密并支持热更新的全局服务配置。Registry 注册邮件、AI、腾讯会议、飞书和微信小店五个模块。
+`src/admin/integrations` 提供可校验、可加密并支持热更新的第三方业务集成配置。Registry 注册邮件、AI、腾讯会议、飞书和微信小店五个模块。
 
 ## 配置存储与生效模型
 

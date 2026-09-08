@@ -3,26 +3,32 @@ import { larkConfig } from './lark.config';
 import { mailConfig } from './mail.config';
 import { tencentMeetingConfig } from './tencent-meeting.config';
 import { wechatShopConfig } from './wechat-shop.config';
-import { ConfigRegistryEntry } from '../core';
+import { IntegrationRegistryEntry } from '../core';
 
 export type ConfigSource = 'database' | 'default';
 
-export const SystemConfigRegistry = {
+export const IntegrationRegistry = {
   mail: mailConfig,
   ai: aiConfig,
   'tencent-meeting': tencentMeetingConfig,
   lark: larkConfig,
   'wechat-shop': wechatShopConfig,
-} as const satisfies Record<string, ConfigRegistryEntry>;
+} as const satisfies Record<string, IntegrationRegistryEntry>;
 
-export type SystemConfigModuleName = keyof typeof SystemConfigRegistry;
+export type IntegrationModuleName = keyof typeof IntegrationRegistry;
 
-export const SYSTEM_CONFIG_MODULES = Object.keys(
-  SystemConfigRegistry,
-) as SystemConfigModuleName[];
+export const INTEGRATION_MODULES = Object.keys(
+  IntegrationRegistry,
+) as IntegrationModuleName[];
 
-export function isSystemConfigModule(
+export function isIntegrationModule(
   value: string,
-): value is SystemConfigModuleName {
-  return value in SystemConfigRegistry;
+): value is IntegrationModuleName {
+  return value in IntegrationRegistry;
 }
+
+// Backward compatibility aliases
+export const SystemConfigRegistry = IntegrationRegistry;
+export type SystemConfigModuleName = IntegrationModuleName;
+export const SYSTEM_CONFIG_MODULES = INTEGRATION_MODULES;
+export const isSystemConfigModule = isIntegrationModule;

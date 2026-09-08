@@ -18,9 +18,9 @@ import { WechatShopEventService } from '../services';
 import { decryptWechatMessage, generateSignature } from '../utils';
 import {
   SingleOrgContextService,
-  SystemConfigChangeEvent,
-  SystemConfigService,
-} from '@/admin/system-config/services';
+  IntegrationChangeEvent,
+  IntegrationsService,
+} from '@/admin/integrations';
 
 @ApiTags('Wechat Shop')
 @Controller('webhooks/wechat-shop/events')
@@ -32,7 +32,7 @@ export class WechatShopEventController implements OnModuleInit {
 
   constructor(
     private readonly wechatShopEventService: WechatShopEventService,
-    private readonly systemConfigService: SystemConfigService,
+    private readonly integrationsService: IntegrationsService,
     private readonly orgContext: SingleOrgContextService,
   ) {
     this.webhookToken = '';
@@ -45,7 +45,7 @@ export class WechatShopEventController implements OnModuleInit {
   }
 
   @OnEvent('config.wechat-shop.updated')
-  async handleConfigUpdate(event: SystemConfigChangeEvent) {
+  async handleConfigUpdate(event: IntegrationChangeEvent) {
     if (!this.orgContext.matches(event.orgId)) return;
     this.logger.log(
       'Received config.wechat-shop.updated event, reloading controller config...',
@@ -54,13 +54,13 @@ export class WechatShopEventController implements OnModuleInit {
   }
 
   @OnEvent('config.wechat-shop.deleted')
-  async handleConfigDelete(event: SystemConfigChangeEvent) {
+  async handleConfigDelete(event: IntegrationChangeEvent) {
     if (!this.orgContext.matches(event.orgId)) return;
     await this.reloadConfig();
   }
 
   private async reloadConfig() {
-    const { value } = await this.systemConfigService.getEffectiveConfig(
+    const { value } = await this.integrationsService.getEffectiveConfig(
       this.orgContext.getOrgId(),
       'wechat-shop',
     );

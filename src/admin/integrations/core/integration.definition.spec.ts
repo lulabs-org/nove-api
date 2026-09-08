@@ -2,12 +2,12 @@ import {
   getDefaultValues,
   getRequiredFields,
   getSecretFields,
-} from './system-config.definition';
-import { SystemConfigRegistry } from '../definitions';
+} from './integration.definition';
+import { IntegrationRegistry } from '../definitions';
 
-describe('system config definitions', () => {
+describe('integration definitions', () => {
   it('derives defaults, required fields, and secrets from one field map', () => {
-    expect(getDefaultValues(SystemConfigRegistry.mail)).toEqual({
+    expect(getDefaultValues(IntegrationRegistry.mail)).toEqual({
       host: 'smtp.gmail.com',
       port: 587,
       secure: false,
@@ -15,7 +15,7 @@ describe('system config definitions', () => {
       brandPrimaryColor: '#2563eb',
       brandFooterText: '此邮件由 Nove System 自动发送，请勿回复。',
     });
-    expect(getRequiredFields(SystemConfigRegistry.mail)).toEqual([
+    expect(getRequiredFields(IntegrationRegistry.mail)).toEqual([
       'host',
       'port',
       'user',
@@ -24,7 +24,7 @@ describe('system config definitions', () => {
     ]);
     expect(
       Object.fromEntries(
-        Object.entries(SystemConfigRegistry).map(([module, entry]) => [
+        Object.entries(IntegrationRegistry).map(([module, entry]) => [
           module,
           getSecretFields(entry),
         ]),

@@ -1,17 +1,20 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
-import { ConfigTestProvider, SystemConfigValues } from '@/admin/system-config';
-import { TesterService } from '@/admin/system-config/services/tester.service';
+import {
+  IntegrationTestProvider,
+  IntegrationValues,
+  IntegrationTesterService,
+} from '@/admin/integrations';
 
 @Injectable()
-export class MailTesterService implements ConfigTestProvider, OnModuleInit {
-  constructor(private readonly testerService: TesterService) {}
+export class MailTesterService implements IntegrationTestProvider, OnModuleInit {
+  constructor(private readonly testerService: IntegrationTesterService) {}
 
   onModuleInit() {
     this.testerService.registerProvider('mail', this);
   }
 
-  async test(value: SystemConfigValues): Promise<void> {
+  async test(value: IntegrationValues): Promise<void> {
     const transporter = nodemailer.createTransport({
       host: String(value.host),
       port: Number(value.port),

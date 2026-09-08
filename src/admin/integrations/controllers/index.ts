@@ -1,1 +1,1 @@
-export * from './system-config.controller';
+export * from './integrations.controller';

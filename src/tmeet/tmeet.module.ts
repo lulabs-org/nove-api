@@ -7,7 +7,7 @@ import { UserPlatformModule } from '@/user-platform/user-platform.module';
 import { BullModule } from '@nestjs/bullmq';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
-import { SystemConfigModule } from '@/admin/system-config/system-config.module';
+import { IntegrationsModule } from '@/admin/integrations';
 
 import {
   TMeetApiClientFactory,
@@ -48,7 +48,7 @@ import {
 
 @Module({
   imports: [
-    SystemConfigModule,
+    IntegrationsModule,
     PrismaModule,
     UserModule,
     UserPlatformModule,

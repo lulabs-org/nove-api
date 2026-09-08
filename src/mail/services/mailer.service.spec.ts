@@ -1,8 +1,10 @@
 import { MailerService } from './mailer.service';
 import type { ConfigType } from '@nestjs/config';
 import { emailConfig } from '@/configs/email.config';
-import { SystemConfigService } from '@/admin/system-config/services/system-config.service';
-import { SingleOrgContextService } from '@/admin/system-config/services';
+import {
+  IntegrationsService,
+  SingleOrgContextService,
+} from '@/admin/integrations';
 import * as nodemailer from 'nodemailer';
 
 jest.mock('nodemailer', () => ({
@@ -79,7 +81,7 @@ describe('MailerService', () => {
 
   const mockSystemConfigService = {
     getEffectiveConfig,
-  } as unknown as SystemConfigService;
+  } as unknown as IntegrationsService;
   const orgContext = {
     getOrgId: jest.fn(() => 'org-1'),
     matches: jest.fn((orgId: string) => orgId === 'org-1'),

@@ -1,1 +1,1 @@
-export * from './system-config.repository';
+export * from './integrations.repository';

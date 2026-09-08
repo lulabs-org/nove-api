@@ -1,19 +1,19 @@
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { encrypt } from '@/common/utils/crypto.util';
-import { SystemConfigRepository } from '../repositories/system-config.repository';
-import { SystemConfigService } from './system-config.service';
+import { IntegrationsRepository } from '../repositories/integrations.repository';
+import { IntegrationsService } from './integrations.service';
 
-describe('SystemConfigService', () => {
+describe('IntegrationsService', () => {
   const orgId = 'org-1';
   const originalEnv = process.env;
   let records: Record<
     string,
     { value: Record<string, unknown>; updatedAt: Date }
   >;
-  let repository: jest.Mocked<SystemConfigRepository>;
+  let repository: jest.Mocked<IntegrationsRepository>;
   let emitter: jest.Mocked<EventEmitter2>;
   let emit: jest.Mock;
-  let service: SystemConfigService;
+  let service: IntegrationsService;
 
   beforeEach(() => {
     process.env = { ...originalEnv, SYSTEM_ENCRYPTION_KEY: 'test-key' };
@@ -43,10 +43,10 @@ describe('SystemConfigService', () => {
           record ? ({ orgId: requestedOrgId, key, ...record } as never) : null,
         );
       }),
-    } as unknown as jest.Mocked<SystemConfigRepository>;
+    } as unknown as jest.Mocked<IntegrationsRepository>;
     emit = jest.fn();
     emitter = { emit } as unknown as jest.Mocked<EventEmitter2>;
-    service = new SystemConfigService(repository, emitter);
+    service = new IntegrationsService(repository, emitter);
   });
 
   afterEach(() => {
@@ -76,14 +76,14 @@ describe('SystemConfigService', () => {
         pass: 'db-password',
       },
     });
-    await expect(service.getConfig(orgId, 'mail')).resolves.toMatchObject({
+    await expect(service.getIntegration(orgId, 'mail')).resolves.toMatchObject({
       orgId,
       value: { pass: '********' },
     });
   });
 
   it('preserves a masked secret and reports a Lark credential restart', async () => {
-    const result = await service.updateConfig(orgId, 'lark', {
+    const result = await service.updateIntegration(orgId, 'lark', {
       appId: 'new-app',
       appSecret: 'new-secret',
     });
@@ -103,7 +103,7 @@ describe('SystemConfigService', () => {
       value: { appId: 'new-app', appSecret: 'new-secret' },
     });
 
-    await service.updateConfig(orgId, 'lark', { appSecret: '********' });
+    await service.updateIntegration(orgId, 'lark', { appSecret: '********' });
     await expect(
       service.getEffectiveConfig(orgId, 'lark'),
     ).resolves.toMatchObject({
@@ -117,7 +117,7 @@ describe('SystemConfigService', () => {
       updatedAt: new Date('2026-09-01T00:00:00Z'),
     };
 
-    await expect(service.deleteConfig(orgId, 'ai')).resolves.toMatchObject({
+    await expect(service.deleteIntegration(orgId, 'ai')).resolves.toMatchObject({
       success: true,
       restartRequired: false,
     });
@@ -163,7 +163,7 @@ describe('SystemConfigService', () => {
     };
 
     await expect(
-      service.getConfig(orgId, 'tencent-meeting'),
+      service.getIntegration(orgId, 'tencent-meeting'),
     ).resolves.toMatchObject({
       orgId,
       source: 'database',
@@ -172,10 +172,10 @@ describe('SystemConfigService', () => {
   });
 
   it('isolates configurations with the same key by organization', async () => {
-    await service.updateConfig('org-1', 'mail', {
+    await service.updateIntegration('org-1', 'mail', {
       host: 'smtp.one.example.com',
     });
-    await service.updateConfig('org-2', 'mail', {
+    await service.updateIntegration('org-2', 'mail', {
       host: 'smtp.two.example.com',
     });
 
@@ -192,7 +192,7 @@ describe('SystemConfigService', () => {
       value: { host: 'smtp.two.example.com' },
     });
 
-    await service.deleteConfig('org-1', 'mail');
+    await service.deleteIntegration('org-1', 'mail');
     await expect(
       service.getEffectiveConfig('org-2', 'mail'),
     ).resolves.toMatchObject({

@@ -27,14 +27,14 @@ import { TMeetWebhookEventBodyDto } from '../dto/tmeet-webhook-body.dto';
 import { MeetingEvent } from '../types';
 import {
   SingleOrgContextService,
-  SystemConfigService,
-} from '@/admin/system-config/services';
+  IntegrationsService,
+} from '@/admin/integrations';
 
 @Injectable({ scope: Scope.REQUEST }) // 需要获取 Request Headers，所以必须是 Request Scope
 export class BodyDecryptionPipe implements PipeTransform {
   constructor(
     @Inject(REQUEST) private readonly request: Request,
-    private readonly systemConfigService: SystemConfigService,
+    private readonly integrationsService: IntegrationsService,
     private readonly orgContext: SingleOrgContextService,
   ) {}
 
@@ -56,7 +56,7 @@ export class BodyDecryptionPipe implements PipeTransform {
     }
 
     // 3. 验证签名
-    const { value: config } = await this.systemConfigService.getEffectiveConfig(
+    const { value: config } = await this.integrationsService.getEffectiveConfig(
       this.orgContext.getOrgId(),
       'tencent-meeting',
     );

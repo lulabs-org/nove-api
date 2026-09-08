@@ -1,17 +1,20 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import OpenAI from 'openai';
-import { ConfigTestProvider, SystemConfigValues } from '@/admin/system-config';
-import { TesterService } from '@/admin/system-config/services/tester.service';
+import {
+  IntegrationTestProvider,
+  IntegrationValues,
+  IntegrationTesterService,
+} from '@/admin/integrations';
 
 @Injectable()
-export class LlmTesterService implements ConfigTestProvider, OnModuleInit {
-  constructor(private readonly testerService: TesterService) {}
+export class LlmTesterService implements IntegrationTestProvider, OnModuleInit {
+  constructor(private readonly testerService: IntegrationTesterService) {}
 
   onModuleInit() {
     this.testerService.registerProvider('ai', this);
   }
 
-  async test(value: SystemConfigValues): Promise<void> {
+  async test(value: IntegrationValues): Promise<void> {
     const client = new OpenAI({
       apiKey: String(value.apiKey),
       baseURL: String(value.baseUrl),

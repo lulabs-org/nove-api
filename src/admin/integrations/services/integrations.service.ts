@@ -8,14 +8,14 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Prisma } from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
-import { SystemConfigRepository } from '../repositories/system-config.repository';
-import { getDefaultValues, SystemConfigValues } from '../core';
+import { IntegrationsRepository } from '../repositories/integrations.repository';
+import { getDefaultValues, IntegrationValues } from '../core';
 import {
   ConfigSource,
-  isSystemConfigModule,
-  SYSTEM_CONFIG_MODULES,
-  SystemConfigModuleName,
-  SystemConfigRegistry,
+  isIntegrationModule,
+  INTEGRATION_MODULES,
+  IntegrationModuleName,
+  IntegrationRegistry,
 } from '../definitions';
 import {
   containsEncryptedValues,
@@ -27,42 +27,47 @@ import {
   missingRequiredFields,
 } from './codec.util';
 
-export interface EffectiveSystemConfig {
+export interface EffectiveIntegration {
   orgId: string;
-  module: SystemConfigModuleName;
-  value: SystemConfigValues;
+  module: IntegrationModuleName;
+  value: IntegrationValues;
   configured: boolean;
   source: ConfigSource;
   updatedAt: Date | null;
 }
 
-export interface SystemConfigChangeEvent {
+export interface IntegrationChangeEvent {
   orgId: string;
-  value: SystemConfigValues;
+  value: IntegrationValues;
 }
 
-export interface PublicSystemConfig extends EffectiveSystemConfig {
-  value: SystemConfigValues;
+export interface PublicIntegration extends EffectiveIntegration {
+  value: IntegrationValues;
 }
+
+// Backward compatibility type aliases
+export type EffectiveSystemConfig = EffectiveIntegration;
+export type SystemConfigChangeEvent = IntegrationChangeEvent;
+export type PublicSystemConfig = PublicIntegration;
 
 @Injectable()
-export class SystemConfigService {
-  private readonly logger = new Logger(SystemConfigService.name);
+export class IntegrationsService {
+  private readonly logger = new Logger(IntegrationsService.name);
 
   constructor(
-    private readonly configRepository: SystemConfigRepository,
+    private readonly repository: IntegrationsRepository,
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  private getModuleKey(module: SystemConfigModuleName): string {
+  private getModuleKey(module: IntegrationModuleName): string {
     return `${module.toUpperCase()}_CONFIG`;
   }
 
   /**
    * 运行时安全检查：防止恶意传入未知的 module 字符串导致空指针或配置泄漏
    */
-  private assertModule(module: string): SystemConfigModuleName {
-    if (!isSystemConfigModule(module)) {
+  private assertModule(module: string): IntegrationModuleName {
+    if (!isIntegrationModule(module)) {
       throw new NotFoundException(
         `Module configuration for '${module}' not found in registry`,
       );
@@ -72,7 +77,7 @@ export class SystemConfigService {
 
   async getRawConfig(orgId: string, module: string) {
     const moduleName = this.assertModule(module);
-    return this.configRepository.findByKey(
+    return this.repository.findByKey(
       orgId,
       this.getModuleKey(moduleName),
     );
@@ -85,14 +90,14 @@ export class SystemConfigService {
   async getEffectiveConfig(
     orgId: string,
     module: string,
-  ): Promise<EffectiveSystemConfig> {
+  ): Promise<EffectiveIntegration> {
     const moduleName = this.assertModule(module);
-    const entry = SystemConfigRegistry[moduleName];
-    const stored = await this.configRepository.findByKey(
+    const entry = IntegrationRegistry[moduleName];
+    const stored = await this.repository.findByKey(
       orgId,
       this.getModuleKey(moduleName),
     );
-    const databaseValue = (stored?.value ?? {}) as SystemConfigValues;
+    const databaseValue = (stored?.value ?? {}) as IntegrationValues;
     const decryptedDatabaseValue = decodeConfig(
       entry,
       databaseValue,
@@ -119,9 +124,11 @@ export class SystemConfigService {
     };
   }
 
-  async listConfigs(orgId: string) {
+  getEffectiveIntegration = this.getEffectiveConfig;
+
+  async listIntegrations(orgId: string) {
     return Promise.all(
-      SYSTEM_CONFIG_MODULES.map(async (module) => {
+      INTEGRATION_MODULES.map(async (module) => {
         const config = await this.getEffectiveConfig(orgId, module);
         return {
           orgId: config.orgId,
@@ -134,24 +141,28 @@ export class SystemConfigService {
     );
   }
 
-  async getConfig(orgId: string, module: string): Promise<PublicSystemConfig> {
+  listConfigs = this.listIntegrations;
+
+  async getIntegration(orgId: string, module: string): Promise<PublicIntegration> {
     const effective = await this.getEffectiveConfig(orgId, module);
-    const entry = SystemConfigRegistry[effective.module];
+    const entry = IntegrationRegistry[effective.module];
     return { ...effective, value: maskConfig(entry, effective.value) };
   }
 
+  getConfig = this.getIntegration;
+
   /**
    * 生成草稿配置（不入库）
-   * 场景：用户在后台填写了表单，点击“测试连接”，需要用这份未保存的数据和环境变量混合后进行测试
+   * 场景：用户在后台填写了表单，点击“测试连接”，需要用这份未保存的数据进行测试
    */
   async resolveDraftConfig(
     orgId: string,
     module: string,
     data: Record<string, unknown>,
-  ): Promise<EffectiveSystemConfig> {
+  ): Promise<EffectiveIntegration> {
     const current = await this.getEffectiveConfig(orgId, module);
     await this.validateData(current.module, data);
-    const entry = SystemConfigRegistry[current.module];
+    const entry = IntegrationRegistry[current.module];
     const value = mergeDraftConfig(entry, current.value, data);
     const missing = missingRequiredFields(entry, value);
     if (missing.length > 0) {
@@ -163,26 +174,28 @@ export class SystemConfigService {
     return { ...current, value };
   }
 
+  resolveDraftIntegration = this.resolveDraftConfig;
+
   /**
    * 更新或保存配置
    * 1. 验证格式 -> 2. 差异对比 -> 3. 密码加密入库 -> 4. 触发更新事件及重启检测
    */
-  async updateConfig(
+  async updateIntegration(
     orgId: string,
     module: string,
     data: Record<string, unknown>,
   ) {
     const moduleName = this.assertModule(module);
-    const entry = SystemConfigRegistry[moduleName];
+    const entry = IntegrationRegistry[moduleName];
     await this.validateData(moduleName, data);
 
     const before = await this.getEffectiveConfig(orgId, moduleName);
     const key = this.getModuleKey(moduleName);
-    const existing = await this.configRepository.findByKey(orgId, key);
+    const existing = await this.repository.findByKey(orgId, key);
     const currentConfig = (existing?.value ?? {}) as Record<string, unknown>;
     const newConfig = encodeUpdateConfig(entry, currentConfig, data);
 
-    await this.configRepository.upsert(
+    await this.repository.upsert(
       orgId,
       key,
       newConfig as Prisma.InputJsonValue,
@@ -200,7 +213,7 @@ export class SystemConfigService {
     this.eventEmitter.emit(`config.${moduleName}.updated`, {
       orgId,
       value: after.value,
-    } satisfies SystemConfigChangeEvent);
+    } satisfies IntegrationChangeEvent);
     this.logger.log(`${entry.description} updated by admin.`);
 
     return {
@@ -213,13 +226,15 @@ export class SystemConfigService {
     };
   }
 
+  updateConfig = this.updateIntegration;
+
   /**
    * 删除数据库中的配置，退回到使用“默认值”的状态
    */
-  async deleteConfig(orgId: string, module: string) {
+  async deleteIntegration(orgId: string, module: string) {
     const moduleName = this.assertModule(module);
     const key = this.getModuleKey(moduleName);
-    const existing = await this.configRepository.findByKey(orgId, key);
+    const existing = await this.repository.findByKey(orgId, key);
 
     if (!existing) {
       throw new NotFoundException(
@@ -227,17 +242,17 @@ export class SystemConfigService {
       );
     }
 
-    await this.configRepository.delete(orgId, key);
+    await this.repository.delete(orgId, key);
     const fallback = await this.getEffectiveConfig(orgId, moduleName);
 
-    const entry = SystemConfigRegistry[moduleName];
+    const entry = IntegrationRegistry[moduleName];
     const restartRequiredOn = entry.restartRequiredOn ?? [];
     const restartRequired = restartRequiredOn.length > 0;
 
     this.eventEmitter.emit(`config.${moduleName}.deleted`, {
       orgId,
       value: fallback.value,
-    } satisfies SystemConfigChangeEvent);
+    } satisfies IntegrationChangeEvent);
     this.logger.log(`${entry.description} deleted by admin.`);
 
     return {
@@ -250,14 +265,16 @@ export class SystemConfigService {
     };
   }
 
+  deleteConfig = this.deleteIntegration;
+
   /**
    * 使用 class-validator 和 DTO 进行严格的运行时格式验证
    */
   private async validateData(
-    module: SystemConfigModuleName,
+    module: IntegrationModuleName,
     data: Record<string, unknown>,
   ): Promise<void> {
-    const dtoInstance = plainToInstance(SystemConfigRegistry[module].dto, data);
+    const dtoInstance = plainToInstance(IntegrationRegistry[module].dto, data);
     const errors = await validate(dtoInstance, {
       whitelist: true,
       forbidNonWhitelisted: true,
@@ -270,3 +287,7 @@ export class SystemConfigService {
     throw new BadRequestException(`Validation failed: ${messages}`);
   }
 }
+
+// Backward compatibility class alias
+export const SystemConfigService = IntegrationsService;
+export type SystemConfigService = IntegrationsService;

@@ -1,31 +1,32 @@
 import { Type } from '@nestjs/common';
 import {
-  ConfigDefinition,
-  ConfigRegistryEntry,
-  SystemConfigValues,
-} from './system-config.types';
+  IntegrationDefinition,
+  IntegrationRegistryEntry,
+  IntegrationValues,
+} from './integration.types';
 
-export * from './system-config.types';
+export * from './integration.types';
 
-export function defineSystemConfig<TDto extends object>(
+export function defineIntegrationConfig<TDto extends object>(
   dto: Type<TDto>,
-  definition: Omit<ConfigDefinition<TDto>, 'dto'>,
-): ConfigDefinition<TDto> & ConfigRegistryEntry {
-  return { dto, ...definition } as ConfigDefinition<TDto> & ConfigRegistryEntry;
+  definition: Omit<IntegrationDefinition<TDto>, 'dto'>,
+): IntegrationDefinition<TDto> & IntegrationRegistryEntry {
+  return { dto, ...definition } as IntegrationDefinition<TDto> & IntegrationRegistryEntry;
 }
 
+// Backward compatibility alias
+export const defineSystemConfig = defineIntegrationConfig;
+
 export function getDefaultValues(
-  entry: ConfigRegistryEntry,
-): SystemConfigValues {
+  entry: IntegrationRegistryEntry,
+): IntegrationValues {
   return { ...(entry.defaults ?? {}) };
 }
 
-export function getRequiredFields(entry: ConfigRegistryEntry): string[] {
+export function getRequiredFields(entry: IntegrationRegistryEntry): string[] {
   return entry.required ?? [];
 }
 
-export function getSecretFields(entry: ConfigRegistryEntry): string[] {
+export function getSecretFields(entry: IntegrationRegistryEntry): string[] {
   return entry.secrets ?? [];
 }
-
-

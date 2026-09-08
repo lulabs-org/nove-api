@@ -7,14 +7,14 @@ import {
 } from '@/mail/templates/helpers';
 import {
   SingleOrgContextService,
-  SystemConfigService,
-} from '@/admin/system-config/services';
+  IntegrationsService,
+} from '@/admin/integrations';
 
 @Injectable()
 export class EmailBrandResolverService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly systemConfigService: SystemConfigService,
+    private readonly integrationsService: IntegrationsService,
     private readonly orgContext: SingleOrgContextService,
   ) {}
 
@@ -49,7 +49,7 @@ export class EmailBrandResolverService {
     brand: EmailBrand;
     publicBaseUrl: string | null;
   }> {
-    const { value } = await this.systemConfigService.getEffectiveConfig(
+    const { value } = await this.integrationsService.getEffectiveConfig(
       this.orgContext.getOrgId(),
       'mail',
     );

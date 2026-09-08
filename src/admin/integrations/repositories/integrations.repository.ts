@@ -3,7 +3,7 @@ import { Prisma, SystemConfig } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 
 @Injectable()
-export class SystemConfigRepository {
+export class IntegrationsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findByKey(orgId: string, key: string): Promise<SystemConfig | null> {
@@ -46,3 +46,7 @@ export class SystemConfigRepository {
     }
   }
 }
+
+// Backward compatibility alias
+export const SystemConfigRepository = IntegrationsRepository;
+export type SystemConfigRepository = IntegrationsRepository;

@@ -31,7 +31,7 @@ import { TMeetEventHandlerService } from '../services/event-handler.service';
 import { WebhookLoggingInterceptor } from '../interceptors/webhook-logging.interceptor';
 import { MeetingEvent } from '../types';
 import { UrlVerificationPipe, BodyDecryptionPipe } from '../pipes';
-import { SingleOrgContextService } from '@/admin/system-config/services';
+import { SingleOrgContextService } from '@/admin/integrations';
 
 /**
  * TMeet Webhook Controller

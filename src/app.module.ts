@@ -49,7 +49,7 @@ import { WechatShopModule } from './wechat-shop/wechat-shop.module';
 import { OrderModule } from './order/order.module';
 import { WebhookLogModule } from './webhook-log/webhook-log.module';
 import { OAuthModule } from './oauth/oauth.module';
-import { SystemConfigModule } from './admin/system-config/system-config.module';
+import { IntegrationsModule } from './admin/integrations/integrations.module';
 import { AdminUserModule } from './admin/user/user.module';
 import { ProductModule } from './product/product.module';
 import { ChannelModule } from './channel/channel.module';
@@ -123,7 +123,7 @@ import { ProfitSharingModule } from './profit-sharing/profit-sharing.module';
     OrderModule,
     WebhookLogModule,
     OAuthModule,
-    SystemConfigModule,
+    IntegrationsModule,
     AdminUserModule,
     ProductModule,
     ChannelModule,

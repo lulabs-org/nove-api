@@ -1,19 +1,22 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { ConfigTestProvider, SystemConfigValues } from '@/admin/system-config';
-import { TesterService } from '@/admin/system-config/services/tester.service';
+import {
+  IntegrationTestProvider,
+  IntegrationValues,
+  IntegrationTesterService,
+} from '@/admin/integrations';
 import { generateSignature } from '../utils/crypto.util';
 
 @Injectable()
 export class TMeetTesterService
-  implements ConfigTestProvider, OnModuleInit
+  implements IntegrationTestProvider, OnModuleInit
 {
-  constructor(private readonly testerService: TesterService) {}
+  constructor(private readonly testerService: IntegrationTesterService) {}
 
   onModuleInit() {
     this.testerService.registerProvider('tencent-meeting', this);
   }
 
-  async test(value: SystemConfigValues): Promise<void> {
+  async test(value: IntegrationValues): Promise<void> {
     const endTime = Math.floor(Date.now() / 1000);
     const requestUri = `/v1/corp/records?${new URLSearchParams({
       start_time: String(endTime - 60),
@@ -56,4 +59,3 @@ export class TMeetTesterService
     }
   }
 }
-

@@ -1,5 +1,5 @@
 import type { Queue } from 'bullmq';
-import { SystemConfigService } from '@/admin/system-config/services';
+import { IntegrationsService } from '@/admin/integrations';
 import { TMeetApiClientFactory } from '../client';
 import { TMeetMeetingCoreService } from './meeting-core.service';
 import { TMeetSummaryCoreService } from './summary-core.service';
@@ -15,7 +15,7 @@ describe('TMeetSyncService organization context', () => {
       {} as TMeetMeetingCoreService,
       {} as TMeetTranscriptCoreService,
       {} as TMeetSummaryCoreService,
-      {} as SystemConfigService,
+      {} as IntegrationsService,
     );
 
     await service.syncRecordings('org-1', 1000, 2000, 'operator-1');

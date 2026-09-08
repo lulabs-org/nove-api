@@ -3,11 +3,11 @@ import * as lark from '@larksuiteoapi/node-sdk';
 import { LarkClientConfig } from '../types';
 import {
   SingleOrgContextService,
-  SystemConfigChangeEvent,
-  SystemConfigService,
-} from '@/admin/system-config/services';
+  IntegrationChangeEvent,
+  IntegrationsService,
+  IntegrationValues,
+} from '@/admin/integrations';
 import { OnEvent } from '@nestjs/event-emitter';
-import { SystemConfigValues } from '@/admin/system-config';
 
 @Injectable()
 export class LarkClient implements OnModuleInit {
@@ -43,7 +43,7 @@ export class LarkClient implements OnModuleInit {
   public wsClient: lark.WSClient;
 
   constructor(
-    private readonly systemConfigService: SystemConfigService,
+    private readonly integrationsService: IntegrationsService,
     private readonly orgContext: SingleOrgContextService,
   ) {
     const config: LarkClientConfig = {
@@ -93,7 +93,7 @@ export class LarkClient implements OnModuleInit {
   }
 
   async onModuleInit() {
-    const { value } = await this.systemConfigService.getEffectiveConfig(
+    const { value } = await this.integrationsService.getEffectiveConfig(
       this.orgContext.getOrgId(),
       'lark',
     );
@@ -105,18 +105,18 @@ export class LarkClient implements OnModuleInit {
   }
 
   @OnEvent('config.lark.updated')
-  handleConfigUpdated(event: SystemConfigChangeEvent) {
+  handleConfigUpdated(event: IntegrationChangeEvent) {
     if (!this.orgContext.matches(event.orgId)) return;
     this.applyHttpConfig(event.value);
   }
 
   @OnEvent('config.lark.deleted')
-  handleConfigDeleted(event: SystemConfigChangeEvent) {
+  handleConfigDeleted(event: IntegrationChangeEvent) {
     if (!this.orgContext.matches(event.orgId)) return;
     this.applyHttpConfig(event.value);
   }
 
-  private applyHttpConfig(value: SystemConfigValues) {
+  private applyHttpConfig(value: IntegrationValues) {
     this.client = new lark.Client({
       appId: String(value.appId ?? ''),
       appSecret: String(value.appSecret ?? ''),

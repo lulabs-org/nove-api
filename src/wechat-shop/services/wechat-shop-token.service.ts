@@ -12,9 +12,9 @@ import { RedisService } from '@/redis/redis.service';
 import { WechatShopApiResponse } from '../types';
 import {
   SingleOrgContextService,
-  SystemConfigChangeEvent,
-  SystemConfigService,
-} from '@/admin/system-config/services';
+  IntegrationChangeEvent,
+  IntegrationsService,
+} from '@/admin/integrations';
 
 @Injectable()
 export class WechatShopTokenService implements OnModuleInit {
@@ -29,7 +29,7 @@ export class WechatShopTokenService implements OnModuleInit {
   constructor(
     private readonly httpService: HttpService,
     private readonly redisService: RedisService,
-    private readonly systemConfigService: SystemConfigService,
+    private readonly integrationsService: IntegrationsService,
     private readonly orgContext: SingleOrgContextService,
   ) {
     this.appId = '';
@@ -43,7 +43,7 @@ export class WechatShopTokenService implements OnModuleInit {
   }
 
   @OnEvent('config.wechat-shop.updated')
-  async handleConfigUpdate(event: SystemConfigChangeEvent) {
+  async handleConfigUpdate(event: IntegrationChangeEvent) {
     if (!this.orgContext.matches(event.orgId)) return;
     this.logger.log(
       'Received config.wechat-shop.updated event, reloading config...',
@@ -55,14 +55,14 @@ export class WechatShopTokenService implements OnModuleInit {
   }
 
   @OnEvent('config.wechat-shop.deleted')
-  async handleConfigDelete(event: SystemConfigChangeEvent) {
+  async handleConfigDelete(event: IntegrationChangeEvent) {
     if (!this.orgContext.matches(event.orgId)) return;
     await this.clearTokenCache();
     await this.reloadConfig();
   }
 
   private async reloadConfig() {
-    const { value } = await this.systemConfigService.getEffectiveConfig(
+    const { value } = await this.integrationsService.getEffectiveConfig(
       this.orgContext.getOrgId(),
       'wechat-shop',
     );

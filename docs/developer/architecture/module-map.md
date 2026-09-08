@@ -33,7 +33,7 @@
 - `prisma`：数据库连接和事务入口。
 - `task`：计划任务、后台任务与处理器。
 - `webhook-log`：保存第三方回调的处理状态和脱敏上下文。
-- `admin/system-config`：管理邮件、AI、腾讯会议、飞书与微信小店配置，负责首次环境导入、敏感字段加密和热更新事件。参见[系统配置](../modules/system-config/overview.md)。
+- `admin/integrations`：管理邮件、AI、腾讯会议、飞书与微信小店配置，负责敏感字段加密和热更新事件。参见[第三方服务集成](../modules/integrations/overview.md)。
 
 ## 模块依赖规则
 

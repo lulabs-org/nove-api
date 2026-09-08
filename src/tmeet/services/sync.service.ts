@@ -7,7 +7,7 @@ import type { RecordMeeting, RecordFile } from '../types';
 import { TMeetMeetingCoreService } from './meeting-core.service';
 import { TMeetTranscriptCoreService } from './transcript-core.service';
 import { TMeetSummaryCoreService } from './summary-core.service';
-import { SystemConfigService } from '@/admin/system-config/services';
+import { IntegrationsService } from '@/admin/integrations';
 
 @Injectable()
 export class TMeetSyncService {
@@ -19,7 +19,7 @@ export class TMeetSyncService {
     private readonly meetingCoreService: TMeetMeetingCoreService,
     private readonly transcriptCoreService: TMeetTranscriptCoreService,
     private readonly summaryCoreService: TMeetSummaryCoreService,
-    private readonly systemConfigService: SystemConfigService,
+    private readonly integrationsService: IntegrationsService,
   ) {}
 
   /**
@@ -279,7 +279,7 @@ export class TMeetSyncService {
 
     const actualEndTime = Math.min(endTime, now);
     const { value: activeConfig } =
-      await this.systemConfigService.getEffectiveConfig(
+      await this.integrationsService.getEffectiveConfig(
         orgId,
         'tencent-meeting',
       );

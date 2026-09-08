@@ -16,23 +16,25 @@ import {
 } from '@nestjs/swagger';
 import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
 import { Auth } from '@/auth/decorators/auth.decorator';
-import { SystemConfigService, TesterService } from '../services';
+import { IntegrationsService, IntegrationTesterService } from '../services';
 
 @ApiTags('Admin / Integrations')
 @ApiBearerAuth()
 @Controller('admin/integrations')
-export class SystemConfigController {
+export class IntegrationsController {
   constructor(
-    private readonly systemConfigService: SystemConfigService,
-    private readonly systemConfigTester: TesterService,
+    private readonly integrationsService: IntegrationsService,
+    private readonly integrationTester: IntegrationTesterService,
   ) {}
 
   @Get()
   @ApiOperation({ summary: 'List organization integrations configuration status' })
   @RequirePermissions('system:config:read')
-  async listConfigs(@Auth('orgId') orgId: string | null | undefined) {
-    return this.systemConfigService.listConfigs(this.requireOrgId(orgId));
+  async list(@Auth('orgId') orgId: string | null | undefined) {
+    return this.integrationsService.listIntegrations(this.requireOrgId(orgId));
   }
+
+  listConfigs = this.list;
 
   @Get(':module')
   @ApiOperation({ summary: 'Get organization integration configuration for a module' })
@@ -42,12 +44,14 @@ export class SystemConfigController {
     example: 'mail',
   })
   @RequirePermissions('system:config:read')
-  async getConfig(
+  async get(
     @Auth('orgId') orgId: string | null | undefined,
     @Param('module') module: string,
   ) {
-    return this.systemConfigService.getConfig(this.requireOrgId(orgId), module);
+    return this.integrationsService.getIntegration(this.requireOrgId(orgId), module);
   }
+
+  getConfig = this.get;
 
   @Put(':module')
   @ApiOperation({
@@ -59,32 +63,36 @@ export class SystemConfigController {
     example: 'mail',
   })
   @RequirePermissions('system:config:write')
-  async updateConfig(
+  async update(
     @Auth('orgId') orgId: string | null | undefined,
     @Param('module') module: string,
     @Body() data: Record<string, unknown>,
   ) {
-    return this.systemConfigService.updateConfig(
+    return this.integrationsService.updateIntegration(
       this.requireOrgId(orgId),
       module,
       data,
     );
   }
 
+  updateConfig = this.update;
+
   @Post(':module/test')
   @ApiOperation({ summary: 'Test a draft integration configuration' })
   @RequirePermissions('system:config:write')
-  async testConfig(
+  async test(
     @Auth('orgId') orgId: string | null | undefined,
     @Param('module') module: string,
     @Body() data: Record<string, unknown>,
   ) {
-    return this.systemConfigTester.testConfig(
+    return this.integrationTester.testIntegration(
       this.requireOrgId(orgId),
       module,
       data,
     );
   }
+
+  testConfig = this.test;
 
   @Delete(':module')
   @ApiOperation({ summary: 'Delete organization integration configuration' })
@@ -94,15 +102,17 @@ export class SystemConfigController {
     example: 'mail',
   })
   @RequirePermissions('system:config:write')
-  async deleteConfig(
+  async remove(
     @Auth('orgId') orgId: string | null | undefined,
     @Param('module') module: string,
   ) {
-    return this.systemConfigService.deleteConfig(
+    return this.integrationsService.deleteIntegration(
       this.requireOrgId(orgId),
       module,
     );
   }
+
+  deleteConfig = this.remove;
 
   private requireOrgId(orgId: string | null | undefined): string {
     if (!orgId) {
@@ -111,3 +121,7 @@ export class SystemConfigController {
     return orgId;
   }
 }
+
+// Backward compatibility alias
+export const SystemConfigController = IntegrationsController;
+export type SystemConfigController = IntegrationsController;

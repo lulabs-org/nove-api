@@ -1,2 +1,2 @@
-export * from './system-config.types';
-export * from './system-config.definition';
+export * from './integration.types';
+export * from './integration.definition';

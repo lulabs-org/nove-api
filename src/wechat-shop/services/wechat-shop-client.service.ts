@@ -21,9 +21,9 @@ import {
 import { WechatShopTokenService } from './wechat-shop-token.service';
 import {
   SingleOrgContextService,
-  SystemConfigChangeEvent,
-  SystemConfigService,
-} from '@/admin/system-config/services';
+  IntegrationChangeEvent,
+  IntegrationsService,
+} from '@/admin/integrations';
 
 @Injectable()
 export class WechatShopClientService implements OnModuleInit {
@@ -33,7 +33,7 @@ export class WechatShopClientService implements OnModuleInit {
   constructor(
     private readonly httpService: HttpService,
     private readonly wechatShopTokenService: WechatShopTokenService,
-    private readonly systemConfigService: SystemConfigService,
+    private readonly integrationsService: IntegrationsService,
     private readonly orgContext: SingleOrgContextService,
   ) {
     this.baseUrl = 'https://api.weixin.qq.com';
@@ -44,7 +44,7 @@ export class WechatShopClientService implements OnModuleInit {
   }
 
   @OnEvent('config.wechat-shop.updated')
-  async handleConfigUpdate(event: SystemConfigChangeEvent) {
+  async handleConfigUpdate(event: IntegrationChangeEvent) {
     if (!this.orgContext.matches(event.orgId)) return;
     this.logger.log(
       'Received config.wechat-shop.updated event, reloading baseUrl...',
@@ -53,13 +53,13 @@ export class WechatShopClientService implements OnModuleInit {
   }
 
   @OnEvent('config.wechat-shop.deleted')
-  async handleConfigDelete(event: SystemConfigChangeEvent) {
+  async handleConfigDelete(event: IntegrationChangeEvent) {
     if (!this.orgContext.matches(event.orgId)) return;
     await this.reloadConfig();
   }
 
   private async reloadConfig() {
-    const { value } = await this.systemConfigService.getEffectiveConfig(
+    const { value } = await this.integrationsService.getEffectiveConfig(
       this.orgContext.getOrgId(),
       'wechat-shop',
     );

@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { SystemConfigService } from './system-config.service';
-import { SystemConfigValues, ConfigTestProvider } from '../core';
+import { IntegrationsService } from './integrations.service';
+import { IntegrationValues, IntegrationTestProvider } from '../core';
 
 export interface TestResult {
   orgId: string;
@@ -9,21 +9,21 @@ export interface TestResult {
 }
 
 @Injectable()
-export class TesterService {
-  private readonly providers = new Map<string, ConfigTestProvider>();
+export class IntegrationTesterService {
+  private readonly providers = new Map<string, IntegrationTestProvider>();
 
-  constructor(private readonly systemConfigService: SystemConfigService) {}
+  constructor(private readonly integrationsService: IntegrationsService) {}
 
-  registerProvider(module: string, provider: ConfigTestProvider): void {
+  registerProvider(module: string, provider: IntegrationTestProvider): void {
     this.providers.set(module, provider);
   }
 
-  async testConfig(
+  async testIntegration(
     orgId: string,
     module: string,
     draft: Record<string, unknown>,
   ): Promise<TestResult> {
-    const { value } = await this.systemConfigService.resolveDraftConfig(
+    const { value } = await this.integrationsService.resolveDraftConfig(
       orgId,
       module,
       draft,
@@ -41,7 +41,9 @@ export class TesterService {
     }
   }
 
-  private runTest(module: string, value: SystemConfigValues): Promise<void> {
+  testConfig = this.testIntegration;
+
+  private runTest(module: string, value: IntegrationValues): Promise<void> {
     const provider = this.providers.get(module);
     if (!provider) {
       throw new BadRequestException('不支持测试该配置模块');
@@ -71,3 +73,7 @@ export class TesterService {
     return '连接测试失败，请检查凭证、服务权限和网络配置';
   }
 }
+
+// Backward compatibility alias
+export const TesterService = IntegrationTesterService;
+export type TesterService = IntegrationTesterService;

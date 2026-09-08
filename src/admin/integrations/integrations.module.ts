@@ -1,20 +1,24 @@
 import { Module } from '@nestjs/common';
-import { SystemConfigController } from './controllers';
-import { SystemConfigRepository } from './repositories';
+import { IntegrationsController } from './controllers';
+import { IntegrationsRepository } from './repositories';
 import {
   SingleOrgContextService,
-  SystemConfigService,
-  TesterService,
+  IntegrationsService,
+  IntegrationTesterService,
 } from './services';
 
 @Module({
-  controllers: [SystemConfigController],
+  controllers: [IntegrationsController],
   providers: [
-    SystemConfigService,
-    SystemConfigRepository,
-    TesterService,
+    IntegrationsService,
+    IntegrationsRepository,
+    IntegrationTesterService,
     SingleOrgContextService,
   ],
-  exports: [SystemConfigService, SingleOrgContextService, TesterService],
+  exports: [IntegrationsService, SingleOrgContextService, IntegrationTesterService],
 })
-export class SystemConfigModule {}
+export class IntegrationsModule {}
+
+// Backward compatibility alias
+export const SystemConfigModule = IntegrationsModule;
+export type SystemConfigModule = IntegrationsModule;
