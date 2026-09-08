@@ -35,13 +35,17 @@ describe('Drive configuration after integrations migration', () => {
     expect(repository.findByKey).toHaveBeenCalledWith('org-a', 'DRIVE_CONFIG');
   });
 
-  it('accepts scoped drive configuration without a legacy default organization', async () => {
+  it('accepts scoped integration configuration without a legacy default organization', async () => {
     await expect(
       integrations.resolveDraftConfig('org-a', 'drive', {
         allowedExtensions: ['.pdf'],
-        malwareScanProvider: 'CLAMAV',
       }),
     ).resolves.toMatchObject({ orgId: 'org-a', module: 'drive' });
+    await expect(
+      integrations.resolveDraftConfig('org-a', 'file-scanning', {
+        malwareScanProvider: 'CLAMAV',
+      }),
+    ).resolves.toMatchObject({ orgId: 'org-a', module: 'file-scanning' });
     await expect(
       integrations.resolveDraftConfig('org-a', 'drive', {
         allowedExtensions: [123],

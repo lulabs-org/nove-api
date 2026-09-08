@@ -10,10 +10,5 @@ export const driveConfig = defineIntegrationConfig(UpdateDriveConfigDto, {
     documentMaxMiB: 100,
     audioMaxMiB: 2048,
     videoMaxMiB: 20480,
-    aliyunSasRegionId: 'cn-beijing',
-    scanTimeoutMs: 300000,
-    scanPollIntervalMs: 3000,
-    clamAvPort: 3310,
-    clamAvTimeoutMs: 600000,
   },
 });

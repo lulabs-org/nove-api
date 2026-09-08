@@ -29,6 +29,7 @@ export type ConfigSource = 'database' | 'default';
 
 export type IntegrationModuleName =
   | 'drive'
+  | 'file-scanning'
   | 'mail'
   | 'ai'
   | 'tencent-meeting'

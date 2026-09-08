@@ -8,7 +8,15 @@ export class IntegrationSummaryResponseDto {
   @ApiProperty({
     description: '集成模块标识',
     example: 'mail',
-    enum: ['mail', 'ai', 'tencent-meeting', 'lark', 'wechat-shop', 'drive'],
+    enum: [
+      'mail',
+      'ai',
+      'tencent-meeting',
+      'lark',
+      'wechat-shop',
+      'drive',
+      'file-scanning',
+    ],
   })
   module!: IntegrationModuleName;
 
