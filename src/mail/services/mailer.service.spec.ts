@@ -79,7 +79,7 @@ describe('MailerService', () => {
     getEffectiveConfig.mockResolvedValue({ value: {} });
   });
 
-  const mockSystemConfigService = {
+  const mockIntegrationsService = {
     getEffectiveConfig,
   } as unknown as IntegrationsService;
   const orgContext = {
@@ -99,7 +99,7 @@ describe('MailerService', () => {
       },
     });
     useMailConfig(config);
-    const svc = new MailerService(mockSystemConfigService, orgContext);
+    const svc = new MailerService(mockIntegrationsService, orgContext);
     await svc.onModuleInit();
 
     // No transporter -> send returns null, verify returns false
@@ -112,7 +112,7 @@ describe('MailerService', () => {
   });
 
   it('ignores configuration events from another organization', async () => {
-    const svc = new MailerService(mockSystemConfigService, orgContext);
+    const svc = new MailerService(mockIntegrationsService, orgContext);
 
     await svc.handleMailConfigUpdate({ orgId: 'org-2', value: {} });
     await svc.handleMailConfigDelete({ orgId: 'org-2', value: {} });
@@ -135,7 +135,7 @@ describe('MailerService', () => {
       },
     });
     useMailConfig(config);
-    const svc = new MailerService(mockSystemConfigService, orgContext);
+    const svc = new MailerService(mockIntegrationsService, orgContext);
     await svc.onModuleInit();
 
     // explicit from has highest precedence
@@ -172,7 +172,7 @@ describe('MailerService', () => {
     });
     useMailConfig(configWithoutFrom);
     const svcWithoutFrom = new MailerService(
-      mockSystemConfigService,
+      mockIntegrationsService,
       orgContext,
     );
     await svcWithoutFrom.onModuleInit();
@@ -210,7 +210,7 @@ describe('MailerService', () => {
       },
     });
     useMailConfig(config);
-    const svc = new MailerService(mockSystemConfigService, orgContext);
+    const svc = new MailerService(mockIntegrationsService, orgContext);
     await svc.onModuleInit();
 
     await expect(svc.verify()).resolves.toBe(true);
@@ -240,7 +240,7 @@ describe('MailerService', () => {
       },
     });
     useMailConfig(config);
-    const svc = new MailerService(mockSystemConfigService, orgContext);
+    const svc = new MailerService(mockIntegrationsService, orgContext);
     await svc.onModuleInit();
 
     await expect(svc.verify()).resolves.toBe(false);
@@ -263,7 +263,7 @@ describe('MailerService', () => {
     // constructor triggers callback branch
     // no assertions needed; execution covers warning branch
 
-    const svc = new MailerService(mockSystemConfigService, orgContext);
+    const svc = new MailerService(mockIntegrationsService, orgContext);
     await svc.onModuleInit();
     expect(createTransport).toHaveBeenCalled();
     expect(transporter.verify).toHaveBeenCalled();

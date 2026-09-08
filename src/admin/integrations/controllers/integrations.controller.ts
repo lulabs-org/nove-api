@@ -34,8 +34,6 @@ export class IntegrationsController {
     return this.integrationsService.listIntegrations(this.requireOrgId(orgId));
   }
 
-  listConfigs = this.list;
-
   @Get(':module')
   @ApiOperation({ summary: 'Get organization integration configuration for a module' })
   @ApiParam({
@@ -50,8 +48,6 @@ export class IntegrationsController {
   ) {
     return this.integrationsService.getIntegration(this.requireOrgId(orgId), module);
   }
-
-  getConfig = this.get;
 
   @Put(':module')
   @ApiOperation({
@@ -75,8 +71,6 @@ export class IntegrationsController {
     );
   }
 
-  updateConfig = this.update;
-
   @Post(':module/test')
   @ApiOperation({ summary: 'Test a draft integration configuration' })
   @RequirePermissions('system:config:write')
@@ -91,8 +85,6 @@ export class IntegrationsController {
       data,
     );
   }
-
-  testConfig = this.test;
 
   @Delete(':module')
   @ApiOperation({ summary: 'Delete organization integration configuration' })
@@ -112,8 +104,6 @@ export class IntegrationsController {
     );
   }
 
-  deleteConfig = this.remove;
-
   private requireOrgId(orgId: string | null | undefined): string {
     if (!orgId) {
       throw new ForbiddenException('Organization context is required');
@@ -121,7 +111,3 @@ export class IntegrationsController {
     return orgId;
   }
 }
-
-// Backward compatibility alias
-export const SystemConfigController = IntegrationsController;
-export type SystemConfigController = IntegrationsController;

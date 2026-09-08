@@ -1,6 +1,6 @@
 import { IsString, IsOptional, IsUrl } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { defineSystemConfig } from '../core';
+import { defineIntegrationConfig } from '../core';
 
 export class UpdateWechatShopConfigDto {
   @ApiPropertyOptional({
@@ -38,7 +38,7 @@ export class UpdateWechatShopConfigDto {
   apiBaseUrl?: string;
 }
 
-export const wechatShopConfig = defineSystemConfig(UpdateWechatShopConfigDto, {
+export const wechatShopConfig = defineIntegrationConfig(UpdateWechatShopConfigDto, {
   description: 'Organization Wechat Shop Configuration',
   defaults: {
     apiBaseUrl: 'https://api.weixin.qq.com',

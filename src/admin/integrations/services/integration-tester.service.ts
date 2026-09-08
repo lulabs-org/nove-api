@@ -41,8 +41,6 @@ export class IntegrationTesterService {
     }
   }
 
-  testConfig = this.testIntegration;
-
   private runTest(module: string, value: IntegrationValues): Promise<void> {
     const provider = this.providers.get(module);
     if (!provider) {
@@ -73,7 +71,3 @@ export class IntegrationTesterService {
     return '连接测试失败，请检查凭证、服务权限和网络配置';
   }
 }
-
-// Backward compatibility alias
-export const TesterService = IntegrationTesterService;
-export type TesterService = IntegrationTesterService;

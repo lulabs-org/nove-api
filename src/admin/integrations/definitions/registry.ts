@@ -26,9 +26,3 @@ export function isIntegrationModule(
 ): value is IntegrationModuleName {
   return value in IntegrationRegistry;
 }
-
-// Backward compatibility aliases
-export const SystemConfigRegistry = IntegrationRegistry;
-export type SystemConfigModuleName = IntegrationModuleName;
-export const SYSTEM_CONFIG_MODULES = INTEGRATION_MODULES;
-export const isSystemConfigModule = isIntegrationModule;

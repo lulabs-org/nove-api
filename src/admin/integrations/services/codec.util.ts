@@ -1,9 +1,9 @@
 import { decrypt, encrypt } from '@/common/utils/crypto.util';
 import {
-  ConfigRegistryEntry,
+  IntegrationRegistryEntry,
   getRequiredFields,
   getSecretFields,
-  SystemConfigValues,
+  IntegrationValues,
 } from '../core';
 
 export const MASKED_SECRET = '********';
@@ -13,10 +13,10 @@ export const MASKED_SECRET = '********';
  * 如果解密失败，可以通过回调记录日志并忽略该脏数据
  */
 export function decodeConfig(
-  entry: ConfigRegistryEntry,
-  storedValue: SystemConfigValues,
+  entry: IntegrationRegistryEntry,
+  storedValue: IntegrationValues,
   onUnreadableSecret?: (field: string) => void,
-): SystemConfigValues {
+): IntegrationValues {
   const value = { ...storedValue };
 
   for (const field of getSecretFields(entry)) {
@@ -38,9 +38,9 @@ export function decodeConfig(
  * 脱敏：给前端下发配置时，将所有涉及安全的字段（如密码、API Key）替换为 '********'
  */
 export function maskConfig(
-  entry: ConfigRegistryEntry,
-  plainValue: SystemConfigValues,
-): SystemConfigValues {
+  entry: IntegrationRegistryEntry,
+  plainValue: IntegrationValues,
+): IntegrationValues {
   const value = { ...plainValue };
   for (const field of getSecretFields(entry)) {
     if (hasValue(value[field])) value[field] = MASKED_SECRET;
@@ -53,17 +53,17 @@ export function maskConfig(
  * 如果 draft 里传来的是 '********'，说明用户没改密码，需自动使用现有数据库里的明文密码替换
  */
 export function mergeDraftConfig(
-  entry: ConfigRegistryEntry,
-  currentValue: SystemConfigValues,
+  entry: IntegrationRegistryEntry,
+  currentValue: IntegrationValues,
   draftValue: Record<string, unknown>,
-): SystemConfigValues {
+): IntegrationValues {
   const draft = { ...draftValue };
   for (const field of getSecretFields(entry)) {
     if (draft[field] === MASKED_SECRET || isBlankString(draft[field])) {
       delete draft[field];
     }
   }
-  return { ...currentValue, ...draft } as SystemConfigValues;
+  return { ...currentValue, ...draft } as IntegrationValues;
 }
 
 /**
@@ -73,10 +73,10 @@ export function mergeDraftConfig(
  * 3. 如果收到新明文密码，进行 AES 加密后保存
  */
 export function encodeUpdateConfig(
-  entry: ConfigRegistryEntry,
+  entry: IntegrationRegistryEntry,
   currentStoredValue: Record<string, unknown>,
   input: Record<string, unknown>,
-): SystemConfigValues {
+): IntegrationValues {
   const normalizedInput = Object.fromEntries(
     Object.entries(input).filter(([, value]) => value !== undefined),
   );
@@ -92,22 +92,22 @@ export function encodeUpdateConfig(
     }
   }
 
-  return value as SystemConfigValues;
+  return value as IntegrationValues;
 }
 
 /**
  * 判断某个模块是否“已配置”完毕（所有必填项都有值）
  */
 export function isConfigured(
-  entry: ConfigRegistryEntry,
-  value: SystemConfigValues,
+  entry: IntegrationRegistryEntry,
+  value: IntegrationValues,
 ): boolean {
   return missingRequiredFields(entry, value).length === 0;
 }
 
 export function missingRequiredFields(
-  entry: ConfigRegistryEntry,
-  value: SystemConfigValues,
+  entry: IntegrationRegistryEntry,
+  value: IntegrationValues,
 ): string[] {
   return getRequiredFields(entry).filter(
     (field) => !hasValue(value[field]),
@@ -115,8 +115,8 @@ export function missingRequiredFields(
 }
 
 export function containsEncryptedValues(
-  entry: ConfigRegistryEntry,
-  value: SystemConfigValues,
+  entry: IntegrationRegistryEntry,
+  value: IntegrationValues,
 ): boolean {
   return getSecretFields(entry).some((field) => hasValue(value[field]));
 }

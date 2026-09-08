@@ -9,7 +9,7 @@ import {
   Min,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { defineSystemConfig } from '../core';
+import { defineIntegrationConfig } from '../core';
 
 export class UpdateMailConfigDto {
   @ApiPropertyOptional({ description: 'SMTP Host', example: 'smtp.gmail.com' })
@@ -76,7 +76,7 @@ export class UpdateMailConfigDto {
   brandPublicBaseUrl?: string;
 }
 
-export const mailConfig = defineSystemConfig(UpdateMailConfigDto, {
+export const mailConfig = defineIntegrationConfig(UpdateMailConfigDto, {
   description: 'Organization Mail Configuration',
   defaults: {
     host: 'smtp.gmail.com',

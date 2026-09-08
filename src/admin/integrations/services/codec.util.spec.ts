@@ -1,5 +1,5 @@
 import { decrypt, encrypt } from '@/common/utils/crypto.util';
-import { SystemConfigRegistry } from '../definitions';
+import { IntegrationRegistry } from '../definitions';
 import {
   decodeConfig,
   encodeUpdateConfig,
@@ -18,7 +18,7 @@ describe('codec.util', () => {
   });
 
   it('encrypts only declared secrets and preserves masked or blank values', () => {
-    const entry = SystemConfigRegistry['wechat-shop'];
+    const entry = IntegrationRegistry['wechat-shop'];
     const existingSecret = encrypt('existing-secret');
 
     const updated = encodeUpdateConfig(
@@ -41,7 +41,7 @@ describe('codec.util', () => {
   });
 
   it('decodes runtime values, masks public secrets, and ignores unreadable data', () => {
-    const entry = SystemConfigRegistry['tencent-meeting'];
+    const entry = IntegrationRegistry['tencent-meeting'];
     const unreadable = jest.fn();
     const decoded = decodeConfig(
       entry,

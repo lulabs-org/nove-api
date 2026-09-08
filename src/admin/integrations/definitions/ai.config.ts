@@ -9,7 +9,7 @@ import {
   Max,
   Min,
 } from 'class-validator';
-import { defineSystemConfig } from '../core';
+import { defineIntegrationConfig } from '../core';
 
 export class UpdateAiConfigDto {
   @ApiPropertyOptional({ enum: ['ark', 'openai', 'custom'] })
@@ -46,7 +46,7 @@ export class UpdateAiConfigDto {
   temperature?: number;
 }
 
-export const aiConfig = defineSystemConfig(UpdateAiConfigDto, {
+export const aiConfig = defineIntegrationConfig(UpdateAiConfigDto, {
   description: 'Organization AI Model Configuration',
   defaults: {
     provider: 'openai',

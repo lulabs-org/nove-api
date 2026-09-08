@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
-import { defineSystemConfig } from '../core';
+import { defineIntegrationConfig } from '../core';
 
 export class UpdateTencentMeetingConfigDto {
   @ApiPropertyOptional()
@@ -39,7 +39,7 @@ export class UpdateTencentMeetingConfigDto {
   encodingAesKey?: string;
 }
 
-export const tencentMeetingConfig = defineSystemConfig(
+export const tencentMeetingConfig = defineIntegrationConfig(
   UpdateTencentMeetingConfigDto,
   {
     description: 'Organization Tencent Meeting Configuration',

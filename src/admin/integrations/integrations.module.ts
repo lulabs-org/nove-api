@@ -18,7 +18,3 @@ import {
   exports: [IntegrationsService, SingleOrgContextService, IntegrationTesterService],
 })
 export class IntegrationsModule {}
-
-// Backward compatibility alias
-export const SystemConfigModule = IntegrationsModule;
-export type SystemConfigModule = IntegrationsModule;

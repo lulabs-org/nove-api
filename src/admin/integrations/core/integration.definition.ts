@@ -14,9 +14,6 @@ export function defineIntegrationConfig<TDto extends object>(
   return { dto, ...definition } as IntegrationDefinition<TDto> & IntegrationRegistryEntry;
 }
 
-// Backward compatibility alias
-export const defineSystemConfig = defineIntegrationConfig;
-
 export function getDefaultValues(
   entry: IntegrationRegistryEntry,
 ): IntegrationValues {

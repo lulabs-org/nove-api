@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
-import { defineSystemConfig } from '../core';
+import { defineIntegrationConfig } from '../core';
 
 export class UpdateLarkConfigDto {
   @ApiPropertyOptional()
@@ -24,7 +24,7 @@ export class UpdateLarkConfigDto {
   eventVerificationToken?: string;
 }
 
-export const larkConfig = defineSystemConfig(UpdateLarkConfigDto, {
+export const larkConfig = defineIntegrationConfig(UpdateLarkConfigDto, {
   description: 'Organization Lark Configuration',
   required: ['appId', 'appSecret'],
   secrets: ['appSecret', 'eventEncryptKey', 'eventVerificationToken'],

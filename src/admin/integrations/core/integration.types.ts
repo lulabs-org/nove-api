@@ -24,10 +24,3 @@ export interface IntegrationRegistryEntry {
 export interface IntegrationTestProvider {
   test(value: IntegrationValues): Promise<void>;
 }
-
-// Backward compatibility aliases
-export type SystemConfigValue = IntegrationValue;
-export type SystemConfigValues = IntegrationValues;
-export type ConfigDefinition<TDto extends object = object> = IntegrationDefinition<TDto>;
-export type ConfigRegistryEntry = IntegrationRegistryEntry;
-export type ConfigTestProvider = IntegrationTestProvider;

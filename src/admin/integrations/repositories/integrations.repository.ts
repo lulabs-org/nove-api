@@ -46,7 +46,3 @@ export class IntegrationsRepository {
     }
   }
 }
-
-// Backward compatibility alias
-export const SystemConfigRepository = IntegrationsRepository;
-export type SystemConfigRepository = IntegrationsRepository;

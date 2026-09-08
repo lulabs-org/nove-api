@@ -45,11 +45,6 @@ export interface PublicIntegration extends EffectiveIntegration {
   value: IntegrationValues;
 }
 
-// Backward compatibility type aliases
-export type EffectiveSystemConfig = EffectiveIntegration;
-export type SystemConfigChangeEvent = IntegrationChangeEvent;
-export type PublicSystemConfig = PublicIntegration;
-
 @Injectable()
 export class IntegrationsService {
   private readonly logger = new Logger(IntegrationsService.name);
@@ -124,8 +119,6 @@ export class IntegrationsService {
     };
   }
 
-  getEffectiveIntegration = this.getEffectiveConfig;
-
   async listIntegrations(orgId: string) {
     return Promise.all(
       INTEGRATION_MODULES.map(async (module) => {
@@ -141,15 +134,11 @@ export class IntegrationsService {
     );
   }
 
-  listConfigs = this.listIntegrations;
-
   async getIntegration(orgId: string, module: string): Promise<PublicIntegration> {
     const effective = await this.getEffectiveConfig(orgId, module);
     const entry = IntegrationRegistry[effective.module];
     return { ...effective, value: maskConfig(entry, effective.value) };
   }
-
-  getConfig = this.getIntegration;
 
   /**
    * 生成草稿配置（不入库）
@@ -173,8 +162,6 @@ export class IntegrationsService {
 
     return { ...current, value };
   }
-
-  resolveDraftIntegration = this.resolveDraftConfig;
 
   /**
    * 更新或保存配置
@@ -226,8 +213,6 @@ export class IntegrationsService {
     };
   }
 
-  updateConfig = this.updateIntegration;
-
   /**
    * 删除数据库中的配置，退回到使用“默认值”的状态
    */
@@ -265,8 +250,6 @@ export class IntegrationsService {
     };
   }
 
-  deleteConfig = this.deleteIntegration;
-
   /**
    * 使用 class-validator 和 DTO 进行严格的运行时格式验证
    */
@@ -287,7 +270,3 @@ export class IntegrationsService {
     throw new BadRequestException(`Validation failed: ${messages}`);
   }
 }
-
-// Backward compatibility class alias
-export const SystemConfigService = IntegrationsService;
-export type SystemConfigService = IntegrationsService;
