@@ -63,9 +63,9 @@ describe('MeetingRepository', () => {
       id: 'meeting-1',
     });
 
-    await expect(repository.exists('meeting-1')).resolves.toBe(true);
+    await expect(repository.exists('meeting-1', 'org-1')).resolves.toBe(true);
     expect(prismaService.meeting.findUnique).toHaveBeenCalledWith({
-      where: { id: 'meeting-1', deletedAt: null },
+      where: { id: 'meeting-1', orgId: 'org-1', deletedAt: null },
       select: { id: true },
     });
   });
@@ -331,7 +331,7 @@ describe('MeetingRepository', () => {
         minutes: [],
       });
 
-      const result = await repository.findById('meeting-with-host');
+      const result = await repository.findById('meeting-with-host', 'org-1');
 
       expect(result).toEqual(
         expect.objectContaining({
@@ -347,7 +347,11 @@ describe('MeetingRepository', () => {
       );
       expect(result).not.toHaveProperty('createdById');
       expect(prismaService.meeting.findUnique).toHaveBeenCalledWith({
-        where: { id: 'meeting-with-host', deletedAt: null },
+        where: {
+          id: 'meeting-with-host',
+          orgId: 'org-1',
+          deletedAt: null,
+        },
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         select: expect.objectContaining({
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -391,7 +395,11 @@ describe('MeetingRepository', () => {
       ]);
       (prismaService.meeting.count as jest.Mock).mockResolvedValue(2);
 
-      const result = await repository.get({ page: 1, limit: 10 });
+      const result = await repository.get({
+        page: 1,
+        limit: 10,
+        orgId: 'org-1',
+      });
 
       expect(result.records).toEqual([
         {
@@ -421,6 +429,8 @@ describe('MeetingRepository', () => {
       ]);
       expect(prismaService.meeting.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          where: expect.objectContaining({ orgId: 'org-1' }),
           select: {
             id: true,
             title: true,
@@ -448,7 +458,7 @@ describe('MeetingRepository', () => {
       (prismaService.meeting.findMany as jest.Mock).mockResolvedValue([]);
       (prismaService.meeting.count as jest.Mock).mockResolvedValue(0);
 
-      await repository.get({ search: '杨仕明' });
+      await repository.get({ search: '杨仕明', orgId: 'org-1' });
 
       expect(prismaService.meeting.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -474,8 +484,14 @@ describe('MeetingRepository', () => {
       (prismaService.meeting.findMany as jest.Mock).mockResolvedValue([]);
       (prismaService.meeting.count as jest.Mock).mockResolvedValue(0);
 
-      await repository.get({ status: ProcessingStatus.PENDING });
-      await repository.get({ status: ProcessingStatus.SKIPPED });
+      await repository.get({
+        status: ProcessingStatus.PENDING,
+        orgId: 'org-1',
+      });
+      await repository.get({
+        status: ProcessingStatus.SKIPPED,
+        orgId: 'org-1',
+      });
 
       const calls = prismaService.meeting.findMany.mock
         .calls as unknown as Array<[{ where: Prisma.MeetingWhereInput }]>;
@@ -499,7 +515,7 @@ describe('MeetingRepository', () => {
       (prismaService.meeting.findMany as jest.Mock).mockResolvedValue([]);
       (prismaService.meeting.count as jest.Mock).mockResolvedValue(0);
 
-      await repository.get({ startDate, endDate });
+      await repository.get({ startDate, endDate, orgId: 'org-1' });
 
       const [query] = prismaService.meeting.findMany.mock.calls.at(
         -1,
@@ -531,7 +547,11 @@ describe('MeetingRepository', () => {
         ]);
       (prismaService.meeting.findMany as jest.Mock).mockResolvedValue([]);
 
-      const result = await repository.getStats({ startDate, endDate });
+      const result = await repository.getStats({
+        startDate,
+        endDate,
+        orgId: 'org-1',
+      });
 
       expect(result).toEqual({
         total: 3,
@@ -551,6 +571,7 @@ describe('MeetingRepository', () => {
       expect(prismaService.meeting.count).toHaveBeenCalledWith({
         where: {
           deletedAt: null,
+          orgId: 'org-1',
           startAt: { gte: startDate, lt: endDate },
         },
       });
@@ -574,14 +595,14 @@ describe('MeetingRepository', () => {
         deletedAt,
       });
 
-      const result = await repository.softDelete('meeting-1');
+      const result = await repository.softDelete('meeting-1', 'org-1');
 
       expect(result).toEqual(
         expect.objectContaining({ id: 'meeting-1', deletedAt }),
       );
       expect(prismaService.meeting.update).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { id: 'meeting-1', deletedAt: null },
+          where: { id: 'meeting-1', orgId: 'org-1', deletedAt: null },
           // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           select: expect.any(Object),
         }),
