@@ -18,9 +18,9 @@ import { RequirePermissions } from '@/admin/permission/decorators/permissions.de
 import { Auth } from '@/auth/decorators/auth.decorator';
 import { SystemConfigService, TesterService } from '../services';
 
-@ApiTags('Admin / System Config')
+@ApiTags('Admin / Integrations')
 @ApiBearerAuth()
-@Controller('admin/system-config')
+@Controller('admin/integrations')
 export class SystemConfigController {
   constructor(
     private readonly systemConfigService: SystemConfigService,
@@ -28,14 +28,14 @@ export class SystemConfigController {
   ) {}
 
   @Get()
-  @ApiOperation({ summary: 'List organization service configuration status' })
+  @ApiOperation({ summary: 'List organization integrations configuration status' })
   @RequirePermissions('system:config:read')
   async listConfigs(@Auth('orgId') orgId: string | null | undefined) {
     return this.systemConfigService.listConfigs(this.requireOrgId(orgId));
   }
 
   @Get(':module')
-  @ApiOperation({ summary: 'Get organization configuration for a module' })
+  @ApiOperation({ summary: 'Get organization integration configuration for a module' })
   @ApiParam({
     name: 'module',
     description: 'Module name (e.g., mail, wechat-shop)',
@@ -51,7 +51,7 @@ export class SystemConfigController {
 
   @Put(':module')
   @ApiOperation({
-    summary: 'Update organization configuration for a module',
+    summary: 'Update organization integration configuration for a module',
   })
   @ApiParam({
     name: 'module',
@@ -72,7 +72,7 @@ export class SystemConfigController {
   }
 
   @Post(':module/test')
-  @ApiOperation({ summary: 'Test a draft service configuration' })
+  @ApiOperation({ summary: 'Test a draft integration configuration' })
   @RequirePermissions('system:config:write')
   async testConfig(
     @Auth('orgId') orgId: string | null | undefined,
@@ -87,7 +87,7 @@ export class SystemConfigController {
   }
 
   @Delete(':module')
-  @ApiOperation({ summary: 'Delete module configuration' })
+  @ApiOperation({ summary: 'Delete organization integration configuration' })
   @ApiParam({
     name: 'module',
     description: 'Module name (e.g., mail, wechat-shop)',

@@ -12,13 +12,15 @@ $$\text{代码非敏感默认值 (兜底)} \to \text{数据库存储值 (最高�
 
 ## API 与权限
 
+控制器路由统一为 `/admin/integrations`，在 Swagger 文档中分组为 **`Admin / Integrations`**。
+
 | 方法 | 路径 | 权限 | 说明 |
 |---|---|---|---|
-| GET | `/admin/system-config` | `system:config:read` | 返回五个模块的配置状态 |
-| GET | `/admin/system-config/:module` | `system:config:read` | 返回掩码后的有效配置 |
-| PUT | `/admin/system-config/:module` | `system:config:write` | 校验并合并保存 |
-| DELETE | `/admin/system-config/:module` | `system:config:write` | 删除数据库配置，退回默认未配置状态 |
-| POST | `/admin/system-config/:module/test` | `system:config:write` | 使用当前草稿测试连接，不持久化 |
+| GET | `/admin/integrations` | `system:config:read` | 返回五个集成模块的配置状态 |
+| GET | `/admin/integrations/:module` | `system:config:read` | 返回掩码后的有效配置 |
+| PUT | `/admin/integrations/:module` | `system:config:write` | 校验并合并保存 |
+| DELETE | `/admin/integrations/:module` | `system:config:write` | 删除数据库配置，退回默认未配置状态 |
+| POST | `/admin/integrations/:module/test` | `system:config:write` | 使用当前草稿测试连接，不持久化 |
 
 配置来源只会是 `database` 或 `default`。数据库记录存在但必填字段不足时，`source` 仍为 `database`，`configured` 为 `false`。
 
