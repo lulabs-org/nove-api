@@ -3,7 +3,6 @@ import { ConfigService } from '@nestjs/config';
 import { TMeetApiService } from './api.service';
 import { tencentMeetingConfig } from '@/configs';
 import { SystemConfigService } from '@/admin/system-config/services/system-config.service';
-import { SingleOrgContextService } from '@/admin/system-config/services';
 
 const mockConfigService = {
   get: jest.fn((key: string) => {
@@ -69,10 +68,6 @@ describe('TMeetApiService', () => {
             getEffectiveConfig,
           },
         },
-        {
-          provide: SingleOrgContextService,
-          useValue: { getOrgId: jest.fn(() => 'org-1') },
-        },
       ],
     }).compile();
 
@@ -98,6 +93,7 @@ describe('TMeetApiService', () => {
       );
 
       const result = await service.getRecordingFileDetail(
+        'org-1',
         'test-file-id',
         'test-user-id',
       );
@@ -128,7 +124,11 @@ describe('TMeetApiService', () => {
         jsonResponse(mockError),
       );
       await expect(
-        service.getRecordingFileDetail('deleted-file-id', 'test-user-id'),
+        service.getRecordingFileDetail(
+          'org-1',
+          'deleted-file-id',
+          'test-user-id',
+        ),
       ).rejects.toThrow('录制文件已经被删除');
     });
 
@@ -140,7 +140,7 @@ describe('TMeetApiService', () => {
         jsonResponse(mockError),
       );
       await expect(
-        service.getRecordingFileDetail('test-file-id', 'test-user-id'),
+        service.getRecordingFileDetail('org-1', 'test-file-id', 'test-user-id'),
       ).rejects.toThrow('IP白名单错误');
     });
   });
@@ -159,7 +159,13 @@ describe('TMeetApiService', () => {
 
       const startTime = Math.floor(new Date('2024-01-01').getTime() / 1000);
       const endTime = Math.floor(new Date('2024-01-31').getTime() / 1000);
-      const result = await service.getCorpRecords(startTime, endTime, 10, 1);
+      const result = await service.getCorpRecords(
+        'org-1',
+        startTime,
+        endTime,
+        10,
+        1,
+      );
 
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('/v1/corp/records'),
@@ -171,9 +177,9 @@ describe('TMeetApiService', () => {
     it('validates time range (max 31 days)', async () => {
       const startTime = Math.floor(new Date('2024-01-01').getTime() / 1000);
       const endTime = Math.floor(new Date('2024-02-15').getTime() / 1000);
-      await expect(service.getCorpRecords(startTime, endTime)).rejects.toThrow(
-        '时间区间不允许超过31天',
-      );
+      await expect(
+        service.getCorpRecords('org-1', startTime, endTime),
+      ).rejects.toThrow('时间区间不允许超过31天');
     });
 
     it('limits page size to max 20', async () => {
@@ -182,7 +188,7 @@ describe('TMeetApiService', () => {
       );
       const startTime = Math.floor(new Date('2024-01-01').getTime() / 1000);
       const endTime = Math.floor(new Date('2024-01-02').getTime() / 1000);
-      await service.getCorpRecords(startTime, endTime, 50, 1);
+      await service.getCorpRecords('org-1', startTime, endTime, 50, 1);
       const calls = (global.fetch as jest.Mock).mock.calls as Array<
         [unknown, unknown?]
       >;
@@ -203,6 +209,7 @@ describe('TMeetApiService', () => {
       );
 
       const result = await service.getSmartFullSummary(
+        'org-1',
         'test-record-file-id',
         'test-operator-id',
         1,
@@ -247,6 +254,7 @@ describe('TMeetApiService', () => {
       );
 
       const result = await service.getSmartFullSummary(
+        'org-1',
         'test-record-file-id',
         'test-operator-id',
       );
@@ -272,7 +280,11 @@ describe('TMeetApiService', () => {
         jsonResponse(mockError),
       );
       await expect(
-        service.getSmartFullSummary('test-record-file-id', 'test-operator-id'),
+        service.getSmartFullSummary(
+          'org-1',
+          'test-record-file-id',
+          'test-operator-id',
+        ),
       ).rejects.toThrow('录制文件已经被删除');
     });
   });

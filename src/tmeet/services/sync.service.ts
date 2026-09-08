@@ -3,17 +3,11 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { TMeetApiService } from '../client';
 import { Meeting } from '@prisma/client';
-import type {
-  RecordMeeting,
-  RecordFile,
-} from '../types';
+import type { RecordMeeting, RecordFile } from '../types';
 import { TMeetMeetingCoreService } from './meeting-core.service';
 import { TMeetTranscriptCoreService } from './transcript-core.service';
 import { TMeetSummaryCoreService } from './summary-core.service';
-import {
-  SingleOrgContextService,
-  SystemConfigService,
-} from '@/admin/system-config/services';
+import { SystemConfigService } from '@/admin/system-config/services';
 
 @Injectable()
 export class TMeetSyncService {
@@ -26,7 +20,6 @@ export class TMeetSyncService {
     private readonly transcriptCoreService: TMeetTranscriptCoreService,
     private readonly summaryCoreService: TMeetSummaryCoreService,
     private readonly systemConfigService: SystemConfigService,
-    private readonly orgContext: SingleOrgContextService,
   ) {}
 
   /**
@@ -36,6 +29,7 @@ export class TMeetSyncService {
    * @returns 成功投递的 job IDs
    */
   async syncRecordings(
+    orgId: string,
     startTime?: number,
     endTime?: number,
     operatorId?: string,
@@ -66,6 +60,7 @@ export class TMeetSyncService {
       );
 
       const job = await this.syncQueue.add('sync-chunk', {
+        orgId,
         startTime: currentStart,
         endTime: currentEnd,
         operatorId,
@@ -103,6 +98,7 @@ export class TMeetSyncService {
    * 处理单个录制文件的同步
    */
   private async processRecordingFile(
+    orgId: string,
     file: RecordFile,
     record: RecordMeeting,
     meeting: Meeting,
@@ -133,6 +129,7 @@ export class TMeetSyncService {
       // 如果需要同步参会者，但转写不需要同步，则独立触发参会者同步
       if (syncParticipants && !syncTranscripts) {
         await this.transcriptCoreService.syncParticipantsForTranscript(
+          orgId,
           record.meeting_id,
           subMeetingId,
           operatorId,
@@ -148,6 +145,7 @@ export class TMeetSyncService {
           try {
             // Step 2.3: 同步转写文本及其相关参会人信息
             await this.transcriptCoreService.syncFromApi(
+              orgId,
               record.meeting_id,
               subMeetingId,
               recording.id,
@@ -171,6 +169,7 @@ export class TMeetSyncService {
           try {
             // Step 2.4: 同步录制文件的智能摘要、纪要和待办
             await this.summaryCoreService.upsertSummaryFromApi(
+              orgId,
               meeting.id,
               recording.id,
               file.record_file_id,
@@ -202,6 +201,7 @@ export class TMeetSyncService {
   private async processMeetingRecord(
     record: RecordMeeting,
     operatorId: string,
+    orgId: string,
     errors: string[],
     forceReSyncTranscript: boolean = false,
     syncTranscripts: boolean = true,
@@ -213,6 +213,7 @@ export class TMeetSyncService {
       const meeting = await this.meetingCoreService.upsertMeetingFromApiRecord(
         record,
         operatorId,
+        orgId,
       );
       let recordingsUpserted = 0;
 
@@ -220,6 +221,7 @@ export class TMeetSyncService {
         // 遍历并同步该会议的所有录制文件
         for (const file of record.record_files) {
           recordingsUpserted += await this.processRecordingFile(
+            orgId,
             file,
             record,
             meeting,
@@ -254,6 +256,7 @@ export class TMeetSyncService {
    * @returns 同步结果统计，包括 upsert 的会议数、录制文件数以及过程中发生的错误
    */
   async syncRecords(
+    orgId: string,
     startTime: number,
     endTime: number,
     operatorId?: string,
@@ -277,13 +280,14 @@ export class TMeetSyncService {
     const actualEndTime = Math.min(endTime, now);
     const { value: activeConfig } =
       await this.systemConfigService.getEffectiveConfig(
-        this.orgContext.getOrgId(),
+        orgId,
         'tencent-meeting',
       );
     const effectiveOperatorId = operatorId || String(activeConfig.userId ?? '');
 
     // 1. 获取指定时间段内的所有企业录制记录
     const recordMeetings = await this.tencentApi.getAllCorpRecords(
+      orgId,
       startTime,
       actualEndTime,
       effectiveOperatorId,
@@ -299,6 +303,7 @@ export class TMeetSyncService {
         await this.processMeetingRecord(
           record,
           effectiveOperatorId,
+          orgId,
           errors,
           forceReSyncTranscript,
           syncTranscripts,
@@ -317,5 +322,3 @@ export class TMeetSyncService {
     };
   }
 }
-
-

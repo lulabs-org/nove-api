@@ -31,7 +31,11 @@ export class SummaryService {
    * @param userId 用户ID
    * @returns 会议内容
    */
-  async getContent(fileId: string, userId: string): Promise<MeetingContent> {
+  async getContent(
+    orgId: string,
+    fileId: string,
+    userId: string,
+  ): Promise<MeetingContent> {
     this.logger.log(`获取会议内容: fileId=${fileId}, userId=${userId}`);
 
     const result: MeetingContent = {
@@ -41,7 +45,11 @@ export class SummaryService {
     };
 
     try {
-      const response = await this.api.getSmartFullSummary(fileId, userId);
+      const response = await this.api.getSmartFullSummary(
+        orgId,
+        fileId,
+        userId,
+      );
 
       result.fullSummary = ContentUtils.decodeBase64Content(
         response.ai_summary,
@@ -55,7 +63,11 @@ export class SummaryService {
     }
 
     try {
-      const response = await this.api.getSmartMeetingMinutes(fileId, userId);
+      const response = await this.api.getSmartMeetingMinutes(
+        orgId,
+        fileId,
+        userId,
+      );
       const { minute, todo } = response.meeting_minute ?? {};
 
       result.aiMinutes = minute ?? '';

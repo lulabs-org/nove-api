@@ -75,7 +75,7 @@ describe('MeetingParticipantJoinedHandler', () => {
       },
     };
 
-    await handler.handle(payload, 1);
+    await handler.handle(payload, 1, 'org-1');
 
     expect(meetingCoreSvc.upsertPtUser).toHaveBeenCalledTimes(1);
     expect(meetingCoreSvc.upsertPtUser).toHaveBeenCalledWith(payload.operator);
@@ -93,7 +93,7 @@ describe('MeetingParticipantJoinedHandler', () => {
       },
     } as ParticipantJoinedPayload;
 
-    await handler.handle(payload, 1);
+    await handler.handle(payload, 1, 'org-1');
 
     expect(meetingCoreSvc.upsertPtUser).not.toHaveBeenCalled();
   });
@@ -119,7 +119,7 @@ describe('MeetingParticipantJoinedHandler', () => {
       },
     } as ParticipantJoinedPayload;
 
-    await handler.handle(payload, 1);
+    await handler.handle(payload, 1, 'org-1');
 
     expect(meetingCoreSvc.upsertPtUser).not.toHaveBeenCalled();
   });

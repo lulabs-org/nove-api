@@ -6,6 +6,7 @@ import {
   HttpCode,
   HttpStatus,
   ValidationPipe,
+  ForbiddenException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -17,6 +18,7 @@ import { RequirePermissions } from '@/admin/permission/decorators/permissions.de
 import { TMeetSyncService } from '../services/sync.service';
 import { TMeetUserLinkService } from '../services/user-link.service';
 import { SyncRecordingsDto } from '../dto/sync-recordings.dto';
+import { Auth } from '@/auth/decorators/auth.decorator';
 
 /**
  * 腾讯会议管理控制器
@@ -52,6 +54,7 @@ export class TMeetController {
   async syncRecordings(
     @Body(new ValidationPipe({ transform: true, whitelist: true }))
     dto: SyncRecordingsDto,
+    @Auth('orgId') orgId?: string | null,
   ) {
     this.logger.log(
       `Sync recordings requested: startDate=${dto.startDate?.toISOString() ?? 'undefined'}, endDate=${dto.endDate?.toISOString() ?? 'undefined'}, syncTranscripts=${dto.syncTranscripts ?? true}, syncSummaries=${dto.syncSummaries ?? true}, syncParticipants=${dto.syncParticipants ?? true}`,
@@ -65,6 +68,7 @@ export class TMeetController {
       : undefined;
 
     const result = await this.syncService.syncRecordings(
+      this.requireOrgId(orgId),
       startTime,
       endTime,
       dto.operatorId,
@@ -78,6 +82,13 @@ export class TMeetController {
       success: true,
       data: result,
     };
+  }
+
+  private requireOrgId(orgId?: string | null): string {
+    if (!orgId) {
+      throw new ForbiddenException('Current organization is required');
+    }
+    return orgId;
   }
 
   /**

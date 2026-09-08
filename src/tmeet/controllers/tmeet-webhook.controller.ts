@@ -31,6 +31,7 @@ import { TMeetEventHandlerService } from '../services/event-handler.service';
 import { WebhookLoggingInterceptor } from '../interceptors/webhook-logging.interceptor';
 import { MeetingEvent } from '../types';
 import { UrlVerificationPipe, BodyDecryptionPipe } from '../pipes';
+import { SingleOrgContextService } from '@/admin/system-config/services';
 
 /**
  * TMeet Webhook Controller
@@ -45,6 +46,7 @@ export class TMeetWebhookController {
 
   constructor(
     private readonly eventHandlerService: TMeetEventHandlerService,
+    private readonly orgContext: SingleOrgContextService,
   ) {}
 
   /**
@@ -63,9 +65,7 @@ export class TMeetWebhookController {
   async verifyWebhook(
     @Query('check_str', UrlVerificationPipe) decryptedStr: string,
   ): Promise<string> {
-    this.logger.log(
-      'Received TMeet Webhook URL verification request',
-    );
+    this.logger.log('Received TMeet Webhook URL verification request');
     await Promise.resolve();
     return decryptedStr;
   }
@@ -92,8 +92,9 @@ export class TMeetWebhookController {
     eventData: MeetingEvent,
   ): Promise<string> {
     // 异步处理业务逻辑，不阻塞主流程
+    const orgId = this.orgContext.getOrgId();
     this.eventHandlerService
-      .handleEvent(eventData)
+      .handleEvent(eventData, orgId)
       .catch((error: unknown) => {
         this.logger.error(
           'Failed to handle event asynchronously',
@@ -105,5 +106,3 @@ export class TMeetWebhookController {
     return 'successfully received callback';
   }
 }
-
-

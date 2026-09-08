@@ -41,6 +41,7 @@ export class TranscriptService {
    * @returns 包含原始响应、唯一用户名、格式化转写和关键词的结果
    */
   async fetch(
+    orgId: string,
     meetingId: string,
     fileId: string,
     userId: string,
@@ -52,6 +53,7 @@ export class TranscriptService {
 
     try {
       const res = await this.api.getTranscript({
+        orgId,
         recordFileId: fileId,
         operatorId: userId,
         operatorIdType: 1,

@@ -11,10 +11,7 @@ import {
   SmartMeetingMinutesResponse,
   TranscriptResponse,
 } from '../types';
-import {
-  SingleOrgContextService,
-  SystemConfigService,
-} from '@/admin/system-config/services';
+import { SystemConfigService } from '@/admin/system-config/services';
 
 /**
  * Tencent Meeting API Service
@@ -26,18 +23,15 @@ export class TMeetApiService {
   private readonly BASE_URL = 'https://api.meeting.qq.com';
   private readonly logger = new Logger(TMeetApiService.name);
 
-  constructor(
-    private readonly systemConfigService: SystemConfigService,
-    private readonly orgContext: SingleOrgContextService,
-  ) {}
+  constructor(private readonly systemConfigService: SystemConfigService) {}
 
   /**
    * Retrieves Tencent Meeting API configuration from injected config
    * @returns Configuration object containing API credentials and settings
    */
-  private async getConfig() {
+  private async getConfig(orgId: string) {
     const { value } = await this.systemConfigService.getEffectiveConfig(
-      this.orgContext.getOrgId(),
+      orgId,
       'tencent-meeting',
     );
     return {
@@ -59,6 +53,7 @@ export class TMeetApiService {
    * @throws Error if API request fails or returns error response
    */
   private async sendRequest<T>(
+    orgId: string,
     method: string,
     requestUri: string,
     queryParams: Record<string, unknown> = {},
@@ -78,7 +73,7 @@ export class TMeetApiService {
 
       const timestamp = Math.floor(Date.now() / 1000).toString();
       const nonce = Math.floor(Math.random() * 100000).toString();
-      const config = await this.getConfig();
+      const config = await this.getConfig(orgId);
 
       const signature = generateSignature(
         config.secretKey,
@@ -163,12 +158,16 @@ export class TMeetApiService {
    * @returns Promise resolving to recording file details
    */
   async getRecordingFileDetail(
+    orgId: string,
     fileId: string,
     userId: string,
   ): Promise<RecordingDetail> {
-    return this.sendRequest<RecordingDetail>('GET', `/v1/addresses/${fileId}`, {
-      userid: userId,
-    });
+    return this.sendRequest<RecordingDetail>(
+      orgId,
+      'GET',
+      `/v1/addresses/${fileId}`,
+      { userid: userId },
+    );
   }
 
   /**
@@ -185,6 +184,7 @@ export class TMeetApiService {
    * @throws Error if time range exceeds 31 days
    */
   async getCorpRecords(
+    orgId: string,
     startTime: number,
     endTime: number,
     pageSize: number = 10,
@@ -198,14 +198,19 @@ export class TMeetApiService {
     }
     const size = Math.min(pageSize, 20);
 
-    return this.sendRequest<RecordMeetingsResponse>('GET', '/v1/corp/records', {
-      start_time: startTime,
-      end_time: endTime,
-      page_size: size,
-      page,
-      operator_id: operatorId,
-      operator_id_type: operatorIdType,
-    });
+    return this.sendRequest<RecordMeetingsResponse>(
+      orgId,
+      'GET',
+      '/v1/corp/records',
+      {
+        start_time: startTime,
+        end_time: endTime,
+        page_size: size,
+        page,
+        operator_id: operatorId,
+        operator_id_type: operatorIdType,
+      },
+    );
   }
 
   /**
@@ -218,6 +223,7 @@ export class TMeetApiService {
    * @returns Promise resolving to meeting details
    */
   async getMeetingDetail(
+    orgId: string,
     meetingId: string,
     operatorId: string,
     operatorIdType: number = 1,
@@ -234,6 +240,7 @@ export class TMeetApiService {
     };
 
     return this.sendRequest<MeetingDetailResponse>(
+      orgId,
       'GET',
       `/v1/meetings/${meetingId}`,
       queryParams,
@@ -253,6 +260,7 @@ export class TMeetApiService {
    * @returns Promise resolving to meeting participants list
    */
   async getParticipants(
+    orgId: string,
     meetingId: string,
     userId: string,
     subMeetingId?: string | null,
@@ -287,6 +295,7 @@ export class TMeetApiService {
     }
 
     return this.sendRequest<MeetingParticipantsResponse>(
+      orgId,
       'GET',
       `/v1/meetings/${meetingId}/participants`,
       queryParams,
@@ -301,10 +310,12 @@ export class TMeetApiService {
    * @returns Promise resolving to smart discussion topics
    */
   async getSmartTopics(
+    orgId: string,
     fileId: string,
     userId: string,
   ): Promise<SmartTopicsResponse> {
     return this.sendRequest<SmartTopicsResponse>(
+      orgId,
       'GET',
       `/v1/recording/${fileId}/topics`,
       { userid: userId },
@@ -322,6 +333,7 @@ export class TMeetApiService {
    * @returns Promise resolving to smart full summary
    */
   async getSmartFullSummary(
+    orgId: string,
     recordFileId: string,
     operatorId: string,
     operatorIdType: number = 1,
@@ -343,6 +355,7 @@ export class TMeetApiService {
     }
 
     return this.sendRequest<SmartFullSummaryResponse>(
+      orgId,
       'GET',
       '/v1/smart/fullsummary',
       queryParams,
@@ -363,6 +376,7 @@ export class TMeetApiService {
    * @returns Promise resolving to smart meeting minutes
    */
   async getSmartMeetingMinutes(
+    orgId: string,
     recordFileId: string,
     operatorId: string,
     operatorIdType: number = 1,
@@ -395,6 +409,7 @@ export class TMeetApiService {
     }
 
     return this.sendRequest<SmartMeetingMinutesResponse>(
+      orgId,
       'GET',
       `/v1/smart/minutes/${recordFileId}`,
       queryParams,
@@ -415,6 +430,7 @@ export class TMeetApiService {
    * @returns Promise resolving to recording transcript details
    */
   async getTranscript(params: {
+    orgId: string;
     recordFileId: string;
     operatorId: string;
     operatorIdType?: number;
@@ -444,6 +460,7 @@ export class TMeetApiService {
     }
 
     return this.sendRequest<TranscriptResponse>(
+      params.orgId,
       'GET',
       `/v1/records/transcripts/details`,
       queryParams,
@@ -460,6 +477,7 @@ export class TMeetApiService {
    * @returns Promise resolving to all meeting records across all pages
    */
   async getAllCorpRecords(
+    orgId: string,
     startTime: number,
     endTime: number,
     operatorId?: string,
@@ -473,6 +491,7 @@ export class TMeetApiService {
       const chunkEnd = Math.min(chunkStart + maxRange, endTime);
 
       const chunkRecords = await this.fetchCorpRecordsPage(
+        orgId,
         chunkStart,
         chunkEnd,
         operatorId,
@@ -489,6 +508,7 @@ export class TMeetApiService {
   }
 
   private async fetchCorpRecordsPage(
+    orgId: string,
     startTime: number,
     endTime: number,
     operatorId?: string,
@@ -501,6 +521,7 @@ export class TMeetApiService {
 
     do {
       const response = await this.getCorpRecords(
+        orgId,
         startTime,
         endTime,
         pageSize,

@@ -22,9 +22,7 @@ import { TMeetMeetingCoreService } from '../../services/meeting-core.service';
 export class MeetingParticipantJoinedHandler extends BaseEventHandler {
   private readonly SUPPORTED_EVENT = 'meeting.participant-joined';
 
-  constructor(
-    private readonly meetingCoreSvc: TMeetMeetingCoreService,
-  ) {
+  constructor(private readonly meetingCoreSvc: TMeetMeetingCoreService) {
     super();
   }
 
@@ -35,7 +33,9 @@ export class MeetingParticipantJoinedHandler extends BaseEventHandler {
   async handle(
     payload: ParticipantJoinedPayload,
     index: number,
+    _orgId: string,
   ): Promise<void> {
+    void _orgId;
     const { meeting_info, operator } = payload;
 
     this.logEventProcessing(this.SUPPORTED_EVENT, payload, index);
