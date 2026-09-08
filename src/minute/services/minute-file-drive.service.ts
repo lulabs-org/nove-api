@@ -37,7 +37,7 @@ export class MinuteFileDriveService {
     private readonly driveService: DriveService,
   ) {}
 
-  async list(minuteId: string, orgId?: string) {
+  async list(minuteId: string, orgId: string) {
     await this.requireMinute(minuteId, orgId);
     const files = await this.prisma.minuteFile.findMany({
       where: { minuteId, deletedAt: null, fileBindingId: { not: null } },
@@ -221,12 +221,12 @@ export class MinuteFileDriveService {
     }
   }
 
-  private async requireMinute(minuteId: string, orgId?: string) {
+  private async requireMinute(minuteId: string, orgId: string) {
     const minute = await this.prisma.minute.findFirst({
       where: {
         id: minuteId,
         deletedAt: null,
-        ...(orgId ? { meeting: { orgId, deletedAt: null } } : {}),
+        meeting: { orgId, deletedAt: null },
       },
       include: { meeting: true },
     });

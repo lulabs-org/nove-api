@@ -1,5 +1,24 @@
 import 'dotenv/config';
-import OSS from 'ali-oss';
+import OSSModule from 'ali-oss';
+
+interface CorsRule {
+  allowedOrigin?: string | string[];
+  allowedMethod?: string | string[];
+  allowedHeader?: string | string[];
+  exposeHeader?: string | string[];
+  maxAgeSeconds?: string;
+}
+
+const OSS = OSSModule as unknown as new (options: {
+  region: string;
+  bucket: string;
+  accessKeyId: string;
+  accessKeySecret: string;
+  secure: boolean;
+}) => {
+  getBucketCORS(bucket: string): Promise<{ rules: CorsRule[] }>;
+  putBucketCORS(bucket: string, rules: CorsRule[]): Promise<unknown>;
+};
 
 const apply = process.argv.includes('--apply');
 
@@ -49,7 +68,7 @@ async function main() {
     secure: true,
   });
 
-  let currentRules: OSS.CORSRule[];
+  let currentRules: CorsRule[];
   try {
     currentRules = (await client.getBucketCORS(bucket)).rules;
   } catch (error: unknown) {

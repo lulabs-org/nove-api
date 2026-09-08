@@ -23,7 +23,10 @@ import {
   ApiResponse,
   ApiParam,
 } from '@nestjs/swagger';
-import { RequireAllPermissions, RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
+import {
+  RequireAllPermissions,
+  RequirePermissions,
+} from '@/admin/permission/decorators/permissions.decorator';
 import { MinuteService } from '../services/minute.service';
 import { TranscriptService } from '../services/transcript.service';
 import { CuidPipe } from '@/common/pipes/cuid.pipe';
@@ -80,12 +83,7 @@ export class MinuteController {
     @Auth() auth: AuthContext,
     @CurrentOrg() orgId: string,
   ) {
-    return this.minuteFileDriveService.attach(
-      id,
-      dto,
-      auth,
-      orgId,
-    );
+    return this.minuteFileDriveService.attach(id, dto, auth, orgId);
   }
 
   /**

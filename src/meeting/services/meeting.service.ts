@@ -1,6 +1,11 @@
 import { PrismaService } from '@/prisma/prisma.service';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { DriveNodeType, DriveSpaceType, FileBindingTargetType, Prisma } from '@prisma/client';
+import {
+  DriveNodeType,
+  DriveSpaceType,
+  FileBindingTargetType,
+  Prisma,
+} from '@prisma/client';
 import { MeetingRepository } from '../repositories/meeting.repository';
 import { MeetingParticipantRepository } from '../repositories/meeting-participant.repository';
 import { GetMeetingRecordsParams } from '../types';

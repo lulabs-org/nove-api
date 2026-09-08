@@ -1,4 +1,3 @@
-ALTER TABLE "meetings" ADD COLUMN "org_id" TEXT;
 
 ALTER TABLE "minute_files" ADD COLUMN "file_binding_id" TEXT;
 
@@ -156,16 +155,13 @@ CREATE INDEX "upload_sessions_expires_at_status_idx" ON "upload_sessions"("expir
 CREATE UNIQUE INDEX "drive_grants_scope_principal_effect_key" ON "drive_grants"("space_id", COALESCE("node_id", ''), "principal_type", "principal_id", "effect");
 CREATE INDEX "drive_grants_node_id_idx" ON "drive_grants"("node_id");
 CREATE INDEX "drive_grants_principal_type_principal_id_idx" ON "drive_grants"("principal_type", "principal_id");
-CREATE UNIQUE INDEX "file_bindings_file_id_target_type_target_id_field_key_purpose_key" ON "file_bindings"("file_id", "target_type", "target_id", "field_key", "purpose");
+CREATE UNIQUE INDEX "file_bindings_file_id_target_type_target_id_field_key_purpo_key" ON "file_bindings"("file_id", "target_type", "target_id", "field_key", "purpose");
 CREATE INDEX "file_bindings_target_type_target_id_active_idx" ON "file_bindings"("target_type", "target_id", "active");
 CREATE INDEX "drive_audit_logs_space_id_created_at_idx" ON "drive_audit_logs"("space_id", "created_at");
 CREATE INDEX "drive_audit_logs_node_id_idx" ON "drive_audit_logs"("node_id");
 CREATE INDEX "drive_audit_logs_file_id_idx" ON "drive_audit_logs"("file_id");
 CREATE UNIQUE INDEX "minute_files_file_binding_id_key" ON "minute_files"("file_binding_id");
-CREATE INDEX "meetings_org_id_idx" ON "meetings"("org_id");
-CREATE INDEX "meetings_org_id_start_at_idx" ON "meetings"("org_id", "start_at");
 
-ALTER TABLE "meetings" ADD CONSTRAINT "meetings_org_id_fkey" FOREIGN KEY ("org_id") REFERENCES "orgs"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 ALTER TABLE "drive_spaces" ADD CONSTRAINT "drive_spaces_owner_user_id_fkey" FOREIGN KEY ("owner_user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "drive_spaces" ADD CONSTRAINT "drive_spaces_org_id_fkey" FOREIGN KEY ("org_id") REFERENCES "orgs"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE "drive_files" ADD CONSTRAINT "drive_files_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;

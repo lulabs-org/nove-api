@@ -1,3 +1,4 @@
+import { MinuteFileDriveService } from '../services/minute-file-drive.service';
 import { ForbiddenException } from '@nestjs/common';
 import { MinuteService } from '../services/minute.service';
 import { MinuteRepository } from '../repositories/minute.repository';
@@ -33,6 +34,7 @@ describe('Minute API organization boundary', () => {
     const minuteController = new MinuteController(
       minutes,
       transcript as unknown as TranscriptService,
+      {} as MinuteFileDriveService,
     );
     const summaryController = new MinuteSummaryController(
       summary as unknown as MinuteSummaryService,

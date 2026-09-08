@@ -29,9 +29,9 @@ Minute 文件使用 `GET/POST /minutes/:minuteId/files`。上传普通组织文�
 
 ## 部署配置
 
-在 Admin 的“系统配置 → 云盘与会议文件”中配置：
+云盘配置已接入组织级 `integrations`，模块名为 `drive`，运行时使用当前单组织上下文读取配置：
 
-- 必填的会议同步默认组织 ID；腾讯会议和飞书同步在缺少有效组织时失败关闭。
+- 会议同步沿用各平台显式传入的组织上下文，不再读取云盘默认组织。
 - 安全扩展名白名单和各类别大小上限。
 - 病毒扫描 Provider、阿里云 SAS 地域/轮询参数，或 ClamAV 主机、端口和超时。
 - 下载 URL 有效期和回收站保留天数。
@@ -47,7 +47,7 @@ pnpm drive:configure-oss-cors --apply
 
 来源读取顺序为 `DRIVE_OSS_CORS_ORIGINS`、`CORS_ORIGINS`、`NOVE_ADMIN_URL`，只接受明确的 HTTP(S) Origin，不接受通配符。签名上传和下载地址始终使用 HTTPS。
 
-Provider 读取优先级为 Admin 系统配置、`DRIVE_MALWARE_SCAN_PROVIDER` 环境变量、环境默认值；生产环境在前两者均缺失时选择 `ALIYUN_SAS`。阿里云调用凭证沿用标准凭证链，不在数据库保存 AccessKey；RAM 身份至少需要 `yundun-sas:CreateFileDetect` 和 `yundun-sas:GetFileDetectResult`。首次使用前需在云安全中心开通恶意文件检测额度。
+Provider 读取优先级为 组织级 integrations 配置、`DRIVE_MALWARE_SCAN_PROVIDER` 环境变量、环境默认值；生产环境在前两者均缺失时选择 `ALIYUN_SAS`。阿里云调用凭证沿用标准凭证链，不在数据库保存 AccessKey；RAM 身份至少需要 `yundun-sas:CreateFileDetect` 和 `yundun-sas:GetFileDetectResult`。首次使用前需在云安全中心开通恶意文件检测额度。
 
 阿里云接口要求完整文件 SHA-256，因此 Admin 会在创建上传会话前对强制扫描文件计算 SHA-256。文件随后仍由浏览器直传私有 OSS，API 不接收文件正文；Worker 只把短期签名下载 URL 提交给阿里云。阿里云 SDK 单文件上限为 100 MiB，当前强制扫描类别本身也不超过该上限。大音视频不会被伪装成“已扫描”，其版本记录会明确保存 `POLICY_BYPASS` 与校验原因。
 
@@ -71,7 +71,7 @@ Compose 将 `INSTREAM`、单文件和总扫描上限配置为 2 GiB，并把单�
 ## 发布与旧数据回填
 
 1. 执行 Prisma migration 和权限 seed。
-2. 配置云盘默认组织、病毒扫描 Provider、OSS 私有 Bucket 与 CORS；使用阿里云时先开通恶意文件检测并授予最小 RAM 权限。
+2. 配置组织级云盘策略、病毒扫描 Provider、OSS 私有 Bucket 与 CORS；使用阿里云时先开通恶意文件检测并授予最小 RAM 权限。
 3. 先执行 `pnpm db:backfill:minute-drive` 查看待回填数量。
 4. 确认后执行 `pnpm db:backfill:minute-drive -- --apply`。脚本只创建逻辑文件和绑定，不复制 OSS 对象。
 5. 校验 MinuteFile 数量、绑定数量和随机下载 SHA-256 后，再切换生产读取流量。

@@ -223,6 +223,4 @@ export class MeetingController {
   assignOrganization(@Body() dto: AssignMeetingOrganizationDto) {
     return this.meetingService.assignOrganization(dto.meetingIds, dto.orgId);
   }
-
-
 }

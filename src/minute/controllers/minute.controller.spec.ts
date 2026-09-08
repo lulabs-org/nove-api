@@ -1,4 +1,7 @@
+import { RecordingFileType } from '@prisma/client';
+import { MinuteFileDriveService } from '../services/minute-file-drive.service';
 /* eslint-disable @typescript-eslint/unbound-method */
+import { AuthContext } from '@/auth/types/auth-context.interface';
 import { PATH_METADATA } from '@nestjs/common/constants';
 import { MinuteService } from '../services/minute.service';
 import { TranscriptService } from '../services/transcript.service';
@@ -8,6 +11,7 @@ describe('MinuteController transcript routes', () => {
   let transcriptService: { getJson: jest.Mock; getText: jest.Mock };
   let minuteService: { getById: jest.Mock };
   let controller: MinuteController;
+  const files = { list: jest.fn(), attach: jest.fn() };
 
   beforeEach(() => {
     transcriptService = {
@@ -20,6 +24,7 @@ describe('MinuteController transcript routes', () => {
     controller = new MinuteController(
       minuteService as unknown as MinuteService,
       transcriptService as unknown as TranscriptService,
+      files as unknown as MinuteFileDriveService,
     );
   });
 
@@ -53,5 +58,17 @@ describe('MinuteController transcript routes', () => {
     expect(transcriptService.getText).toHaveBeenCalledWith('minute-1');
     expect(minuteService.getById).toHaveBeenCalledWith('minute-1', 'org-1');
     expect(transcriptService.getJson).not.toHaveBeenCalled();
+  });
+
+  it('keeps file reads and attachments scoped even for a drive administrator', async () => {
+    const auth = {
+      orgId: 'org-other',
+      permissions: ['drive:admin'],
+    } as AuthContext;
+    await controller.listMinuteFiles('minute-1', 'org-a');
+    expect(files.list).toHaveBeenCalledWith('minute-1', 'org-a');
+    const dto = { fileId: 'file-1', fileType: RecordingFileType.TRANSCRIPT };
+    await controller.attachMinuteFile('minute-1', dto, auth, 'org-a');
+    expect(files.attach).toHaveBeenCalledWith('minute-1', dto, auth, 'org-a');
   });
 });
