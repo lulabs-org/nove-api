@@ -58,10 +58,7 @@ describe('SystemConfigService', () => {
     process.env = originalEnv;
   });
 
-  it('uses database values, ignores environment values, and masks secrets', async () => {
-    process.env.SMTP_USER = 'env@example.com';
-    process.env.SMTP_PASS = 'env-password';
-    process.env.SMTP_FROM = 'env@example.com';
+  it('uses database values over defaults and masks secrets', async () => {
     records[`${orgId}:MAIL_CONFIG`] = {
       value: {
         host: 'db.smtp.example.com',
@@ -91,9 +88,6 @@ describe('SystemConfigService', () => {
   });
 
   it('preserves a masked secret and reports a Lark credential restart', async () => {
-    process.env.LARK_APP_ID = 'old-app';
-    process.env.LARK_APP_SECRET = 'old-secret';
-
     const result = await service.updateConfig(orgId, 'lark', {
       appId: 'new-app',
       appSecret: 'new-secret',
@@ -122,10 +116,7 @@ describe('SystemConfigService', () => {
     });
   });
 
-  it('deletes database config and falls back to environment values', async () => {
-    delete process.env.ARK_API_KEY;
-    process.env.OPENAI_API_KEY = 'env-key';
-    process.env.OPENAI_MODEL = 'env-model';
+  it('deletes database config and falls back to default values', async () => {
     records[`${orgId}:AI_CONFIG`] = {
       value: { apiKey: encrypt('db-key'), model: 'db-model' },
       updatedAt: new Date('2026-09-01T00:00:00Z'),
@@ -140,12 +131,14 @@ describe('SystemConfigService', () => {
       value: {
         provider: 'openai',
         baseUrl: 'https://ark.cn-beijing.volces.com/api/v3',
-        model: 'env-model',
-        apiKey: 'env-key',
+        model: '{TEMPLATE_ENDPOINT_ID}',
         maxTokens: 16000,
         temperature: 0.7,
       },
     });
+    const fallback = await service.getEffectiveConfig(orgId, 'ai');
+    expect(fallback.configured).toBe(false);
+    expect(fallback.source).toBe('default');
   });
 
   it('uses the effective secret when testing a masked draft', async () => {

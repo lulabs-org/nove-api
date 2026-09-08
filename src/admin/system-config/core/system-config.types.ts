@@ -3,20 +3,12 @@ import { Type } from '@nestjs/common';
 export type SystemConfigValue = string | number | boolean;
 export type SystemConfigValues = Record<string, SystemConfigValue>;
 
-export interface EnvironmentSource<
-  TValue extends SystemConfigValue = SystemConfigValue,
-> {
-  key: string;
-  read: (environment: NodeJS.ProcessEnv) => TValue | undefined;
-}
-
 export interface ConfigFieldDefinition<
   TValue extends SystemConfigValue = SystemConfigValue,
 > {
   required?: boolean;
   secret?: boolean;
   default?: TValue;
-  environment?: EnvironmentSource<TValue>;
 }
 
 export type DtoFieldValue<TValue> =

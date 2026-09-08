@@ -2,25 +2,25 @@
 
 `src/admin/system-config` 提供可校验、可加密并支持热更新的全局服务配置。Registry 注册邮件、AI、腾讯会议、飞书和微信小店五个模块。
 
-## 首次环境导入
+## 配置存储与生效模型
 
-API 在首次启动、进入 Nest 生命周期钩子前，把已有数据库值、服务环境变量和非敏感默认值合并成数据库快照。数据库字段优先，环境变量只补缺失字段；敏感字段使用 `SYSTEM_ENCRYPTION_KEY` 加密。
+第三方业务服务配置（邮件、AI、腾讯会议、飞书、微信小店）完全由数据库（`system_configs` 表）驱动并按组织（Organization）隔离。运行时**不会读取或回退到环境变量**，生效配置规则为：
+$$\text{代码非敏感默认值 (兜底)} \to \text{数据库存储值 (最高优)}$$
 
-迁移在一个 Serializable 事务内执行，并最后写入 `SYSTEM_CONFIG_ENV_IMPORT_V1` 标记。标记只保存导入时间、字段名和完整状态，不保存配置值。标记存在后，运行时完全忽略这些服务环境变量；删除后台配置也不会在重启后重新导入。
-
-首次部署应保留原服务环境变量并确认导入成功。完成连接测试后，可从部署环境移除 SMTP、AI、腾讯会议、飞书和微信小店密钥，但必须长期、稳定地保留 `SYSTEM_ENCRYPTION_KEY`。数据库、Redis、JWT 等部署基础设施配置仍由环境变量或 Secret 管理平台维护。
+* **基础设施配置**：数据库、Redis、JWT 密钥及 `SYSTEM_ENCRYPTION_KEY` 仍由部署环境变量或 Secret 管理平台维护。
+* **业务集成配置**：所有第三方服务的凭证与参数统一在 Nove Admin 后台录入与管理。敏感字段入库时使用 `SYSTEM_ENCRYPTION_KEY` 进行 AES-256-GCM 加密，未配置时服务优雅降级。
 
 ## API 与权限
 
 | 方法 | 路径 | 权限 | 说明 |
 |---|---|---|---|
 | GET | `/admin/system-config` | `system:config:read` | 返回五个模块的配置状态 |
-| GET | `/admin/system-config/:module` | `system:config:read` | 返回掩码后的有效配置与初始化元数据 |
+| GET | `/admin/system-config/:module` | `system:config:read` | 返回掩码后的有效配置 |
 | PUT | `/admin/system-config/:module` | `system:config:write` | 校验并合并保存 |
-| DELETE | `/admin/system-config/:module` | `system:config:write` | 删除数据库配置，不恢复环境变量 |
+| DELETE | `/admin/system-config/:module` | `system:config:write` | 删除数据库配置，退回默认未配置状态 |
 | POST | `/admin/system-config/:module/test` | `system:config:write` | 使用当前草稿测试连接，不持久化 |
 
-配置来源只会是 `database` 或 `default`。数据库记录存在但必填字段不足时，`source` 仍为 `database`，`configured` 为 `false`。`environmentImportedAt` 和 `environmentImportedFields` 只描述历史导入，不包含原始值。
+配置来源只会是 `database` 或 `default`。数据库记录存在但必填字段不足时，`source` 仍为 `database`，`configured` 为 `false`。
 
 ## 敏感字段契约
 

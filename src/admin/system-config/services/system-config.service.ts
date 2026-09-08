@@ -9,7 +9,7 @@ import { Prisma } from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { SystemConfigRepository } from '../repositories/system-config.repository';
-import { readEnvironment, SystemConfigValues } from '../core';
+import { SystemConfigValues } from '../core';
 import {
   ConfigSource,
   isSystemConfigModule,
@@ -73,7 +73,7 @@ export class SystemConfigService {
 
   /**
    * 核心逻辑：获取当前模块的“最终生效”配置
-   * 合并策略：数据库配置 (最高优) > 环境变量 (中优) > 代码默认值 (兜底)
+   * 合并策略：数据库配置 (最高优) > 代码默认值 (兜底)
    */
   async getEffectiveConfig(
     orgId: string,
@@ -94,10 +94,8 @@ export class SystemConfigService {
           `Failed to decrypt ${moduleName}.${field}; database override ignored`,
         ),
     );
-    const environmentValues = readEnvironment(entry);
     const value = {
       ...this.codec.defaults(entry),
-      ...environmentValues,
       ...decryptedDatabaseValue,
     };
     const source: ConfigSource = stored ? 'database' : 'default';
@@ -209,7 +207,7 @@ export class SystemConfigService {
   }
 
   /**
-   * 删除数据库中的配置，退回到使用“环境变量”或“默认值”的状态
+   * 删除数据库中的配置，退回到使用“默认值”的状态
    */
   async deleteConfig(orgId: string, module: string) {
     const moduleName = this.assertModule(module);
