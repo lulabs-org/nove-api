@@ -12,6 +12,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MinuteService, GetMinuteResponse } from './meeting-recording.service';
 import { LarkClient } from '../client/lark.client';
+import { LarkClientNotConfiguredException } from '../exceptions';
 
 describe('MinuteService', () => {
   let service: MinuteService; // 测试的服务实例
@@ -37,10 +38,14 @@ describe('MinuteService', () => {
     });
 
     mockLarkClient = {
-      vc: {
-        v1: {
-          meetingRecording: {
-            get: getMock,
+      isConfigured: true,
+      assertConfigured: jest.fn(),
+      client: {
+        vc: {
+          v1: {
+            meetingRecording: {
+              get: getMock,
+            },
           },
         },
       },
@@ -75,8 +80,22 @@ describe('MinuteService', () => {
     expect(result.recording?.duration).toBe('3600');
 
     // 验证 get 方法是否被调用，并且传入了正确的参数
-    expect(mockLarkClient.vc?.v1?.meetingRecording?.get).toHaveBeenCalledWith({
+    expect(
+      mockLarkClient.client?.vc?.v1?.meetingRecording?.get,
+    ).toHaveBeenCalledWith({
       path: { meeting_id: 'test-meeting-id' },
     });
+  });
+
+  it('throws LarkClientNotConfiguredException when lark client is not configured', async () => {
+    (mockLarkClient.assertConfigured as jest.Mock).mockImplementationOnce(
+      () => {
+        throw new LarkClientNotConfiguredException();
+      },
+    );
+
+    await expect(service.getMinuteInfo('test-meeting-id')).rejects.toThrow(
+      LarkClientNotConfiguredException,
+    );
   });
 });
