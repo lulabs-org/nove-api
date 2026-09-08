@@ -1,6 +1,6 @@
 import { IsString, IsOptional, IsUrl } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { defineIntegrationConfig } from '../core';
+import { defineIntegrationConfig } from '../utils';
 
 export class UpdateWechatShopConfigDto {
   @ApiPropertyOptional({

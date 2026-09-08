@@ -2,10 +2,10 @@ import {
   getDefaultValues,
   getRequiredFields,
   getSecretFields,
-} from './integration.definition';
+} from './definition.util';
 import { IntegrationRegistry } from '../definitions';
 
-describe('integration definitions', () => {
+describe('definition.util', () => {
   it('derives defaults, required fields, and secrets from one field map', () => {
     expect(getDefaultValues(IntegrationRegistry.mail)).toEqual({
       host: 'smtp.gmail.com',

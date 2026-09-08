@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { IntegrationsService } from './integrations.service';
-import { IntegrationValues, IntegrationTestProvider } from '../core';
+import { IntegrationValues, IntegrationTestProvider } from '../types';
 
 export interface TestResult {
   orgId: string;

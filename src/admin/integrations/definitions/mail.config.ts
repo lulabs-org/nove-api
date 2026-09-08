@@ -9,7 +9,7 @@ import {
   Min,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { defineIntegrationConfig } from '../core';
+import { defineIntegrationConfig } from '../utils';
 
 export class UpdateMailConfigDto {
   @ApiPropertyOptional({ description: 'SMTP Host', example: 'smtp.gmail.com' })

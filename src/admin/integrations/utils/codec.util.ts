@@ -1,10 +1,12 @@
 import { decrypt, encrypt } from '@/common/utils/crypto.util';
 import {
   IntegrationRegistryEntry,
+  IntegrationValues,
+} from '../types';
+import {
   getRequiredFields,
   getSecretFields,
-  IntegrationValues,
-} from '../core';
+} from './definition.util';
 
 export const MASKED_SECRET = '********';
 

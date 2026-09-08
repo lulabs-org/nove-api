@@ -9,7 +9,7 @@ import {
   Max,
   Min,
 } from 'class-validator';
-import { defineIntegrationConfig } from '../core';
+import { defineIntegrationConfig } from '../utils';
 
 export class UpdateAiConfigDto {
   @ApiPropertyOptional({ enum: ['ark', 'openai', 'custom'] })

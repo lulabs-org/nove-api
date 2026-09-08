@@ -9,7 +9,7 @@ import { Prisma } from '@prisma/client';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 import { IntegrationsRepository } from '../repositories/integrations.repository';
-import { getDefaultValues, IntegrationValues } from '../core';
+import { IntegrationValues } from '../types';
 import {
   ConfigSource,
   isIntegrationModule,
@@ -21,11 +21,12 @@ import {
   containsEncryptedValues,
   decodeConfig,
   encodeUpdateConfig,
+  getDefaultValues,
   isConfigured,
   maskConfig,
   mergeDraftConfig,
   missingRequiredFields,
-} from './codec.util';
+} from '../utils';
 
 export interface EffectiveIntegration {
   orgId: string;

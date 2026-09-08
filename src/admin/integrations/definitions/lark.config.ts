@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsString } from 'class-validator';
-import { defineIntegrationConfig } from '../core';
+import { defineIntegrationConfig } from '../utils';
 
 export class UpdateLarkConfigDto {
   @ApiPropertyOptional()

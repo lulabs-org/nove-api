@@ -3,9 +3,7 @@ import {
   IntegrationDefinition,
   IntegrationRegistryEntry,
   IntegrationValues,
-} from './integration.types';
-
-export * from './integration.types';
+} from '../types';
 
 export function defineIntegrationConfig<TDto extends object>(
   dto: Type<TDto>,
