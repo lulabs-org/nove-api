@@ -18,12 +18,15 @@ import {
   QueryPlatformUserTranscriptContextDto,
 } from '../dto/platform-user-transcript.dto';
 import { PlatformUserTranscriptService } from '../services/platform-user-transcript.service';
+import { CurrentOrg } from '@/auth/decorators';
 
 @ApiTags('Minute')
 @ApiBearerAuth()
 @Controller('platform-users/:platformUserId')
 export class PlatformUserTranscriptController {
-  constructor(private readonly service: PlatformUserTranscriptService) {}
+  constructor(
+    private readonly service: PlatformUserTranscriptService,
+  ) {}
 
   @Get('minutes/transcripts')
   @RequireAllPermissions('platform-user:read', 'minute:read')
@@ -37,11 +40,13 @@ export class PlatformUserTranscriptController {
     @Param('platformUserId', CuidPipe) platformUserId: string,
     @Query(new ValidationPipe({ transform: true }))
     query: QueryPlatformUserMinuteTranscriptsDto,
+    @CurrentOrg() orgId: string,
   ) {
     return this.service.getMinuteTranscripts(
       platformUserId,
       query.startDate,
       query.endDate,
+      orgId,
     );
   }
 
@@ -61,11 +66,13 @@ export class PlatformUserTranscriptController {
     @Param('minuteId', CuidPipe) minuteId: string,
     @Query(new ValidationPipe({ transform: true }))
     query: QueryPlatformUserTranscriptContextDto,
+    @CurrentOrg() orgId: string,
   ) {
     return this.service.getTranscriptContext(
       platformUserId,
       minuteId,
       query.depth,
+      orgId,
     );
   }
 }

@@ -7,7 +7,6 @@ import {
 } from '@/admin/permission/decorators/permissions.decorator';
 import { PlatformUserTranscriptService } from '../services/platform-user-transcript.service';
 import { PlatformUserTranscriptController } from './platform-user-transcript.controller';
-
 describe('PlatformUserTranscriptController', () => {
   const service = {
     getMinuteTranscripts: jest.fn(),
@@ -47,15 +46,20 @@ describe('PlatformUserTranscriptController', () => {
   it('delegates minute transcript queries', async () => {
     service.getMinuteTranscripts.mockResolvedValue({ minutes: [] });
 
-    await controller.getMinuteTranscripts('platform-user-1', {
-      startDate: '2026-08-01T00:00:00Z',
-      endDate: '2026-09-01T00:00:00Z',
-    });
+    await controller.getMinuteTranscripts(
+      'platform-user-1',
+      {
+        startDate: '2026-08-01T00:00:00Z',
+        endDate: '2026-09-01T00:00:00Z',
+      },
+      'org-1',
+    );
 
     expect(service.getMinuteTranscripts).toHaveBeenCalledWith(
       'platform-user-1',
       '2026-08-01T00:00:00Z',
       '2026-09-01T00:00:00Z',
+      'org-1',
     );
   });
 });
