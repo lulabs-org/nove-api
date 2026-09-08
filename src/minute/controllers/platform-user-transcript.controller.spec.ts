@@ -7,8 +7,6 @@ import {
 } from '@/admin/permission/decorators/permissions.decorator';
 import { PlatformUserTranscriptService } from '../services/platform-user-transcript.service';
 import { PlatformUserTranscriptController } from './platform-user-transcript.controller';
-import { MinuteService } from '../services/minute.service';
-
 describe('PlatformUserTranscriptController', () => {
   const service = {
     getMinuteTranscripts: jest.fn(),
@@ -16,7 +14,6 @@ describe('PlatformUserTranscriptController', () => {
   };
   const controller = new PlatformUserTranscriptController(
     service as unknown as PlatformUserTranscriptService,
-    { requireOrgId: (orgId: string) => orgId } as unknown as MinuteService,
   );
 
   beforeEach(() => jest.clearAllMocks());

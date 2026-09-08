@@ -1,6 +1,5 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { MinuteRepository } from '../repositories/minute.repository';
-import { MinuteSummaryRepository } from '../repositories/minute-summary.repository';
 import { RecordingNotFoundException } from '@/meeting/exceptions/meeting.exceptions';
 import {
   QueryMinuteDto,
@@ -13,7 +12,6 @@ import { PrismaService } from '@/prisma/prisma.service';
 export class MinuteService {
   constructor(
     private readonly meetingRecordingRepository: MinuteRepository,
-    private readonly meetingSummaryRepository: MinuteSummaryRepository,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -21,7 +19,6 @@ export class MinuteService {
    * 获取录制记录详情
    */
   async getById(id: string, orgId: string) {
-    this.requireOrgId(orgId);
     const recording = await this.meetingRecordingRepository.findById(id, orgId);
     if (!recording) {
       throw new RecordingNotFoundException(id);
@@ -30,7 +27,6 @@ export class MinuteService {
   }
 
   async findMany(query: QueryMinuteDto, orgId: string) {
-    this.requireOrgId(orgId);
     const page = query.page || 1;
     const limit = query.limit || 10;
     const skip = (page - 1) * limit;
@@ -72,15 +68,7 @@ export class MinuteService {
     return { success: true, data: recording, deletedAt: new Date() };
   }
 
-  requireOrgId(orgId?: string | null): string {
-    if (!orgId?.trim()) {
-      throw new ForbiddenException('Current organization is required');
-    }
-    return orgId;
-  }
-
   private async assertMeetingOrganization(meetingId: string, orgId: string) {
-    this.requireOrgId(orgId);
     if (!meetingId?.trim()) {
       throw new ForbiddenException('Meeting is required');
     }

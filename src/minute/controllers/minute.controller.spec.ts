@@ -6,7 +6,7 @@ import { MinuteController } from './minute.controller';
 
 describe('MinuteController transcript routes', () => {
   let transcriptService: { getJson: jest.Mock; getText: jest.Mock };
-  let minuteService: { getById: jest.Mock; requireOrgId: jest.Mock };
+  let minuteService: { getById: jest.Mock };
   let controller: MinuteController;
 
   beforeEach(() => {
@@ -16,7 +16,6 @@ describe('MinuteController transcript routes', () => {
     };
     minuteService = {
       getById: jest.fn().mockResolvedValue({ id: 'minute-1' }),
-      requireOrgId: jest.fn((orgId: string) => orgId),
     };
     controller = new MinuteController(
       minuteService as unknown as MinuteService,

@@ -9,7 +9,6 @@ describe('SpeakerSummaryController organization scope', () => {
       findMany: jest.fn().mockResolvedValue({ data: [], total: 0 }),
     };
     const minuteService = {
-      requireOrgId: jest.fn().mockReturnValue('org-1'),
       getById: jest.fn().mockResolvedValue({ id: 'minute-1' }),
     };
     const controller = new SpeakerSummaryController(
@@ -21,7 +20,6 @@ describe('SpeakerSummaryController organization scope', () => {
     await expect(
       controller.list('minute-1', { page: 1, limit: 10 }, 'org-1'),
     ).resolves.toEqual({ data: [], total: 0 });
-    expect(minuteService.requireOrgId).toHaveBeenCalledWith('org-1');
     expect(minuteService.getById).toHaveBeenCalledWith('minute-1', 'org-1');
     expect(crudService.findMany).toHaveBeenCalledWith('minute-1', 1, 10);
   });

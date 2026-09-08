@@ -30,7 +30,7 @@ import {
   GenerateParticipantSummaryDto,
 } from '../dto/speaker-summary.dto';
 import { MinuteService } from '../services/minute.service';
-import { Auth } from '@/auth/decorators/auth.decorator';
+import { CurrentOrg } from '@/auth/decorators';
 
 @ApiTags('Minute Speaker Summary')
 @ApiBearerAuth()
@@ -53,7 +53,7 @@ export class SpeakerSummaryController {
     @Param('minuteId', CuidPipe) minuteId: string,
     @Query(new ValidationPipe({ transform: true }))
     query: QuerySpeakerSummaryDto,
-    @Auth('orgId') orgId?: string | null,
+    @CurrentOrg() orgId: string,
   ) {
     await this.assertMinute(minuteId, orgId);
     return this.service.findMany(minuteId, query.page, query.limit);
@@ -66,7 +66,7 @@ export class SpeakerSummaryController {
   async get(
     @Param('minuteId', CuidPipe) minuteId: string,
     @Param('summaryId', CuidPipe) summaryId: string,
-    @Auth('orgId') orgId?: string | null,
+    @CurrentOrg() orgId: string,
   ) {
     await this.assertMinute(minuteId, orgId);
     return this.service.findById(minuteId, summaryId);
@@ -79,7 +79,7 @@ export class SpeakerSummaryController {
   async create(
     @Param('minuteId', CuidPipe) minuteId: string,
     @Body(new ValidationPipe()) dto: CreateSpeakerSummaryDto,
-    @Auth('orgId') orgId?: string | null,
+    @CurrentOrg() orgId: string,
   ) {
     await this.assertMinute(minuteId, orgId);
     return this.service.create(minuteId, dto);
@@ -92,7 +92,7 @@ export class SpeakerSummaryController {
     @Param('minuteId', CuidPipe) minuteId: string,
     @Param('summaryId', CuidPipe) summaryId: string,
     @Body(new ValidationPipe()) dto: UpdateSpeakerSummaryDto,
-    @Auth('orgId') orgId?: string | null,
+    @CurrentOrg() orgId: string,
   ) {
     await this.assertMinute(minuteId, orgId);
     return this.service.update(minuteId, summaryId, dto);
@@ -104,7 +104,7 @@ export class SpeakerSummaryController {
   async delete(
     @Param('minuteId', CuidPipe) minuteId: string,
     @Param('summaryId', CuidPipe) summaryId: string,
-    @Auth('orgId') orgId?: string | null,
+    @CurrentOrg() orgId: string,
   ) {
     await this.assertMinute(minuteId, orgId);
     return this.service.delete(minuteId, summaryId);
@@ -117,7 +117,7 @@ export class SpeakerSummaryController {
   async generateSummaries(
     @Param('minuteId', CuidPipe) minuteId: string,
     @Body(new ValidationPipe()) dto: GenerateParticipantSummaryDto,
-    @Auth('orgId') orgId?: string | null,
+    @CurrentOrg() orgId: string,
   ) {
     await this.assertMinute(minuteId, orgId);
     return {
@@ -130,10 +130,7 @@ export class SpeakerSummaryController {
     };
   }
 
-  private assertMinute(minuteId: string, orgId?: string | null) {
-    return this.minuteService.getById(
-      minuteId,
-      this.minuteService.requireOrgId(orgId),
-    );
+  private assertMinute(minuteId: string, orgId: string) {
+    return this.minuteService.getById(minuteId, orgId);
   }
 }

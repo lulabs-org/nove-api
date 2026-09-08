@@ -1,6 +1,5 @@
 import { ForbiddenException } from '@nestjs/common';
 import { RecordingSource } from '@prisma/client';
-import { MinuteSummaryRepository } from '../repositories/minute-summary.repository';
 import { MinuteRepository } from '../repositories/minute.repository';
 import { MinuteService } from './minute.service';
 import { PrismaService } from '@/prisma/prisma.service';
@@ -14,7 +13,6 @@ describe('MinuteService list', () => {
     };
     const service = new MinuteService(
       repository as unknown as MinuteRepository,
-      {} as MinuteSummaryRepository,
       {} as PrismaService,
     );
 
@@ -57,7 +55,6 @@ describe('MinuteService list', () => {
     };
     const service = new MinuteService(
       repository as unknown as MinuteRepository,
-      {} as MinuteSummaryRepository,
       prisma as unknown as PrismaService,
     );
 
@@ -80,7 +77,6 @@ describe('MinuteService list', () => {
     };
     const service = new MinuteService(
       repository as unknown as MinuteRepository,
-      {} as MinuteSummaryRepository,
       prisma as unknown as PrismaService,
     );
 

@@ -26,7 +26,7 @@ import {
 } from '../dto/minute-summary.dto';
 import { CuidPipe } from '@/common/pipes/cuid.pipe';
 import { MinuteService } from '../services/minute.service';
-import { Auth } from '@/auth/decorators/auth.decorator';
+import { CurrentOrg } from '@/auth/decorators';
 
 @ApiTags('Minute Summary')
 @Controller('minutes/:minuteId/summary')
@@ -46,7 +46,7 @@ export class MinuteSummaryController {
   @ApiResponse({ status: HttpStatus.OK, type: MinuteSummaryDto })
   async getSummary(
     @Param('minuteId', CuidPipe) minuteId: string,
-    @Auth('orgId') orgId?: string | null,
+    @CurrentOrg() orgId: string,
   ) {
     this.logger.log(`获取纪要总结: ${minuteId}`);
     await this.assertMinute(minuteId, orgId);
@@ -61,7 +61,7 @@ export class MinuteSummaryController {
   async createSummary(
     @Param('minuteId', CuidPipe) minuteId: string,
     @Body(new ValidationPipe()) createParams: CreateMinuteSummaryBodyDto,
-    @Auth('orgId') orgId?: string | null,
+    @CurrentOrg() orgId: string,
   ) {
     this.logger.log(`创建纪要总结: ${minuteId}`);
     await this.assertMinute(minuteId, orgId);
@@ -76,7 +76,7 @@ export class MinuteSummaryController {
   async updateSummary(
     @Param('minuteId', CuidPipe) minuteId: string,
     @Body(new ValidationPipe()) updateParams: UpdateMinuteSummaryDto,
-    @Auth('orgId') orgId?: string | null,
+    @CurrentOrg() orgId: string,
   ) {
     this.logger.log(`更新纪要总结: minuteId=${minuteId}`);
     await this.assertMinute(minuteId, orgId);
@@ -90,17 +90,14 @@ export class MinuteSummaryController {
   @ApiResponse({ status: HttpStatus.OK, type: MinuteSummaryDto })
   async deleteSummary(
     @Param('minuteId', CuidPipe) minuteId: string,
-    @Auth('orgId') orgId?: string | null,
+    @CurrentOrg() orgId: string,
   ) {
     this.logger.log(`删除纪要总结: minuteId=${minuteId}`);
     await this.assertMinute(minuteId, orgId);
     return this.minuteSummaryService.delete(minuteId);
   }
 
-  private assertMinute(minuteId: string, orgId?: string | null) {
-    return this.minuteService.getById(
-      minuteId,
-      this.minuteService.requireOrgId(orgId),
-    );
+  private assertMinute(minuteId: string, orgId: string) {
+    return this.minuteService.getById(minuteId, orgId);
   }
 }

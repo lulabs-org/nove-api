@@ -42,7 +42,7 @@ import {
   MinuteDto,
   MinuteDeleteResponseDto,
 } from '../dto/minute.dto';
-import { Auth } from '@/auth/decorators/auth.decorator';
+import { CurrentOrg } from '@/auth/decorators';
 
 @ApiTags('Minute')
 @Controller('minutes')
@@ -69,13 +69,10 @@ export class MinuteController {
   })
   async createMinute(
     @Body(new ValidationPipe()) createParams: CreateMinuteDto,
-    @Auth('orgId') orgId?: string | null,
+    @CurrentOrg() orgId: string,
   ) {
     this.logger.log(`创建录制记录: ${createParams.meetingId}`);
-    return this.minuteService.create(
-      createParams,
-      this.minuteService.requireOrgId(orgId),
-    );
+    return this.minuteService.create(createParams, orgId);
   }
 
   /**
@@ -88,12 +85,9 @@ export class MinuteController {
   async getMinutes(
     @Query(new ValidationPipe({ transform: true }))
     query: QueryMinuteDto,
-    @Auth('orgId') orgId?: string | null,
+    @CurrentOrg() orgId: string,
   ) {
-    return this.minuteService.findMany(
-      query,
-      this.minuteService.requireOrgId(orgId),
-    );
+    return this.minuteService.findMany(query, orgId);
   }
 
   /**
@@ -110,12 +104,9 @@ export class MinuteController {
   })
   async getMinuteById(
     @Param('id', CuidPipe) id: string,
-    @Auth('orgId') orgId?: string | null,
+    @CurrentOrg() orgId: string,
   ) {
-    return this.minuteService.getById(
-      id,
-      this.minuteService.requireOrgId(orgId),
-    );
+    return this.minuteService.getById(id, orgId);
   }
 
   /**
@@ -134,13 +125,10 @@ export class MinuteController {
   async createTranscript(
     @Param('id', CuidPipe) id: string,
     @Body(new ValidationPipe()) createParams: CreateTranscriptBodyDto,
-    @Auth('orgId') orgId?: string | null,
+    @CurrentOrg() orgId: string,
   ) {
     this.logger.log(`创建录制转写记录: ${id}`);
-    await this.minuteService.getById(
-      id,
-      this.minuteService.requireOrgId(orgId),
-    );
+    await this.minuteService.getById(id, orgId);
     return this.transcriptService.create({
       ...createParams,
       minuteId: id,
@@ -157,7 +145,7 @@ export class MinuteController {
   async getTranscript(
     @Param('id', CuidPipe) minuteId: string,
     @Query(new ValidationPipe({ transform: true })) query: QueryTranscriptDto,
-    @Auth('orgId') orgId?: string | null,
+    @CurrentOrg() orgId: string,
   ): Promise<TranscriptJsonResponseDto> {
     const { includeLocalUser = false } = query;
     this.logger.log(
@@ -165,10 +153,7 @@ export class MinuteController {
     );
 
     try {
-      await this.minuteService.getById(
-        minuteId,
-        this.minuteService.requireOrgId(orgId),
-      );
+      await this.minuteService.getById(minuteId, orgId);
       const result = await this.transcriptService.getJson(
         minuteId,
         includeLocalUser,
@@ -194,15 +179,12 @@ export class MinuteController {
   @ApiGetTranscriptTextDocs()
   async getTranscriptText(
     @Param('id', CuidPipe) minuteId: string,
-    @Auth('orgId') orgId?: string | null,
+    @CurrentOrg() orgId: string,
   ): Promise<TranscriptTextResponseDto> {
     this.logger.log(`获取录制转写文本: ${minuteId}`);
 
     try {
-      await this.minuteService.getById(
-        minuteId,
-        this.minuteService.requireOrgId(orgId),
-      );
+      await this.minuteService.getById(minuteId, orgId);
       const text = await this.transcriptService.getText(minuteId);
 
       this.logger.log(`获取录制的转写文本成功: ${minuteId}`);
@@ -230,13 +212,9 @@ export class MinuteController {
   async updateMinute(
     @Param('id', CuidPipe) id: string,
     @Body(new ValidationPipe()) updateParams: UpdateMinuteDto,
-    @Auth('orgId') orgId?: string | null,
+    @CurrentOrg() orgId: string,
   ) {
-    return this.minuteService.update(
-      id,
-      updateParams,
-      this.minuteService.requireOrgId(orgId),
-    );
+    return this.minuteService.update(id, updateParams, orgId);
   }
 
   /**
@@ -252,11 +230,8 @@ export class MinuteController {
   })
   async deleteMinute(
     @Param('id', CuidPipe) id: string,
-    @Auth('orgId') orgId?: string | null,
+    @CurrentOrg() orgId: string,
   ) {
-    return this.minuteService.delete(
-      id,
-      this.minuteService.requireOrgId(orgId),
-    );
+    return this.minuteService.delete(id, orgId);
   }
 }

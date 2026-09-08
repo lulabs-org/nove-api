@@ -1,7 +1,6 @@
 import { ForbiddenException } from '@nestjs/common';
 import { MinuteService } from '../services/minute.service';
 import { MinuteRepository } from '../repositories/minute.repository';
-import { MinuteSummaryRepository } from '../repositories/minute-summary.repository';
 import { PrismaService } from '@/prisma/prisma.service';
 import { MinuteController } from './minute.controller';
 import { TranscriptService } from '../services/transcript.service';
@@ -21,7 +20,6 @@ describe('Minute API organization boundary', () => {
   const prisma = { meeting: { findFirst: jest.fn() } };
   const minutes = new MinuteService(
     repository as unknown as MinuteRepository,
-    {} as MinuteSummaryRepository,
     prisma as unknown as PrismaService,
   );
 
@@ -78,16 +76,5 @@ describe('Minute API organization boundary', () => {
       ),
     ).rejects.toBeInstanceOf(ForbiddenException);
     expect(repository.update).not.toHaveBeenCalled();
-  });
-
-  it('rejects missing organization before querying or deleting', async () => {
-    await expect(minutes.getById('minute-a', '')).rejects.toBeInstanceOf(
-      ForbiddenException,
-    );
-    await expect(minutes.delete('minute-a', '')).rejects.toBeInstanceOf(
-      ForbiddenException,
-    );
-    expect(repository.findById).not.toHaveBeenCalled();
-    expect(repository.delete).not.toHaveBeenCalled();
   });
 });

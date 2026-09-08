@@ -8,7 +8,6 @@ describe('MinuteSummaryController organization scope', () => {
       findByMinuteId: jest.fn().mockResolvedValue({ id: 'summary-1' }),
     };
     const minuteService = {
-      requireOrgId: jest.fn().mockReturnValue('org-1'),
       getById: jest.fn().mockResolvedValue({ id: 'minute-1' }),
     };
     const controller = new MinuteSummaryController(
@@ -19,7 +18,6 @@ describe('MinuteSummaryController organization scope', () => {
     await expect(controller.getSummary('minute-1', 'org-1')).resolves.toEqual({
       id: 'summary-1',
     });
-    expect(minuteService.requireOrgId).toHaveBeenCalledWith('org-1');
     expect(minuteService.getById).toHaveBeenCalledWith('minute-1', 'org-1');
     expect(summaryService.findByMinuteId).toHaveBeenCalledWith('minute-1');
   });
