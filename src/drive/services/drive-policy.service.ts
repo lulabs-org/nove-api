@@ -54,7 +54,6 @@ export class DrivePolicyService {
       if (space.ownerUserId !== userId) this.deny();
       return;
     }
-    if (space.type === DriveSpaceType.SYSTEM_UNASSIGNED) this.deny();
     if (!space.orgId || auth.orgId !== space.orgId) this.deny();
 
     const member = await this.access.findMembership(space.orgId, userId);

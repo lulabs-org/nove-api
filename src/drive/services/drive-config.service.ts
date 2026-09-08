@@ -9,10 +9,10 @@ export class DriveConfigService {
     private readonly orgContext: SingleOrgContextService,
   ) {}
 
-  async getConfig(module: 'drive') {
+  async getConfig() {
     const config = await this.integrations.getEffectiveConfig(
       this.orgContext.getOrgId(),
-      module,
+      'drive',
     );
     return config.value;
   }

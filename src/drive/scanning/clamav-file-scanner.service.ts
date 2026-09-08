@@ -25,11 +25,7 @@ export class ClamAvFileScannerService implements FileScannerProvider {
   ) {}
 
   async scan(input: FileScanInput): Promise<FileScanResult> {
-    const raw = (await this.systemConfig.getConfig('drive')) as
-      | { value?: Record<string, unknown> }
-      | Record<string, unknown>
-      | null;
-    const config = (raw?.value ?? raw ?? {}) as {
+    const config = (await this.systemConfig.getConfig()) as {
       clamAvHost?: string;
       clamAvPort?: number;
       clamAvTimeoutMs?: number;

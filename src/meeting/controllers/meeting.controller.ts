@@ -39,7 +39,6 @@ import {
   QueryMeetingStatsDto,
   QueryMeetingParticipantsDto,
   MeetingParticipantListResponseDto,
-  AssignMeetingOrganizationDto,
 } from '../dto';
 import { CuidPipe } from '@/common/pipes/cuid.pipe';
 import { CurrentOrg } from '@/auth/decorators';
@@ -55,13 +54,6 @@ export class MeetingController {
   private readonly logger = new Logger(MeetingController.name);
 
   constructor(private readonly meetingService: MeetingService) {}
-
-  @Get('organization/unassigned')
-  @RequirePermissions('drive:admin')
-  @ApiOperation({ summary: '获取待分配组织的历史会议' })
-  listUnassignedMeetings() {
-    return this.meetingService.listUnassigned();
-  }
 
   /**
    * 获取会议记录列表
@@ -216,11 +208,5 @@ export class MeetingController {
 
     this.logger.log('获取会议统计信息成功');
     return stats;
-  }
-  @Patch('organization/assign')
-  @RequirePermissions('drive:admin')
-  @ApiOperation({ summary: '批量设置历史会议的组织归属' })
-  assignOrganization(@Body() dto: AssignMeetingOrganizationDto) {
-    return this.meetingService.assignOrganization(dto.meetingIds, dto.orgId);
   }
 }

@@ -1,4 +1,3 @@
-import { PrismaService } from '@/prisma/prisma.service';
 import { ProcessingStatus } from '../../minute/enums/status.enum';
 import { MeetingPlatform, MeetingType } from '@prisma/client';
 import { MeetingRepository } from '../repositories/meeting.repository';
@@ -27,7 +26,6 @@ describe('MeetingService', () => {
     service = new MeetingService(
       repository as unknown as MeetingRepository,
       participantRepository as unknown as MeetingParticipantRepository,
-      {} as PrismaService,
     );
   });
 

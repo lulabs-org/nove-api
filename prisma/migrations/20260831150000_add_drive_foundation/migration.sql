@@ -1,7 +1,7 @@
 
 ALTER TABLE "minute_files" ADD COLUMN "file_binding_id" TEXT;
 
-CREATE TYPE "DriveSpaceType" AS ENUM ('PERSONAL', 'ORG', 'SYSTEM_UNASSIGNED');
+CREATE TYPE "DriveSpaceType" AS ENUM ('PERSONAL', 'ORG');
 CREATE TYPE "DriveSpaceStatus" AS ENUM ('ACTIVE', 'SUSPENDED');
 CREATE TYPE "DriveNodeType" AS ENUM ('FILE', 'FOLDER');
 CREATE TYPE "DriveFileManagedBy" AS ENUM ('USER', 'SYSTEM');
@@ -26,8 +26,7 @@ CREATE TABLE "drive_spaces" (
     CONSTRAINT "drive_spaces_pkey" PRIMARY KEY ("id"),
     CONSTRAINT "drive_spaces_owner_check" CHECK (
       ("type" = 'PERSONAL' AND "owner_user_id" IS NOT NULL AND "org_id" IS NULL) OR
-      ("type" = 'ORG' AND "owner_user_id" IS NULL AND "org_id" IS NOT NULL) OR
-      ("type" = 'SYSTEM_UNASSIGNED' AND "owner_user_id" IS NULL AND "org_id" IS NULL)
+      ("type" = 'ORG' AND "owner_user_id" IS NULL AND "org_id" IS NOT NULL)
     )
 );
 
@@ -136,7 +135,6 @@ CREATE TABLE "drive_audit_logs" (
 
 CREATE UNIQUE INDEX "drive_spaces_personal_owner_key" ON "drive_spaces"("owner_user_id") WHERE "type" = 'PERSONAL' AND "deleted_at" IS NULL;
 CREATE UNIQUE INDEX "drive_spaces_org_key" ON "drive_spaces"("org_id") WHERE "type" = 'ORG' AND "deleted_at" IS NULL;
-CREATE UNIQUE INDEX "drive_spaces_unassigned_key" ON "drive_spaces"("type") WHERE "type" = 'SYSTEM_UNASSIGNED' AND "deleted_at" IS NULL;
 CREATE INDEX "drive_spaces_owner_user_id_idx" ON "drive_spaces"("owner_user_id");
 CREATE INDEX "drive_spaces_org_id_idx" ON "drive_spaces"("org_id");
 CREATE INDEX "drive_spaces_type_status_idx" ON "drive_spaces"("type", "status");

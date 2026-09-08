@@ -27,7 +27,7 @@ describe('Drive configuration after integrations migration', () => {
       value: { allowedExtensions: ['.pdf'], downloadUrlExpiresSeconds: 120 },
       updatedAt: new Date(),
     });
-    await expect(service.getConfig('drive')).resolves.toMatchObject({
+    await expect(service.getConfig()).resolves.toMatchObject({
       allowedExtensions: ['.pdf'],
       downloadUrlExpiresSeconds: 120,
       recycleRetentionDays: 30,
@@ -53,7 +53,7 @@ describe('Drive configuration after integrations migration', () => {
     orgContext.getOrgId.mockImplementation(() => {
       throw new Error('Organization context unavailable');
     });
-    await expect(service.getConfig('drive')).rejects.toThrow(
+    await expect(service.getConfig()).rejects.toThrow(
       'Organization context unavailable',
     );
     expect(repository.findByKey).not.toHaveBeenCalled();

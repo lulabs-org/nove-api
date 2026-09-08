@@ -44,7 +44,7 @@ describe('FileScanService', () => {
     const previousProvider = process.env.DRIVE_MALWARE_SCAN_PROVIDER;
     process.env.NODE_ENV = 'production';
     delete process.env.DRIVE_MALWARE_SCAN_PROVIDER;
-    systemConfig.getConfig.mockResolvedValue(null);
+    systemConfig.getConfig.mockResolvedValue({});
     await expect(service.resolveProvider(true)).resolves.toBe(
       FileScanProvider.ALIYUN_SAS,
     );

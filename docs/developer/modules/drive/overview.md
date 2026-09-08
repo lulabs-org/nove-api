@@ -1,6 +1,6 @@
 # 云盘与 Minute 文件
 
-云盘模块提供个人空间、组织空间和待归属系统空间。`StorageObject` 仍是不可变的物理对象；`DriveFile` 和 `FileVersion` 提供稳定文件身份与版本，`DriveNode` 提供目录树，`FileBinding` 负责业务关联。
+云盘模块提供个人空间和组织空间。`StorageObject` 仍是不可变的物理对象；`DriveFile` 和 `FileVersion` 提供稳定文件身份与版本，`DriveNode` 提供目录树，`FileBinding` 负责业务关联。
 
 ## 安全边界
 
@@ -68,12 +68,12 @@ docker compose -f docker-compose.yml -f docker-compose.clamav.yml up -d clamav
 
 Compose 将 `INSTREAM`、单文件和总扫描上限配置为 2 GiB，并把单次扫描时限设为 10 分钟。实际云盘策略只把不超过 100 MiB 的强制扫描类别交给 ClamAV；音视频不进入该数据链路。
 
-## 发布与旧数据回填
+## 发布与历史数据
 
 1. 执行 Prisma migration 和权限 seed。
 2. 配置组织级云盘策略、病毒扫描 Provider、OSS 私有 Bucket 与 CORS；使用阿里云时先开通恶意文件检测并授予最小 RAM 权限。
-3. 先执行 `pnpm db:backfill:minute-drive` 查看待回填数量。
-4. 确认后执行 `pnpm db:backfill:minute-drive -- --apply`。脚本只创建逻辑文件和绑定，不复制 OSS 对象。
-5. 校验 MinuteFile 数量、绑定数量和随机下载 SHA-256 后，再切换生产读取流量。
+3. 验证上传、扫描、下载和 Minute 文件关联。
 
-旧 `MinuteFile.fileObjectId` 在兼容发布周期内保留。V2 自定义数据表运行时不属于本次交付；`CUSTOM_RECORD` 绑定类型仅作为后续扩展点。
+旧 `MinuteFile.fileObjectId` 保留。本模块不分配历史会议的组织，也不自动转换旧文件；需要迁移时，应根据实际数据单独制定迁移方案。云盘只提供个人空间和组织空间。
+
+V2 自定义数据表运行时不属于本次交付；`CUSTOM_RECORD` 绑定类型仅作为后续扩展点。

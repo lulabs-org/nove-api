@@ -68,9 +68,6 @@ export class DriveService {
     const userId = this.policy.requireUserId(auth);
     const spaces = [await this.ensurePersonalSpace(userId)];
     if (auth.orgId) spaces.push(await this.ensureOrgSpace(auth.orgId));
-    if (this.policy.isDriveAdmin(auth)) {
-      spaces.push(await this.ensureUnassignedSpace());
-    }
     return spaces.map((space) => ({
       id: space.id,
       name: space.name,
@@ -458,11 +455,7 @@ export class DriveService {
       record.node!.id,
       record.id,
     );
-    const raw = (await this.systemConfig.getConfig('drive')) as
-      | { value?: Record<string, unknown> }
-      | Record<string, unknown>
-      | null;
-    const config = (raw?.value ?? raw ?? {}) as {
+    const config = (await this.systemConfig.getConfig()) as {
       downloadUrlExpiresSeconds?: number;
     };
     const expiresSeconds = config.downloadUrlExpiresSeconds ?? 10 * 60;
@@ -593,11 +586,7 @@ export class DriveService {
     const bindingCount = await this.files.countActiveBindingsForNodes(ids);
     if (bindingCount) throw new ConflictException('文件仍被业务实体引用');
     const now = new Date();
-    const raw = (await this.systemConfig.getConfig('drive')) as
-      | { value?: Record<string, unknown> }
-      | Record<string, unknown>
-      | null;
-    const config = (raw?.value ?? raw ?? {}) as {
+    const config = (await this.systemConfig.getConfig()) as {
       recycleRetentionDays?: number;
     };
     const retentionDays = config.recycleRetentionDays ?? 30;
@@ -649,10 +638,6 @@ export class DriveService {
     const space = await this.spaces.ensureOrganization(orgId);
     if (!space) throw new ForbiddenException('当前组织不存在');
     return space;
-  }
-
-  private async ensureUnassignedSpace() {
-    return this.spaces.ensureUnassigned();
   }
 
   private async findSpace(id: string) {

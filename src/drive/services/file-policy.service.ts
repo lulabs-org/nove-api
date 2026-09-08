@@ -134,11 +134,7 @@ export class FilePolicyService {
     audioMaxMiB?: number;
     videoMaxMiB?: number;
   }> {
-    const raw = (await this.systemConfig.getConfig('drive')) as
-      | { value?: Record<string, unknown> }
-      | Record<string, unknown>
-      | null;
-    return (raw?.value ?? raw ?? {}) as {
+    return (await this.systemConfig.getConfig()) as {
       allowedExtensions?: string[];
       imageMaxMiB?: number;
       documentMaxMiB?: number;

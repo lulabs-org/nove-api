@@ -42,7 +42,6 @@
     "db:reset": "prisma migrate reset",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed:real": "tsx prisma/seed.ts --real",
-    "db:backfill:minute-drive": "tsx scripts/ts/backfill-minute-drive-files.ts",
     "drive:configure-oss-cors": "tsx scripts/ts/configure-drive-oss-cors.ts",
     "db:backup": "chmod +x scripts/shell/backup.sh && ./scripts/shell/backup.sh",
     "mcp:inspect": "npx @modelcontextprotocol/inspector node dist/main.js",

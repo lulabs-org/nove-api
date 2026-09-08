@@ -66,26 +66,6 @@ export class DriveSpaceRepository {
     }
   }
 
-  async ensureUnassigned() {
-    const where = {
-      type: DriveSpaceType.SYSTEM_UNASSIGNED,
-      deletedAt: null,
-    } satisfies Prisma.DriveSpaceWhereInput;
-    const existing = await this.prisma.driveSpace.findFirst({ where });
-    if (existing) return existing;
-    try {
-      return await this.prisma.driveSpace.create({
-        data: {
-          type: DriveSpaceType.SYSTEM_UNASSIGNED,
-          name: '待归属会议文件',
-        },
-      });
-    } catch (error) {
-      if (!this.isUniqueConflict(error)) throw error;
-      return this.prisma.driveSpace.findFirstOrThrow({ where });
-    }
-  }
-
   private isUniqueConflict(error: unknown): boolean {
     return (
       error instanceof Prisma.PrismaClientKnownRequestError &&

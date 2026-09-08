@@ -8,7 +8,7 @@ describe('FilePolicyService', () => {
     config as unknown as DriveConfigService,
   );
 
-  beforeEach(() => config.getConfig.mockResolvedValue(null));
+  beforeEach(() => config.getConfig.mockResolvedValue({}));
 
   it('accepts an allowed declaration and normalizes its name', async () => {
     await expect(

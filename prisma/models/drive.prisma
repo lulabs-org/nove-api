@@ -193,7 +193,6 @@ model DriveAuditLog {
 enum DriveSpaceType {
   PERSONAL
   ORG
-  SYSTEM_UNASSIGNED
 }
 
 enum DriveSpaceStatus {
