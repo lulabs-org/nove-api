@@ -10,6 +10,46 @@ describe('PlatformUserTranscriptRepository', () => {
 
   beforeEach(() => jest.clearAllMocks());
 
+  it('resolves a platform user only through meetings in the organization', async () => {
+    platformUser.findFirst.mockResolvedValue(null);
+
+    await repository.findPlatformUser('platform-user-1', 'org-1');
+
+    expect(platformUser.findFirst).toHaveBeenCalledWith({
+      where: {
+        id: 'platform-user-1',
+        deletedAt: null,
+        OR: [
+          {
+            meetingParticipants: {
+              some: {
+                deletedAt: null,
+                meeting: { orgId: 'org-1', deletedAt: null },
+              },
+            },
+          },
+          {
+            transcriptSegments: {
+              some: {
+                transcript: {
+                  minute: {
+                    is: {
+                      deletedAt: null,
+                      meeting: {
+                        is: { orgId: 'org-1', deletedAt: null },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        ],
+      },
+      select: { id: true, displayName: true },
+    });
+  });
+
   it('queries matching minutes by speech and a half-open minute range', async () => {
     minute.findMany.mockResolvedValue([]);
     const startDate = new Date('2026-08-01T00:00:00+08:00');
@@ -19,6 +59,7 @@ describe('PlatformUserTranscriptRepository', () => {
       'platform-user-1',
       startDate,
       endDate,
+      'org-1',
     );
 
     expect(minute.findMany).toHaveBeenCalledWith(
@@ -26,10 +67,7 @@ describe('PlatformUserTranscriptRepository', () => {
         where: expect.objectContaining({
           deletedAt: null,
           startAt: { gte: startDate, lt: endDate },
-          OR: [
-            { meeting: { is: null } },
-            { meeting: { is: { deletedAt: null } } },
-          ],
+          meeting: { is: { orgId: 'org-1', deletedAt: null } },
           transcripts: {
             some: {
               segments: { some: { speakerId: 'platform-user-1' } },
@@ -55,14 +93,18 @@ describe('PlatformUserTranscriptRepository', () => {
   it('loads all transcript segments while filtering the minute membership', async () => {
     minute.findFirst.mockResolvedValue(null);
 
-    await repository.findMinuteContextSource('minute-1', 'platform-user-1');
+    await repository.findMinuteContextSource(
+      'minute-1',
+      'platform-user-1',
+      'org-1',
+    );
 
     expect(minute.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({
         where: {
           id: 'minute-1',
           deletedAt: null,
-          meeting: { is: { deletedAt: null } },
+          meeting: { is: { orgId: 'org-1', deletedAt: null } },
         },
         select: expect.objectContaining({
           meeting: {

@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -31,16 +32,18 @@ export class PlatformUserTranscriptService {
     platformUserId: string,
     startDateValue: string,
     endDateValue: string,
+    orgId: string,
   ): Promise<PlatformUserMinuteTranscriptsResponseDto> {
     const { startDate, endDate } = this.validateDateRange(
       startDateValue,
       endDateValue,
     );
-    const platformUser = await this.ensurePlatformUser(platformUserId);
+    const platformUser = await this.ensurePlatformUser(platformUserId, orgId);
     const minutes = await this.repository.findMinuteTranscripts(
       platformUserId,
       startDate,
       endDate,
+      orgId,
     );
 
     return {
@@ -77,11 +80,13 @@ export class PlatformUserTranscriptService {
     platformUserId: string,
     minuteId: string,
     depth: number,
+    orgId: string,
   ): Promise<PlatformUserTranscriptContextResponseDto> {
-    const platformUser = await this.ensurePlatformUser(platformUserId);
+    const platformUser = await this.ensurePlatformUser(platformUserId, orgId);
     const minute = await this.repository.findMinuteContextSource(
       minuteId,
       platformUserId,
+      orgId,
     );
 
     if (!minute) {
@@ -130,8 +135,13 @@ export class PlatformUserTranscriptService {
     };
   }
 
-  private async ensurePlatformUser(platformUserId: string) {
-    const platformUser = await this.repository.findPlatformUser(platformUserId);
+  private async ensurePlatformUser(platformUserId: string, orgId: string) {
+    if (!orgId?.trim())
+      throw new ForbiddenException('Current organization is required');
+    const platformUser = await this.repository.findPlatformUser(
+      platformUserId,
+      orgId,
+    );
     if (!platformUser) {
       throw new NotFoundException('Platform user not found');
     }

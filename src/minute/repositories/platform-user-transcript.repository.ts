@@ -42,9 +42,36 @@ const minuteContextSelect = {
 export class PlatformUserTranscriptRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  findPlatformUser(platformUserId: string) {
+  findPlatformUser(platformUserId: string, orgId: string) {
     return this.prisma.platformUser.findFirst({
-      where: { id: platformUserId, deletedAt: null },
+      where: {
+        id: platformUserId,
+        deletedAt: null,
+        OR: [
+          {
+            meetingParticipants: {
+              some: {
+                deletedAt: null,
+                meeting: { orgId, deletedAt: null },
+              },
+            },
+          },
+          {
+            transcriptSegments: {
+              some: {
+                transcript: {
+                  minute: {
+                    is: {
+                      deletedAt: null,
+                      meeting: { is: { orgId, deletedAt: null } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        ],
+      },
       select: { id: true, displayName: true },
     });
   }
@@ -53,15 +80,13 @@ export class PlatformUserTranscriptRepository {
     platformUserId: string,
     startDate: Date,
     endDate: Date,
+    orgId: string,
   ) {
     return this.prisma.minute.findMany({
       where: {
         deletedAt: null,
+        meeting: { is: { orgId, deletedAt: null } },
         startAt: { gte: startDate, lt: endDate },
-        OR: [
-          { meeting: { is: null } },
-          { meeting: { is: { deletedAt: null } } },
-        ],
         transcripts: {
           some: {
             segments: { some: { speakerId: platformUserId } },
@@ -107,12 +132,16 @@ export class PlatformUserTranscriptRepository {
     });
   }
 
-  findMinuteContextSource(minuteId: string, platformUserId: string) {
+  findMinuteContextSource(
+    minuteId: string,
+    platformUserId: string,
+    orgId: string,
+  ) {
     return this.prisma.minute.findFirst({
       where: {
         id: minuteId,
         deletedAt: null,
-        meeting: { is: { deletedAt: null } },
+        meeting: { is: { orgId, deletedAt: null } },
       },
       select: {
         ...minuteContextSelect,
