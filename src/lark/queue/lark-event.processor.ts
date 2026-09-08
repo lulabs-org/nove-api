@@ -14,45 +14,23 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import type { Job } from 'bullmq';
 import { LarkMeetingService } from '../services/lark-meeting.service';
-import {
-  LarkMeetingEndedJobData,
-  MeetingEndedEventData,
-} from '../types/lark-meeting.types';
-import { SingleOrgContextService } from '@/admin/system-config/services';
-
-type LarkMeetingEndedQueueData =
-  | LarkMeetingEndedJobData
-  | MeetingEndedEventData;
+import { LarkMeetingEndedJobData } from '../types/lark-meeting.types';
 
 @Injectable()
 @Processor('lark-events')
 export class LarkEventProcessor extends WorkerHost {
   private readonly logger = new Logger(LarkEventProcessor.name);
 
-  constructor(
-    private readonly larkMeetingService: LarkMeetingService,
-    private readonly orgContext: SingleOrgContextService,
-  ) {
+  constructor(private readonly larkMeetingService: LarkMeetingService) {
     super();
   }
 
   override async process(
-    job: Job<LarkMeetingEndedQueueData>,
+    job: Job<LarkMeetingEndedJobData>,
   ): Promise<unknown> {
     switch (job.name) {
       case 'meetingEnded': {
-        let event: MeetingEndedEventData;
-        let orgId: string;
-        if ('event' in job.data && 'orgId' in job.data) {
-          event = job.data.event;
-          orgId = job.data.orgId;
-        } else {
-          event = job.data;
-          orgId = this.orgContext.getOrgId();
-          this.logger.warn(
-            `Processing legacy Lark job ${job.id ?? 'unknown'} without orgId`,
-          );
-        }
+        const { event, orgId } = job.data;
         await this.larkMeetingService.handleMeetingEnded(event, orgId);
         return { ok: true };
       }
