@@ -26,10 +26,7 @@ import { MeetingEndedEventData } from '../types/lark-meeting.types';
 import { Response, Request } from 'express';
 import { LarkMeetingService } from '../services/lark-meeting.service';
 import { LarkEvent } from '../enums/lark-event.enum';
-import {
-  IntegrationsService,
-  IntegrationValues,
-} from '@/admin/integrations';
+import { IntegrationsService, IntegrationValues } from '@/admin/integrations';
 import { SingleOrgContextService } from '@/admin/org';
 
 @ApiTags('Webhooks')

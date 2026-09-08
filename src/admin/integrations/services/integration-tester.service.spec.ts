@@ -12,11 +12,13 @@ describe('IntegrationTesterService', () => {
       .spyOn(service as never, 'runTest')
       .mockResolvedValue(undefined as never);
 
-    await expect(service.testIntegration('org-1', 'mail', {})).resolves.toEqual({
-      orgId: 'org-1',
-      success: true,
-      message: '连接测试成功',
-    });
+    await expect(service.testIntegration('org-1', 'mail', {})).resolves.toEqual(
+      {
+        orgId: 'org-1',
+        success: true,
+        message: '连接测试成功',
+      },
+    );
   });
 
   it('sanitizes provider failures', async () => {

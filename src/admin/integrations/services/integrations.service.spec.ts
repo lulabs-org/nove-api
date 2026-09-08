@@ -117,10 +117,12 @@ describe('IntegrationsService', () => {
       updatedAt: new Date('2026-09-01T00:00:00Z'),
     };
 
-    await expect(service.deleteIntegration(orgId, 'ai')).resolves.toMatchObject({
-      success: true,
-      restartRequired: false,
-    });
+    await expect(service.deleteIntegration(orgId, 'ai')).resolves.toMatchObject(
+      {
+        success: true,
+        restartRequired: false,
+      },
+    );
     expect(emit).toHaveBeenCalledWith('config.ai.deleted', {
       orgId,
       value: {

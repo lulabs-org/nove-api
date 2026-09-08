@@ -48,4 +48,3 @@ export const aiConfig = defineIntegrationConfig(UpdateAiConfigDto, {
   required: ['apiKey', 'baseUrl', 'model'],
   secrets: ['apiKey'],
 });
-

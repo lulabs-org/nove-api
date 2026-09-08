@@ -10,11 +10,7 @@
  */
 
 import { Injectable, Logger } from '@nestjs/common';
-import {
-  NewSpeakerInfo,
-  SpeakerInfo,
-  ParticipantDetail,
-} from '../types';
+import { NewSpeakerInfo, SpeakerInfo, ParticipantDetail } from '../types';
 import { Platform, PlatformUser } from '@prisma/client';
 import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
 import { UserPhoneHashRepository } from '@/user/repositories/user-phone-hash.repository';

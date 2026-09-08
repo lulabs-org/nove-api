@@ -34,7 +34,9 @@ export class IntegrationsController {
   ) {}
 
   @Get()
-  @ApiOperation({ summary: 'List organization integrations configuration status' })
+  @ApiOperation({
+    summary: 'List organization integrations configuration status',
+  })
   @ApiResponse({
     status: 200,
     description: '返回所有集成模块的配置状态列表',
@@ -46,7 +48,9 @@ export class IntegrationsController {
   }
 
   @Get(':module')
-  @ApiOperation({ summary: 'Get organization integration configuration for a module' })
+  @ApiOperation({
+    summary: 'Get organization integration configuration for a module',
+  })
   @ApiParam({
     name: 'module',
     description: 'Module name (e.g., mail, wechat-shop)',
@@ -58,10 +62,7 @@ export class IntegrationsController {
     type: IntegrationDetailResponseDto,
   })
   @RequirePermissions('system:config:read')
-  async get(
-    @CurrentOrg() orgId: string,
-    @Param('module') module: string,
-  ) {
+  async get(@CurrentOrg() orgId: string, @Param('module') module: string) {
     return this.integrationsService.getIntegration(orgId, module);
   }
 
@@ -85,11 +86,7 @@ export class IntegrationsController {
     @Param('module') module: string,
     @Body() data: Record<string, unknown>,
   ) {
-    return this.integrationsService.updateIntegration(
-      orgId,
-      module,
-      data,
-    );
+    return this.integrationsService.updateIntegration(orgId, module, data);
   }
 
   @Post(':module/test')
@@ -110,11 +107,7 @@ export class IntegrationsController {
     @Param('module') module: string,
     @Body() data: Record<string, unknown>,
   ) {
-    return this.integrationTester.testIntegration(
-      orgId,
-      module,
-      data,
-    );
+    return this.integrationTester.testIntegration(orgId, module, data);
   }
 
   @Delete(':module')
@@ -130,14 +123,7 @@ export class IntegrationsController {
     type: IntegrationMutationResponseDto,
   })
   @RequirePermissions('system:config:write')
-  async remove(
-    @CurrentOrg() orgId: string,
-    @Param('module') module: string,
-  ) {
-    return this.integrationsService.deleteIntegration(
-      orgId,
-      module,
-    );
+  async remove(@CurrentOrg() orgId: string, @Param('module') module: string) {
+    return this.integrationsService.deleteIntegration(orgId, module);
   }
 }
-

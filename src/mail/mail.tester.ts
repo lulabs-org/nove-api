@@ -7,7 +7,9 @@ import {
 } from '@/admin/integrations';
 
 @Injectable()
-export class MailTesterService implements IntegrationTestProvider, OnModuleInit {
+export class MailTesterService
+  implements IntegrationTestProvider, OnModuleInit
+{
   constructor(private readonly testerService: IntegrationTesterService) {}
 
   onModuleInit() {

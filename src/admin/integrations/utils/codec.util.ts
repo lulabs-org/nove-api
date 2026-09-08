@@ -1,12 +1,6 @@
 import { decrypt, encrypt } from '@/common/utils/crypto.util';
-import {
-  IntegrationRegistryEntry,
-  IntegrationValues,
-} from '../types';
-import {
-  getRequiredFields,
-  getSecretFields,
-} from './definition.util';
+import { IntegrationRegistryEntry, IntegrationValues } from '../types';
+import { getRequiredFields, getSecretFields } from './definition.util';
 
 export const MASKED_SECRET = '********';
 
@@ -111,9 +105,7 @@ export function missingRequiredFields(
   entry: IntegrationRegistryEntry,
   value: IntegrationValues,
 ): string[] {
-  return getRequiredFields(entry).filter(
-    (field) => !hasValue(value[field]),
-  );
+  return getRequiredFields(entry).filter((field) => !hasValue(value[field]));
 }
 
 export function containsEncryptedValues(

@@ -9,7 +9,8 @@ export function defineIntegrationConfig<TDto extends object>(
   dto: Type<TDto>,
   definition: Omit<IntegrationDefinition<TDto>, 'dto'>,
 ): IntegrationDefinition<TDto> & IntegrationRegistryEntry {
-  return { dto, ...definition } as IntegrationDefinition<TDto> & IntegrationRegistryEntry;
+  return { dto, ...definition } as IntegrationDefinition<TDto> &
+    IntegrationRegistryEntry;
 }
 
 export function getDefaultValues(

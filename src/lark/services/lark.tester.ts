@@ -7,7 +7,9 @@ import {
 } from '@/admin/integrations';
 
 @Injectable()
-export class LarkTesterService implements IntegrationTestProvider, OnModuleInit {
+export class LarkTesterService
+  implements IntegrationTestProvider, OnModuleInit
+{
   constructor(private readonly testerService: IntegrationTesterService) {}
 
   onModuleInit() {

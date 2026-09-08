@@ -19,8 +19,8 @@ export const INTEGRATION_EVENT_PATTERNS = {
 } as const;
 
 export const IntegrationEvents = {
-  updated: (module: IntegrationModuleName | string) =>
+  updated: (module: IntegrationModuleName) =>
     `config.${module}.updated` as const,
-  deleted: (module: IntegrationModuleName | string) =>
+  deleted: (module: IntegrationModuleName) =>
     `config.${module}.deleted` as const,
 };

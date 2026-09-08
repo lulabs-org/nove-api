@@ -1,10 +1,6 @@
 import { decrypt, encrypt } from '@/common/utils/crypto.util';
 import { IntegrationRegistry } from '../definitions';
-import {
-  decodeConfig,
-  encodeUpdateConfig,
-  maskConfig,
-} from './codec.util';
+import { decodeConfig, encodeUpdateConfig, maskConfig } from './codec.util';
 
 describe('codec.util', () => {
   const originalEnv = process.env;

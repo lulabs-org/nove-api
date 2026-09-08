@@ -24,11 +24,14 @@ export class UpdateWechatShopConfigDto {
   apiBaseUrl?: string;
 }
 
-export const wechatShopConfig = defineIntegrationConfig(UpdateWechatShopConfigDto, {
-  description: 'Organization Wechat Shop Configuration',
-  defaults: {
-    apiBaseUrl: 'https://api.weixin.qq.com',
+export const wechatShopConfig = defineIntegrationConfig(
+  UpdateWechatShopConfigDto,
+  {
+    description: 'Organization Wechat Shop Configuration',
+    defaults: {
+      apiBaseUrl: 'https://api.weixin.qq.com',
+    },
+    required: ['appId', 'appSecret'],
+    secrets: ['appSecret', 'webhookToken', 'encodingAesKey'],
   },
-  required: ['appId', 'appSecret'],
-  secrets: ['appSecret', 'webhookToken', 'encodingAesKey'],
-});
+);

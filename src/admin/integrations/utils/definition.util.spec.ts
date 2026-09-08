@@ -38,11 +38,7 @@ describe('definition.util', () => {
         'webhookToken',
         'encodingAesKey',
       ],
-      lark: [
-        'appSecret',
-        'eventEncryptKey',
-        'eventVerificationToken',
-      ],
+      lark: ['appSecret', 'eventEncryptKey', 'eventVerificationToken'],
       'wechat-shop': ['appSecret', 'webhookToken', 'encodingAesKey'],
     });
   });

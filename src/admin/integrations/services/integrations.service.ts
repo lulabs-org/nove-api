@@ -63,10 +63,7 @@ export class IntegrationsService {
 
   async getRawConfig(orgId: string, module: string) {
     const moduleName = this.assertModule(module);
-    return this.repository.findByKey(
-      orgId,
-      this.getModuleKey(moduleName),
-    );
+    return this.repository.findByKey(orgId, this.getModuleKey(moduleName));
   }
 
   /**
@@ -84,13 +81,10 @@ export class IntegrationsService {
       this.getModuleKey(moduleName),
     );
     const databaseValue = (stored?.value ?? {}) as IntegrationValues;
-    const decryptedDatabaseValue = decodeConfig(
-      entry,
-      databaseValue,
-      (field) =>
-        this.logger.error(
-          `Failed to decrypt ${moduleName}.${field}; database override ignored`,
-        ),
+    const decryptedDatabaseValue = decodeConfig(entry, databaseValue, (field) =>
+      this.logger.error(
+        `Failed to decrypt ${moduleName}.${field}; database override ignored`,
+      ),
     );
     const value = {
       ...getDefaultValues(entry),
@@ -125,7 +119,10 @@ export class IntegrationsService {
     );
   }
 
-  async getIntegration(orgId: string, module: string): Promise<PublicIntegration> {
+  async getIntegration(
+    orgId: string,
+    module: string,
+  ): Promise<PublicIntegration> {
     const effective = await this.getEffectiveConfig(orgId, module);
     const entry = IntegrationRegistry[effective.module];
     return { ...effective, value: maskConfig(entry, effective.value) };
