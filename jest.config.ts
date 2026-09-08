@@ -9,6 +9,7 @@ const common: Partial<Config> = {
   },
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    '^ali-oss$': '<rootDir>/test/mocks/ali-oss.ts',
   },
   collectCoverageFrom: [
     'src/**/*.ts',

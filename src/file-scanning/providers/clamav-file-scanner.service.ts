@@ -6,7 +6,6 @@ import {
 import { createHash } from 'node:crypto';
 import { createConnection, Socket } from 'node:net';
 import { once } from 'node:events';
-import { DriveConfigService } from '@/drive/services/drive-config.service';
 import {
   OBJECT_STORAGE,
   ObjectStorage,
@@ -15,31 +14,28 @@ import {
   FileScannerProvider,
   FileScanInput,
   FileScanResult,
-} from './file-scanner.types';
+} from '../types';
+import { FileScanningConfigService } from '../services/file-scanning-config.service';
 
 @Injectable()
 export class ClamAvFileScannerService implements FileScannerProvider {
   constructor(
-    private readonly systemConfig: DriveConfigService,
+    private readonly scanningConfig: FileScanningConfigService,
     @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorage,
   ) {}
 
   async scan(input: FileScanInput): Promise<FileScanResult> {
-    const config = (await this.systemConfig.getConfig()) as {
-      clamAvHost?: string;
-      clamAvPort?: number;
-      clamAvTimeoutMs?: number;
-    };
-    const host = config.clamAvHost?.trim() || process.env.CLAMAV_HOST?.trim();
-    if (!host) throw new ServiceUnavailableException('ClamAV 尚未配置');
+    const config = await this.scanningConfig.getConfig();
+    const host = config.clamAvHost?.trim();
+    if (!host) {
+      throw new ServiceUnavailableException('ClamAV 尚未配置');
+    }
 
     const socket = createConnection({
       host,
-      port: config.clamAvPort ?? Number(process.env.CLAMAV_PORT || 3310),
+      port: config.clamAvPort ?? 3310,
     });
-    socket.setTimeout(
-      config.clamAvTimeoutMs ?? Number(process.env.CLAMAV_TIMEOUT_MS || 600000),
-    );
+    socket.setTimeout(config.clamAvTimeoutMs ?? 600000);
     await once(socket, 'connect');
     socket.write('zINSTREAM\0');
     const hash = createHash('sha256');

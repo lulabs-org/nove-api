@@ -17,15 +17,14 @@ describe('FileScanService', () => {
     uploadSession: { updateMany: jest.fn() },
     $transaction: jest.fn(),
   };
-  const systemConfig = { getConfig: jest.fn() };
-  const aliyun = { scan: jest.fn() };
-  const clamAv = { scan: jest.fn() };
+  const fileScanning = {
+    resolveEffectiveProvider: jest.fn(),
+    scan: jest.fn(),
+  };
   const queue = { add: jest.fn() };
   const service = new FileScanService(
     new FileScanRepository(prisma as never),
-    systemConfig as never,
-    aliyun as never,
-    clamAv as never,
+    fileScanning as never,
     queue as never,
   );
 
@@ -39,23 +38,21 @@ describe('FileScanService', () => {
     );
   });
 
-  it('defaults production scans to Alibaba Cloud', async () => {
-    const previous = process.env.NODE_ENV;
-    const previousProvider = process.env.DRIVE_MALWARE_SCAN_PROVIDER;
-    process.env.NODE_ENV = 'production';
-    delete process.env.DRIVE_MALWARE_SCAN_PROVIDER;
-    systemConfig.getConfig.mockResolvedValue({});
+  it('delegates provider resolution to FileScanningService when scan required', async () => {
+    fileScanning.resolveEffectiveProvider.mockResolvedValue(
+      FileScanProvider.ALIYUN_SAS,
+    );
     await expect(service.resolveProvider(true)).resolves.toBe(
       FileScanProvider.ALIYUN_SAS,
     );
     await expect(service.resolveProvider(false)).resolves.toBe(
       FileScanProvider.POLICY_BYPASS,
     );
-    if (previous === undefined) delete process.env.NODE_ENV;
-    else process.env.NODE_ENV = previous;
-    if (previousProvider === undefined)
-      delete process.env.DRIVE_MALWARE_SCAN_PROVIDER;
-    else process.env.DRIVE_MALWARE_SCAN_PROVIDER = previousProvider;
+
+    fileScanning.resolveEffectiveProvider.mockResolvedValue(null);
+    await expect(service.resolveProvider(true)).resolves.toBe(
+      FileScanProvider.POLICY_BYPASS,
+    );
   });
 
   it('activates a verifying version only after a clean provider result', async () => {
@@ -70,7 +67,7 @@ describe('FileScanService', () => {
       storageObjectId: 'object-1',
       storageObject: { objectKey: 'drive/report.pdf' },
     });
-    aliyun.scan.mockResolvedValue({
+    fileScanning.scan.mockResolvedValue({
       clean: true,
       checksumSha256: 'a'.repeat(64),
       details: { engine: 'aliyun-sas' },
@@ -78,7 +75,16 @@ describe('FileScanService', () => {
 
     await service.process('version-1');
 
-    expect(aliyun.scan).toHaveBeenCalled();
+    expect(fileScanning.scan).toHaveBeenCalledWith(
+      {
+        objectKey: 'drive/report.pdf',
+        fileName: 'report.pdf',
+        contentType: 'application/pdf',
+        sizeBytes: 100n,
+        checksumSha256: 'a'.repeat(64),
+      },
+      { provider: FileScanProvider.ALIYUN_SAS },
+    );
     const activeUpdate = prisma.fileVersion.update.mock.lastCall?.[0] as {
       data: { status?: FileVersionStatus };
     };
@@ -102,7 +108,7 @@ describe('FileScanService', () => {
       storageObjectId: 'object-2',
       storageObject: { objectKey: 'drive/report.pdf' },
     });
-    clamAv.scan.mockResolvedValue({
+    fileScanning.scan.mockResolvedValue({
       clean: false,
       checksumSha256: 'b'.repeat(64),
       details: { response: 'Eicar-Test-Signature FOUND' },

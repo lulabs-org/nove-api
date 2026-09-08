@@ -6,21 +6,23 @@ import {
 import Credential from '@alicloud/credentials';
 import Sas20181203, * as $Sas20181203 from '@alicloud/sas20181203';
 import { $OpenApiUtil } from '@alicloud/openapi-core';
-import { DriveConfigService } from '@/drive/services/drive-config.service';
-import { ObjectStorage } from '@/storage/object-storage.interface';
-import { OBJECT_STORAGE } from '@/storage/object-storage.interface';
+import {
+  OBJECT_STORAGE,
+  ObjectStorage,
+} from '@/storage/object-storage.interface';
 import {
   FileScannerProvider,
   FileScanInput,
   FileScanResult,
-} from './file-scanner.types';
+} from '../types';
+import { FileScanningConfigService } from '../services/file-scanning-config.service';
 
 const MAX_ALIYUN_SCAN_BYTES = 100n * 1024n * 1024n;
 
 @Injectable()
 export class AliyunFileScannerService implements FileScannerProvider {
   constructor(
-    private readonly systemConfig: DriveConfigService,
+    private readonly scanningConfig: FileScanningConfigService,
     @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorage,
   ) {}
 
@@ -101,15 +103,8 @@ export class AliyunFileScannerService implements FileScannerProvider {
   }
 
   private async getConfig() {
-    const config = (await this.systemConfig.getConfig()) as {
-      aliyunSasRegionId?: string;
-      scanTimeoutMs?: number;
-      scanPollIntervalMs?: number;
-    };
-    const configuredRegion =
-      config.aliyunSasRegionId?.trim() ||
-      process.env.ALIYUN_OSS_REGION?.trim() ||
-      'cn-hangzhou';
+    const config = await this.scanningConfig.getConfig();
+    const configuredRegion = config.aliyunSasRegionId?.trim() || 'cn-hangzhou';
     return {
       regionId: configuredRegion.replace(/^oss-/, ''),
       timeoutMs: config.scanTimeoutMs ?? 5 * 60 * 1000,

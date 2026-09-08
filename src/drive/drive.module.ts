@@ -4,6 +4,7 @@ import { BullBoardModule } from '@bull-board/nestjs';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { PrismaModule } from '@/prisma/prisma.module';
 import { StorageModule } from '@/storage/storage.module';
+import { FileScanningModule } from '@/file-scanning';
 import { DriveController } from './drive.controller';
 import { DriveService } from './services/drive.service';
 import { DrivePolicyService } from './services/drive-policy.service';
@@ -11,11 +12,9 @@ import { FilePolicyService } from './services/file-policy.service';
 import { DriveCleanupService } from './services/drive-cleanup.service';
 import { IntegrationsModule } from '@/admin/integrations';
 import { DriveConfigService } from './services/drive-config.service';
-import { AliyunFileScannerService } from './scanning/aliyun-file-scanner.service';
-import { ClamAvFileScannerService } from './scanning/clamav-file-scanner.service';
 import { FileScanService } from './scanning/file-scan.service';
 import { FileScanProcessor } from './scanning/file-scan.processor';
-import { DRIVE_SCAN_QUEUE } from './scanning/file-scanner.types';
+import { DRIVE_SCAN_QUEUE } from './scanning/file-scan.constants';
 import {
   DriveAccessRepository,
   DriveCleanupRepository,
@@ -31,6 +30,7 @@ import {
     PrismaModule,
     StorageModule,
     IntegrationsModule,
+    FileScanningModule,
     BullModule.registerQueue({ name: DRIVE_SCAN_QUEUE }),
     BullBoardModule.forFeature({
       name: DRIVE_SCAN_QUEUE,
@@ -51,8 +51,6 @@ import {
     DrivePolicyService,
     FilePolicyService,
     DriveCleanupService,
-    AliyunFileScannerService,
-    ClamAvFileScannerService,
     FileScanService,
     FileScanProcessor,
   ],

@@ -2,40 +2,22 @@ import { Injectable } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { FileScanProvider, FileVersionStatus, Prisma } from '@prisma/client';
 import type { Queue } from 'bullmq';
-import { DriveConfigService } from '@/drive/services/drive-config.service';
+import { FileScanningService } from '@/file-scanning';
 import { FileScanRepository } from '../repositories';
-import { AliyunFileScannerService } from './aliyun-file-scanner.service';
-import { ClamAvFileScannerService } from './clamav-file-scanner.service';
-import { DRIVE_SCAN_QUEUE } from './file-scanner.types';
+import { DRIVE_SCAN_QUEUE } from './file-scan.constants';
 
 @Injectable()
 export class FileScanService {
   constructor(
     private readonly scans: FileScanRepository,
-    private readonly systemConfig: DriveConfigService,
-    private readonly aliyun: AliyunFileScannerService,
-    private readonly clamAv: ClamAvFileScannerService,
+    private readonly fileScanning: FileScanningService,
     @InjectQueue(DRIVE_SCAN_QUEUE) private readonly queue: Queue,
   ) {}
 
   async resolveProvider(requiresScan: boolean): Promise<FileScanProvider> {
     if (!requiresScan) return FileScanProvider.POLICY_BYPASS;
-    const config = (await this.systemConfig.getConfig()) as {
-      malwareScanProvider?: 'ALIYUN_SAS' | 'CLAMAV';
-    };
-    if (config.malwareScanProvider) return config.malwareScanProvider;
-    const environmentProvider = process.env.DRIVE_MALWARE_SCAN_PROVIDER?.trim();
-    if (
-      environmentProvider === FileScanProvider.ALIYUN_SAS ||
-      environmentProvider === FileScanProvider.CLAMAV
-    ) {
-      return environmentProvider;
-    }
-    return process.env.NODE_ENV === 'production'
-      ? FileScanProvider.ALIYUN_SAS
-      : process.env.CLAMAV_HOST?.trim()
-        ? FileScanProvider.CLAMAV
-        : FileScanProvider.POLICY_BYPASS;
+    const provider = await this.fileScanning.resolveEffectiveProvider();
+    return provider ?? FileScanProvider.POLICY_BYPASS;
   }
 
   async enqueue(fileVersionId: string): Promise<void> {
@@ -57,17 +39,16 @@ export class FileScanService {
     if (!version || version.status !== FileVersionStatus.VERIFYING) return;
 
     await this.scans.markStarted(version.id, new Date());
-    const provider =
-      version.scanProvider === FileScanProvider.ALIYUN_SAS
-        ? this.aliyun
-        : this.clamAv;
-    const result = await provider.scan({
-      objectKey: version.storageObject.objectKey,
-      fileName: version.originalName,
-      contentType: version.contentType,
-      sizeBytes: version.sizeBytes,
-      checksumSha256: version.checksumSha256,
-    });
+    const result = await this.fileScanning.scan(
+      {
+        objectKey: version.storageObject.objectKey,
+        fileName: version.originalName,
+        contentType: version.contentType,
+        sizeBytes: version.sizeBytes,
+        checksumSha256: version.checksumSha256,
+      },
+      { provider: version.scanProvider },
+    );
     const current = await this.scans.findStatus(version.id);
     if (current?.status !== FileVersionStatus.VERIFYING) return;
     const checksumMatches =

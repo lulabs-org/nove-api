@@ -1,4 +1,4 @@
-export const DRIVE_SCAN_QUEUE = 'drive-file-scan';
+import { FileScanProvider } from '@prisma/client';
 
 export interface FileScanInput {
   objectKey: string;
@@ -16,4 +16,14 @@ export interface FileScanResult {
 
 export interface FileScannerProvider {
   scan(input: FileScanInput): Promise<FileScanResult>;
+}
+
+export interface FileScanningConfig {
+  malwareScanProvider?: FileScanProvider;
+  aliyunSasRegionId?: string;
+  scanTimeoutMs?: number;
+  scanPollIntervalMs?: number;
+  clamAvHost?: string;
+  clamAvPort?: number;
+  clamAvTimeoutMs?: number;
 }
