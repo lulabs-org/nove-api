@@ -14,7 +14,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import type { Job } from 'bullmq';
 import { LarkMeetingService } from '../services/lark-meeting.service';
-import { MeetingEndedEventData } from '../types/lark-meeting.types';
+import { LarkMeetingEndedJobData } from '../types/lark-meeting.types';
 
 @Injectable()
 @Processor('lark-events')
@@ -25,13 +25,13 @@ export class LarkEventProcessor extends WorkerHost {
     super();
   }
 
-  override async process(job: Job<Record<string, unknown>>): Promise<unknown> {
+  override async process(job: Job<LarkMeetingEndedJobData>): Promise<unknown> {
     switch (job.name) {
-      case 'meetingEnded':
-        await this.larkMeetingService.handleMeetingEnded(
-          job.data as unknown as MeetingEndedEventData,
-        );
+      case 'meetingEnded': {
+        const { event, orgId } = job.data;
+        await this.larkMeetingService.handleMeetingEnded(event, orgId);
         return { ok: true };
+      }
       default:
         this.logger.warn(`Unknown job type: ${job.name}`);
         return { ok: false };

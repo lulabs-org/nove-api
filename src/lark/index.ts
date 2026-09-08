@@ -3,6 +3,7 @@ export * from './client';
 export * from './controllers';
 export * from './enums';
 export * from './exceptions';
+export * from './listeners';
 export * from './queue';
 export * from './services';
 export * from './types';

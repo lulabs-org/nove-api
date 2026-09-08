@@ -6,8 +6,8 @@ import { SystemConfigModule } from '@/admin/system-config/system-config.module';
 
 import { LarkClient } from './client/lark.client';
 import { LarkWebhookController } from './controllers/webhook.controller';
+import { LarkWsEventListener } from './listeners';
 import {
-  LarkEventWsService,
   LarkMeetingService,
   MinuteService,
   LarkTesterService,
@@ -28,14 +28,10 @@ import { LarkEventProcessor } from './queue/lark-event.processor';
     LarkClient,
     MinuteService,
     LarkTesterService,
-    LarkEventWsService,
+    LarkWsEventListener,
     LarkMeetingService,
     LarkEventProcessor,
   ],
-  exports: [
-    LarkClient,
-    MinuteService,
-    LarkMeetingService,
-  ],
+  exports: [LarkClient, MinuteService, LarkMeetingService],
 })
 export class LarkModule {}
