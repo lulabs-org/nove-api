@@ -50,6 +50,7 @@ export class RecordingCompletedHandler extends BaseEventHandler {
   async handle(
     payload: RecordingCompletedPayload,
     index: number,
+    orgId: string,
   ): Promise<void> {
     this.logEventProcessing(this.SUPPORTED_EVENT, payload, index);
 
@@ -72,6 +73,7 @@ export class RecordingCompletedHandler extends BaseEventHandler {
     const meeting = await this.meetingCoreSvc.upsertMeetingFromWebhook(
       payload,
       this.SUPPORTED_EVENT,
+      orgId,
     );
 
     let uniqueParticipants: ParticipantDetail[] | undefined;
@@ -83,6 +85,7 @@ export class RecordingCompletedHandler extends BaseEventHandler {
     // - original: 保留了每次进出的时间戳，用于写入用户的行为日志 (JOIN/LEAVE)。
     try {
       const res = await this.tencentParticipantSvc.list(
+        orgId,
         meeting_id,
         creator.userid,
         sub_meeting_id,
@@ -108,7 +111,6 @@ export class RecordingCompletedHandler extends BaseEventHandler {
     // 将参会者的 JOIN/LEAVE 行为落库，并更新他们的总参会时长
     await this.participantSvc.syncParticipants(meeting, rawParticipants!);
 
-
     // 3. 循环处理每一个录音文件 (一场会议可能会被分段录制出多个文件)
     for (const file of recording_files) {
       if (!file.record_file_id) continue;
@@ -121,6 +123,7 @@ export class RecordingCompletedHandler extends BaseEventHandler {
 
       // 3.2 核心业务同步：从腾讯 API 拉取“智能摘要”和“待办事项”并入库
       await this.summaryCoreSvc.upsertSummaryFromApi(
+        orgId,
         meeting.id,
         recording.id,
         file.record_file_id,
@@ -149,6 +152,7 @@ export class RecordingCompletedHandler extends BaseEventHandler {
       if (shouldSync) {
         const paragraphs =
           await this.transcriptCoreSvc.fetchTranscriptParagraphs(
+            orgId,
             file.record_file_id,
             creator.userid || '',
             uniqueParticipants,

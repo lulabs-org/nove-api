@@ -13,11 +13,8 @@ import {
 } from '@prisma/client';
 import { Meetuser, EventPayload, MeetingSessionInfo } from '../types';
 import { TMeetEventUtils } from '../utils/tmeet-event.utils';
-import type {
-  RecordMeeting,
-  RecordFile,
-} from '../types';
-import { TMeetApiService } from '../client';
+import type { RecordMeeting, RecordFile } from '../types';
+import { TMeetApiClientFactory } from '../client';
 import {
   TENCENT_MEETING_TYPE_RECURRING,
   computeSubMeetingId,
@@ -45,7 +42,7 @@ export class TMeetMeetingCoreService {
     private readonly ptUserRepo: PlatformUserRepository,
     private readonly meetingRepo: MeetingRepository,
     private readonly recordingRepo: MinuteRepository,
-    private readonly tencentApi: TMeetApiService,
+    private readonly tencentApi: TMeetApiClientFactory,
   ) {}
 
   // ==========================================
@@ -54,6 +51,7 @@ export class TMeetMeetingCoreService {
   async upsertMeetingFromWebhook(
     payload: EventPayload,
     event: string,
+    orgId: string,
   ): Promise<Meeting> {
     const { meeting_info, operate_time } = payload;
     if (!meeting_info) {
@@ -67,6 +65,7 @@ export class TMeetMeetingCoreService {
     const creatorUser = await this.upsertPtUser(creator as Meetuser);
 
     const meetingData: Partial<MeetingData> = {
+      orgId,
       title: meeting_info.subject,
       meetingCode: meeting_info.meeting_code,
       type: meetingType,
@@ -98,11 +97,14 @@ export class TMeetMeetingCoreService {
   // ==========================================
   // 从 API 数据中拉取处理会议入库
   // ==========================================
-  async upsertMeetingFromApiRecord(record: RecordMeeting, operatorId: string) {
-    const detail = await this.tencentApi.getMeetingDetail(
-      record.meeting_id,
-      operatorId,
-    );
+  async upsertMeetingFromApiRecord(
+    record: RecordMeeting,
+    operatorId: string,
+    orgId: string,
+  ) {
+    const detail = await (
+      await this.tencentApi.forOrg(orgId)
+    ).getMeetingDetail(record.meeting_id, operatorId);
     const meetingInfo = detail.meeting_info_list?.[0];
 
     const meetingType = meetingInfo?.meeting_type;
@@ -134,6 +136,7 @@ export class TMeetMeetingCoreService {
       record.meeting_id,
       subMeetingId,
       {
+        orgId,
         title: meetingInfo?.subject ?? record.subject,
         meetingCode: meetingInfo?.meeting_code ?? record.meeting_code,
         type: systemMeetingType,
@@ -217,5 +220,3 @@ export class TMeetMeetingCoreService {
     });
   }
 }
-
-

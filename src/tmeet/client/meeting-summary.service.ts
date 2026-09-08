@@ -10,7 +10,7 @@
  */
 
 import { Injectable, Logger } from '@nestjs/common';
-import { TMeetApiService } from './api.service';
+import { TMeetApiClientFactory } from './api-client.factory';
 import { ContentUtils } from '../utils/content.utils';
 
 export interface MeetingContent {
@@ -23,7 +23,7 @@ export interface MeetingContent {
 export class SummaryService {
   private readonly logger = new Logger(SummaryService.name);
 
-  constructor(private readonly api: TMeetApiService) {}
+  constructor(private readonly api: TMeetApiClientFactory) {}
 
   /**
    * 获取会议内容（摘要、纪要等）
@@ -31,7 +31,11 @@ export class SummaryService {
    * @param userId 用户ID
    * @returns 会议内容
    */
-  async getContent(fileId: string, userId: string): Promise<MeetingContent> {
+  async getContent(
+    orgId: string,
+    fileId: string,
+    userId: string,
+  ): Promise<MeetingContent> {
     this.logger.log(`获取会议内容: fileId=${fileId}, userId=${userId}`);
 
     const result: MeetingContent = {
@@ -40,8 +44,10 @@ export class SummaryService {
       todo: '',
     };
 
+    const tmeetApi = await this.api.forOrg(orgId);
+
     try {
-      const response = await this.api.getSmartFullSummary(fileId, userId);
+      const response = await tmeetApi.getSmartFullSummary(fileId, userId);
 
       result.fullSummary = ContentUtils.decodeBase64Content(
         response.ai_summary,
@@ -55,7 +61,7 @@ export class SummaryService {
     }
 
     try {
-      const response = await this.api.getSmartMeetingMinutes(fileId, userId);
+      const response = await tmeetApi.getSmartMeetingMinutes(fileId, userId);
       const { minute, todo } = response.meeting_minute ?? {};
 
       result.aiMinutes = minute ?? '';

@@ -2,8 +2,8 @@ import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
 import { TMeetSyncService } from '../services/sync.service';
-
 interface SyncJobData {
+  orgId: string;
   startTime: number;
   endTime: number;
   operatorId?: string;
@@ -29,6 +29,7 @@ export class TMeetSyncProcessor extends WorkerHost {
 
   async process(job: Job<SyncJobData>) {
     const {
+      orgId,
       startTime,
       endTime,
       operatorId,
@@ -37,6 +38,10 @@ export class TMeetSyncProcessor extends WorkerHost {
       syncParticipants,
       forceReSyncTranscript,
     } = job.data;
+
+    if (!orgId) {
+      throw new Error(`Sync job ${job.id ?? 'unknown'} missing required orgId`);
+    }
 
     this.logger.log(
       `Processing job ${job.id}: Syncing ${new Date(startTime * 1000).toISOString()} ~ ${new Date(endTime * 1000).toISOString()} (syncTranscripts=${syncTranscripts ?? true}, syncSummaries=${syncSummaries ?? true}, syncParticipants=${syncParticipants ?? true})`,
@@ -47,6 +52,7 @@ export class TMeetSyncProcessor extends WorkerHost {
     );
 
     const result = await this.syncService.syncRecords(
+      orgId,
       startTime,
       endTime,
       operatorId,
@@ -67,4 +73,3 @@ export class TMeetSyncProcessor extends WorkerHost {
     return result;
   }
 }
-

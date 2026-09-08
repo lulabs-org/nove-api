@@ -10,7 +10,7 @@
  */
 
 import { Injectable, Logger } from '@nestjs/common';
-import { TMeetApiService } from './api.service';
+import { TMeetApiClientFactory } from './api-client.factory';
 import { TranscriptFormatterService } from './transcript-formatter.service';
 import { TranscriptResult } from '../types';
 
@@ -29,7 +29,7 @@ export class TranscriptService {
   };
 
   constructor(
-    private readonly api: TMeetApiService,
+    private readonly api: TMeetApiClientFactory,
     private readonly formatter: TranscriptFormatterService,
   ) {}
 
@@ -41,6 +41,7 @@ export class TranscriptService {
    * @returns 包含原始响应、唯一用户名、格式化转写和关键词的结果
    */
   async fetch(
+    orgId: string,
     meetingId: string,
     fileId: string,
     userId: string,
@@ -51,7 +52,8 @@ export class TranscriptService {
     this.logger.log('开始获取录音转写', context);
 
     try {
-      const res = await this.api.getTranscript({
+      const tmeetApi = await this.api.forOrg(orgId);
+      const res = await tmeetApi.getTranscript({
         recordFileId: fileId,
         operatorId: userId,
         operatorIdType: 1,

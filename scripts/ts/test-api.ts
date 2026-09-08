@@ -1,4 +1,4 @@
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 import { TMeetApiService } from '../../src/tmeet/client';
 import { tencentMeetingConfig } from '../../src/configs/tencent-mtg.config';
@@ -12,7 +12,20 @@ async function bootstrap() {
         load: [tencentMeetingConfig],
       }),
     ],
-    providers: [TMeetApiService],
+    providers: [
+      {
+        provide: TMeetApiService,
+        inject: [ConfigService],
+        useFactory: (config: ConfigService) =>
+          new TMeetApiService({
+            appId: config.get<string>('TENCENT_MEETING_APP_ID') ?? '',
+            sdkId: config.get<string>('TENCENT_MEETING_SDK_ID') ?? '',
+            secretId: config.get<string>('TENCENT_MEETING_SECRET_ID') ?? '',
+            secretKey: config.get<string>('TENCENT_MEETING_SECRET_KEY') ?? '',
+            userId: config.get<string>('USER_ID') ?? '',
+          }),
+      },
+    ],
   }).compile();
 
   const tencentApi = moduleRef.get(TMeetApiService);
@@ -20,11 +33,11 @@ async function bootstrap() {
 
   const minutes = await prisma.minute.findMany({
     orderBy: { createdAt: 'desc' },
-    take: 1
+    take: 1,
   });
 
   if (minutes.length === 0 || !minutes[0].externalId) {
-    console.log("No recordings found or missing externalId");
+    console.log('No recordings found or missing externalId');
     return;
   }
 
@@ -32,19 +45,22 @@ async function bootstrap() {
   const operatorId = 'woaJARCQAA65b_BO6kq2pTSG-yvvjc_g';
 
   try {
-    console.log("=== Testing getTranscript with limit=200 ===");
+    console.log('=== Testing getTranscript with limit=200 ===');
     const res = await tencentApi.getTranscript({
       recordFileId,
       operatorId,
       operatorIdType: 1,
       limit: 200,
     });
-    console.log("Transcript paragraphs count:", res.minutes?.paragraphs?.length || 0);
-  } catch (e) {
-    console.error("Error:", e.message);
+    console.log(
+      'Transcript paragraphs count:',
+      res.minutes?.paragraphs?.length || 0,
+    );
+  } catch (error: unknown) {
+    console.error('Error:', error instanceof Error ? error.message : error);
   }
 
   await prisma.$disconnect();
 }
 
-bootstrap();
+void bootstrap();

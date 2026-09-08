@@ -5,3 +5,4 @@ export * from './transcript.service';
 export * from './participant.service';
 export * from './tmeet.tester';
 
+export * from './api-client.factory';

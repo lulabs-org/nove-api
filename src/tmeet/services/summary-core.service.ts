@@ -39,6 +39,7 @@ export class TMeetSummaryCoreService {
   // 从 API 数据中拉取处理智能总结入库
   // ==========================================
   async upsertSummaryFromApi(
+    orgId: string,
     meetingId: string,
     minuteId: string,
     fileId: string,
@@ -48,7 +49,11 @@ export class TMeetSummaryCoreService {
       `Syncing summary for meeting ${meetingId}, recording ${minuteId}, file ${fileId}`,
     );
 
-    const content = await this.apiSummaryService.getContent(fileId, operatorId);
+    const content = await this.apiSummaryService.getContent(
+      orgId,
+      fileId,
+      operatorId,
+    );
 
     // 如果没有任何内容，直接跳过保存
     if (!content.fullSummary && !content.aiMinutes && !content.todo) {
@@ -65,5 +70,3 @@ export class TMeetSummaryCoreService {
     this.logger.log(`Successfully synced summary for file ${fileId}`);
   }
 }
-
-

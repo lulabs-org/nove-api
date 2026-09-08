@@ -13,6 +13,7 @@ import { Logger } from '@nestjs/common';
 import { TMeetWebhookController } from './tmeet-webhook.controller';
 import { TMeetEventHandlerService } from '../services/event-handler.service';
 import { MeetingEvent } from '../types';
+import { SingleOrgContextService } from '@/admin/system-config/services';
 
 describe('TMeetWebhookController', () => {
   let controller: TMeetWebhookController;
@@ -25,6 +26,7 @@ describe('TMeetWebhookController', () => {
     eventHandlerService = { handleEvent: jest.fn() };
     controller = new TMeetWebhookController(
       eventHandlerService as unknown as TMeetEventHandlerService,
+      { getOrgId: () => 'org-1' } as SingleOrgContextService,
     );
 
     // Mock logger to avoid console output during tests
@@ -36,9 +38,7 @@ describe('TMeetWebhookController', () => {
     it('should return decrypted string and log request', async () => {
       const logSpy = jest.spyOn(Logger.prototype, 'log');
 
-      const result = await controller.verifyWebhook(
-        'decrypted_check_str',
-      );
+      const result = await controller.verifyWebhook('decrypted_check_str');
 
       expect(result).toBe('decrypted_check_str');
       expect(logSpy).toHaveBeenCalledWith(
@@ -61,7 +61,10 @@ describe('TMeetWebhookController', () => {
 
       expect(result).toBe('successfully received callback');
       expect(eventHandlerService.handleEvent).toHaveBeenCalledTimes(1);
-      expect(eventHandlerService.handleEvent).toHaveBeenCalledWith(mockEvent);
+      expect(eventHandlerService.handleEvent).toHaveBeenCalledWith(
+        mockEvent,
+        'org-1',
+      );
     });
 
     it('should log error when event handler rejects asynchronously', async () => {

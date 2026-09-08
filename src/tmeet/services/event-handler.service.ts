@@ -28,7 +28,7 @@ export class TMeetEventHandlerService {
   /**
    * Handle Tencent Meeting events
    */
-  async handleEvent(eventData: MeetingEvent): Promise<void> {
+  async handleEvent(eventData: MeetingEvent, orgId: string): Promise<void> {
     const { event, payload } = eventData;
 
     this.logEventDetails(eventData);
@@ -48,7 +48,7 @@ export class TMeetEventHandlerService {
     try {
       // Batch process payloads
       const processingPromises = payload.map((item, index: number) =>
-        handler.handle(item as EventPayload, index),
+        handler.handle(item as EventPayload, index, orgId),
       );
 
       // 并行处理所有负载
@@ -83,5 +83,3 @@ export class TMeetEventHandlerService {
     return this.eventHandlerFactory.getSupportedEvents();
   }
 }
-
-

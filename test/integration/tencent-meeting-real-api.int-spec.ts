@@ -139,7 +139,20 @@ describe('Tencent Meeting Real API Integration Tests', () => {
           isGlobal: true,
         }),
       ],
-      providers: [TMeetApiService],
+      providers: [
+        {
+          provide: TMeetApiService,
+          inject: [ConfigService],
+          useFactory: (config: ConfigService) =>
+            new TMeetApiService({
+              appId: config.get<string>('TENCENT_MEETING_APP_ID') ?? '',
+              sdkId: config.get<string>('TENCENT_MEETING_SDK_ID') ?? '',
+              secretId: config.get<string>('TENCENT_MEETING_SECRET_ID') ?? '',
+              secretKey: config.get<string>('TENCENT_MEETING_SECRET_KEY') ?? '',
+              userId: config.get<string>('USER_ID') ?? '',
+            }),
+        },
+      ],
     }).compile();
 
     apiService = moduleRef.get(TMeetApiService);

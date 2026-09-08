@@ -1,22 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigService } from '@nestjs/config';
 import { TMeetApiService } from './api.service';
-import { tencentMeetingConfig } from '@/configs';
-import { SystemConfigService } from '@/admin/system-config/services/system-config.service';
-import { SingleOrgContextService } from '@/admin/system-config/services';
-
-const mockConfigService = {
-  get: jest.fn((key: string) => {
-    const config: Record<string, string> = {
-      TENCENT_MEETING_SECRET_ID: 'mock-secret-id',
-      TENCENT_MEETING_SECRET_KEY: 'mock-secret-key',
-      TENCENT_MEETING_APP_ID: 'mock-app-id',
-      TENCENT_MEETING_SDK_ID: 'mock-sdk-id',
-      USER_ID: 'mock-user-id',
-    };
-    return config[key];
-  }),
-};
 
 const mockTencentMeetingConfig = {
   webhook: {
@@ -44,39 +26,8 @@ const jsonResponse = (data: unknown) => ({
 
 describe('TMeetApiService', () => {
   let service: TMeetApiService;
-  const getEffectiveConfig = jest.fn().mockResolvedValue({
-    value: {
-      secretId: 'mock-secret-id',
-      secretKey: 'mock-secret-key',
-      appId: 'mock-app-id',
-      sdkId: 'mock-sdk-id',
-      userId: 'mock-user-id',
-    },
-  });
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        TMeetApiService,
-        { provide: ConfigService, useValue: mockConfigService },
-        {
-          provide: tencentMeetingConfig.KEY,
-          useValue: mockTencentMeetingConfig,
-        },
-        {
-          provide: SystemConfigService,
-          useValue: {
-            getEffectiveConfig,
-          },
-        },
-        {
-          provide: SingleOrgContextService,
-          useValue: { getOrgId: jest.fn(() => 'org-1') },
-        },
-      ],
-    }).compile();
-
-    service = module.get<TMeetApiService>(TMeetApiService);
+  beforeEach(() => {
+    service = new TMeetApiService(mockTencentMeetingConfig.api);
     jest.clearAllMocks();
   });
 
@@ -114,10 +65,6 @@ describe('TMeetApiService', () => {
         }) as unknown as Record<string, unknown>,
       );
       expect(result).toEqual(mockResponse);
-      expect(getEffectiveConfig).toHaveBeenCalledWith(
-        'org-1',
-        'tencent-meeting',
-      );
     });
 
     it('should handle API errors', async () => {

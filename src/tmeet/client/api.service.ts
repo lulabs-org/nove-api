@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { generateSignature } from '../utils/crypto.util';
 import {
   RecordingDetail,
@@ -11,42 +11,27 @@ import {
   SmartMeetingMinutesResponse,
   TranscriptResponse,
 } from '../types';
-import {
-  SingleOrgContextService,
-  SystemConfigService,
-} from '@/admin/system-config/services';
+export interface TMeetApiConfig {
+  secretId: string;
+  secretKey: string;
+  appId: string;
+  sdkId: string;
+  userId: string;
+}
 
 /**
  * Tencent Meeting API Service
  * Provides methods to interact with Tencent Meeting API endpoints
  * Handles authentication, request signing, and error handling
  */
-@Injectable()
 export class TMeetApiService {
   private readonly BASE_URL = 'https://api.meeting.qq.com';
   private readonly logger = new Logger(TMeetApiService.name);
 
-  constructor(
-    private readonly systemConfigService: SystemConfigService,
-    private readonly orgContext: SingleOrgContextService,
-  ) {}
+  private readonly config: Readonly<TMeetApiConfig>;
 
-  /**
-   * Retrieves Tencent Meeting API configuration from injected config
-   * @returns Configuration object containing API credentials and settings
-   */
-  private async getConfig() {
-    const { value } = await this.systemConfigService.getEffectiveConfig(
-      this.orgContext.getOrgId(),
-      'tencent-meeting',
-    );
-    return {
-      secretId: String(value.secretId ?? ''),
-      secretKey: String(value.secretKey ?? ''),
-      appId: String(value.appId ?? ''),
-      sdkId: String(value.sdkId ?? ''),
-      userId: String(value.userId ?? ''),
-    };
+  constructor(config: TMeetApiConfig) {
+    this.config = Object.freeze({ ...config });
   }
 
   /**
@@ -78,7 +63,7 @@ export class TMeetApiService {
 
       const timestamp = Math.floor(Date.now() / 1000).toString();
       const nonce = Math.floor(Math.random() * 100000).toString();
-      const config = await this.getConfig();
+      const config = this.config;
 
       const signature = generateSignature(
         config.secretKey,
