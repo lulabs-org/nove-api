@@ -136,24 +136,31 @@ export class AliyunOssStorageService implements ObjectStorage, OnModuleInit {
           string,
           unknown
         >;
-        const bucket = String(dynamicConfig.bucket ?? '').trim();
-        const accessKeyId = String(dynamicConfig.accessKeyId ?? '').trim();
-        const accessKeySecret = String(
-          dynamicConfig.accessKeySecret ?? '',
+        const toOptionalString = (val: unknown): string => {
+          if (typeof val === 'string') return val;
+          if (typeof val === 'number' || typeof val === 'boolean')
+            return String(val);
+          return '';
+        };
+        const bucket = toOptionalString(dynamicConfig.bucket).trim();
+        const accessKeyId = toOptionalString(dynamicConfig.accessKeyId).trim();
+        const accessKeySecret = toOptionalString(
+          dynamicConfig.accessKeySecret,
         ).trim();
 
         if (bucket && accessKeyId && accessKeySecret) {
           const publicBucket =
-            String(dynamicConfig.publicBucket ?? '').trim() || bucket;
+            toOptionalString(dynamicConfig.publicBucket).trim() || bucket;
           effectiveConfig = {
             region:
-              String(dynamicConfig.region ?? '').trim() || 'oss-cn-hangzhou',
+              toOptionalString(dynamicConfig.region).trim() ||
+              'oss-cn-hangzhou',
             bucket,
             publicBucket,
             accessKeyId,
             accessKeySecret,
             publicBaseUrl:
-              String(dynamicConfig.publicBaseUrl ?? '')
+              toOptionalString(dynamicConfig.publicBaseUrl)
                 .trim()
                 .replace(/\/+$/, '') || null,
             signedUrlExpiresSeconds: this.normalizeExpiresSeconds(

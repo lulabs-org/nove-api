@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 import { BadRequestException } from '@nestjs/common';
 import { StorageTesterService } from './storage.tester';
 import { IntegrationTesterService } from '@/admin/integrations';

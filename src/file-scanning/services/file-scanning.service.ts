@@ -60,7 +60,7 @@ export class FileScanningService {
         return this.clamAv.scan(input);
       default:
         throw new ServiceUnavailableException(
-          `不支持的文件扫描提供商: ${provider}`,
+          `不支持的文件扫描提供商: ${String(provider)}`,
         );
     }
   }
