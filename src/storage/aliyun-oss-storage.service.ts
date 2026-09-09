@@ -147,12 +147,12 @@ export class AliyunOssStorageService implements ObjectStorage, OnModuleInit {
         ).trim();
 
         if (bucket && accessKeyId && accessKeySecret) {
+          const region =
+            toOptionalString(dynamicConfig.region).trim() || 'oss-cn-hangzhou';
           const publicBucket =
             toOptionalString(dynamicConfig.publicBucket).trim() || bucket;
           effectiveConfig = {
-            region:
-              toOptionalString(dynamicConfig.region).trim() ||
-              'oss-cn-hangzhou',
+            region,
             bucket,
             publicBucket,
             accessKeyId,
@@ -160,7 +160,10 @@ export class AliyunOssStorageService implements ObjectStorage, OnModuleInit {
             publicBaseUrl:
               toOptionalString(dynamicConfig.publicBaseUrl)
                 .trim()
-                .replace(/\/+$/, '') || null,
+                .replace(/\/+$/, '') ||
+              (publicBucket && region
+                ? `https://${publicBucket}.${region}.aliyuncs.com`
+                : null),
             signedUrlExpiresSeconds: this.normalizeExpiresSeconds(
               dynamicConfig.signedUrlExpiresSeconds,
             ),

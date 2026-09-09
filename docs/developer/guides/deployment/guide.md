@@ -23,7 +23,7 @@ cp .env.example .env
 
 首次部署新版服务配置时，先保留原有五组服务环境变量。确认 `SYSTEM_CONFIG_ENV_IMPORT_V1` 已写入、后台字段已掩码并完成连接测试后，再从部署平台移除这些服务密钥。后续配置统一通过后台管理；修改环境变量或删除后台配置都不会触发再次导入。
 
-个人头像写入 `avatars/{userId}/{uuid}.webp`。Bucket 与对象均保持私有，可以继续开启“阻止公共访问”；不要开放匿名读取或写入。数据库保存稳定的本站托管对象地址，API 在返回当前用户资料和 `/api/auth/me` 时生成短期 GET 签名 URL，默认有效期为 600 秒，且不会把签名 URL 写入数据库。`ALIYUN_OSS_PUBLIC_BASE_URL` 用于识别本站托管对象，通常填写 Bucket 公网域名。服务端 RAM 身份只授予该前缀所需的 `PutObject`、`GetObject` 和 `DeleteObject` 权限。缺少任一必要 OSS 配置或 OSS 拒绝上传时，其他 API 仍可启动，但头像上传返回 503；签名生成失败时资料接口仍可返回，只是不包含头像 URL。
+个人头像写入 `avatars/{userId}/{uuid}.webp`，使用公共读权限与长期缓存策略（`public, max-age=31536000`）。推荐使用独立的公共存储桶（`publicBucket`，如 `nove-avatars`）配合 CDN 或公共域名（`publicBaseUrl`）提供静态头像加速访问；在未配置独立公共桶的单桶模式下，系统将在读取时通过私有签名 URL 访问。服务端 RAM 身份只授予所需存储桶前缀的 `PutObject`、`GetObject` 和 `DeleteObject` 权限。缺少任一必要 OSS 配置或 OSS 拒绝上传时，其他 API 仍可启动，但头像上传返回 503；无法生成访问地址时资料接口仍可返回，只是不包含头像 URL。
 
 ## 本地开发
 
