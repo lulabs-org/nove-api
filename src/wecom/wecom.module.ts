@@ -11,6 +11,7 @@ import { WecomEventService } from './service/wecom-event.service';
 import { WecomEventController } from './controllers/wecom-event.controller';
 import { WecomEventProcessor } from './processor/wecom-event.processor';
 import { WecomRepository } from './repositories';
+import { WecomTesterService } from './wecom.tester';
 import { PrismaModule } from '@/prisma/prisma.module';
 
 @Module({
@@ -31,6 +32,7 @@ import { PrismaModule } from '@/prisma/prisma.module';
     WecomCustomerService,
     WecomEventService,
     WecomEventProcessor,
+    WecomTesterService,
   ],
   controllers: [WecomEventController],
   exports: [WecomTokenService, WecomClientService],
