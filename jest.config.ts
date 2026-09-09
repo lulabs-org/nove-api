@@ -5,7 +5,14 @@ const common: Partial<Config> = {
   testEnvironment: 'node',
   moduleFileExtensions: ['ts', 'js', 'json'],
   transform: {
-    '^.+\\.ts$': 'ts-jest',
+    '^.+\\.ts$': [
+      'ts-jest',
+      {
+        tsconfig: {
+          isolatedModules: true,
+        },
+      },
+    ],
   },
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
@@ -23,6 +30,7 @@ const common: Partial<Config> = {
 };
 
 const config: Config = {
+  maxWorkers: '50%',
   projects: [
     {
       displayName: 'unit',
