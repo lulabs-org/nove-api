@@ -73,6 +73,12 @@ model User {
   // 平台与存储相关关联
   platformUsers          PlatformUser[] // 平台用户关联
   uploadedStorageObjects StorageObject[]
+  personalDriveSpaces    DriveSpace[]    @relation("DrivePersonalOwner")
+  createdDriveNodes      DriveNode[]     @relation("DriveNodeCreator")
+  createdDriveFiles      DriveFile[]     @relation("DriveFileCreator")
+  createdUploadSessions  UploadSession[] @relation("UploadSessionCreator")
+  createdDriveGrants     DriveGrant[]    @relation("DriveGrantCreator")
+  driveAuditLogs         DriveAuditLog[] @relation("DriveAuditActor")
   phoneHashMappings      UserPhoneHash[] // 手机号哈希映射
 
   @@unique([countryCode, phone], name: "uq_users_country_code_phone")

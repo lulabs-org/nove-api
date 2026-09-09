@@ -18,6 +18,7 @@ model StorageObject {
   minuteFiles           MinuteFile[]
   identityDocFrontFiles UserIdentityDocument[] @relation("IdentityDocFrontFile")
   identityDocBackFiles  UserIdentityDocument[] @relation("IdentityDocBackFile")
+  fileVersions          FileVersion[]
 
   @@unique([provider, bucket, objectKey])
   @@map("storage_objects")

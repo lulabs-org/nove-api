@@ -1,3 +1,7 @@
+import { Auth } from '@/auth/decorators/auth.decorator';
+import { AuthContext } from '@/auth/types/auth-context.interface';
+import { MinuteFileDriveService } from '../services/minute-file-drive.service';
+import { AttachMinuteFileDto } from '../dto/minute-file.dto';
 import {
   Controller,
   Get,
@@ -19,7 +23,10 @@ import {
   ApiResponse,
   ApiParam,
 } from '@nestjs/swagger';
-import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
+import {
+  RequireAllPermissions,
+  RequirePermissions,
+} from '@/admin/permission/decorators/permissions.decorator';
 import { MinuteService } from '../services/minute.service';
 import { TranscriptService } from '../services/transcript.service';
 import { CuidPipe } from '@/common/pipes/cuid.pipe';
@@ -53,7 +60,31 @@ export class MinuteController {
   constructor(
     private readonly minuteService: MinuteService,
     private readonly transcriptService: TranscriptService,
+    private readonly minuteFileDriveService: MinuteFileDriveService,
   ) {}
+
+  @Get(':id/files')
+  @RequireAllPermissions('minute:read', 'drive:read')
+  @ApiOperation({ summary: '获取 Minute 的云盘文件' })
+  listMinuteFiles(
+    @Param('id', CuidPipe) id: string,
+    @CurrentOrg() orgId: string,
+  ) {
+    return this.minuteFileDriveService.list(id, orgId);
+  }
+
+  @Post(':id/files')
+  @RequireAllPermissions('minute:update', 'drive:read', 'drive:update')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: '将组织云盘文件关联到 Minute' })
+  attachMinuteFile(
+    @Param('id', CuidPipe) id: string,
+    @Body(new ValidationPipe()) dto: AttachMinuteFileDto,
+    @Auth() auth: AuthContext,
+    @CurrentOrg() orgId: string,
+  ) {
+    return this.minuteFileDriveService.attach(id, dto, auth, orgId);
+  }
 
   /**
    * 创建录制记录

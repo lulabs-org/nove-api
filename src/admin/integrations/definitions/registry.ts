@@ -1,3 +1,6 @@
+import { storageConfig } from './storage.config';
+import { driveConfig } from './drive.config';
+import { fileScanningConfig } from './file-scanning.config';
 import { aiConfig } from './ai.config';
 import { larkConfig } from './lark.config';
 import { mailConfig } from './mail.config';
@@ -12,6 +15,9 @@ import {
 export { ConfigSource, IntegrationModuleName };
 
 export const IntegrationRegistry = {
+  storage: storageConfig,
+  drive: driveConfig,
+  'file-scanning': fileScanningConfig,
   mail: mailConfig,
   ai: aiConfig,
   'tencent-meeting': tencentMeetingConfig,

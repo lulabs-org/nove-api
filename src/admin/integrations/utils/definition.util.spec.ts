@@ -30,6 +30,9 @@ describe('definition.util', () => {
         ]),
       ),
     ).toEqual({
+      storage: ['accessKeySecret'],
+      drive: [],
+      'file-scanning': [],
       mail: ['pass'],
       ai: ['apiKey'],
       'tencent-meeting': [

@@ -17,6 +17,12 @@ importers:
       '@alicloud/openapi-client':
         specifier: ^0.4.15
         version: 0.4.15
+      '@alicloud/openapi-core':
+        specifier: 1.0.7
+        version: 1.0.7
+      '@alicloud/sas20181203':
+        specifier: 9.3.3
+        version: 9.3.3
       '@alicloud/tea-typescript':
         specifier: ^1.8.0
         version: 1.8.0
@@ -441,6 +447,9 @@ packages:
 
   '@alicloud/openapi-util@0.3.3':
     resolution: {integrity: sha512-vf0cQ/q8R2U7ZO88X5hDiu1yV3t/WexRj+YycWxRutkH/xVXfkmpRgps8lmNEk7Ar+0xnY8+daN2T+2OyB9F4A==}
+
+  '@alicloud/sas20181203@9.3.3':
+    resolution: {integrity: sha512-70aaoggAf2PzPGLxAdTDxF5c2goLw84jsHiL7mtEG2NSWvLCiWIgofbs3X9PkzPOpxr8YRwVux9BX27z1Bi7eA==}
 
   '@alicloud/tea-typescript@1.8.0':
     resolution: {integrity: sha512-CWXWaquauJf0sW30mgJRVu9aaXyBth5uMBCUc+5vKTK1zlgf3hIqRUjJZbjlwHwQ5y9anwcu18r48nOZb7l2QQ==}
@@ -8327,6 +8336,13 @@ snapshots:
       '@alicloud/tea-util': 1.4.11
       kitx: 2.2.0
       sm3: 1.0.3
+    transitivePeerDependencies:
+      - supports-color
+
+  '@alicloud/sas20181203@9.3.3':
+    dependencies:
+      '@alicloud/openapi-core': 1.0.7
+      '@darabonba/typescript': 1.0.3
     transitivePeerDependencies:
       - supports-color
 

@@ -16,6 +16,8 @@ export const INTEGRATION_EVENT_PATTERNS = {
   LARK_DELETED: 'config.lark.deleted',
   WECHAT_SHOP_UPDATED: 'config.wechat-shop.updated',
   WECHAT_SHOP_DELETED: 'config.wechat-shop.deleted',
+  STORAGE_UPDATED: 'config.storage.updated',
+  STORAGE_DELETED: 'config.storage.deleted',
 } as const;
 
 export const IntegrationEvents = {

@@ -33,4 +33,9 @@ export const NOVE_CLI_OAUTH_SCOPES = [
   'order:update',
   'order:status',
   'order:delete',
+  'drive:read',
+  'drive:upload',
+  'drive:update',
+  'drive:delete',
+  'drive:manage-acl',
 ] as const;

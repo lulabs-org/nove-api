@@ -18,9 +18,11 @@ import { PlatformUserTranscriptRepository } from './repositories/platform-user-t
 import { LlmModule } from '@/llm/llm.module';
 import { PrismaModule } from '@/prisma/prisma.module';
 import { HttpModule } from '@nestjs/axios';
+import { DriveModule } from '@/drive/drive.module';
+import { MinuteFileDriveService } from './services/minute-file-drive.service';
 
 @Module({
-  imports: [PrismaModule, LlmModule, HttpModule],
+  imports: [PrismaModule, LlmModule, HttpModule, DriveModule],
   controllers: [
     MinuteController,
     MinuteSummaryController,
@@ -40,6 +42,7 @@ import { HttpModule } from '@nestjs/axios';
     MinuteFileRepository,
     TranscriptRepository,
     PlatformUserTranscriptRepository,
+    MinuteFileDriveService,
   ],
   exports: [
     MinuteService,
