@@ -6,7 +6,6 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import * as OSSModule from 'ali-oss';
 import {
   IntegrationChangeEvent,
   INTEGRATION_EVENT_PATTERNS,
@@ -67,7 +66,17 @@ interface OssClientConstructor {
   }): OssClient;
 }
 
-const OSS = OSSModule as unknown as OssClientConstructor;
+function getOssConstructor(): OssClientConstructor {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const OSSModule = require('ali-oss') as unknown;
+  return (
+    typeof OSSModule === 'object' &&
+    OSSModule !== null &&
+    'default' in OSSModule
+      ? (OSSModule as { default: unknown }).default
+      : OSSModule
+  ) as OssClientConstructor;
+}
 
 interface StorageEffectiveConfig {
   region: string;
@@ -366,6 +375,7 @@ export class AliyunOssStorageService implements ObjectStorage, OnModuleInit {
       throw new ServiceUnavailableException('对象存储服务尚未配置');
     }
 
+    const OSS = getOssConstructor();
     this.privateClient = new OSS({
       region,
       bucket,
@@ -394,6 +404,7 @@ export class AliyunOssStorageService implements ObjectStorage, OnModuleInit {
       return this.publicClient;
     }
 
+    const OSS = getOssConstructor();
     this.publicClient = new OSS({
       region,
       bucket: targetBucket,

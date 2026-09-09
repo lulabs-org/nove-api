@@ -9,7 +9,6 @@ const common: Partial<Config> = {
   },
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
-    '^ali-oss$': '<rootDir>/test/mocks/ali-oss.ts',
   },
   collectCoverageFrom: [
     'src/**/*.ts',
@@ -45,9 +44,7 @@ const config: Config = {
     {
       displayName: 'integration',
       ...common,
-      testMatch: [
-        '<rootDir>/test/integration/**/*.int-spec.ts',
-      ],
+      testMatch: ['<rootDir>/test/integration/**/*.int-spec.ts'],
       coverageDirectory: 'coverage/integration',
       setupFilesAfterEnv: ['<rootDir>/test/setup-integration.ts'],
     },

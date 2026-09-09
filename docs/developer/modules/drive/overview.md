@@ -41,8 +41,8 @@ OSS CORS 必须允许 Admin 来源执行 `PUT`，并在响应头中暴露 `ETag`
 可先预览、再合并写入当前 Bucket 的 CORS 规则：
 
 ```bash
-pnpm drive:configure-oss-cors
-pnpm drive:configure-oss-cors --apply
+npx tsx scripts/ts/configure-drive-oss-cors.ts
+npx tsx scripts/ts/configure-drive-oss-cors.ts --apply
 ```
 
 来源读取顺序为 `DRIVE_OSS_CORS_ORIGINS`、`CORS_ORIGINS`、`NOVE_ADMIN_URL`，只接受明确的 HTTP(S) Origin，不接受通配符。签名上传和下载地址始终使用 HTTPS。

@@ -1,5 +1,4 @@
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common';
-import * as OSSModule from 'ali-oss';
 import {
   IntegrationTestProvider,
   IntegrationTesterService,
@@ -21,7 +20,17 @@ interface OssTestClientConstructor {
   }): OssTestClient;
 }
 
-const OSS = OSSModule as unknown as OssTestClientConstructor;
+function getOssTestConstructor(): OssTestClientConstructor {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const OSSModule = require('ali-oss') as unknown;
+  return (
+    typeof OSSModule === 'object' &&
+    OSSModule !== null &&
+    'default' in OSSModule
+      ? (OSSModule as { default: unknown }).default
+      : OSSModule
+  ) as OssTestClientConstructor;
+}
 
 @Injectable()
 export class StorageTesterService
@@ -47,6 +56,7 @@ export class StorageTesterService
     }
 
     const testBucket = async (targetBucket: string, label?: string) => {
+      const OSS = getOssTestConstructor();
       const client = new OSS({
         region: region || 'oss-cn-hangzhou',
         bucket: targetBucket,
