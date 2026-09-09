@@ -1,26 +1,26 @@
 // 分润规则表
 model ProfitShareRule {
-  id              String    @id @default(cuid())
-  name            String    @map("name") // 规则名称（如：2023年9月核心分账规则）
-  
-  ruleType        ProfitShareRuleType @default(ORDER_PERCENTAGE) @map("rule_type")
-  
+  id   String @id @default(cuid())
+  name String @map("name") // 规则名称（如：2023年9月核心分账规则）
+
+  ruleType ProfitShareRuleType @default(ORDER_PERCENTAGE) @map("rule_type")
+
   // 匹配条件（可空代表不限）
-  productId       String?   @map("product_id") // 对应产品ID/品类ID
-  channelId       Int?      @map("channel_id") // 对应渠道ID
-  
+  productId String? @map("product_id") // 对应产品ID/品类ID
+  channelId Int?    @map("channel_id") // 对应渠道ID
+
   // 时间版本控制，核心业务逻辑（每月变更靠这个控制）
-  validStartTime  DateTime  @map("valid_start_time") @db.Timestamptz(6)
-  validEndTime    DateTime  @map("valid_end_time") @db.Timestamptz(6)
-  
-  status          ProfitShareRuleStatus @default(ACTIVE) @map("status")
+  validStartTime DateTime @map("valid_start_time") @db.Timestamptz(6)
+  validEndTime   DateTime @map("valid_end_time") @db.Timestamptz(6)
 
-  modules         ProfitShareModule[]
-  records         ProfitShareRecord[]
+  status ProfitShareRuleStatus @default(ACTIVE) @map("status")
 
-  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt       DateTime? @map("deleted_at") @db.Timestamptz(6)
+  modules ProfitShareModule[]
+  records ProfitShareRecord[]
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
 
   @@index([productId, channelId], map: "idx_profit_rules_product_channel")
   @@index([validStartTime, validEndTime], map: "idx_profit_rules_valid_time")
@@ -29,7 +29,7 @@ model ProfitShareRule {
 
 enum ProfitShareRuleType {
   ORDER_PERCENTAGE // 按订单比例分润
-  FIXED_MONTHLY    // 月度固定分账
+  FIXED_MONTHLY // 月度固定分账
 }
 
 enum ProfitShareRuleStatus {
@@ -40,21 +40,21 @@ enum ProfitShareRuleStatus {
 
 // 分润模块配置表（如：关单 4%，运营 3%，或月度固定课酬）
 model ProfitShareModule {
-  id             String    @id @default(cuid())
-  ruleId         String    @map("rule_id")
-  name           String    @map("name") // 模块名称（关单、运营对接、教师课酬等）
-  shareRatio     Decimal   @default(0) @map("share_ratio") @db.Decimal(8, 4) // 模块占订单比例（例如 0.0400 表示 4%）
-  fixedAmount    Int?      @map("fixed_amount") // 固定金额（分，例如 500000 表示 5000 元/月）
-  isRefundable   Boolean   @default(true) @map("is_refundable") // 退款时是否需要扣回
+  id               String  @id @default(cuid())
+  ruleId           String  @map("rule_id")
+  name             String  @map("name") // 模块名称（关单、运营对接、教师课酬等）
+  shareRatio       Decimal @default(0) @map("share_ratio") @db.Decimal(8, 4) // 模块占订单比例（例如 0.0400 表示 4%）
+  fixedAmount      Int?    @map("fixed_amount") // 固定金额（分，例如 500000 表示 5000 元/月）
+  isRefundable     Boolean @default(true) @map("is_refundable") // 退款时是否需要扣回
   amortizationType String  @default("NONE") @map("amortization_type") // 结算模式: NONE (不分摊), MONTHLY (按月摊销)
   allocationMode   String  @default("FIXED") @map("allocation_mode") // 收益人确定方式: FIXED (固定人员比例), ORDER_OWNER (随订单负责人), FINANCIAL_CLOSER (随订单关单人)
-  
-  rule           ProfitShareRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
-  allocations    ProfitShareAllocation[]
-  records        ProfitShareRecord[]
 
-  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rule        ProfitShareRule         @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  allocations ProfitShareAllocation[]
+  records     ProfitShareRecord[]
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@index([ruleId], map: "idx_profit_modules_rule_id")
   @@map("profit_share_modules")
@@ -62,20 +62,20 @@ model ProfitShareModule {
 
 // 分润模块成员分配表（该模块下的比例分配，如张三和李四平分模块收益，或指定某成员固定金额）
 model ProfitShareAllocation {
-  id               String    @id @default(cuid())
-  moduleId         String    @map("module_id")
-  
-  // 收益人：可以是特定角色，也可以是具体成员
-  memberId         String?   @map("member_id") 
-  roleId           String?   @map("role_id")
-  
-  allocationRatio  Decimal   @default(1.0000) @map("allocation_ratio") @db.Decimal(8, 4) // 成员在模块内的分配比例（例如 0.5000 表示 50%）
-  fixedAmount      Int?      @map("fixed_amount") // 该成员每月固定金额（分，例如 500000 表示 5000 元/月）
-  
-  module           ProfitShareModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  moduleId String @map("module_id")
 
-  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  // 收益人：可以是特定角色，也可以是具体成员
+  memberId String? @map("member_id")
+  roleId   String? @map("role_id")
+
+  allocationRatio Decimal @default(1.0000) @map("allocation_ratio") @db.Decimal(8, 4) // 成员在模块内的分配比例（例如 0.5000 表示 50%）
+  fixedAmount     Int?    @map("fixed_amount") // 该成员每月固定金额（分，例如 500000 表示 5000 元/月）
+
+  module ProfitShareModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@index([moduleId], map: "idx_profit_alloc_module_id")
   @@map("profit_share_allocations")
@@ -83,29 +83,29 @@ model ProfitShareAllocation {
 
 // 分润明细流水表（最终结算单）
 model ProfitShareRecord {
-  id               String    @id @default(cuid())
-  orderId          String?   @map("order_id") // 对应订单ID（月度固定分账等非单笔分润可为空）
-  periodMonth      String?   @map("period_month") // 业务期号（如 2026-09，便于月度固定对账和幂等防重）
-  ruleId           String    @map("rule_id")
-  moduleId         String    @map("module_id")
-  memberId         String    @map("member_id") // 最终收益成员
-  
-  ruleSnapshot     Json      @map("rule_snapshot") @db.JsonB // 生成时的规则快照（防篡改与追溯）
-  
-  baseAmount       Int       @map("base_amount") // 计算基数（分，订单总额或固定分账基数）
-  profitAmount     Int       @map("profit_amount") // 实际分润金额（分，正数为收益，负数为退回）
-  
-  settlementTime   DateTime? @map("settlement_time") @db.Timestamptz(6) // 预计结算时间
-  status           ProfitShareRecordStatus @default(PENDING) @map("status")
-  
+  id          String  @id @default(cuid())
+  orderId     String? @map("order_id") // 对应订单ID（月度固定分账等非单笔分润可为空）
+  periodMonth String? @map("period_month") // 业务期号（如 2026-09，便于月度固定对账和幂等防重）
+  ruleId      String  @map("rule_id")
+  moduleId    String  @map("module_id")
+  memberId    String  @map("member_id") // 最终收益成员
+
+  ruleSnapshot Json @map("rule_snapshot") @db.JsonB // 生成时的规则快照（防篡改与追溯）
+
+  baseAmount   Int @map("base_amount") // 计算基数（分，订单总额或固定分账基数）
+  profitAmount Int @map("profit_amount") // 实际分润金额（分，正数为收益，负数为退回）
+
+  settlementTime DateTime?               @map("settlement_time") @db.Timestamptz(6) // 预计结算时间
+  status         ProfitShareRecordStatus @default(PENDING) @map("status")
+
   // 关联
-  order            Order?            @relation(fields: [orderId], references: [id])
-  rule             ProfitShareRule   @relation(fields: [ruleId], references: [id])
-  module           ProfitShareModule @relation(fields: [moduleId], references: [id])
-  
-  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt        DateTime? @map("deleted_at") @db.Timestamptz(6)
+  order  Order?            @relation(fields: [orderId], references: [id])
+  rule   ProfitShareRule   @relation(fields: [ruleId], references: [id])
+  module ProfitShareModule @relation(fields: [moduleId], references: [id])
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
 
   @@index([orderId], map: "idx_profit_records_order_id")
   @@index([memberId, status], map: "idx_profit_records_member_status")
@@ -115,8 +115,8 @@ model ProfitShareRecord {
 }
 
 enum ProfitShareRecordStatus {
-  PENDING    // 待结算
-  SETTLED    // 已结算
-  CLAWBACK   // 已回扣（负数金额流水专用）
-  CANCELLED  // 已取消（退款且未结算时直接取消）
+  PENDING // 待结算
+  SETTLED // 已结算
+  CLAWBACK // 已回扣（负数金额流水专用）
+  CANCELLED // 已取消（退款且未结算时直接取消）
 }

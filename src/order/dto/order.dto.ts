@@ -1,5 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Currency, OrderStatus, PaymentProvider, Prisma } from '@prisma/client';
+import {
+  BenefitAdjustmentType,
+  Currency,
+  OrderStatus,
+  PaymentProvider,
+  Prisma,
+} from '@prisma/client';
 
 export class OrderRelationDto {
   @ApiProperty({ description: '关联对象 ID' })
@@ -97,6 +103,12 @@ export class OrderDto {
   @ApiPropertyOptional({ description: '权益结束时间', nullable: true })
   benefitEnd: Date | null;
 
+  @ApiProperty({ description: '累计冻结天数' })
+  frozenDays: number;
+
+  @ApiPropertyOptional({ description: '当前冻结开始时间', nullable: true })
+  frozenAt: Date | null;
+
   @ApiPropertyOptional({
     description: '支付提供方',
     enum: PaymentProvider,
@@ -167,4 +179,49 @@ export class OrderListResponse {
 
   @ApiProperty({ description: '总页数' })
   totalPages: number;
+}
+
+export class OrderBenefitAdjustmentDto {
+  @ApiProperty({ description: '调整流水记录 ID' })
+  id: string;
+
+  @ApiProperty({ description: '订单 ID' })
+  orderId: string;
+
+  @ApiProperty({
+    description: '调整类型',
+    enum: BenefitAdjustmentType,
+  })
+  type: BenefitAdjustmentType;
+
+  @ApiProperty({ description: '影响/顺延天数' })
+  days: number;
+
+  @ApiPropertyOptional({ description: '冻结开始时间', nullable: true })
+  freezeStart: Date | null;
+
+  @ApiPropertyOptional({ description: '解冻时间', nullable: true })
+  freezeEnd: Date | null;
+
+  @ApiProperty({ description: '调整前权益结束时间' })
+  beforeEnd: Date;
+
+  @ApiProperty({ description: '调整后权益结束时间' })
+  afterEnd: Date;
+
+  @ApiPropertyOptional({ description: '调整原因或备注', nullable: true })
+  reason: string | null;
+
+  @ApiPropertyOptional({ description: '操作人用户 ID', nullable: true })
+  operatorId: string | null;
+
+  @ApiPropertyOptional({
+    description: '操作人信息',
+    type: OrderRelationDto,
+    nullable: true,
+  })
+  operator?: OrderRelationDto | null;
+
+  @ApiProperty({ description: '创建时间' })
+  createdAt: Date;
 }

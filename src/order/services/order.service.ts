@@ -3,16 +3,26 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Currency, OrderStatus, Prisma } from '@prisma/client';
+import {
+  BenefitAdjustmentType,
+  Currency,
+  OrderStatus,
+  Prisma,
+} from '@prisma/client';
 import {
   CreateOrderDto,
+  ExtendOrderDto,
+  FreezeOrderDto,
+  OrderBenefitAdjustmentDto,
   OrderDto,
   OrderListResponse,
   OrderRelationDto,
   QueryOrderDto,
+  UnfreezeOrderDto,
   UpdateOrderDto,
 } from '../dto';
 import {
+  OrderBenefitAdjustmentWithOperator,
   OrderRepository,
   OrderWithRelations,
 } from '../repositories/order.repository';
@@ -219,6 +229,161 @@ export class OrderService {
     await this.findActiveOrder(id);
     const order = await this.orderRepository.update(id, { status });
     return this.toDto(order);
+  }
+
+  async freeze(
+    id: string,
+    dto: FreezeOrderDto,
+    operatorId?: string,
+  ): Promise<OrderDto> {
+    const order = await this.findActiveOrder(id);
+
+    if (order.status !== OrderStatus.PAID) {
+      throw new BadRequestException(
+        `Only paid orders can be frozen (current status: ${order.status})`,
+      );
+    }
+
+    const now = new Date();
+    if (!order.benefitEnd || order.benefitEnd <= now) {
+      throw new BadRequestException(
+        'Cannot freeze an order without benefit end date or that is already expired',
+      );
+    }
+
+    if (operatorId) {
+      await this.ensureUserExists(operatorId, 'Operator not found');
+    }
+
+    const result = await this.orderRepository.executeBenefitAdjustment({
+      orderId: id,
+      orderUpdate: {
+        status: OrderStatus.FROZEN,
+        frozenAt: now,
+      },
+      adjustmentCreate: {
+        order: { connect: { id } },
+        type: BenefitAdjustmentType.FREEZE,
+        days: 0,
+        freezeStart: now,
+        beforeEnd: order.benefitEnd,
+        afterEnd: order.benefitEnd,
+        reason: this.trimNullable(dto.reason),
+        operator: operatorId ? { connect: { id: operatorId } } : undefined,
+      },
+    });
+
+    return this.toDto(result.order);
+  }
+
+  async unfreeze(
+    id: string,
+    dto: UnfreezeOrderDto,
+    operatorId?: string,
+  ): Promise<OrderDto> {
+    const order = await this.findActiveOrder(id);
+
+    if (order.status !== OrderStatus.FROZEN || !order.frozenAt) {
+      throw new BadRequestException(
+        `Only frozen orders can be unfrozen (current status: ${order.status})`,
+      );
+    }
+
+    if (operatorId) {
+      await this.ensureUserExists(operatorId, 'Operator not found');
+    }
+
+    const now = new Date();
+    const msPerDay = 24 * 60 * 60 * 1000;
+    const actualFrozenDays = Math.max(
+      1,
+      Math.ceil((now.getTime() - order.frozenAt.getTime()) / msPerDay),
+    );
+
+    const currentEnd = order.benefitEnd ? new Date(order.benefitEnd) : now;
+    const newBenefitEnd = new Date(
+      currentEnd.getTime() + actualFrozenDays * msPerDay,
+    );
+    const totalFrozenDays = (order.frozenDays || 0) + actualFrozenDays;
+
+    const result = await this.orderRepository.executeBenefitAdjustment({
+      orderId: id,
+      orderUpdate: {
+        status: OrderStatus.PAID,
+        frozenAt: null,
+        frozenDays: totalFrozenDays,
+        benefitEnd: newBenefitEnd,
+      },
+      adjustmentCreate: {
+        order: { connect: { id } },
+        type: BenefitAdjustmentType.UNFREEZE,
+        days: actualFrozenDays,
+        freezeStart: order.frozenAt,
+        freezeEnd: now,
+        beforeEnd: currentEnd,
+        afterEnd: newBenefitEnd,
+        reason: this.trimNullable(dto.reason),
+        operator: operatorId ? { connect: { id: operatorId } } : undefined,
+      },
+    });
+
+    return this.toDto(result.order);
+  }
+
+  async extend(
+    id: string,
+    dto: ExtendOrderDto,
+    operatorId?: string,
+  ): Promise<OrderDto> {
+    const order = await this.findActiveOrder(id);
+
+    if (
+      order.status !== OrderStatus.PAID &&
+      order.status !== OrderStatus.FROZEN
+    ) {
+      throw new BadRequestException(
+        `Only paid or frozen orders can be extended (current status: ${order.status})`,
+      );
+    }
+
+    if (dto.days <= 0) {
+      throw new BadRequestException('Extension days must be greater than 0');
+    }
+
+    if (operatorId) {
+      await this.ensureUserExists(operatorId, 'Operator not found');
+    }
+
+    const now = new Date();
+    const msPerDay = 24 * 60 * 60 * 1000;
+    const currentEnd = order.benefitEnd ? new Date(order.benefitEnd) : now;
+    const newBenefitEnd = new Date(currentEnd.getTime() + dto.days * msPerDay);
+
+    const result = await this.orderRepository.executeBenefitAdjustment({
+      orderId: id,
+      orderUpdate: {
+        benefitEnd: newBenefitEnd,
+      },
+      adjustmentCreate: {
+        order: { connect: { id } },
+        type: BenefitAdjustmentType.EXTENSION,
+        days: dto.days,
+        beforeEnd: currentEnd,
+        afterEnd: newBenefitEnd,
+        reason: this.trimNullable(dto.reason),
+        operator: operatorId ? { connect: { id: operatorId } } : undefined,
+      },
+    });
+
+    return this.toDto(result.order);
+  }
+
+  async getBenefitAdjustments(
+    id: string,
+  ): Promise<OrderBenefitAdjustmentDto[]> {
+    await this.findActiveOrder(id);
+    const adjustments = await this.orderRepository.findBenefitAdjustments(id);
+    return adjustments.map((item) => this.toAdjustmentDto(item));
   }
 
   async delete(id: string): Promise<void> {
@@ -452,6 +617,8 @@ export class OrderService {
       completedAt: order.completedAt,
       benefitStart: order.benefitStart,
       benefitEnd: order.benefitEnd,
+      frozenDays: order.frozenDays,
+      frozenAt: order.frozenAt,
       paymentProvider: order.paymentProvider,
       providerTradeNo: order.providerTradeNo,
       product: order.product
@@ -487,6 +654,25 @@ export class OrderService {
       code: user.username,
       name: user.profile?.displayName || user.username || user.email,
       email: user.email,
+    };
+  }
+
+  private toAdjustmentDto(
+    adj: OrderBenefitAdjustmentWithOperator,
+  ): OrderBenefitAdjustmentDto {
+    return {
+      id: adj.id,
+      orderId: adj.orderId,
+      type: adj.type,
+      days: adj.days,
+      freezeStart: adj.freezeStart,
+      freezeEnd: adj.freezeEnd,
+      beforeEnd: adj.beforeEnd,
+      afterEnd: adj.afterEnd,
+      reason: adj.reason,
+      operatorId: adj.operatorId,
+      operator: this.toUserRelation(adj.operator),
+      createdAt: adj.createdAt,
     };
   }
 }
