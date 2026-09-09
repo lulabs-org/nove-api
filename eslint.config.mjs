@@ -31,20 +31,4 @@ export default tseslint.config(
       '@typescript-eslint/no-unsafe-argument': 'warn',
     },
   },
-  {
-    files: ['src/drive/services/**/*.ts', 'src/drive/scanning/**/*.ts'],
-    rules: {
-      'no-restricted-imports': [
-        'error',
-        {
-          paths: [
-            {
-              name: '@/prisma/prisma.service',
-              message: 'Drive 数据访问必须封装在 src/drive/repositories 中。',
-            },
-          ],
-        },
-      ],
-    },
-  },
 );

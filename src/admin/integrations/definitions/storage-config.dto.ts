@@ -49,7 +49,8 @@ export class UpdateStorageConfigDto {
   accessKeySecret?: string;
 
   @ApiPropertyOptional({
-    description: '公开访问地址 (Base URL)，例如 CDN 加速域名或 Bucket 外网域名，末尾不带斜杠',
+    description:
+      '公开访问地址 (Base URL)，例如 CDN 加速域名或 Bucket 外网域名，末尾不带斜杠',
   })
   @IsOptional()
   @IsString()

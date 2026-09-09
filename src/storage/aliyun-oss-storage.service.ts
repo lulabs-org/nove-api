@@ -99,14 +99,18 @@ export class AliyunOssStorageService implements ObjectStorage, OnModuleInit {
   @OnEvent(INTEGRATION_EVENT_PATTERNS.STORAGE_UPDATED)
   async handleStorageConfigUpdate(event: IntegrationChangeEvent) {
     if (this.orgContext && !this.orgContext.matches(event.orgId)) return;
-    this.logger.log('Received config.storage.updated event, reloading OSS client...');
+    this.logger.log(
+      'Received config.storage.updated event, reloading OSS client...',
+    );
     await this.reloadConfig();
   }
 
   @OnEvent(INTEGRATION_EVENT_PATTERNS.STORAGE_DELETED)
   async handleStorageConfigDelete(event: IntegrationChangeEvent) {
     if (this.orgContext && !this.orgContext.matches(event.orgId)) return;
-    this.logger.log('Received config.storage.deleted event, resetting OSS client to defaults...');
+    this.logger.log(
+      'Received config.storage.deleted event, resetting OSS client to defaults...',
+    );
     await this.reloadConfig();
   }
 
@@ -119,10 +123,15 @@ export class AliyunOssStorageService implements ObjectStorage, OnModuleInit {
           orgId,
           'storage',
         );
-        const dynamicConfig = (effective?.value ?? {}) as Record<string, unknown>;
+        const dynamicConfig = (effective?.value ?? {}) as Record<
+          string,
+          unknown
+        >;
         const bucket = String(dynamicConfig.bucket ?? '').trim();
         const accessKeyId = String(dynamicConfig.accessKeyId ?? '').trim();
-        const accessKeySecret = String(dynamicConfig.accessKeySecret ?? '').trim();
+        const accessKeySecret = String(
+          dynamicConfig.accessKeySecret ?? '',
+        ).trim();
 
         if (bucket && accessKeyId && accessKeySecret) {
           const publicBucket =
@@ -294,7 +303,10 @@ export class AliyunOssStorageService implements ObjectStorage, OnModuleInit {
     key: string;
     uploadId: string;
   }): Promise<void> {
-    await this.getPrivateClient().abortMultipartUpload(input.key, input.uploadId);
+    await this.getPrivateClient().abortMultipartUpload(
+      input.key,
+      input.uploadId,
+    );
   }
 
   async headObject(key: string): Promise<{

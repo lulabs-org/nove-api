@@ -10,11 +10,7 @@ import {
   OBJECT_STORAGE,
   ObjectStorage,
 } from '@/storage/object-storage.interface';
-import {
-  FileScannerProvider,
-  FileScanInput,
-  FileScanResult,
-} from '../types';
+import { FileScannerProvider, FileScanInput, FileScanResult } from '../types';
 import { FileScanningConfigService } from '../services/file-scanning-config.service';
 
 @Injectable()

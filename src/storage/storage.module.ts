@@ -17,4 +17,3 @@ import { OBJECT_STORAGE } from './object-storage.interface';
   exports: [OBJECT_STORAGE, StorageTesterService],
 })
 export class StorageModule {}
-

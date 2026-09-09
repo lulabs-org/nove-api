@@ -217,7 +217,9 @@ describe('AliyunOssStorageService', () => {
 
     expect(service.getBucket()).toBe('dynamic-bucket');
     expect(
-      service.getManagedKey('https://dynamic.example.com/avatars/user-1/a.webp'),
+      service.getManagedKey(
+        'https://dynamic.example.com/avatars/user-1/a.webp',
+      ),
     ).toBe('avatars/user-1/a.webp');
 
     // Simulate update event with new bucket
@@ -253,9 +255,7 @@ describe('AliyunOssStorageService', () => {
       value: {},
     });
 
-    expect(() => service.getBucket()).toThrow(
-      ServiceUnavailableException,
-    );
+    expect(() => service.getBucket()).toThrow(ServiceUnavailableException);
   });
 
   it('supports dual-bucket architecture with direct CDN URL for public avatars', async () => {
@@ -295,10 +295,22 @@ describe('AliyunOssStorageService', () => {
     const privateClient = {
       put: jest.fn().mockResolvedValue(undefined),
       delete: jest.fn(),
-      signatureUrl: jest.fn().mockReturnValue('https://signed.example.com/file'),
+      signatureUrl: jest
+        .fn()
+        .mockReturnValue('https://signed.example.com/file'),
     };
-    (service as unknown as { publicClient: typeof publicClient; privateClient: typeof privateClient }).publicClient = publicClient;
-    (service as unknown as { publicClient: typeof publicClient; privateClient: typeof privateClient }).privateClient = privateClient;
+    (
+      service as unknown as {
+        publicClient: typeof publicClient;
+        privateClient: typeof privateClient;
+      }
+    ).publicClient = publicClient;
+    (
+      service as unknown as {
+        publicClient: typeof publicClient;
+        privateClient: typeof privateClient;
+      }
+    ).privateClient = privateClient;
 
     // When publicBucket is distinct from bucket, getReadUrl returns the direct CDN URL without signing
     const avatarUrl = 'https://cdn.example.com/avatars/user-1/avatar.webp';
@@ -327,4 +339,3 @@ describe('AliyunOssStorageService', () => {
     expect(privateClient.put).not.toHaveBeenCalled();
   });
 });
-

@@ -1,10 +1,10 @@
-import {
-  Injectable,
-  ServiceUnavailableException,
-} from '@nestjs/common';
+import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { FileScanProvider } from '@prisma/client';
 import { FileScanningConfigService } from './file-scanning-config.service';
-import { AliyunFileScannerService, ClamAvFileScannerService } from '../providers';
+import {
+  AliyunFileScannerService,
+  ClamAvFileScannerService,
+} from '../providers';
 import { FileScanInput, FileScanResult } from '../types';
 
 @Injectable()

@@ -441,11 +441,7 @@ export class DriveService {
 
   async createDownloadUrl(fileId: string, auth: DriveAuthContext) {
     const record = await this.findFile(fileId);
-    await this.acl.assertNodeAction(
-      record.node!,
-      DriveAction.DOWNLOAD,
-      auth,
-    );
+    await this.acl.assertNodeAction(record.node!, DriveAction.DOWNLOAD, auth);
     await this.assertBusinessAccess(record, auth);
     const version = record.versions[0];
     if (!version || version.status !== FileVersionStatus.ACTIVE) {

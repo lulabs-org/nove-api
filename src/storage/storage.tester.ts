@@ -65,7 +65,9 @@ export class StorageTesterService
         const err = error as { message?: string; name?: string };
         const message = err?.message || '未知错误';
         const prefix = label ? `${label} ` : '';
-        throw new BadRequestException(`OSS 连通性测试失败: ${prefix}${message}`);
+        throw new BadRequestException(
+          `OSS 连通性测试失败: ${prefix}${message}`,
+        );
       }
     };
 
