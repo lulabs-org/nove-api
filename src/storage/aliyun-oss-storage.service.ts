@@ -72,6 +72,7 @@ const OSS = OSSModule as unknown as OssClientConstructor;
 interface StorageEffectiveConfig {
   region: string;
   bucket: string;
+  publicBucket: string;
   accessKeyId: string;
   accessKeySecret: string;
   publicBaseUrl: string | null;
@@ -82,6 +83,8 @@ interface StorageEffectiveConfig {
 export class AliyunOssStorageService implements ObjectStorage, OnModuleInit {
   private readonly logger = new Logger(AliyunOssStorageService.name);
   private client: OssClient | null = null;
+  private privateClient: OssClient | null = null;
+  private publicClient: OssClient | null = null;
   private integrationsConfig: StorageEffectiveConfig | null = null;
 
   constructor(
@@ -108,7 +111,7 @@ export class AliyunOssStorageService implements ObjectStorage, OnModuleInit {
   }
 
   async reloadConfig() {
-    let dynamicConfig: Record<string, unknown> | null = null;
+    let effectiveConfig: StorageEffectiveConfig | null = null;
     if (this.integrationsService && this.orgContext) {
       try {
         const orgId = this.orgContext.getOrgId();
@@ -116,52 +119,44 @@ export class AliyunOssStorageService implements ObjectStorage, OnModuleInit {
           orgId,
           'storage',
         );
-        if (effective.source === 'database') {
-          dynamicConfig = effective.value;
+        const dynamicConfig = (effective?.value ?? {}) as Record<string, unknown>;
+        const bucket = String(dynamicConfig.bucket ?? '').trim();
+        const accessKeyId = String(dynamicConfig.accessKeyId ?? '').trim();
+        const accessKeySecret = String(dynamicConfig.accessKeySecret ?? '').trim();
+
+        if (bucket && accessKeyId && accessKeySecret) {
+          const publicBucket =
+            String(dynamicConfig.publicBucket ?? '').trim() || bucket;
+          effectiveConfig = {
+            region:
+              String(dynamicConfig.region ?? '').trim() || 'oss-cn-hangzhou',
+            bucket,
+            publicBucket,
+            accessKeyId,
+            accessKeySecret,
+            publicBaseUrl:
+              String(dynamicConfig.publicBaseUrl ?? '')
+                .trim()
+                .replace(/\/+$/, '') || null,
+            signedUrlExpiresSeconds: this.normalizeExpiresSeconds(
+              dynamicConfig.signedUrlExpiresSeconds,
+            ),
+          };
         }
       } catch {
-        // Fallback silently if single org context is uninitialized
+        // Uninitialized org context
       }
     }
 
-    if (dynamicConfig) {
-      this.integrationsConfig = {
-        region:
-          (dynamicConfig.region as string)?.trim() ||
-          process.env.ALIYUN_OSS_REGION?.trim() ||
-          'oss-cn-hangzhou',
-        bucket:
-          (dynamicConfig.bucket as string)?.trim() ||
-          process.env.ALIYUN_OSS_BUCKET?.trim() ||
-          '',
-        accessKeyId:
-          (dynamicConfig.accessKeyId as string)?.trim() ||
-          process.env.ALIBABA_CLOUD_ACCESS_KEY_ID?.trim() ||
-          '',
-        accessKeySecret:
-          (dynamicConfig.accessKeySecret as string)?.trim() ||
-          process.env.ALIBABA_CLOUD_ACCESS_KEY_SECRET?.trim() ||
-          '',
-        publicBaseUrl:
-          (
-            (dynamicConfig.publicBaseUrl as string)?.trim() ||
-            process.env.ALIYUN_OSS_PUBLIC_BASE_URL?.trim() ||
-            ''
-          ).replace(/\/+$/, '') || null,
-        signedUrlExpiresSeconds: this.normalizeExpiresSeconds(
-          dynamicConfig.signedUrlExpiresSeconds ??
-            process.env.ALIYUN_OSS_SIGNED_URL_EXPIRES_SECONDS,
-        ),
-      };
-    } else {
-      this.integrationsConfig = null;
-    }
+    this.integrationsConfig = effectiveConfig;
     this.client = null;
+    this.privateClient = null;
+    this.publicClient = null;
   }
 
   async putObject(input: PutObjectInput): Promise<StoredObject> {
     const url = this.buildPublicUrl(input.key);
-    const client = this.getClient();
+    const client = this.getPublicClient();
     try {
       await client.put(input.key, input.body, {
         headers: {
@@ -183,7 +178,10 @@ export class AliyunOssStorageService implements ObjectStorage, OnModuleInit {
   }
 
   async deleteObject(key: string): Promise<void> {
-    await this.getClient().delete(key);
+    const client = key.startsWith('avatars/')
+      ? this.getPublicClient()
+      : this.getPrivateClient();
+    await client.delete(key);
   }
 
   getManagedKey(url: string): string | null {
@@ -215,8 +213,16 @@ export class AliyunOssStorageService implements ObjectStorage, OnModuleInit {
     const key = this.getManagedKey(url);
     if (!key) return url;
 
+    const config = this.getActiveConfig();
+    const isIndependentPublic = Boolean(
+      config.publicBucket && config.publicBucket !== config.bucket,
+    );
+    if (isIndependentPublic) {
+      return url;
+    }
+
     const expires = this.getSignedUrlExpiresSeconds();
-    return this.getClient().signatureUrl(key, {
+    return this.getPublicClient().signatureUrl(key, {
       expires,
       method: 'GET',
       response: {
@@ -237,12 +243,16 @@ export class AliyunOssStorageService implements ObjectStorage, OnModuleInit {
     return bucket;
   }
 
+  getPublicBucket(): string {
+    return this.getActiveConfig().publicBucket;
+  }
+
   async createMultipartUpload(input: {
     key: string;
     contentType: string;
   }): Promise<{ uploadId: string }> {
     try {
-      return await this.getClient().initMultipartUpload(input.key, {
+      return await this.getPrivateClient().initMultipartUpload(input.key, {
         mime: input.contentType,
         headers: { 'x-oss-object-acl': 'private' },
       });
@@ -257,7 +267,7 @@ export class AliyunOssStorageService implements ObjectStorage, OnModuleInit {
     partNumber: number;
     expiresSeconds: number;
   }): string {
-    return this.getClient().signatureUrl(input.key, {
+    return this.getPrivateClient().signatureUrl(input.key, {
       method: 'PUT',
       expires: input.expiresSeconds,
       response: {},
@@ -273,7 +283,7 @@ export class AliyunOssStorageService implements ObjectStorage, OnModuleInit {
     uploadId: string;
     parts: Array<{ number: number; etag: string }>;
   }): Promise<void> {
-    await this.getClient().completeMultipartUpload(
+    await this.getPrivateClient().completeMultipartUpload(
       input.key,
       input.uploadId,
       input.parts,
@@ -284,7 +294,7 @@ export class AliyunOssStorageService implements ObjectStorage, OnModuleInit {
     key: string;
     uploadId: string;
   }): Promise<void> {
-    await this.getClient().abortMultipartUpload(input.key, input.uploadId);
+    await this.getPrivateClient().abortMultipartUpload(input.key, input.uploadId);
   }
 
   async headObject(key: string): Promise<{
@@ -292,7 +302,7 @@ export class AliyunOssStorageService implements ObjectStorage, OnModuleInit {
     contentType?: string;
     etag?: string;
   }> {
-    const result = await this.getClient().head(key);
+    const result = await this.getPrivateClient().head(key);
     const headers = result.res?.headers ?? {};
     return {
       sizeBytes: Number(headers['content-length'] ?? result.res?.size ?? 0),
@@ -305,14 +315,14 @@ export class AliyunOssStorageService implements ObjectStorage, OnModuleInit {
     key: string,
     range: { start: number; end: number },
   ): Promise<Buffer> {
-    const result = await this.getClient().get(key, {
+    const result = await this.getPrivateClient().get(key, {
       headers: { Range: `bytes=${range.start}-${range.end}` },
     });
     return result.content;
   }
 
   async getObjectStream(key: string): Promise<Readable> {
-    const result = await this.getClient().getStream(key);
+    const result = await this.getPrivateClient().getStream(key);
     return result.stream;
   }
 
@@ -323,7 +333,7 @@ export class AliyunOssStorageService implements ObjectStorage, OnModuleInit {
     expiresSeconds: number;
   }): string {
     const safeName = input.fileName.replace(/[\r\n"\\]/g, '_');
-    return this.getClient().signatureUrl(input.key, {
+    return this.getPrivateClient().signatureUrl(input.key, {
       method: 'GET',
       expires: input.expiresSeconds,
       response: {
@@ -333,24 +343,57 @@ export class AliyunOssStorageService implements ObjectStorage, OnModuleInit {
     });
   }
 
-  private getClient(): OssClient {
+  private getPrivateClient(): OssClient {
     if (this.client) return this.client;
+    if (this.privateClient) return this.privateClient;
 
     const { region, bucket, accessKeyId, accessKeySecret } =
       this.getActiveConfig();
 
     if (!region || !bucket || !accessKeyId || !accessKeySecret) {
-      throw new ServiceUnavailableException('头像存储服务尚未配置');
+      throw new ServiceUnavailableException('对象存储服务尚未配置');
     }
 
-    this.client = new OSS({
+    this.privateClient = new OSS({
       region,
       bucket,
       accessKeyId,
       accessKeySecret,
       secure: true,
     });
-    return this.client;
+    return this.privateClient;
+  }
+
+  private getPublicClient(): OssClient {
+    if (this.client) return this.client;
+    if (this.publicClient) return this.publicClient;
+
+    const { region, publicBucket, bucket, accessKeyId, accessKeySecret } =
+      this.getActiveConfig();
+
+    const targetBucket = publicBucket || bucket;
+
+    if (!region || !targetBucket || !accessKeyId || !accessKeySecret) {
+      throw new ServiceUnavailableException('头像存储服务尚未配置');
+    }
+
+    if (targetBucket === bucket && this.privateClient) {
+      this.publicClient = this.privateClient;
+      return this.publicClient;
+    }
+
+    this.publicClient = new OSS({
+      region,
+      bucket: targetBucket,
+      accessKeyId,
+      accessKeySecret,
+      secure: true,
+    });
+    return this.publicClient;
+  }
+
+  private getClient(): OssClient {
+    return this.getPrivateClient();
   }
 
   private buildPublicUrl(key: string): string {
@@ -382,18 +425,13 @@ export class AliyunOssStorageService implements ObjectStorage, OnModuleInit {
       return this.integrationsConfig;
     }
     return {
-      region: process.env.ALIYUN_OSS_REGION?.trim() || 'oss-cn-hangzhou',
-      bucket: process.env.ALIYUN_OSS_BUCKET?.trim() || '',
-      accessKeyId: process.env.ALIBABA_CLOUD_ACCESS_KEY_ID?.trim() || '',
-      accessKeySecret: process.env.ALIBABA_CLOUD_ACCESS_KEY_SECRET?.trim() || '',
-      publicBaseUrl:
-        (process.env.ALIYUN_OSS_PUBLIC_BASE_URL?.trim() || '').replace(
-          /\/+$/,
-          '',
-        ) || null,
-      signedUrlExpiresSeconds: this.normalizeExpiresSeconds(
-        process.env.ALIYUN_OSS_SIGNED_URL_EXPIRES_SECONDS,
-      ),
+      region: 'oss-cn-hangzhou',
+      bucket: '',
+      publicBucket: '',
+      accessKeyId: '',
+      accessKeySecret: '',
+      publicBaseUrl: null,
+      signedUrlExpiresSeconds: 600,
     };
   }
 }

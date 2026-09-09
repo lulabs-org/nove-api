@@ -7,7 +7,7 @@ export interface PutObjectInput {
   body: Buffer;
   contentType: string;
   cacheControl?: string;
-  access?: 'private';
+  access?: 'private' | 'public-read';
 }
 
 export interface StoredObject {
@@ -38,6 +38,7 @@ export interface ObjectStorage {
   getReadUrl(url: string): string;
   getProvider(): 'OSS';
   getBucket(): string;
+  getPublicBucket?(): string;
   createMultipartUpload(input: {
     key: string;
     contentType: string;

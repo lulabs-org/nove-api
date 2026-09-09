@@ -36,6 +36,7 @@ export class StorageTesterService
   async test(value: IntegrationValues): Promise<void> {
     const region = String(value.region ?? '').trim();
     const bucket = String(value.bucket ?? '').trim();
+    const publicBucket = String(value.publicBucket ?? '').trim();
     const accessKeyId = String(value.accessKeyId ?? '').trim();
     const accessKeySecret = String(value.accessKeySecret ?? '').trim();
 
@@ -45,24 +46,33 @@ export class StorageTesterService
       );
     }
 
-    const client = new OSS({
-      region: region || 'oss-cn-hangzhou',
-      bucket,
-      accessKeyId,
-      accessKeySecret,
-      secure: true,
-    });
+    const testBucket = async (targetBucket: string, label?: string) => {
+      const client = new OSS({
+        region: region || 'oss-cn-hangzhou',
+        bucket: targetBucket,
+        accessKeyId,
+        accessKeySecret,
+        secure: true,
+      });
 
-    try {
-      if (typeof client.getBucketInfo === 'function') {
-        await client.getBucketInfo(bucket);
-      } else if (typeof client.list === 'function') {
-        await client.list({ 'max-keys': 1 });
+      try {
+        if (typeof client.getBucketInfo === 'function') {
+          await client.getBucketInfo(targetBucket);
+        } else if (typeof client.list === 'function') {
+          await client.list({ 'max-keys': 1 });
+        }
+      } catch (error: unknown) {
+        const err = error as { message?: string; name?: string };
+        const message = err?.message || '未知错误';
+        const prefix = label ? `${label} ` : '';
+        throw new BadRequestException(`OSS 连通性测试失败: ${prefix}${message}`);
       }
-    } catch (error: unknown) {
-      const err = error as { message?: string; name?: string };
-      const message = err?.message || '未知错误';
-      throw new BadRequestException(`OSS 连通性测试失败: ${message}`);
+    };
+
+    await testBucket(bucket);
+
+    if (publicBucket && publicBucket !== bucket) {
+      await testBucket(publicBucket, '公共存储桶');
     }
   }
 }

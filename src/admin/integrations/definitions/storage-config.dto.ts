@@ -20,11 +20,19 @@ export class UpdateStorageConfigDto {
   region?: string;
 
   @ApiPropertyOptional({
-    description: '存储桶名称 (Bucket)',
+    description: '私有存储桶名称 (Bucket)，用于云盘文件与核心附件',
   })
   @IsOptional()
   @IsString()
   bucket?: string;
+
+  @ApiPropertyOptional({
+    description:
+      '公共媒体存储桶 (Public Bucket，可选)，用于头像等公开访问资源；留空表示复用私有存储桶',
+  })
+  @IsOptional()
+  @IsString()
+  publicBucket?: string;
 
   @ApiPropertyOptional({
     description: 'AccessKey ID',

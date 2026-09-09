@@ -65,4 +65,28 @@ describe('StorageTesterService', () => {
       }),
     ).rejects.toThrow(/OSS 连通性测试失败: NoSuchBucket/);
   });
+
+  it('passes when both private bucket and public bucket succeed', async () => {
+    await expect(
+      storageTester.test({
+        region: 'oss-cn-hangzhou',
+        bucket: 'valid-bucket',
+        publicBucket: 'valid-public-bucket',
+        accessKeyId: 'ak',
+        accessKeySecret: 'sk',
+      }),
+    ).resolves.toBeUndefined();
+  });
+
+  it('throws BadRequestException when public bucket test fails', async () => {
+    await expect(
+      storageTester.test({
+        region: 'oss-cn-hangzhou',
+        bucket: 'valid-bucket',
+        publicBucket: 'invalid-bucket',
+        accessKeyId: 'ak',
+        accessKeySecret: 'sk',
+      }),
+    ).rejects.toThrow(/OSS 连通性测试失败: 公共存储桶 NoSuchBucket/);
+  });
 });
