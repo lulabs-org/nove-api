@@ -3,7 +3,7 @@ import type { Config } from 'jest';
 const common: Partial<Config> = {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  moduleFileExtensions: ['ts', 'js', 'json'],
+  moduleFileExtensions: ['js', 'ts', 'json'],
   transform: {
     '^.+\\.ts$': [
       'ts-jest',
