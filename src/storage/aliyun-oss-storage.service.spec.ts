@@ -185,4 +185,70 @@ describe('AliyunOssStorageService', () => {
       },
     );
   });
+
+  it('loads dynamic configuration from IntegrationsService and reloads on events', async () => {
+    const mockIntegrations = {
+      getEffectiveConfig: jest.fn().mockResolvedValue({
+        source: 'database',
+        value: {
+          region: 'oss-cn-beijing',
+          bucket: 'dynamic-bucket',
+          accessKeyId: 'dyn-ak',
+          accessKeySecret: 'dyn-sk',
+          publicBaseUrl: 'https://dynamic.example.com',
+          signedUrlExpiresSeconds: 1200,
+        },
+      }),
+    };
+    const mockOrg = {
+      getOrgId: jest.fn().mockReturnValue('org-123'),
+      matches: jest.fn((id: string) => id === 'org-123'),
+    };
+
+    const service = new AliyunOssStorageService(
+      mockIntegrations as never,
+      mockOrg as never,
+    );
+    await service.onModuleInit();
+
+    expect(service.getBucket()).toBe('dynamic-bucket');
+    expect(
+      service.getManagedKey('https://dynamic.example.com/avatars/user-1/a.webp'),
+    ).toBe('avatars/user-1/a.webp');
+
+    // Simulate update event with new bucket
+    mockIntegrations.getEffectiveConfig.mockResolvedValueOnce({
+      source: 'database',
+      value: {
+        region: 'oss-cn-shanghai',
+        bucket: 'reloaded-bucket',
+        accessKeyId: 'dyn-ak-2',
+        accessKeySecret: 'dyn-sk-2',
+        publicBaseUrl: 'https://reloaded.example.com',
+        signedUrlExpiresSeconds: 1800,
+      },
+    });
+
+    await service.handleStorageConfigUpdate({
+      orgId: 'org-123',
+      value: {},
+    });
+
+    expect(service.getBucket()).toBe('reloaded-bucket');
+
+    // Simulate delete event (fallback to env)
+    process.env.ALIYUN_OSS_BUCKET = 'fallback-env-bucket';
+    mockIntegrations.getEffectiveConfig.mockResolvedValueOnce({
+      source: 'default',
+      value: {},
+    });
+
+    await service.handleStorageConfigDelete({
+      orgId: 'org-123',
+      value: {},
+    });
+
+    expect(service.getBucket()).toBe('fallback-env-bucket');
+  });
 });
+

@@ -1,5 +1,18 @@
-import { Injectable, ServiceUnavailableException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnModuleInit,
+  Optional,
+  ServiceUnavailableException,
+} from '@nestjs/common';
+import { OnEvent } from '@nestjs/event-emitter';
 import * as OSSModule from 'ali-oss';
+import {
+  IntegrationChangeEvent,
+  INTEGRATION_EVENT_PATTERNS,
+  IntegrationsService,
+} from '@/admin/integrations';
+import { SingleOrgContextService } from '@/admin/org';
 import {
   ObjectStorage,
   PutObjectInput,
@@ -56,9 +69,95 @@ interface OssClientConstructor {
 
 const OSS = OSSModule as unknown as OssClientConstructor;
 
+interface StorageEffectiveConfig {
+  region: string;
+  bucket: string;
+  accessKeyId: string;
+  accessKeySecret: string;
+  publicBaseUrl: string | null;
+  signedUrlExpiresSeconds: number;
+}
+
 @Injectable()
-export class AliyunOssStorageService implements ObjectStorage {
+export class AliyunOssStorageService implements ObjectStorage, OnModuleInit {
+  private readonly logger = new Logger(AliyunOssStorageService.name);
   private client: OssClient | null = null;
+  private integrationsConfig: StorageEffectiveConfig | null = null;
+
+  constructor(
+    @Optional() private readonly integrationsService?: IntegrationsService,
+    @Optional() private readonly orgContext?: SingleOrgContextService,
+  ) {}
+
+  async onModuleInit() {
+    await this.reloadConfig();
+  }
+
+  @OnEvent(INTEGRATION_EVENT_PATTERNS.STORAGE_UPDATED)
+  async handleStorageConfigUpdate(event: IntegrationChangeEvent) {
+    if (this.orgContext && !this.orgContext.matches(event.orgId)) return;
+    this.logger.log('Received config.storage.updated event, reloading OSS client...');
+    await this.reloadConfig();
+  }
+
+  @OnEvent(INTEGRATION_EVENT_PATTERNS.STORAGE_DELETED)
+  async handleStorageConfigDelete(event: IntegrationChangeEvent) {
+    if (this.orgContext && !this.orgContext.matches(event.orgId)) return;
+    this.logger.log('Received config.storage.deleted event, resetting OSS client to defaults...');
+    await this.reloadConfig();
+  }
+
+  async reloadConfig() {
+    let dynamicConfig: Record<string, unknown> | null = null;
+    if (this.integrationsService && this.orgContext) {
+      try {
+        const orgId = this.orgContext.getOrgId();
+        const effective = await this.integrationsService.getEffectiveConfig(
+          orgId,
+          'storage',
+        );
+        if (effective.source === 'database') {
+          dynamicConfig = effective.value;
+        }
+      } catch {
+        // Fallback silently if single org context is uninitialized
+      }
+    }
+
+    if (dynamicConfig) {
+      this.integrationsConfig = {
+        region:
+          (dynamicConfig.region as string)?.trim() ||
+          process.env.ALIYUN_OSS_REGION?.trim() ||
+          'oss-cn-hangzhou',
+        bucket:
+          (dynamicConfig.bucket as string)?.trim() ||
+          process.env.ALIYUN_OSS_BUCKET?.trim() ||
+          '',
+        accessKeyId:
+          (dynamicConfig.accessKeyId as string)?.trim() ||
+          process.env.ALIBABA_CLOUD_ACCESS_KEY_ID?.trim() ||
+          '',
+        accessKeySecret:
+          (dynamicConfig.accessKeySecret as string)?.trim() ||
+          process.env.ALIBABA_CLOUD_ACCESS_KEY_SECRET?.trim() ||
+          '',
+        publicBaseUrl:
+          (
+            (dynamicConfig.publicBaseUrl as string)?.trim() ||
+            process.env.ALIYUN_OSS_PUBLIC_BASE_URL?.trim() ||
+            ''
+          ).replace(/\/+$/, '') || null,
+        signedUrlExpiresSeconds: this.normalizeExpiresSeconds(
+          dynamicConfig.signedUrlExpiresSeconds ??
+            process.env.ALIYUN_OSS_SIGNED_URL_EXPIRES_SECONDS,
+        ),
+      };
+    } else {
+      this.integrationsConfig = null;
+    }
+    this.client = null;
+  }
 
   async putObject(input: PutObjectInput): Promise<StoredObject> {
     const url = this.buildPublicUrl(input.key);
@@ -131,7 +230,7 @@ export class AliyunOssStorageService implements ObjectStorage {
   }
 
   getBucket(): string {
-    const bucket = process.env.ALIYUN_OSS_BUCKET?.trim();
+    const bucket = this.getActiveConfig().bucket;
     if (!bucket) {
       throw new ServiceUnavailableException('对象存储 Bucket 尚未配置');
     }
@@ -237,10 +336,8 @@ export class AliyunOssStorageService implements ObjectStorage {
   private getClient(): OssClient {
     if (this.client) return this.client;
 
-    const region = process.env.ALIYUN_OSS_REGION?.trim();
-    const bucket = process.env.ALIYUN_OSS_BUCKET?.trim();
-    const accessKeyId = process.env.ALIBABA_CLOUD_ACCESS_KEY_ID?.trim();
-    const accessKeySecret = process.env.ALIBABA_CLOUD_ACCESS_KEY_SECRET?.trim();
+    const { region, bucket, accessKeyId, accessKeySecret } =
+      this.getActiveConfig();
 
     if (!region || !bucket || !accessKeyId || !accessKeySecret) {
       throw new ServiceUnavailableException('头像存储服务尚未配置');
@@ -265,18 +362,38 @@ export class AliyunOssStorageService implements ObjectStorage {
   }
 
   private getPublicBaseUrl(): string | null {
-    return (
-      process.env.ALIYUN_OSS_PUBLIC_BASE_URL?.trim().replace(/\/+$/, '') || null
-    );
+    return this.getActiveConfig().publicBaseUrl;
   }
 
   private getSignedUrlExpiresSeconds(): number {
-    const configured = Number(
-      process.env.ALIYUN_OSS_SIGNED_URL_EXPIRES_SECONDS?.trim() || 600,
-    );
+    return this.getActiveConfig().signedUrlExpiresSeconds;
+  }
+
+  private normalizeExpiresSeconds(configuredVal: unknown): number {
+    const configured = Number(configuredVal || 600);
     if (!Number.isInteger(configured) || configured < 60 || configured > 3600) {
       return 600;
     }
     return configured;
+  }
+
+  private getActiveConfig(): StorageEffectiveConfig {
+    if (this.integrationsConfig) {
+      return this.integrationsConfig;
+    }
+    return {
+      region: process.env.ALIYUN_OSS_REGION?.trim() || 'oss-cn-hangzhou',
+      bucket: process.env.ALIYUN_OSS_BUCKET?.trim() || '',
+      accessKeyId: process.env.ALIBABA_CLOUD_ACCESS_KEY_ID?.trim() || '',
+      accessKeySecret: process.env.ALIBABA_CLOUD_ACCESS_KEY_SECRET?.trim() || '',
+      publicBaseUrl:
+        (process.env.ALIYUN_OSS_PUBLIC_BASE_URL?.trim() || '').replace(
+          /\/+$/,
+          '',
+        ) || null,
+      signedUrlExpiresSeconds: this.normalizeExpiresSeconds(
+        process.env.ALIYUN_OSS_SIGNED_URL_EXPIRES_SECONDS,
+      ),
+    };
   }
 }

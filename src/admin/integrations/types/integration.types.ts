@@ -34,7 +34,8 @@ export type IntegrationModuleName =
   | 'ai'
   | 'tencent-meeting'
   | 'lark'
-  | 'wechat-shop';
+  | 'wechat-shop'
+  | 'storage';
 
 export interface EffectiveIntegration {
   orgId: string;
