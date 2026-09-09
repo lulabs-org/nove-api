@@ -35,6 +35,7 @@ export type IntegrationModuleName =
   | 'tencent-meeting'
   | 'lark'
   | 'wechat-shop'
+  | 'wecom'
   | 'storage';
 
 export interface EffectiveIntegration {
