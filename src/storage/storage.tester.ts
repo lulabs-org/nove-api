@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common';
+import * as OSSModule from 'ali-oss';
 import {
   IntegrationTestProvider,
   IntegrationTesterService,
@@ -21,14 +22,11 @@ interface OssTestClientConstructor {
 }
 
 function getOssTestConstructor(): OssTestClientConstructor {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const OSSModule = require('ali-oss') as unknown;
+  const mod = OSSModule as unknown;
   return (
-    typeof OSSModule === 'object' &&
-    OSSModule !== null &&
-    'default' in OSSModule
-      ? (OSSModule as { default: unknown }).default
-      : OSSModule
+    typeof mod === 'object' && mod !== null && 'default' in mod
+      ? (mod as { default: unknown }).default
+      : mod
   ) as OssTestClientConstructor;
 }
 
@@ -43,11 +41,18 @@ export class StorageTesterService
   }
 
   async test(value: IntegrationValues): Promise<void> {
-    const region = String(value.region ?? '').trim();
-    const bucket = String(value.bucket ?? '').trim();
-    const publicBucket = String(value.publicBucket ?? '').trim();
-    const accessKeyId = String(value.accessKeyId ?? '').trim();
-    const accessKeySecret = String(value.accessKeySecret ?? '').trim();
+    const toOptionalString = (val: unknown): string => {
+      if (typeof val === 'string') return val;
+      if (typeof val === 'number' || typeof val === 'boolean')
+        return String(val);
+      return '';
+    };
+
+    const region = toOptionalString(value.region).trim();
+    const bucket = toOptionalString(value.bucket).trim();
+    const publicBucket = toOptionalString(value.publicBucket).trim();
+    const accessKeyId = toOptionalString(value.accessKeyId).trim();
+    const accessKeySecret = toOptionalString(value.accessKeySecret).trim();
 
     if (!bucket || !accessKeyId || !accessKeySecret) {
       throw new BadRequestException(

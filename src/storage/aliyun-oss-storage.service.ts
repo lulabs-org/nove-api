@@ -12,6 +12,7 @@ import {
   IntegrationsService,
 } from '@/admin/integrations';
 import { SingleOrgContextService } from '@/admin/org';
+import * as OSSModule from 'ali-oss';
 import {
   ObjectStorage,
   PutObjectInput,
@@ -67,14 +68,11 @@ interface OssClientConstructor {
 }
 
 function getOssConstructor(): OssClientConstructor {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const OSSModule = require('ali-oss') as unknown;
+  const mod = OSSModule as unknown;
   return (
-    typeof OSSModule === 'object' &&
-    OSSModule !== null &&
-    'default' in OSSModule
-      ? (OSSModule as { default: unknown }).default
-      : OSSModule
+    typeof mod === 'object' && mod !== null && 'default' in mod
+      ? (mod as { default: unknown }).default
+      : mod
   ) as OssClientConstructor;
 }
 
