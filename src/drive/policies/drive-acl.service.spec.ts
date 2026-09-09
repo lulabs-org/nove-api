@@ -10,16 +10,16 @@ import {
   DriveNodeRepository,
   DriveSpaceRepository,
 } from '../repositories';
-import { DrivePolicyService } from './drive-policy.service';
+import { DriveAclService } from './drive-acl.service';
 
-describe('DrivePolicyService', () => {
+describe('DriveAclService', () => {
   const prisma = {
     driveSpace: { findUnique: jest.fn() },
     orgMember: { findUnique: jest.fn() },
     driveGrant: { findMany: jest.fn() },
     driveNode: { findUnique: jest.fn() },
   };
-  const service = new DrivePolicyService(
+  const service = new DriveAclService(
     new DriveSpaceRepository(prisma as never),
     new DriveNodeRepository(prisma as never),
     new DriveAccessRepository(prisma as never),

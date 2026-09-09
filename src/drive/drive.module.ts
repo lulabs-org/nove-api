@@ -7,8 +7,7 @@ import { StorageModule } from '@/storage/storage.module';
 import { FileScanningModule } from '@/file-scanning';
 import { DriveController } from './drive.controller';
 import { DriveService } from './services/drive.service';
-import { DrivePolicyService } from './services/drive-policy.service';
-import { FilePolicyService } from './services/file-policy.service';
+import { DriveAclService, FileValidatorService } from './policies';
 import { DriveCleanupService } from './services/drive-cleanup.service';
 import { IntegrationsModule } from '@/admin/integrations';
 import { DriveConfigService } from './services/drive-config.service';
@@ -48,12 +47,12 @@ import {
     FileScanRepository,
     UploadSessionRepository,
     DriveService,
-    DrivePolicyService,
-    FilePolicyService,
+    DriveAclService,
+    FileValidatorService,
     DriveCleanupService,
     FileScanService,
     FileScanProcessor,
   ],
-  exports: [DriveService, DrivePolicyService],
+  exports: [DriveService, DriveAclService],
 })
 export class DriveModule {}

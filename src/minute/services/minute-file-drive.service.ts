@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { FileBindingTargetType } from '@prisma/client';
 import { DriveService } from '@/drive/services/drive.service';
-import { DriveAuthContext } from '@/drive/services/drive-policy.service';
+import { DriveAuthContext } from '@/drive/policies';
 import { AttachMinuteFileDto } from '../dto/minute-file.dto';
 import { MinuteRepository } from '../repositories/minute.repository';
 import { MinuteFileRepository } from '../repositories/minute-file.repository';

@@ -8,7 +8,7 @@ import { MinuteFileDriveService } from './minute-file-drive.service';
 import { MinuteRepository } from '../repositories/minute.repository';
 import { MinuteFileRepository } from '../repositories/minute-file.repository';
 import { DriveService } from '@/drive/services/drive.service';
-import { DriveAuthContext } from '@/drive/services/drive-policy.service';
+import { DriveAuthContext } from '@/drive/policies';
 import { AttachMinuteFileDto } from '../dto/minute-file.dto';
 
 describe('MinuteFileDriveService', () => {

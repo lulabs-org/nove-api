@@ -91,7 +91,7 @@ const RULES: Record<string, FileRule> = {
 };
 
 @Injectable()
-export class FilePolicyService {
+export class FileValidatorService {
   constructor(private readonly systemConfig: DriveConfigService) {}
 
   async validateDeclaration(
@@ -145,7 +145,7 @@ export class FilePolicyService {
 
   private configuredMax(
     extension: string,
-    config: Awaited<ReturnType<FilePolicyService['getConfig']>>,
+    config: Awaited<ReturnType<FileValidatorService['getConfig']>>,
   ) {
     const image = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.svg'].includes(
       extension,

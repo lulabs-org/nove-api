@@ -27,7 +27,7 @@ type SpaceRecord = Prisma.DriveSpaceGetPayload<Record<string, never>>;
 type NodeRecord = Prisma.DriveNodeGetPayload<Record<string, never>>;
 
 @Injectable()
-export class DrivePolicyService {
+export class DriveAclService {
   constructor(
     private readonly spaces: DriveSpaceRepository,
     private readonly nodes: DriveNodeRepository,

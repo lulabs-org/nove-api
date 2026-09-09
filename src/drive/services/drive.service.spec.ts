@@ -1,7 +1,7 @@
 import { Test } from '@nestjs/testing';
 import { DriveSpaceType } from '@prisma/client';
 import { DriveService } from './drive.service';
-import { DrivePolicyService } from './drive-policy.service';
+import { DriveAclService } from '../policies';
 import { DriveSpaceRepository } from '../repositories';
 
 describe('Drive space listing', () => {
@@ -20,11 +20,11 @@ describe('Drive space listing', () => {
         orgId: 'org-a',
       }),
     };
-    const policy = { requireUserId: jest.fn().mockReturnValue('user-a') };
+    const acl = { requireUserId: jest.fn().mockReturnValue('user-a') };
     const module = await Test.createTestingModule({ providers: [DriveService] })
       .useMocker((token) => {
         if (token === DriveSpaceRepository) return spaces;
-        if (token === DrivePolicyService) return policy;
+        if (token === DriveAclService) return acl;
         return {};
       })
       .compile();

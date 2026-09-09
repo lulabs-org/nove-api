@@ -1,10 +1,10 @@
 import { BadRequestException } from '@nestjs/common';
 import { DriveConfigService } from '@/drive/services/drive-config.service';
-import { FilePolicyService } from './file-policy.service';
+import { FileValidatorService } from './file-validator.service';
 
-describe('FilePolicyService', () => {
+describe('FileValidatorService', () => {
   const config = { getConfig: jest.fn() };
-  const service = new FilePolicyService(
+  const service = new FileValidatorService(
     config as unknown as DriveConfigService,
   );
 

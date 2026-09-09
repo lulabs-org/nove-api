@@ -35,8 +35,11 @@ import {
   SignUploadPartsDto,
   UpdateDriveNodeDto,
 } from '../dto';
-import { DriveAuthContext, DrivePolicyService } from './drive-policy.service';
-import { FilePolicyService } from './file-policy.service';
+import {
+  DriveAclService,
+  DriveAuthContext,
+  FileValidatorService,
+} from '../policies';
 import { DriveConfigService } from '@/drive/services/drive-config.service';
 import { FileScanService } from './file-scan.service';
 import {
@@ -57,15 +60,15 @@ export class DriveService {
     private readonly files: DriveFileRepository,
     private readonly uploads: UploadSessionRepository,
     private readonly access: DriveAccessRepository,
-    private readonly policy: DrivePolicyService,
-    private readonly filePolicy: FilePolicyService,
+    private readonly acl: DriveAclService,
+    private readonly fileValidator: FileValidatorService,
     private readonly fileScans: FileScanService,
     private readonly systemConfig: DriveConfigService,
     @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorage,
   ) {}
 
   async listSpaces(auth: DriveAuthContext): Promise<DriveSpaceDto[]> {
-    const userId = this.policy.requireUserId(auth);
+    const userId = this.acl.requireUserId(auth);
     const spaces = [await this.ensurePersonalSpace(userId)];
     if (auth.orgId) spaces.push(await this.ensureOrgSpace(auth.orgId));
     return spaces.map((space) => ({
@@ -82,9 +85,9 @@ export class DriveService {
     auth: DriveAuthContext,
   ) {
     const space = await this.findSpace(spaceId);
-    await this.policy.assertSpaceAccess(space, auth);
+    await this.acl.assertSpaceAccess(space, auth);
     if (query.parentId) {
-      await this.policy.assertParent(
+      await this.acl.assertParent(
         spaceId,
         query.parentId,
         auth,
@@ -109,9 +112,9 @@ export class DriveService {
     dto: CreateDriveFolderDto,
     auth: DriveAuthContext,
   ): Promise<DriveNodeDto> {
-    const userId = this.policy.requireUserId(auth);
+    const userId = this.acl.requireUserId(auth);
     const name = this.normalizeNodeName(dto.name);
-    await this.policy.assertParent(
+    await this.acl.assertParent(
       dto.spaceId,
       dto.parentId,
       auth,
@@ -144,7 +147,7 @@ export class DriveService {
   ): Promise<DriveNodeDto> {
     const node = await this.findNode(id);
     if (dto.name !== undefined) {
-      await this.policy.assertNodeAction(node, DriveAction.RENAME, auth);
+      await this.acl.assertNodeAction(node, DriveAction.RENAME, auth);
       await this.assertMutable(node);
       await this.assertNameAvailable(
         node.spaceId,
@@ -154,7 +157,7 @@ export class DriveService {
       );
     }
     if (dto.inheritAcl !== undefined) {
-      await this.policy.assertNodeAction(node, DriveAction.MANAGE_ACL, auth);
+      await this.acl.assertNodeAction(node, DriveAction.MANAGE_ACL, auth);
     }
     try {
       const updated = await this.nodes.update(id, {
@@ -165,7 +168,7 @@ export class DriveService {
       if (dto.name !== undefined) {
         await this.audit(
           node.spaceId,
-          this.policy.requireUserId(auth),
+          this.acl.requireUserId(auth),
           DriveAuditAction.RENAME,
           node.id,
         );
@@ -183,8 +186,8 @@ export class DriveService {
   ): Promise<DriveNodeDto> {
     const node = await this.findNode(id);
     await this.assertMutable(node);
-    await this.policy.assertNodeAction(node, DriveAction.MOVE, auth);
-    await this.policy.assertParent(
+    await this.acl.assertNodeAction(node, DriveAction.MOVE, auth);
+    await this.acl.assertParent(
       node.spaceId,
       dto.parentId,
       auth,
@@ -205,7 +208,7 @@ export class DriveService {
       });
       await this.audit(
         node.spaceId,
-        this.policy.requireUserId(auth),
+        this.acl.requireUserId(auth),
         DriveAuditAction.MOVE,
         node.id,
       );
@@ -219,20 +222,20 @@ export class DriveService {
     dto: CreateUploadSessionDto,
     auth: DriveAuthContext,
   ) {
-    const userId = this.policy.requireUserId(auth);
+    const userId = this.acl.requireUserId(auth);
     const sizeBytes = this.parseSize(dto.sizeBytes);
-    const fileName = await this.filePolicy.validateDeclaration(
+    const fileName = await this.fileValidator.validateDeclaration(
       dto.fileName,
       dto.contentType,
       sizeBytes,
     );
     const scanProvider = await this.fileScans.resolveProvider(
-      this.filePolicy.requiresMalwareScan(fileName),
+      this.fileValidator.requiresMalwareScan(fileName),
     );
     if (scanProvider === FileScanProvider.ALIYUN_SAS && !dto.checksumSha256) {
       throw new BadRequestException('该文件需要提供 SHA-256 后才能云端扫描');
     }
-    await this.policy.assertParent(
+    await this.acl.assertParent(
       dto.spaceId,
       dto.parentId,
       auth,
@@ -357,9 +360,9 @@ export class DriveService {
         start: 0,
         end: Math.max(0, Math.min(head.sizeBytes - 1, 65535)),
       });
-      this.filePolicy.validateMagic(session.fileName, prefix);
+      this.fileValidator.validateMagic(session.fileName, prefix);
 
-      const userId = this.policy.requireUserId(auth);
+      const userId = this.acl.requireUserId(auth);
       const initialStatus =
         session.scanProvider === FileScanProvider.POLICY_BYPASS
           ? FileVersionStatus.ACTIVE
@@ -418,7 +421,7 @@ export class DriveService {
 
   async getFile(fileId: string, auth: DriveAuthContext) {
     const record = await this.findFile(fileId);
-    await this.policy.assertNodeAction(record.node!, DriveAction.VIEW, auth);
+    await this.acl.assertNodeAction(record.node!, DriveAction.VIEW, auth);
     await this.assertBusinessAccess(record, auth);
     const version = record.versions[0];
     if (!version) throw new NotFoundException('文件版本不存在');
@@ -438,7 +441,7 @@ export class DriveService {
 
   async createDownloadUrl(fileId: string, auth: DriveAuthContext) {
     const record = await this.findFile(fileId);
-    await this.policy.assertNodeAction(
+    await this.acl.assertNodeAction(
       record.node!,
       DriveAction.DOWNLOAD,
       auth,
@@ -450,7 +453,7 @@ export class DriveService {
     }
     await this.audit(
       record.node!.spaceId,
-      this.policy.requireUserId(auth),
+      this.acl.requireUserId(auth),
       DriveAuditAction.DOWNLOAD,
       record.node!.id,
       record.id,
@@ -473,7 +476,7 @@ export class DriveService {
 
   async listBindings(fileId: string, auth: DriveAuthContext) {
     const record = await this.findFile(fileId);
-    await this.policy.assertNodeAction(record.node!, DriveAction.VIEW, auth);
+    await this.acl.assertNodeAction(record.node!, DriveAction.VIEW, auth);
     return record.bindings.map((binding) => ({
       id: binding.id,
       targetType: binding.targetType,
@@ -547,15 +550,15 @@ export class DriveService {
 
   async listGrants(nodeId: string, auth: DriveAuthContext) {
     const node = await this.findNode(nodeId);
-    await this.policy.assertNodeAction(node, DriveAction.MANAGE_ACL, auth);
+    await this.acl.assertNodeAction(node, DriveAction.MANAGE_ACL, auth);
     return this.access.listNodeGrants(nodeId);
   }
 
   async listSpaceGrants(spaceId: string, auth: DriveAuthContext) {
     const space = await this.findSpace(spaceId);
-    await this.policy.assertSpaceAccess(space, auth);
+    await this.acl.assertSpaceAccess(space, auth);
     if (
-      !this.policy.isDriveAdmin(auth) &&
+      !this.acl.isDriveAdmin(auth) &&
       !auth.permissions.includes('drive:manage-acl')
     )
       throw new ForbiddenException('无权管理空间授权');
@@ -576,7 +579,7 @@ export class DriveService {
       principalId: dto.principalId,
       effect: dto.effect,
       actions: dto.actions,
-      createdById: this.policy.requireUserId(auth),
+      createdById: this.acl.requireUserId(auth),
     });
   }
 
@@ -592,7 +595,7 @@ export class DriveService {
 
   async listAuditLogs(nodeId: string, auth: DriveAuthContext) {
     const node = await this.findNode(nodeId);
-    await this.policy.assertNodeAction(node, DriveAction.VIEW, auth);
+    await this.acl.assertNodeAction(node, DriveAction.VIEW, auth);
     return this.access.listAuditLogs(nodeId, node.fileId);
   }
 
@@ -602,7 +605,7 @@ export class DriveService {
     auth: DriveAuthContext,
   ) {
     const node = await this.findNode(nodeId);
-    await this.policy.assertNodeAction(node, DriveAction.MANAGE_ACL, auth);
+    await this.acl.assertNodeAction(node, DriveAction.MANAGE_ACL, auth);
     await this.validatePrincipal(node.spaceId, dto);
     const grant = await this.access.upsertGrant({
       spaceId: node.spaceId,
@@ -611,11 +614,11 @@ export class DriveService {
       principalId: dto.principalId,
       effect: dto.effect,
       actions: dto.actions,
-      createdById: this.policy.requireUserId(auth),
+      createdById: this.acl.requireUserId(auth),
     });
     await this.audit(
       node.spaceId,
-      this.policy.requireUserId(auth),
+      this.acl.requireUserId(auth),
       DriveAuditAction.GRANT,
       node.id,
     );
@@ -628,12 +631,12 @@ export class DriveService {
     auth: DriveAuthContext,
   ): Promise<void> {
     const node = await this.findNode(nodeId);
-    await this.policy.assertNodeAction(node, DriveAction.MANAGE_ACL, auth);
+    await this.acl.assertNodeAction(node, DriveAction.MANAGE_ACL, auth);
     const result = await this.access.deleteNodeGrant(nodeId, grantId);
     if (!result.count) throw new NotFoundException('授权记录不存在');
     await this.audit(
       node.spaceId,
-      this.policy.requireUserId(auth),
+      this.acl.requireUserId(auth),
       DriveAuditAction.REVOKE,
       node.id,
     );
@@ -642,7 +645,7 @@ export class DriveService {
   async trashNode(id: string, auth: DriveAuthContext): Promise<void> {
     const node = await this.findNode(id);
     await this.assertMutable(node);
-    await this.policy.assertNodeAction(node, DriveAction.DELETE, auth);
+    await this.acl.assertNodeAction(node, DriveAction.DELETE, auth);
     const ids = await this.getSubtreeIds(id);
     const bindingCount = await this.files.countActiveBindingsForNodes(ids);
     if (bindingCount) throw new ConflictException('文件仍被业务实体引用');
@@ -658,7 +661,7 @@ export class DriveService {
     );
     await this.audit(
       node.spaceId,
-      this.policy.requireUserId(auth),
+      this.acl.requireUserId(auth),
       DriveAuditAction.TRASH,
       node.id,
     );
@@ -668,7 +671,7 @@ export class DriveService {
     const node = await this.nodes.findById(id);
     if (!node || !node.deletedAt)
       throw new NotFoundException('回收站项目不存在');
-    await this.policy.assertNodeAction(node, DriveAction.DELETE, auth);
+    await this.acl.assertNodeAction(node, DriveAction.DELETE, auth);
     if (node.parentId) {
       const parent = await this.nodes.findActiveParent(node.parentId);
       if (!parent) throw new ConflictException('原父文件夹已被删除');
@@ -678,7 +681,7 @@ export class DriveService {
     await this.nodes.restore(ids);
     await this.audit(
       node.spaceId,
-      this.policy.requireUserId(auth),
+      this.acl.requireUserId(auth),
       DriveAuditAction.RESTORE,
       node.id,
     );
@@ -686,7 +689,7 @@ export class DriveService {
 
   async listTrash(spaceId: string, auth: DriveAuthContext) {
     const space = await this.findSpace(spaceId);
-    await this.policy.assertSpaceAccess(space, auth);
+    await this.acl.assertSpaceAccess(space, auth);
     const nodes = await this.nodes.listTrash(spaceId);
     return { items: nodes.map((node) => this.toNodeDto(node)) };
   }
@@ -724,13 +727,13 @@ export class DriveService {
     const session = await this.uploads.findById(id);
     if (!session) throw new NotFoundException('上传会话不存在');
     if (
-      session.createdById !== this.policy.requireUserId(auth) &&
-      !this.policy.isDriveAdmin(auth)
+      session.createdById !== this.acl.requireUserId(auth) &&
+      !this.acl.isDriveAdmin(auth)
     ) {
       throw new ForbiddenException('无权访问该上传会话');
     }
     const space = await this.findSpace(session.spaceId);
-    await this.policy.assertSpaceAccess(space, auth);
+    await this.acl.assertSpaceAccess(space, auth);
     return session;
   }
 
@@ -742,7 +745,7 @@ export class DriveService {
     const minuteBindings = file.bindings.filter(
       (binding) => binding.targetType === FileBindingTargetType.MINUTE,
     );
-    if (!minuteBindings.length || this.policy.isDriveAdmin(auth)) return;
+    if (!minuteBindings.length || this.acl.isDriveAdmin(auth)) return;
     if (!auth.permissions.includes('minute:read')) {
       throw new ForbiddenException('无权访问该 Minute 文件');
     }
