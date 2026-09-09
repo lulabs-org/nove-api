@@ -4,7 +4,6 @@ import {
   Get,
   HttpCode,
   HttpStatus,
-  Inject,
   Logger,
   Post,
   Query,
@@ -13,7 +12,8 @@ import {
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { Public } from '@/auth/decorators/public.decorator';
-import { wecomConfig, WecomConfig } from '@/configs/wecom.config';
+import { IntegrationsService } from '@/admin/integrations';
+import { SingleOrgContextService } from '@/admin/org';
 import { WecomEventBodyDto, WecomEventQueryDto } from '../dto/wecom-event.dto';
 import { WecomEventService } from '../service/wecom-event.service';
 import {
@@ -28,8 +28,26 @@ export class WecomEventController {
 
   constructor(
     private readonly wecomEventService: WecomEventService,
-    @Inject(wecomConfig.KEY) private readonly config: WecomConfig,
+    private readonly integrationsService: IntegrationsService,
+    private readonly orgContext: SingleOrgContextService,
   ) {}
+
+  private async getConfig(): Promise<{
+    token: string;
+    encodingAesKey: string;
+    corpId: string;
+  }> {
+    const { value } = await this.integrationsService.getEffectiveConfig(
+      this.orgContext.getOrgId(),
+      'wecom',
+    );
+
+    return {
+      token: String(value.webhookToken ?? ''),
+      encodingAesKey: String(value.encodingAesKey ?? ''),
+      corpId: String(value.corpId ?? ''),
+    };
+  }
 
   @Public()
   @Get()
@@ -37,8 +55,8 @@ export class WecomEventController {
     summary: 'Verify WeCom Webhook URL',
     description: '用于接收并响应企业微信事件推送服务器的 URL 验证请求。',
   })
-  verifyWebhook(@Query() query: WecomEventQueryDto) {
-    const { webhookToken: token, encodingAesKey, corpId } = this.config;
+  async verifyWebhook(@Query() query: WecomEventQueryDto) {
+    const { token, encodingAesKey, corpId } = await this.getConfig();
 
     if (!token || !encodingAesKey || !corpId) {
       throw new UnauthorizedException('WeCom webhook configuration is missing');
@@ -84,11 +102,11 @@ export class WecomEventController {
     description:
       '接收企业微信的各类事件推送（如通讯录变更等），并进行统一验证、解密和分发。',
   })
-  receiveEvent(
+  async receiveEvent(
     @Query() query: WecomEventQueryDto,
     @Body() payload: WecomEventBodyDto,
   ) {
-    const { webhookToken: token, encodingAesKey, corpId } = this.config;
+    const { token, encodingAesKey, corpId } = await this.getConfig();
 
     if (!token || !encodingAesKey || !corpId) {
       throw new UnauthorizedException('WeCom webhook configuration is missing');

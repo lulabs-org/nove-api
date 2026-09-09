@@ -1,6 +1,5 @@
 import { HttpService } from '@nestjs/axios';
 import {
-  Inject,
   Injectable,
   Logger,
   ServiceUnavailableException,
@@ -8,21 +7,28 @@ import {
 import { AxiosError } from 'axios';
 import { firstValueFrom } from 'rxjs';
 
-import { wecomConfig, WecomConfig } from '@/configs/wecom.config';
+import { IntegrationsService } from '@/admin/integrations';
+import { SingleOrgContextService } from '@/admin/org';
 import { WecomExternalContactResponse } from '../types';
 import { WecomTokenService } from './wecom-token.service';
 
 @Injectable()
 export class WecomClientService {
   private readonly logger = new Logger(WecomClientService.name);
-  private readonly baseUrl: string;
 
   constructor(
-    @Inject(wecomConfig.KEY) private readonly config: WecomConfig,
     private readonly httpService: HttpService,
     private readonly wecomTokenService: WecomTokenService,
-  ) {
-    this.baseUrl = this.config.apiBaseUrl;
+    private readonly integrationsService: IntegrationsService,
+    private readonly orgContext: SingleOrgContextService,
+  ) {}
+
+  private async getApiBaseUrl(): Promise<string> {
+    const { value } = await this.integrationsService.getEffectiveConfig(
+      this.orgContext.getOrgId(),
+      'wecom',
+    );
+    return String(value.apiBaseUrl ?? 'https://qyapi.weixin.qq.com');
   }
 
   /**
@@ -37,10 +43,11 @@ export class WecomClientService {
     cursor?: string,
   ): Promise<WecomExternalContactResponse> {
     const accessToken = await this.wecomTokenService.getAccessToken();
+    const baseUrl = await this.getApiBaseUrl();
 
     const { data } = await firstValueFrom(
       this.httpService.get<WecomExternalContactResponse>(
-        `${this.baseUrl}/cgi-bin/externalcontact/get`,
+        `${baseUrl}/cgi-bin/externalcontact/get`,
         {
           params: {
             access_token: accessToken,

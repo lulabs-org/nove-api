@@ -1,11 +1,9 @@
 import { Module } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
-import { ConfigModule } from '@nestjs/config';
 import { BullModule } from '@nestjs/bullmq';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
-
-import { wecomConfig } from '@/configs/wecom.config';
+import { IntegrationsModule } from '@/admin/integrations';
 import { WecomTokenService } from './service/wecom-token.service';
 import { WecomClientService } from './service/wecom-client.service';
 import { WecomCustomerService } from './service/wecom-customer.service';
@@ -19,7 +17,7 @@ import { PrismaModule } from '@/prisma/prisma.module';
   imports: [
     PrismaModule,
     HttpModule,
-    ConfigModule.forFeature(wecomConfig),
+    IntegrationsModule,
     BullModule.registerQueue({ name: 'wecom-event' }),
     BullBoardModule.forFeature({
       name: 'wecom-event',
