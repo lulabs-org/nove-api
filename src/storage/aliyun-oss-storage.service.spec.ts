@@ -338,4 +338,50 @@ describe('AliyunOssStorageService', () => {
     );
     expect(privateClient.put).not.toHaveBeenCalled();
   });
+
+  it('falls back publicBaseUrl to standard OSS endpoint when omitted', async () => {
+    const mockIntegrations = {
+      getEffectiveConfig: jest.fn().mockResolvedValue({
+        source: 'database',
+        value: {
+          region: 'oss-cn-beijing',
+          bucket: 'private-bucket',
+          publicBucket: 'public-bucket',
+          accessKeyId: 'dyn-ak',
+          accessKeySecret: 'dyn-sk',
+          publicBaseUrl: '',
+        },
+      }),
+    };
+    const mockOrg = {
+      getOrgId: jest.fn().mockReturnValue('org-123'),
+      matches: jest.fn(() => true),
+    };
+
+    const service = new AliyunOssStorageService(
+      mockIntegrations as never,
+      mockOrg as never,
+    );
+    await service.onModuleInit();
+
+    const publicClient = {
+      put: jest.fn().mockResolvedValue(undefined),
+    };
+    (
+      service as unknown as {
+        publicClient: typeof publicClient;
+      }
+    ).publicClient = publicClient;
+
+    const result = await service.putObject({
+      key: 'avatars/user-1/test.webp',
+      body: Buffer.from('data'),
+      contentType: 'image/webp',
+      access: 'public-read',
+    });
+
+    expect(result.url).toBe(
+      'https://public-bucket.oss-cn-beijing.aliyuncs.com/avatars/user-1/test.webp',
+    );
+  });
 });

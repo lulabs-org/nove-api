@@ -85,7 +85,7 @@ describe('ProfileService avatar management', () => {
           body: Buffer;
           contentType: string;
           cacheControl?: string;
-          access?: 'private';
+          access?: 'private' | 'public-read';
         }
       | undefined;
     objectStorage.putObject.mockImplementation(
@@ -108,8 +108,8 @@ describe('ProfileService avatar management', () => {
 
     expect(uploadedInput?.key).toMatch(/^avatars\/user-1\/.+\.webp$/);
     expect(uploadedInput?.contentType).toBe('image/webp');
-    expect(uploadedInput?.cacheControl).toBe('private, max-age=0, no-store');
-    expect(uploadedInput?.access).toBe('private');
+    expect(uploadedInput?.cacheControl).toBe('public, max-age=31536000');
+    expect(uploadedInput?.access).toBe('public-read');
     expect(uploadedInput?.body).toBeDefined();
     expect(await sharpFactory(uploadedInput!.body).metadata()).toEqual(
       expect.objectContaining({ width: 512, height: 512, format: 'webp' }),

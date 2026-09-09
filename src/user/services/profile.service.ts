@@ -133,8 +133,8 @@ export class ProfileService {
       key,
       body: processed,
       contentType: 'image/webp',
-      cacheControl: 'private, max-age=0, no-store',
-      access: 'private',
+      cacheControl: 'public, max-age=31536000',
+      access: 'public-read',
     });
 
     let updatedUser: Awaited<ReturnType<UserCommandRepository['updateAvatar']>>;
