@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { Prisma, RefundStatus } from '@prisma/client';
+import { OrderStatus, Prisma, RefundStatus } from '@prisma/client';
 import {
   CreateOrderRefundDto,
   OrderRefundDto,
@@ -18,6 +18,11 @@ import {
   OrderRefundRepository,
   OrderRefundWithRelations,
 } from './order-refund.repository';
+import {
+  BenefitCalculationPreview,
+  calculateEffectiveUsedDays,
+  calculateSuggestedRefundAmount,
+} from './utils/benefit-calculation.util';
 
 const SORT_FIELDS: Record<
   string,
@@ -52,13 +57,27 @@ export class OrderRefundService {
     }
     await this.ensureRelations(dto.orderId, dto.parentId);
 
+    let benefitUsedDays = dto.benefitUsedDays;
+    if (benefitUsedDays === undefined && dto.orderId) {
+      const order = await this.repository.findOrderForRefund(dto.orderId);
+      if (order && order.benefitStart) {
+        benefitUsedDays = calculateEffectiveUsedDays({
+          benefitStart: order.benefitStart,
+          frozenDays: order.frozenDays,
+          frozenAt: order.frozenAt,
+          status: order.status,
+          applyAt: this.toDate(dto.submittedAt) ?? new Date(),
+        });
+      }
+    }
+
     const item = await this.repository.create({
       afterSaleCode,
       refundChannel: dto.refundChannel,
       approvalUrl: this.trimNullable(dto.approvalUrl),
       refundAmount: dto.refundAmount,
       refundReason: this.trimNullable(dto.refundReason),
-      benefitUsedDays: dto.benefitUsedDays,
+      benefitUsedDays,
       applicantName: this.trimNullable(dto.applicantName),
       financialNote: this.trimNullable(dto.financialNote),
       productCategory: this.trimNullable(dto.productCategory),
@@ -173,6 +192,72 @@ export class OrderRefundService {
   async delete(id: string): Promise<void> {
     await this.findActive(id);
     await this.repository.softDelete(id);
+  }
+
+  async previewBenefitCalculation(
+    orderId: string,
+    applyAt?: string,
+  ): Promise<BenefitCalculationPreview> {
+    const order = await this.repository.findOrderForRefund(orderId);
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+
+    const targetDate = applyAt ? new Date(applyAt) : new Date();
+    const effectiveUsedDays = calculateEffectiveUsedDays({
+      benefitStart: order.benefitStart,
+      frozenDays: order.frozenDays,
+      frozenAt: order.frozenAt,
+      status: order.status,
+      applyAt: targetDate,
+    });
+
+    const msPerDay = 24 * 60 * 60 * 1000;
+    const naturalDays =
+      order.benefitStart && targetDate > order.benefitStart
+        ? Math.ceil(
+            (targetDate.getTime() - order.benefitStart.getTime()) / msPerDay,
+          )
+        : 0;
+
+    let totalFrozenDays = order.frozenDays || 0;
+    const isCurrentlyFrozen = order.status === OrderStatus.FROZEN;
+    if (isCurrentlyFrozen && order.frozenAt && targetDate > order.frozenAt) {
+      totalFrozenDays += Math.ceil(
+        (targetDate.getTime() - order.frozenAt.getTime()) / msPerDay,
+      );
+    }
+
+    let totalDays = order.product?.durationDays || 365;
+    if (order.benefitStart && order.benefitEnd) {
+      const diffDays = Math.ceil(
+        (order.benefitEnd.getTime() - order.benefitStart.getTime()) / msPerDay,
+      );
+      if (diffDays > 0) {
+        totalDays = Math.max(
+          diffDays - (order.frozenDays || 0),
+          order.product?.durationDays || 1,
+        );
+      }
+    }
+
+    const remainingDays = Math.max(0, totalDays - effectiveUsedDays);
+    const suggestedRefundAmount = calculateSuggestedRefundAmount({
+      orderAmount: order.amount,
+      totalDays,
+      usedDays: effectiveUsedDays,
+    });
+
+    return {
+      benefitStart: order.benefitStart,
+      applyAt: targetDate,
+      naturalDays,
+      totalFrozenDays,
+      isCurrentlyFrozen,
+      effectiveUsedDays,
+      remainingDays,
+      suggestedRefundAmount,
+    };
   }
 
   private async findActive(id: string): Promise<OrderRefundWithRelations> {

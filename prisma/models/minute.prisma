@@ -2,9 +2,9 @@ model Minute {
   id         String  @id @default(cuid())
   externalId String? @map("external_id") @db.VarChar(100) // 外部系统录制ID，用于唯一标识
 
-  source RecordingSource @default(PLATFORM_AUTO)
+  source       RecordingSource @default(PLATFORM_AUTO)
   // 错误信息（用于记录失败状态）
-  errorMessage String? @map("error_message")
+  errorMessage String?         @map("error_message")
 
   // 元数据
   metadata Json @default("{}") @db.JsonB

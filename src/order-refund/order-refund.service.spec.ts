@@ -68,6 +68,7 @@ describe('OrderRefundService', () => {
       softDelete: jest.fn(),
       orderExists: jest.fn(),
       refundExists: jest.fn(),
+      findOrderForRefund: jest.fn(),
     } as unknown as jest.Mocked<OrderRefundRepository>;
     service = new OrderRefundService(repository);
   });
@@ -191,5 +192,65 @@ describe('OrderRefundService', () => {
       NotFoundException,
     );
     expect(repository.softDelete).not.toHaveBeenCalled();
+  });
+
+  it('automatically calculates benefitUsedDays deducting frozenDays when not provided', async () => {
+    repository.findByAfterSaleCode.mockResolvedValue(null);
+    repository.orderExists.mockResolvedValue(true);
+    repository.findOrderForRefund.mockResolvedValue({
+      id: 'order-1',
+      amount: 36500,
+      status: 'PAID' as any,
+      benefitStart: new Date('2024-01-01T00:00:00.000Z'),
+      benefitEnd: new Date('2025-02-05T00:00:00.000Z'),
+      frozenDays: 36,
+      frozenAt: null,
+      product: { durationDays: 365 },
+    });
+    repository.create.mockResolvedValue(refund({ benefitUsedDays: 164 }));
+
+    await service.create(
+      {
+        afterSaleCode: 'AS-AUTO-001',
+        orderId: 'order-1',
+        submittedAt: '2024-07-19T00:00:00.000Z', // day 200
+      },
+      'user-1',
+    );
+
+    expect(repository.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        benefitUsedDays: 164, // 200 - 36
+      }),
+    );
+  });
+
+  it('previews benefit calculation with remaining days and suggested amount', async () => {
+    repository.findOrderForRefund.mockResolvedValue({
+      id: 'order-1',
+      amount: 36500,
+      status: 'PAID' as any,
+      benefitStart: new Date('2024-01-01T00:00:00.000Z'),
+      benefitEnd: new Date('2025-02-05T00:00:00.000Z'),
+      frozenDays: 36,
+      frozenAt: null,
+      product: { durationDays: 365 },
+    });
+
+    const preview = await service.previewBenefitCalculation(
+      'order-1',
+      '2024-07-19T00:00:00.000Z',
+    );
+
+    expect(preview).toEqual({
+      benefitStart: new Date('2024-01-01T00:00:00.000Z'),
+      applyAt: new Date('2024-07-19T00:00:00.000Z'),
+      naturalDays: 200,
+      totalFrozenDays: 36,
+      isCurrentlyFrozen: false,
+      effectiveUsedDays: 164,
+      remainingDays: 201,
+      suggestedRefundAmount: 20100,
+    });
   });
 });

@@ -55,10 +55,11 @@ model User {
   createdApiKeys    ApiKey[] // 创建的 API Keys
 
   // 订单相关关联
-  orders                Order[]       @relation("UserOrders") // 用户的订单
-  currentOwnerOrders    Order[]       @relation("CurrentOwnerOrders") // 当前负责的订单
-  financialCloserOrders Order[]       @relation("FinancialCloserOrders") // 财务结单的订单
-  createdRefunds        OrderRefund[] @relation("RefundCreator") // 创建的退款记录
+  orders                Order[]                  @relation("UserOrders") // 用户的订单
+  currentOwnerOrders    Order[]                  @relation("CurrentOwnerOrders") // 当前负责的订单
+  financialCloserOrders Order[]                  @relation("FinancialCloserOrders") // 财务结单的订单
+  createdRefunds        OrderRefund[]            @relation("RefundCreator") // 创建的退款记录
+  benefitAdjustments    OrderBenefitAdjustment[] @relation("BenefitAdjustmentOperator") // 操作的权益调整记录
 
   // 产品相关关联
   createdProducts Product[] @relation("ProductCreator") // 创建的产品

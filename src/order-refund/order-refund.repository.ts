@@ -91,4 +91,24 @@ export class OrderRefundRepository {
       select: { id: true },
     }));
   }
+
+  async findOrderForRefund(id: string) {
+    return this.prisma.order.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        amount: true,
+        status: true,
+        benefitStart: true,
+        benefitEnd: true,
+        frozenDays: true,
+        frozenAt: true,
+        product: {
+          select: {
+            durationDays: true,
+          },
+        },
+      },
+    });
+  }
 }

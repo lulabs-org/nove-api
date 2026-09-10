@@ -22,10 +22,11 @@ async function statusValidationErrors(
 }
 
 describe('order status DTO validation', () => {
-  it('exposes only the four order lifecycle statuses', () => {
+  it('exposes the supported order lifecycle statuses', () => {
     expect(Object.values(OrderStatus)).toEqual([
       'UNPAID',
       'PAID',
+      'FROZEN',
       'CANCELLED',
       'COMPLETED',
     ]);
