@@ -99,6 +99,7 @@ export class OrderRefundRepository {
         id: true,
         amount: true,
         status: true,
+        durationDays: true,
         benefitStart: true,
         benefitEnd: true,
         frozenDays: true,

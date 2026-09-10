@@ -56,6 +56,18 @@ export class OrderService {
       dto.productId,
       dto.productName,
     );
+    const durationDays = await this.resolveDurationDays(
+      dto.productId,
+      dto.durationDays,
+    );
+
+    const benefitStart = this.toDate(dto.benefitStart);
+    let benefitEnd = this.toDate(dto.benefitEnd);
+    if (benefitStart && !benefitEnd && durationDays) {
+      benefitEnd = new Date(
+        benefitStart.getTime() + durationDays * 24 * 60 * 60 * 1000,
+      );
+    }
 
     const order = await this.orderRepository.create({
       orderCode,
@@ -76,8 +88,9 @@ export class OrderService {
       paidAt: this.toDate(dto.paidAt),
       cancelledAt: this.toDate(dto.cancelledAt),
       completedAt: this.toDate(dto.completedAt),
-      benefitStart: this.toDate(dto.benefitStart),
-      benefitEnd: this.toDate(dto.benefitEnd),
+      durationDays,
+      benefitStart,
+      benefitEnd,
       paymentProvider: dto.paymentProvider,
       providerTradeNo: this.trimNullable(dto.providerTradeNo),
       product: dto.productId ? { connect: { id: dto.productId } } : undefined,
@@ -186,6 +199,7 @@ export class OrderService {
       paidAt: this.toDate(dto.paidAt),
       cancelledAt: this.toDate(dto.cancelledAt),
       completedAt: this.toDate(dto.completedAt),
+      durationDays: dto.durationDays,
       benefitStart: this.toDate(dto.benefitStart),
       benefitEnd: this.toDate(dto.benefitEnd),
       paymentProvider: dto.paymentProvider,
@@ -494,6 +508,17 @@ export class OrderService {
     return product?.name;
   }
 
+  private async resolveDurationDays(
+    productId?: string,
+    durationDays?: number,
+  ): Promise<number | undefined> {
+    if (durationDays !== undefined) return durationDays;
+    if (!productId) return undefined;
+
+    const product = await this.orderRepository.findProductById(productId);
+    return product?.durationDays ?? undefined;
+  }
+
   private buildWhere(query: QueryOrderDto): Prisma.OrderWhereInput {
     const where: Prisma.OrderWhereInput = {};
 
@@ -615,6 +640,7 @@ export class OrderService {
       paidAt: order.paidAt,
       cancelledAt: order.cancelledAt,
       completedAt: order.completedAt,
+      durationDays: order.durationDays,
       benefitStart: order.benefitStart,
       benefitEnd: order.benefitEnd,
       frozenDays: order.frozenDays,

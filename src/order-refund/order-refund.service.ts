@@ -228,8 +228,8 @@ export class OrderRefundService {
       );
     }
 
-    let totalDays = order.product?.durationDays || 365;
-    if (order.benefitStart && order.benefitEnd) {
+    let totalDays = order.durationDays || order.product?.durationDays || 365;
+    if (!order.durationDays && order.benefitStart && order.benefitEnd) {
       const diffDays = Math.ceil(
         (order.benefitEnd.getTime() - order.benefitStart.getTime()) / msPerDay,
       );

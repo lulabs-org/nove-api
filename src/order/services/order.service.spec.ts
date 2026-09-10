@@ -37,6 +37,7 @@ const mockOrder = (
   paidAt: new Date('2024-01-01T00:00:00.000Z'),
   cancelledAt: null,
   completedAt: null,
+  durationDays: 365,
   benefitStart: new Date('2024-01-01T00:00:00.000Z'),
   benefitEnd: new Date('2024-12-31T00:00:00.000Z'),
   frozenDays: 0,
@@ -350,6 +351,77 @@ describe('OrderService - Benefit Freeze, Unfreeze & Extension', () => {
           name: '系统管理员',
         }),
       });
+    });
+  });
+
+  describe('create with durationDays', () => {
+    it('inherits durationDays from product and calculates benefitEnd when not provided', async () => {
+      repository.findByOrderCode.mockResolvedValue(null);
+      repository.findByOrderNumber.mockResolvedValue(null);
+      repository.productExists.mockResolvedValue(true);
+      repository.findProductById.mockResolvedValue({
+        id: 'prod-1',
+        name: '年度会员',
+        durationDays: 365,
+      });
+
+      const startDate = '2026-01-01T00:00:00.000Z';
+      const createdOrder = mockOrder({
+        durationDays: 365,
+        benefitStart: new Date(startDate),
+        benefitEnd: new Date('2027-01-01T00:00:00.000Z'),
+      });
+      repository.create.mockResolvedValue(createdOrder);
+
+      const result = await service.create({
+        amount: 36500,
+        productId: 'prod-1',
+        benefitStart: startDate,
+      });
+
+      expect(repository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          durationDays: 365,
+          benefitStart: new Date(startDate),
+          benefitEnd: new Date('2027-01-01T00:00:00.000Z'),
+        }),
+      );
+      expect(result.durationDays).toBe(365);
+    });
+
+    it('respects explicitly provided durationDays over product durationDays', async () => {
+      repository.findByOrderCode.mockResolvedValue(null);
+      repository.findByOrderNumber.mockResolvedValue(null);
+      repository.productExists.mockResolvedValue(true);
+      repository.findProductById.mockResolvedValue({
+        id: 'prod-1',
+        name: '年度会员',
+        durationDays: 365,
+      });
+
+      const startDate = '2026-01-01T00:00:00.000Z';
+      const createdOrder = mockOrder({
+        durationDays: 30,
+        benefitStart: new Date(startDate),
+        benefitEnd: new Date('2026-01-31T00:00:00.000Z'),
+      });
+      repository.create.mockResolvedValue(createdOrder);
+
+      const result = await service.create({
+        amount: 3000,
+        productId: 'prod-1',
+        durationDays: 30,
+        benefitStart: startDate,
+      });
+
+      expect(repository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          durationDays: 30,
+          benefitStart: new Date(startDate),
+          benefitEnd: new Date('2026-01-31T00:00:00.000Z'),
+        }),
+      );
+      expect(result.durationDays).toBe(30);
     });
   });
 });
