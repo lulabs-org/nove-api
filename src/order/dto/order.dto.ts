@@ -97,6 +97,12 @@ export class OrderDto {
   @ApiPropertyOptional({ description: '完成时间', nullable: true })
   completedAt: Date | null;
 
+  @ApiPropertyOptional({
+    description: '购买权益时长（天数）',
+    nullable: true,
+  })
+  durationDays: number | null;
+
   @ApiPropertyOptional({ description: '权益开始时间', nullable: true })
   benefitStart: Date | null;
 

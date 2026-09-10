@@ -189,6 +189,15 @@ export class CreateOrderDto {
   @IsDateString()
   completedAt?: string;
 
+  @ApiPropertyOptional({
+    description: '购买权益时长（天数）',
+    example: 365,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  durationDays?: number;
+
   @ApiPropertyOptional({ description: '权益开始时间' })
   @IsOptional()
   @IsDateString()

@@ -172,10 +172,10 @@ export class OrderRepository {
 
   async findProductById(
     id: string,
-  ): Promise<{ id: string; name: string } | null> {
+  ): Promise<{ id: string; name: string; durationDays: number | null } | null> {
     return this.prisma.product.findUnique({
       where: { id },
-      select: { id: true, name: true },
+      select: { id: true, name: true, durationDays: true },
     });
   }
 

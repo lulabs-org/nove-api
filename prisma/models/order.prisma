@@ -46,6 +46,7 @@ model Order {
   completedAt DateTime? @map("completed_at") @db.Timestamptz(6) // 完成时间
 
   // 权益周期（确定性边界）
+  durationDays Int?      @map("duration_days") // 购买权益时长（天，下单/支付时的快照值或定制值）
   benefitStart DateTime? @map("benefit_start") @db.Timestamptz(6) // 权益开始时间
   benefitEnd   DateTime? @map("benefit_end") @db.Timestamptz(6) // 权益结束时间
 
