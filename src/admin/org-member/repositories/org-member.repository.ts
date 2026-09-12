@@ -41,7 +41,7 @@ const memberRoleOptionSelect = {
   },
   memberRoles: {
     where: { deletedAt: null },
-    select: { roleId: true },
+    select: { id: true, roleId: true },
   },
 } satisfies Prisma.OrgMemberSelect;
 

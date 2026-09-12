@@ -40,6 +40,11 @@ export class QueryMemberRoleOptionDto {
   assignment?: 'assigned' | 'unassigned';
 }
 
+export class MemberRoleBindingOptionDto {
+  @ApiProperty() id: string;
+  @ApiProperty() roleId: string;
+}
+
 export class MemberRoleOptionDto {
   @ApiProperty() id: string;
   @ApiProperty() userId: string;
@@ -50,6 +55,8 @@ export class MemberRoleOptionDto {
   @ApiPropertyOptional({ type: String, nullable: true }) avatar: string | null;
   @ApiProperty({ type: [String] }) departmentNames: string[];
   @ApiProperty({ type: [String] }) roleIds: string[];
+  @ApiProperty({ type: [MemberRoleBindingOptionDto] })
+  roleBindings: MemberRoleBindingOptionDto[];
 }
 
 export class MemberRoleOptionListResponse {

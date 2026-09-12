@@ -164,6 +164,10 @@ export class OrgMemberService {
           ]),
         ],
         roleIds: member.memberRoles.map((item) => item.roleId),
+        roleBindings: member.memberRoles.map(({ id, roleId }) => ({
+          id,
+          roleId,
+        })),
       })),
       total: result.total,
       page,
