@@ -14,7 +14,7 @@ import { UserQueryRepository } from '@/user/repositories/user-query.repository';
 import { UserCommandRepository } from '@/user/repositories/user-command.repository';
 import { StripeOrderHistorySyncDto } from '../dto';
 import { mapCurrency, mapPaymentStatus } from '../utils/stripe-mapping.util';
-import { encodeOrderNumber, generateOrderCode } from '../utils/order-number.util';
+import { encodeOrderNumber, generateOrderCode } from '@/common/utils';
 
 @Injectable()
 export class StripeOrderSyncService {
