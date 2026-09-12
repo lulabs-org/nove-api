@@ -42,7 +42,10 @@ export class StripeTesterService
 
       // 核心容错：若返回 403 (more_permissions_required)，说明已通过 Stripe 官方身份认证
       // 证实 Key 真实有效且网络畅通，无需强迫管理员在 Stripe 控制台额外开启 Account 权限！
-      if (err?.statusCode === 403 || err?.code === 'more_permissions_required') {
+      if (
+        err?.statusCode === 403 ||
+        err?.code === 'more_permissions_required'
+      ) {
         this.logger.log(
           'Stripe 密钥连通性与身份鉴权通过（受限密钥模式，无 Account 权限）',
         );

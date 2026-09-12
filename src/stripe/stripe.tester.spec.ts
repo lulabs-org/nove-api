@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 import { BadRequestException } from '@nestjs/common';
 import Stripe from 'stripe';
 import { StripeTesterService } from './stripe.tester';
@@ -83,8 +84,8 @@ describe('StripeTesterService', () => {
     const error = new Error('An error occurred with our connection to Stripe');
     mockAccountsRetrieve.mockRejectedValue(error);
 
-    await expect(
-      service.test({ secretKey: 'sk_live_valid' }),
-    ).rejects.toThrow('An error occurred with our connection to Stripe');
+    await expect(service.test({ secretKey: 'sk_live_valid' })).rejects.toThrow(
+      'An error occurred with our connection to Stripe',
+    );
   });
 });
