@@ -7,4 +7,5 @@ export * from './wecom.config';
 export * from './drive.config';
 export * from './file-scanning.config';
 export * from './storage.config';
+export * from './stripe.config';
 export * from './registry';

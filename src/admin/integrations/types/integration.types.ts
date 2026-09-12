@@ -36,7 +36,8 @@ export type IntegrationModuleName =
   | 'lark'
   | 'wechat-shop'
   | 'wecom'
-  | 'storage';
+  | 'storage'
+  | 'stripe';
 
 export interface EffectiveIntegration {
   orgId: string;

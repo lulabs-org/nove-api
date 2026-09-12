@@ -169,8 +169,10 @@ describe('OrderService - Benefit Freeze, Unfreeze & Extension', () => {
 
   describe('unfreeze', () => {
     it('unfreezes a FROZEN order, extends benefitEnd by elapsed days, and restores PAID status', async () => {
-      // Frozen 36 days ago
-      const frozenAt = new Date(Date.now() - 36 * 24 * 60 * 60 * 1000);
+      // Frozen ~35.5 days ago (Math.ceil produces exactly 36 days regardless of execution latency)
+      const frozenAt = new Date(
+        Date.now() - (35 * 24 * 60 * 60 * 1000 + 12 * 60 * 60 * 1000),
+      );
       const originalEnd = new Date('2024-12-31T00:00:00.000Z');
       const order = mockOrder({
         status: OrderStatus.FROZEN,

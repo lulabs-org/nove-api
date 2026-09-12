@@ -29,7 +29,7 @@ function parseRegexCsv(value?: string): RegExp[] {
 }
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { rawBody: true });
   await app.get(SingleOrgContextService).initialize();
 
   const allowedOrigins = new Set(parseCsv(process.env.CORS_ORIGINS));

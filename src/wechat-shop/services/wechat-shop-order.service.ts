@@ -6,12 +6,11 @@ import { Queue } from 'bullmq';
 import { WechatOrderHistorySyncDto } from '../dto/wechat-order-history-sync.dto';
 import { WechatShopRepository } from '../repositories';
 import {
-  encodeOrderNumber,
-  generateOrderCode,
   mapWechatShopStatus,
   splitTimeRanges,
   WechatOrderUnixRange,
 } from '../utils';
+import { encodeOrderNumber, generateOrderCode } from '@/common/utils';
 import { UserCommandRepository } from '@/user/repositories/user-command.repository';
 import { UserQueryRepository } from '@/user/repositories/user-query.repository';
 import { WechatShopClientService } from './wechat-shop-client.service';
