@@ -388,7 +388,7 @@ describe('OrgMemberService.listMembers', () => {
           },
           primaryDept: { name: '研发部' },
           memberDepartments: [{ dept: { name: '研发部' } }],
-          memberRoles: [{ roleId: 'role-1' }],
+          memberRoles: [{ id: 'binding-1', roleId: 'role-1' }],
         },
       ],
     });
@@ -406,6 +406,7 @@ describe('OrgMemberService.listMembers', () => {
             displayName: 'Alice',
             departmentNames: ['研发部'],
             roleIds: ['role-1'],
+            roleBindings: [{ id: 'binding-1', roleId: 'role-1' }],
           }),
         ],
       }),

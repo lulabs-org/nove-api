@@ -236,10 +236,19 @@ export class RoleService {
     };
   }
 
-  async deleteRoleBinding(bindingId: string): Promise<void> {
+  async deleteRoleBinding(orgId: string, bindingId: string): Promise<void> {
     const binding = await this.roleRepository.findRoleBindingById(bindingId);
-    if (!binding) {
+    if (
+      !binding ||
+      binding.member.orgId !== orgId ||
+      binding.deletedAt ||
+      binding.member.deletedAt
+    ) {
       throw new NotFoundException('Role binding not found');
+    }
+
+    if (binding.role.code === 'SUPER_ADMIN') {
+      throw new BadRequestException('超级管理员受保护，不允许移除');
     }
 
     await this.roleRepository.deleteRoleBinding(bindingId);
