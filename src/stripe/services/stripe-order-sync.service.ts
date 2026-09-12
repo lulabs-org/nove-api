@@ -6,7 +6,11 @@ import {
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-import { OrderStatus, PaymentProvider, Prisma } from '@prisma/client';
+import {
+  OrderStatus,
+  PaymentProvider,
+  Prisma,
+} from '@/generated/prisma/client';
 import Stripe from 'stripe';
 import { StripeClientService } from './stripe-client.service';
 import { StripeRepository } from '../repositories/stripe.repository';

@@ -5,7 +5,7 @@ import {
   TrackingReportCadence,
   TrackingSourceType,
   TrackingTargetType,
-} from '@prisma/client';
+} from '@/generated/prisma/client';
 
 export class TrackingTargetSummaryDto {
   @ApiProperty() id: string;

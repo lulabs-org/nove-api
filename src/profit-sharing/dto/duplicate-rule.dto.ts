@@ -1,5 +1,5 @@
 import { ApiPropertyOptional, ApiProperty } from '@nestjs/swagger';
-import { ProfitShareRuleStatus } from '@prisma/client';
+import { ProfitShareRuleStatus } from '@/generated/prisma/client';
 import { IsArray, IsEnum, IsOptional, IsString } from 'class-validator';
 
 export class DuplicateProfitShareRuleDto {

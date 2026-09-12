@@ -1,28 +1,30 @@
 /**
  * @file migrate-phone-hashes.ts
  * @description 历史用户手机号加密同步脚本 (One-off Migration Script)
- * 
+ *
  * 【背景】
  * 针对第三方平台（如腾讯会议）回调中仅提供手机号 Hash，而本地系统 `User` 表仅存储明文手机号的问题。
  * 本脚本旨在遍历系统中已有的存量用户，将其手机号提取出来，通过不可逆加密算法计算出 Hash，
  * 并统一写入到独立的映射表 `UserPhoneHash` 中。完成映射后，系统便能具备 O(1) 的极速 Webhook 识别能力。
- * 
+ *
  * 【前提条件】
  * 1. 已在 Prisma Schema 中新建了 `UserPhoneHash` 表。
  * 2. 已经运行过 `pnpm db:generate` 及 `pnpm db:push` 将表结构同步到了数据库。
  * 3. 你已经将本脚本中的 `encryptPhone` 函数替换为你实际使用的加密算法。
- * 
+ *
  * 【执行方式】
  * 在项目根目录下通过 ts-node 运行（会自动读取你根目录的 .env 文件）：
  * $ npx ts-node scripts/ts/migrate-phone-hashes.ts
- * 
+ *
  * 【安全性保证】
  * 脚本采用了 `upsert` (存在即更新，不存在即插入) 的幂等设计，可随时中断并安全重复执行，不会产生脏数据。
  */
-import { PrismaClient, Platform } from '@prisma/client';
+import '../../src/prisma/load-prisma-env';
+import { createPrismaAdapter } from '../../src/prisma/prisma-adapter';
+import { PrismaClient, Platform } from '@/generated/prisma/client';
 import * as crypto from 'crypto';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ adapter: createPrismaAdapter() });
 
 /**
  * TODO: 请在这里替换为你实际的加密算法和密钥

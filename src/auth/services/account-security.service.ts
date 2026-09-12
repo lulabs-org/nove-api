@@ -23,7 +23,7 @@ import {
   SecurityNotificationRecipient,
   UserSecurityAuditEventType,
   VerificationCodeType,
-} from '@prisma/client';
+} from '@/generated/prisma/client';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '@/prisma/prisma.service';
 import { OtpService } from '@/auth/services/otp.service';

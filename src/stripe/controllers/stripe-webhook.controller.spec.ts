@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, RawBodyRequest } from '@nestjs/common';
 import { Request } from 'express';
-import { WebhookStatus } from '@prisma/client';
+import { WebhookStatus } from '@/generated/prisma/client';
 import { StripeWebhookController } from './stripe-webhook.controller';
 import { StripeClientService } from '../services/stripe-client.service';
 import { StripeEventService } from '../services/stripe-event.service';

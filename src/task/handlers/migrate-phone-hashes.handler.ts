@@ -2,7 +2,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { UserPhoneHashRepository } from '@/user/repositories/user-phone-hash.repository';
 import { Job } from 'bullmq';
 import * as crypto from 'crypto';
-import { Platform } from '@prisma/client';
+import { Platform } from '@/generated/prisma/client';
 import { ITaskHandler } from './task-handler.interface';
 import { TaskHandlerRegistry } from './task-handler.registry';
 import { PrismaService } from '../../prisma/prisma.service';

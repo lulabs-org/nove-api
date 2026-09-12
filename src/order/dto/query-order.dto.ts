@@ -1,5 +1,9 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Currency, OrderStatus, PaymentProvider } from '@prisma/client';
+import {
+  Currency,
+  OrderStatus,
+  PaymentProvider,
+} from '@/generated/prisma/client';
 import {
   IsBoolean,
   IsDateString,

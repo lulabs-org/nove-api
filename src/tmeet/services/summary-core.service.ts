@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { MinuteSummaryService } from '@/minute/services';
 import { CreateMinuteSummaryDto } from '@/minute/dto/minute-summary.dto';
-import { GenerationMethod } from '@prisma/client';
+import { GenerationMethod } from '@/generated/prisma/client';
 import { SummaryService as ApiSummaryService } from '../client';
 
 @Injectable()

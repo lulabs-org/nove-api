@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@/generated/prisma/client';
 import { NewSpeakerInfo } from './speaker.types';
 
 export interface TranscriptWord {
@@ -56,7 +56,7 @@ export interface TranscriptResult {
 
 export type PrismaTransaction = Omit<
   PrismaClient,
-  '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
+  '$connect' | '$disconnect' | '$on' | '$transaction' | '$extends'
 >;
 
 export interface CreateTranscriptResult {

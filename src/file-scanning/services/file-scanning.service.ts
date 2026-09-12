@@ -1,5 +1,5 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
-import { FileScanProvider } from '@prisma/client';
+import { FileScanProvider } from '@/generated/prisma/client';
 import { FileScanningConfigService } from './file-scanning-config.service';
 import {
   AliyunFileScannerService,

@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Platform, Prisma } from '@prisma/client';
+import { Platform, Prisma } from '@/generated/prisma/client';
 
 import { WecomRepository } from '../repositories';
 import { WecomClientService } from './wecom-client.service';

@@ -1,4 +1,4 @@
-import { MeetingPlatform, RecordingSource } from '@prisma/client';
+import { MeetingPlatform, RecordingSource } from '@/generated/prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { MinuteRepository } from './minute.repository';
 

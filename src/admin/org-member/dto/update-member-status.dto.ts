@@ -10,7 +10,7 @@
  */
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsNotEmpty } from 'class-validator';
-import { MemberStatus } from '@prisma/client';
+import { MemberStatus } from '@/generated/prisma/client';
 
 export class UpdateMemberStatusDto {
   @ApiProperty({

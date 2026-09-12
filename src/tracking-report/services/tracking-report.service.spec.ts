@@ -3,7 +3,7 @@ import {
   TargetTrackingReportType,
   TrackingReportCadence,
   TrackingTargetType,
-} from '@prisma/client';
+} from '@/generated/prisma/client';
 import {
   trackingReportListSelect,
   TrackingReportRepository,

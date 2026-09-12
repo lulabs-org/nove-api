@@ -1,5 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { FileScanProvider, Prisma, UploadSessionStatus } from '@prisma/client';
+import {
+  FileScanProvider,
+  Prisma,
+  UploadSessionStatus,
+} from '@/generated/prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 
 @Injectable()

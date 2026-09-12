@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
  */
-import { RecordingFileType } from '@prisma/client';
+import { RecordingFileType } from '@/generated/prisma/client';
 
 /**
  * 会议文件创建参数

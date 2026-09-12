@@ -6,7 +6,7 @@ import {
   Product,
   ProductCategory,
   ProductStatus,
-} from '@prisma/client';
+} from '@/generated/prisma/client';
 import { ProductRepository } from '../repositories/product.repository';
 import { ProductService } from './product.service';
 

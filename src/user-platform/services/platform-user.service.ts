@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PlatformUserRepository } from '../repositories/platform-user.repository';
-import type { PlatformUser, Platform } from '@prisma/client';
+import type { PlatformUser, Platform } from '@/generated/prisma/client';
 
 @Injectable()
 export class PlatformUserService {

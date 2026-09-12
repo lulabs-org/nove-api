@@ -5,7 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, ProjectStatus } from '@prisma/client';
+import { Prisma, ProjectStatus } from '@/generated/prisma/client';
 import { randomUUID } from 'node:crypto';
 import {
   CreateProjectDto,

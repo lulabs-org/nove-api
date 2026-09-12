@@ -1,5 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { DriveNodeType, FileVersionStatus, Prisma } from '@prisma/client';
+import {
+  DriveNodeType,
+  FileVersionStatus,
+  Prisma,
+} from '@/generated/prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 
 export const latestFileVersionInclude = {

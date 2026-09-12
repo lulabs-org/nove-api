@@ -4,7 +4,7 @@ import { ProfitSharingService } from './profit-sharing.service';
 import { ProfitSharingRuleRepository } from '../repositories/profit-sharing-rule.repository';
 import { ProfitSharingRecordRepository } from '../repositories/profit-sharing-record.repository';
 import { PrismaService } from '../../prisma/prisma.service';
-import { ProfitShareRecordStatus } from '@prisma/client';
+import { ProfitShareRecordStatus } from '@/generated/prisma/client';
 
 describe('ProfitSharingService - Cross Period and Incremental Refunds', () => {
   let profitSharingService: ProfitSharingService;

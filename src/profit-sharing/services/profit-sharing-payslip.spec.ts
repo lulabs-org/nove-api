@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
 import { ProfitSharingPayslipService } from './profit-sharing-payslip.service';
-import { ProfitShareRecordStatus, ProfitShareRuleType } from '@prisma/client';
+import {
+  ProfitShareRecordStatus,
+  ProfitShareRuleType,
+} from '@/generated/prisma/client';
 
 describe('ProfitSharingPayslipService', () => {
   let payslipService: ProfitSharingPayslipService;

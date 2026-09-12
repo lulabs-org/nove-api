@@ -5,7 +5,7 @@ import {
   SecurityNotificationRecipient,
   SecurityNotificationStatus,
   UserSecurityAuditEventType,
-} from '@prisma/client';
+} from '@/generated/prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { AuthMailService } from '@/mail/services/auth-mail.service';
 import { SmsDeliveryError, SmsService } from '@/sms/sms.service';

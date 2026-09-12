@@ -15,7 +15,7 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
-import { Gender } from '@prisma/client';
+import { Gender } from '@/generated/prisma/client';
 
 const trimToNull = ({ value }: { value: unknown }) => {
   if (typeof value !== 'string') return value;

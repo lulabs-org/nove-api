@@ -3,8 +3,8 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { OAuthClientType } from '@prisma/client';
-import { OAuthClientStatus } from '@prisma/client';
+import { OAuthClientType } from '@/generated/prisma/client';
+import { OAuthClientStatus } from '@/generated/prisma/client';
 import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
 

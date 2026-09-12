@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { OrderStatus, Prisma, RefundStatus } from '@prisma/client';
+import { OrderStatus, Prisma, RefundStatus } from '@/generated/prisma/client';
 import {
   CreateOrderRefundDto,
   OrderRefundDto,

@@ -11,7 +11,7 @@
 
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import type { PlatformUser } from '@prisma/client';
+import type { PlatformUser } from '@/generated/prisma/client';
 
 @Injectable()
 export class PlatformUserRepository {

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/unbound-method */
 import { NotFoundException } from '@nestjs/common';
-import { Channel } from '@prisma/client';
+import { Channel } from '@/generated/prisma/client';
 import { ChannelRepository } from '../repositories/channel.repository';
 import { ChannelService } from './channel.service';
 

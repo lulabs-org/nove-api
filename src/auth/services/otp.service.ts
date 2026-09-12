@@ -8,7 +8,7 @@ import { VerificationCodeRepository } from '@/auth/repositories/verification-cod
 import { AuthMailService } from '@/mail/services/auth-mail.service';
 import { SmsDeliveryError, SmsService } from '@/sms/sms.service';
 import { CodeType } from '@/common/enums';
-import { VerificationCodeType } from '@prisma/client';
+import { VerificationCodeType } from '@/generated/prisma/client';
 import {
   generateNumericCode,
   isValidEmail,

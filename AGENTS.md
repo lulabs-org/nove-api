@@ -8,7 +8,7 @@ Prisma schemas, migrations, and seeds belong in `prisma/`; shared test fixtures 
 
 ## Build, Test, and Development Commands
 
-Use Node.js 20 and pnpm 9 to match CI.
+Use Node.js 22.12+ (CI uses 22.23.1) and pnpm 9.15.9 to match CI.
 
 - `pnpm install --frozen-lockfile`: install locked dependencies.
 - `pnpm start:dev`: start the API with watch mode.

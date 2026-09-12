@@ -1,4 +1,4 @@
-import { FileScanProvider } from '@prisma/client';
+import { FileScanProvider } from '@/generated/prisma/client';
 import { FileScanningConfigService } from './file-scanning-config.service';
 
 describe('FileScanningConfigService', () => {

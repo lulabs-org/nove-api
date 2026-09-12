@@ -12,7 +12,7 @@ import {
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import { Public } from '@/auth/decorators/public.decorator';
-import { Prisma, WebhookStatus } from '@prisma/client';
+import { Prisma, WebhookStatus } from '@/generated/prisma/client';
 import Stripe from 'stripe';
 import { StripeClientService } from '../services/stripe-client.service';
 import { StripeEventService } from '../services/stripe-event.service';

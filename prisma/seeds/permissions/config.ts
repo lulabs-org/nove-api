@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@/generated/prisma/client';
 import type { PermissionConfig } from './type';
 
 const DRIVE_PERMISSION_CONFIGS: readonly PermissionConfig[] = [

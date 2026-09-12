@@ -12,7 +12,7 @@ import {
   IsArray,
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
-import { MeetingPlatform, RecordingSource } from '@prisma/client';
+import { MeetingPlatform, RecordingSource } from '@/generated/prisma/client';
 import { CreateMinuteSummaryDto } from './minute-summary.dto';
 
 export class QueryMinuteDto {

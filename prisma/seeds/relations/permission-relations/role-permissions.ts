@@ -1,4 +1,4 @@
-import { PrismaClient, Permission, Role } from '@prisma/client';
+import { PrismaClient, Permission, Role } from '@/generated/prisma/client';
 
 // 管理员角色排除的权限列表
 const ADMIN_EXCLUDED_PERMISSIONS = ['system:config'];

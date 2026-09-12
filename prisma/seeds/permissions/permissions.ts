@@ -9,7 +9,7 @@
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
-import { PrismaClient, Permission } from '@prisma/client';
+import { PrismaClient, Permission } from '@/generated/prisma/client';
 import { NOVE_CLI_OAUTH_SCOPES } from '../oauth-scopes';
 import { PERMISSION_CONFIGS, REAL_PERMISSION_CONFIGS } from './config';
 

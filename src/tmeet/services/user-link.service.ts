@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { UserPhoneHashRepository } from '@/user/repositories/user-phone-hash.repository';
-import { Platform } from '@prisma/client';
+import { Platform } from '@/generated/prisma/client';
 
 @Injectable()
 export class TMeetUserLinkService {

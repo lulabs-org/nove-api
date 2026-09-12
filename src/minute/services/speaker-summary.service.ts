@@ -10,7 +10,7 @@
  */
 
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { GenerationMethod } from '@prisma/client';
+import { GenerationMethod } from '@/generated/prisma/client';
 import { formatToTimezone, formatTimeMs } from '@/common/utils/time.util';
 import { LlmService } from '@/llm/llm.service';
 import { SpeakerSummaryRepository } from '../repositories';

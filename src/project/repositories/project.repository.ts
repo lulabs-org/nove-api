@@ -3,7 +3,7 @@ import {
   ForbiddenException,
   Injectable,
 } from '@nestjs/common';
-import { DriveAction, Prisma } from '@prisma/client';
+import { DriveAction, Prisma } from '@/generated/prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { DriveAclService, DriveAuthContext } from '@/drive/policies';
 

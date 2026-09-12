@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { UploadSessionStatus } from '@prisma/client';
+import { UploadSessionStatus } from '@/generated/prisma/client';
 import {
   OBJECT_STORAGE,
   ObjectStorage,

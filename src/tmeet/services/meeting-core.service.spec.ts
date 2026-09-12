@@ -1,4 +1,4 @@
-import { Platform } from '@prisma/client';
+import { Platform } from '@/generated/prisma/client';
 import { MinuteRepository } from '@/minute/repositories';
 import { MeetingRepository } from '@/meeting/repositories/meeting.repository';
 import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';

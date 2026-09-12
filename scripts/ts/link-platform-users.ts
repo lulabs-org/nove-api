@@ -1,19 +1,21 @@
 /**
  * @file link-platform-users.ts
  * @description 平台用户与本地用户关联脚本 (One-off Migration Script)
- * 
+ *
  * 【背景】
  * 在同步或接收第三方平台（如腾讯会议）的回调时，平台用户（PlatformUser）会带有 `phoneHash`，
  * 但尚未与本地 `User` 建立关联（`localUserId` 为空）。
  * 本脚本通过 `UserPhoneHash` 表中的 `hashValue`，将 `PlatformUser` 和 `User` 关联起来。
- * 
+ *
  * 【执行方式】
  * 在项目根目录下通过 ts-node 运行：
  * $ npx ts-node scripts/ts/link-platform-users.ts
  */
-import { PrismaClient, Platform } from '@prisma/client';
+import '../../src/prisma/load-prisma-env';
+import { createPrismaAdapter } from '../../src/prisma/prisma-adapter';
+import { PrismaClient, Platform } from '@/generated/prisma/client';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ adapter: createPrismaAdapter() });
 
 async function main() {
   console.log('🚀 开始关联 PlatformUser 和本地 User...');
@@ -32,7 +34,9 @@ async function main() {
     },
   });
 
-  console.log(`🔍 找到了 ${platformUsers.length} 个带有 phoneHash 且尚未关联本地用户的腾讯会议用户。`);
+  console.log(
+    `🔍 找到了 ${platformUsers.length} 个带有 phoneHash 且尚未关联本地用户的腾讯会议用户。`,
+  );
 
   let successCount = 0;
   let notFoundCount = 0;
@@ -71,7 +75,9 @@ async function main() {
   }
 
   console.log('✅ 关联操作执行完成！');
-  console.log(`📊 成功关联: ${successCount} | 未找到匹配: ${notFoundCount} | 失败异常: ${errorCount}`);
+  console.log(
+    `📊 成功关联: ${successCount} | 未找到匹配: ${notFoundCount} | 失败异常: ${errorCount}`,
+  );
 }
 
 main()

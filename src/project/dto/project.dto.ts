@@ -1,5 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ProductStatus, ProjectLevel, ProjectStatus } from '@prisma/client';
+import {
+  ProductStatus,
+  ProjectLevel,
+  ProjectStatus,
+} from '@/generated/prisma/client';
 
 export class ProjectOwnerDto {
   @ApiProperty()

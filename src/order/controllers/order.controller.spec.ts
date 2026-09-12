@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { OrderController } from './order.controller';
 import { OrderService } from '../services/order.service';
-import { OrderStatus } from '@prisma/client';
+import { OrderStatus } from '@/generated/prisma/client';
 
 describe('OrderController', () => {
   let controller: OrderController;

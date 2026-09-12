@@ -14,7 +14,7 @@ import {
   IntegrationsService,
 } from '@/admin/integrations';
 import { SingleOrgContextService } from '@/admin/org';
-import { Currency } from '@prisma/client';
+import { Currency } from '@/generated/prisma/client';
 import { mapCurrency } from '../utils/stripe-mapping.util';
 
 @Injectable()

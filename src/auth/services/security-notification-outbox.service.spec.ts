@@ -3,7 +3,7 @@ import {
   SecurityNotificationRecipient,
   SecurityNotificationStatus,
   UserSecurityAuditEventType,
-} from '@prisma/client';
+} from '@/generated/prisma/client';
 import { SecurityNotificationOutboxService } from './security-notification-outbox.service';
 
 const firstMockArgument = (mock: jest.Mock): unknown =>

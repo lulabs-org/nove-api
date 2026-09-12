@@ -5,7 +5,7 @@ import {
   ConflictException,
   HttpException,
 } from '@nestjs/common';
-import { Prisma, OrgMember } from '@prisma/client';
+import { Prisma, OrgMember } from '@/generated/prisma/client';
 import { generateUsername } from '@/common/utils';
 import { PrismaService } from '@/prisma/prisma.service';
 import { OrgMemberRepository } from '../repositories/org-member.repository';

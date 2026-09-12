@@ -1,4 +1,4 @@
-import { RecordingFileType } from '@prisma/client';
+import { RecordingFileType } from '@/generated/prisma/client';
 import { MinuteFileDriveService } from '../services/minute-file-drive.service';
 /* eslint-disable @typescript-eslint/unbound-method */
 import { AuthContext } from '@/auth/types/auth-context.interface';

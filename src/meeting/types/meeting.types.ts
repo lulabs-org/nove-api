@@ -10,7 +10,7 @@ import { ProcessingStatus } from '../../minute/enums/status.enum';
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
-import { MeetingPlatform, MeetingType } from '@prisma/client';
+import { MeetingPlatform, MeetingType } from '@/generated/prisma/client';
 
 /**
  * 会议记录创建参数

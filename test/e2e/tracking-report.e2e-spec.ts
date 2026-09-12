@@ -7,7 +7,7 @@ import {
   TrackingReportCadence,
   TrackingSourceType,
   TrackingTargetType,
-} from '@prisma/client';
+} from '@/generated/prisma/client';
 import * as request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { PermService } from '../../src/admin/permission/services/permission.service';

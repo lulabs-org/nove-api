@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Gender, Prisma } from '@prisma/client';
+import { Gender, Prisma } from '@/generated/prisma/client';
 import { generateUsername } from '@/common/utils';
 import { PrismaService } from '@/prisma/prisma.service';
 

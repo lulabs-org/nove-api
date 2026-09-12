@@ -8,7 +8,7 @@ import {
   Currency,
   OrderStatus,
   Prisma,
-} from '@prisma/client';
+} from '@/generated/prisma/client';
 import {
   CreateOrderDto,
   ExtendOrderDto,

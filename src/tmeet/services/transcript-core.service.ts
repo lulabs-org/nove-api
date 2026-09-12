@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Platform, PlatformUser } from '@prisma/client';
+import { Platform, PlatformUser } from '@/generated/prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { PlatformUserRepository } from '@/user-platform/repositories/platform-user.repository';
 import { TranscriptRepository } from '@/minute/repositories';

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import { GenerationMethod, Prisma } from '@prisma/client';
+import { GenerationMethod, Prisma } from '@/generated/prisma/client';
 
 type CreateInput = Prisma.MinuteSummaryUncheckedCreateInput;
 

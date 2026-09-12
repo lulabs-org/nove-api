@@ -16,17 +16,19 @@
  * - npx tsx prisma/seed.ts --module platform-users        # 仅初始化平台用户数据（mock 模式）
  * - npx tsx prisma/seed.ts --real --module permissions    # 仅初始化权限数据（real 模式）
  *
- * 支持的独立同步模块: permissions, products, channels, projects, platform-users, meetings, orders, refunds, oauth-clients
+ * 支持的独立同步模块: organization, permissions, products, channels, projects, platform-users, meetings, orders, refunds, oauth-clients
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
-import { PrismaClient } from '@prisma/client';
+import '../src/prisma/load-prisma-env';
+import { createPrismaAdapter } from '../src/prisma/prisma-adapter';
+import { PrismaClient } from '@/generated/prisma/client';
 import { seedDatabase } from './seed-utils/database-seed';
 import type { SeedMode } from './seed-utils/types';
 import * as seedFunctions from './seeds';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ adapter: createPrismaAdapter() });
 
 async function main(): Promise<void> {
   const mode: SeedMode = process.argv.includes('--real') ? 'real' : 'mock';
@@ -38,6 +40,9 @@ async function main(): Promise<void> {
     console.log(`\n🚀 开始独立同步模块: ${moduleName} (${mode} 模式)...`);
 
     switch (moduleName) {
+      case 'organization':
+        await seedFunctions.createOrganization(prisma, mode === 'real');
+        break;
       case 'permissions':
         {
           const permissions = await seedFunctions.createPermissions(
@@ -75,7 +80,7 @@ async function main(): Promise<void> {
       default:
         console.error(`❌ 不支持单独同步模块或模块不存在: ${moduleName}`);
         console.log(
-          '支持的独立同步模块: permissions, products, channels, projects, platform-users, meetings, orders, refunds, oauth-clients',
+          '支持的独立同步模块: organization, permissions, products, channels, projects, platform-users, meetings, orders, refunds, oauth-clients',
         );
         process.exit(1);
     }

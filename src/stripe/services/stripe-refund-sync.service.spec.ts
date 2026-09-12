@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getQueueToken } from '@nestjs/bullmq';
-import { RefundChannel, RefundStatus } from '@prisma/client';
+import { RefundChannel, RefundStatus } from '@/generated/prisma/client';
 import Stripe from 'stripe';
 import { StripeRefundSyncService } from './stripe-refund-sync.service';
 import { StripeClientService } from './stripe-client.service';

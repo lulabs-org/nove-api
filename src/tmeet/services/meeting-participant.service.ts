@@ -17,7 +17,7 @@ import {
   Prisma,
   MeetingControlAction,
   Meeting,
-} from '@prisma/client';
+} from '@/generated/prisma/client';
 import { ParticipantDetail } from '../types';
 
 @Injectable()

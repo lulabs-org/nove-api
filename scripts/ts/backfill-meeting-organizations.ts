@@ -1,7 +1,8 @@
-import 'dotenv/config';
-import { PrismaClient } from '@prisma/client';
+import '../../src/prisma/load-prisma-env';
+import { createPrismaAdapter } from '../../src/prisma/prisma-adapter';
+import { PrismaClient } from '@/generated/prisma/client';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ adapter: createPrismaAdapter() });
 
 function requestedOrgId(): string | undefined {
   const index = process.argv.indexOf('--org-id');

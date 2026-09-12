@@ -1,4 +1,4 @@
-import { Currency, OrderStatus, RefundStatus } from '@prisma/client';
+import { Currency, OrderStatus, RefundStatus } from '@/generated/prisma/client';
 
 const SUPPORTED_CURRENCIES = new Set<string>([
   'CNY',

@@ -1,6 +1,10 @@
 import { InjectQueue } from '@nestjs/bullmq';
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { OrderStatus, PaymentProvider, Prisma } from '@prisma/client';
+import {
+  OrderStatus,
+  PaymentProvider,
+  Prisma,
+} from '@/generated/prisma/client';
 import { Queue } from 'bullmq';
 
 import { WechatOrderHistorySyncDto } from '../dto/wechat-order-history-sync.dto';

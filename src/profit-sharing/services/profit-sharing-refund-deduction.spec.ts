@@ -4,8 +4,8 @@ import {
   ProfitShareRuleType,
   ProfitShareRecordStatus,
   RefundStatus,
-} from '@prisma/client';
-import { Decimal } from '@prisma/client/runtime/library';
+} from '@/generated/prisma/client';
+import { Prisma } from '@/generated/prisma/client';
 import { ProfitSharingService } from './profit-sharing.service';
 import { ProfitSharingRuleRepository } from '../repositories/profit-sharing-rule.repository';
 import { ProfitSharingRecordRepository } from '../repositories/profit-sharing-record.repository';
@@ -31,7 +31,7 @@ describe('ProfitSharing Refund Deduction in Calculations', () => {
         id: 'mod-sales',
         ruleId: 'rule-order-test',
         name: '关单提成 (可退)',
-        shareRatio: new Decimal(0.04), // 4%
+        shareRatio: new Prisma.Decimal(0.04), // 4%
         isRefundable: true,
         amortizationType: 'NONE',
         allocationMode: 'FIXED',
@@ -40,7 +40,7 @@ describe('ProfitSharing Refund Deduction in Calculations', () => {
             id: 'alloc-1',
             moduleId: 'mod-sales',
             memberId: 'sales-zhang',
-            allocationRatio: new Decimal(1.0),
+            allocationRatio: new Prisma.Decimal(1.0),
           },
         ],
       },
@@ -48,7 +48,7 @@ describe('ProfitSharing Refund Deduction in Calculations', () => {
         id: 'mod-fixed-bonus',
         ruleId: 'rule-order-test',
         name: '技术交付津贴 (不可退)',
-        shareRatio: new Decimal(0.02), // 2%
+        shareRatio: new Prisma.Decimal(0.02), // 2%
         isRefundable: false,
         amortizationType: 'NONE',
         allocationMode: 'FIXED',
@@ -57,7 +57,7 @@ describe('ProfitSharing Refund Deduction in Calculations', () => {
             id: 'alloc-2',
             moduleId: 'mod-fixed-bonus',
             memberId: 'dev-wang',
-            allocationRatio: new Decimal(1.0),
+            allocationRatio: new Prisma.Decimal(1.0),
           },
         ],
       },
