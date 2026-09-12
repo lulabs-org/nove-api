@@ -19,14 +19,11 @@ export class UpdateStripeConfigDto {
   currency?: string;
 }
 
-export const stripeConfig = defineIntegrationConfig(
-  UpdateStripeConfigDto,
-  {
-    description: 'Organization Stripe Payment Configuration',
-    defaults: {
-      currency: 'USD',
-    },
-    required: ['secretKey'],
-    secrets: ['secretKey', 'webhookSecret'],
+export const stripeConfig = defineIntegrationConfig(UpdateStripeConfigDto, {
+  description: 'Organization Stripe Payment Configuration',
+  defaults: {
+    currency: 'USD',
   },
-);
+  required: ['secretKey'],
+  secrets: ['secretKey', 'webhookSecret'],
+});

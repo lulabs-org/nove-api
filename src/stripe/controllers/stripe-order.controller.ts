@@ -35,7 +35,8 @@ export class StripeOrderController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Sync historical Stripe orders',
-    description: '后台异步拉取指定时间段内的 Stripe 历史交易并分发至 BullMQ 队列切片入库。',
+    description:
+      '后台异步拉取指定时间段内的 Stripe 历史交易并分发至 BullMQ 队列切片入库。',
   })
   @ApiBody({ type: StripeOrderHistorySyncDto })
   @ApiResponse({ status: 200, description: '历史订单同步任务下发完成' })
@@ -53,7 +54,8 @@ export class StripeOrderController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Sync single Stripe order',
-    description: '按需单笔同步指定的 Stripe PaymentIntent (pi_xxx)、CheckoutSession (cs_xxx) 或 Charge (ch_xxx)。',
+    description:
+      '按需单笔同步指定的 Stripe PaymentIntent (pi_xxx)、CheckoutSession (cs_xxx) 或 Charge (ch_xxx)。',
   })
   @ApiParam({
     name: 'externalId',
@@ -75,7 +77,8 @@ export class StripeOrderController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Sync historical Stripe refunds',
-    description: '后台异步拉取指定时间段内的 Stripe 历史退款记录并分发至 BullMQ 队列切片入库。',
+    description:
+      '后台异步拉取指定时间段内的 Stripe 历史退款记录并分发至 BullMQ 队列切片入库。',
   })
   @ApiBody({ type: StripeRefundHistorySyncDto })
   @ApiResponse({ status: 200, description: '历史退款同步任务下发完成' })

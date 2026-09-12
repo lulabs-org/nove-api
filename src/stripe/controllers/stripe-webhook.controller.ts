@@ -12,7 +12,8 @@ import {
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import { Public } from '@/auth/decorators/public.decorator';
-import { WebhookStatus } from '@prisma/client';
+import { Prisma, WebhookStatus } from '@prisma/client';
+import Stripe from 'stripe';
 import { StripeClientService } from '../services/stripe-client.service';
 import { StripeEventService } from '../services/stripe-event.service';
 import { WebhookLogService } from '@/webhook-log/webhook-log.service';
@@ -33,7 +34,8 @@ export class StripeWebhookController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Receive Stripe webhooks',
-    description: '接收并验签 Stripe Webhook 回调事件，幂等处理结账支付与售后退款。',
+    description:
+      '接收并验签 Stripe Webhook 回调事件，幂等处理结账支付与售后退款。',
   })
   @ApiResponse({ status: 200, description: 'Webhook processed successfully' })
   @ApiResponse({ status: 400, description: 'Invalid signature or payload' })
@@ -50,28 +52,29 @@ export class StripeWebhookController {
       throw new BadRequestException('Raw request body is missing');
     }
 
-    let event: any;
+    let event: Stripe.Event;
     try {
       event = this.stripeClientService.constructEvent(rawBody, signature);
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
       await this.webhookLogService.createLog({
         provider: 'stripe',
         event: 'signature_verification_failed',
-        payload: { error: err.message },
-        headers: req.headers as any,
+        payload: { error: errorMessage },
+        headers: req.headers as unknown as Prisma.InputJsonValue,
         status: WebhookStatus.FAILED,
-        errorMessage: err.message,
+        errorMessage,
       });
       throw new BadRequestException(
-        `Stripe webhook signature error: ${err.message}`,
+        `Stripe webhook signature error: ${errorMessage}`,
       );
     }
 
     await this.webhookLogService.createLog({
       provider: 'stripe',
       event: event.type,
-      payload: event,
-      headers: req.headers as any,
+      payload: event as unknown as Prisma.InputJsonValue,
+      headers: req.headers as unknown as Prisma.InputJsonValue,
       status: WebhookStatus.SUCCESS,
       externalId: event.id,
     });

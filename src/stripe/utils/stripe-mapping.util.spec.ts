@@ -1,6 +1,5 @@
 import { Currency, OrderStatus, RefundStatus } from '@prisma/client';
 import {
-  mapAmount,
   mapCurrency,
   mapPaymentStatus,
   mapRefundStatus,
@@ -38,7 +37,9 @@ describe('stripe-mapping.util', () => {
 
     it('should map other states to OrderStatus.UNPAID', () => {
       expect(mapPaymentStatus('processing')).toBe(OrderStatus.UNPAID);
-      expect(mapPaymentStatus('requires_payment_method')).toBe(OrderStatus.UNPAID);
+      expect(mapPaymentStatus('requires_payment_method')).toBe(
+        OrderStatus.UNPAID,
+      );
       expect(mapPaymentStatus(undefined)).toBe(OrderStatus.UNPAID);
     });
   });

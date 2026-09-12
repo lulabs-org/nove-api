@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getQueueToken } from '@nestjs/bullmq';
 import { RefundChannel, RefundStatus } from '@prisma/client';
+import Stripe from 'stripe';
 import { StripeRefundSyncService } from './stripe-refund-sync.service';
 import { StripeClientService } from './stripe-client.service';
 import { StripeRepository } from '../repositories/stripe.repository';
@@ -22,12 +23,25 @@ describe('StripeRefundSyncService', () => {
     };
 
     stripeRepository = {
-      findOrderByChargeOrIntent: jest.fn().mockResolvedValue({ id: 'order-999' }),
-      upsertRefund: jest.fn().mockImplementation(async ({ create, update, afterSaleCode }) => ({
-        id: 'refund-1',
-        afterSaleCode,
-        ...create,
-      })),
+      findOrderByChargeOrIntent: jest
+        .fn()
+        .mockResolvedValue({ id: 'order-999' }),
+      upsertRefund: jest
+        .fn()
+        .mockImplementation(
+          ({
+            create,
+            afterSaleCode,
+          }: {
+            create: Record<string, unknown>;
+            afterSaleCode: string;
+          }) =>
+            Promise.resolve({
+              id: 'refund-1',
+              afterSaleCode,
+              ...create,
+            }),
+        ),
     };
 
     queue = {
@@ -47,7 +61,7 @@ describe('StripeRefundSyncService', () => {
   });
 
   it('should sync refund and associate local order', async () => {
-    const refund: any = {
+    const refund = {
       id: 're_123',
       amount: 1500,
       charge: 'ch_456',
@@ -55,11 +69,14 @@ describe('StripeRefundSyncService', () => {
       status: 'succeeded',
       reason: 'requested_by_customer',
       created: 1700000000,
-    };
+    } as unknown as Stripe.Refund;
 
     const result = await service.syncFromRefund(refund);
 
-    expect(stripeRepository.findOrderByChargeOrIntent).toHaveBeenCalledWith('ch_456', 'pi_789');
+    expect(stripeRepository.findOrderByChargeOrIntent).toHaveBeenCalledWith(
+      'ch_456',
+      'pi_789',
+    );
     expect(stripeRepository.upsertRefund).toHaveBeenCalledWith(
       expect.objectContaining({
         afterSaleCode: 're_123',
@@ -68,7 +85,7 @@ describe('StripeRefundSyncService', () => {
           refundChannel: RefundChannel.STRIPE,
           refundAmount: 1500,
           status: RefundStatus.SETTLED,
-        }),
+        }) as unknown as Record<string, unknown>,
       }),
     );
     expect(result.afterSaleCode).toBe('re_123');

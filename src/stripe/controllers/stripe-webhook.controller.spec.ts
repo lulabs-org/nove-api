@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, RawBodyRequest } from '@nestjs/common';
+import { Request } from 'express';
 import { WebhookStatus } from '@prisma/client';
 import { StripeWebhookController } from './stripe-webhook.controller';
 import { StripeClientService } from '../services/stripe-client.service';
@@ -36,7 +37,9 @@ describe('StripeWebhookController', () => {
   });
 
   it('should throw BadRequestException if signature is missing', async () => {
-    const req: any = { rawBody: Buffer.from('test') };
+    const req = {
+      rawBody: Buffer.from('test'),
+    } as unknown as RawBodyRequest<Request>;
     await expect(controller.handleWebhook(req, '')).rejects.toThrow(
       BadRequestException,
     );
@@ -47,7 +50,10 @@ describe('StripeWebhookController', () => {
       throw new Error('Invalid signature');
     });
 
-    const req: any = { rawBody: Buffer.from('test'), headers: {} };
+    const req = {
+      rawBody: Buffer.from('test'),
+      headers: {},
+    } as unknown as RawBodyRequest<Request>;
     await expect(controller.handleWebhook(req, 'sig_123')).rejects.toThrow(
       BadRequestException,
     );
@@ -62,9 +68,14 @@ describe('StripeWebhookController', () => {
 
   it('should verify event, log success and dispatch to event service', async () => {
     const mockEvent = { id: 'evt_123', type: 'payment_intent.succeeded' };
-    (stripeClientService.constructEvent as jest.Mock).mockReturnValue(mockEvent);
+    (stripeClientService.constructEvent as jest.Mock).mockReturnValue(
+      mockEvent,
+    );
 
-    const req: any = { rawBody: Buffer.from('test'), headers: {} };
+    const req = {
+      rawBody: Buffer.from('test'),
+      headers: {},
+    } as unknown as RawBodyRequest<Request>;
     const res = await controller.handleWebhook(req, 'sig_valid');
 
     expect(res).toEqual({ received: true, result: { success: true } });

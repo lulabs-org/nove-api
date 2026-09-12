@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getQueueToken } from '@nestjs/bullmq';
 import { Currency, OrderStatus, PaymentProvider } from '@prisma/client';
+import Stripe from 'stripe';
 import { StripeOrderSyncService } from './stripe-order-sync.service';
 import { StripeClientService } from './stripe-client.service';
 import { StripeRepository } from '../repositories/stripe.repository';
@@ -31,19 +32,39 @@ describe('StripeOrderSyncService', () => {
     };
 
     stripeRepository = {
-      upsertOrder: jest.fn().mockImplementation(async ({ create, update, externalId }) => {
-        const createData = typeof create === 'function' ? await create() : create;
-        return { action: 'created', order: { id: 'order-1', externalId, ...createData } };
-      }),
+      upsertOrder: jest
+        .fn()
+        .mockImplementation(
+          async ({
+            create,
+            externalId,
+          }: {
+            create:
+              | (() => Promise<Record<string, unknown>>)
+              | Record<string, unknown>;
+            externalId: string;
+          }) => {
+            const createData =
+              typeof create === 'function' ? await create() : create;
+            return {
+              action: 'created',
+              order: { id: 'order-1', externalId, ...createData },
+            };
+          },
+        ),
     };
 
     userQuery = {
       byId: jest.fn().mockResolvedValue(null),
-      byEmail: jest.fn().mockResolvedValue({ id: 'user-123', email: 'test@example.com' }),
+      byEmail: jest
+        .fn()
+        .mockResolvedValue({ id: 'user-123', email: 'test@example.com' }),
     };
 
     userCommand = {
-      createWithProfile: jest.fn().mockResolvedValue({ id: 'user-new', email: 'new@example.com' }),
+      createWithProfile: jest
+        .fn()
+        .mockResolvedValue({ id: 'user-new', email: 'new@example.com' }),
     };
 
     queue = {
@@ -65,7 +86,7 @@ describe('StripeOrderSyncService', () => {
   });
 
   it('should sync order from PaymentIntent and link user by email', async () => {
-    const paymentIntent: any = {
+    const paymentIntent = {
       id: 'pi_test123',
       amount: 4900,
       currency: 'usd',
@@ -74,7 +95,7 @@ describe('StripeOrderSyncService', () => {
       receipt_email: 'test@example.com',
       latest_charge: 'ch_test123',
       metadata: {},
-    };
+    } as unknown as Stripe.PaymentIntent;
 
     const result = await service.syncFromPaymentIntent(paymentIntent);
 
@@ -88,13 +109,13 @@ describe('StripeOrderSyncService', () => {
           status: OrderStatus.PAID,
           purchaserId: 'user-123',
           paymentProvider: PaymentProvider.STRIPE,
-        }),
+        }) as unknown as Record<string, unknown>,
       }),
     );
   });
 
   it('should sync order from CheckoutSession and map correctly', async () => {
-    const session: any = {
+    const session = {
       id: 'cs_test123',
       payment_intent: 'pi_cs_test123',
       amount_total: 9900,
@@ -107,7 +128,7 @@ describe('StripeOrderSyncService', () => {
         name: 'Test Customer',
       },
       metadata: {},
-    };
+    } as unknown as Stripe.Checkout.Session;
 
     const result = await service.syncFromCheckoutSession(session);
 
@@ -120,7 +141,7 @@ describe('StripeOrderSyncService', () => {
           currency: Currency.EUR,
           status: OrderStatus.PAID,
           purchaserId: 'user-123',
-        }),
+        }) as unknown as Record<string, unknown>,
       }),
     );
   });

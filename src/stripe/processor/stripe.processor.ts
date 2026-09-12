@@ -21,16 +21,23 @@ export class StripeProcessor extends WorkerHost {
     try {
       switch (job.name) {
         case 'sync-payment-intents-page': {
-          const result = await this.orderSyncService.processPaymentIntentsPage(
-            job.data,
-          );
+          const data = job.data as {
+            created?: { gte?: number; lte?: number };
+            startingAfter?: string;
+            limit?: number;
+          };
+          const result =
+            await this.orderSyncService.processPaymentIntentsPage(data);
           return result;
         }
 
         case 'sync-refunds-page': {
-          const result = await this.refundSyncService.processRefundsPage(
-            job.data,
-          );
+          const data = job.data as {
+            created?: { gte?: number; lte?: number };
+            startingAfter?: string;
+            limit?: number;
+          };
+          const result = await this.refundSyncService.processRefundsPage(data);
           return result;
         }
 

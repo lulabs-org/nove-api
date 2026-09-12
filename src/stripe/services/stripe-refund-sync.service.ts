@@ -75,7 +75,9 @@ export class StripeRefundSyncService {
   async syncSingle(refundId: string) {
     const trimmedId = refundId.trim();
     if (!trimmedId.startsWith('re_')) {
-      throw new BadRequestException(`Invalid Stripe refund ID format: ${trimmedId} (expected re_xxx)`);
+      throw new BadRequestException(
+        `Invalid Stripe refund ID format: ${trimmedId} (expected re_xxx)`,
+      );
     }
 
     const client = this.stripeClient.getClient();
@@ -95,7 +97,8 @@ export class StripeRefundSyncService {
 
     if (dto.startDate) {
       const startMs = new Date(dto.startDate).getTime();
-      if (isNaN(startMs)) throw new BadRequestException('Invalid startDate format');
+      if (isNaN(startMs))
+        throw new BadRequestException('Invalid startDate format');
       createdFilter.gte = Math.floor(startMs / 1000);
     }
 
@@ -114,7 +117,8 @@ export class StripeRefundSyncService {
     }
 
     const job = await this.syncQueue.add('sync-refunds-page', {
-      created: Object.keys(createdFilter).length > 0 ? createdFilter : undefined,
+      created:
+        Object.keys(createdFilter).length > 0 ? createdFilter : undefined,
       limit: dto.limit || 100,
     });
 
@@ -144,7 +148,9 @@ export class StripeRefundSyncService {
     }
 
     const list = await client.refunds.list(params);
-    this.logger.log(`Fetched ${list.data.length} refunds (has_more: ${list.has_more})`);
+    this.logger.log(
+      `Fetched ${list.data.length} refunds (has_more: ${list.has_more})`,
+    );
 
     let syncedCount = 0;
     for (const refund of list.data) {

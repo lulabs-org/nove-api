@@ -39,14 +39,18 @@ export class StripeClientService implements OnModuleInit {
   @OnEvent(INTEGRATION_EVENT_PATTERNS.STRIPE_UPDATED)
   async handleConfigUpdate(event: IntegrationChangeEvent) {
     if (!this.orgContext.matches(event.orgId)) return;
-    this.logger.log('Received config.stripe.updated event, reloading Stripe client...');
+    this.logger.log(
+      'Received config.stripe.updated event, reloading Stripe client...',
+    );
     await this.reloadConfig();
   }
 
   @OnEvent(INTEGRATION_EVENT_PATTERNS.STRIPE_DELETED)
   async handleConfigDelete(event: IntegrationChangeEvent) {
     if (!this.orgContext.matches(event.orgId)) return;
-    this.logger.log('Received config.stripe.deleted event, resetting Stripe client...');
+    this.logger.log(
+      'Received config.stripe.deleted event, resetting Stripe client...',
+    );
     await this.reloadConfig();
   }
 
@@ -134,10 +138,7 @@ export class StripeClientService implements OnModuleInit {
   /**
    * 校验 Webhook 签名并反序列化 Event 对象
    */
-  constructEvent(
-    rawBody: Buffer,
-    signature: string | string[],
-  ): Stripe.Event {
+  constructEvent(rawBody: Buffer, signature: string | string[]): Stripe.Event {
     const client = this.getClient();
     const secret = this.getWebhookSecret();
 
@@ -147,9 +148,14 @@ export class StripeClientService implements OnModuleInit {
 
     try {
       return client.webhooks.constructEvent(rawBody, signature, secret);
-    } catch (err: any) {
-      this.logger.error(`Stripe webhook signature verification failed: ${err.message}`);
-      throw new BadRequestException(`Webhook signature verification failed: ${err.message}`);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      this.logger.error(
+        `Stripe webhook signature verification failed: ${errorMessage}`,
+      );
+      throw new BadRequestException(
+        `Webhook signature verification failed: ${errorMessage}`,
+      );
     }
   }
 }

@@ -60,7 +60,10 @@ export class StripeOrderSyncService {
           ) {
             user = await this.userQuery.byEmail(normalizedEmail);
           } else {
-            this.logger.warn(`Failed to auto-create user for ${normalizedEmail}:`, error);
+            this.logger.warn(
+              `Failed to auto-create user for ${normalizedEmail}:`,
+              error,
+            );
           }
         }
       }
@@ -203,7 +206,9 @@ export class StripeOrderSyncService {
         const pi = await client.paymentIntents.retrieve(paymentIntentId);
         return this.syncFromPaymentIntent(pi);
       } catch (e) {
-        this.logger.warn(`Failed to retrieve PaymentIntent ${paymentIntentId} for charge ${charge.id}, falling back to charge mapping`);
+        this.logger.warn(
+          `Failed to retrieve PaymentIntent ${paymentIntentId} for charge ${charge.id}, falling back to charge mapping: ${(e as Error).message}`,
+        );
       }
     }
 
@@ -268,19 +273,22 @@ export class StripeOrderSyncService {
 
     if (trimmedId.startsWith('cs_')) {
       const session = await client.checkout.sessions.retrieve(trimmedId);
-      if (!session) throw new NotFoundException(`Checkout session not found: ${trimmedId}`);
+      if (!session)
+        throw new NotFoundException(`Checkout session not found: ${trimmedId}`);
       return this.syncFromCheckoutSession(session);
     }
 
     if (trimmedId.startsWith('pi_')) {
       const pi = await client.paymentIntents.retrieve(trimmedId);
-      if (!pi) throw new NotFoundException(`PaymentIntent not found: ${trimmedId}`);
+      if (!pi)
+        throw new NotFoundException(`PaymentIntent not found: ${trimmedId}`);
       return this.syncFromPaymentIntent(pi);
     }
 
     if (trimmedId.startsWith('ch_')) {
       const charge = await client.charges.retrieve(trimmedId);
-      if (!charge) throw new NotFoundException(`Charge not found: ${trimmedId}`);
+      if (!charge)
+        throw new NotFoundException(`Charge not found: ${trimmedId}`);
       return this.syncFromCharge(charge);
     }
 
@@ -289,7 +297,9 @@ export class StripeOrderSyncService {
       const pi = await client.paymentIntents.retrieve(trimmedId);
       return await this.syncFromPaymentIntent(pi);
     } catch {
-      throw new BadRequestException(`Unrecognized Stripe identifier format: ${trimmedId}`);
+      throw new BadRequestException(
+        `Unrecognized Stripe identifier format: ${trimmedId}`,
+      );
     }
   }
 
@@ -301,7 +311,8 @@ export class StripeOrderSyncService {
 
     if (dto.startDate) {
       const startMs = new Date(dto.startDate).getTime();
-      if (isNaN(startMs)) throw new BadRequestException('Invalid startDate format');
+      if (isNaN(startMs))
+        throw new BadRequestException('Invalid startDate format');
       createdFilter.gte = Math.floor(startMs / 1000);
     }
 
@@ -320,7 +331,8 @@ export class StripeOrderSyncService {
     }
 
     const job = await this.syncQueue.add('sync-payment-intents-page', {
-      created: Object.keys(createdFilter).length > 0 ? createdFilter : undefined,
+      created:
+        Object.keys(createdFilter).length > 0 ? createdFilter : undefined,
       limit: dto.limit || 100,
     });
 
@@ -350,7 +362,9 @@ export class StripeOrderSyncService {
     }
 
     const list = await client.paymentIntents.list(params);
-    this.logger.log(`Fetched ${list.data.length} payment intents (has_more: ${list.has_more})`);
+    this.logger.log(
+      `Fetched ${list.data.length} payment intents (has_more: ${list.has_more})`,
+    );
 
     let syncedCount = 0;
     for (const pi of list.data) {

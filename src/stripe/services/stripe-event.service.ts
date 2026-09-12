@@ -17,28 +17,28 @@ export class StripeEventService {
 
     switch (event.type) {
       case 'checkout.session.completed': {
-        const session = event.data.object as Stripe.Checkout.Session;
+        const session = event.data.object;
         return this.orderSyncService.syncFromCheckoutSession(session);
       }
 
       case 'payment_intent.succeeded': {
-        const paymentIntent = event.data.object as Stripe.PaymentIntent;
+        const paymentIntent = event.data.object;
         return this.orderSyncService.syncFromPaymentIntent(paymentIntent);
       }
 
       case 'charge.succeeded': {
-        const charge = event.data.object as Stripe.Charge;
+        const charge = event.data.object;
         return this.orderSyncService.syncFromCharge(charge);
       }
 
       case 'refund.created':
       case 'refund.updated': {
-        const refund = event.data.object as Stripe.Refund;
+        const refund = event.data.object;
         return this.refundSyncService.syncFromRefund(refund);
       }
 
       case 'charge.refunded': {
-        const charge = event.data.object as Stripe.Charge;
+        const charge = event.data.object;
         if (charge.refunds && charge.refunds.data.length > 0) {
           const results: any[] = [];
           for (const refund of charge.refunds.data) {
