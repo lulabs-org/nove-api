@@ -133,7 +133,7 @@ export class DriveController {
 
   @Post('files/:fileId/preview-url')
   @RequirePermissions('drive:read')
-  @ApiOperation({ summary: '获取图片预览地址，不记录下载审计' })
+  @ApiOperation({ summary: '获取图片或视频预览地址，不记录下载审计' })
   createPreviewUrl(@Param('fileId') fileId: string, @Auth() auth: AuthContext) {
     return this.driveService.createPreviewUrl(fileId, auth);
   }

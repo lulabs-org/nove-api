@@ -256,6 +256,7 @@ enum DriveAction {
 }
 
 enum FileBindingTargetType {
+  PRODUCT
   MINUTE
   PROJECT
   CUSTOM_RECORD

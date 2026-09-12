@@ -98,6 +98,7 @@ describe('ProductService', () => {
         publishedAt: expect.any(Date),
         archivedAt: null,
       }),
+      undefined,
     );
     expect(result.rating).toBe(4.8);
   });

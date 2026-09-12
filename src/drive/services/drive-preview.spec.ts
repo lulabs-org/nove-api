@@ -78,6 +78,15 @@ describe('Drive image preview audit', () => {
     );
   });
 
+  it('previews videos without download audits', async () => {
+    files.findDetails.mockResolvedValue({
+      ...record,
+      versions: [{ ...record.versions[0], contentType: 'video/mp4' }],
+    });
+    const result = await service.createPreviewUrl('file-a', auth);
+    expect(result.contentDisposition).toBe('inline');
+    expect(access.createAudit).not.toHaveBeenCalled();
+  });
   it('explicit downloads still write DOWNLOAD audits', async () => {
     await service.createDownloadUrl('file-a', auth);
     expect(access.createAudit).toHaveBeenCalledTimes(1);
