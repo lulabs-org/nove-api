@@ -1,3 +1,5 @@
+import '../../src/prisma/load-prisma-env';
+import { createPrismaAdapter } from '../../src/prisma/prisma-adapter';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 import { TMeetApiService } from '../../src/tmeet/client';
@@ -27,7 +29,7 @@ async function bootstrap() {
   }).compile();
 
   const tencentApi = moduleRef.get(TMeetApiService);
-  const prisma = new PrismaClient();
+  const prisma = new PrismaClient({ adapter: createPrismaAdapter() });
 
   const minutes = await prisma.minute.findMany({
     orderBy: { createdAt: 'desc' },

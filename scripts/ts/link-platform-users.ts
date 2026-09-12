@@ -11,9 +11,11 @@
  * 在项目根目录下通过 ts-node 运行：
  * $ npx ts-node scripts/ts/link-platform-users.ts
  */
+import '../../src/prisma/load-prisma-env';
+import { createPrismaAdapter } from '../../src/prisma/prisma-adapter';
 import { PrismaClient, Platform } from '@prisma/client';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ adapter: createPrismaAdapter() });
 
 async function main() {
   console.log('🚀 开始关联 PlatformUser 和本地 User...');

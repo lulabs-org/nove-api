@@ -56,7 +56,7 @@ export interface TranscriptResult {
 
 export type PrismaTransaction = Omit<
   PrismaClient,
-  '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
+  '$connect' | '$disconnect' | '$on' | '$transaction' | '$extends'
 >;
 
 export interface CreateTranscriptResult {

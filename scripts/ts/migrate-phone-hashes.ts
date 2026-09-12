@@ -19,10 +19,12 @@
  * 【安全性保证】
  * 脚本采用了 `upsert` (存在即更新，不存在即插入) 的幂等设计，可随时中断并安全重复执行，不会产生脏数据。
  */
+import '../../src/prisma/load-prisma-env';
+import { createPrismaAdapter } from '../../src/prisma/prisma-adapter';
 import { PrismaClient, Platform } from '@prisma/client';
 import * as crypto from 'crypto';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ adapter: createPrismaAdapter() });
 
 /**
  * TODO: 请在这里替换为你实际的加密算法和密钥

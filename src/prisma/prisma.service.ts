@@ -9,11 +9,17 @@
  * Copyright (c) 2025 by ${git_name_email}, All Rights Reserved.
  */
 
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import './load-prisma-env';
+
+import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { Prisma, PrismaClient } from '@prisma/client';
+import { createPrismaAdapter } from './prisma-adapter';
 
 @Injectable()
-export class PrismaService extends PrismaClient implements OnModuleInit {
+export class PrismaService
+  extends PrismaClient
+  implements OnModuleInit, OnModuleDestroy
+{
   constructor() {
     const logLevels: Prisma.LogLevel[] =
       process.env.NODE_ENV === 'production'
@@ -22,10 +28,17 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
 
     super({
       log: logLevels,
+      adapter: createPrismaAdapter(),
     });
+  }
+
+  async onModuleDestroy() {
+    await this.$disconnect();
   }
 
   async onModuleInit() {
     await this.$connect();
+    // Driver adapters create pools lazily; verify connectivity at startup.
+    await this.$queryRaw`SELECT 1`;
   }
 }

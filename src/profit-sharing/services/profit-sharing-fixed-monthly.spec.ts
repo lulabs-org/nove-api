@@ -5,7 +5,7 @@ import {
   ProfitShareRuleType,
   ProfitShareRecordStatus,
 } from '@prisma/client';
-import { Decimal } from '@prisma/client/runtime/library';
+import { Prisma } from '@prisma/client';
 import { ProfitSharingRuleService } from './profit-sharing-rule.service';
 import { ProfitSharingService } from './profit-sharing.service';
 import { ProfitSharingRuleRepository } from '../repositories/profit-sharing-rule.repository';
@@ -152,7 +152,7 @@ describe('ProfitSharing Fixed Monthly Payout', () => {
             id: 'mod-1',
             ruleId: 'rule-fixed-1',
             name: '教师月度课酬',
-            shareRatio: new Decimal(0),
+            shareRatio: new Prisma.Decimal(0),
             fixedAmount: 500000,
             isRefundable: false,
             amortizationType: 'NONE',
@@ -165,7 +165,7 @@ describe('ProfitSharing Fixed Monthly Payout', () => {
                 moduleId: 'mod-1',
                 memberId: 'teacher-wang',
                 roleId: null,
-                allocationRatio: new Decimal(1),
+                allocationRatio: new Prisma.Decimal(1),
                 fixedAmount: 500000,
                 createdAt: new Date(),
                 updatedAt: new Date(),
@@ -225,7 +225,7 @@ describe('ProfitSharing Fixed Monthly Payout', () => {
             id: 'mod-1',
             ruleId: 'rule-fixed-1',
             name: '教师月度课酬',
-            shareRatio: new Decimal(0),
+            shareRatio: new Prisma.Decimal(0),
             fixedAmount: 500000,
             isRefundable: false,
             amortizationType: 'NONE',
@@ -238,7 +238,7 @@ describe('ProfitSharing Fixed Monthly Payout', () => {
                 moduleId: 'mod-1',
                 memberId: 'teacher-wang',
                 roleId: null,
-                allocationRatio: new Decimal(1),
+                allocationRatio: new Prisma.Decimal(1),
                 fixedAmount: 500000,
                 createdAt: new Date(),
                 updatedAt: new Date(),
@@ -284,7 +284,7 @@ describe('ProfitSharing Fixed Monthly Payout', () => {
             id: 'mod-ops',
             ruleId: 'rule-order-1',
             name: '运营跟单',
-            shareRatio: new Decimal(0.03), // 3%
+            shareRatio: new Prisma.Decimal(0.03), // 3%
             fixedAmount: null,
             allocationMode: 'ORDER_OWNER', // 随订单负责人
             isRefundable: true,
@@ -295,7 +295,7 @@ describe('ProfitSharing Fixed Monthly Payout', () => {
                 moduleId: 'mod-ops',
                 memberId: 'supervisor-fallback',
                 roleId: null,
-                allocationRatio: new Decimal(1),
+                allocationRatio: new Prisma.Decimal(1),
                 fixedAmount: null,
               },
             ],
@@ -304,7 +304,7 @@ describe('ProfitSharing Fixed Monthly Payout', () => {
             id: 'mod-closer',
             ruleId: 'rule-order-1',
             name: '关单销售',
-            shareRatio: new Decimal(0.04), // 4%
+            shareRatio: new Prisma.Decimal(0.04), // 4%
             fixedAmount: null,
             allocationMode: 'FINANCIAL_CLOSER', // 随订单关单人
             isRefundable: true,
@@ -375,7 +375,7 @@ describe('ProfitSharing Fixed Monthly Payout', () => {
             id: 'mod-ops',
             ruleId: 'rule-order-1',
             name: '运营跟单',
-            shareRatio: new Decimal(0.05), // 5%
+            shareRatio: new Prisma.Decimal(0.05), // 5%
             fixedAmount: null,
             allocationMode: 'ORDER_OWNER',
             isRefundable: true,
@@ -386,7 +386,7 @@ describe('ProfitSharing Fixed Monthly Payout', () => {
                 moduleId: 'mod-ops',
                 memberId: 'supervisor-fallback',
                 roleId: null,
-                allocationRatio: new Decimal(1),
+                allocationRatio: new Prisma.Decimal(1),
                 fixedAmount: null,
               },
             ],
@@ -441,7 +441,7 @@ describe('ProfitSharing Fixed Monthly Payout', () => {
         modules: [
           {
             name: '运营跟单',
-            shareRatio: new Decimal(0.03),
+            shareRatio: new Prisma.Decimal(0.03),
             fixedAmount: null,
             isRefundable: true,
             amortizationType: 'NONE',
@@ -450,7 +450,7 @@ describe('ProfitSharing Fixed Monthly Payout', () => {
               {
                 memberId: 'supervisor-fallback',
                 roleId: null,
-                allocationRatio: new Decimal(1),
+                allocationRatio: new Prisma.Decimal(1),
                 fixedAmount: null,
               },
             ],
@@ -503,7 +503,7 @@ describe('ProfitSharing Fixed Monthly Payout', () => {
         modules: [
           {
             name: '关单',
-            shareRatio: new Decimal(0.04),
+            shareRatio: new Prisma.Decimal(0.04),
             fixedAmount: null,
             isRefundable: true,
             amortizationType: 'NONE',

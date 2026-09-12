@@ -8,10 +8,12 @@
  * 
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved. 
  */
+import '../../src/prisma/load-prisma-env';
+import { createPrismaAdapter } from '../../src/prisma/prisma-adapter';
 import { PrismaClient } from '@prisma/client';
 import { assignPermissionsToRole } from '../../prisma/seeds/relations/permission-relations/role-permissions';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ adapter: createPrismaAdapter() });
 
 interface CommandLineArgs {
   roleId: string;

@@ -5,12 +5,14 @@
  * 或者使用 tsx (推荐，速度更快):
  * npx tsx scripts/ts/check-empty-transcripts.ts
  */
+import '../../src/prisma/load-prisma-env';
+import { createPrismaAdapter } from '../../src/prisma/prisma-adapter';
 import { PrismaClient } from '@prisma/client';
 import * as fs from 'fs';
 import * as path from 'path';
 
 // 初始化 Prisma 客户端实例，用于与数据库进行交互
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ adapter: createPrismaAdapter() });
 
 /**
  * 主函数：用于查询并导出数据库中缺少段落数据（TranscriptSegment）的转写记录（Transcript）。

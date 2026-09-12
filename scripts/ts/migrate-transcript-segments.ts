@@ -21,9 +21,11 @@
  * 为了确保数据不被重复插入，脚本复用了原 `Sentence` 的 `id` 作为新 `TranscriptSegment` 的 `id`。
  * 这意味着脚本可以随时中断并安全重复执行，不会产生脏数据。
  */
+import '../../src/prisma/load-prisma-env';
+import { createPrismaAdapter } from '../../src/prisma/prisma-adapter';
 import { PrismaClient } from '@prisma/client';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ adapter: createPrismaAdapter() });
 
 async function main() {
   console.log('🚀 开始数据迁移：从 Paragraph/Sentence/Word 到 TranscriptSegment...');

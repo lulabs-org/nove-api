@@ -6,7 +6,7 @@ import type { Meeting } from '@prisma/client';
 
 type PrismaTransaction = Omit<
   PrismaClient,
-  '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'
+  '$connect' | '$disconnect' | '$on' | '$transaction' | '$extends'
 >;
 
 type MinuteMeetingSummaryWithDeletedAt = Pick<

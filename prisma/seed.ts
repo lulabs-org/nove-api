@@ -21,12 +21,14 @@
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
+import '../src/prisma/load-prisma-env';
+import { createPrismaAdapter } from '../src/prisma/prisma-adapter';
 import { PrismaClient } from '@prisma/client';
 import { seedDatabase } from './seed-utils/database-seed';
 import type { SeedMode } from './seed-utils/types';
 import * as seedFunctions from './seeds';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ adapter: createPrismaAdapter() });
 
 async function main(): Promise<void> {
   const mode: SeedMode = process.argv.includes('--real') ? 'real' : 'mock';

@@ -6,8 +6,11 @@ import {
 } from '@nestjs/common';
 import { CreateProfitShareRuleDto } from '../dto/create-profit-share-rule.dto';
 import { UpdateProfitShareRuleDto } from '../dto/update-profit-share-rule.dto';
-import { Decimal } from '@prisma/client/runtime/library';
-import { ProfitShareRuleType, ProfitShareRuleStatus } from '@prisma/client';
+import {
+  Prisma,
+  ProfitShareRuleType,
+  ProfitShareRuleStatus,
+} from '@prisma/client';
 import { ProfitSharingRuleRepository } from '../repositories/profit-sharing-rule.repository';
 
 @Injectable()
@@ -38,7 +41,7 @@ export class ProfitSharingRuleService {
       modules: {
         create: dto.modules.map((module) => ({
           name: module.name,
-          shareRatio: new Decimal(module.shareRatio ?? 0),
+          shareRatio: new Prisma.Decimal(module.shareRatio ?? 0),
           fixedAmount: module.fixedAmount,
           isRefundable: module.isRefundable ?? true,
           amortizationType: module.amortizationType ?? 'NONE',
@@ -47,7 +50,9 @@ export class ProfitSharingRuleService {
             create: (module.allocations || []).map((allocation) => ({
               memberId: allocation.memberId,
               roleId: allocation.roleId,
-              allocationRatio: new Decimal(allocation.allocationRatio ?? 1),
+              allocationRatio: new Prisma.Decimal(
+                allocation.allocationRatio ?? 1,
+              ),
               fixedAmount: allocation.fixedAmount,
             })),
           },
@@ -106,7 +111,7 @@ export class ProfitSharingRuleService {
                 where: { id: m.id },
                 data: {
                   name: m.name,
-                  shareRatio: new Decimal(m.shareRatio ?? 0),
+                  shareRatio: new Prisma.Decimal(m.shareRatio ?? 0),
                   fixedAmount: m.fixedAmount,
                   isRefundable: m.isRefundable ?? true,
                   amortizationType: m.amortizationType ?? 'NONE',
@@ -126,7 +131,9 @@ export class ProfitSharingRuleService {
                         data: {
                           memberId: a.memberId,
                           roleId: a.roleId,
-                          allocationRatio: new Decimal(a.allocationRatio ?? 1),
+                          allocationRatio: new Prisma.Decimal(
+                            a.allocationRatio ?? 1,
+                          ),
                           fixedAmount: a.fixedAmount,
                         },
                       })),
@@ -135,7 +142,9 @@ export class ProfitSharingRuleService {
                       .map((a) => ({
                         memberId: a.memberId,
                         roleId: a.roleId,
-                        allocationRatio: new Decimal(a.allocationRatio ?? 1),
+                        allocationRatio: new Prisma.Decimal(
+                          a.allocationRatio ?? 1,
+                        ),
                         fixedAmount: a.fixedAmount,
                       })),
                   },
@@ -145,7 +154,7 @@ export class ProfitSharingRuleService {
               .filter((m) => !m.id)
               .map((module) => ({
                 name: module.name,
-                shareRatio: new Decimal(module.shareRatio ?? 0),
+                shareRatio: new Prisma.Decimal(module.shareRatio ?? 0),
                 fixedAmount: module.fixedAmount,
                 isRefundable: module.isRefundable ?? true,
                 amortizationType: module.amortizationType ?? 'NONE',
@@ -155,7 +164,7 @@ export class ProfitSharingRuleService {
                     ? module.allocations.map((allocation) => ({
                         memberId: allocation.memberId,
                         roleId: allocation.roleId,
-                        allocationRatio: new Decimal(
+                        allocationRatio: new Prisma.Decimal(
                           allocation.allocationRatio ?? 1,
                         ),
                         fixedAmount: allocation.fixedAmount,

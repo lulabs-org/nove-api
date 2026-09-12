@@ -15,10 +15,12 @@
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved. 
  */
 
+import '../../src/prisma/load-prisma-env';
+import { createPrismaAdapter } from '../../src/prisma/prisma-adapter';
 import { PrismaClient } from '@prisma/client';
 import { assignRolesToUsers } from '../../prisma/seeds/relations/user-relations/user-roles';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ adapter: createPrismaAdapter() });
 
 interface CommandLineArgs {
   userIds: string[];

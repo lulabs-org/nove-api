@@ -1,6 +1,21 @@
+import { config } from 'dotenv';
+import { expand } from 'dotenv-expand';
+expand(config({ quiet: true }));
+import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient, Prisma } from "@prisma/client";
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({
+  adapter: new PrismaPg(
+    {
+      connectionString: process.env.DATABASE_URL,
+      connectionTimeoutMillis: 10000,
+      idleTimeoutMillis: 300000,
+    },
+    {
+      schema: new URL(process.env.DATABASE_URL).searchParams.get('schema') || 'public',
+    },
+  ),
+});
 
 /**
  * 用法:

@@ -1,11 +1,12 @@
-import 'dotenv/config';
 
+import '../../src/prisma/load-prisma-env';
+import { createPrismaAdapter } from '../../src/prisma/prisma-adapter';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaClient } from '@prisma/client';
 import * as crypto from 'crypto';
 import { generateUsername } from '../../src/common/utils';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ adapter: createPrismaAdapter() });
 const apiBaseUrl = process.env.OAUTH_E2E_API_URL || 'http://127.0.0.1:3000';
 
 function assert(condition: unknown, message: string): asserts condition {
