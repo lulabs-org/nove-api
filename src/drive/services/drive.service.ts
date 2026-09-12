@@ -459,8 +459,8 @@ export class DriveService {
     if (!version || version.status !== FileVersionStatus.ACTIVE) {
       throw new ConflictException('文件尚不可下载');
     }
-    if (preview && !version.contentType.startsWith('image/')) {
-      throw new BadRequestException('仅支持图片预览');
+    if (preview && !/^(image|video)\//.test(version.contentType)) {
+      throw new BadRequestException('仅支持图片和视频预览');
     }
     if (!preview) {
       await this.audit(

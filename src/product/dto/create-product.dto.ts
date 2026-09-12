@@ -12,6 +12,7 @@ import {
   IsOptional,
   IsString,
   IsUrl,
+  Matches,
   Length,
   Max,
   Min,
@@ -92,12 +93,16 @@ export class CreateProductDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsUrl({ require_protocol: true })
+  @IsString()
+  @Length(1, 500)
+  @Matches(/^(?:drive:\/\/file\/[a-zA-Z0-9_-]+|https?:\/\/[^\s]+)$/)
   imageUrl?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
-  @IsUrl({ require_protocol: true })
+  @IsString()
+  @Length(1, 500)
+  @Matches(/^(?:drive:\/\/file\/[a-zA-Z0-9_-]+|https?:\/\/[^\s]+)$/)
   videoUrl?: string;
 
   @ApiPropertyOptional()

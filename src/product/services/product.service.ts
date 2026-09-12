@@ -1,3 +1,4 @@
+import { DriveAuthContext } from '@/drive/policies';
 import {
   BadRequestException,
   Injectable,
@@ -29,37 +30,44 @@ const SORT_FIELD_MAP: Record<
 export class ProductService {
   constructor(private readonly productRepository: ProductRepository) {}
 
-  async create(dto: CreateProductDto, actorId?: string): Promise<ProductDto> {
+  async create(
+    dto: CreateProductDto,
+    actorId?: string,
+    auth?: DriveAuthContext,
+  ): Promise<ProductDto> {
     const productCode = dto.productCode.trim();
     await this.ensureCodeAvailable(productCode);
     this.validatePrices(dto.price, dto.originalPrice);
 
     const lifecycle = this.resolveLifecycle(dto.status, dto.publishedAt);
-    const product = await this.productRepository.create({
-      productCode,
-      name: dto.name.trim(),
-      description: this.nullableString(dto.description),
-      shortDescription: this.nullableString(dto.shortDescription),
-      category: dto.category,
-      status: dto.status ?? ProductStatus.DRAFT,
-      price: dto.price,
-      originalPrice: dto.originalPrice,
-      currency: dto.currency,
-      durationDays: dto.durationDays,
-      maxUsers: dto.maxUsers,
-      tags: this.normalizeTags(dto.tags),
-      imageUrl: this.nullableString(dto.imageUrl),
-      videoUrl: this.nullableString(dto.videoUrl),
-      downloadUrl: this.nullableString(dto.downloadUrl),
-      externalUrl: this.nullableString(dto.externalUrl),
-      sortOrder: dto.sortOrder,
-      isRecommended: dto.isRecommended,
-      isFeatured: dto.isFeatured,
-      rating: dto.rating,
-      createdBy: actorId,
-      updatedBy: actorId,
-      ...lifecycle,
-    });
+    const product = await this.productRepository.create(
+      {
+        productCode,
+        name: dto.name.trim(),
+        description: this.nullableString(dto.description),
+        shortDescription: this.nullableString(dto.shortDescription),
+        category: dto.category,
+        status: dto.status ?? ProductStatus.DRAFT,
+        price: dto.price,
+        originalPrice: dto.originalPrice,
+        currency: dto.currency,
+        durationDays: dto.durationDays,
+        maxUsers: dto.maxUsers,
+        tags: this.normalizeTags(dto.tags),
+        imageUrl: this.nullableString(dto.imageUrl),
+        videoUrl: this.nullableString(dto.videoUrl),
+        downloadUrl: this.nullableString(dto.downloadUrl),
+        externalUrl: this.nullableString(dto.externalUrl),
+        sortOrder: dto.sortOrder,
+        isRecommended: dto.isRecommended,
+        isFeatured: dto.isFeatured,
+        rating: dto.rating,
+        createdBy: actorId,
+        updatedBy: actorId,
+        ...lifecycle,
+      },
+      auth,
+    );
     return this.toDto(product);
   }
 
@@ -93,6 +101,7 @@ export class ProductService {
     id: string,
     dto: UpdateProductDto,
     actorId?: string,
+    auth?: DriveAuthContext,
   ): Promise<ProductDto> {
     const existing = await this.findProduct(id);
     const productCode = dto.productCode?.trim();
@@ -116,30 +125,34 @@ export class ProductService {
           )
         : {};
 
-    const product = await this.productRepository.update(id, {
-      productCode,
-      name: dto.name?.trim(),
-      description: this.optionalNullableString(dto, 'description'),
-      shortDescription: this.optionalNullableString(dto, 'shortDescription'),
-      category: dto.category,
-      status: dto.status,
-      price: dto.price,
-      originalPrice: dto.originalPrice,
-      currency: dto.currency,
-      durationDays: dto.durationDays,
-      maxUsers: dto.maxUsers,
-      tags: dto.tags === undefined ? undefined : this.normalizeTags(dto.tags),
-      imageUrl: this.optionalNullableString(dto, 'imageUrl'),
-      videoUrl: this.optionalNullableString(dto, 'videoUrl'),
-      downloadUrl: this.optionalNullableString(dto, 'downloadUrl'),
-      externalUrl: this.optionalNullableString(dto, 'externalUrl'),
-      sortOrder: dto.sortOrder,
-      isRecommended: dto.isRecommended,
-      isFeatured: dto.isFeatured,
-      rating: dto.rating,
-      updatedBy: actorId,
-      ...lifecycle,
-    });
+    const product = await this.productRepository.update(
+      id,
+      {
+        productCode,
+        name: dto.name?.trim(),
+        description: this.optionalNullableString(dto, 'description'),
+        shortDescription: this.optionalNullableString(dto, 'shortDescription'),
+        category: dto.category,
+        status: dto.status,
+        price: dto.price,
+        originalPrice: dto.originalPrice,
+        currency: dto.currency,
+        durationDays: dto.durationDays,
+        maxUsers: dto.maxUsers,
+        tags: dto.tags === undefined ? undefined : this.normalizeTags(dto.tags),
+        imageUrl: this.optionalNullableString(dto, 'imageUrl'),
+        videoUrl: this.optionalNullableString(dto, 'videoUrl'),
+        downloadUrl: this.optionalNullableString(dto, 'downloadUrl'),
+        externalUrl: this.optionalNullableString(dto, 'externalUrl'),
+        sortOrder: dto.sortOrder,
+        isRecommended: dto.isRecommended,
+        isFeatured: dto.isFeatured,
+        rating: dto.rating,
+        updatedBy: actorId,
+        ...lifecycle,
+      },
+      auth,
+    );
     return this.toDto(product);
   }
 
