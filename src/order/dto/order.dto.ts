@@ -97,6 +97,12 @@ export class OrderDto {
   @ApiPropertyOptional({ description: '完成时间', nullable: true })
   completedAt: Date | null;
 
+  @ApiPropertyOptional({ description: '渠道资金结算时间', nullable: true })
+  settledAt: Date | null;
+
+  @ApiPropertyOptional({ description: '渠道结算详情', nullable: true })
+  settleInfo: Record<string, any> | null;
+
   @ApiPropertyOptional({
     description: '购买权益时长（天数）',
     nullable: true,

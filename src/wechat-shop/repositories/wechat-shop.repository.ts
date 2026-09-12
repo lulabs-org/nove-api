@@ -57,7 +57,7 @@ export class WechatShopRepository {
     if (existingOrder) {
       const order = await this.update(existingOrder.id, params.update);
 
-      return { action: 'updated' as const, order };
+      return { action: 'updated' as const, order, previous: existingOrder };
     }
 
     const createData =
@@ -66,7 +66,7 @@ export class WechatShopRepository {
         : params.create;
     const order = await this.create(createData);
 
-    return { action: 'created' as const, order };
+    return { action: 'created' as const, order, previous: null };
   }
 
   /**

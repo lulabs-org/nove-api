@@ -19,8 +19,14 @@ export class WechatShopProcessor extends WorkerHost {
     try {
       switch (job.name) {
         case 'sync-single-order': {
-          const data = job.data as { orderId: string };
-          await this.wechatShopOrderService.syncSingle(data.orderId);
+          const data = job.data as { orderId: string; settleTime?: number };
+          if (data.settleTime !== undefined) {
+            await this.wechatShopOrderService.syncSingle(data.orderId, {
+              settleTime: data.settleTime,
+            });
+          } else {
+            await this.wechatShopOrderService.syncSingle(data.orderId);
+          }
           break;
         }
 

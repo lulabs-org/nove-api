@@ -39,6 +39,7 @@ const SORT_FIELD_MAP: Record<
   orderCode: 'orderCode',
   orderNumber: 'orderNumber',
   financialClosedAt: 'financialClosedAt',
+  settledAt: 'settledAt',
 };
 
 @Injectable()
@@ -561,6 +562,13 @@ export class OrderService {
       };
     }
 
+    if (query.settledFrom || query.settledTo) {
+      where.settledAt = {
+        gte: query.settledFrom ? new Date(query.settledFrom) : undefined,
+        lte: query.settledTo ? new Date(query.settledTo) : undefined,
+      };
+    }
+
     return where;
   }
 
@@ -631,6 +639,8 @@ export class OrderService {
       currentOwnerId: order.currentOwnerId,
       financialCloserId: order.financialCloserId,
       financialClosedAt: order.financialClosedAt,
+      settledAt: order.settledAt,
+      settleInfo: (order.settleInfo as Record<string, any>) ?? null,
       amount: order.amount,
       currency: order.currency,
       amountCny: order.amountCny,
