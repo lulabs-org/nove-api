@@ -1,3 +1,4 @@
+import { AuthContext } from '@/auth/types/auth-context.interface';
 import {
   Body,
   Controller,
@@ -49,11 +50,13 @@ export class ProjectController {
     @Body() dto: CreateProjectDto,
     @Auth('orgId') orgId?: string | null,
     @Auth('userId') userId?: string | null,
+    @Auth() auth?: AuthContext,
   ): Promise<ProjectDto> {
     return this.projectService.create(
       this.projectService.requireOrgId(orgId),
       dto,
       userId,
+      auth,
     );
   }
 
@@ -105,12 +108,14 @@ export class ProjectController {
     @Body() dto: UpdateProjectDto,
     @Auth('orgId') orgId?: string | null,
     @Auth('userId') userId?: string | null,
+    @Auth() auth?: AuthContext,
   ): Promise<ProjectDto> {
     return this.projectService.update(
       id,
       this.projectService.requireOrgId(orgId),
       dto,
       userId,
+      auth,
     );
   }
 
