@@ -23,7 +23,7 @@
 
 import '../src/prisma/load-prisma-env';
 import { createPrismaAdapter } from '../src/prisma/prisma-adapter';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@/generated/prisma/client';
 import { seedDatabase } from './seed-utils/database-seed';
 import type { SeedMode } from './seed-utils/types';
 import * as seedFunctions from './seeds';

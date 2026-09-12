@@ -1,4 +1,4 @@
-import { TaskStatus, TaskType } from '@prisma/client';
+import { TaskStatus, TaskType } from '@/generated/prisma/client';
 
 // ---- Swagger View Models（仅用于文档展示，不影响业务类型）----
 export class OkResponse {

@@ -16,7 +16,7 @@ import {
   FileVersionStatus,
   FileScanProvider,
   UploadSessionStatus,
-} from '@prisma/client';
+} from '@/generated/prisma/client';
 import { randomUUID } from 'node:crypto';
 import { extname } from 'node:path';
 import {

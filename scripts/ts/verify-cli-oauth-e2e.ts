@@ -1,8 +1,7 @@
-
 import '../../src/prisma/load-prisma-env';
 import { createPrismaAdapter } from '../../src/prisma/prisma-adapter';
 import { JwtService } from '@nestjs/jwt';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@/generated/prisma/client';
 import * as crypto from 'crypto';
 import { generateUsername } from '../../src/common/utils';
 

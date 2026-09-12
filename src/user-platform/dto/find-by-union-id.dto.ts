@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsEnum } from 'class-validator';
-import { Platform } from '@prisma/client';
+import { Platform } from '@/generated/prisma/client';
 
 export class FindByUnionIdDto {
   @ApiProperty({

@@ -4,7 +4,7 @@ import {
   DriveGrantEffect,
   DriveSpaceType,
   MemberStatus,
-} from '@prisma/client';
+} from '@/generated/prisma/client';
 import {
   DriveAccessRepository,
   DriveNodeRepository,

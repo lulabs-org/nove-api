@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { RecordingFileType } from '@prisma/client';
+import { RecordingFileType } from '@/generated/prisma/client';
 import { IsEnum, IsInt, IsOptional, IsString, Min } from 'class-validator';
 
 export class AttachMinuteFileDto {

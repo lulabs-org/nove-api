@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { RefundStatus } from '@prisma/client';
+import { RefundStatus } from '@/generated/prisma/client';
 import { IsDateString, IsEnum, IsOptional, IsString } from 'class-validator';
 
 export class UpdateRefundStatusDto {

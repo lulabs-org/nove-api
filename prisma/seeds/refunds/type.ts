@@ -1,5 +1,10 @@
-import { Order, RefundChannel, RefundStatus, User } from '@prisma/client';
-import { Prisma } from '@prisma/client';
+import {
+  Order,
+  RefundChannel,
+  RefundStatus,
+  User,
+} from '@/generated/prisma/client';
+import { Prisma } from '@/generated/prisma/client';
 
 export interface CreateRefundsParams {
   users: {

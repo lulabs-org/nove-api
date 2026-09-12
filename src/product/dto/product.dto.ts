@@ -1,5 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Currency, ProductCategory, ProductStatus } from '@prisma/client';
+import {
+  Currency,
+  ProductCategory,
+  ProductStatus,
+} from '@/generated/prisma/client';
 
 export class ProductDto {
   @ApiProperty()

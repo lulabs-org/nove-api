@@ -1,6 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getQueueToken } from '@nestjs/bullmq';
-import { Currency, OrderStatus, PaymentProvider } from '@prisma/client';
+import {
+  Currency,
+  OrderStatus,
+  PaymentProvider,
+} from '@/generated/prisma/client';
 import Stripe from 'stripe';
 import { StripeOrderSyncService } from './stripe-order-sync.service';
 import { StripeClientService } from './stripe-client.service';

@@ -12,7 +12,10 @@ import {
   ValidateNested,
   ValidateIf,
 } from 'class-validator';
-import { ProfitShareRuleStatus, ProfitShareRuleType } from '@prisma/client';
+import {
+  ProfitShareRuleStatus,
+  ProfitShareRuleType,
+} from '@/generated/prisma/client';
 
 export class CreateProfitShareAllocationDto {
   @ApiPropertyOptional({ description: '记录ID，供更新时使用' })

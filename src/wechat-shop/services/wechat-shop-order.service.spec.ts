@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getQueueToken } from '@nestjs/bullmq';
-import { OrderStatus, PaymentProvider } from '@prisma/client';
+import { OrderStatus, PaymentProvider } from '@/generated/prisma/client';
 import { WechatShopOrderService } from './wechat-shop-order.service';
 import { WechatShopRepository } from '../repositories';
 import { WechatShopClientService } from './wechat-shop-client.service';

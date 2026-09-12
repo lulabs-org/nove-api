@@ -6,7 +6,12 @@ import {
 } from '@nestjs/bullmq';
 import type { Job } from 'bullmq';
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
-import { TaskStatus, TaskType, ScheduledTask, Prisma } from '@prisma/client';
+import {
+  TaskStatus,
+  TaskType,
+  ScheduledTask,
+  Prisma,
+} from '@/generated/prisma/client';
 import { TasksRepository } from '../repositories/tasks.repository';
 import { TaskExecutionLogsRepository } from '../repositories/task-execution-logs.repository';
 import { TaskHandlerRegistry } from '../handlers/task-handler.registry';

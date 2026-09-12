@@ -1,7 +1,11 @@
 import { Type } from 'class-transformer';
 import { IsDateString, IsInt, Matches, Max, Min } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { MeetingPlatform, MeetingType, RecordingSource } from '@prisma/client';
+import {
+  MeetingPlatform,
+  MeetingType,
+  RecordingSource,
+} from '@/generated/prisma/client';
 
 const TIMEZONE_SUFFIX = /(?:Z|[+-]\d{2}:\d{2})$/;
 

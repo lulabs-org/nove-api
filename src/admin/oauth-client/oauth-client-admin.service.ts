@@ -9,7 +9,7 @@ import {
   OAuthClientStatus,
   OAuthClientType,
   Prisma,
-} from '@prisma/client';
+} from '@/generated/prisma/client';
 import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
 

@@ -4,7 +4,11 @@ import {
   ConflictException,
   NotFoundException,
 } from '@nestjs/common';
-import { Currency, RefundChannel, RefundStatus } from '@prisma/client';
+import {
+  Currency,
+  RefundChannel,
+  RefundStatus,
+} from '@/generated/prisma/client';
 import {
   OrderRefundRepository,
   OrderRefundWithRelations,

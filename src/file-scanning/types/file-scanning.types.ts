@@ -1,4 +1,4 @@
-import { FileScanProvider } from '@prisma/client';
+import { FileScanProvider } from '@/generated/prisma/client';
 
 export interface FileScanInput {
   objectKey: string;

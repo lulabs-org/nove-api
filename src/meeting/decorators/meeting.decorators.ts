@@ -7,7 +7,7 @@ import {
   ApiParam,
   ApiBody,
 } from '@nestjs/swagger';
-import { MeetingPlatform, MeetingType } from '@prisma/client';
+import { MeetingPlatform, MeetingType } from '@/generated/prisma/client';
 import {
   MeetingRecordListResponseDto,
   MeetingStatsResponseDto,

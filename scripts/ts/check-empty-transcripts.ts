@@ -1,13 +1,13 @@
 /**
  * 运行命令 (在项目根目录下执行)：
  * npx ts-node scripts/ts/check-empty-transcripts.ts
- * 
+ *
  * 或者使用 tsx (推荐，速度更快):
  * npx tsx scripts/ts/check-empty-transcripts.ts
  */
 import '../../src/prisma/load-prisma-env';
 import { createPrismaAdapter } from '../../src/prisma/prisma-adapter';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@/generated/prisma/client';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -28,35 +28,44 @@ async function main() {
     where: {
       // 查询条件：segments 关联表（TranscriptSegment）中没有任何关联记录
       segments: {
-        none: {}
-      }
+        none: {},
+      },
     },
     select: {
       // 仅选择需要的字段，减少内存占用和数据库传输压力
-      id: true,             // 转写记录 ID
-      source: true,         // 转写数据来源
-      status: true,         // 转写状态
-      createdAt: true,      // 创建时间
-      minuteId: true,    // 关联的录音 ID
+      id: true, // 转写记录 ID
+      source: true, // 转写数据来源
+      status: true, // 转写状态
+      createdAt: true, // 创建时间
+      minuteId: true, // 关联的录音 ID
       minute: {
         // 级联查询：获取关联录音的 externalId
         select: {
-          externalId: true  // 录音在外部系统（如腾讯会议）的 ID
-        }
-      }
+          externalId: true, // 录音在外部系统（如腾讯会议）的 ID
+        },
+      },
     },
     orderBy: {
       // 按创建时间倒序排列，最新的记录排在前面
-      createdAt: 'desc'
-    }
+      createdAt: 'desc',
+    },
   });
 
-  console.log(`查询完成！一共有 ${allEmptyTranscripts.length} 条 Transcript 没有对应的 TranscriptSegment 记录。`);
+  console.log(
+    `查询完成！一共有 ${allEmptyTranscripts.length} 条 Transcript 没有对应的 TranscriptSegment 记录。`,
+  );
 
   // 如果查询结果不为空，则开始生成 CSV 文件
   if (allEmptyTranscripts.length > 0) {
     // 1. 构造 CSV 的表头（首行）
-    const headers = ['id', 'source', 'status', 'createdAt', 'minuteId', 'externalId'];
+    const headers = [
+      'id',
+      'source',
+      'status',
+      'createdAt',
+      'minuteId',
+      'externalId',
+    ];
     const csvLines = [headers.join(',')];
 
     // 2. 遍历查询到的记录，逐行构造 CSV 数据
@@ -64,21 +73,23 @@ async function main() {
       // 将单条记录的字段映射为一个数组
       const line = [
         t.id,
-        t.source || '',                // 如果 source 为空则转为空字符串
+        t.source || '', // 如果 source 为空则转为空字符串
         t.status,
-        t.createdAt.toISOString(),     // 将日期格式化为 ISO 字符串以便在 CSV 中统一显示
-        t.minuteId || '',           // 如果 minuteId 为空则转为空字符串
-        t.minute?.externalId || ''  // 可选链处理 minute 和 externalId，为空则转为空字符串
-      ].map(field => {
-        // 将字段统一转换为字符串
-        const str = String(field);
-        // CSV 转义规则处理：如果字符串中包含逗号、双引号或换行符
-        // 必须将其用双引号包裹，并将字符串本身包含的双引号替换为两个双引号 ("")
-        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-          return `"${str.replace(/"/g, '""')}"`;
-        }
-        return str;
-      }).join(','); // 将各字段使用逗号拼接为一行数据
+        t.createdAt.toISOString(), // 将日期格式化为 ISO 字符串以便在 CSV 中统一显示
+        t.minuteId || '', // 如果 minuteId 为空则转为空字符串
+        t.minute?.externalId || '', // 可选链处理 minute 和 externalId，为空则转为空字符串
+      ]
+        .map((field) => {
+          // 将字段统一转换为字符串
+          const str = String(field);
+          // CSV 转义规则处理：如果字符串中包含逗号、双引号或换行符
+          // 必须将其用双引号包裹，并将字符串本身包含的双引号替换为两个双引号 ("")
+          if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+            return `"${str.replace(/"/g, '""')}"`;
+          }
+          return str;
+        })
+        .join(','); // 将各字段使用逗号拼接为一行数据
 
       // 将处理好的一行数据添加到数据集中
       csvLines.push(line);
@@ -93,7 +104,9 @@ async function main() {
     // 5. 同步写入文件系统
     fs.writeFileSync(outputPath, csvContent, 'utf-8');
 
-    console.log(`\n已成功将全部 ${allEmptyTranscripts.length} 条记录导出到 CSV 文件：`);
+    console.log(
+      `\n已成功将全部 ${allEmptyTranscripts.length} 条记录导出到 CSV 文件：`,
+    );
     console.log(outputPath);
   }
 }

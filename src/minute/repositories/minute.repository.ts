@@ -1,8 +1,12 @@
 import { RecordingStatus } from '../enums/status.enum';
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import { RecordingSource, PrismaClient, Prisma } from '@prisma/client';
-import type { Meeting } from '@prisma/client';
+import {
+  RecordingSource,
+  PrismaClient,
+  Prisma,
+} from '@/generated/prisma/client';
+import type { Meeting } from '@/generated/prisma/client';
 
 type PrismaTransaction = Omit<
   PrismaClient,

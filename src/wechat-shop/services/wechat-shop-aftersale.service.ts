@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
-import { RefundChannel, RefundStatus } from '@prisma/client';
+import { RefundChannel, RefundStatus } from '@/generated/prisma/client';
 import { WechatShopRepository } from '../repositories';
 import {
   GetAftersaleListParams,

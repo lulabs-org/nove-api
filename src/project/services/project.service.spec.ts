@@ -4,7 +4,11 @@ import {
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
-import { ProductStatus, ProjectLevel, ProjectStatus } from '@prisma/client';
+import {
+  ProductStatus,
+  ProjectLevel,
+  ProjectStatus,
+} from '@/generated/prisma/client';
 import { ProjectRepository } from '../repositories/project.repository';
 import { ProjectService } from './project.service';
 

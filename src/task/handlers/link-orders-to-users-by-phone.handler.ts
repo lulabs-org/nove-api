@@ -1,5 +1,5 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@/generated/prisma/client';
 import { generateUsername } from '@/common/utils';
 import { Job } from 'bullmq';
 import { PrismaService } from '@/prisma/prisma.service';

@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { Prisma, PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@/generated/prisma/client';
 import { PrismaService } from '../../../src/prisma/prisma.service';
 import { createPrismaAdapter } from '../../../src/prisma/prisma-adapter';
 

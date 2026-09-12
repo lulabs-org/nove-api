@@ -10,7 +10,7 @@ import {
   Prisma,
   ProfitShareRuleType,
   ProfitShareRuleStatus,
-} from '@prisma/client';
+} from '@/generated/prisma/client';
 import { ProfitSharingRuleRepository } from '../repositories/profit-sharing-rule.repository';
 
 @Injectable()

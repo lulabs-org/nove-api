@@ -5,19 +5,19 @@
  * @LastEditTime: 2026-01-15 20:19:59
  * @FilePath: /nove_api/scripts/ts/assign-roles.ts
  * @Description: 为用户分配角色的脚本
- * 
+ *
  * # 为单个用户分配角色
  * pnpm dlx tsx scripts/ts/assign-roles.ts admin-role user-001
- * 
+ *
  * # 为多个用户分配角色
  * pnpm dlx tsx scripts/ts/assign-roles.ts member-role user-001 user-002 user-003 user-004
- * 
- * Copyright (c) 2026 by LuLab-Team, All Rights Reserved. 
+ *
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
 import '../../src/prisma/load-prisma-env';
 import { createPrismaAdapter } from '../../src/prisma/prisma-adapter';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@/generated/prisma/client';
 import { assignRolesToUsers } from '../../prisma/seeds/relations/user-relations/user-roles';
 
 const prisma = new PrismaClient({ adapter: createPrismaAdapter() });
@@ -33,12 +33,16 @@ function parseCommandLineArgs(): CommandLineArgs {
   if (args.length < 2) {
     console.error('❌ 错误: 缺少必要的参数');
     console.log('\n使用方法:');
-    console.log('  tsx scripts/assign-roles.ts <roleId> <userId1> <userId2> ...');
+    console.log(
+      '  tsx scripts/assign-roles.ts <roleId> <userId1> <userId2> ...',
+    );
     console.log('\n参数说明:');
     console.log('  roleId   - 要分配的角色ID');
     console.log('  userIds  - 要分配角色的用户ID列表（可多个）');
     console.log('\n示例:');
-    console.log('  tsx scripts/assign-roles.ts role-123 user-001 user-002 user-003');
+    console.log(
+      '  tsx scripts/assign-roles.ts role-123 user-001 user-002 user-003',
+    );
     process.exit(1);
   }
 

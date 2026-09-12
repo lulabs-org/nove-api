@@ -1,4 +1,4 @@
-import { PrismaClient, Currency, OrderStatus } from '@prisma/client';
+import { PrismaClient, Currency, OrderStatus } from '@/generated/prisma/client';
 
 export async function createOrders(prisma: PrismaClient) {
   const orders = [

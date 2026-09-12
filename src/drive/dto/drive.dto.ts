@@ -20,7 +20,7 @@ import {
   DriveAction,
   DriveGrantEffect,
   DrivePrincipalType,
-} from '@prisma/client';
+} from '@/generated/prisma/client';
 
 export class ListDriveNodesQueryDto {
   @ApiPropertyOptional({ nullable: true })

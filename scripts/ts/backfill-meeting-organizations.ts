@@ -1,6 +1,6 @@
 import '../../src/prisma/load-prisma-env';
 import { createPrismaAdapter } from '../../src/prisma/prisma-adapter';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@/generated/prisma/client';
 
 const prisma = new PrismaClient({ adapter: createPrismaAdapter() });
 

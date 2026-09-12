@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
-import { FileScanProvider, FileVersionStatus, Prisma } from '@prisma/client';
+import {
+  FileScanProvider,
+  FileVersionStatus,
+  Prisma,
+} from '@/generated/prisma/client';
 import type { Queue } from 'bullmq';
 import { FileScanningService } from '@/file-scanning';
 import { FileScanRepository } from '../repositories';

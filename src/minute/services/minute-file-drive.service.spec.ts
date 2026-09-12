@@ -3,7 +3,7 @@ import {
   FileBindingTargetType,
   FileVersionStatus,
   RecordingFileType,
-} from '@prisma/client';
+} from '@/generated/prisma/client';
 import { MinuteFileDriveService } from './minute-file-drive.service';
 import { MinuteRepository } from '../repositories/minute.repository';
 import { MinuteFileRepository } from '../repositories/minute-file.repository';

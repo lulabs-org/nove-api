@@ -4,8 +4,8 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
-import { Gender } from '@prisma/client';
+import { Prisma } from '@/generated/prisma/client';
+import { Gender } from '@/generated/prisma/client';
 import { parse } from 'csv-parse/sync';
 import * as ExcelJS from 'exceljs';
 import { plainToInstance } from 'class-transformer';

@@ -1,5 +1,5 @@
 import { ForbiddenException } from '@nestjs/common';
-import { RecordingSource } from '@prisma/client';
+import { RecordingSource } from '@/generated/prisma/client';
 import { MinuteRepository } from '../repositories/minute.repository';
 import { MinuteService } from './minute.service';
 import { PrismaService } from '@/prisma/prisma.service';

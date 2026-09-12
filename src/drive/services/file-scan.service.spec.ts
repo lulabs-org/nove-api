@@ -3,7 +3,7 @@ import {
   FileVersionStatus,
   Prisma,
   UploadSessionStatus,
-} from '@prisma/client';
+} from '@/generated/prisma/client';
 import { FileScanRepository } from '../repositories';
 import { FileScanService } from './file-scan.service';
 

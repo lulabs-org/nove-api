@@ -18,7 +18,7 @@ import { Observable, throwError } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
 import type { Request, Response } from 'express';
 import { WebhookLogService } from '@/webhook-log/webhook-log.service';
-import { WebhookStatus, Prisma } from '@prisma/client';
+import { WebhookStatus, Prisma } from '@/generated/prisma/client';
 import { MeetingEvent } from '../types';
 
 /**

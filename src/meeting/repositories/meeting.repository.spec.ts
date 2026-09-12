@@ -6,7 +6,11 @@ import { ProcessingStatus } from '../../minute/enums/status.enum';
 import { Test, TestingModule } from '@nestjs/testing';
 import { MeetingRepository } from './meeting.repository';
 import { PrismaService } from '../../prisma/prisma.service';
-import { MeetingPlatform, MeetingType, Prisma } from '@prisma/client';
+import {
+  MeetingPlatform,
+  MeetingType,
+  Prisma,
+} from '@/generated/prisma/client';
 
 describe('MeetingRepository', () => {
   let repository: MeetingRepository;

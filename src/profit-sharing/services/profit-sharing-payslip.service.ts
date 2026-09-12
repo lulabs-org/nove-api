@@ -5,7 +5,7 @@ import {
   ProfitShareRuleType,
   ProfitShareRuleStatus,
   Prisma,
-} from '@prisma/client';
+} from '@/generated/prisma/client';
 import {
   PayslipItemCategory,
   CreatePayslipAdjustmentDto,

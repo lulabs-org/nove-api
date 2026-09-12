@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { ConfigType } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@/generated/prisma/client';
 import * as crypto from 'crypto';
 
 import { PermService } from '@/admin/permission/services/permission.service';

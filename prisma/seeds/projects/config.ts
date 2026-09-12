@@ -1,4 +1,4 @@
-import { ProjectLevel, ProjectStatus } from '@prisma/client';
+import { ProjectLevel, ProjectStatus } from '@/generated/prisma/client';
 import type { ProjectConfig } from './type';
 
 export const PROJECT_CONFIGS: readonly ProjectConfig[] = [

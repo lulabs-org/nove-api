@@ -4,8 +4,8 @@ import {
   ProfitShareRuleStatus,
   ProfitShareRuleType,
   ProfitShareRecordStatus,
-} from '@prisma/client';
-import { Prisma } from '@prisma/client';
+} from '@/generated/prisma/client';
+import { Prisma } from '@/generated/prisma/client';
 import { ProfitSharingRuleService } from './profit-sharing-rule.service';
 import { ProfitSharingService } from './profit-sharing.service';
 import { ProfitSharingRuleRepository } from '../repositories/profit-sharing-rule.repository';

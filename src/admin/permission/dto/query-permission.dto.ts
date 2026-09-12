@@ -10,7 +10,7 @@
  */
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsEnum, IsBoolean } from 'class-validator';
-import { PermissionType } from '@prisma/client';
+import { PermissionType } from '@/generated/prisma/client';
 import { Type, Transform } from 'class-transformer';
 
 export class QueryPermissionDto {

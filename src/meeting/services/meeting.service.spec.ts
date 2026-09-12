@@ -1,5 +1,5 @@
 import { ProcessingStatus } from '../../minute/enums/status.enum';
-import { MeetingPlatform, MeetingType } from '@prisma/client';
+import { MeetingPlatform, MeetingType } from '@/generated/prisma/client';
 import { MeetingRepository } from '../repositories/meeting.repository';
 import { MeetingParticipantRepository } from '../repositories/meeting-participant.repository';
 import { MeetingService } from './meeting.service';

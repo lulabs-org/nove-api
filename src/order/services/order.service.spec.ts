@@ -1,6 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/unbound-method */
 import { BadRequestException } from '@nestjs/common';
-import { BenefitAdjustmentType, Currency, OrderStatus } from '@prisma/client';
+import {
+  BenefitAdjustmentType,
+  Currency,
+  OrderStatus,
+} from '@/generated/prisma/client';
 import {
   OrderBenefitAdjustmentWithOperator,
   OrderRepository,

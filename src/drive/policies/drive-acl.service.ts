@@ -10,7 +10,7 @@ import {
   DriveSpaceType,
   MemberStatus,
   Prisma,
-} from '@prisma/client';
+} from '@/generated/prisma/client';
 import { AuthContext } from '@/auth/types/auth-context.interface';
 import { PermService } from '@/admin/permission/services/permission.service';
 import {

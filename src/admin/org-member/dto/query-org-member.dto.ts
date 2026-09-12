@@ -19,7 +19,7 @@ import {
   IsBoolean,
   Max,
 } from 'class-validator';
-import { MemberType, MemberStatus } from '@prisma/client';
+import { MemberType, MemberStatus } from '@/generated/prisma/client';
 import { Transform, Type } from 'class-transformer';
 
 const blankStringToUndefined = ({ value }: { value: unknown }) =>

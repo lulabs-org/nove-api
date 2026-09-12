@@ -6,7 +6,7 @@
 
 - Node.js 22.12+，CI 和 Docker 使用 22.23.1；pnpm 9.15.9。
 - `prisma`、`@prisma/client`、`@prisma/adapter-pg` 固定到相同版本，避免 `latest` 引入下一个大版本或预发布版本。
-- 保留 Prisma 7 支持的 `prisma-client-js` 生成器和 CommonJS 构建，现有 `@prisma/client` 导入保持兼容。新 `prisma-client` 生成器迁移可独立进行。
+- 使用 Prisma 7 默认的 `prisma-client` 生成器，将客户端显式生成到 `src/generated/prisma`；生成目录不提交到 Git。项目继续按现有 NestJS CommonJS 配置编译生成代码。
 - CLI 的 schema 目录、迁移目录、seed 和数据库地址由根目录 `prisma.config.ts` 配置；配置显式加载 `.env` 并展开 `${VARIABLE}` 引用，保留部署环境已注入的变量。`prisma/schema.prisma` 不再声明连接地址。
 - `prisma generate` 不需要数据库凭据，便于 Docker 构建；迁移等数据库命令必须提供 `DATABASE_URL`。
 - 服务及 TypeScript 数据脚本使用 `createPrismaAdapter()`。服务销毁时释放连接池。

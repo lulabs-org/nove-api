@@ -12,7 +12,7 @@ import {
   MeetingType,
   Platform,
   RecordingSource,
-} from '@prisma/client';
+} from '@/generated/prisma/client';
 
 describe('ParticipantSummaryController (e2e)', () => {
   const generateSummaries = jest.fn().mockResolvedValue([]);

@@ -7,7 +7,7 @@ import {
   RefundStatus,
   Prisma,
   Order,
-} from '@prisma/client';
+} from '@/generated/prisma/client';
 
 import { RuleWithDetails } from '../types';
 import { ProfitSharingRuleRepository } from '../repositories/profit-sharing-rule.repository';

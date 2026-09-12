@@ -10,7 +10,7 @@ import {
   ValidateIf,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { MemberType } from '@prisma/client';
+import { MemberType } from '@/generated/prisma/client';
 
 export class CreateOrgMemberDto {
   @ApiPropertyOptional({

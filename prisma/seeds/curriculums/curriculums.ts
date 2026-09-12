@@ -4,7 +4,7 @@ import {
   Project,
   Prisma,
   CurriculumStatus,
-} from '@prisma/client';
+} from '@/generated/prisma/client';
 import { CURRICULUM_CONFIGS } from './config';
 import type {
   CreateCurriculumsParams,

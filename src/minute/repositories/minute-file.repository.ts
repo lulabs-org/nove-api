@@ -9,7 +9,7 @@
  * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
  */
 import { Injectable } from '@nestjs/common';
-import { FileVersionStatus } from '@prisma/client';
+import { FileVersionStatus } from '@/generated/prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import type { CreateMinuteFileData, UpdateMinuteFileData } from '../types';
 

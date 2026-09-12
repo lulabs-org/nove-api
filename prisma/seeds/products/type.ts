@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
-import { ProductCategory } from '@prisma/client';
+import { ProductCategory } from '@/generated/prisma/client';
 
 export interface ProductConfig {
   productCode: string;

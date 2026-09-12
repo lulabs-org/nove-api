@@ -1,4 +1,8 @@
-import { Project, ProjectLevel, ProjectStatus } from '@prisma/client';
+import {
+  Project,
+  ProjectLevel,
+  ProjectStatus,
+} from '@/generated/prisma/client';
 
 export interface ProjectConfig {
   id: string;

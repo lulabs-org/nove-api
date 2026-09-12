@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { OrderRefund, Prisma } from '@prisma/client';
+import { OrderRefund, Prisma } from '@/generated/prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 
 const refundInclude = {

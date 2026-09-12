@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { TrackingReportCadence } from '@prisma/client';
+import { TrackingReportCadence } from '@/generated/prisma/client';
 import { DateTime } from 'luxon';
 
 export interface TrackingReportPeriod {

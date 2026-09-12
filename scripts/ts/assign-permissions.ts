@@ -4,13 +4,13 @@
  * @LastEditors: 杨仕明 shiming.y@qq.com
  * @LastEditTime: 2026-01-15 20:27:21
  * @FilePath: /nove_api/scripts/assign-permissions.ts
- * @Description: 
- * 
- * Copyright (c) 2026 by LuLab-Team, All Rights Reserved. 
+ * @Description:
+ *
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 import '../../src/prisma/load-prisma-env';
 import { createPrismaAdapter } from '../../src/prisma/prisma-adapter';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '@/generated/prisma/client';
 import { assignPermissionsToRole } from '../../prisma/seeds/relations/permission-relations/role-permissions';
 
 const prisma = new PrismaClient({ adapter: createPrismaAdapter() });
@@ -26,12 +26,16 @@ function parseCommandLineArgs(): CommandLineArgs {
   if (args.length < 2) {
     console.error('❌ 错误: 缺少必要的参数');
     console.log('\n使用方法:');
-    console.log('  tsx scripts/assign-permissions.ts <roleId> <permissionId1> <permissionId2> ...');
+    console.log(
+      '  tsx scripts/assign-permissions.ts <roleId> <permissionId1> <permissionId2> ...',
+    );
     console.log('\n参数说明:');
     console.log('  roleId       - 要分配权限的角色ID');
     console.log('  permissionIds - 要分配的权限ID列表（可多个）');
     console.log('\n示例:');
-    console.log('  tsx scripts/assign-permissions.ts role-123 perm-001 perm-002 perm-003');
+    console.log(
+      '  tsx scripts/assign-permissions.ts role-123 perm-001 perm-002 perm-003',
+    );
     process.exit(1);
   }
 
@@ -73,9 +77,7 @@ async function main(): Promise<void> {
     await assignPermissionsToRole(prisma, roleId, permissions);
     console.log('\n✅ 权限分配成功！');
     console.log(`📊 已为角色 ${roleId} 分配 ${permissions.length} 个权限`);
-    console.log(
-      `📝 权限列表: ${permissions.map((p) => p.code).join(', ')}`,
-    );
+    console.log(`📝 权限列表: ${permissions.map((p) => p.code).join(', ')}`);
   } catch (error) {
     console.error('\n❌ 权限分配失败:', error);
     throw error;

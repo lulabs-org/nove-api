@@ -10,7 +10,7 @@ import {
   Meeting,
   Minute,
   RecordingSource,
-} from '@prisma/client';
+} from '@/generated/prisma/client';
 import { Meetuser, EventPayload, MeetingSessionInfo } from '../types';
 import { TMeetEventUtils } from '../utils/tmeet-event.utils';
 import type { RecordMeeting, RecordFile } from '../types';

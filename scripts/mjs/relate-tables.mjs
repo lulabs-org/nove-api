@@ -2,7 +2,9 @@ import { config } from 'dotenv';
 import { expand } from 'dotenv-expand';
 expand(config({ quiet: true }));
 import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient, Prisma } from "@prisma/client";
+import prismaClient from "../../src/generated/prisma/client.ts";
+
+const { PrismaClient, Prisma } = prismaClient;
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg(
@@ -19,7 +21,7 @@ const prisma = new PrismaClient({
 
 /**
  * 用法:
- *   node scripts/relate-tables.mjs --sourceModel=PlatformUser --targetModel=User --sourceField=email --targetField=email --foreignKey=localUserId --batch=1000 --dryRun=true
+ *   pnpm exec tsx scripts/mjs/relate-tables.mjs --sourceModel=PlatformUser --targetModel=User --sourceField=email --targetField=email --foreignKey=localUserId --batch=1000 --dryRun=true
  *
  * 说明:
  *   - --sourceModel 必填: 源模型名称（需要更新外键的模型）
@@ -49,7 +51,7 @@ const WHERE = getArg("where", "");
 const TARGET_WHERE = getArg("targetWhere", "");
 
 if (!SOURCE_MODEL || !TARGET_MODEL || !SOURCE_FIELD || !TARGET_FIELD || !FOREIGN_KEY) {
-  console.error("❌ 缺少参数。示例: node relate-tables.mjs --sourceModel=PlatformUser --targetModel=User --sourceField=email --targetField=email --foreignKey=localUserId");
+  console.error("❌ 缺少参数。示例: pnpm exec tsx scripts/mjs/relate-tables.mjs --sourceModel=PlatformUser --targetModel=User --sourceField=email --targetField=email --foreignKey=localUserId");
   process.exit(1);
 }
 

@@ -7,7 +7,7 @@ import {
   Param,
   Body,
 } from '@nestjs/common';
-import { Prisma, ProfitShareRecordStatus } from '@prisma/client';
+import { Prisma, ProfitShareRecordStatus } from '@/generated/prisma/client';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
 import { ProfitSharingRecordService } from '../services/profit-sharing-record.service';

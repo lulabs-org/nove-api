@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, Product, ProductStatus } from '@prisma/client';
+import { Prisma, Product, ProductStatus } from '@/generated/prisma/client';
 import {
   CreateProductDto,
   ProductDto,

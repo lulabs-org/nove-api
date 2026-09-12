@@ -1,6 +1,6 @@
 import { plainToInstance, type ClassConstructor } from 'class-transformer';
 import { validate } from 'class-validator';
-import { OrderStatus } from '@prisma/client';
+import { OrderStatus } from '@/generated/prisma/client';
 import { CreateOrderDto } from './create-order.dto';
 import { QueryOrderDto } from './query-order.dto';
 import { UpdateOrderStatusDto } from './update-order-status.dto';

@@ -12,7 +12,7 @@
 import './load-prisma-env';
 
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { Prisma, PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@/generated/prisma/client';
 import { createPrismaAdapter } from './prisma-adapter';
 
 @Injectable()

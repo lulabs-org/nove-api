@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Channel, Prisma } from '@prisma/client';
+import { Channel, Prisma } from '@/generated/prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 
 export type ChannelWithOrderCount = Channel & { orderCount: number };

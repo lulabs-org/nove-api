@@ -9,7 +9,7 @@
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
-import { PrismaClient, User, Dept } from '@prisma/client';
+import { PrismaClient, User, Dept } from '@/generated/prisma/client';
 
 async function getOrgMemberId(
   prisma: PrismaClient,

@@ -1,5 +1,9 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { MeetingPlatform, MeetingType, RecordingSource } from '@prisma/client';
+import {
+  MeetingPlatform,
+  MeetingType,
+  RecordingSource,
+} from '@/generated/prisma/client';
 import { PlatformUserTranscriptRepository } from '../repositories/platform-user-transcript.repository';
 import { PlatformUserTranscriptService } from './platform-user-transcript.service';
 

@@ -1,5 +1,5 @@
 import { TMeetEventUtils } from './tmeet-event.utils';
-import { MeetingType } from '@prisma/client';
+import { MeetingType } from '@/generated/prisma/client';
 import { MeetingType as TMeetMeetingType } from '../enums/tmeet.enum';
 
 describe('TMeetEventUtils', () => {

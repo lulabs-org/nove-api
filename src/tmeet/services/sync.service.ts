@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { TMeetApiClientFactory } from '../client';
-import { Meeting } from '@prisma/client';
+import { Meeting } from '@/generated/prisma/client';
 import type { RecordMeeting, RecordFile } from '../types';
 import { TMeetMeetingCoreService } from './meeting-core.service';
 import { TMeetTranscriptCoreService } from './transcript-core.service';

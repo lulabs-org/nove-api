@@ -1,4 +1,4 @@
-import { GenerationMethod, PrismaClient } from '@prisma/client';
+import { GenerationMethod, PrismaClient } from '@/generated/prisma/client';
 import { SPEAKER_SUMMARY_CONFIGS } from './config';
 import type { SpeakerSummary } from './type';
 

@@ -5,7 +5,7 @@ import {
   OrderStatus,
   PaymentProvider,
   Prisma,
-} from '@prisma/client';
+} from '@/generated/prisma/client';
 
 export class OrderRelationDto {
   @ApiProperty({ description: '关联对象 ID' })

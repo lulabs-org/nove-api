@@ -1,5 +1,5 @@
 import { Test } from '@nestjs/testing';
-import { DriveSpaceType } from '@prisma/client';
+import { DriveSpaceType } from '@/generated/prisma/client';
 import { DriveService } from './drive.service';
 import { DriveAclService } from '../policies';
 import { DriveSpaceRepository } from '../repositories';

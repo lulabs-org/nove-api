@@ -9,7 +9,7 @@ import {
   Prisma,
   StorageProvider,
   UploadSessionStatus,
-} from '@prisma/client';
+} from '@/generated/prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { latestFileVersionInclude } from './drive-node.repository';
 
