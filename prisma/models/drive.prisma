@@ -259,6 +259,7 @@ enum FileBindingTargetType {
   PRODUCT
   MINUTE
   PROJECT
+  IDENTITY_DOCUMENT
   CUSTOM_RECORD
   OTHER
 }

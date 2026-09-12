@@ -83,6 +83,27 @@ export const REAL_PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     resource: 'user',
     action: 'reset-password',
   },
+  {
+    name: '查看身份凭证',
+    code: 'identity-document:read',
+    description: '查看用户身份凭证及脱敏证件号码',
+    resource: 'identity-document',
+    action: 'read',
+  },
+  {
+    name: '维护身份凭证',
+    code: 'identity-document:write',
+    description: '登记、修改、提交和删除用户身份凭证',
+    resource: 'identity-document',
+    action: 'write',
+  },
+  {
+    name: '审核身份凭证',
+    code: 'identity-document:review',
+    description: '审核通过或驳回待核验的身份凭证',
+    resource: 'identity-document',
+    action: 'review',
+  },
 
   // ========== 角色管理 ==========
   {
@@ -877,6 +898,27 @@ export const PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     description: '重置用户密码',
     resource: 'user',
     action: 'reset-password',
+  },
+  {
+    name: '查看身份凭证',
+    code: 'identity-document:read',
+    description: '查看用户身份凭证及脱敏证件号码',
+    resource: 'identity-document',
+    action: 'read',
+  },
+  {
+    name: '维护身份凭证',
+    code: 'identity-document:write',
+    description: '登记、修改、提交和删除用户身份凭证',
+    resource: 'identity-document',
+    action: 'write',
+  },
+  {
+    name: '审核身份凭证',
+    code: 'identity-document:review',
+    description: '审核通过或驳回待核验的身份凭证',
+    resource: 'identity-document',
+    action: 'review',
   },
 
   // ========== 角色管理 ==========
