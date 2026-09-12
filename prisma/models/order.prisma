@@ -28,6 +28,10 @@ model Order {
   financialCloserId String?   @map("financial_closer_id") // 财务结单人（系统用户ID）
   financialClosedAt DateTime? @map("financial_closed_at") @db.Timestamptz(6) // 财务结单时间
 
+  // 渠道结算：微信小店 / Stripe 等外部平台的客观资金结算与扣费明细
+  settledAt  DateTime? @map("settled_at") @db.Timestamptz(6) // 渠道资金结算时间
+  settleInfo Json?     @map("settle_info") @db.JsonB // 渠道结算详情（包含手续费 commission_fee、返佣等）
+
   // 金额（最小货币单位：分/cent；JPY则是"1"代表1日元）
   amount   Int      @map("amount") // 订单金额（最小单位：分）
   currency Currency @default(CNY) // 币种
@@ -91,6 +95,8 @@ model Order {
   // 结单对账：按结单时间筛选/分组
   @@index([financialClosedAt], map: "idx_orders_financial_closed_at")
   @@index([channelId, financialClosedAt], map: "idx_orders_channel_fin_closed_at")
+  // 渠道结算对账：按渠道结算时间筛选
+  @@index([settledAt], map: "idx_orders_settled_at")
   // 负责人/产品维度
   @@index([currentOwnerId], map: "idx_orders_current_owner_id")
   @@index([productId, createdAt], map: "idx_orders_product_created_at")

@@ -164,7 +164,14 @@ export interface WechatShopOrder {
     /** 优惠券信息 */
     coupon_info?: Record<string, unknown>;
     /** 结算信息 */
-    settle_info?: Record<string, unknown>;
+    settle_info?: {
+      predict_commission_fee?: number;
+      commission_fee?: number;
+      predict_wecoin_commission?: number;
+      wecoin_commission?: number;
+      settle_time?: number;
+      [key: string]: unknown;
+    };
   };
   /** 售后详情信息 */
   aftersale_detail?: {

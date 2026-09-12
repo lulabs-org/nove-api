@@ -28,6 +28,8 @@ const mockOrder = (
   currentOwnerId: null,
   financialCloserId: null,
   financialClosedAt: null,
+  settledAt: null,
+  settleInfo: null,
   amount: 36500,
   currency: Currency.CNY,
   amountCny: 36500,

@@ -90,6 +90,16 @@ export class QueryOrderDto {
   @IsDateString()
   createdTo?: string;
 
+  @ApiPropertyOptional({ description: '渠道资金结算开始时间' })
+  @IsOptional()
+  @IsDateString()
+  settledFrom?: string;
+
+  @ApiPropertyOptional({ description: '渠道资金结算结束时间' })
+  @IsOptional()
+  @IsDateString()
+  settledTo?: string;
+
   @ApiPropertyOptional({ description: '是否包含已删除订单', example: false })
   @IsOptional()
   @Transform(({ value }) => value === true || value === 'true')

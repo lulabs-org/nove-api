@@ -4,6 +4,7 @@ import { Queue } from 'bullmq';
 import {
   ChannelsEcAftersaleUpdateEvent,
   ChannelsEcOrderPayEvent,
+  ChannelsEcOrderSettleEvent,
 } from '../types';
 import { WechatShopOrderService } from './wechat-shop-order.service';
 
@@ -18,6 +19,8 @@ export class WechatShopEventService {
   > = {
     channels_ec_order_pay: (payload) =>
       this.handleOrderPay(payload as ChannelsEcOrderPayEvent),
+    channels_ec_order_settle: (payload) =>
+      this.handleOrderSettle(payload as ChannelsEcOrderSettleEvent),
     channels_ec_aftersale_update: (payload) =>
       this.handleAftersaleUpdate(payload as ChannelsEcAftersaleUpdateEvent),
   };
@@ -57,6 +60,22 @@ export class WechatShopEventService {
     if (orderId) {
       await this.wechatShopOrderService.syncSingle(String(orderId));
     }
+  }
+
+  /**
+   * 处理订单结算成功事件
+   */
+  private async handleOrderSettle(payload: ChannelsEcOrderSettleEvent) {
+    const orderId = payload.order_info?.order_id;
+    const settleTime = payload.order_info?.settle_time;
+
+    if (!orderId) {
+      throw new Error('Missing order_id in WeChat order settle event');
+    }
+
+    await this.wechatShopOrderService.syncSingle(String(orderId), {
+      settleTime: typeof settleTime === 'number' ? settleTime : undefined,
+    });
   }
 
   /**
