@@ -131,6 +131,13 @@ export class DriveController {
     return this.driveService.getFile(fileId, auth);
   }
 
+  @Post('files/:fileId/preview-url')
+  @RequirePermissions('drive:read')
+  @ApiOperation({ summary: '获取图片预览地址，不记录下载审计' })
+  createPreviewUrl(@Param('fileId') fileId: string, @Auth() auth: AuthContext) {
+    return this.driveService.createPreviewUrl(fileId, auth);
+  }
+
   @Post('files/:fileId/download-url')
   @RequirePermissions('drive:read')
   @ApiOperation({ summary: '获取十分钟有效的私有下载地址' })

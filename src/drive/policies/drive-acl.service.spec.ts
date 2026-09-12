@@ -11,18 +11,21 @@ import {
   DriveSpaceRepository,
 } from '../repositories';
 import { DriveAclService } from './drive-acl.service';
+import { PermService } from '@/admin/permission/services/permission.service';
 
 describe('DriveAclService', () => {
   const prisma = {
     driveSpace: { findUnique: jest.fn() },
     orgMember: { findUnique: jest.fn() },
     driveGrant: { findMany: jest.fn() },
-    driveNode: { findUnique: jest.fn() },
+    driveNode: { findUnique: jest.fn(), findFirst: jest.fn() },
   };
+  const permissions = { hasPermission: jest.fn() };
   const service = new DriveAclService(
     new DriveSpaceRepository(prisma as never),
     new DriveNodeRepository(prisma as never),
     new DriveAccessRepository(prisma as never),
+    permissions as unknown as PermService,
   );
   const auth = {
     authMethod: 'jwt' as const,
@@ -47,6 +50,7 @@ describe('DriveAclService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    permissions.hasPermission.mockResolvedValue(true);
     prisma.driveSpace.findUnique.mockResolvedValue({
       id: 'space-1',
       type: DriveSpaceType.ORG,
@@ -69,6 +73,56 @@ describe('DriveAclService', () => {
     await expect(
       service.assertNodeAction(node, DriveAction.VIEW, auth),
     ).resolves.toBeUndefined();
+  });
+
+  it('uses current role permissions for JWT folder uploads even with an empty snapshot', async () => {
+    prisma.driveNode.findFirst.mockResolvedValue({ ...node, type: 'FOLDER' });
+    await expect(
+      service.assertParent(
+        'space-1',
+        'node-1',
+        { ...auth, permissions: [] },
+        DriveAction.UPLOAD,
+      ),
+    ).resolves.toBeDefined();
+    expect(permissions.hasPermission).toHaveBeenCalledWith(
+      'user-1',
+      'drive:upload',
+    );
+  });
+
+  it('rejects JWT folder writes when current roles lack permission', async () => {
+    permissions.hasPermission.mockResolvedValue(false);
+    await expect(
+      service.assertNodeAction(node, DriveAction.UPLOAD, {
+        ...auth,
+        permissions: ['drive:upload'],
+      }),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
+  it.each(['api_key', 'oauth'] as const)(
+    'does not expand %s scopes using owner permissions',
+    async (authMethod) => {
+      await expect(
+        service.assertNodeAction(node, DriveAction.UPLOAD, {
+          ...auth,
+          authMethod,
+          permissions: [],
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenException);
+      expect(permissions.hasPermission).not.toHaveBeenCalled();
+    },
+  );
+
+  it('keeps explicit upload DENY ahead of role permission fallback', async () => {
+    prisma.driveGrant.findMany.mockResolvedValue([
+      { nodeId: node.id, effect: DriveGrantEffect.DENY },
+    ]);
+    await expect(
+      service.assertNodeAction(node, DriveAction.UPLOAD, auth),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+    expect(permissions.hasPermission).not.toHaveBeenCalled();
   });
 
   it('applies explicit deny before default organization read', async () => {

@@ -63,5 +63,6 @@ export interface ObjectStorage {
     fileName: string;
     contentType: string;
     expiresSeconds: number;
+    contentDisposition?: 'inline' | 'attachment';
   }): string;
 }

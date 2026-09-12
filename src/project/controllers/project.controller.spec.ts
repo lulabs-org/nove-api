@@ -40,6 +40,7 @@ describe('ProjectController', () => {
       'org-1',
       { title: 'Project' },
       'user-1',
+      undefined,
     );
   });
 

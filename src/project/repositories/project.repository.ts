@@ -1,6 +1,11 @@
-import { Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
+import { DriveAction, Prisma } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
+import { DriveAclService, DriveAuthContext } from '@/drive/policies';
 
 export const PROJECT_SELECT = {
   id: true,
@@ -66,10 +71,20 @@ export type ProjectOwnerRecord = Prisma.UserGetPayload<{
 
 @Injectable()
 export class ProjectRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly acl: DriveAclService,
+  ) {}
 
-  create(data: Prisma.ProjectUncheckedCreateInput): Promise<ProjectRecord> {
-    return this.prisma.project.create({ data, select: PROJECT_SELECT });
+  create(
+    data: Prisma.ProjectUncheckedCreateInput,
+    auth?: DriveAuthContext,
+  ): Promise<ProjectRecord> {
+    return this.prisma.$transaction(async (tx) => {
+      const project = await tx.project.create({ data, select: PROJECT_SELECT });
+      await this.syncCover(tx, project, auth);
+      return project;
+    });
   }
 
   findById(id: string, orgId: string): Promise<ProjectRecord | null> {
@@ -103,12 +118,169 @@ export class ProjectRepository {
     id: string,
     orgId: string,
     data: Prisma.ProjectUncheckedUpdateInput,
+    auth?: DriveAuthContext,
   ): Promise<ProjectRecord> {
-    return this.prisma.project.update({
-      where: { id, orgId, deletedAt: null },
-      data,
-      select: PROJECT_SELECT,
+    return this.prisma.$transaction(async (tx) => {
+      const project = await tx.project.update({
+        where: { id, orgId, deletedAt: null },
+        data,
+        select: PROJECT_SELECT,
+      });
+      if (data.image !== undefined) await this.syncCover(tx, project, auth);
+      return project;
     });
+  }
+
+  private async syncCover(
+    tx: Prisma.TransactionClient,
+    project: ProjectRecord,
+    auth?: DriveAuthContext,
+  ) {
+    const fileId = project.image?.match(
+      /^drive:\/\/file\/([a-zA-Z0-9_-]+)$/,
+    )?.[1];
+    const scope = {
+      targetType: 'PROJECT' as const,
+      targetId: project.id,
+      purpose: 'COVER',
+      active: true,
+    };
+    const old = await tx.fileBinding.findMany({
+      where: { ...scope, ...(fileId ? { fileId: { not: fileId } } : {}) },
+      include: { file: { include: { node: true } } },
+    });
+    if (fileId) {
+      if (!auth) throw new ForbiddenException('绑定项目封面需要用户身份');
+      const file = await tx.driveFile.findUnique({
+        where: { id: fileId },
+        include: {
+          node: { include: { space: true } },
+          versions: { orderBy: { version: 'desc' }, take: 1 },
+          bindings: { where: { active: true } },
+        },
+      });
+      const node = file?.node;
+      const version = file?.versions[0];
+      if (
+        !node ||
+        node.deletedAt ||
+        node.space.deletedAt ||
+        node.space.type !== 'ORG' ||
+        node.space.orgId !== project.orgId
+      )
+        throw new BadRequestException('封面必须是当前组织云盘中的文件');
+      if (
+        !version ||
+        version.status !== 'ACTIVE' ||
+        !version.contentType.startsWith('image/')
+      )
+        throw new BadRequestException('请选择已通过校验的图片');
+      await this.acl.assertNodeAction(node, DriveAction.VIEW, auth);
+      if (
+        file.bindings.some(
+          (binding) =>
+            binding.targetType !== 'PROJECT' || binding.targetId !== project.id,
+        )
+      )
+        throw new BadRequestException(
+          '该文件已关联其他业务，请上传独立的项目封面',
+        );
+      let parentId: string | null = null;
+      for (const name of ['项目资料', project.id, '封面']) {
+        const folder: { id: string } | null = await tx.driveNode.findFirst({
+          where: {
+            spaceId: node.spaceId,
+            parentId,
+            name,
+            type: 'FOLDER',
+            deletedAt: null,
+          },
+        });
+        const created: { id: string } =
+          folder ??
+          (await tx.driveNode.create({
+            data: {
+              spaceId: node.spaceId,
+              parentId,
+              name,
+              type: 'FOLDER',
+              createdById: auth.userId,
+            },
+          }));
+        parentId = created.id;
+      }
+      await tx.driveNode.update({ where: { id: node.id }, data: { parentId } });
+      await tx.driveFile.update({
+        where: { id: fileId },
+        data: { managedBy: 'SYSTEM' },
+      });
+      const key = {
+        fileId,
+        targetType: 'PROJECT' as const,
+        targetId: project.id,
+        fieldKey: 'image',
+        purpose: 'COVER',
+      };
+      await tx.fileBinding.upsert({
+        where: { fileId_targetType_targetId_fieldKey_purpose: key },
+        create: key,
+        update: { active: true },
+      });
+      if (
+        !file.bindings.some(
+          (binding) =>
+            binding.targetType === 'PROJECT' &&
+            binding.targetId === project.id &&
+            binding.purpose === 'COVER',
+        )
+      ) {
+        await tx.driveAuditLog.create({
+          data: {
+            spaceId: node.spaceId,
+            nodeId: node.id,
+            fileId,
+            actorId: auth.userId,
+            action: 'BIND',
+            metadata: {
+              targetType: 'PROJECT',
+              targetId: project.id,
+              purpose: 'COVER',
+            },
+          },
+        });
+      }
+    }
+    for (const binding of old) {
+      await tx.fileBinding.update({
+        where: { id: binding.id },
+        data: { active: false },
+      });
+      const node = binding.file.node;
+      if (node)
+        await tx.driveAuditLog.create({
+          data: {
+            spaceId: node.spaceId,
+            nodeId: node.id,
+            fileId: binding.fileId,
+            actorId: auth?.userId,
+            action: 'UNBIND',
+            metadata: {
+              targetType: 'PROJECT',
+              targetId: project.id,
+              purpose: 'COVER',
+            },
+          },
+        });
+      if (
+        !(await tx.fileBinding.count({
+          where: { fileId: binding.fileId, active: true },
+        }))
+      )
+        await tx.driveFile.update({
+          where: { id: binding.fileId },
+          data: { managedBy: 'USER' },
+        });
+    }
   }
 
   softDelete(

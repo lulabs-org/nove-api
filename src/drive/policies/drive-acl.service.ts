@@ -12,6 +12,7 @@ import {
   Prisma,
 } from '@prisma/client';
 import { AuthContext } from '@/auth/types/auth-context.interface';
+import { PermService } from '@/admin/permission/services/permission.service';
 import {
   DriveAccessRepository,
   DriveNodeRepository,
@@ -32,6 +33,7 @@ export class DriveAclService {
     private readonly spaces: DriveSpaceRepository,
     private readonly nodes: DriveNodeRepository,
     private readonly access: DriveAccessRepository,
+    private readonly permissions: PermService,
   ) {}
 
   requireUserId(auth: DriveAuthContext): string {
@@ -107,7 +109,19 @@ export class DriveAclService {
     }
 
     const permission = this.permissionForAction(action);
-    if (!auth.permissions.includes(permission)) this.deny();
+    // JWT route guards use the user's current roles (including super admin).
+    // Delegated credentials must additionally retain their scope boundary.
+    if (auth.authMethod !== 'jwt' && !auth.permissions.includes(permission)) {
+      this.deny();
+    }
+    if (
+      !(await this.permissions.hasPermission(
+        this.requireUserId(auth),
+        permission,
+      ))
+    ) {
+      this.deny();
+    }
   }
 
   async assertParent(

@@ -69,14 +69,15 @@ export class CreateProjectDto {
 
   @ApiPropertyOptional({
     nullable: true,
-    description: '站内绝对路径或 HTTP(S) URL',
+    description: '站内绝对路径、HTTP(S) URL 或云盘文件引用',
   })
   @IsOptional()
   @Transform(nullableTrim)
   @IsString()
   @MaxLength(500)
-  @Matches(/^(?:\/(?!\/)|https?:\/\/)/, {
-    message: 'image must be an absolute site path or an HTTP(S) URL',
+  @Matches(/^(?:\/(?!\/)|https?:\/\/|drive:\/\/file\/[a-zA-Z0-9_-]+$)/, {
+    message:
+      'image must be an absolute site path, an HTTP(S) URL, or a drive file reference',
   })
   image?: string | null;
 

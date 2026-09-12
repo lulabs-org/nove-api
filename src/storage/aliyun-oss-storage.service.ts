@@ -360,13 +360,14 @@ export class AliyunOssStorageService implements ObjectStorage, OnModuleInit {
     fileName: string;
     contentType: string;
     expiresSeconds: number;
+    contentDisposition?: 'inline' | 'attachment';
   }): string {
     const safeName = input.fileName.replace(/[\r\n"\\]/g, '_');
     return this.getPrivateClient().signatureUrl(input.key, {
       method: 'GET',
       expires: input.expiresSeconds,
       response: {
-        'content-disposition': `attachment; filename*=UTF-8''${encodeURIComponent(safeName)}`,
+        'content-disposition': `${input.contentDisposition ?? 'attachment'}; filename*=UTF-8''${encodeURIComponent(safeName)}`,
         'cache-control': 'private, no-store',
       },
     });

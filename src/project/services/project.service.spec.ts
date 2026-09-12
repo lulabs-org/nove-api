@@ -121,6 +121,7 @@ describe('ProjectService', () => {
         updatedById: 'user-1',
         publishedAt: expect.any(Date),
       }),
+      undefined,
     );
     expect(result.owner).toEqual({ id: 'user-1', displayName: 'Owner Name' });
   });
@@ -185,6 +186,7 @@ describe('ProjectService', () => {
       expect.objectContaining({
         code: expect.stringMatching(/^PRJ-\d{4}-[A-F0-9]{12}$/),
       }),
+      undefined,
     );
     expect(result.code).toMatch(/^PRJ-\d{4}-[A-F0-9]{12}$/);
   });

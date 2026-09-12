@@ -1,3 +1,4 @@
+import { DriveAuthContext } from '@/drive/policies';
 import {
   BadRequestException,
   ForbiddenException,
@@ -35,6 +36,7 @@ export class ProjectService {
     orgId: string,
     dto: CreateProjectDto,
     actorId?: string | null,
+    auth?: DriveAuthContext,
   ): Promise<ProjectDto> {
     await this.ensureSlugAvailable(dto.slug);
     await this.validateRelations(dto.ownerId, dto.productId);
@@ -42,34 +44,37 @@ export class ProjectService {
     this.validateDates(dto.startDate, dto.endDate);
 
     const status = dto.status ?? ProjectStatus.DRAFT;
-    const project = await this.projectRepository.create({
-      orgId,
-      title: dto.title.trim(),
-      subtitle: this.nullableString(dto.subtitle),
-      code: this.generateProjectCode(),
-      slug: dto.slug ?? null,
-      category: this.nullableString(dto.category),
-      image: this.nullableString(dto.image),
-      description: this.nullableString(dto.description),
-      level: dto.level,
-      duration: this.nullableString(dto.duration),
-      maxStudents: dto.maxStudents,
-      prerequisites: this.nullableJsonList(dto.prerequisites),
-      outcomes: this.nullableJsonList(dto.outcomes),
-      tags: this.normalizeList(dto.tags) ?? [],
-      ownerId: dto.ownerId,
-      productId: dto.productId,
-      status,
-      sortOrder: dto.sortOrder,
-      isFeatured: dto.isFeatured,
-      startDate: this.dateValue(dto.startDate),
-      endDate: this.dateValue(dto.endDate),
-      enrollDeadline: this.dateValue(dto.enrollDeadline),
-      publishedAt: status === ProjectStatus.DRAFT ? null : new Date(),
-      metadata: (dto.metadata ?? {}) as Prisma.InputJsonValue,
-      createdById: actorId,
-      updatedById: actorId,
-    });
+    const project = await this.projectRepository.create(
+      {
+        orgId,
+        title: dto.title.trim(),
+        subtitle: this.nullableString(dto.subtitle),
+        code: this.generateProjectCode(),
+        slug: dto.slug ?? null,
+        category: this.nullableString(dto.category),
+        image: this.nullableString(dto.image),
+        description: this.nullableString(dto.description),
+        level: dto.level,
+        duration: this.nullableString(dto.duration),
+        maxStudents: dto.maxStudents,
+        prerequisites: this.nullableJsonList(dto.prerequisites),
+        outcomes: this.nullableJsonList(dto.outcomes),
+        tags: this.normalizeList(dto.tags) ?? [],
+        ownerId: dto.ownerId,
+        productId: dto.productId,
+        status,
+        sortOrder: dto.sortOrder,
+        isFeatured: dto.isFeatured,
+        startDate: this.dateValue(dto.startDate),
+        endDate: this.dateValue(dto.endDate),
+        enrollDeadline: this.dateValue(dto.enrollDeadline),
+        publishedAt: status === ProjectStatus.DRAFT ? null : new Date(),
+        metadata: (dto.metadata ?? {}) as Prisma.InputJsonValue,
+        createdById: actorId,
+        updatedById: actorId,
+      },
+      auth,
+    );
     return this.toDto(project);
   }
 
@@ -148,6 +153,7 @@ export class ProjectService {
     orgId: string,
     dto: UpdateProjectDto,
     actorId?: string | null,
+    auth?: DriveAuthContext,
   ): Promise<ProjectDto> {
     const existing = await this.findProject(id, orgId);
     if (dto.slug !== undefined && dto.slug !== existing.slug) {
@@ -172,50 +178,55 @@ export class ProjectService {
     this.validateDateObjects(startDate, endDate);
 
     const status = dto.status ?? existing.status;
-    const project = await this.projectRepository.update(id, orgId, {
-      title: dto.title?.trim(),
-      subtitle: this.optionalNullableString(dto, 'subtitle'),
-      code: existing.code ? undefined : this.generateProjectCode(),
-      slug: dto.slug,
-      category: this.optionalNullableString(dto, 'category'),
-      image: this.optionalNullableString(dto, 'image'),
-      description: this.optionalNullableString(dto, 'description'),
-      level: dto.level,
-      duration: this.optionalNullableString(dto, 'duration'),
-      maxStudents: dto.maxStudents,
-      prerequisites:
-        dto.prerequisites === undefined
-          ? undefined
-          : this.nullableJsonList(dto.prerequisites),
-      outcomes:
-        dto.outcomes === undefined
-          ? undefined
-          : this.nullableJsonList(dto.outcomes),
-      tags:
-        dto.tags === undefined
-          ? undefined
-          : (this.normalizeList(dto.tags) ?? []),
-      ownerId: dto.ownerId,
-      productId: dto.productId,
-      status: dto.status,
-      sortOrder: dto.sortOrder,
-      isFeatured: dto.isFeatured,
-      startDate: dto.startDate === undefined ? undefined : startDate,
-      endDate: dto.endDate === undefined ? undefined : endDate,
-      enrollDeadline:
-        dto.enrollDeadline === undefined
-          ? undefined
-          : this.dateValue(dto.enrollDeadline),
-      publishedAt:
-        status !== ProjectStatus.DRAFT && !existing.publishedAt
-          ? new Date()
-          : undefined,
-      metadata:
-        dto.metadata === undefined
-          ? undefined
-          : (dto.metadata as Prisma.InputJsonValue),
-      updatedById: actorId,
-    });
+    const project = await this.projectRepository.update(
+      id,
+      orgId,
+      {
+        title: dto.title?.trim(),
+        subtitle: this.optionalNullableString(dto, 'subtitle'),
+        code: existing.code ? undefined : this.generateProjectCode(),
+        slug: dto.slug,
+        category: this.optionalNullableString(dto, 'category'),
+        image: this.optionalNullableString(dto, 'image'),
+        description: this.optionalNullableString(dto, 'description'),
+        level: dto.level,
+        duration: this.optionalNullableString(dto, 'duration'),
+        maxStudents: dto.maxStudents,
+        prerequisites:
+          dto.prerequisites === undefined
+            ? undefined
+            : this.nullableJsonList(dto.prerequisites),
+        outcomes:
+          dto.outcomes === undefined
+            ? undefined
+            : this.nullableJsonList(dto.outcomes),
+        tags:
+          dto.tags === undefined
+            ? undefined
+            : (this.normalizeList(dto.tags) ?? []),
+        ownerId: dto.ownerId,
+        productId: dto.productId,
+        status: dto.status,
+        sortOrder: dto.sortOrder,
+        isFeatured: dto.isFeatured,
+        startDate: dto.startDate === undefined ? undefined : startDate,
+        endDate: dto.endDate === undefined ? undefined : endDate,
+        enrollDeadline:
+          dto.enrollDeadline === undefined
+            ? undefined
+            : this.dateValue(dto.enrollDeadline),
+        publishedAt:
+          status !== ProjectStatus.DRAFT && !existing.publishedAt
+            ? new Date()
+            : undefined,
+        metadata:
+          dto.metadata === undefined
+            ? undefined
+            : (dto.metadata as Prisma.InputJsonValue),
+        updatedById: actorId,
+      },
+      auth,
+    );
     return this.toDto(project);
   }
 

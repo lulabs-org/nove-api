@@ -440,6 +440,18 @@ export class DriveService {
   }
 
   async createDownloadUrl(fileId: string, auth: DriveAuthContext) {
+    return this.createFileUrl(fileId, auth, false);
+  }
+
+  async createPreviewUrl(fileId: string, auth: DriveAuthContext) {
+    return this.createFileUrl(fileId, auth, true);
+  }
+
+  private async createFileUrl(
+    fileId: string,
+    auth: DriveAuthContext,
+    preview: boolean,
+  ) {
     const record = await this.findFile(fileId);
     await this.acl.assertNodeAction(record.node!, DriveAction.DOWNLOAD, auth);
     await this.assertBusinessAccess(record, auth);
@@ -447,13 +459,18 @@ export class DriveService {
     if (!version || version.status !== FileVersionStatus.ACTIVE) {
       throw new ConflictException('文件尚不可下载');
     }
-    await this.audit(
-      record.node!.spaceId,
-      this.acl.requireUserId(auth),
-      DriveAuditAction.DOWNLOAD,
-      record.node!.id,
-      record.id,
-    );
+    if (preview && !version.contentType.startsWith('image/')) {
+      throw new BadRequestException('仅支持图片预览');
+    }
+    if (!preview) {
+      await this.audit(
+        record.node!.spaceId,
+        this.acl.requireUserId(auth),
+        DriveAuditAction.DOWNLOAD,
+        record.node!.id,
+        record.id,
+      );
+    }
     const config = (await this.systemConfig.getConfig()) as {
       downloadUrlExpiresSeconds?: number;
     };
@@ -464,9 +481,10 @@ export class DriveService {
         fileName: record.node!.name,
         contentType: version.contentType,
         expiresSeconds,
+        contentDisposition: preview ? 'inline' : 'attachment',
       }),
       expiresInSeconds: expiresSeconds,
-      contentDisposition: 'attachment',
+      contentDisposition: preview ? 'inline' : 'attachment',
     };
   }
 
