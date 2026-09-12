@@ -13,6 +13,7 @@
 - 默认每个客户端最多 10 个连接，连接/排队超时 10 秒，空闲连接保留 300 秒。URL 的 `schema`、`connection_limit`、`pool_timeout`、`connect_timeout`、`max_idle_connection_lifetime` 映射到驱动配置；`pool_timeout` 优先于 `connect_timeout`。node-postgres 使用同一超时控制建连与排队，不能完全复刻旧引擎的两个独立超时。
 - SSL 使用 node-postgres 的证书验证行为，不全局关闭验证。私有 CA 需配置 `sslrootcert`；发布前核对部署环境的证书链。
 - Prisma 7 的 `migrate dev` / `migrate reset` 不再自动运行 seed；需要数据初始化时显式运行 `pnpm db:seed`，生成客户端使用 `pnpm db:generate`。
+- 单组织运行环境要求数据库中恰好存在一个启用组织。新数据库只需初始化组织时，运行 `pnpm exec tsx prisma/seed.ts --module organization`；不要为了启动服务而写入整套模拟数据。
 
 升级依赖不需要新增业务 migration，也不要重写历史 migration。建议执行：
 
