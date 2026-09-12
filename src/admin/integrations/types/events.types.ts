@@ -20,6 +20,8 @@ export const INTEGRATION_EVENT_PATTERNS = {
   WECOM_DELETED: 'config.wecom.deleted',
   STORAGE_UPDATED: 'config.storage.updated',
   STORAGE_DELETED: 'config.storage.deleted',
+  STRIPE_UPDATED: 'config.stripe.updated',
+  STRIPE_DELETED: 'config.stripe.deleted',
 } as const;
 
 export const IntegrationEvents = {

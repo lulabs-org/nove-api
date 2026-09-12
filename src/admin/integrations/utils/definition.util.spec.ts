@@ -44,6 +44,7 @@ describe('definition.util', () => {
       lark: ['appSecret', 'eventEncryptKey', 'eventVerificationToken'],
       'wechat-shop': ['appSecret', 'webhookToken', 'encodingAesKey'],
       wecom: ['corpSecret', 'webhookToken', 'encodingAesKey'],
+      stripe: ['secretKey', 'webhookSecret'],
     });
   });
 });

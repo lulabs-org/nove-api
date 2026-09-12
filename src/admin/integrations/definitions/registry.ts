@@ -7,6 +7,7 @@ import { mailConfig } from './mail.config';
 import { tencentMeetingConfig } from './tencent-meeting.config';
 import { wechatShopConfig } from './wechat-shop.config';
 import { wecomConfig } from './wecom.config';
+import { stripeConfig } from './stripe.config';
 import {
   ConfigSource,
   IntegrationModuleName,
@@ -25,6 +26,7 @@ export const IntegrationRegistry = {
   lark: larkConfig,
   'wechat-shop': wechatShopConfig,
   wecom: wecomConfig,
+  stripe: stripeConfig,
 } as const satisfies Record<IntegrationModuleName, IntegrationRegistryEntry>;
 
 export const INTEGRATION_MODULES = Object.keys(
