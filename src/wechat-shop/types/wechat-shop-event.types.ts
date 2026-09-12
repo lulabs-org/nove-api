@@ -35,4 +35,3 @@ export interface ChannelsEcOrderSettleEvent {
     settle_time: number;
   };
 }
-

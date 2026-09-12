@@ -9,7 +9,10 @@ import { UserCommandRepository } from '@/user/repositories/user-command.reposito
 
 describe('WechatShopOrderService', () => {
   let service: WechatShopOrderService;
-  const mockRepositoryUpsert = jest.fn();
+  const mockRepositoryUpsert = jest.fn<
+    Promise<unknown>,
+    [{ externalId: string; create: unknown; update: Record<string, unknown> }]
+  >();
   const mockGetOrder = jest.fn();
   const mockByPhone = jest.fn();
   const mockCreateWithProfile = jest.fn();
@@ -118,7 +121,7 @@ describe('WechatShopOrderService', () => {
             },
             status: OrderStatus.COMPLETED,
             paymentProvider: PaymentProvider.WECHAT,
-          }),
+          }) as unknown as Record<string, unknown>,
         }),
       );
 
@@ -164,7 +167,7 @@ describe('WechatShopOrderService', () => {
               settle_time: 1662480000,
               commission_fee: 250,
             },
-          }),
+          }) as unknown as Record<string, unknown>,
         }),
       );
     });
@@ -197,7 +200,7 @@ describe('WechatShopOrderService', () => {
             settleInfo: {
               settle_time: 1662480000,
             },
-          }),
+          }) as unknown as Record<string, unknown>,
         }),
       );
     });
