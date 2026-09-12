@@ -2,31 +2,38 @@
 
 ## Project Structure & Module Organization
 
-Keep NestJS features grouped by domain under `src/`, such as `src/auth`, `src/meeting`, and `src/org-member`. Co-locate controllers, services, DTOs, guards, and module definitions within each domain. Shared infrastructure belongs in `src/common`, `src/configs`, `src/prisma`, or another clearly scoped shared module. Prisma schemas, migrations, and deterministic seeds live in `prisma/`. Put test fixtures and cross-module suites in `test/`, documentation in `docs/`, and maintenance tooling in `scripts/`. Treat `dist/` and `coverage/` as generated output.
+This NestJS 11/TypeScript API uses Prisma with PostgreSQL and Redis/BullMQ. Group features under `src/` by domain, such as `auth/`, `meeting/`, `order/`, and `drive/`. Keep controllers, services, repositories, DTOs, and module definitions within their domain. Shared utilities and infrastructure live in `src/common/`, `src/configs/`, and `src/prisma/`.
+
+Prisma schemas, migrations, and seeds belong in `prisma/`; shared test fixtures and helpers in `test/`; documentation in `docs/`; maintenance tools in `scripts/`. Treat `dist/` and `coverage/` as generated output.
 
 ## Build, Test, and Development Commands
 
-- `pnpm install`: install dependencies.
-- `pnpm start:dev`: run the API in watch mode.
-- `pnpm build`: compile the Nest application into `dist/`.
-- `pnpm lint` and `pnpm lint:prisma`: lint and auto-fix application and Prisma TypeScript.
-- `pnpm format`: format source, test, and Prisma files with Prettier.
-- `pnpm test:unit`, `pnpm test:integration`, `pnpm test:e2e`, and `pnpm test:system`: run suites by level.
-- `pnpm test:ci`: run all Jest projects with coverage.
-- `pnpm db:generate`, `pnpm db:migrate`, and `pnpm db:seed`: regenerate Prisma, apply development migrations, and seed data.
+Use Node.js 20 and pnpm 9 to match CI.
+
+- `pnpm install --frozen-lockfile`: install locked dependencies.
+- `pnpm start:dev`: start the API with watch mode.
+- `pnpm build`: compile the application into `dist/`.
+- `pnpm lint` / `pnpm lint:prisma`: lint and auto-fix application/test or Prisma TypeScript.
+- `pnpm format`: format source, tests, and Prisma TypeScript with Prettier.
+- `pnpm db:generate`: regenerate the Prisma client.
+- `pnpm db:migrate`: create/apply development migrations.
+- `pnpm exec prisma validate`: validate the Prisma schema.
+- `pnpm docs:dev`: serve the documentation locally.
 
 ## Coding Style & Naming Conventions
 
-Use TypeScript with 2-space indentation, single quotes, and trailing commas. Follow ESLint and Prettier rather than hand-formatting. Name files in kebab-case, classes and interfaces in PascalCase, and functions and variables in camelCase. Use explicit suffixes such as `.dto.ts`, `.guard.ts`, and `.service.ts`. Prefer `@/` for imports rooted at `src/` and `@common/` for shared utilities.
+Use two-space indentation, single quotes, and trailing commas. Follow Prettier and the type-aware ESLint configuration. Use kebab-case filenames, PascalCase classes, and camelCase functions and variables. Retain role suffixes such as `.service.ts`, `.controller.ts`, and `.dto.ts`. Prefer `@/` imports for paths rooted at `src/`.
 
 ## Testing Guidelines
 
-Jest with `ts-jest` powers all suites. Name unit tests `src/**/*.spec.ts` or `test/unit/**/*.spec.ts`, integration tests `*.int-spec.ts`, and end-to-end tests `*.e2e-spec.ts`. Unit coverage must remain at least 80% for branches, functions, lines, and statements. Add focused tests with every behavior change and run `pnpm test:ci` before significant merges.
+Tests use Jest, ts-jest, and Supertest. Place unit tests in `src/**/*.spec.ts` or `test/unit/**/*.spec.ts`; integration tests in `test/integration/**/*.int-spec.ts`; end-to-end tests in `test/e2e/**/*.e2e-spec.ts`.
+
+Run `pnpm exec jest --selectProjects unit --runInBand` for serial unit tests. Use `pnpm test:integration` or `pnpm test:e2e` for broader checks and `pnpm test:ci` for all configured projects with coverage. Unit coverage thresholds are configured at 80% for branches, functions, lines, and statements. Current CI runs unit tests. Add focused regression tests for behavior changes; use isolated test databases.
 
 ## Commit & Pull Request Guidelines
 
-Follow the repository's Conventional Commit pattern, for example `fix(permission): restrict API key scope` or `feat(org-member): add leader support`. Keep each commit scoped and include migrations with schema changes. Pull requests should explain behavior and risk, link relevant issues, note `.env` or database changes, and include API snapshots or test evidence when useful. Confirm build, lint, targeted tests, and required Prisma steps before requesting review.
+Follow Conventional Commits, e.g., `fix(role): guard member removal`. Keep commits scoped; include migrations with schema changes. PRs should explain behavior, link relevant issues, document configuration/database changes, and report validation. Run build, lint, relevant tests, and Prisma validation when applicable before review.
 
 ## Security & Configuration
 
-Never commit credentials. Derive local configuration from `.env.example`, document new keys, and avoid logging tokens or personal data. Review migrations and seeds for deterministic, non-production-safe defaults.
+Copy `.env.example` to `.env` for local configuration; document new keys in the example. Never commit credentials or log tokens. Review migration and seed effects before running them against shared databases.
