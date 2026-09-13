@@ -111,7 +111,7 @@ export class RefreshTokenRepository {
    */
   async revokeAllTokensByUserId(
     userId: string,
-    excludeJti?: string,
+    excludeId?: string,
     options: RevokeRefreshTokenOptions = {},
   ): Promise<number> {
     const revokedAt = options.revokedAt || new Date();
@@ -121,7 +121,7 @@ export class RefreshTokenRepository {
         userId,
         revokedAt: null,
         expiresAt: { gt: new Date() },
-        ...(excludeJti && { jti: { not: excludeJti } }),
+        ...(excludeId && { id: { not: excludeId } }),
       },
       data: {
         revokedAt,
@@ -130,6 +130,36 @@ export class RefreshTokenRepository {
     });
 
     return result.count;
+  }
+
+  async findActiveByUserId(userId: string): Promise<RefreshToken[]> {
+    return this.prisma.refreshToken.findMany({
+      where: {
+        userId,
+        revokedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
+    }) as Promise<RefreshToken[]>;
+  }
+
+  async revokeByIdForUser(
+    userId: string,
+    id: string,
+  ): Promise<RefreshToken | null> {
+    const result = await this.prisma.refreshToken.updateMany({
+      where: {
+        id,
+        userId,
+        revokedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      data: { revokedAt: new Date() },
+    });
+    if (!result.count) return null;
+    return this.prisma.refreshToken.findUnique({
+      where: { id },
+    }) as Promise<RefreshToken | null>;
   }
 
   /**

@@ -1,4 +1,4 @@
-import { ProductCategory } from '@prisma/client';
+import { ProductCategory } from '@/generated/prisma/client';
 import { ProductConfig } from './type';
 
 export const PRODUCT_CONFIGS: ProductConfig[] = [

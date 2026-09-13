@@ -1,3 +1,7 @@
+import { Auth } from '@/auth/decorators/auth.decorator';
+import { AuthContext } from '@/auth/types/auth-context.interface';
+import { MinuteFileDriveService } from '../services/minute-file-drive.service';
+import { AttachMinuteFileDto } from '../dto/minute-file.dto';
 import {
   Controller,
   Get,
@@ -19,12 +23,24 @@ import {
   ApiResponse,
   ApiParam,
 } from '@nestjs/swagger';
-import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
+import {
+  RequireAllPermissions,
+  RequirePermissions,
+} from '@/admin/permission/decorators/permissions.decorator';
 import { MinuteService } from '../services/minute.service';
 import { TranscriptService } from '../services/transcript.service';
 import { CuidPipe } from '@/common/pipes/cuid.pipe';
-import { ApiGetTranscriptByRecordingIdDocs } from '../decorators/minute.decorators';
-import { CreateTranscriptBodyDto, TranscriptDto } from '../dto/transcript.dto';
+import {
+  ApiGetTranscriptDocs,
+  ApiGetTranscriptTextDocs,
+} from '../decorators/minute.decorators';
+import {
+  CreateTranscriptBodyDto,
+  QueryTranscriptDto,
+  TranscriptDto,
+  TranscriptJsonResponseDto,
+  TranscriptTextResponseDto,
+} from '../dto/transcript.dto';
 import {
   CreateMinuteDto,
   UpdateMinuteDto,
@@ -33,6 +49,7 @@ import {
   MinuteDto,
   MinuteDeleteResponseDto,
 } from '../dto/minute.dto';
+import { CurrentOrg } from '@/auth/decorators';
 
 @ApiTags('Minute')
 @Controller('minutes')
@@ -43,7 +60,31 @@ export class MinuteController {
   constructor(
     private readonly minuteService: MinuteService,
     private readonly transcriptService: TranscriptService,
+    private readonly minuteFileDriveService: MinuteFileDriveService,
   ) {}
+
+  @Get(':id/files')
+  @RequireAllPermissions('minute:read', 'drive:read')
+  @ApiOperation({ summary: '获取 Minute 的云盘文件' })
+  listMinuteFiles(
+    @Param('id', CuidPipe) id: string,
+    @CurrentOrg() orgId: string,
+  ) {
+    return this.minuteFileDriveService.list(id, orgId);
+  }
+
+  @Post(':id/files')
+  @RequireAllPermissions('minute:update', 'drive:read', 'drive:update')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: '将组织云盘文件关联到 Minute' })
+  attachMinuteFile(
+    @Param('id', CuidPipe) id: string,
+    @Body(new ValidationPipe()) dto: AttachMinuteFileDto,
+    @Auth() auth: AuthContext,
+    @CurrentOrg() orgId: string,
+  ) {
+    return this.minuteFileDriveService.attach(id, dto, auth, orgId);
+  }
 
   /**
    * 创建录制记录
@@ -59,9 +100,10 @@ export class MinuteController {
   })
   async createMinute(
     @Body(new ValidationPipe()) createParams: CreateMinuteDto,
+    @CurrentOrg() orgId: string,
   ) {
     this.logger.log(`创建录制记录: ${createParams.meetingId}`);
-    return this.minuteService.create(createParams);
+    return this.minuteService.create(createParams, orgId);
   }
 
   /**
@@ -74,8 +116,9 @@ export class MinuteController {
   async getMinutes(
     @Query(new ValidationPipe({ transform: true }))
     query: QueryMinuteDto,
+    @CurrentOrg() orgId: string,
   ) {
-    return this.minuteService.findMany(query);
+    return this.minuteService.findMany(query, orgId);
   }
 
   /**
@@ -90,8 +133,11 @@ export class MinuteController {
     description: '获取成功',
     type: MinuteDto,
   })
-  async getMinuteById(@Param('id', CuidPipe) id: string) {
-    return this.minuteService.getById(id);
+  async getMinuteById(
+    @Param('id', CuidPipe) id: string,
+    @CurrentOrg() orgId: string,
+  ) {
+    return this.minuteService.getById(id, orgId);
   }
 
   /**
@@ -110,8 +156,10 @@ export class MinuteController {
   async createTranscript(
     @Param('id', CuidPipe) id: string,
     @Body(new ValidationPipe()) createParams: CreateTranscriptBodyDto,
+    @CurrentOrg() orgId: string,
   ) {
     this.logger.log(`创建录制转写记录: ${id}`);
+    await this.minuteService.getById(id, orgId);
     return this.transcriptService.create({
       ...createParams,
       minuteId: id,
@@ -119,26 +167,55 @@ export class MinuteController {
   }
 
   /**
-   * 获取录制转写
+   * 获取结构化录制转写
    */
   @Get(':id/transcript')
   @RequirePermissions('minute:read')
   @HttpCode(HttpStatus.OK)
-  @ApiGetTranscriptByRecordingIdDocs()
+  @ApiGetTranscriptDocs()
   async getTranscript(
     @Param('id', CuidPipe) minuteId: string,
-    @Query('format') format?: 'text' | 'json',
-  ): Promise<any> {
-    this.logger.log(`获取转写文本: ${minuteId}, format: ${format}`);
+    @Query(new ValidationPipe({ transform: true })) query: QueryTranscriptDto,
+    @CurrentOrg() orgId: string,
+  ): Promise<TranscriptJsonResponseDto> {
+    const { includeLocalUser = false } = query;
+    this.logger.log(
+      `获取结构化转写: ${minuteId}, includeLocalUser: ${includeLocalUser}`,
+    );
 
     try {
-      if (format === 'json') {
-        const data = await this.transcriptService.getJson(minuteId);
+      await this.minuteService.getById(minuteId, orgId);
+      const result = await this.transcriptService.getJson(
+        minuteId,
+        includeLocalUser,
+      );
 
-        this.logger.log(`获取录制的转写 JSON 成功: ${minuteId}`);
-        return { data };
-      }
+      this.logger.log(`获取结构化录制转写成功: ${minuteId}`);
+      return result;
+    } catch (error: unknown) {
+      this.logger.error(
+        `获取结构化录制转写失败: ${minuteId}`,
+        (error as Error).stack,
+      );
+      throw error;
+    }
+  }
 
+  /**
+   * 获取录制转写文本
+   */
+  @Get(':id/transcript/text')
+  @RequirePermissions('minute:read')
+  @HttpCode(HttpStatus.OK)
+  @ApiGetTranscriptTextDocs()
+  async getTranscriptText(
+    @Param('id', CuidPipe) minuteId: string,
+    @CurrentOrg() orgId: string,
+  ): Promise<TranscriptTextResponseDto> {
+    this.logger.log(`获取录制转写文本: ${minuteId}`);
+
+    try {
+      await this.minuteService.getById(minuteId, orgId);
       const text = await this.transcriptService.getText(minuteId);
 
       this.logger.log(`获取录制的转写文本成功: ${minuteId}`);
@@ -166,8 +243,9 @@ export class MinuteController {
   async updateMinute(
     @Param('id', CuidPipe) id: string,
     @Body(new ValidationPipe()) updateParams: UpdateMinuteDto,
+    @CurrentOrg() orgId: string,
   ) {
-    return this.minuteService.update(id, updateParams);
+    return this.minuteService.update(id, updateParams, orgId);
   }
 
   /**
@@ -181,7 +259,10 @@ export class MinuteController {
     description: '删除成功',
     type: MinuteDeleteResponseDto,
   })
-  async deleteMinute(@Param('id', CuidPipe) id: string) {
-    return this.minuteService.delete(id);
+  async deleteMinute(
+    @Param('id', CuidPipe) id: string,
+    @CurrentOrg() orgId: string,
+  ) {
+    return this.minuteService.delete(id, orgId);
   }
 }

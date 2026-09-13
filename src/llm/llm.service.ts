@@ -1,28 +1,76 @@
-import { Injectable, Logger, Inject } from '@nestjs/common';
-import { ConfigType } from '@nestjs/config';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import OpenAI from 'openai';
-import { openaiConfig } from '../configs/openai.config';
+import {
+  IntegrationChangeEvent,
+  INTEGRATION_EVENT_PATTERNS,
+  IntegrationsService,
+  IntegrationRegistry,
+  getDefaultValues,
+} from '@/admin/integrations';
+import { SingleOrgContextService } from '@/admin/org';
+import { OnEvent } from '@nestjs/event-emitter';
 
 @Injectable()
-export class LlmService {
+export class LlmService implements OnModuleInit {
   private readonly logger = new Logger(LlmService.name);
   private openai: OpenAI;
+  private activeConfig: {
+    model: string;
+    maxTokens: number;
+    temperature: number;
+  };
 
   constructor(
-    @Inject(openaiConfig.KEY)
-    private readonly config: ConfigType<typeof openaiConfig>,
+    private readonly integrationsService: IntegrationsService,
+    private readonly orgContext: SingleOrgContextService,
   ) {
-    const apiKey = this.config.apiKey.ark || this.config.apiKey.openai || '';
-    const baseURL = this.config.baseURL;
+    const defaults = getDefaultValues(IntegrationRegistry.ai);
+    this.openai = new OpenAI({
+      apiKey: '',
+      baseURL: defaults.baseUrl ? String(defaults.baseUrl) : undefined,
+    });
+    this.activeConfig = {
+      model: String(defaults.model ?? ''),
+      maxTokens: Number(defaults.maxTokens ?? 16000),
+      temperature: Number(defaults.temperature ?? 0.7),
+    };
+  }
 
-    if (!apiKey) {
-      this.logger.warn('OpenAI API密钥未配置，OpenAI服务将不可用');
-    }
+  async onModuleInit() {
+    await this.reloadConfig();
+  }
 
+  @OnEvent(INTEGRATION_EVENT_PATTERNS.AI_UPDATED)
+  async handleConfigUpdated(event: IntegrationChangeEvent) {
+    if (!this.orgContext.matches(event.orgId)) return;
+    await this.reloadConfig();
+  }
+
+  @OnEvent(INTEGRATION_EVENT_PATTERNS.AI_DELETED)
+  async handleConfigDeleted(event: IntegrationChangeEvent) {
+    if (!this.orgContext.matches(event.orgId)) return;
+    await this.reloadConfig();
+  }
+
+  getActiveModel(): string {
+    return this.activeConfig.model;
+  }
+
+  private async reloadConfig() {
+    const { value } = await this.integrationsService.getEffectiveConfig(
+      this.orgContext.getOrgId(),
+      'ai',
+    );
+    const apiKey = String(value.apiKey ?? '');
     this.openai = new OpenAI({
       apiKey,
-      baseURL,
+      baseURL: value.baseUrl ? String(value.baseUrl) : undefined,
     });
+    this.activeConfig = {
+      model: String(value.model ?? ''),
+      maxTokens: Number(value.maxTokens ?? 16000),
+      temperature: Number(value.temperature ?? 0.7),
+    };
   }
 
   /**
@@ -40,9 +88,9 @@ export class LlmService {
     },
   ): Promise<string> {
     try {
-      const configModel = this.config.model;
-      const configMaxTokens = this.config.maxTokens;
-      const configTemperature = this.config.temperature;
+      const configModel = this.activeConfig.model;
+      const configMaxTokens = this.activeConfig.maxTokens;
+      const configTemperature = this.activeConfig.temperature;
 
       const completion = await this.openai.chat.completions.create({
         messages,
@@ -77,9 +125,9 @@ export class LlmService {
     },
   ): Promise<AsyncIterableIterator<string>> {
     try {
-      const configModel = this.config.model;
-      const configMaxTokens = this.config.maxTokens;
-      const configTemperature = this.config.temperature;
+      const configModel = this.activeConfig.model;
+      const configMaxTokens = this.activeConfig.maxTokens;
+      const configTemperature = this.activeConfig.temperature;
 
       const stream = await this.openai.chat.completions.create({
         messages,

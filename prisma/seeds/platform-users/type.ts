@@ -9,7 +9,7 @@
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
-import { Platform, Prisma } from '@prisma/client';
+import { Platform, Prisma } from '@/generated/prisma/client';
 
 export type PlatformUserConfig = Omit<
   Prisma.PlatformUserUncheckedCreateInput,

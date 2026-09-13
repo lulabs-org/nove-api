@@ -5,7 +5,7 @@ import { TasksRepository } from '../repositories/tasks.repository';
 import { TaskExecutionLogsRepository } from '../repositories/task-execution-logs.repository';
 import { TaskHandlerRegistry } from '../handlers/task-handler.registry';
 import { Job } from 'bullmq';
-import { TaskStatus, TaskType } from '@prisma/client';
+import { TaskStatus, TaskType } from '@/generated/prisma/client';
 import { Logger } from '@nestjs/common';
 
 describe('TaskProcessor', () => {

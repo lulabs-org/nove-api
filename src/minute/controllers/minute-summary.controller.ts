@@ -25,6 +25,8 @@ import {
   MinuteSummaryDto,
 } from '../dto/minute-summary.dto';
 import { CuidPipe } from '@/common/pipes/cuid.pipe';
+import { MinuteService } from '../services/minute.service';
+import { CurrentOrg } from '@/auth/decorators';
 
 @ApiTags('Minute Summary')
 @Controller('minutes/:minuteId/summary')
@@ -32,15 +34,22 @@ import { CuidPipe } from '@/common/pipes/cuid.pipe';
 export class MinuteSummaryController {
   private readonly logger = new Logger(MinuteSummaryController.name);
 
-  constructor(private readonly minuteSummaryService: MinuteSummaryService) {}
+  constructor(
+    private readonly minuteSummaryService: MinuteSummaryService,
+    private readonly minuteService: MinuteService,
+  ) {}
 
   @Get()
   @RequirePermissions('minute-summary:read')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '获取纪要总结' })
   @ApiResponse({ status: HttpStatus.OK, type: MinuteSummaryDto })
-  async getSummary(@Param('minuteId', CuidPipe) minuteId: string) {
+  async getSummary(
+    @Param('minuteId', CuidPipe) minuteId: string,
+    @CurrentOrg() orgId: string,
+  ) {
     this.logger.log(`获取纪要总结: ${minuteId}`);
+    await this.assertMinute(minuteId, orgId);
     return this.minuteSummaryService.findByMinuteId(minuteId);
   }
 
@@ -52,8 +61,10 @@ export class MinuteSummaryController {
   async createSummary(
     @Param('minuteId', CuidPipe) minuteId: string,
     @Body(new ValidationPipe()) createParams: CreateMinuteSummaryBodyDto,
+    @CurrentOrg() orgId: string,
   ) {
     this.logger.log(`创建纪要总结: ${minuteId}`);
+    await this.assertMinute(minuteId, orgId);
     return this.minuteSummaryService.create(minuteId, createParams);
   }
 
@@ -65,8 +76,10 @@ export class MinuteSummaryController {
   async updateSummary(
     @Param('minuteId', CuidPipe) minuteId: string,
     @Body(new ValidationPipe()) updateParams: UpdateMinuteSummaryDto,
+    @CurrentOrg() orgId: string,
   ) {
     this.logger.log(`更新纪要总结: minuteId=${minuteId}`);
+    await this.assertMinute(minuteId, orgId);
     return this.minuteSummaryService.update(minuteId, updateParams);
   }
 
@@ -75,8 +88,16 @@ export class MinuteSummaryController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '删除纪要总结' })
   @ApiResponse({ status: HttpStatus.OK, type: MinuteSummaryDto })
-  async deleteSummary(@Param('minuteId', CuidPipe) minuteId: string) {
+  async deleteSummary(
+    @Param('minuteId', CuidPipe) minuteId: string,
+    @CurrentOrg() orgId: string,
+  ) {
     this.logger.log(`删除纪要总结: minuteId=${minuteId}`);
+    await this.assertMinute(minuteId, orgId);
     return this.minuteSummaryService.delete(minuteId);
+  }
+
+  private assertMinute(minuteId: string, orgId: string) {
+    return this.minuteService.getById(minuteId, orgId);
   }
 }

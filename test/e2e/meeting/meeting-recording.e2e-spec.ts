@@ -6,7 +6,11 @@ import { AppModule } from '../../../src/app.module';
 import { PrismaService } from '../../../src/prisma/prisma.service';
 import { PermService } from '../../../src/admin/permission/services/permission.service';
 import { JwtService } from '@nestjs/jwt';
-import { MeetingPlatform, MeetingType, RecordingSource } from '@prisma/client';
+import {
+  MeetingPlatform,
+  MeetingType,
+  RecordingSource,
+} from '@/generated/prisma/client';
 
 describe('MinuteController (e2e)', () => {
   let app: INestApplication;

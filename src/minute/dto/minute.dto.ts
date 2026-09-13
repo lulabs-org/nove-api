@@ -12,10 +12,16 @@ import {
   IsArray,
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
-import { RecordingSource } from '@prisma/client';
+import { MeetingPlatform, RecordingSource } from '@/generated/prisma/client';
 import { CreateMinuteSummaryDto } from './minute-summary.dto';
 
 export class QueryMinuteDto {
+  @ApiPropertyOptional({ description: '搜索外部录制ID或会议标题' })
+  @IsOptional()
+  @Transform(({ value }) => (value === '' ? undefined : (value as string)))
+  @IsString()
+  search?: string;
+
   @ApiPropertyOptional({ description: '会议ID' })
   @IsOptional()
   @Transform(({ value }) => (value === '' ? undefined : (value as string)))
@@ -110,6 +116,33 @@ export class CreateRecordingSummaryDto extends CreateMinuteSummaryDto {
   goldenQuotes?: Record<string, unknown>[];
 }
 
+export class MinuteMeetingDto {
+  @ApiProperty({ description: '会议ID' })
+  id: string;
+
+  @ApiProperty({ description: '会议标题' })
+  title: string;
+
+  @ApiProperty({ description: '会议平台', enum: MeetingPlatform })
+  platform: MeetingPlatform;
+
+  @ApiPropertyOptional({
+    description: '会议开始时间',
+    type: String,
+    format: 'date-time',
+    nullable: true,
+  })
+  startAt?: Date | null;
+
+  @ApiPropertyOptional({
+    description: '会议结束时间',
+    type: String,
+    format: 'date-time',
+    nullable: true,
+  })
+  endAt?: Date | null;
+}
+
 export class MinuteDto {
   @ApiProperty({ description: '录音ID' })
   id: string;
@@ -137,14 +170,35 @@ export class MinuteDto {
   @ApiPropertyOptional({ description: '会议ID', type: String, nullable: true })
   meetingId?: string | null;
 
-  @ApiPropertyOptional({ description: '录制用户ID' })
-  recorderUserId?: string;
+  @ApiPropertyOptional({
+    description: '关联会议摘要',
+    type: MinuteMeetingDto,
+    nullable: true,
+  })
+  meeting?: MinuteMeetingDto | null;
 
-  @ApiPropertyOptional({ description: '开始时间' })
-  startAt?: Date;
+  @ApiPropertyOptional({
+    description: '录制用户ID',
+    type: String,
+    nullable: true,
+  })
+  recorderUserId?: string | null;
 
-  @ApiPropertyOptional({ description: '结束时间' })
-  endAt?: Date;
+  @ApiPropertyOptional({
+    description: '开始时间',
+    type: String,
+    format: 'date-time',
+    nullable: true,
+  })
+  startAt?: Date | null;
+
+  @ApiPropertyOptional({
+    description: '结束时间',
+    type: String,
+    format: 'date-time',
+    nullable: true,
+  })
+  endAt?: Date | null;
 
   @ApiProperty({ description: '创建时间' })
   createdAt: Date;
@@ -152,13 +206,18 @@ export class MinuteDto {
   @ApiProperty({ description: '更新时间' })
   updatedAt: Date;
 
-  @ApiPropertyOptional({ description: '删除时间' })
-  deletedAt?: Date;
+  @ApiPropertyOptional({
+    description: '删除时间',
+    type: String,
+    format: 'date-time',
+    nullable: true,
+  })
+  deletedAt?: Date | null;
 }
 
 export class MinuteListResponseDto {
   @ApiProperty({ description: '列表数据', type: [MinuteDto] })
-  data: any[];
+  data: MinuteDto[];
 
   @ApiProperty({ description: '总数' })
   total: number;

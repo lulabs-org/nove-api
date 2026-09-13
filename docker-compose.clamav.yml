@@ -1,0 +1,35 @@
+services:
+  nove:
+    environment:
+      DRIVE_MALWARE_SCAN_PROVIDER: CLAMAV
+      CLAMAV_HOST: clamav
+      CLAMAV_PORT: 3310
+    depends_on:
+      - clamav
+
+  clamav:
+    image: clamav/clamav:1.5-debian13-slim
+    container_name: nove-clamav
+    restart: unless-stopped
+    environment:
+      CLAMD_CONF_StreamMaxLength: 2048M
+      CLAMD_CONF_MaxFileSize: 2048M
+      CLAMD_CONF_MaxScanSize: 2048M
+      CLAMD_CONF_PCREMaxFileSize: 2048M
+      CLAMD_CONF_MaxScanTime: 600000
+      FRESHCLAM_CHECKS: 12
+    ports:
+      - '127.0.0.1:${CLAMAV_PORT:-3310}:3310'
+    volumes:
+      - clamav_data:/var/lib/clamav
+    healthcheck:
+      test: ['CMD', 'clamdscan', '--ping', '1']
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 120s
+    networks:
+      - nove_net
+
+volumes:
+  clamav_data:

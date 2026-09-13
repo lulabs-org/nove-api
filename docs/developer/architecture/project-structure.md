@@ -5,7 +5,7 @@ Nove API 按领域组织 NestJS 模块；控制器、服务、仓储、DTO 和�
 ```text
 nove_api/
 ├── src/
-│   ├── admin/system-config/   # 全局动态配置
+│   ├── admin/integrations/    # 第三方服务集成配置
 │   ├── auth/                  # 登录、注册、令牌与统一认证
 │   ├── org/ dept/ org-member/# 组织、部门与成员
 │   ├── meeting/ meet-ai/      # 会议数据与 AI 总结

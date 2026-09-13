@@ -2,32 +2,40 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-09-23 06:15:34
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-09 01:33:12
- * @FilePath: /lulab_backend/src/user/user.controller.ts
- * @Description:
+ * @LastEditTime: 2026-09-04 16:35:00
+ * @FilePath: /nove_api/src/user/user.controller.ts
+ * @Description: 用户控制器
  *
- * Copyright (c) 2025 by ${git_name_email}, All Rights Reserved.
+ * Copyright (c) 2025 by LuLab-Team, All Rights Reserved.
  */
 
 import {
   Controller,
+  Delete,
   Get,
   Put,
   Body,
   Req,
+  UploadedFile,
+  UseInterceptors,
   ValidationPipe,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags } from '@nestjs/swagger';
 import { NoPermissionRequired } from '@/admin/permission/decorators/permissions.decorator';
 import { Request } from 'express';
 import { ProfileService } from './services/profile.service';
-import { User, CurrentUser } from '@/auth/decorators/user.decorator';
+import { Auth } from '@/auth/decorators/auth.decorator';
 import { UpdateProfileDto } from '@/user/dto/update-profile.dto';
 import { UserProfileResponseDto } from '@/user/dto/user-profile-response.dto';
 import {
+  ApiDeleteUserAvatarDocs,
   ApiGetUserProfileDocs,
+  ApiUploadUserAvatarDocs,
   ApiUpdateUserProfileDocs,
 } from './decorators/user.decorators';
+import { RequireAuth } from '@/auth/decorators/require-auth.decorator';
+import { AvatarUploadFile } from '@/user/types/avatar-upload-file';
 
 @ApiTags('User')
 @Controller('api/user')
@@ -36,26 +44,54 @@ export class UserController {
   constructor(private readonly profileService: ProfileService) {}
 
   @Get('profile')
+  @RequireAuth('jwt')
   @ApiGetUserProfileDocs()
-  async getProfile(@User() user: CurrentUser): Promise<UserProfileResponseDto> {
-    return await this.profileService.getProfile(user.id);
+  async getProfile(
+    @Auth('userId') userId: string,
+  ): Promise<UserProfileResponseDto> {
+    return await this.profileService.getProfile(userId);
   }
 
   @Put('profile')
+  @RequireAuth('jwt')
   @ApiUpdateUserProfileDocs()
   async updateProfile(
-    @User() user: CurrentUser,
+    @Auth('userId') userId: string,
     @Body(ValidationPipe) updateProfileDto: UpdateProfileDto,
     @Req() req: Request,
   ): Promise<UserProfileResponseDto> {
     const ip = this.getClientIp(req);
     const userAgent = req.get('User-Agent');
     return await this.profileService.updateProfile(
-      user.id,
+      userId,
       updateProfileDto,
       ip,
       userAgent,
     );
+  }
+
+  @Put('profile/avatar')
+  @RequireAuth('jwt')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 5 * 1024 * 1024 },
+    }),
+  )
+  @ApiUploadUserAvatarDocs()
+  uploadAvatar(
+    @Auth('userId') userId: string,
+    @UploadedFile() file?: AvatarUploadFile,
+  ): Promise<UserProfileResponseDto> {
+    return this.profileService.uploadAvatar(userId, file);
+  }
+
+  @Delete('profile/avatar')
+  @RequireAuth('jwt')
+  @ApiDeleteUserAvatarDocs()
+  deleteAvatar(
+    @Auth('userId') userId: string,
+  ): Promise<UserProfileResponseDto> {
+    return this.profileService.deleteAvatar(userId);
   }
 
   private getClientIp(req: Request): string {

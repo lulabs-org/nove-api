@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Order, Prisma } from '@prisma/client';
+import { Order, Prisma } from '@/generated/prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 
 const orderInclude = {
@@ -58,6 +58,26 @@ const orderInclude = {
 export type OrderWithRelations = Prisma.OrderGetPayload<{
   include: typeof orderInclude;
 }>;
+
+const benefitAdjustmentInclude = {
+  operator: {
+    select: {
+      id: true,
+      username: true,
+      email: true,
+      profile: {
+        select: {
+          displayName: true,
+        },
+      },
+    },
+  },
+} satisfies Prisma.OrderBenefitAdjustmentInclude;
+
+export type OrderBenefitAdjustmentWithOperator =
+  Prisma.OrderBenefitAdjustmentGetPayload<{
+    include: typeof benefitAdjustmentInclude;
+  }>;
 
 @Injectable()
 export class OrderRepository {
@@ -152,10 +172,10 @@ export class OrderRepository {
 
   async findProductById(
     id: string,
-  ): Promise<{ id: string; name: string } | null> {
+  ): Promise<{ id: string; name: string; durationDays: number | null } | null> {
     return this.prisma.product.findUnique({
       where: { id },
-      select: { id: true, name: true },
+      select: { id: true, name: true, durationDays: true },
     });
   }
 
@@ -173,5 +193,39 @@ export class OrderRepository {
       select: { id: true },
     });
     return !!channel;
+  }
+
+  async executeBenefitAdjustment(params: {
+    orderId: string;
+    orderUpdate: Prisma.OrderUpdateInput;
+    adjustmentCreate: Prisma.OrderBenefitAdjustmentCreateInput;
+  }): Promise<{
+    order: OrderWithRelations;
+    adjustment: OrderBenefitAdjustmentWithOperator;
+  }> {
+    return this.prisma.$transaction(async (tx) => {
+      const order = await tx.order.update({
+        where: { id: params.orderId },
+        data: params.orderUpdate,
+        include: orderInclude,
+      });
+
+      const adjustment = await tx.orderBenefitAdjustment.create({
+        data: params.adjustmentCreate,
+        include: benefitAdjustmentInclude,
+      });
+
+      return { order, adjustment };
+    });
+  }
+
+  async findBenefitAdjustments(
+    orderId: string,
+  ): Promise<OrderBenefitAdjustmentWithOperator[]> {
+    return this.prisma.orderBenefitAdjustment.findMany({
+      where: { orderId, deletedAt: null },
+      orderBy: { createdAt: 'desc' },
+      include: benefitAdjustmentInclude,
+    });
   }
 }

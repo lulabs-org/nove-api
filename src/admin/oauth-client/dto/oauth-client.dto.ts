@@ -11,7 +11,7 @@ import {
   Min,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { OAuthClientStatus, OAuthClientType } from '@prisma/client';
+import { OAuthClientStatus, OAuthClientType } from '@/generated/prisma/client';
 
 export class QueryOAuthClientsDto {
   @ApiPropertyOptional({ default: 1, type: Number })

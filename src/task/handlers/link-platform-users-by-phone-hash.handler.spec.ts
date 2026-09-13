@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { Test, TestingModule } from '@nestjs/testing';
-import { Platform } from '@prisma/client';
+import { Platform } from '@/generated/prisma/client';
 import { Job } from 'bullmq';
 import { PrismaService } from '@/prisma/prisma.service';
 import { LinkPlatformUsersByPhoneHashHandler } from './link-platform-users-by-phone-hash.handler';

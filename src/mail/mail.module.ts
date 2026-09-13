@@ -10,20 +10,20 @@
  */
 
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { emailConfig } from '@/configs/email.config';
 import { MailerService } from './services/mailer.service';
 import { MailService } from './services/mail.service';
+import { AuthMailService } from './services/auth-mail.service';
+import { EmailBrandResolverService } from './services/email-brand-resolver.service';
 import { MailController } from './mail.controller';
+import { MailTesterService } from './mail.tester';
 import { BullModule } from '@nestjs/bullmq';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { MailProcessor } from './mail.processor';
-import { SystemConfigModule } from '@/admin/system-config/system-config.module';
+import { IntegrationsModule } from '@/admin/integrations';
 
 @Module({
   imports: [
-    ConfigModule.forFeature(emailConfig),
     BullModule.registerQueue({
       name: 'mail', // 队列名称
     }),
@@ -31,10 +31,17 @@ import { SystemConfigModule } from '@/admin/system-config/system-config.module';
       name: 'mail',
       adapter: BullMQAdapter,
     }),
-    SystemConfigModule,
+    IntegrationsModule,
   ],
   controllers: [MailController],
-  providers: [MailerService, MailService, MailProcessor], // 注册MailProcessor
-  exports: [MailService], // 导出服务以便其他模块使用
+  providers: [
+    MailerService,
+    MailService,
+    EmailBrandResolverService,
+    AuthMailService,
+    MailProcessor,
+    MailTesterService,
+  ],
+  exports: [MailService, AuthMailService, EmailBrandResolverService],
 })
 export class MailModule {}

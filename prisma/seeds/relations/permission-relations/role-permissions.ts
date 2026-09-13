@@ -1,4 +1,4 @@
-import { PrismaClient, Permission, Role } from '@prisma/client';
+import { PrismaClient, Permission, Role } from '@/generated/prisma/client';
 
 // 管理员角色排除的权限列表
 const ADMIN_EXCLUDED_PERMISSIONS = ['system:config'];
@@ -8,12 +8,16 @@ const MANAGER_PERMISSIONS = [
   'user:read',
   'user:create',
   'user:update',
+  'org-member:read',
   'department:read',
   'department:create',
   'department:update',
   'product:read',
   'product:create',
   'product:update',
+  'project:read',
+  'project:create',
+  'project:update',
   'channel:read',
   'channel:create',
   'channel:update',
@@ -30,6 +34,11 @@ const MANAGER_PERMISSIONS = [
   'tracking-report:create',
   'tracking-report:update',
   'tracking-report:delete',
+  'drive:read',
+  'drive:upload',
+  'drive:update',
+  'drive:delete',
+  'drive:manage-acl',
 ];
 
 // 财务角色权限列表
@@ -54,6 +63,7 @@ const CUSTOMER_SERVICE_PERMISSIONS = [
   'order-refund:create',
   'order-refund:update',
   'product:read',
+  'project:read',
   'channel:read',
   'dashboard:read',
 ];
@@ -62,8 +72,10 @@ const CUSTOMER_SERVICE_PERMISSIONS = [
 const USER_PERMISSIONS = [
   'dashboard:read',
   'product:read',
+  'project:read',
   'channel:read',
   'order:read',
+  'drive:read',
 ];
 
 /**

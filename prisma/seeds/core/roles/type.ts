@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
-import { RoleType } from '@prisma/client';
+import { RoleType } from '@/generated/prisma/client';
 
 export interface RoleConfig {
   orgId?: string;

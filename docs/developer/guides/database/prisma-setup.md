@@ -1,6 +1,33 @@
 # Prisma 集成说明
 
-本项目已成功集成 Prisma ORM，提供类型安全的数据库访问。
+本项目使用 Prisma ORM **7.10.0**，提供类型安全的 PostgreSQL 访问。
+
+## Prisma 7 运行要求与升级
+
+- Node.js 22.12+，CI 和 Docker 使用 22.23.1；pnpm 9.15.9。
+- `prisma`、`@prisma/client`、`@prisma/adapter-pg` 固定到相同版本，避免 `latest` 引入下一个大版本或预发布版本。
+- 使用 Prisma 7 默认的 `prisma-client` 生成器，将客户端显式生成到 `src/generated/prisma`；生成目录不提交到 Git。项目继续按现有 NestJS CommonJS 配置编译生成代码。
+- CLI 的 schema 目录、迁移目录、seed 和数据库地址由根目录 `prisma.config.ts` 配置；配置显式加载 `.env` 并展开 `${VARIABLE}` 引用，保留部署环境已注入的变量。`prisma/schema.prisma` 不再声明连接地址。
+- `prisma generate` 不需要数据库凭据，便于 Docker 构建；迁移等数据库命令必须提供 `DATABASE_URL`。
+- 服务及 TypeScript 数据脚本使用 `createPrismaAdapter()`。服务销毁时释放连接池。
+- 默认每个客户端最多 10 个连接，连接/排队超时 10 秒，空闲连接保留 300 秒。URL 的 `schema`、`connection_limit`、`pool_timeout`、`connect_timeout`、`max_idle_connection_lifetime` 映射到驱动配置；`pool_timeout` 优先于 `connect_timeout`。node-postgres 使用同一超时控制建连与排队，不能完全复刻旧引擎的两个独立超时。
+- SSL 使用 node-postgres 的证书验证行为，不全局关闭验证。私有 CA 需配置 `sslrootcert`；发布前核对部署环境的证书链。
+- Prisma 7 的 `migrate dev` / `migrate reset` 不再自动运行 seed；需要数据初始化时显式运行 `pnpm db:seed`，生成客户端使用 `pnpm db:generate`。
+- 单组织运行环境要求数据库中恰好存在一个启用组织。新数据库只需初始化组织时，运行 `pnpm exec tsx prisma/seed.ts --module organization`；不要为了启动服务而写入整套模拟数据。
+
+升级依赖不需要新增业务 migration，也不要重写历史 migration。建议执行：
+
+```bash
+pnpm install --frozen-lockfile
+pnpm db:generate
+pnpm exec prisma validate
+pnpm build
+pnpm exec jest --selectProjects unit --runInBand
+# DATABASE_URL 必须指向独立测试库；以下命令会应用迁移并写入测试数据。
+pnpm db:migrate:prod
+pnpm exec jest --selectProjects integration --runInBand test/integration/prisma/prisma7.int-spec.ts
+```
+
 
 ## 已完成的配置
 
@@ -8,6 +35,7 @@
 
 - `prisma` - Prisma CLI 工具
 - `@prisma/client` - Prisma 客户端
+- `@prisma/adapter-pg` - PostgreSQL 驱动适配器
 - `@nestjs/config` - 环境变量配置
 
 ### 2. 数据库配置

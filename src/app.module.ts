@@ -20,15 +20,13 @@ import { MailModule } from './mail/mail.module';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { UnifiedAuthGuard } from '@/auth/guards/unified-auth.guard';
-import { ScopeGuard } from '@/auth/guards/scope.guard';
 import { PermissionGuard } from '@/admin/permission/guards/permission.guard';
 import { PrismaModule } from './prisma/prisma.module';
 import { MeetingModule } from './meeting/meeting.module';
 import { MinuteModule } from './minute/minute.module';
 
-import { TencentMtgModule } from './tencent-mtg/tencent-mtg.module';
-import { LarkMeetingModule } from './lark-meeting/lark-meeting.module';
-import { VerificationModule } from '@/verification/verification.module';
+import { TMeetModule } from './tmeet/tmeet.module';
+import { LarkModule } from './lark/lark.module';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { AppResolver } from './app.resolver';
@@ -51,14 +49,18 @@ import { WechatShopModule } from './wechat-shop/wechat-shop.module';
 import { OrderModule } from './order/order.module';
 import { WebhookLogModule } from './webhook-log/webhook-log.module';
 import { OAuthModule } from './oauth/oauth.module';
-import { SystemConfigModule } from './admin/system-config/system-config.module';
+import { IntegrationsModule } from './admin/integrations/integrations.module';
 import { AdminUserModule } from './admin/user/user.module';
 import { ProductModule } from './product/product.module';
 import { ChannelModule } from './channel/channel.module';
 import { OrderRefundModule } from './order-refund/order-refund.module';
 import { TrackingReportModule } from './tracking-report/tracking-report.module';
 import { OAuthClientAdminModule } from './admin/oauth-client/oauth-client-admin.module';
-
+import { ProjectModule } from './project/project.module';
+import { ProfitSharingModule } from './profit-sharing/profit-sharing.module';
+import { DriveModule } from './drive/drive.module';
+import { WecomModule } from './wecom/wecom.module';
+import { StripeModule } from './stripe/stripe.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -110,9 +112,8 @@ import { OAuthClientAdminModule } from './admin/oauth-client/oauth-client-admin.
     MeetingModule,
     MinuteModule,
 
-    TencentMtgModule,
-    LarkMeetingModule,
-    VerificationModule,
+    TMeetModule,
+    LarkModule,
     LlmModule,
     ApiKeyModule,
     PermissionModule,
@@ -125,13 +126,18 @@ import { OAuthClientAdminModule } from './admin/oauth-client/oauth-client-admin.
     OrderModule,
     WebhookLogModule,
     OAuthModule,
-    SystemConfigModule,
+    IntegrationsModule,
     AdminUserModule,
     ProductModule,
     ChannelModule,
     OrderRefundModule,
     TrackingReportModule,
     OAuthClientAdminModule,
+    ProjectModule,
+    ProfitSharingModule,
+    DriveModule,
+    WecomModule,
+    StripeModule,
   ],
   controllers: [AppController],
   providers: [
@@ -140,10 +146,6 @@ import { OAuthClientAdminModule } from './admin/oauth-client/oauth-client-admin.
     {
       provide: APP_GUARD,
       useClass: UnifiedAuthGuard,
-    },
-    {
-      provide: APP_GUARD,
-      useClass: ScopeGuard,
     },
     {
       provide: APP_GUARD,

@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { GenerationMethod } from '@prisma/client';
+import { GenerationMethod } from '@/generated/prisma/client';
 import { SpeakerSummaryRepository } from '../repositories';
 import {
   CreateSpeakerSummaryDto,

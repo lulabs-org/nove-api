@@ -304,8 +304,9 @@ export class RoleController {
   })
   @RequirePermissions('role:update')
   async deleteRoleBinding(
+    @Param('orgId') orgId: string,
     @Param('bindingId') bindingId: string,
   ): Promise<void> {
-    return this.roleService.deleteRoleBinding(bindingId);
+    return this.roleService.deleteRoleBinding(orgId, bindingId);
   }
 }

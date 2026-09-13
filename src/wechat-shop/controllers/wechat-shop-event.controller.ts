@@ -4,7 +4,6 @@ import {
   Get,
   HttpCode,
   HttpStatus,
-  Inject,
   Post,
   Query,
   UnauthorizedException,
@@ -14,12 +13,18 @@ import {
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { OnEvent } from '@nestjs/event-emitter';
 import { Public } from '@/auth/decorators/public.decorator';
-import { wechatShopConfig, WechatShopConfig } from '@/configs';
 import { WechatEventBodyDto, WechatEventQueryDto } from '../dto';
 import { WechatShopEventService } from '../services';
-import { decryptWechatMessage, generateSignature } from '../utils';
-import { SystemConfigService } from '@/admin/system-config/system-config.service';
-import { decrypt } from '@/common/utils/crypto.util';
+import {
+  decryptWechatMessage,
+  generateSignature,
+  isSignatureEqual,
+} from '../utils';
+import {
+  IntegrationChangeEvent,
+  IntegrationsService,
+} from '@/admin/integrations';
+import { SingleOrgContextService } from '@/admin/org';
 
 @ApiTags('Wechat Shop')
 @Controller('webhooks/wechat-shop/events')
@@ -31,12 +36,12 @@ export class WechatShopEventController implements OnModuleInit {
 
   constructor(
     private readonly wechatShopEventService: WechatShopEventService,
-    @Inject(wechatShopConfig.KEY) private readonly config: WechatShopConfig,
-    private readonly systemConfigService: SystemConfigService,
+    private readonly integrationsService: IntegrationsService,
+    private readonly orgContext: SingleOrgContextService,
   ) {
-    this.webhookToken = this.config.webhookToken;
-    this.encodingAesKey = this.config.encodingAesKey;
-    this.appId = this.config.appId;
+    this.webhookToken = '';
+    this.encodingAesKey = '';
+    this.appId = '';
   }
 
   async onModuleInit() {
@@ -44,37 +49,28 @@ export class WechatShopEventController implements OnModuleInit {
   }
 
   @OnEvent('config.wechat-shop.updated')
-  async handleConfigUpdate() {
+  async handleConfigUpdate(event: IntegrationChangeEvent) {
+    if (!this.orgContext.matches(event.orgId)) return;
     this.logger.log(
       'Received config.wechat-shop.updated event, reloading controller config...',
     );
     await this.reloadConfig();
   }
 
+  @OnEvent('config.wechat-shop.deleted')
+  async handleConfigDelete(event: IntegrationChangeEvent) {
+    if (!this.orgContext.matches(event.orgId)) return;
+    await this.reloadConfig();
+  }
+
   private async reloadConfig() {
-    const rawConfig =
-      await this.systemConfigService.getRawConfig('wechat-shop');
-
-    if (rawConfig && rawConfig.value) {
-      const dbConfig = rawConfig.value as Record<string, string>;
-      this.appId = dbConfig.appId ?? this.config.appId;
-
-      if (dbConfig.webhookToken) {
-        try {
-          this.webhookToken = decrypt(dbConfig.webhookToken);
-        } catch {
-          this.logger.error('Failed to decrypt webhookToken from DB');
-        }
-      }
-
-      if (dbConfig.encodingAesKey) {
-        try {
-          this.encodingAesKey = decrypt(dbConfig.encodingAesKey);
-        } catch {
-          this.logger.error('Failed to decrypt encodingAesKey from DB');
-        }
-      }
-    }
+    const { value } = await this.integrationsService.getEffectiveConfig(
+      this.orgContext.getOrgId(),
+      'wechat-shop',
+    );
+    this.appId = String(value.appId ?? '');
+    this.webhookToken = String(value.webhookToken ?? '');
+    this.encodingAesKey = String(value.encodingAesKey ?? '');
   }
 
   @Public()
@@ -142,7 +138,7 @@ export class WechatShopEventController implements OnModuleInit {
       token,
     );
 
-    if (hash !== query.msg_signature) {
+    if (!isSignatureEqual(query.msg_signature, hash)) {
       throw new UnauthorizedException('Invalid msg_signature');
     }
 

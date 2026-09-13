@@ -16,7 +16,7 @@ import {
   IsOptional,
   IsBoolean,
 } from 'class-validator';
-import { Platform } from '@prisma/client';
+import { Platform } from '@/generated/prisma/client';
 
 export class CreatePlatformUserDto {
   @ApiProperty({

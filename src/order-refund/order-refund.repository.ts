@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { OrderRefund, Prisma } from '@prisma/client';
+import { OrderRefund, Prisma } from '@/generated/prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 
 const refundInclude = {
@@ -90,5 +90,26 @@ export class OrderRefundRepository {
       where: { id, deletedAt: null },
       select: { id: true },
     }));
+  }
+
+  async findOrderForRefund(id: string) {
+    return this.prisma.order.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        amount: true,
+        status: true,
+        durationDays: true,
+        benefitStart: true,
+        benefitEnd: true,
+        frozenDays: true,
+        frozenAt: true,
+        product: {
+          select: {
+            durationDays: true,
+          },
+        },
+      },
+    });
   }
 }

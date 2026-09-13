@@ -1,15 +1,32 @@
+import { config } from 'dotenv';
+import { expand } from 'dotenv-expand';
+expand(config({ quiet: true }));
+import { PrismaPg } from '@prisma/adapter-pg';
 import fs from "fs";
 import { parse } from "csv-parse";
-import { PrismaClient, Prisma } from "@prisma/client";
+import prismaClient from "../../src/generated/prisma/client.ts";
 import cuid from 'cuid';
 
-const prisma = new PrismaClient();
+const { PrismaClient, Prisma } = prismaClient;
+
+const prisma = new PrismaClient({
+  adapter: new PrismaPg(
+    {
+      connectionString: process.env.DATABASE_URL,
+      connectionTimeoutMillis: 10000,
+      idleTimeoutMillis: 300000,
+    },
+    {
+      schema: new URL(process.env.DATABASE_URL).searchParams.get('schema') || 'public',
+    },
+  ),
+});
 
 /**
  * 用法:
- *   node scripts/import-csv-prisma.mjs --model=User --file=./data.csv --batch=1000 --skipDuplicates=true
- *   node scripts/import-csv-prisma.mjs --model=User --file=scripts/csv_data/user.csv --batch=1000 --skipDuplicates=true
- *   node scripts/import-csv-prisma.mjs --model=PlatformUser --file=scripts/csv_data/data.csv --batch=1000 --skipDuplicates=true
+ *   pnpm exec tsx scripts/mjs/import-csv-prisma.mjs --model=User --file=./data.csv --batch=1000 --skipDuplicates=true
+ *   pnpm exec tsx scripts/mjs/import-csv-prisma.mjs --model=User --file=scripts/csv_data/user.csv --batch=1000 --skipDuplicates=true
+ *   pnpm exec tsx scripts/mjs/import-csv-prisma.mjs --model=PlatformUser --file=scripts/csv_data/data.csv --batch=1000 --skipDuplicates=true
  *
  * 说明:
  *   - --model 必填: Prisma 的 Model 名（区分大小写，如 User / Post）
@@ -32,7 +49,7 @@ const SKIP_DUPLICATES = (getArg("skipDuplicates", "true") + "").toLowerCase() ==
 const MAPPING = getArg("mapping", "");
 
 if (!MODEL || !FILE) {
-  console.error("❌ 缺少参数。示例: node import-csv-prisma.mjs --model=User --file=./data.csv");
+  console.error("❌ 缺少参数。示例: pnpm exec tsx scripts/mjs/import-csv-prisma.mjs --model=User --file=./data.csv");
   process.exit(1);
 }
 

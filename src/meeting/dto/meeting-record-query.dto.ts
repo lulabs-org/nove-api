@@ -19,7 +19,7 @@ import {
   Max,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { MeetingPlatform, MeetingType } from '@prisma/client';
+import { MeetingPlatform, MeetingType } from '@/generated/prisma/client';
 import { Transform, Type } from 'class-transformer';
 
 export class QueryMeetingRecordsDto {

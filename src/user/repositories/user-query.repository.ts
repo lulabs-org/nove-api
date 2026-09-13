@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import type { User, UserProfile } from '@prisma/client';
+import type { User, UserProfile } from '@/generated/prisma/client';
 
 @Injectable()
 export class UserQueryRepository {
@@ -105,7 +105,8 @@ export class UserQueryRepository {
     ];
     if (countryCode) {
       conditions.push({
-        uq_users_country_code_phone: { countryCode, phone: target },
+        countryCode,
+        phone: target,
       });
     } else {
       conditions.push({ phone: target });

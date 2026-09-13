@@ -2,29 +2,27 @@
  * @Author: 杨仕明 shiming.y@qq.com
  * @Date: 2025-10-01 06:58:19
  * @LastEditors: 杨仕明 shiming.y@qq.com
- * @LastEditTime: 2026-01-14 10:21:11
- * @FilePath: /lulab_backend/src/auth/auth.module.ts
- * @Description:
+ * @LastEditTime: 2026-09-04 18:00:00
+ * @FilePath: /nove_api/src/auth/auth.module.ts
+ * @Description: 认证模块配置与提供者装配
  *
- * Copyright (c) 2025 by ${git_name_email}, All Rights Reserved.
+ * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigModule } from '@nestjs/config';
-import { AuthController } from './auth.controller';
-import { RegisterService } from './services/register.service';
-import { LoginService } from './services/login.service';
-import { PasswordService } from './services/password.service';
+import { AuthController } from './controllers/auth.controller';
+import { AccountSecurityController } from './controllers/account-security.controller';
+import { OtpController } from './controllers/otp.controller';
+import { AuthService } from './services/auth.service';
 import { TokenService } from './services/token.service';
-import { AuthPolicyService } from './services/auth-policy.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JWT_USER_LOOKUP, JWT_TOKEN_BLACKLIST } from './types/jwt.types';
 import { RedisModule } from '@/redis/redis.module';
 import { MailModule } from '@/mail/mail.module';
 import { UserModule } from '@/user/user.module';
-import { VerificationModule } from '@/verification/verification.module';
 import { RefreshTokenRepository } from './repositories/refresh-token.repository';
 import { LoginLogRepository } from './repositories/login-log.repository';
 import { JwtUserLookupService } from './services/jwt-user-lookup.service';
@@ -32,12 +30,17 @@ import { TokenBlacklistService } from './services/token-blacklist.service';
 import { jwtConfig } from '@/configs/jwt.config';
 import { PermissionModule } from '@/admin/permission/permission.module';
 import { UnifiedAuthGuard } from './guards/unified-auth.guard';
+import { AccountSecurityService } from './services/account-security.service';
+import { SmsModule } from '@/sms/sms.module';
+import { SecurityAuditCryptoService } from './services/security-audit-crypto.service';
+import { SecurityNotificationOutboxService } from './services/security-notification-outbox.service';
+import { OtpService } from './services/otp.service';
+import { VerificationCodeRepository } from './repositories/verification-code.repository';
 
 @Module({
   imports: [
     RedisModule,
     UserModule,
-    VerificationModule,
     PermissionModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     ConfigModule.forFeature(jwtConfig),
@@ -52,14 +55,12 @@ import { UnifiedAuthGuard } from './guards/unified-auth.guard';
       inject: [jwtConfig.KEY],
     }),
     MailModule,
+    SmsModule,
   ],
-  controllers: [AuthController],
+  controllers: [AuthController, AccountSecurityController, OtpController],
   providers: [
-    RegisterService,
-    LoginService,
-    PasswordService,
+    AuthService,
     TokenService,
-    AuthPolicyService,
     JwtStrategy,
     RefreshTokenRepository,
     LoginLogRepository,
@@ -67,15 +68,12 @@ import { UnifiedAuthGuard } from './guards/unified-auth.guard';
     TokenBlacklistService,
     { provide: JWT_TOKEN_BLACKLIST, useExisting: TokenBlacklistService },
     UnifiedAuthGuard,
+    AccountSecurityService,
+    SecurityAuditCryptoService,
+    SecurityNotificationOutboxService,
+    OtpService,
+    VerificationCodeRepository,
   ],
-  exports: [
-    RegisterService,
-    LoginService,
-    PasswordService,
-    TokenService,
-    AuthPolicyService,
-    TokenBlacklistService,
-    UnifiedAuthGuard,
-  ],
+  exports: [AuthService, TokenService, TokenBlacklistService, UnifiedAuthGuard],
 })
 export class AuthModule {}

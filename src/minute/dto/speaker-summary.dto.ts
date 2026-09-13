@@ -10,7 +10,7 @@ import {
   Min,
 } from 'class-validator';
 
-import { GenerationMethod } from '@prisma/client';
+import { GenerationMethod } from '@/generated/prisma/client';
 
 export class CreateSpeakerSummaryDto {
   @ApiProperty({

@@ -69,6 +69,7 @@ ALIYUN_SMS_SIGN_NAME=视算新里程科技
 ALIYUN_SMS_TEMPLATE_REGISTER=SMS_271525576
 ALIYUN_SMS_TEMPLATE_LOGIN=SMS_271525576
 ALIYUN_SMS_TEMPLATE_RESET=SMS_271525576
+ALIYUN_SMS_TEMPLATE_SECURITY_CHANGE=SMS_xxxxxxxxx
 ```
 
 #### 2.2 安全配置建议
@@ -147,19 +148,30 @@ Content-Type: application/json
 
 ### 常见错误
 
-1. **签名不合法**：
+1. **只能向已绑定的测试手机号发送（`isv.SMS_TEST_NUMBER_LIMIT`）**：
+   - 当前签名或模板属于测试资源时，接收号码必须先在阿里云短信控制台绑定并完成授权
+   - 核对绑定号码与 API 请求号码完全一致；Nove 对中国大陆号码统一使用不带 `+86` 的 11 位格式
+   - 生产环境必须改用审核通过、没有绿色“测”标记的正式签名和模板
+
+2. **测试签名与模板类型不匹配（`isv.SMS_TEST_SIGN_TEMPLATE_LIMIT`）**：
+   - 测试专用签名只能搭配测试专用模板
+   - 正式签名只能搭配审核通过的正式模板
+   - 核对 `ALIYUN_SMS_SIGN_NAME` 与当前业务使用的模板环境变量来自同一套测试或正式资源；手机号换绑验证码使用 `ALIYUN_SMS_TEMPLATE_LOGIN`
+   - 联系方式换绑成功通知使用 `ALIYUN_SMS_TEMPLATE_SECURITY_CHANGE`，模板变量为 `contactType`、`newContact`（脱敏后的新联系方式）和 `changedAt`；必须配置审核通过的正式通知模板，未配置或投递失败时会保留在安全通知 Outbox 中重试，不影响换绑事务
+
+3. **签名不合法**：
    - 检查签名是否审核通过
    - 确认签名名称配置正确
 
-2. **模板不存在**：
+4. **模板不存在**：
    - 检查模板代码是否正确
    - 确认模板已审核通过
 
-3. **余额不足**：
+5. **余额不足**：
    - 检查阿里云账户余额
    - 充值或设置自动充值
 
-4. **权限不足**：
+6. **权限不足**：
    - 检查AccessKey权限
    - 确认RAM用户有短信发送权限
 

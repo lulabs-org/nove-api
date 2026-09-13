@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsEnum, IsDateString } from 'class-validator';
-import { MemberType } from '@prisma/client';
+import { MemberType } from '@/generated/prisma/client';
 
 export class UpdateOrgMemberDto {
   @ApiPropertyOptional({

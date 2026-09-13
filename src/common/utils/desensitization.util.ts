@@ -75,4 +75,53 @@ export class DesensitizationUtil {
 
     return `${prefix}********${suffix}`;
   }
+
+  /**
+   * 护照号脱敏
+   * 保留前2位和后2位，中间用 **** 替代
+   * @param passport 护照号
+   * @returns 脱敏后的护照号
+   */
+  static maskPassport(passport: string | null | undefined): string | undefined {
+    if (!passport) return undefined;
+
+    const trimmed = passport.trim();
+    if (trimmed.length < 5) return passport;
+
+    const prefix = trimmed.slice(0, 2);
+    const suffix = trimmed.slice(-2);
+    const maskLength = Math.max(trimmed.length - 4, 4);
+
+    return `${prefix}${'*'.repeat(maskLength)}${suffix}`;
+  }
+
+  /**
+   * 通用证件号脱敏
+   * @param documentType 证件类型 (IdentityDocumentType)
+   * @param documentNumber 原始证件号码
+   * @returns 脱敏后的证件号码
+   */
+  static maskDocument(
+    documentType: string | undefined,
+    documentNumber: string | null | undefined,
+  ): string | undefined {
+    if (!documentNumber) return undefined;
+
+    switch (documentType) {
+      case 'ID_CARD':
+      case 'HOUSEHOLD_REGISTER':
+        return this.maskIdCard(documentNumber);
+      case 'PASSPORT':
+        return this.maskPassport(documentNumber);
+      default: {
+        const len = documentNumber.length;
+        if (len <= 4) return '****';
+        const prefixLen = Math.min(2, Math.floor(len / 4));
+        const suffixLen = Math.min(2, Math.floor(len / 4));
+        const prefix = documentNumber.slice(0, prefixLen);
+        const suffix = documentNumber.slice(-suffixLen);
+        return `${prefix}****${suffix}`;
+      }
+    }
+  }
 }

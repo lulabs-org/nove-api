@@ -1,5 +1,5 @@
 import { ForbiddenException } from '@nestjs/common';
-import { OAuthClientStatus, OAuthClientType } from '@prisma/client';
+import { OAuthClientStatus, OAuthClientType } from '@/generated/prisma/client';
 
 import { PrismaService } from '@/prisma/prisma.service';
 import { OAuthClientAdminService } from './oauth-client-admin.service';

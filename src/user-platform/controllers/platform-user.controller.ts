@@ -20,7 +20,7 @@ import {
 } from '@nestjs/swagger';
 import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
 import { PlatformUserService } from '../services/platform-user.service';
-import { Platform } from '@prisma/client';
+import { Platform } from '@/generated/prisma/client';
 import {
   CreatePlatformUserDto,
   ListPlatformUsersDto,

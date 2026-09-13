@@ -1,5 +1,50 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@/generated/prisma/client';
 import type { PermissionConfig } from './type';
+
+const DRIVE_PERMISSION_CONFIGS: readonly PermissionConfig[] = [
+  {
+    name: '查看云盘',
+    code: 'drive:read',
+    description: '浏览和下载有权访问的云盘文件',
+    resource: 'drive',
+    action: 'read',
+  },
+  {
+    name: '上传云盘文件',
+    code: 'drive:upload',
+    description: '创建文件夹和上传文件',
+    resource: 'drive',
+    action: 'upload',
+  },
+  {
+    name: '编辑云盘文件',
+    code: 'drive:update',
+    description: '重命名和移动云盘文件',
+    resource: 'drive',
+    action: 'update',
+  },
+  {
+    name: '删除云盘文件',
+    code: 'drive:delete',
+    description: '移入回收站和恢复文件',
+    resource: 'drive',
+    action: 'delete',
+  },
+  {
+    name: '管理云盘授权',
+    code: 'drive:manage-acl',
+    description: '管理文件和文件夹授权',
+    resource: 'drive',
+    action: 'manage-acl',
+  },
+  {
+    name: '云盘超级管理',
+    code: 'drive:admin',
+    description: '访问待归属空间和跨组织管理能力',
+    resource: 'drive',
+    action: 'admin',
+  },
+];
 
 export const REAL_PERMISSION_CONFIGS: readonly PermissionConfig[] = [
   // ========== 用户管理 ==========
@@ -37,6 +82,27 @@ export const REAL_PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     description: '重置用户密码',
     resource: 'user',
     action: 'reset-password',
+  },
+  {
+    name: '查看身份凭证',
+    code: 'identity-document:read',
+    description: '查看用户身份凭证及脱敏证件号码',
+    resource: 'identity-document',
+    action: 'read',
+  },
+  {
+    name: '维护身份凭证',
+    code: 'identity-document:write',
+    description: '登记、修改、提交和删除用户身份凭证',
+    resource: 'identity-document',
+    action: 'write',
+  },
+  {
+    name: '审核身份凭证',
+    code: 'identity-document:review',
+    description: '审核通过或驳回待核验的身份凭证',
+    resource: 'identity-document',
+    action: 'review',
   },
 
   // ========== 角色管理 ==========
@@ -263,6 +329,43 @@ export const REAL_PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     action: 'toggle-status',
   },
 
+  // ========== 项目管理 ==========
+  {
+    name: '查看项目',
+    code: 'project:read',
+    description: '查看项目信息',
+    resource: 'project',
+    action: 'read',
+  },
+  {
+    name: '创建项目',
+    code: 'project:create',
+    description: '创建新项目',
+    resource: 'project',
+    action: 'create',
+  },
+  {
+    name: '编辑项目',
+    code: 'project:update',
+    description: '编辑项目信息',
+    resource: 'project',
+    action: 'update',
+  },
+  {
+    name: '删除项目',
+    code: 'project:delete',
+    description: '软删除项目',
+    resource: 'project',
+    action: 'delete',
+  },
+  {
+    name: '切换项目状态',
+    code: 'project:toggle-status',
+    description: '切换项目生命周期状态',
+    resource: 'project',
+    action: 'toggle-status',
+  },
+
   // ========== 渠道管理 ==========
   {
     name: '查看渠道',
@@ -427,6 +530,36 @@ export const REAL_PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     description: '管理仪表板配置',
     resource: 'dashboard',
     action: 'manage',
+  },
+
+  // ========== 分润管理 ==========
+  {
+    name: '查看分润',
+    code: 'profit-sharing:read',
+    description: '查看分润规则和明细',
+    resource: 'profit-sharing',
+    action: 'read',
+  },
+  {
+    name: '创建分润规则',
+    code: 'profit-sharing:create',
+    description: '创建分润规则',
+    resource: 'profit-sharing',
+    action: 'create',
+  },
+  {
+    name: '更新分润规则',
+    code: 'profit-sharing:update',
+    description: '更新分润规则',
+    resource: 'profit-sharing',
+    action: 'update',
+  },
+  {
+    name: '删除分润规则',
+    code: 'profit-sharing:delete',
+    description: '删除分润规则',
+    resource: 'profit-sharing',
+    action: 'delete',
   },
 
   // ========== MCP Tool 使用权限 ==========
@@ -726,6 +859,7 @@ export const REAL_PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     resource: 'platform-user',
     action: 'delete',
   },
+  ...DRIVE_PERMISSION_CONFIGS,
 ] as const satisfies readonly Prisma.PermissionCreateInput[];
 
 export const PERMISSION_CONFIGS: readonly PermissionConfig[] = [
@@ -765,6 +899,27 @@ export const PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     resource: 'user',
     action: 'reset-password',
   },
+  {
+    name: '查看身份凭证',
+    code: 'identity-document:read',
+    description: '查看用户身份凭证及脱敏证件号码',
+    resource: 'identity-document',
+    action: 'read',
+  },
+  {
+    name: '维护身份凭证',
+    code: 'identity-document:write',
+    description: '登记、修改、提交和删除用户身份凭证',
+    resource: 'identity-document',
+    action: 'write',
+  },
+  {
+    name: '审核身份凭证',
+    code: 'identity-document:review',
+    description: '审核通过或驳回待核验的身份凭证',
+    resource: 'identity-document',
+    action: 'review',
+  },
 
   // ========== 角色管理 ==========
   {
@@ -990,6 +1145,43 @@ export const PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     action: 'toggle-status',
   },
 
+  // ========== 项目管理 ==========
+  {
+    name: '查看项目',
+    code: 'project:read',
+    description: '查看项目信息',
+    resource: 'project',
+    action: 'read',
+  },
+  {
+    name: '创建项目',
+    code: 'project:create',
+    description: '创建新项目',
+    resource: 'project',
+    action: 'create',
+  },
+  {
+    name: '编辑项目',
+    code: 'project:update',
+    description: '编辑项目信息',
+    resource: 'project',
+    action: 'update',
+  },
+  {
+    name: '删除项目',
+    code: 'project:delete',
+    description: '软删除项目',
+    resource: 'project',
+    action: 'delete',
+  },
+  {
+    name: '切换项目状态',
+    code: 'project:toggle-status',
+    description: '切换项目生命周期状态',
+    resource: 'project',
+    action: 'toggle-status',
+  },
+
   // ========== 渠道管理 ==========
   {
     name: '查看渠道',
@@ -1154,6 +1346,36 @@ export const PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     description: '管理仪表板配置',
     resource: 'dashboard',
     action: 'manage',
+  },
+
+  // ========== 分润管理 ==========
+  {
+    name: '查看分润',
+    code: 'profit-sharing:read',
+    description: '查看分润规则和明细',
+    resource: 'profit-sharing',
+    action: 'read',
+  },
+  {
+    name: '创建分润规则',
+    code: 'profit-sharing:create',
+    description: '创建分润规则',
+    resource: 'profit-sharing',
+    action: 'create',
+  },
+  {
+    name: '更新分润规则',
+    code: 'profit-sharing:update',
+    description: '更新分润规则',
+    resource: 'profit-sharing',
+    action: 'update',
+  },
+  {
+    name: '删除分润规则',
+    code: 'profit-sharing:delete',
+    description: '删除分润规则',
+    resource: 'profit-sharing',
+    action: 'delete',
   },
 
   // ========== MCP Tool 使用权限 ==========
@@ -1453,4 +1675,5 @@ export const PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     resource: 'platform-user',
     action: 'delete',
   },
+  ...DRIVE_PERMISSION_CONFIGS,
 ] as const satisfies readonly Prisma.PermissionCreateInput[];

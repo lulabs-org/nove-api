@@ -2,7 +2,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { Job } from 'bullmq';
 import * as crypto from 'crypto';
-import { Platform } from '@prisma/client';
+import { Platform } from '@/generated/prisma/client';
 import { MigratePhoneHashesHandler } from './migrate-phone-hashes.handler';
 import { TaskHandlerRegistry } from './task-handler.registry';
 import { PrismaService } from '../../prisma/prisma.service';

@@ -5,10 +5,12 @@ model MinuteFile {
   durationMs BigInt?           @map("duration_ms")
   resolution String?
 
-  minuteId     String        @map("minute_id")
-  minute       Minute        @relation(fields: [minuteId], references: [id], onDelete: Cascade)
-  fileObjectId String        @map("file_object_id") @db.Uuid
-  object       StorageObject @relation(fields: [fileObjectId], references: [id], onDelete: Restrict)
+  minuteId      String        @map("minute_id")
+  minute        Minute        @relation(fields: [minuteId], references: [id], onDelete: Cascade)
+  fileObjectId  String        @map("file_object_id") @db.Uuid
+  object        StorageObject @relation(fields: [fileObjectId], references: [id], onDelete: Restrict)
+  fileBindingId String?       @unique @map("file_binding_id")
+  fileBinding   FileBinding?  @relation(fields: [fileBindingId], references: [id], onDelete: Restrict)
 
   // 系统字段及时间
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)

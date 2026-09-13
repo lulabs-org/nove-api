@@ -9,8 +9,8 @@
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
-import { PrismaClient } from '@prisma/client';
-import { User } from '@prisma/client';
+import { PrismaClient } from '@/generated/prisma/client';
+import { User } from '@/generated/prisma/client';
 
 export async function createUserOrganizationRelations(
   prisma: PrismaClient,

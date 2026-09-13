@@ -24,8 +24,6 @@ import { TasksRepository } from './repositories/tasks.repository';
 import { TaskExecutionLogsRepository } from './repositories/task-execution-logs.repository';
 import { UserModule } from '../user/user.module';
 
-import { ConfigModule } from '@nestjs/config';
-import { openaiConfig } from '../configs/openai.config';
 import { TASK_QUEUE_NAME } from './task.constants';
 import { TaskHandlerRegistry } from './handlers/task-handler.registry';
 import { HttpTaskHandler } from './handlers/http.handler';
@@ -43,7 +41,6 @@ import { LinkOrdersToUsersByPhoneHandler } from './handlers/link-orders-to-users
       adapter: BullMQAdapter,
     }),
     LlmModule,
-    ConfigModule.forFeature(openaiConfig),
     HttpModule,
     UserModule,
   ],

@@ -1,5 +1,9 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Currency, OrderStatus, PaymentProvider } from '@prisma/client';
+import {
+  Currency,
+  OrderStatus,
+  PaymentProvider,
+} from '@/generated/prisma/client';
 import {
   IsBoolean,
   IsDateString,
@@ -89,6 +93,16 @@ export class QueryOrderDto {
   @IsOptional()
   @IsDateString()
   createdTo?: string;
+
+  @ApiPropertyOptional({ description: '渠道资金结算开始时间' })
+  @IsOptional()
+  @IsDateString()
+  settledFrom?: string;
+
+  @ApiPropertyOptional({ description: '渠道资金结算结束时间' })
+  @IsOptional()
+  @IsDateString()
+  settledTo?: string;
 
   @ApiPropertyOptional({ description: '是否包含已删除订单', example: false })
   @IsOptional()

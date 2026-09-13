@@ -11,7 +11,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsInt, IsOptional, Min, IsEnum } from 'class-validator';
-import { ApiKeyStatus } from '@prisma/client';
+import { ApiKeyStatus } from '@/generated/prisma/client';
 
 /**
  * 分页查询 DTO

@@ -9,12 +9,12 @@
  * Copyright (c) 2025 by ${git_name_email}, All Rights Reserved.
  */
 
+import { Injectable, Inject, Optional } from '@nestjs/common';
 import {
-  Injectable,
-  Inject,
-  UnauthorizedException,
-  Optional,
-} from '@nestjs/common';
+  TokenRevokedException,
+  SessionInvalidException,
+  AuthUserNotFoundException,
+} from '../exceptions';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import {
@@ -54,14 +54,30 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         TokenBlacklistScope.AccessToken,
       );
       if (revoked) {
-        throw new UnauthorizedException('访问令牌已撤销');
+        throw new TokenRevokedException();
       }
     }
+
+    // 用户级撤销检查：全端登出/密码重置后，撤销时间点之前签发的
+    // 所有 access token 立即失效，而非等待其自然过期
+    if (
+      this.blacklist?.isUserRevokedBefore &&
+      typeof payload?.iat === 'number'
+    ) {
+      const revoked = await this.blacklist.isUserRevokedBefore(
+        payload.sub,
+        payload.iat,
+      );
+      if (revoked) {
+        throw new SessionInvalidException();
+      }
+    }
+
     const authUser = await this.userLookup.getAuthenticatedUserById(
       payload.sub,
     );
     if (!authUser) {
-      throw new UnauthorizedException('用户不存在');
+      throw new AuthUserNotFoundException();
     }
 
     // 如果 JWT 中带有 scope 权限范围（OAuth 2.0 场景），则将其附加到 authUser 上

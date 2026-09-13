@@ -32,5 +32,28 @@ describe('wechat-order-sync.util', () => {
         { startTime: 1000, endTime: 2000 },
       ]);
     });
+
+    it('splits long ranges into contiguous 24-hour windows for aftersale', () => {
+      const startTime = 1000;
+      const oneDay = 24 * 60 * 60;
+      const endTime = startTime + oneDay * 2 + 10;
+
+      const ranges = splitTimeRanges(startTime, endTime, oneDay);
+
+      expect(ranges).toEqual([
+        {
+          startTime: startTime,
+          endTime: startTime + oneDay,
+        },
+        {
+          startTime: startTime + oneDay + 1,
+          endTime: startTime + oneDay * 2 + 1,
+        },
+        {
+          startTime: startTime + oneDay * 2 + 2,
+          endTime: endTime,
+        },
+      ]);
+    });
   });
 });

@@ -4,8 +4,8 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
-import { Gender } from '@prisma/client';
+import { Prisma } from '@/generated/prisma/client';
+import { Gender } from '@/generated/prisma/client';
 import { parse } from 'csv-parse/sync';
 import * as ExcelJS from 'exceljs';
 import { plainToInstance } from 'class-transformer';
@@ -123,6 +123,13 @@ export class AdminUserService {
                 profile: {
                   is: {
                     displayName: { contains: keyword, mode: 'insensitive' },
+                  },
+                },
+              },
+              {
+                profile: {
+                  is: {
+                    fullName: { contains: keyword, mode: 'insensitive' },
                   },
                 },
               },
@@ -549,6 +556,7 @@ export class AdminUserService {
       countryCode: user.countryCode,
       phone: user.phone,
       displayName: user.profile?.displayName ?? null,
+      fullName: user.profile?.fullName ?? null,
       avatar: user.profile?.avatar ?? null,
       active: user.active,
       emailVerified: Boolean(user.emailVerifiedAt),

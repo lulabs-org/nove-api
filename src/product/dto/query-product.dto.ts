@@ -1,5 +1,9 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Currency, ProductCategory, ProductStatus } from '@prisma/client';
+import {
+  Currency,
+  ProductCategory,
+  ProductStatus,
+} from '@/generated/prisma/client';
 import { Transform, Type } from 'class-transformer';
 import {
   IsBoolean,

@@ -70,7 +70,7 @@ export const ApiUpdateUserProfileDocs = () =>
     ApiOperation({
       summary: '更新用户资料',
       description:
-        '更新当前登录用户的资料信息，包括用户名、邮箱、手机号、头像、姓名、个人简介等。需要提供有效的访问令牌。',
+        '更新当前登录用户的资料信息，包括用户名、邮箱、手机号、姓名、个人简介等。头像由专用上传接口维护。需要提供有效的访问令牌。',
       tags: ['User'],
     }),
     ApiConsumes('application/json'),
@@ -94,7 +94,6 @@ export const ApiUpdateUserProfileDocs = () =>
             createdAt: '2024-01-01T00:00:00.000Z',
             profile: {
               name: '李四',
-              avatar: 'https://example.com/new-avatar.jpg',
               bio: '这是我更新后的个人简介',
             },
           },
@@ -152,7 +151,6 @@ export const ApiUpdateUserProfileDocs = () =>
           description: '更新用户档案信息',
           value: {
             name: '李四',
-            avatar: 'https://example.com/new-avatar.jpg',
             bio: '这是我更新后的个人简介',
           },
         },
@@ -175,4 +173,53 @@ export const ApiUpdateUserProfileDocs = () =>
         default: 'application/json',
       },
     }),
+  );
+
+export const ApiUploadUserAvatarDocs = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: '上传当前用户头像',
+      description:
+        '仅接受普通用户 JWT。图片会被重新编码为 512×512 WebP，并替换当前头像。',
+      tags: ['User'],
+    }),
+    ApiBearerAuth(),
+    ApiConsumes('multipart/form-data'),
+    ApiBody({
+      schema: {
+        type: 'object',
+        required: ['file'],
+        properties: {
+          file: { type: 'string', format: 'binary' },
+        },
+      },
+    }),
+    ApiResponse({
+      status: 200,
+      description: '头像上传成功',
+      type: UserProfileResponseDto,
+    }),
+    ApiResponse({ status: 400, description: '文件缺失、格式错误或图片过大' }),
+    ApiResponse({ status: 401, description: '未登录或访问令牌无效' }),
+    ApiResponse({ status: 403, description: '不接受 API Key 或 OAuth 认证' }),
+    ApiResponse({ status: 413, description: '上传文件超过 5 MB' }),
+    ApiResponse({ status: 503, description: '头像存储服务未配置或不可用' }),
+  );
+
+export const ApiDeleteUserAvatarDocs = () =>
+  applyDecorators(
+    ApiOperation({
+      summary: '删除当前用户头像',
+      description: '仅接受普通用户 JWT。清空数据库头像并尽力删除托管对象。',
+      tags: ['User'],
+    }),
+    ApiBearerAuth(),
+    ApiProduces('application/json'),
+    ApiResponse({
+      status: 200,
+      description: '头像删除成功',
+      type: UserProfileResponseDto,
+    }),
+    ApiResponse({ status: 401, description: '未登录或访问令牌无效' }),
+    ApiResponse({ status: 403, description: '不接受 API Key 或 OAuth 认证' }),
   );

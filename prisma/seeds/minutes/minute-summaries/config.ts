@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
-import { GenerationMethod } from '@prisma/client';
+import { GenerationMethod } from '@/generated/prisma/client';
 import type { MinuteSummaryConfig } from './type';
 
 export const MINUTE_SUMMARY_CONFIGS: {

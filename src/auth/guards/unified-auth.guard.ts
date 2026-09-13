@@ -32,7 +32,7 @@ import { UserOrgService } from '@/admin/api-key/services/user-organization.servi
 import { PermService } from '@/admin/permission/services/permission.service';
 import type { AuthenticatedUser } from '@/auth/types/jwt.types';
 import { PrismaService } from '@/prisma/prisma.service';
-import { OAuthClientStatus } from '@prisma/client';
+import { OAuthClientStatus } from '@/generated/prisma/client';
 
 @Injectable()
 export class UnifiedAuthGuard extends AuthGuard('jwt') implements CanActivate {
@@ -180,6 +180,7 @@ export class UnifiedAuthGuard extends AuthGuard('jwt') implements CanActivate {
         orgId: user.organizationId ?? null,
         permissions: currentScopes,
         oauthClientId: user.clientId,
+        user,
       };
       return true;
     }
@@ -216,6 +217,7 @@ export class UnifiedAuthGuard extends AuthGuard('jwt') implements CanActivate {
       userId: user.id,
       orgId,
       permissions,
+      user,
     };
 
     request.authContext = authContext;

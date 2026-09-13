@@ -9,7 +9,7 @@
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
-import { PrismaClient, OrderRefund } from '@prisma/client';
+import { PrismaClient, OrderRefund } from '@/generated/prisma/client';
 import { RefundConfig, RefundCreateInput } from './type';
 import { REFUND_CONFIGS } from './config';
 

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { GenerationMethod } from '@prisma/client';
+import { GenerationMethod } from '@/generated/prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { MinuteSummaryRepository } from './minute-summary.repository';
 

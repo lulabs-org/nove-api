@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
-import { Product, User, Channel } from '@prisma/client';
+import { Product, User, Channel } from '@/generated/prisma/client';
 
 export interface CreateOrdersParams {
   users: {

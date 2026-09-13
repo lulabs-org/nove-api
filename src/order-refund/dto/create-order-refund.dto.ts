@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { RefundChannel } from '@prisma/client';
+import { RefundChannel } from '@/generated/prisma/client';
 import {
   IsDateString,
   IsEnum,

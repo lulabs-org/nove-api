@@ -12,7 +12,7 @@ import {
   DataPermissionRuleDto,
   DataPermissionRuleListResponse,
 } from '../dto';
-import { DataPermissionRule } from '@prisma/client';
+import { DataPermissionRule } from '@/generated/prisma/client';
 
 interface DataPermissionRuleWithFields extends DataPermissionRule {
   createdAt: Date;

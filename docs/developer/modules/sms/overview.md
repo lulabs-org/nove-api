@@ -9,17 +9,17 @@
 ## 模块边界
 
 ```text
-VerificationController
-  └── VerificationService
-      ├── VerificationRepository
+OtpController
+  └── OtpService
+      ├── VerificationCodeRepository
       ├── MailService
       └── SmsService
           └── 阿里云短信 API
 ```
 
-- `VerificationService` 生成和持久化验证码，并执行目标与 IP 频率限制。
+- `OtpService` 生成和持久化验证码，并执行目标与 IP 频率限制。
 - `SmsService` 根据 `register`、`login` 或 `reset_password` 选择阿里云模板，发送短信并检查供应商响应。
-- `SmsModule` 本身不声明 HTTP Controller；对外的验证码接口由 `VerificationController` 提供。
+- `SmsModule` 本身不声明 HTTP Controller；对外的验证码接口由 `AuthModule` 中的 `OtpController` 提供。
 
 ## 配置
 
@@ -36,7 +36,7 @@ ALIYUN_SMS_TEMPLATE_RESET
 
 ## 调用方式
 
-业务模块一般通过 `VerificationService` 发送验证码。对外路由为：
+认证业务通过 `OtpService` 发送和验证验证码。对外路由为：
 
 ```http
 POST /api/auth/otp/send
@@ -47,4 +47,4 @@ POST /api/auth/otp/verify
 
 ## 错误处理
 
-`SmsService` 会将阿里云非 `OK` 响应视为发送失败，`VerificationService` 再将其转换为面向 API 调用方的错误。排障时可记录供应商错误码和请求 ID，但不应记录 AccessKey、完整手机号或验证码。
+`SmsService` 会将阿里云非 `OK` 响应视为发送失败，`OtpService` 再将其转换为面向 API 调用方的错误。排障时可记录供应商错误码和请求 ID，但不应记录 AccessKey、完整手机号或验证码。

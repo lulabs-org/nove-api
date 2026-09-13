@@ -9,7 +9,7 @@
  * Copyright (c) 2025 by ${git_name_email}, All Rights Reserved.
  */
 
-import { User, UserProfile } from '@prisma/client';
+import { User, UserProfile } from '@/generated/prisma/client';
 import { UserProfileResponseDto } from '@/user/dto/user-profile-response.dto';
 
 export function formatUserResponse(

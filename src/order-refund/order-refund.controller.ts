@@ -14,6 +14,7 @@ import {
 import {
   ApiBearerAuth,
   ApiOperation,
+  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -54,6 +55,25 @@ export class OrderRefundController {
     @Query() query: QueryOrderRefundDto,
   ): Promise<OrderRefundListResponse> {
     return this.service.findAll(query);
+  }
+
+  @Get('preview-calculation')
+  @RequirePermissions('order-refund:read')
+  @ApiOperation({
+    summary: '预估退款权益使用天数与建议金额',
+    description: '根据订单实际冻结天数，精确推导实际权益消耗天数及建议退款金额',
+  })
+  @ApiQuery({ name: 'orderId', required: true, description: '订单 ID' })
+  @ApiQuery({
+    name: 'applyAt',
+    required: false,
+    description: '申请时间（默认当前时间）',
+  })
+  async previewCalculation(
+    @Query('orderId') orderId: string,
+    @Query('applyAt') applyAt?: string,
+  ) {
+    return this.service.previewBenefitCalculation(orderId, applyAt);
   }
 
   @Get(':id')

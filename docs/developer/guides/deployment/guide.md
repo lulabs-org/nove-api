@@ -15,10 +15,15 @@ cp .env.example .env
 - `JWT_SECRET`、`JWT_REFRESH_SECRET` 及有效期
 - `CORS_ORIGINS`、`CORS_ORIGIN_REGEXES`、`CORS_CREDENTIALS`
 - `BULL_BOARD_USER`、`BULL_BOARD_PASSWORD`
-- 腾讯会议、飞书、微信小店、SMTP、短信和 LLM 凭据
-- 数据库加密密钥（用于动态系统配置）
+- 腾讯会议、飞书、微信小店、SMTP 和 LLM 凭据（仅在全新数据库首次启动时导入；短信仍按原部署配置）
+- 头像存储所需的 `ALIYUN_OSS_REGION`、`ALIYUN_OSS_BUCKET`、`ALIYUN_OSS_PUBLIC_BASE_URL`，以及可选的 `ALIYUN_OSS_SIGNED_URL_EXPIRES_SECONDS`
+- `SYSTEM_ENCRYPTION_KEY`（用于动态系统配置，必须长期保留且不能直接轮换）
 
 不要直接使用 `.env.example` 中的占位密钥。生产凭据应由部署平台的 Secret 管理能力注入，并限制 `.env` 文件权限。
+
+首次部署新版服务配置时，先保留原有五组服务环境变量。确认 `SYSTEM_CONFIG_ENV_IMPORT_V1` 已写入、后台字段已掩码并完成连接测试后，再从部署平台移除这些服务密钥。后续配置统一通过后台管理；修改环境变量或删除后台配置都不会触发再次导入。
+
+个人头像写入 `avatars/{userId}/{uuid}.webp`，使用公共读权限与长期缓存策略（`public, max-age=31536000`）。推荐使用独立的公共存储桶（`publicBucket`，如 `nove-avatars`）配合 CDN 或公共域名（`publicBaseUrl`）提供静态头像加速访问；在未配置独立公共桶的单桶模式下，系统将在读取时通过私有签名 URL 访问。服务端 RAM 身份只授予所需存储桶前缀的 `PutObject`、`GetObject` 和 `DeleteObject` 权限。缺少任一必要 OSS 配置或 OSS 拒绝上传时，其他 API 仍可启动，但头像上传返回 503；无法生成访问地址时资料接口仍可返回，只是不包含头像 URL。
 
 ## 本地开发
 

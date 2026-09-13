@@ -3,9 +3,16 @@ import type { Config } from 'jest';
 const common: Partial<Config> = {
   preset: 'ts-jest',
   testEnvironment: 'node',
-  moduleFileExtensions: ['ts', 'js', 'json'],
+  moduleFileExtensions: ['js', 'ts', 'json'],
   transform: {
-    '^.+\\.ts$': 'ts-jest',
+    '^.+\\.ts$': [
+      'ts-jest',
+      {
+        tsconfig: {
+          isolatedModules: true,
+        },
+      },
+    ],
   },
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
@@ -23,6 +30,7 @@ const common: Partial<Config> = {
 };
 
 const config: Config = {
+  maxWorkers: '50%',
   projects: [
     {
       displayName: 'unit',
@@ -44,9 +52,7 @@ const config: Config = {
     {
       displayName: 'integration',
       ...common,
-      testMatch: [
-        '<rootDir>/test/integration/**/*.int-spec.ts',
-      ],
+      testMatch: ['<rootDir>/test/integration/**/*.int-spec.ts'],
       coverageDirectory: 'coverage/integration',
       setupFilesAfterEnv: ['<rootDir>/test/setup-integration.ts'],
     },

@@ -1,6 +1,6 @@
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
-import { MeetingPlatform, MeetingType } from '@prisma/client';
+import { MeetingPlatform, MeetingType } from '@/generated/prisma/client';
 import { CreateMeetingRecordDto } from './meeting-record-create.dto';
 import { QueryMeetingStatsDto } from './meeting-record-stats.dto';
 import { UpdateMeetingRecordDto } from './meeting-record-update.dto';

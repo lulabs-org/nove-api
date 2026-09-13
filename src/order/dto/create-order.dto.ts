@@ -1,5 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Currency, OrderStatus, PaymentProvider } from '@prisma/client';
+import {
+  Currency,
+  OrderStatus,
+  PaymentProvider,
+} from '@/generated/prisma/client';
 import {
   IsDateString,
   IsEnum,
@@ -184,20 +188,19 @@ export class CreateOrderDto {
   @IsDateString()
   cancelledAt?: string;
 
-  @ApiPropertyOptional({ description: '退款时间' })
-  @IsOptional()
-  @IsDateString()
-  refundedAt?: string;
-
   @ApiPropertyOptional({ description: '完成时间' })
   @IsOptional()
   @IsDateString()
   completedAt?: string;
 
-  @ApiPropertyOptional({ description: '生效时间' })
+  @ApiPropertyOptional({
+    description: '购买权益时长（天数）',
+    example: 365,
+  })
   @IsOptional()
-  @IsDateString()
-  effectiveAt?: string;
+  @IsInt()
+  @Min(1)
+  durationDays?: number;
 
   @ApiPropertyOptional({ description: '权益开始时间' })
   @IsOptional()

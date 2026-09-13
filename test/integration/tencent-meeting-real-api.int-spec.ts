@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { TencentApiService } from '@/integrations/tencent-meeting/services/api.service';
-import { tencentMeetingConfig } from '@/configs/tencent-mtg.config';
+import { TMeetApiService } from '@/tmeet/client';
 import { config } from 'dotenv';
 import {
   RecordMeetingsResponse,
@@ -12,7 +11,7 @@ import {
   SmartMeetingMinutesResponse,
   TranscriptResponse,
   MeetingParticipantsResponse,
-} from '@/integrations/tencent-meeting/types';
+} from '@/tmeet/types';
 
 // 加载测试环境变量
 config({ path: '.env.test' });
@@ -116,7 +115,7 @@ const classifyApiError = (error: unknown): ApiError => {
  * USER_ID=测试用户ID
  */
 describe('Tencent Meeting Real API Integration Tests', () => {
-  let apiService: TencentApiService;
+  let apiService: TMeetApiService;
   let configService: ConfigService;
 
   // 测试数据配置
@@ -135,14 +134,26 @@ describe('Tencent Meeting Real API Integration Tests', () => {
     const moduleRef: TestingModule = await Test.createTestingModule({
       imports: [
         ConfigModule.forRoot({
-          load: [tencentMeetingConfig],
           isGlobal: true,
         }),
       ],
-      providers: [TencentApiService],
+      providers: [
+        {
+          provide: TMeetApiService,
+          inject: [ConfigService],
+          useFactory: (config: ConfigService) =>
+            new TMeetApiService({
+              appId: config.get<string>('TENCENT_MEETING_APP_ID') ?? '',
+              sdkId: config.get<string>('TENCENT_MEETING_SDK_ID') ?? '',
+              secretId: config.get<string>('TENCENT_MEETING_SECRET_ID') ?? '',
+              secretKey: config.get<string>('TENCENT_MEETING_SECRET_KEY') ?? '',
+              userId: config.get<string>('USER_ID') ?? '',
+            }),
+        },
+      ],
     }).compile();
 
-    apiService = moduleRef.get(TencentApiService);
+    apiService = moduleRef.get(TMeetApiService);
     configService = moduleRef.get(ConfigService);
 
     // 验证配置

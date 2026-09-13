@@ -51,7 +51,7 @@ describe('SpeakerSummaryService', () => {
     ],
   };
 
-  let llmService: { ask: jest.Mock };
+  let llmService: { ask: jest.Mock; getActiveModel: jest.Mock };
   let repository: {
     findGenerationContext: jest.Mock;
     upsert: jest.Mock;
@@ -59,7 +59,10 @@ describe('SpeakerSummaryService', () => {
   let service: SpeakerSummaryService;
 
   beforeEach(() => {
-    llmService = { ask: jest.fn().mockResolvedValue('generated summary') };
+    llmService = {
+      ask: jest.fn().mockResolvedValue('generated summary'),
+      getActiveModel: jest.fn().mockReturnValue('test-model'),
+    };
     repository = {
       findGenerationContext: jest.fn().mockResolvedValue(context),
       upsert: jest.fn().mockResolvedValue(undefined),
@@ -67,13 +70,6 @@ describe('SpeakerSummaryService', () => {
     service = new SpeakerSummaryService(
       llmService as unknown as LlmService,
       repository as unknown as SpeakerSummaryRepository,
-      {
-        apiKey: { ark: '', openai: '' },
-        baseURL: 'https://example.com',
-        model: 'test-model',
-        maxTokens: 16_000,
-        temperature: 0.7,
-      },
     );
     jest.clearAllMocks();
   });

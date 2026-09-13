@@ -10,13 +10,13 @@
  */
 
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
 import { LlmService } from './llm.service';
-import { openaiConfig } from '@/configs';
+import { IntegrationsModule } from '@/admin/integrations';
+import { LlmTesterService } from './llm.tester';
 
 @Module({
-  imports: [ConfigModule.forFeature(openaiConfig)],
-  providers: [LlmService],
+  imports: [IntegrationsModule],
+  providers: [LlmService, LlmTesterService],
   exports: [LlmService],
 })
 export class LlmModule {}

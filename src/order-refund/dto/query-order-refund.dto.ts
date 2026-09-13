@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { RefundChannel, RefundStatus } from '@prisma/client';
+import { RefundChannel, RefundStatus } from '@/generated/prisma/client';
 import { Transform, Type } from 'class-transformer';
 import {
   IsBoolean,

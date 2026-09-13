@@ -3,7 +3,11 @@ import {
   ProcessingStatus,
 } from '../../minute/enums/status.enum';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { MeetingPlatform, MeetingType, RecordingSource } from '@prisma/client';
+import {
+  MeetingPlatform,
+  MeetingType,
+  RecordingSource,
+} from '@/generated/prisma/client';
 
 export class MeetingHostResponseDto {
   @ApiProperty({ description: '平台用户 ID' })
@@ -70,6 +74,13 @@ export class MinuteSummaryResponseDto {
 export class MeetingRecordResponseDto {
   @ApiProperty({ description: '会议记录ID' })
   id: string;
+
+  @ApiPropertyOptional({
+    description: '所属组织 ID',
+    type: String,
+    nullable: true,
+  })
+  orgId: string | null;
 
   @ApiProperty({ description: '会议平台', enum: MeetingPlatform })
   platform: MeetingPlatform;

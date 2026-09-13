@@ -1,6 +1,6 @@
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
-import { GenerationMethod } from '@prisma/client';
+import { GenerationMethod } from '@/generated/prisma/client';
 import { CreateSpeakerSummaryDto } from './speaker-summary.dto';
 
 const validSummary = {

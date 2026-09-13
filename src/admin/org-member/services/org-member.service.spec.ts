@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { BadRequestException, ConflictException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@/generated/prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { OrgMemberRepository } from '../repositories/org-member.repository';
 import { OrgMemberService } from './org-member.service';
@@ -388,7 +388,7 @@ describe('OrgMemberService.listMembers', () => {
           },
           primaryDept: { name: '研发部' },
           memberDepartments: [{ dept: { name: '研发部' } }],
-          memberRoles: [{ roleId: 'role-1' }],
+          memberRoles: [{ id: 'binding-1', roleId: 'role-1' }],
         },
       ],
     });
@@ -406,6 +406,7 @@ describe('OrgMemberService.listMembers', () => {
             displayName: 'Alice',
             departmentNames: ['研发部'],
             roleIds: ['role-1'],
+            roleBindings: [{ id: 'binding-1', roleId: 'role-1' }],
           }),
         ],
       }),

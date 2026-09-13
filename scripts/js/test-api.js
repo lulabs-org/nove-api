@@ -1,10 +1,10 @@
 const { NestFactory } = require('@nestjs/core');
 const { AppModule } = require('./dist/app.module');
-const { TencentApiService } = require('./dist/integrations/tencent-meeting/services/api.service');
+const { TMeetApiService } = require('./dist/tmeet/client/api.service');
 
 async function bootstrap() {
   const app = await NestFactory.createApplicationContext(AppModule);
-  const tencentApi = app.get(TencentApiService);
+  const tencentApi = app.get(TMeetApiService);
 
   const meetingId = '12536410613901019222';
   const subMeetingId = '1770084000';

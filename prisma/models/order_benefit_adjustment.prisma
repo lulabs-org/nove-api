@@ -1,0 +1,40 @@
+// 订单权益调整记录表（记录冻结、解冻、延期流水）
+model OrderBenefitAdjustment {
+  id String @id @default(cuid())
+
+  orderId String                @map("order_id") // 所属订单ID
+  type    BenefitAdjustmentType @map("type") // 调整类型：FREEZE(冻结), UNFREEZE(解冻), EXTENSION(直接延期)
+
+  days Int @default(0) @map("days") // 调整/影响天数（如冻结36天，或延期36天）
+
+  freezeStart DateTime? @map("freeze_start") @db.Timestamptz(6) // 冻结开始时间
+  freezeEnd   DateTime? @map("freeze_end") @db.Timestamptz(6) // 实际解冻时间
+
+  beforeEnd DateTime @map("before_end") @db.Timestamptz(6) // 调整前权益到期时间
+  afterEnd  DateTime @map("after_end") @db.Timestamptz(6) // 调整后权益到期时间
+
+  reason     String? @map("reason") // 调整原因/备注
+  operatorId String? @map("operator_id") // 操作人ID
+  metadata   Json?   @db.JsonB // 扩展元数据
+
+  // 关联
+  order    Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  operator User? @relation("BenefitAdjustmentOperator", fields: [operatorId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@index([orderId], map: "idx_order_benefit_adjustments_order_id")
+  @@index([operatorId], map: "idx_order_benefit_adjustments_operator_id")
+  @@index([type], map: "idx_order_benefit_adjustments_type")
+  @@index([createdAt], map: "idx_order_benefit_adjustments_created_at")
+  @@map("order_benefit_adjustments")
+}
+
+// 权益调整类型枚举
+enum BenefitAdjustmentType {
+  FREEZE // 冻结暂停（权益不可用）
+  UNFREEZE // 解冻恢复（到期日顺延）
+  EXTENSION // 直接延期/赠送
+}

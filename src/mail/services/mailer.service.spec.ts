@@ -1,7 +1,6 @@
 import { MailerService } from './mailer.service';
-import type { ConfigType } from '@nestjs/config';
-import { emailConfig } from '@/configs/email.config';
-import { SystemConfigService } from '@/admin/system-config/system-config.service';
+import { IntegrationsService } from '@/admin/integrations';
+import { SingleOrgContextService } from '@/admin/org';
 import * as nodemailer from 'nodemailer';
 
 jest.mock('nodemailer', () => ({
@@ -31,9 +30,25 @@ function makeTransporter(options?: { verifyCbError?: Error | null }) {
   return t;
 }
 
-function makeConfig(
-  map: Partial<ConfigType<typeof emailConfig>>,
-): ConfigType<typeof emailConfig> {
+interface MockMailConfig {
+  smtp: {
+    host: string;
+    port: number;
+    secure: boolean;
+    user: string;
+    pass: string;
+    from: string;
+  };
+  brand?: {
+    name?: string;
+    logoUrl?: string | null;
+    primaryColor?: string;
+    footerText?: string;
+    publicBaseUrl?: string | null;
+  };
+}
+
+function makeConfig(map: Partial<MockMailConfig>): MockMailConfig {
   return {
     smtp: {
       host: map.smtp?.host ?? 'smtp.gmail.com',
@@ -43,20 +58,46 @@ function makeConfig(
       pass: map.smtp?.pass ?? '',
       from: map.smtp?.from ?? '',
     },
+    brand: {
+      name: map.brand?.name ?? 'Nove System',
+      logoUrl: map.brand?.logoUrl ?? null,
+      primaryColor: map.brand?.primaryColor ?? '#2563eb',
+      footerText:
+        map.brand?.footerText ?? '此邮件由 Nove System 自动发送，请勿回复。',
+      publicBaseUrl: map.brand?.publicBaseUrl ?? null,
+    },
   };
 }
 
 describe('MailerService', () => {
   const createTransport = nodemailer.createTransport as unknown as jest.Mock;
+  const getEffectiveConfig = jest.fn();
+
+  const useMailConfig = (config: MockMailConfig) => {
+    getEffectiveConfig.mockResolvedValue({
+      value: {
+        host: config.smtp.host,
+        port: config.smtp.port,
+        secure: config.smtp.secure,
+        user: config.smtp.user,
+        pass: config.smtp.pass,
+        from: config.smtp.from,
+      },
+    });
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
+    getEffectiveConfig.mockResolvedValue({ value: {} });
   });
 
-  const mockSystemConfigService = {
-    getConfig: jest.fn().mockResolvedValue(null),
-    getRawConfig: jest.fn().mockResolvedValue(null),
-  } as unknown as SystemConfigService;
+  const mockIntegrationsService = {
+    getEffectiveConfig,
+  } as unknown as IntegrationsService;
+  const orgContext = {
+    getOrgId: jest.fn(() => 'org-1'),
+    matches: jest.fn((orgId: string) => orgId === 'org-1'),
+  } as unknown as SingleOrgContextService;
 
   it('skips transporter when SMTP creds missing; send/verify are no-ops', async () => {
     const config = makeConfig({
@@ -69,7 +110,8 @@ describe('MailerService', () => {
         from: '',
       },
     });
-    const svc = new MailerService(config, mockSystemConfigService);
+    useMailConfig(config);
+    const svc = new MailerService(mockIntegrationsService, orgContext);
     await svc.onModuleInit();
 
     // No transporter -> send returns null, verify returns false
@@ -78,6 +120,16 @@ describe('MailerService', () => {
 
     // createTransport should not be called
     expect(createTransport).not.toHaveBeenCalled();
+    expect(getEffectiveConfig).toHaveBeenCalledWith('org-1', 'mail');
+  });
+
+  it('ignores configuration events from another organization', async () => {
+    const svc = new MailerService(mockIntegrationsService, orgContext);
+
+    await svc.handleMailConfigUpdate({ orgId: 'org-2', value: {} });
+    await svc.handleMailConfigDelete({ orgId: 'org-2', value: {} });
+
+    expect(getEffectiveConfig).not.toHaveBeenCalled();
   });
 
   it('creates transporter with config and sends email (from precedence)', async () => {
@@ -94,7 +146,8 @@ describe('MailerService', () => {
         from: 'noreply@test.com',
       },
     });
-    const svc = new MailerService(config, mockSystemConfigService);
+    useMailConfig(config);
+    const svc = new MailerService(mockIntegrationsService, orgContext);
     await svc.onModuleInit();
 
     // explicit from has highest precedence
@@ -129,9 +182,10 @@ describe('MailerService', () => {
         from: 'user@test.com', // 模拟配置中的回退逻辑
       },
     });
+    useMailConfig(configWithoutFrom);
     const svcWithoutFrom = new MailerService(
-      configWithoutFrom,
-      mockSystemConfigService,
+      mockIntegrationsService,
+      orgContext,
     );
     await svcWithoutFrom.onModuleInit();
     transporter.sendMail.mockResolvedValueOnce({ messageId: 'mid-3' });
@@ -167,7 +221,8 @@ describe('MailerService', () => {
         from: 'test@test.com',
       },
     });
-    const svc = new MailerService(config, mockSystemConfigService);
+    useMailConfig(config);
+    const svc = new MailerService(mockIntegrationsService, orgContext);
     await svc.onModuleInit();
 
     await expect(svc.verify()).resolves.toBe(true);
@@ -196,7 +251,8 @@ describe('MailerService', () => {
         from: 'test@test.com',
       },
     });
-    const svc = new MailerService(config, mockSystemConfigService);
+    useMailConfig(config);
+    const svc = new MailerService(mockIntegrationsService, orgContext);
     await svc.onModuleInit();
 
     await expect(svc.verify()).resolves.toBe(false);
@@ -215,10 +271,11 @@ describe('MailerService', () => {
         from: 'test@test.com',
       },
     });
+    useMailConfig(config);
     // constructor triggers callback branch
     // no assertions needed; execution covers warning branch
 
-    const svc = new MailerService(config, mockSystemConfigService);
+    const svc = new MailerService(mockIntegrationsService, orgContext);
     await svc.onModuleInit();
     expect(createTransport).toHaveBeenCalled();
     expect(transporter.verify).toHaveBeenCalled();

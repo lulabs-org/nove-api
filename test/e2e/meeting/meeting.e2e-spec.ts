@@ -4,7 +4,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from '../../../src/app.module';
 import { PrismaService } from '../../../src/prisma/prisma.service';
-import { MeetingPlatform, MeetingType } from '@prisma/client';
+import { MeetingPlatform, MeetingType } from '@/generated/prisma/client';
 
 import { PermService } from '../../../src/admin/permission/services/permission.service';
 

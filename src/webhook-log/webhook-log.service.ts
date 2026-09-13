@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { WebhookStatus, Prisma } from '@prisma/client';
+import { WebhookStatus, Prisma } from '@/generated/prisma/client';
 
 export interface CreateWebhookLogParams {
   provider: string;

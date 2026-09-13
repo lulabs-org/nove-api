@@ -12,7 +12,7 @@ import {
   PermissionTreeDto,
   PermissionListResponse,
 } from '../dto';
-import { Permission } from '@prisma/client';
+import { Permission } from '@/generated/prisma/client';
 
 interface PermissionWithChildren extends Permission {
   parent?: Permission | null;

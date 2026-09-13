@@ -1,11 +1,30 @@
 import { ApiProperty, ApiPropertyOptional, OmitType } from '@nestjs/swagger';
 import {
+  IsBoolean,
   IsString,
   IsOptional,
   IsNumber,
   IsDateString,
   IsNotEmpty,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
+
+export class QueryTranscriptDto {
+  @ApiPropertyOptional({
+    description: '是否同时返回转写说话人关联的本地用户资料',
+    type: Boolean,
+    default: false,
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    const rawValue: unknown = value;
+    if (rawValue === true || rawValue === 'true') return true;
+    if (rawValue === false || rawValue === 'false') return false;
+    return rawValue;
+  })
+  @IsBoolean()
+  includeLocalUser?: boolean = false;
+}
 
 export class CreateTranscriptDto {
   @ApiProperty({ description: '转写来源/文件名' })
@@ -92,27 +111,108 @@ export class TranscriptListResponseDto {
   totalPages: number;
 }
 
-export class TranscriptParagraphDto {
-  @ApiPropertyOptional({ description: '说话人名称' })
-  speakerName?: string;
+export class TranscriptPlatformUserDto {
+  @ApiProperty({ description: '平台用户记录 ID' })
+  id: string;
 
-  @ApiPropertyOptional({ description: '开始时间, 格式 hh:mm:ss' })
-  startTime?: string;
-
-  @ApiPropertyOptional({ description: '结束时间, 格式 hh:mm:ss' })
-  endTime?: string;
-
-  @ApiPropertyOptional({ description: '文本内容' })
-  text?: string;
+  @ApiProperty({
+    description: '平台用户显示名称',
+    type: String,
+    nullable: true,
+  })
+  displayName: string | null;
 }
 
-export class TranscriptByRecordingIdResponseDto {
-  @ApiPropertyOptional({ description: '拼接后的转写文本 (format=text 时返回)' })
-  text?: string;
+export class TranscriptLocalUserDto {
+  @ApiProperty({ description: '本地用户 ID' })
+  id: string;
 
-  @ApiPropertyOptional({
-    type: [TranscriptParagraphDto],
-    description: '转写段落 JSON 数组 (format=json 时返回)',
+  @ApiProperty({
+    description: '本地用户资料显示名称',
+    type: String,
+    nullable: true,
   })
-  data?: TranscriptParagraphDto[];
+  displayName: string | null;
+
+  @ApiProperty({
+    description: '本地用户填写的完整姓名（未经实名认证）',
+    type: String,
+    nullable: true,
+  })
+  fullName: string | null;
+}
+
+export class TranscriptParagraphDto {
+  @ApiProperty({ description: '转写段落 ID' })
+  id: string;
+
+  @ApiProperty({ description: '说话人名称' })
+  speakerName: string;
+
+  @ApiProperty({ description: '开始时间, 格式 hh:mm:ss' })
+  startTime: string;
+
+  @ApiProperty({ description: '结束时间, 格式 hh:mm:ss' })
+  endTime: string;
+
+  @ApiProperty({ description: '文本内容' })
+  text: string;
+
+  @ApiProperty({
+    description: '说话人关联的平台用户；未关联时为 null',
+    type: 'object',
+    nullable: true,
+    properties: {
+      id: {
+        type: 'string',
+        description: '平台用户记录 ID',
+      },
+      displayName: {
+        type: 'string',
+        description: '平台用户显示名称',
+        nullable: true,
+      },
+    },
+  })
+  platformUser: TranscriptPlatformUserDto | null;
+
+  @ApiProperty({
+    description:
+      '说话人关联的本地用户；includeLocalUser=false 或未关联时为 null',
+    type: 'object',
+    nullable: true,
+    properties: {
+      id: {
+        type: 'string',
+        description: '本地用户 ID',
+      },
+      displayName: {
+        type: 'string',
+        description: '本地用户资料显示名称',
+        nullable: true,
+      },
+      fullName: {
+        type: 'string',
+        description: '本地用户填写的完整姓名（未经实名认证）',
+        nullable: true,
+      },
+    },
+  })
+  user: TranscriptLocalUserDto | null;
+}
+
+export class TranscriptTextResponseDto {
+  @ApiProperty({ description: '拼接后的转写文本' })
+  text: string;
+}
+
+export class TranscriptJsonResponseDto {
+  @ApiProperty({ description: '转写记录 ID' })
+  transcriptId: string;
+
+  @ApiProperty({
+    type: [TranscriptParagraphDto],
+    description: '转写段落 JSON 数组',
+  })
+  data: TranscriptParagraphDto[];
 }

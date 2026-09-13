@@ -1,4 +1,4 @@
-import { PrismaClient, Currency, OrderStatus } from '@prisma/client';
+import { PrismaClient, Currency, OrderStatus } from '@/generated/prisma/client';
 
 export async function createOrders(prisma: PrismaClient) {
   const orders = [
@@ -12,7 +12,7 @@ export async function createOrders(prisma: PrismaClient) {
       amountCny: 29900,
       status: OrderStatus.PAID,
       paidAt: new Date('2024-01-15 10:30:00'),
-      effectiveAt: new Date('2024-01-15'),
+      durationDays: 365,
       benefitStart: new Date('2024-01-15'),
       benefitEnd: new Date('2025-01-14'),
     },
@@ -26,7 +26,7 @@ export async function createOrders(prisma: PrismaClient) {
       amountCny: 49900,
       status: OrderStatus.PAID,
       paidAt: new Date('2024-02-01 14:20:00'),
-      effectiveAt: new Date('2024-02-01'),
+      durationDays: 365,
       benefitStart: new Date('2024-02-01'),
       benefitEnd: new Date('2025-01-31'),
     },
@@ -40,7 +40,7 @@ export async function createOrders(prisma: PrismaClient) {
       amountCny: 99900,
       status: OrderStatus.PAID,
       paidAt: new Date('2024-01-01 09:15:00'),
-      effectiveAt: new Date('2024-01-01'),
+      durationDays: 365,
       benefitStart: new Date('2024-01-01'),
       benefitEnd: new Date('2024-12-31'),
     },
@@ -55,7 +55,7 @@ export async function createOrders(prisma: PrismaClient) {
       amountCny: 19900,
       status: OrderStatus.PAID,
       paidAt: new Date('2024-03-01 16:45:00'),
-      effectiveAt: new Date('2024-03-01'),
+      durationDays: 30,
       benefitStart: new Date('2024-03-01'),
       benefitEnd: new Date('2024-03-31'),
     },
@@ -69,7 +69,7 @@ export async function createOrders(prisma: PrismaClient) {
       amountCny: 79900,
       status: OrderStatus.PAID,
       paidAt: new Date('2024-02-15 11:30:00'),
-      effectiveAt: new Date('2024-02-15'),
+      durationDays: 365,
       benefitStart: new Date('2024-02-15'),
       benefitEnd: new Date('2025-02-14'),
     },
@@ -86,7 +86,7 @@ export async function createOrders(prisma: PrismaClient) {
       amountCny: 39900,
       status: OrderStatus.PAID,
       paidAt: new Date('2024-03-20 13:20:00'),
-      effectiveAt: new Date('2024-03-20'),
+      durationDays: 365,
       benefitStart: new Date('2024-03-20'),
       benefitEnd: new Date('2025-03-20'),
     },
@@ -102,7 +102,7 @@ export async function createOrders(prisma: PrismaClient) {
       amountCny: 50400,
       status: OrderStatus.PAID,
       paidAt: new Date('2024-03-10 08:45:00'),
-      effectiveAt: new Date('2024-03-10'),
+      durationDays: 365,
       benefitStart: new Date('2024-03-10'),
       benefitEnd: new Date('2025-03-10'),
     },

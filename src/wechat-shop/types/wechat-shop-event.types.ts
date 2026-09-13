@@ -23,3 +23,15 @@ export interface ChannelsEcAftersaleUpdateEvent {
     wxa_vip_discounted_price?: number;
   };
 }
+
+export interface ChannelsEcOrderSettleEvent {
+  ToUserName: string;
+  FromUserName: string;
+  CreateTime: number;
+  MsgType: string;
+  Event: 'channels_ec_order_settle';
+  order_info: {
+    order_id: string | number;
+    settle_time: number;
+  };
+}

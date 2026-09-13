@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { OrgMember, Prisma } from '@prisma/client';
+import { OrgMember, Prisma } from '@/generated/prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 
 const orgMemberListSelect = {
@@ -41,7 +41,7 @@ const memberRoleOptionSelect = {
   },
   memberRoles: {
     where: { deletedAt: null },
-    select: { roleId: true },
+    select: { id: true, roleId: true },
   },
 } satisfies Prisma.OrgMemberSelect;
 

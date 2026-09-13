@@ -1,8 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import {
   ChannelsEcAftersaleUpdateEvent,
   ChannelsEcOrderPayEvent,
+  ChannelsEcOrderSettleEvent,
 } from '../types';
 import { WechatShopOrderService } from './wechat-shop-order.service';
 
@@ -17,12 +19,15 @@ export class WechatShopEventService {
   > = {
     channels_ec_order_pay: (payload) =>
       this.handleOrderPay(payload as ChannelsEcOrderPayEvent),
+    channels_ec_order_settle: (payload) =>
+      this.handleOrderSettle(payload as ChannelsEcOrderSettleEvent),
     channels_ec_aftersale_update: (payload) =>
       this.handleAftersaleUpdate(payload as ChannelsEcAftersaleUpdateEvent),
   };
 
   constructor(
     private readonly wechatShopOrderService: WechatShopOrderService,
+    @InjectQueue('wechat-order-sync') private readonly syncQueue: Queue,
   ) {}
 
   /**
@@ -58,13 +63,43 @@ export class WechatShopEventService {
   }
 
   /**
+   * 处理订单结算成功事件
+   */
+  private async handleOrderSettle(payload: ChannelsEcOrderSettleEvent) {
+    const orderId = payload.order_info?.order_id;
+    const settleTime = payload.order_info?.settle_time;
+
+    if (!orderId) {
+      throw new Error('Missing order_id in WeChat order settle event');
+    }
+
+    await this.wechatShopOrderService.syncSingle(String(orderId), {
+      settleTime: typeof settleTime === 'number' ? settleTime : undefined,
+    });
+  }
+
+  /**
    * 处理售后状态更新事件
    */
   private async handleAftersaleUpdate(payload: ChannelsEcAftersaleUpdateEvent) {
-    const orderId = payload.finder_shop_aftersale_status_update?.order_id;
-    if (orderId) {
-      // TODO: 处理售后状态更新
-      await Promise.resolve();
+    const afterSaleOrderId =
+      //把after_sale_order_id取出来
+      payload.finder_shop_aftersale_status_update?.after_sale_order_id;
+
+    if (!afterSaleOrderId) {
+      throw new Error('Missing after_sale_order_id in WeChat aftersale event');
     }
+
+    // 回调只负责可靠入队，详情查询和数据库写入交给 Worker 重试处理。
+    await this.syncQueue.add(
+      'sync-single-aftersale',
+      { afterSaleOrderId: String(afterSaleOrderId) },
+      {
+        attempts: 5,
+        backoff: { type: 'exponential', delay: 1000 },
+        removeOnComplete: 100,
+        removeOnFail: 500,
+      },
+    );
   }
 }

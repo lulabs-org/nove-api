@@ -1,3 +1,4 @@
+import { AuthContext } from '@/auth/types/auth-context.interface';
 import {
   Body,
   Controller,
@@ -42,9 +43,9 @@ export class ProductController {
   @ApiResponse({ status: 201, type: ProductDto })
   create(
     @Body() dto: CreateProductDto,
-    @Auth('userId') userId?: string,
+    @Auth() auth: AuthContext,
   ): Promise<ProductDto> {
-    return this.productService.create(dto, userId);
+    return this.productService.create(dto, auth.userId ?? undefined, auth);
   }
 
   @Get()
@@ -71,9 +72,9 @@ export class ProductController {
   update(
     @Param('id') id: string,
     @Body() dto: UpdateProductDto,
-    @Auth('userId') userId?: string,
+    @Auth() auth: AuthContext,
   ): Promise<ProductDto> {
-    return this.productService.update(id, dto, userId);
+    return this.productService.update(id, dto, auth.userId ?? undefined, auth);
   }
 
   @Patch(':id/status')

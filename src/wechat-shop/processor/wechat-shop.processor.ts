@@ -2,12 +2,16 @@ import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
 import { WechatShopOrderService } from '../services/wechat-shop-order.service';
+import { WechatShopAftersaleService } from '../services/wechat-shop-aftersale.service';
 
 @Processor('wechat-order-sync')
 export class WechatShopProcessor extends WorkerHost {
   private readonly logger = new Logger(WechatShopProcessor.name);
 
-  constructor(private readonly wechatShopOrderService: WechatShopOrderService) {
+  constructor(
+    private readonly wechatShopOrderService: WechatShopOrderService,
+    private readonly wechatShopAftersaleService: WechatShopAftersaleService,
+  ) {
     super();
   }
 
@@ -15,8 +19,22 @@ export class WechatShopProcessor extends WorkerHost {
     try {
       switch (job.name) {
         case 'sync-single-order': {
-          const data = job.data as { orderId: string };
-          await this.wechatShopOrderService.syncSingle(data.orderId);
+          const data = job.data as { orderId: string; settleTime?: number };
+          if (data.settleTime !== undefined) {
+            await this.wechatShopOrderService.syncSingle(data.orderId, {
+              settleTime: data.settleTime,
+            });
+          } else {
+            await this.wechatShopOrderService.syncSingle(data.orderId);
+          }
+          break;
+        }
+
+        case 'sync-single-aftersale': {
+          const data = job.data as { afterSaleOrderId: string };
+          await this.wechatShopAftersaleService.syncSingle(
+            data.afterSaleOrderId,
+          );
           break;
         }
 
@@ -25,6 +43,14 @@ export class WechatShopProcessor extends WorkerHost {
             WechatShopOrderService['processHistoryRange']
           >[0];
           await this.wechatShopOrderService.processHistoryRange(data);
+          break;
+        }
+
+        case 'sync-aftersale-history-range': {
+          const data = job.data as Parameters<
+            WechatShopAftersaleService['processHistoryRange']
+          >[0];
+          await this.wechatShopAftersaleService.processHistoryRange(data);
           break;
         }
 

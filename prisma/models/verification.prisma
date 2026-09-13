@@ -1,13 +1,14 @@
 // 验证码模型
 model VerificationCode {
-  id        String               @id @default(cuid())
-  target    String // 邮箱或手机号
-  code      String // 验证码
-  type      VerificationCodeType // 验证码类型
-  expiresAt DateTime // 过期时间
-  used      Boolean              @default(false) // 是否已使用
-  ip        String? // 发送时的IP地址
-  userAgent String? // 用户代理
+  id           String               @id @default(cuid())
+  target       String // 邮箱或手机号
+  code         String // 验证码
+  type         VerificationCodeType // 验证码类型
+  expiresAt    DateTime // 过期时间
+  used         Boolean              @default(false) // 是否已使用
+  attemptCount Int                  @default(0) @map("attempt_count") // 验证失败次数
+  ip           String? // 发送时的IP地址
+  userAgent    String? // 用户代理
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -23,4 +24,7 @@ enum VerificationCodeType {
   REGISTER // 注册
   LOGIN // 登录
   RESET_PASSWORD // 重置密码
+  IDENTITY_CONFIRM // 敏感操作前的身份确认
+  CHANGE_EMAIL // 换绑邮箱
+  CHANGE_PHONE // 换绑手机号
 }

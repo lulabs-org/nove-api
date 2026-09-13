@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@/generated/prisma/client';
 import { retryVersionTransaction } from './prisma-transaction-retry';
 
 describe('retryVersionTransaction', () => {

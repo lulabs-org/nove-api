@@ -1,6 +1,5 @@
 import { HttpService } from '@nestjs/axios';
 import {
-  Inject,
   Injectable,
   Logger,
   ServiceUnavailableException,
@@ -10,15 +9,22 @@ import { AxiosError } from 'axios';
 import { firstValueFrom } from 'rxjs';
 import { OnEvent } from '@nestjs/event-emitter';
 
-import { wechatShopConfig, WechatShopConfig } from '@/configs';
 import {
+  AftersaleOrderDetailResponse,
+  GetAftersaleListParams,
+  GetAftersaleListResponse,
   GetOrderListParams,
   OrderDetailResponse,
   OrderListResponse,
   WechatShopApiResponse,
 } from '../types';
 import { WechatShopTokenService } from './wechat-shop-token.service';
-import { SystemConfigService } from '@/admin/system-config/system-config.service';
+import {
+  IntegrationChangeEvent,
+  INTEGRATION_EVENT_PATTERNS,
+  IntegrationsService,
+} from '@/admin/integrations';
+import { SingleOrgContextService } from '@/admin/org';
 
 @Injectable()
 export class WechatShopClientService implements OnModuleInit {
@@ -26,34 +32,39 @@ export class WechatShopClientService implements OnModuleInit {
   private baseUrl: string;
 
   constructor(
-    @Inject(wechatShopConfig.KEY) private readonly config: WechatShopConfig,
     private readonly httpService: HttpService,
     private readonly wechatShopTokenService: WechatShopTokenService,
-    private readonly systemConfigService: SystemConfigService,
+    private readonly integrationsService: IntegrationsService,
+    private readonly orgContext: SingleOrgContextService,
   ) {
-    this.baseUrl = this.config.apiBaseUrl;
+    this.baseUrl = 'https://api.weixin.qq.com';
   }
 
   async onModuleInit() {
     await this.reloadConfig();
   }
 
-  @OnEvent('config.wechat-shop.updated')
-  async handleConfigUpdate() {
+  @OnEvent(INTEGRATION_EVENT_PATTERNS.WECHAT_SHOP_UPDATED)
+  async handleConfigUpdate(event: IntegrationChangeEvent) {
+    if (!this.orgContext.matches(event.orgId)) return;
     this.logger.log(
       'Received config.wechat-shop.updated event, reloading baseUrl...',
     );
     await this.reloadConfig();
   }
 
-  private async reloadConfig() {
-    const rawConfig =
-      await this.systemConfigService.getRawConfig('wechat-shop');
+  @OnEvent(INTEGRATION_EVENT_PATTERNS.WECHAT_SHOP_DELETED)
+  async handleConfigDelete(event: IntegrationChangeEvent) {
+    if (!this.orgContext.matches(event.orgId)) return;
+    await this.reloadConfig();
+  }
 
-    if (rawConfig && rawConfig.value) {
-      const dbConfig = rawConfig.value as Record<string, string>;
-      this.baseUrl = dbConfig.apiBaseUrl ?? this.config.apiBaseUrl;
-    }
+  private async reloadConfig() {
+    const { value } = await this.integrationsService.getEffectiveConfig(
+      this.orgContext.getOrgId(),
+      'wechat-shop',
+    );
+    this.baseUrl = String(value.apiBaseUrl ?? 'https://api.weixin.qq.com');
   }
 
   /**
@@ -98,6 +109,54 @@ export class WechatShopClientService implements OnModuleInit {
     }
 
     return response;
+  }
+
+  /**
+   * 按售后单号获取微信小店售后单详情。
+   *
+   * @see https://developers.weixin.qq.com/doc/store/shop/API/channels-shop-aftersale/aftersale/api_getaftersaleorder.html
+   */
+  async getAftersaleOrder(
+    afterSaleOrderId: string,
+  ): Promise<AftersaleOrderDetailResponse> {
+    const response = await this.request<AftersaleOrderDetailResponse>(
+      '/channels/ec/aftersale/getaftersaleorder',
+      {
+        data: {
+          after_sale_order_id: afterSaleOrderId,
+        },
+      },
+    );
+
+    if (!response?.after_sale_order) {
+      this.logger.error(
+        `Wechat aftersale detail missing: afterSaleOrderId=${afterSaleOrderId}`,
+        response,
+      );
+      throw new ServiceUnavailableException(
+        `Wechat aftersale detail missing: afterSaleOrderId=${afterSaleOrderId}`,
+      );
+    }
+
+    return response;
+  }
+
+  /**
+   * 获取售后单列表
+   *
+   * @see https://developers.weixin.qq.com/doc/store/shop/API/channels-shop-aftersale/aftersale/api_getaftersalelist.html
+   * @param params 请求参数。注意：begin_create_time/end_create_time 与 begin_update_time/end_update_time 至少需要传入一对，且每次请求时间跨度不可超过 24 小时
+   * @returns 微信售后单 ID 列表及分页游标
+   */
+  async getAftersaleList(
+    params: GetAftersaleListParams,
+  ): Promise<GetAftersaleListResponse> {
+    return this.request<GetAftersaleListResponse>(
+      '/channels/ec/aftersale/getaftersalelist',
+      {
+        data: params as Record<string, unknown>,
+      },
+    );
   }
 
   /**

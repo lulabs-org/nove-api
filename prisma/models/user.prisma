@@ -1,5 +1,5 @@
 model User {
-  id       String  @id @default(cuid())
+  id       String @id @default(cuid())
   username String @unique @db.VarChar(50) // 登录用户名，如 john_doe
 
   // password 密码相关字段
@@ -43,28 +43,43 @@ model User {
   ledDepartments       Dept[]                @relation("DepartmentLeader")
 
   // 个人详细信息
-  profile     UserProfile?
-  settings    UserSettings?
-  preferences UserPreference?
+  profile           UserProfile?
+  settings          UserSettings?
+  preferences       UserPreference?
+  identityDocuments UserIdentityDocument[] // 用户证件与实名认证信息
 
   // 登录日志关联
-  loginLogs      LoginLog[] // 登录日志
+  loginLogs         LoginLog[] // 登录日志
+  securityAuditLogs UserSecurityAuditLog[]
   // API Key 关联
-  createdApiKeys ApiKey[] // 创建的 API Keys
+  createdApiKeys    ApiKey[] // 创建的 API Keys
 
   // 订单相关关联
-  orders                Order[]       @relation("UserOrders") // 用户的订单
-  currentOwnerOrders    Order[]       @relation("CurrentOwnerOrders") // 当前负责的订单
-  financialCloserOrders Order[]       @relation("FinancialCloserOrders") // 财务结单的订单
-  createdRefunds        OrderRefund[] @relation("RefundCreator") // 创建的退款记录
+  orders                Order[]                  @relation("UserOrders") // 用户的订单
+  currentOwnerOrders    Order[]                  @relation("CurrentOwnerOrders") // 当前负责的订单
+  financialCloserOrders Order[]                  @relation("FinancialCloserOrders") // 财务结单的订单
+  createdRefunds        OrderRefund[]            @relation("RefundCreator") // 创建的退款记录
+  benefitAdjustments    OrderBenefitAdjustment[] @relation("BenefitAdjustmentOperator") // 操作的权益调整记录
 
   // 产品相关关联
   createdProducts Product[] @relation("ProductCreator") // 创建的产品
   updatedProducts Product[] @relation("ProductUpdater") // 更新的产品
 
+  // 项目相关关联
+  ownedProjects   Project[]       @relation("ProjectOwner") // 负责的项目
+  createdProjects Project[]       @relation("ProjectCreator") // 创建的项目
+  updatedProjects Project[]       @relation("ProjectUpdater") // 更新的项目
+  projectMembers  ProjectMember[] // 参与的项目成员关系
+
   // 平台与存储相关关联
   platformUsers          PlatformUser[] // 平台用户关联
   uploadedStorageObjects StorageObject[]
+  personalDriveSpaces    DriveSpace[]    @relation("DrivePersonalOwner")
+  createdDriveNodes      DriveNode[]     @relation("DriveNodeCreator")
+  createdDriveFiles      DriveFile[]     @relation("DriveFileCreator")
+  createdUploadSessions  UploadSession[] @relation("UploadSessionCreator")
+  createdDriveGrants     DriveGrant[]    @relation("DriveGrantCreator")
+  driveAuditLogs         DriveAuditLog[] @relation("DriveAuditActor")
   phoneHashMappings      UserPhoneHash[] // 手机号哈希映射
 
   @@unique([countryCode, phone], name: "uq_users_country_code_phone")

@@ -9,7 +9,7 @@
  * Copyright (c) 2026 by LuLab-Team, All Rights Reserved.
  */
 
-import { PrismaClient, Org } from '@prisma/client';
+import { PrismaClient, Org } from '@/generated/prisma/client';
 import { ORGANIZATION_CONFIG, REAL_ORGANIZATION_CONFIG } from './config';
 
 export async function createOrganization(

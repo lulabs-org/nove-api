@@ -1,17 +1,20 @@
 import { InjectQueue } from '@nestjs/bullmq';
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { PaymentProvider, Prisma } from '@prisma/client';
+import {
+  OrderStatus,
+  PaymentProvider,
+  Prisma,
+} from '@/generated/prisma/client';
 import { Queue } from 'bullmq';
 
 import { WechatOrderHistorySyncDto } from '../dto/wechat-order-history-sync.dto';
 import { WechatShopRepository } from '../repositories';
 import {
-  encodeOrderNumber,
-  generateOrderCode,
   mapWechatShopStatus,
   splitTimeRanges,
   WechatOrderUnixRange,
 } from '../utils';
+import { encodeOrderNumber, generateOrderCode } from '@/common/utils';
 import { UserCommandRepository } from '@/user/repositories/user-command.repository';
 import { UserQueryRepository } from '@/user/repositories/user-query.repository';
 import { WechatShopClientService } from './wechat-shop-client.service';
@@ -30,7 +33,7 @@ export class WechatShopOrderService {
   /**
    * 针对微信订单号主动拉取，并进行同步写入。
    */
-  async syncSingle(orderId: string) {
+  async syncSingle(orderId: string, options?: { settleTime?: number }) {
     const { order } = await this.wechatShopClient.getOrder(orderId);
     if (!order) return;
 
@@ -39,6 +42,7 @@ export class WechatShopOrderService {
       pay_info: payInfo,
       price_info: priceInfo,
       delivery_info: deliveryInfo,
+      settle_info: settleInfo,
     } = order.order_detail ?? {};
 
     const addressInfo = deliveryInfo?.address_info;
@@ -80,9 +84,35 @@ export class WechatShopOrderService {
       purchaserId = user.id;
     }
 
+    const settleTimestamp =
+      options?.settleTime ??
+      (typeof settleInfo?.settle_time === 'number'
+        ? settleInfo.settle_time
+        : undefined);
+
+    const settledAt = settleTimestamp
+      ? new Date(settleTimestamp * 1000)
+      : undefined;
+
+    const completedAt =
+      order.status === 100 && order.update_time
+        ? new Date(order.update_time * 1000)
+        : settledAt;
+
+    const settleInfoData =
+      settleInfo ??
+      (settleTimestamp ? { settle_time: settleTimestamp } : undefined);
+
     const orderData = {
-      status: mapWechatShopStatus(order.status),
+      status:
+        mapWechatShopStatus(order.status) ??
+        (settledAt ? OrderStatus.COMPLETED : undefined),
       paidAt: payInfo?.pay_time ? new Date(payInfo.pay_time * 1000) : undefined,
+      settledAt,
+      settleInfo: (settleInfoData ?? undefined) as
+        | Prisma.InputJsonValue
+        | undefined,
+      completedAt,
       amount: priceInfo?.order_price,
       paymentProvider: payInfo?.transaction_id
         ? PaymentProvider.WECHAT

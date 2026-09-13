@@ -1,5 +1,5 @@
 import * as JSONBig from 'json-bigint';
-import { createDecipheriv, createHash } from 'node:crypto';
+import { createDecipheriv, createHash, timingSafeEqual } from 'node:crypto';
 
 /**
  * 微信签名生成工具
@@ -13,6 +13,19 @@ import { createDecipheriv, createHash } from 'node:crypto';
 export function generateSignature(...args: string[]): string {
   const str = args.sort().join('');
   return createHash('sha1').update(str).digest('hex');
+}
+
+/**
+ * 使用常量时间比较签名，避免普通字符串比较泄露匹配进度。
+ */
+export function isSignatureEqual(actual: string, expected: string): boolean {
+  const actualBuffer = Buffer.from(actual);
+  const expectedBuffer = Buffer.from(expected);
+
+  return (
+    actualBuffer.length === expectedBuffer.length &&
+    timingSafeEqual(actualBuffer, expectedBuffer)
+  );
 }
 
 /**

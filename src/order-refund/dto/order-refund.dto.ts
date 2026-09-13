@@ -1,5 +1,9 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Currency, RefundChannel, RefundStatus } from '@prisma/client';
+import {
+  Currency,
+  RefundChannel,
+  RefundStatus,
+} from '@/generated/prisma/client';
 
 export class RefundOrderRelationDto {
   @ApiProperty({ description: '订单 ID' })

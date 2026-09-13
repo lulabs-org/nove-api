@@ -7,7 +7,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { ConfigType } from '@nestjs/config';
-import { ApiKeyStatus } from '@prisma/client';
+import { ApiKeyStatus } from '@/generated/prisma/client';
 import { ApiKeyRepository } from '../repositories/api-key.repository';
 import { apiKeyConfig } from '@/configs/api-key.config';
 import {

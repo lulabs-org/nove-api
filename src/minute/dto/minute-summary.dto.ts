@@ -1,6 +1,6 @@
 import { IsString, IsOptional, IsArray, IsObject } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional, OmitType } from '@nestjs/swagger';
-import { GenerationMethod } from '@prisma/client';
+import { GenerationMethod } from '@/generated/prisma/client';
 
 export class CreateMinuteSummaryDto {
   @ApiProperty({ description: '关联的录制ID' })

@@ -16,9 +16,10 @@ import { UserQueryRepository } from './repositories/user-query.repository';
 import { UserCommandRepository } from './repositories/user-command.repository';
 import { UserPhoneHashRepository } from './repositories/user-phone-hash.repository';
 import { PrismaModule } from '@/prisma/prisma.module';
+import { StorageModule } from '@/storage/storage.module';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, StorageModule],
   controllers: [UserController],
   providers: [
     ProfileService,

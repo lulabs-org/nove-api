@@ -1,0 +1,96 @@
+// =============================================================================
+// 用户通用证件/凭据模型 (User Identity Document)
+// 支持：身份证、护照、户口簿、港澳台通行证、外国人永居证等
+// =============================================================================
+
+model UserIdentityDocument {
+  id     String @id @default(cuid())
+  userId String @map("user_id")
+
+  /// 证件类型
+  documentType   IdentityDocumentType @map("document_type")
+  /// 签发国家或地区代码（ISO 3166-1 alpha-3，如 CHN, USA, HKG 等）
+  issuingCountry String               @default("CHN") @map("issuing_country") @db.VarChar(3)
+
+  /// 持证人姓名（与证件记载保持一致）
+  holderName String @map("holder_name") @db.VarChar(100)
+
+  // ---------------- 安全与敏感数据存储 ----------------
+  /// 证件号码密文（AES-GCM 等算法加密存储，避免数据库明文泄露）
+  numberCipher String @map("number_cipher") @db.VarChar(500)
+  /// 证件号码哈希（HMAC-SHA256 或 SHA256+盐，用于精确检索与防重复绑定）
+  numberHash   String @map("number_hash") @db.VarChar(64)
+  /// 证件号码脱敏展示（如 110101********1234 或 E1234****，用于列表回显）
+  maskedNumber String @map("masked_number") @db.VarChar(50)
+
+  // ---------------- 证件有效期与签发信息 ----------------
+  /// 签发日期
+  issueDate        DateTime? @map("issue_date") @db.Date
+  /// 到期日期（若长期有效则可为空）
+  expiryDate       DateTime? @map("expiry_date") @db.Date
+  /// 是否长期有效（如部分成年人二代身份证、户口簿无过期日）
+  isPermanent      Boolean   @default(false) @map("is_permanent")
+  /// 签发机构（如 "北京市公安局海淀分局"、"National Passport Center"）
+  issuingAuthority String?   @map("issuing_authority") @db.VarChar(100)
+
+  // ---------------- 证件影印件（关联 StorageObject） ----------------
+  /// 正面照 / 主信息页文件 ID
+  frontFileId String? @map("front_file_id") @db.Uuid
+  /// 反面照 / 副页文件 ID（如身份证国徽面、户口簿户主页）
+  backFileId  String? @map("back_file_id") @db.Uuid
+
+  // ---------------- 差异化非通用信息（JSONB 弹性扩展） ----------------
+  /// 扩展元数据（例如户口簿户号及与户主关系、护照机读码 MRZ、身份证民族等）
+  metadata Json?
+
+  // ---------------- 认证状态与主证标记 ----------------
+  /// 认证状态
+  status       DocumentVerifyStatus @default(UNVERIFIED)
+  /// 审核失败原因（若被驳回）
+  rejectReason String?              @map("reject_reason") @db.VarChar(255)
+  /// 认证通过时间
+  verifiedAt   DateTime?            @map("verified_at") @db.Timestamptz(6)
+
+  /// 是否为当前用户的默认/主实名证件
+  isPrimary Boolean @default(false) @map("is_primary")
+
+  // ---------------- 审计时间戳 ----------------
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6) // 软删除时间戳
+
+  // ---------------- 关联关系 ----------------
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  frontFile StorageObject? @relation("IdentityDocFrontFile", fields: [frontFileId], references: [id], onDelete: SetNull)
+  backFile  StorageObject? @relation("IdentityDocBackFile", fields: [backFileId], references: [id], onDelete: SetNull)
+
+  // ---------------- 约束与索引 ----------------
+  // 同一签发国家/地区下，相同证件类型的相同号码哈希唯一（防止冒用或重复绑定）
+  @@unique([issuingCountry, documentType, numberHash], name: "uq_country_doc_type_number_hash")
+  @@index([userId], map: "idx_user_docs_user_id")
+  @@index([numberHash], map: "idx_user_docs_number_hash")
+  @@index([status], map: "idx_user_docs_status")
+  @@index([userId, isPrimary], map: "idx_user_docs_user_primary")
+  @@index([deletedAt], map: "idx_user_docs_deleted_at")
+  @@map("user_identity_documents")
+}
+
+/// 证件类型枚举
+enum IdentityDocumentType {
+  ID_CARD // 中华人民共和国居民身份证
+  PASSPORT // 护照
+  HOUSEHOLD_REGISTER // 居民户口簿
+  HK_MACAO_PERMIT // 港澳居民来往内地通行证（回乡证）
+  TAIWAN_PERMIT // 台湾居民来往大陆通行证（台胞证）
+  FOREIGN_PERMANENT_RESIDENT // 外国人永久居留身份证（五星卡）
+  OTHER // 其他证件
+}
+
+/// 认证状态枚举
+enum DocumentVerifyStatus {
+  UNVERIFIED // 未认证（仅登记草稿）
+  PENDING // 待核验 / 审核中
+  VERIFIED // 已认证通过
+  REJECTED // 认证被驳回
+  EXPIRED // 证件已过期
+}

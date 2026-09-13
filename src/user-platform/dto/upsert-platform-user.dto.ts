@@ -10,7 +10,7 @@
  */
 import { ApiProperty, OmitType, PickType } from '@nestjs/swagger';
 import { IsEnum, IsString, IsNotEmpty, IsOptional } from 'class-validator';
-import { Platform } from '@prisma/client';
+import { Platform } from '@/generated/prisma/client';
 
 export class UpsertPlatformUserDto {
   @ApiProperty({

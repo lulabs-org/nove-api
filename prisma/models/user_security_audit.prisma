@@ -1,0 +1,68 @@
+enum UserSecurityAuditEventType {
+  EMAIL_BOUND
+  EMAIL_CHANGED
+  PHONE_BOUND
+  PHONE_CHANGED
+}
+
+enum SecurityNotificationChannel {
+  EMAIL
+  PHONE
+}
+
+enum SecurityNotificationRecipient {
+  OLD
+  NEW
+}
+
+enum SecurityNotificationStatus {
+  PENDING
+  PROCESSING
+  SENT
+  FAILED
+}
+
+model UserSecurityAuditLog {
+  id                   String                     @id @default(uuid())
+  userId               String                     @map("user_id")
+  eventType            UserSecurityAuditEventType @map("event_type")
+  oldValueEncrypted    String?                    @map("old_value_encrypted") @db.Text
+  newValueEncrypted    String                     @map("new_value_encrypted") @db.Text
+  oldValueMasked       String?                    @map("old_value_masked")
+  newValueMasked       String                     @map("new_value_masked")
+  verificationMethod   String                     @map("verification_method")
+  ip                   String
+  userAgent            String?                    @map("user_agent") @db.Text
+  deviceId             String?                    @map("device_id")
+  encryptionKeyVersion String                     @map("encryption_key_version")
+  createdAt            DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user          User                         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notifications SecurityNotificationOutbox[]
+
+  @@index([userId, createdAt])
+  @@index([eventType, createdAt])
+  @@map("user_security_audit_logs")
+}
+
+model SecurityNotificationOutbox {
+  id            String                        @id @default(uuid())
+  auditLogId    String                        @map("audit_log_id")
+  channel       SecurityNotificationChannel
+  recipient     SecurityNotificationRecipient
+  status        SecurityNotificationStatus    @default(PENDING)
+  attemptCount  Int                           @default(0) @map("attempt_count")
+  nextAttemptAt DateTime                      @default(now()) @map("next_attempt_at") @db.Timestamptz(6)
+  claimedAt     DateTime?                     @map("claimed_at") @db.Timestamptz(6)
+  sentAt        DateTime?                     @map("sent_at") @db.Timestamptz(6)
+  lastError     String?                       @map("last_error")
+  createdAt     DateTime                      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime                      @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  auditLog UserSecurityAuditLog @relation(fields: [auditLogId], references: [id], onDelete: Cascade)
+
+  @@unique([auditLogId, recipient])
+  @@index([status, nextAttemptAt])
+  @@index([claimedAt])
+  @@map("security_notification_outbox")
+}
