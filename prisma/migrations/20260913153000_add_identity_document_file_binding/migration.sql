@@ -1,0 +1,1 @@
+ALTER TYPE "FileBindingTargetType" ADD VALUE 'IDENTITY_DOCUMENT';
