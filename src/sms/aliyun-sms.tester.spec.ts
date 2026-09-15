@@ -28,7 +28,6 @@ describe('AliyunSmsTester', () => {
     expect(sendTestSms).toHaveBeenCalledTimes(3);
     expect(sendTestSms).toHaveBeenCalledWith(
       '13800138000',
-      '+86',
       expect.objectContaining(value),
     );
   });

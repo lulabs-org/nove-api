@@ -1,4 +1,3 @@
-import { CodeType } from '@/common/enums';
 import { SmsDeliveryError, SmsService } from './sms.service';
 
 describe('SmsService', () => {
@@ -17,13 +16,13 @@ describe('SmsService', () => {
     const service = new SmsService(configService as never);
     (
       service as unknown as {
-        createClient: () => { sendSmsWithOptions: jest.Mock };
+        getClient: () => { sendSmsWithOptions: jest.Mock };
       }
-    ).createClient = jest.fn(() => ({ sendSmsWithOptions }));
+    ).getClient = jest.fn(() => ({ sendSmsWithOptions }));
     return { service, configService };
   }
 
-  it('maps the Aliyun test-number restriction to an actionable message', async () => {
+  it('extracts actionable error message directly from provider response', async () => {
     const { service } = createService(
       jest.fn().mockResolvedValue({
         body: {
@@ -35,16 +34,15 @@ describe('SmsService', () => {
     );
 
     await expect(
-      service.sendSms('13800138000', '123456', CodeType.CHANGE_PHONE, '+86'),
+      service.sendSms('13800138000', '123456'),
     ).rejects.toMatchObject<SmsDeliveryError>({
       name: 'SmsDeliveryError',
       providerCode: 'isv.SMS_TEST_NUMBER_LIMIT',
-      message:
-        '当前使用的是阿里云测试短信，只能发送给已绑定的测试手机号。请先在阿里云短信控制台绑定该号码，或改用审核通过的正式签名和模板',
+      message: '只能向已绑定的测试手机号发送短信',
     });
   });
 
-  it('does not expose unexpected provider errors to API callers', async () => {
+  it('preserves exception message when provider rejects with error', async () => {
     const { service } = createService(
       jest.fn().mockRejectedValue(
         Object.assign(new Error('internal provider details'), {
@@ -55,15 +53,15 @@ describe('SmsService', () => {
     );
 
     await expect(
-      service.sendSms('13800138000', '123456', CodeType.LOGIN, '+86'),
+      service.sendSms('13800138000', '123456'),
     ).rejects.toMatchObject<SmsDeliveryError>({
       name: 'SmsDeliveryError',
-      message: '短信服务暂时不可用，请稍后重试',
+      message: 'internal provider details',
       providerCode: 'InternalError',
     });
   });
 
-  it('recognizes the test-number restriction when Aliyun omits the error code', async () => {
+  it('extracts message when provider returns unknown error code', async () => {
     const { service } = createService(
       jest.fn().mockResolvedValue({
         body: {
@@ -74,15 +72,15 @@ describe('SmsService', () => {
     );
 
     await expect(
-      service.sendSms('13800138000', '123456', CodeType.LOGIN, '+86'),
+      service.sendSms('13800138000', '123456'),
     ).rejects.toMatchObject<SmsDeliveryError>({
       name: 'SmsDeliveryError',
-      message:
-        '当前使用的是阿里云测试短信，只能发送给已绑定的测试手机号。请先在阿里云短信控制台绑定该号码，或改用审核通过的正式签名和模板',
+      message: '只能向已回复授权信息的手机号发送',
+      providerCode: 'UNKNOWN',
     });
   });
 
-  it('maps a mixed test and production signature/template pair to configuration guidance', async () => {
+  it('extracts template restriction error message directly', async () => {
     const { service } = createService(
       jest.fn().mockResolvedValue({
         body: {
@@ -94,27 +92,21 @@ describe('SmsService', () => {
     );
 
     await expect(
-      service.sendSms('13800138000', '123456', CodeType.CHANGE_PHONE, '+86'),
+      service.sendSms('13800138000', '123456'),
     ).rejects.toMatchObject<SmsDeliveryError>({
       name: 'SmsDeliveryError',
       providerCode: 'isv.SMS_TEST_SIGN_TEMPLATE_LIMIT',
-      message:
-        '阿里云短信签名与模板类型不匹配。请检查平台治理中的阿里云短信签名和验证码模板配置',
+      message: 'Test template and signature restrictions',
     });
   });
 
-  it('sends Chinese mainland numbers in the same 11-digit format used by test bindings', async () => {
+  it('cleans Chinese mainland numbers by stripping any +86 prefix', async () => {
     const sendSmsWithOptions = jest.fn().mockResolvedValue({
       body: { code: 'OK', requestId: 'request-4' },
     });
     const { service } = createService(sendSmsWithOptions);
 
-    await service.sendSms(
-      '13800138000',
-      '123456',
-      CodeType.CHANGE_PHONE,
-      '+86',
-    );
+    await service.sendSms('+8613800138000', '123456');
 
     expect(sendSmsWithOptions).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -131,9 +123,8 @@ describe('SmsService', () => {
     });
     const { service } = createService(sendSmsWithOptions);
 
-    await service.sendSecurityChangeNotice(
+    await service.sendSecurityNotice(
       '13800138000',
-      '+86',
       '手机号',
       '+86 139****0000',
       '2026/8/31 10:00:00',
@@ -158,8 +149,8 @@ describe('SmsService', () => {
     });
     const { service, configService } = createService(sendSmsWithOptions);
 
-    await service.sendSms('13800138000', '123456', CodeType.LOGIN, '+86');
-    await service.sendSms('13800138000', '654321', CodeType.LOGIN, '+86');
+    await service.sendSms('13800138000', '123456');
+    await service.sendSms('13800138000', '654321');
 
     expect(configService.getRequiredConfig).toHaveBeenCalledTimes(2);
   });
@@ -171,7 +162,7 @@ describe('SmsService', () => {
     );
 
     await expect(
-      service.sendSms('13800138000', '123456', CodeType.LOGIN, '+86'),
+      service.sendSms('13800138000', '123456'),
     ).rejects.toMatchObject({
       message: '短信服务尚未配置',
       providerCode: 'SMS_NOT_CONFIGURED',

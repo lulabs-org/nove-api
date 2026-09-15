@@ -95,9 +95,8 @@ export class SecurityNotificationOutboxService {
         );
       } else {
         if (snapshot.kind !== 'phone') throw new Error('CONTACT_KIND_MISMATCH');
-        await this.smsService.sendSecurityChangeNotice(
+        await this.smsService.sendSecurityNotice(
           snapshot.phone,
-          snapshot.countryCode,
           contactLabel,
           item.auditLog.newValueMasked,
           item.auditLog.createdAt.toLocaleString('zh-CN', { hour12: false }),

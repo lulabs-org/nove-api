@@ -10,20 +10,22 @@
  */
 
 import { Injectable, Logger } from '@nestjs/common';
-import Dysmsapi20170525, * as $Dysmsapi20170525 from '@alicloud/dysmsapi20170525';
-import * as $OpenApi from '@alicloud/openapi-client';
-import * as $Util from '@alicloud/tea-util';
-import { CodeType } from '@/common/enums';
-import { DesensitizationUtil, formatPhoneNumber } from '@/common/utils';
+import Dysmsapi20170525, { SendSmsRequest } from '@alicloud/dysmsapi20170525';
+import { Config as OpenApiConfig } from '@alicloud/openapi-client';
+import { RuntimeOptions } from '@alicloud/tea-util';
+import { DesensitizationUtil } from '@/common/utils';
 import {
   AliyunSmsConfigService,
   AliyunSmsConfigValue,
 } from './aliyun-sms-config.service';
 
-export { formatPhoneNumber };
-
-const SMS_TEST_NUMBER_LIMIT = 'isv.SMS_TEST_NUMBER_LIMIT';
-const SMS_TEST_SIGN_TEMPLATE_LIMIT = 'isv.SMS_TEST_SIGN_TEMPLATE_LIMIT';
+/**
+ * 默认网络运行时参数：防止外部 API 偶发网络挂起阻塞 NestJS 工作线程
+ */
+const DEFAULT_RUNTIME_OPTIONS = new RuntimeOptions({
+  connectTimeout: 3000,
+  readTimeout: 5000,
+});
 
 export class SmsDeliveryError extends Error {
   constructor(
@@ -35,114 +37,65 @@ export class SmsDeliveryError extends Error {
   }
 }
 
-interface AliyunErrorInfo {
-  providerCode?: string;
-  requestId?: string;
-  providerMessage?: string;
-  publicMessage: string;
-  recommend?: string;
-}
-
-/**
- * 解析阿里云 SMS SDK 返回的响应或异常，提取标准化排查信息与面向用户的提示
- */
-export function parseAliyunSmsError(error: unknown): AliyunErrorInfo {
-  const err =
-    error && typeof error === 'object'
-      ? (error as Record<string, unknown>)
-      : {};
-  const providerCode = typeof err.code === 'string' ? err.code : undefined;
-  const requestId =
-    typeof err.requestId === 'string' ? err.requestId : undefined;
-  const providerMessage =
-    typeof err.message === 'string' ? err.message : undefined;
-
-  let recommend: string | undefined;
-  if (err.data && typeof err.data === 'object') {
-    const data = err.data as Record<string, unknown>;
-    if (data.Recommend) {
-      recommend =
-        typeof data.Recommend === 'string'
-          ? data.Recommend
-          : JSON.stringify(data.Recommend);
-    }
-  }
-
-  let publicMessage = '短信服务暂时不可用，请稍后重试';
-  if (
-    providerCode === SMS_TEST_NUMBER_LIMIT ||
-    (providerMessage?.includes('授权') && providerMessage.includes('手机号'))
-  ) {
-    publicMessage =
-      '当前使用的是阿里云测试短信，只能发送给已绑定的测试手机号。请先在阿里云短信控制台绑定该号码，或改用审核通过的正式签名和模板';
-  } else if (providerCode === SMS_TEST_SIGN_TEMPLATE_LIMIT) {
-    publicMessage =
-      '阿里云短信签名与模板类型不匹配。请检查平台治理中的阿里云短信签名和验证码模板配置';
-  }
-
-  return { providerCode, requestId, providerMessage, publicMessage, recommend };
-}
+type SmsTemplateType = 'verification' | 'securityChange';
 
 @Injectable()
 export class SmsService {
   private readonly logger = new Logger(SmsService.name);
 
-  constructor(private readonly configService: AliyunSmsConfigService) {}
+  constructor(private readonly configService: AliyunSmsConfigService) { }
+
+  private cachedClient?: { key: string; client: Dysmsapi20170525 };
 
   /**
-   * 创建阿里云短信客户端（保留实例方法以便单元测试 mock）
+   * 获取阿里云客户端实例（相同 AK/SK 复用连接池，配置变更时自动创建）
    */
-  createClient(configValue: AliyunSmsConfigValue): Dysmsapi20170525 {
-    const config = new $OpenApi.Config({
-      accessKeyId: configValue.accessKeyId,
-      accessKeySecret: configValue.accessKeySecret,
-      endpoint: 'dysmsapi.aliyuncs.com',
-    });
-    return new Dysmsapi20170525(config);
+  getClient(configValue: AliyunSmsConfigValue): Dysmsapi20170525 {
+    const cacheKey = `${configValue.accessKeyId}:${configValue.accessKeySecret}`;
+    if (this.cachedClient?.key === cacheKey) {
+      return this.cachedClient.client;
+    }
+
+    const client = new Dysmsapi20170525(
+      new OpenApiConfig({
+        accessKeyId: configValue.accessKeyId,
+        accessKeySecret: configValue.accessKeySecret,
+        endpoint: 'dysmsapi.aliyuncs.com',
+      }),
+    );
+    this.cachedClient = { key: cacheKey, client };
+    return client;
   }
 
   /**
    * 发送短信验证码
    * @param phoneNumber 手机号码
    * @param code 验证码
-   * @param _type 验证码类型（保留入参以兼容调用签名，所有验证码共用同一模板）
-   * @param countryCode 国家代码（可选）
    */
-  async sendSms(
-    phoneNumber: string,
-    code: string,
-    _type?: CodeType,
-    countryCode?: string,
-  ): Promise<void> {
+  async sendSms(phoneNumber: string, code: string): Promise<void> {
     const config = await this.loadConfig();
-    await this.deliverSms(
-      config,
-      phoneNumber,
-      countryCode,
-      config.verificationTemplateCode,
-      { code },
-    );
+    await this.deliverSms(config, phoneNumber, 'verification', { code });
   }
 
-  async sendSecurityChangeNotice(
+  /**
+   * 发送账号安全变更通知短信（如手机号、邮箱换绑等安全事件）
+   * @param phoneNumber 接收通知的目标手机号
+   * @param contactLabel 变更的联系方式类型（如：手机号、邮箱）
+   * @param newContactMasked 脱敏后的新联系方式
+   * @param changedAt 变更发生的时间
+   */
+  async sendSecurityNotice(
     phoneNumber: string,
-    countryCode: string,
     contactLabel: string,
     newContactMasked: string,
     changedAt: string,
   ): Promise<void> {
     const config = await this.loadConfig();
-    await this.deliverSms(
-      config,
-      phoneNumber,
-      countryCode,
-      config.securityChangeTemplateCode,
-      {
-        contactType: contactLabel,
-        newContact: newContactMasked,
-        changedAt,
-      },
-    );
+    await this.deliverSms(config, phoneNumber, 'securityChange', {
+      contactType: contactLabel,
+      newContact: newContactMasked,
+      changedAt,
+    });
   }
 
   /**
@@ -150,18 +103,11 @@ export class SmsService {
    */
   async sendTestSms(
     phoneNumber: string,
-    countryCode?: string,
     draftConfig?: AliyunSmsConfigValue,
   ): Promise<void> {
     const code = String(Math.floor(100000 + Math.random() * 900000));
     const config = draftConfig ?? (await this.loadConfig());
-    await this.deliverSms(
-      config,
-      phoneNumber,
-      countryCode,
-      config.verificationTemplateCode,
-      { code },
-    );
+    await this.deliverSms(config, phoneNumber, 'verification', { code });
   }
 
   /**
@@ -170,67 +116,49 @@ export class SmsService {
   private async deliverSms(
     config: AliyunSmsConfigValue,
     phoneNumber: string,
-    countryCode: string | undefined,
-    templateCode: string,
+    templateType: SmsTemplateType,
     templateParams: Record<string, string>,
   ): Promise<void> {
-    const fullPhoneNumber = formatPhoneNumber(phoneNumber, countryCode);
+    const targetPhone = phoneNumber.trim().replace(/^\+?86/, '');
+    const maskedPhone = DesensitizationUtil.maskPhone(targetPhone);
+    const templateCode =
+      templateType === 'verification'
+        ? config.verificationTemplateCode
+        : config.securityChangeTemplateCode;
+
     try {
-      const sendSmsRequest = new $Dysmsapi20170525.SendSmsRequest({
-        phoneNumbers: fullPhoneNumber,
+      const sendSmsRequest = new SendSmsRequest({
+        phoneNumbers: targetPhone,
         signName: config.signName,
         templateCode,
         templateParam: JSON.stringify(templateParams),
       });
 
-      const runtime = new $Util.RuntimeOptions({});
-      const response = await this.createClient(config).sendSmsWithOptions(
+      const response = await this.getClient(config).sendSmsWithOptions(
         sendSmsRequest,
-        runtime,
+        DEFAULT_RUNTIME_OPTIONS,
       );
 
       if (response.body?.code !== 'OK') {
-        const { providerCode, requestId, publicMessage, recommend } =
-          parseAliyunSmsError(response.body);
-        this.logDeliveryFailure(
-          fullPhoneNumber,
-          providerCode,
-          requestId,
-          recommend,
+        const message = response.body?.message || '短信发送失败';
+        this.logger.error(
+          `短信发送失败: target=${maskedPhone}, code=${response.body?.code ?? 'UNKNOWN'}, message=${message}`,
         );
-        throw new SmsDeliveryError(publicMessage, providerCode);
+        throw new SmsDeliveryError(message, response.body?.code);
       }
 
-      this.logger.log(
-        `短信发送成功: ${DesensitizationUtil.maskPhone(fullPhoneNumber)}`,
-      );
+      this.logger.log(`短信发送成功: ${maskedPhone}`);
     } catch (error) {
       if (error instanceof SmsDeliveryError) throw error;
 
-      const { providerCode, requestId, publicMessage, recommend } =
-        parseAliyunSmsError(error);
-      this.logDeliveryFailure(
-        fullPhoneNumber,
-        providerCode,
-        requestId,
-        recommend,
+      const message =
+        error instanceof Error ? error.message : '短信发送发生异常';
+      const code = (error as { code?: string })?.code;
+      this.logger.error(
+        `短信发送异常: target=${maskedPhone}, code=${code ?? 'UNKNOWN'}, message=${message}`,
       );
 
-      throw new SmsDeliveryError(publicMessage, providerCode);
-    }
-  }
-
-  private logDeliveryFailure(
-    phoneNumber: string,
-    providerCode?: string,
-    requestId?: string,
-    recommend?: string,
-  ): void {
-    this.logger.error(
-      `短信发送失败: target=${DesensitizationUtil.maskPhone(phoneNumber)}, code=${providerCode ?? 'UNKNOWN'}, requestId=${requestId ?? 'UNKNOWN'}`,
-    );
-    if (recommend) {
-      this.logger.error(`诊断地址: ${recommend}`);
+      throw new SmsDeliveryError(message, code);
     }
   }
 

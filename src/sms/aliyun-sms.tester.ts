@@ -34,7 +34,6 @@ export class AliyunSmsTester implements IntegrationTestProvider, OnModuleInit {
     await this.assertRateLimit(countryCode, phoneNumber);
     await this.smsService.sendTestSms(
       phoneNumber,
-      countryCode,
       value as unknown as AliyunSmsConfigValue,
     );
   }
