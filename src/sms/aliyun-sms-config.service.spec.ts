@@ -19,9 +19,7 @@ describe('AliyunSmsConfigService', () => {
         accessKeyId: encrypt('key-id'),
         accessKeySecret: encrypt('key-secret'),
         signName: '测试签名',
-        registerTemplateCode: 'SMS_REGISTER1',
-        loginTemplateCode: 'SMS_LOGIN1',
-        resetPasswordTemplateCode: 'SMS_RESET1',
+        verificationTemplateCode: 'SMS_VERIFICATION1',
         securityChangeTemplateCode: 'SMS_SECURITY1',
       },
     });
@@ -33,7 +31,7 @@ describe('AliyunSmsConfigService', () => {
     await expect(service.getRequiredConfig()).resolves.toMatchObject({
       accessKeyId: 'key-id',
       accessKeySecret: 'key-secret',
-      loginTemplateCode: 'SMS_LOGIN1',
+      verificationTemplateCode: 'SMS_VERIFICATION1',
     });
     expect(findFirstByKey).toHaveBeenCalledWith('ALIYUN_SMS_CONFIG');
   });

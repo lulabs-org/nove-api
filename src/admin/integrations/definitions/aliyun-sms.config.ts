@@ -16,15 +16,7 @@ export class UpdateAliyunSmsConfigDto {
 
   @IsOptional()
   @Matches(/^SMS_[A-Za-z0-9]+$/)
-  registerTemplateCode?: string;
-
-  @IsOptional()
-  @Matches(/^SMS_[A-Za-z0-9]+$/)
-  loginTemplateCode?: string;
-
-  @IsOptional()
-  @Matches(/^SMS_[A-Za-z0-9]+$/)
-  resetPasswordTemplateCode?: string;
+  verificationTemplateCode?: string;
 
   @IsOptional()
   @Matches(/^SMS_[A-Za-z0-9]+$/)
@@ -39,9 +31,7 @@ export const aliyunSmsConfig = defineIntegrationConfig(
       'accessKeyId',
       'accessKeySecret',
       'signName',
-      'registerTemplateCode',
-      'loginTemplateCode',
-      'resetPasswordTemplateCode',
+      'verificationTemplateCode',
       'securityChangeTemplateCode',
     ],
     secrets: ['accessKeyId', 'accessKeySecret'],

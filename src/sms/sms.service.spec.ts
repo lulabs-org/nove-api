@@ -6,9 +6,7 @@ describe('SmsService', () => {
     accessKeyId: 'access-key-id',
     accessKeySecret: 'access-key-secret',
     signName: '测试签名',
-    registerTemplateCode: 'SMS_REGISTER',
-    loginTemplateCode: 'SMS_LOGIN',
-    resetPasswordTemplateCode: 'SMS_RESET',
+    verificationTemplateCode: 'SMS_VERIFICATION',
     securityChangeTemplateCode: 'SMS_SECURITY_CHANGE',
   };
 
@@ -101,7 +99,7 @@ describe('SmsService', () => {
       name: 'SmsDeliveryError',
       providerCode: 'isv.SMS_TEST_SIGN_TEMPLATE_LIMIT',
       message:
-        '阿里云短信签名与模板类型不匹配。请检查平台治理中的阿里云短信签名和登录模板配置',
+        '阿里云短信签名与模板类型不匹配。请检查平台治理中的阿里云短信签名和验证码模板配置',
     });
   });
 
@@ -119,7 +117,10 @@ describe('SmsService', () => {
     );
 
     expect(sendSmsWithOptions).toHaveBeenCalledWith(
-      expect.objectContaining({ phoneNumbers: '13800138000' }),
+      expect.objectContaining({
+        phoneNumbers: '13800138000',
+        templateCode: 'SMS_VERIFICATION',
+      }),
       expect.anything(),
     );
   });

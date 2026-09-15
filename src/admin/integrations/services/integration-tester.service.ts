@@ -40,7 +40,7 @@ export class IntegrationTesterService {
         success: true,
         message:
           module === 'aliyun-sms'
-            ? '测试短信已发送；仅表示当前凭证、签名、登录模板和目标号码可用'
+            ? '测试短信已发送；仅表示当前凭证、签名、验证码模板和目标号码可用'
             : '连接测试成功',
       };
     } catch (error) {

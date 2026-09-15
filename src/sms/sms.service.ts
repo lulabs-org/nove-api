@@ -55,20 +55,23 @@ export class SmsService {
    * 发送短信验证码
    * @param phoneNumber 手机号码
    * @param code 验证码
-   * @param type 验证码类型
+   * @param _type 验证码类型（所有验证码场景共用同一模板）
    * @param countryCode 国家代码（可选）
    */
   async sendSms(
     phoneNumber: string,
     code: string,
-    type: CodeType,
+    _type: CodeType,
     countryCode?: string,
   ): Promise<void> {
     const config = await this.loadConfig();
-    const templateCode = this.getTemplateCode(type, config);
-    await this.deliverSms(config, phoneNumber, countryCode, templateCode, {
-      code,
-    });
+    await this.deliverSms(
+      config,
+      phoneNumber,
+      countryCode,
+      config.verificationTemplateCode,
+      { code },
+    );
   }
 
   async sendSecurityChangeNotice(
@@ -103,7 +106,7 @@ export class SmsService {
       config,
       phoneNumber,
       countryCode,
-      config.loginTemplateCode,
+      config.verificationTemplateCode,
       { code },
     );
   }
@@ -189,7 +192,7 @@ export class SmsService {
       return '当前使用的是阿里云测试短信，只能发送给已绑定的测试手机号。请先在阿里云短信控制台绑定该号码，或改用审核通过的正式签名和模板';
     }
     if (providerCode === SMS_TEST_SIGN_TEMPLATE_LIMIT) {
-      return '阿里云短信签名与模板类型不匹配。请检查平台治理中的阿里云短信签名和登录模板配置';
+      return '阿里云短信签名与模板类型不匹配。请检查平台治理中的阿里云短信签名和验证码模板配置';
     }
     return '短信服务暂时不可用，请稍后重试';
   }
@@ -220,25 +223,6 @@ export class SmsService {
       return phoneNumber;
     }
     return `${normalizedCountryCode.replace(/^\+/, '')}${phoneNumber}`;
-  }
-
-  /**
-   * 根据验证码类型获取短信模板代码
-   * 注意：这些模板代码需要在阿里云控制台中预先配置
-   */
-  private getTemplateCode(
-    type: CodeType,
-    config: AliyunSmsConfigValue,
-  ): string {
-    const templateMap = {
-      [CodeType.REGISTER]: config.registerTemplateCode,
-      [CodeType.LOGIN]: config.loginTemplateCode,
-      [CodeType.RESET_PASSWORD]: config.resetPasswordTemplateCode,
-      [CodeType.IDENTITY_CONFIRM]: config.loginTemplateCode,
-      [CodeType.CHANGE_EMAIL]: config.loginTemplateCode,
-      [CodeType.CHANGE_PHONE]: config.loginTemplateCode,
-    } as const;
-    return templateMap[type];
   }
 
   private async loadConfig(): Promise<AliyunSmsConfigValue> {

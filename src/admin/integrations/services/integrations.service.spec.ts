@@ -206,9 +206,7 @@ describe('IntegrationsService', () => {
       accessKeyId: 'key-id',
       accessKeySecret: 'key-secret',
       signName: '短信签名',
-      registerTemplateCode: 'SMS_REGISTER1',
-      loginTemplateCode: 'SMS_LOGIN1',
-      resetPasswordTemplateCode: 'SMS_RESET1',
+      verificationTemplateCode: 'SMS_VERIFICATION1',
       securityChangeTemplateCode: 'SMS_SECURITY1',
     });
 
