@@ -31,6 +31,7 @@ describe('definition.util', () => {
       ),
     ).toEqual({
       storage: ['accessKeySecret'],
+      'aliyun-sms': ['accessKeyId', 'accessKeySecret'],
       drive: [],
       'file-scanning': [],
       mail: ['pass'],

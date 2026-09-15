@@ -25,6 +25,7 @@ describe('IntegrationsService', () => {
           record ? ({ orgId: requestedOrgId, key, ...record } as never) : null,
         );
       }),
+      findFirstByKey: jest.fn(),
       upsert: jest.fn((requestedOrgId: string, key: string, value: unknown) => {
         records[`${requestedOrgId}:${key}`] = {
           value: value as Record<string, unknown>,
@@ -198,5 +199,52 @@ describe('IntegrationsService', () => {
       source: 'database',
       value: { host: 'smtp.two.example.com' },
     });
+  });
+
+  it('encrypts and masks both Aliyun SMS credentials using the shared integration flow', async () => {
+    await service.updateIntegration(orgId, 'aliyun-sms', {
+      accessKeyId: 'key-id',
+      accessKeySecret: 'key-secret',
+      signName: '短信签名',
+      verificationTemplateCode: 'SMS_VERIFICATION1',
+      securityChangeTemplateCode: 'SMS_SECURITY1',
+    });
+
+    expect(records[`${orgId}:ALIYUN_SMS_CONFIG`].value).not.toMatchObject({
+      accessKeyId: 'key-id',
+      accessKeySecret: 'key-secret',
+    });
+    await expect(
+      service.getIntegration(orgId, 'aliyun-sms'),
+    ).resolves.toMatchObject({
+      configured: true,
+      value: {
+        accessKeyId: '********',
+        accessKeySecret: '********',
+      },
+    });
+
+    await service.updateIntegration(orgId, 'aliyun-sms', {
+      accessKeyId: '********',
+      accessKeySecret: '',
+      signName: '新签名',
+    });
+    await expect(
+      service.getEffectiveConfig(orgId, 'aliyun-sms'),
+    ).resolves.toMatchObject({
+      value: {
+        accessKeyId: 'key-id',
+        accessKeySecret: 'key-secret',
+        signName: '新签名',
+      },
+    });
+  });
+
+  it('rejects an incomplete first Aliyun SMS configuration', async () => {
+    await expect(
+      service.updateIntegration(orgId, 'aliyun-sms', {
+        signName: '短信签名',
+      }),
+    ).rejects.toThrow('Missing required configuration');
   });
 });

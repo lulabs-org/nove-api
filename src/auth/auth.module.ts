@@ -31,7 +31,7 @@ import { jwtConfig } from '@/configs/jwt.config';
 import { PermissionModule } from '@/admin/permission/permission.module';
 import { UnifiedAuthGuard } from './guards/unified-auth.guard';
 import { AccountSecurityService } from './services/account-security.service';
-import { SmsModule } from '@/sms/sms.module';
+import { SmsModule } from '@/sms';
 import { SecurityAuditCryptoService } from './services/security-audit-crypto.service';
 import { SecurityNotificationOutboxService } from './services/security-notification-outbox.service';
 import { OtpService } from './services/otp.service';

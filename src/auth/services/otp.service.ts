@@ -6,7 +6,7 @@ import {
 } from '../exceptions';
 import { VerificationCodeRepository } from '@/auth/repositories/verification-code.repository';
 import { AuthMailService } from '@/mail/services/auth-mail.service';
-import { SmsDeliveryError, SmsService } from '@/sms/sms.service';
+import { SmsDeliveryError, SmsService } from '@/sms';
 import { CodeType } from '@/common/enums';
 import { VerificationCodeType } from '@/generated/prisma/client';
 import {
@@ -60,6 +60,7 @@ export class OtpService {
     userAgent?: string,
     countryCode?: string,
   ): Promise<{ success: boolean; message: string }> {
+    void countryCode;
     const isEmail = isValidEmail(target);
     const isPhone = isValidCnPhone(target);
 
@@ -87,7 +88,7 @@ export class OtpService {
       if (isEmail) {
         await this.sendEmailCode(target, code, type);
       } else {
-        await this.sendSmsCode(target, code, type, countryCode);
+        await this.sendSmsCode(target, code);
       }
     } catch (error) {
       await this.repo.deleteVerificationCode(verificationCode.id);
@@ -174,14 +175,9 @@ export class OtpService {
     await this.authMailService.sendVerificationCode(email, code, typeMap[type]);
   }
 
-  private async sendSmsCode(
-    phone: string,
-    code: string,
-    type: CodeType,
-    countryCode?: string,
-  ): Promise<void> {
+  private async sendSmsCode(phone: string, code: string): Promise<void> {
     try {
-      await this.smsService.sendSms(phone, code, type, countryCode);
+      await this.smsService.sendSms(phone, code);
     } catch (error) {
       const errorMessage =
         error instanceof SmsDeliveryError

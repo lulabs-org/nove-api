@@ -9,7 +9,6 @@
  * Copyright (c) 2025 by ${git_name_email}, All Rights Reserved.
  */
 
-export * from './aliyun.config';
 export * from './redis.config';
 export * from './jwt.config';
 export * from './api-key.config';

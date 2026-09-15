@@ -8,7 +8,7 @@ import {
 } from '@/generated/prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { AuthMailService } from '@/mail/services/auth-mail.service';
-import { SmsDeliveryError, SmsService } from '@/sms/sms.service';
+import { SmsDeliveryError, SmsService } from '@/sms';
 import { SecurityAuditCryptoService } from './security-audit-crypto.service';
 
 const RETRY_DELAYS_MS = [60_000, 300_000, 1_800_000, 7_200_000, 43_200_000];
@@ -95,9 +95,8 @@ export class SecurityNotificationOutboxService {
         );
       } else {
         if (snapshot.kind !== 'phone') throw new Error('CONTACT_KIND_MISMATCH');
-        await this.smsService.sendSecurityChangeNotice(
+        await this.smsService.sendSecurityNotice(
           snapshot.phone,
-          snapshot.countryCode,
           contactLabel,
           item.auditLog.newValueMasked,
           item.auditLog.createdAt.toLocaleString('zh-CN', { hour12: false }),

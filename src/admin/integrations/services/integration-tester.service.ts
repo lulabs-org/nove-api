@@ -23,15 +23,26 @@ export class IntegrationTesterService {
     module: string,
     draft: Record<string, unknown>,
   ): Promise<TestResult> {
+    const { configDraft, testValues } = this.extractTestValues(module, draft);
     const { value } = await this.integrationsService.resolveDraftConfig(
       orgId,
       module,
-      draft,
+      configDraft,
     );
 
     try {
-      await this.withTimeout(this.runTest(module, value), 15_000);
-      return { orgId, success: true, message: '连接测试成功' };
+      await this.withTimeout(
+        this.runTest(module, { ...value, ...testValues }),
+        15_000,
+      );
+      return {
+        orgId,
+        success: true,
+        message:
+          module === 'aliyun-sms'
+            ? '测试短信已发送；仅表示当前凭证、签名、验证码模板和目标号码可用'
+            : '连接测试成功',
+      };
     } catch (error) {
       return {
         orgId,
@@ -39,6 +50,29 @@ export class IntegrationTesterService {
         message: this.safeFailureMessage(error),
       };
     }
+  }
+
+  private extractTestValues(
+    module: string,
+    draft: Record<string, unknown>,
+  ): {
+    configDraft: Record<string, unknown>;
+    testValues: IntegrationValues;
+  } {
+    if (module !== 'aliyun-sms') return { configDraft: draft, testValues: {} };
+    const { testCountryCode, testPhoneNumber, ...configDraft } = draft;
+    if (
+      typeof testCountryCode !== 'string' ||
+      !/^\+?\d{1,4}$/.test(testCountryCode) ||
+      typeof testPhoneNumber !== 'string' ||
+      !/^\d{6,20}$/.test(testPhoneNumber)
+    ) {
+      throw new BadRequestException('请输入有效的国家代码和手机号');
+    }
+    return {
+      configDraft,
+      testValues: { testCountryCode, testPhoneNumber },
+    };
   }
 
   private runTest(module: string, value: IntegrationValues): Promise<void> {

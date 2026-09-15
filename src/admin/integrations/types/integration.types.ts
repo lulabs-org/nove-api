@@ -37,7 +37,8 @@ export type IntegrationModuleName =
   | 'wechat-shop'
   | 'wecom'
   | 'storage'
-  | 'stripe';
+  | 'stripe'
+  | 'aliyun-sms';
 
 export interface EffectiveIntegration {
   orgId: string;

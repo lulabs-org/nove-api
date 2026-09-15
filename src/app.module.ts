@@ -61,6 +61,7 @@ import { ProfitSharingModule } from './profit-sharing/profit-sharing.module';
 import { DriveModule } from './drive/drive.module';
 import { WecomModule } from './wecom/wecom.module';
 import { StripeModule } from './stripe/stripe.module';
+import { SmsModule } from './sms';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -138,6 +139,7 @@ import { StripeModule } from './stripe/stripe.module';
     DriveModule,
     WecomModule,
     StripeModule,
+    SmsModule,
   ],
   controllers: [AppController],
   providers: [

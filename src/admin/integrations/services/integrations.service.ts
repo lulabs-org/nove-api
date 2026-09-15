@@ -46,6 +46,7 @@ export class IntegrationsService {
   ) {}
 
   private getModuleKey(module: IntegrationModuleName): string {
+    if (module === 'aliyun-sms') return 'ALIYUN_SMS_CONFIG';
     return `${module.toUpperCase()}_CONFIG`;
   }
 
@@ -169,6 +170,14 @@ export class IntegrationsService {
     const existing = await this.repository.findByKey(orgId, key);
     const currentConfig = (existing?.value ?? {}) as Record<string, unknown>;
     const newConfig = encodeUpdateConfig(entry, currentConfig, data);
+    if (moduleName === 'aliyun-sms') {
+      const missing = missingRequiredFields(entry, newConfig);
+      if (missing.length > 0) {
+        throw new BadRequestException(
+          `Missing required configuration: ${missing.join(', ')}`,
+        );
+      }
+    }
 
     await this.repository.upsert(
       orgId,

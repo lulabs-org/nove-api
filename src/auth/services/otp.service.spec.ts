@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { CodeType } from '@/common/enums';
-import { SmsDeliveryError } from '@/sms/sms.service';
+import { SmsDeliveryError } from '@/sms';
 import { OtpService } from './otp.service';
 
 describe('OtpService delivery accounting', () => {

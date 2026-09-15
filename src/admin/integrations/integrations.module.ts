@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { IntegrationsController } from './controllers';
 import { IntegrationsRepository } from './repositories';
 import { IntegrationsService, IntegrationTesterService } from './services';
-
 @Module({
   controllers: [IntegrationsController],
   providers: [
@@ -10,6 +9,10 @@ import { IntegrationsService, IntegrationTesterService } from './services';
     IntegrationsRepository,
     IntegrationTesterService,
   ],
-  exports: [IntegrationsService, IntegrationTesterService],
+  exports: [
+    IntegrationsService,
+    IntegrationTesterService,
+    IntegrationsRepository,
+  ],
 })
 export class IntegrationsModule {}

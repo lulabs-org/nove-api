@@ -19,7 +19,7 @@ describe('SecurityNotificationOutboxService', () => {
   const prisma = { securityNotificationOutbox: outbox };
   const crypto = { decryptSnapshot: jest.fn() };
   const authMail = { sendContactChangeNotification: jest.fn() };
-  const sms = { sendSecurityChangeNotice: jest.fn() };
+  const sms = { sendSecurityNotice: jest.fn() };
   let service: SecurityNotificationOutboxService;
 
   beforeEach(() => {
@@ -90,15 +90,14 @@ describe('SecurityNotificationOutboxService', () => {
       countryCode: '+86',
       phone: '13900000000',
     });
-    sms.sendSecurityChangeNotice.mockRejectedValue(
+    sms.sendSecurityNotice.mockRejectedValue(
       new Error('provider leaked details'),
     );
 
     await service.processPending();
 
-    expect(sms.sendSecurityChangeNotice).toHaveBeenCalledWith(
+    expect(sms.sendSecurityNotice).toHaveBeenCalledWith(
       '13900000000',
-      '+86',
       '手机号',
       '+86 139****0000',
       expect.any(String),
