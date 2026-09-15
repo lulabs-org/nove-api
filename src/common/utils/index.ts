@@ -21,3 +21,5 @@ export * from './password.util';
 export * from './time.util';
 export * from './prompt.util';
 export * from './order-number.util';
+export * from './desensitization.util';
+export * from './phone.util';
