@@ -1,4 +1,4 @@
-import { CodeType } from '../common/enums';
+import { CodeType } from '@/common/enums';
 import { SmsDeliveryError, SmsService } from './sms.service';
 
 describe('SmsService', () => {

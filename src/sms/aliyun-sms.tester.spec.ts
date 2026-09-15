@@ -1,7 +1,7 @@
 import { IntegrationTesterService } from '@/admin/integrations/services';
 import { RedisService } from '@/redis/redis.service';
 import { AliyunSmsTester } from './aliyun-sms.tester';
-import { SmsService } from './sms.service';
+import { SmsService } from './services';
 
 describe('AliyunSmsTester', () => {
   it('registers with the shared tester and rate-limits a target without OTP state', async () => {

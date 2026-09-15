@@ -8,7 +8,7 @@ import {
 } from '@/generated/prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { AuthMailService } from '@/mail/services/auth-mail.service';
-import { SmsDeliveryError, SmsService } from '@/sms/sms.service';
+import { SmsDeliveryError, SmsService } from '@/sms';
 import { SecurityAuditCryptoService } from './security-audit-crypto.service';
 
 const RETRY_DELAYS_MS = [60_000, 300_000, 1_800_000, 7_200_000, 43_200_000];

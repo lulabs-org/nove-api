@@ -1,10 +1,12 @@
 import { Module } from '@nestjs/common';
-import { SmsService } from './sms.service';
-import { AliyunSmsConfigService } from './aliyun-sms-config.service';
-import { IntegrationsRepository } from '@/admin/integrations/repositories';
+import { IntegrationsModule } from '@/admin/integrations';
+import { RedisModule } from '@/redis/redis.module';
+import { SmsService, AliyunSmsConfigService } from './services';
+import { AliyunSmsTester } from './aliyun-sms.tester';
 
 @Module({
-  providers: [SmsService, AliyunSmsConfigService, IntegrationsRepository],
-  exports: [SmsService, AliyunSmsConfigService],
+  imports: [IntegrationsModule, RedisModule],
+  providers: [SmsService, AliyunSmsConfigService, AliyunSmsTester],
+  exports: [SmsService, AliyunSmsConfigService, AliyunSmsTester],
 })
 export class SmsModule {}

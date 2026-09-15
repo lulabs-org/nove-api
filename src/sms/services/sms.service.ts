@@ -13,7 +13,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import Dysmsapi20170525, * as $Dysmsapi20170525 from '@alicloud/dysmsapi20170525';
 import * as $OpenApi from '@alicloud/openapi-client';
 import * as $Util from '@alicloud/tea-util';
-import { CodeType } from '../common/enums';
+import { CodeType } from '@/common/enums';
 import {
   AliyunSmsConfigService,
   AliyunSmsConfigValue,

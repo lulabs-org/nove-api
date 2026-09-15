@@ -6,7 +6,7 @@ import {
 } from '../exceptions';
 import { VerificationCodeRepository } from '@/auth/repositories/verification-code.repository';
 import { AuthMailService } from '@/mail/services/auth-mail.service';
-import { SmsDeliveryError, SmsService } from '@/sms/sms.service';
+import { SmsDeliveryError, SmsService } from '@/sms';
 import { CodeType } from '@/common/enums';
 import { VerificationCodeType } from '@/generated/prisma/client';
 import {

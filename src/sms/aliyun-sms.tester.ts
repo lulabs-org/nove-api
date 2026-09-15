@@ -6,8 +6,7 @@ import {
   IntegrationValues,
 } from '@/admin/integrations/types';
 import { RedisService } from '@/redis/redis.service';
-import { AliyunSmsConfigValue } from './aliyun-sms-config.service';
-import { SmsService } from './sms.service';
+import { AliyunSmsConfigValue, SmsService } from './services';
 
 const TEST_LIMIT = 3;
 const TEST_TTL_SECONDS = 10 * 60;
