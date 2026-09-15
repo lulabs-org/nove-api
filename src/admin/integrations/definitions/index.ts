@@ -8,4 +8,5 @@ export * from './drive.config';
 export * from './file-scanning.config';
 export * from './storage.config';
 export * from './stripe.config';
+export * from './aliyun-sms.config';
 export * from './registry';

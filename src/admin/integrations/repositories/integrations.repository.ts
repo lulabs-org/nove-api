@@ -12,6 +12,13 @@ export class IntegrationsRepository {
     });
   }
 
+  async findFirstByKey(key: string): Promise<SystemConfig | null> {
+    return this.prisma.systemConfig.findFirst({
+      where: { key },
+      orderBy: { updatedAt: 'desc' },
+    });
+  }
+
   async upsert(
     orgId: string,
     key: string,

@@ -9,14 +9,15 @@
  * Copyright (c) 2025 by 杨仕明 shiming.y@qq.com, All Rights Reserved.
  */
 
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import { ConfigType } from '@nestjs/config';
+import { Injectable, Logger } from '@nestjs/common';
 import Dysmsapi20170525, * as $Dysmsapi20170525 from '@alicloud/dysmsapi20170525';
 import * as $OpenApi from '@alicloud/openapi-client';
 import * as $Util from '@alicloud/tea-util';
-import Credential from '@alicloud/credentials';
 import { CodeType } from '../common/enums';
-import { aliyunConfig } from '../configs/aliyun.config';
+import {
+  AliyunSmsConfigService,
+  AliyunSmsConfigValue,
+} from './aliyun-sms-config.service';
 
 const SMS_TEST_NUMBER_LIMIT = 'isv.SMS_TEST_NUMBER_LIMIT';
 const SMS_TEST_SIGN_TEMPLATE_LIMIT = 'isv.SMS_TEST_SIGN_TEMPLATE_LIMIT';
@@ -34,22 +35,16 @@ export class SmsDeliveryError extends Error {
 @Injectable()
 export class SmsService {
   private readonly logger = new Logger(SmsService.name);
-  private client: Dysmsapi20170525;
 
-  constructor(
-    @Inject(aliyunConfig.KEY)
-    private readonly cfg: ConfigType<typeof aliyunConfig>,
-  ) {
-    this.client = this.createClient();
-  }
+  constructor(private readonly configService: AliyunSmsConfigService) {}
 
   /**
    * 创建阿里云短信客户端
    */
-  private createClient(): Dysmsapi20170525 {
-    const credential = new Credential();
+  private createClient(configValue: AliyunSmsConfigValue): Dysmsapi20170525 {
     const config = new $OpenApi.Config({
-      credential: credential,
+      accessKeyId: configValue.accessKeyId,
+      accessKeySecret: configValue.accessKeySecret,
     });
     // Endpoint 请参考 https://api.aliyun.com/product/Dysmsapi
     config.endpoint = 'dysmsapi.aliyuncs.com';
@@ -69,8 +64,11 @@ export class SmsService {
     type: CodeType,
     countryCode?: string,
   ): Promise<void> {
-    const templateCode = this.getTemplateCode(type);
-    await this.deliverSms(phoneNumber, countryCode, templateCode, { code });
+    const config = await this.loadConfig();
+    const templateCode = this.getTemplateCode(type, config);
+    await this.deliverSms(config, phoneNumber, countryCode, templateCode, {
+      code,
+    });
   }
 
   async sendSecurityChangeNotice(
@@ -80,21 +78,38 @@ export class SmsService {
     newContactMasked: string,
     changedAt: string,
   ): Promise<void> {
-    const templateCode = this.cfg.sms.templates.securityChange;
-    if (!templateCode) {
-      throw new SmsDeliveryError(
-        '安全通知短信模板未配置',
-        'SECURITY_CHANGE_TEMPLATE_MISSING',
-      );
-    }
-    await this.deliverSms(phoneNumber, countryCode, templateCode, {
-      contactType: contactLabel,
-      newContact: newContactMasked,
-      changedAt,
-    });
+    const config = await this.loadConfig();
+    await this.deliverSms(
+      config,
+      phoneNumber,
+      countryCode,
+      config.securityChangeTemplateCode,
+      {
+        contactType: contactLabel,
+        newContact: newContactMasked,
+        changedAt,
+      },
+    );
+  }
+
+  async sendTestSms(
+    phoneNumber: string,
+    countryCode?: string,
+    draftConfig?: AliyunSmsConfigValue,
+  ): Promise<void> {
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const config = draftConfig ?? (await this.loadConfig());
+    await this.deliverSms(
+      config,
+      phoneNumber,
+      countryCode,
+      config.loginTemplateCode,
+      { code },
+    );
   }
 
   private async deliverSms(
+    config: AliyunSmsConfigValue,
     phoneNumber: string,
     countryCode: string | undefined,
     templateCode: string,
@@ -102,18 +117,16 @@ export class SmsService {
   ): Promise<void> {
     const fullPhoneNumber = this.formatPhoneNumber(phoneNumber, countryCode);
     try {
-      const signName = this.getSignName();
-
       const sendSmsRequest = new $Dysmsapi20170525.SendSmsRequest({
         phoneNumbers: fullPhoneNumber,
-        signName: signName,
+        signName: config.signName,
         templateCode: templateCode,
         templateParam: JSON.stringify(templateParams),
       });
 
       const runtime = new $Util.RuntimeOptions({});
 
-      const response = await this.client.sendSmsWithOptions(
+      const response = await this.createClient(config).sendSmsWithOptions(
         sendSmsRequest,
         runtime,
       );
@@ -176,7 +189,7 @@ export class SmsService {
       return '当前使用的是阿里云测试短信，只能发送给已绑定的测试手机号。请先在阿里云短信控制台绑定该号码，或改用审核通过的正式签名和模板';
     }
     if (providerCode === SMS_TEST_SIGN_TEMPLATE_LIMIT) {
-      return '阿里云短信签名与模板类型不匹配。测试签名必须搭配测试模板；正式签名必须搭配审核通过的正式模板，请检查 ALIYUN_SMS_SIGN_NAME 和 ALIYUN_SMS_TEMPLATE_LOGIN';
+      return '阿里云短信签名与模板类型不匹配。请检查平台治理中的阿里云短信签名和登录模板配置';
     }
     return '短信服务暂时不可用，请稍后重试';
   }
@@ -213,23 +226,26 @@ export class SmsService {
    * 根据验证码类型获取短信模板代码
    * 注意：这些模板代码需要在阿里云控制台中预先配置
    */
-  private getTemplateCode(type: CodeType): string {
+  private getTemplateCode(
+    type: CodeType,
+    config: AliyunSmsConfigValue,
+  ): string {
     const templateMap = {
-      [CodeType.REGISTER]: this.cfg.sms.templates.register,
-      [CodeType.LOGIN]: this.cfg.sms.templates.login,
-      [CodeType.RESET_PASSWORD]: this.cfg.sms.templates.resetPassword,
-      [CodeType.IDENTITY_CONFIRM]: this.cfg.sms.templates.login,
-      [CodeType.CHANGE_EMAIL]: this.cfg.sms.templates.login,
-      [CodeType.CHANGE_PHONE]: this.cfg.sms.templates.login,
+      [CodeType.REGISTER]: config.registerTemplateCode,
+      [CodeType.LOGIN]: config.loginTemplateCode,
+      [CodeType.RESET_PASSWORD]: config.resetPasswordTemplateCode,
+      [CodeType.IDENTITY_CONFIRM]: config.loginTemplateCode,
+      [CodeType.CHANGE_EMAIL]: config.loginTemplateCode,
+      [CodeType.CHANGE_PHONE]: config.loginTemplateCode,
     } as const;
     return templateMap[type];
   }
 
-  /**
-   * 获取短信签名
-   * 注意：签名需要在阿里云控制台中预先配置并审核通过
-   */
-  private getSignName(): string {
-    return this.cfg.sms.signName;
+  private async loadConfig(): Promise<AliyunSmsConfigValue> {
+    try {
+      return await this.configService.getRequiredConfig();
+    } catch {
+      throw new SmsDeliveryError('短信服务尚未配置', 'SMS_NOT_CONFIGURED');
+    }
   }
 }

@@ -8,6 +8,7 @@ import { tencentMeetingConfig } from './tencent-meeting.config';
 import { wechatShopConfig } from './wechat-shop.config';
 import { wecomConfig } from './wecom.config';
 import { stripeConfig } from './stripe.config';
+import { aliyunSmsConfig } from './aliyun-sms.config';
 import {
   ConfigSource,
   IntegrationModuleName,
@@ -27,6 +28,7 @@ export const IntegrationRegistry = {
   'wechat-shop': wechatShopConfig,
   wecom: wecomConfig,
   stripe: stripeConfig,
+  'aliyun-sms': aliyunSmsConfig,
 } as const satisfies Record<IntegrationModuleName, IntegrationRegistryEntry>;
 
 export const INTEGRATION_MODULES = Object.keys(

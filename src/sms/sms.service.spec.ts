@@ -2,28 +2,31 @@ import { CodeType } from '../common/enums';
 import { SmsDeliveryError, SmsService } from './sms.service';
 
 describe('SmsService', () => {
+  const config = {
+    accessKeyId: 'access-key-id',
+    accessKeySecret: 'access-key-secret',
+    signName: '测试签名',
+    registerTemplateCode: 'SMS_REGISTER',
+    loginTemplateCode: 'SMS_LOGIN',
+    resetPasswordTemplateCode: 'SMS_RESET',
+    securityChangeTemplateCode: 'SMS_SECURITY_CHANGE',
+  };
+
   function createService(sendSmsWithOptions: jest.Mock) {
-    const service = new SmsService({
-      sms: {
-        signName: '测试签名',
-        templates: {
-          register: 'SMS_REGISTER',
-          login: 'SMS_LOGIN',
-          resetPassword: 'SMS_RESET',
-          securityChange: 'SMS_SECURITY_CHANGE',
-        },
-      },
-    } as never);
-    (
-      service as unknown as { client: { sendSmsWithOptions: jest.Mock } }
-    ).client = {
-      sendSmsWithOptions,
+    const configService = {
+      getRequiredConfig: jest.fn().mockResolvedValue(config),
     };
-    return service;
+    const service = new SmsService(configService as never);
+    (
+      service as unknown as {
+        createClient: () => { sendSmsWithOptions: jest.Mock };
+      }
+    ).createClient = jest.fn(() => ({ sendSmsWithOptions }));
+    return { service, configService };
   }
 
   it('maps the Aliyun test-number restriction to an actionable message', async () => {
-    const service = createService(
+    const { service } = createService(
       jest.fn().mockResolvedValue({
         body: {
           code: 'isv.SMS_TEST_NUMBER_LIMIT',
@@ -44,7 +47,7 @@ describe('SmsService', () => {
   });
 
   it('does not expose unexpected provider errors to API callers', async () => {
-    const service = createService(
+    const { service } = createService(
       jest.fn().mockRejectedValue(
         Object.assign(new Error('internal provider details'), {
           code: 'InternalError',
@@ -63,7 +66,7 @@ describe('SmsService', () => {
   });
 
   it('recognizes the test-number restriction when Aliyun omits the error code', async () => {
-    const service = createService(
+    const { service } = createService(
       jest.fn().mockResolvedValue({
         body: {
           code: 'UNKNOWN',
@@ -82,7 +85,7 @@ describe('SmsService', () => {
   });
 
   it('maps a mixed test and production signature/template pair to configuration guidance', async () => {
-    const service = createService(
+    const { service } = createService(
       jest.fn().mockResolvedValue({
         body: {
           code: 'isv.SMS_TEST_SIGN_TEMPLATE_LIMIT',
@@ -98,7 +101,7 @@ describe('SmsService', () => {
       name: 'SmsDeliveryError',
       providerCode: 'isv.SMS_TEST_SIGN_TEMPLATE_LIMIT',
       message:
-        '阿里云短信签名与模板类型不匹配。测试签名必须搭配测试模板；正式签名必须搭配审核通过的正式模板，请检查 ALIYUN_SMS_SIGN_NAME 和 ALIYUN_SMS_TEMPLATE_LOGIN',
+        '阿里云短信签名与模板类型不匹配。请检查平台治理中的阿里云短信签名和登录模板配置',
     });
   });
 
@@ -106,7 +109,7 @@ describe('SmsService', () => {
     const sendSmsWithOptions = jest.fn().mockResolvedValue({
       body: { code: 'OK', requestId: 'request-4' },
     });
-    const service = createService(sendSmsWithOptions);
+    const { service } = createService(sendSmsWithOptions);
 
     await service.sendSms(
       '13800138000',
@@ -125,7 +128,7 @@ describe('SmsService', () => {
     const sendSmsWithOptions = jest.fn().mockResolvedValue({
       body: { code: 'OK', requestId: 'request-5' },
     });
-    const service = createService(sendSmsWithOptions);
+    const { service } = createService(sendSmsWithOptions);
 
     await service.sendSecurityChangeNotice(
       '13800138000',
@@ -146,5 +149,31 @@ describe('SmsService', () => {
       }),
       expect.anything(),
     );
+  });
+
+  it('loads fresh database configuration before every send', async () => {
+    const sendSmsWithOptions = jest.fn().mockResolvedValue({
+      body: { code: 'OK', requestId: 'request-6' },
+    });
+    const { service, configService } = createService(sendSmsWithOptions);
+
+    await service.sendSms('13800138000', '123456', CodeType.LOGIN, '+86');
+    await service.sendSms('13800138000', '654321', CodeType.LOGIN, '+86');
+
+    expect(configService.getRequiredConfig).toHaveBeenCalledTimes(2);
+  });
+
+  it('reports missing or unreadable database configuration uniformly', async () => {
+    const { service, configService } = createService(jest.fn());
+    configService.getRequiredConfig.mockRejectedValue(
+      new Error('decrypt failed'),
+    );
+
+    await expect(
+      service.sendSms('13800138000', '123456', CodeType.LOGIN, '+86'),
+    ).rejects.toMatchObject({
+      message: '短信服务尚未配置',
+      providerCode: 'SMS_NOT_CONFIGURED',
+    });
   });
 });
