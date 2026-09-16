@@ -5,7 +5,7 @@ import { RequirePermissions } from '@/admin/permission/decorators/permissions.de
 import { ProfitSharingPayslipService } from '../services/profit-sharing-payslip.service';
 import { CreatePayslipAdjustmentDto } from '../dto/payslip-adjustment.dto';
 
-@ApiTags('月度工资条 (Payslips)')
+@ApiTags('Payslips')
 @ApiBearerAuth()
 @Controller('profit-sharing/payslips')
 export class ProfitSharingPayslipController {

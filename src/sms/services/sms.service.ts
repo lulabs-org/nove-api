@@ -43,7 +43,7 @@ type SmsTemplateType = 'verification' | 'securityChange';
 export class SmsService {
   private readonly logger = new Logger(SmsService.name);
 
-  constructor(private readonly configService: AliyunSmsConfigService) { }
+  constructor(private readonly configService: AliyunSmsConfigService) {}
 
   private cachedClient?: { key: string; client: Dysmsapi20170525 };
 

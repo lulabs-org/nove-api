@@ -22,26 +22,19 @@ describe('AppController (e2e)', () => {
     }
   });
 
-  describe('Root endpoint', () => {
-    it('/ (GET) should return welcome message without authentication', async () => {
-      const response = await request(app.getHttpServer()).get('/').expect(200);
+  describe('Health endpoint', () => {
+    it('/health (GET) should return sanitized health status without authentication', async () => {
+      const response = await request(app.getHttpServer())
+        .get('/health')
+        .expect((res) => {
+          expect([200, 503]).toContain(res.status);
+        });
 
-      expect(response.text).toBe('Welcome to Nove Backend Service');
-    });
-
-    it('/ (GET) should have proper headers', async () => {
-      const response = await request(app.getHttpServer()).get('/').expect(200);
-
-      expect(response.headers['content-type']).toMatch(/text\/html/);
-    });
-  });
-
-  describe('Security headers', () => {
-    it('should include security headers in response', async () => {
-      const response = await request(app.getHttpServer()).get('/').expect(200);
-
-      expect(response.headers).toHaveProperty('x-powered-by');
-      expect(response.headers['content-type']).toMatch(/text\/html/);
+      expect(response.body).toHaveProperty('status');
+      expect(response.body).toHaveProperty('timestamp');
+      expect(response.body).not.toHaveProperty('components');
+      expect(response.body).not.toHaveProperty('memory');
+      expect(response.body).not.toHaveProperty('version');
     });
   });
 });
