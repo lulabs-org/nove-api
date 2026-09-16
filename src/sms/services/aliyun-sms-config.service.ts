@@ -17,7 +17,7 @@ export interface AliyunSmsConfigValue {
 export class AliyunSmsConfigService {
   private readonly logger = new Logger(AliyunSmsConfigService.name);
 
-  constructor(private readonly repository: IntegrationsRepository) { }
+  constructor(private readonly repository: IntegrationsRepository) {}
 
   async getRequiredConfig(): Promise<AliyunSmsConfigValue> {
     const stored = await this.repository.findFirstByKey(ALIYUN_SMS_CONFIG_KEY);
