@@ -17,6 +17,9 @@ export class PlatformUserDto {
   @ApiProperty({ description: '显示名称', required: false })
   displayName?: string;
 
+  @ApiProperty({ description: '头像地址', required: false, nullable: true })
+  avatarUrl?: string | null;
+
   @ApiProperty({ description: '国家代码', required: false })
   countryCode?: string;
 
