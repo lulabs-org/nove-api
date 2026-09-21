@@ -31,7 +31,7 @@ describe('AliyunOssStorageService', () => {
         : null;
   }
 
-  it('recognizes only avatar objects under the configured public base URL', () => {
+  it('recognizes managed public assets under the configured public base URL', () => {
     const service = new AliyunOssStorageService();
     withConfig(service, { publicBaseUrl: 'https://cdn.example.com/media' });
 
@@ -40,6 +40,11 @@ describe('AliyunOssStorageService', () => {
         'https://cdn.example.com/media/avatars/user-1/avatar.webp',
       ),
     ).toBe('avatars/user-1/avatar.webp');
+    expect(
+      service.getManagedKey(
+        'https://cdn.example.com/media/mail-brand-logos/org-1/logo.webp',
+      ),
+    ).toBe('mail-brand-logos/org-1/logo.webp');
     expect(
       service.getManagedKey(
         'https://cdn.example.com/media/projects/image.webp',
