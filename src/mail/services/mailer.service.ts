@@ -8,6 +8,7 @@ import { SingleOrgContextService } from '@/admin/org';
 import { OnEvent } from '@nestjs/event-emitter';
 import * as nodemailer from 'nodemailer';
 import type SMTPTransport from 'nodemailer/lib/smtp-transport';
+import { sanitizeEmailHeader } from '@/mail/templates/helpers';
 
 export interface MailerSendOptions {
   to: string;
@@ -23,7 +24,7 @@ export interface MailerSendOptions {
 export class MailerService implements OnModuleInit {
   private readonly logger = new Logger(MailerService.name);
   private transporter?: nodemailer.Transporter<SMTPTransport.SentMessageInfo>;
-  private activeConfig: Record<string, string> | null = null;
+  private activeConfig: { from: string; brandName: string } | null = null;
 
   constructor(
     private readonly integrationsService: IntegrationsService,
@@ -60,9 +61,13 @@ export class MailerService implements OnModuleInit {
     const smtpPort = Number(value.port ?? 587);
     const smtpSecure = Boolean(value.secure ?? false);
     const smtpFrom = String(value.from ?? '');
+    const brandName = sanitizeEmailHeader(
+      String(value.brandName ?? 'Nove System'),
+    );
 
     this.activeConfig = {
       from: smtpFrom,
+      brandName: brandName || 'Nove System',
     };
 
     if (!smtpUser || !smtpPass) {
@@ -109,7 +114,10 @@ export class MailerService implements OnModuleInit {
       return null;
     }
 
-    const defaultFrom = options.from || this.activeConfig?.from || '';
+    const defaultFrom = options.from || {
+      name: this.activeConfig?.brandName || 'Nove System',
+      address: this.activeConfig?.from || '',
+    };
 
     const mailOptions: nodemailer.SendMailOptions = {
       from: defaultFrom,
