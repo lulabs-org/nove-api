@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsNotEmpty, IsOptional, IsBoolean } from 'class-validator';
 import { Transform } from 'class-transformer';
 
@@ -8,10 +8,14 @@ export class CreateDataPermissionRuleDto {
   @IsNotEmpty()
   name: string;
 
-  @ApiProperty({ description: '规则编码', example: 'dept_only' })
+  @ApiPropertyOptional({
+    description: '规则编码（已废弃，创建时由系统自动生成）',
+    example: 'dept_only',
+    deprecated: true,
+  })
   @IsString()
-  @IsNotEmpty()
-  code: string;
+  @IsOptional()
+  code?: string;
 
   @ApiProperty({
     description: '规则描述',
