@@ -86,6 +86,12 @@ interface StorageEffectiveConfig {
   signedUrlExpiresSeconds: number;
 }
 
+const PUBLIC_ASSET_PREFIXES = ['avatars/', 'mail-brand-logos/'] as const;
+
+function isManagedPublicAsset(key: string): boolean {
+  return PUBLIC_ASSET_PREFIXES.some((prefix) => key.startsWith(prefix));
+}
+
 @Injectable()
 export class AliyunOssStorageService implements ObjectStorage, OnModuleInit {
   private readonly logger = new Logger(AliyunOssStorageService.name);
@@ -204,7 +210,7 @@ export class AliyunOssStorageService implements ObjectStorage, OnModuleInit {
   }
 
   async deleteObject(key: string): Promise<void> {
-    const client = key.startsWith('avatars/')
+    const client = isManagedPublicAsset(key)
       ? this.getPublicClient()
       : this.getPrivateClient();
     await client.delete(key);
@@ -229,7 +235,7 @@ export class AliyunOssStorageService implements ObjectStorage, OnModuleInit {
           : null
         : candidatePath;
 
-      return key?.startsWith('avatars/') ? key : null;
+      return key && isManagedPublicAsset(key) ? key : null;
     } catch {
       return null;
     }
@@ -422,10 +428,6 @@ export class AliyunOssStorageService implements ObjectStorage, OnModuleInit {
       secure: true,
     });
     return this.publicClient;
-  }
-
-  private getClient(): OssClient {
-    return this.getPrivateClient();
   }
 
   private buildPublicUrl(key: string): string {

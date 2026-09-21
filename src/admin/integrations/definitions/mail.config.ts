@@ -7,6 +7,7 @@ import {
   Matches,
   Max,
   Min,
+  ValidateIf,
 } from 'class-validator';
 import { defineIntegrationConfig } from '../utils';
 
@@ -42,6 +43,7 @@ export class UpdateMailConfigDto {
   brandName?: string;
 
   @IsOptional()
+  @ValidateIf((_, value: unknown) => value !== '')
   @IsUrl({ require_tld: false })
   brandLogoUrl?: string;
 
