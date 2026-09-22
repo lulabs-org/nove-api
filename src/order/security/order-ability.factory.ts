@@ -55,17 +55,6 @@ export class OrderAbilityFactory {
             can('read', 'Order');
           }
         }
-      } else {
-        // 未配置显式数据规则：默认安全策略（本人负责、本人购买或公海未认领）
-        can('read', 'Order', {
-          currentOwnerId: userId,
-        });
-        can('read', 'Order', {
-          currentOwnerId: null,
-        });
-        can('read', 'Order', {
-          purchaserId: userId,
-        });
       }
     }
 

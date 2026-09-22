@@ -11,7 +11,7 @@ import { OrderAbilityFactory } from './order-ability.factory';
 
 @Injectable()
 export class OrderPolicyService {
-  constructor(private readonly abilityFactory: OrderAbilityFactory) { }
+  constructor(private readonly abilityFactory: OrderAbilityFactory) {}
 
   /**
    * 获取当前用户能够读取的 Order Where 过滤条件

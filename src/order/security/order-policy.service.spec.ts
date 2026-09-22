@@ -74,6 +74,14 @@ describe('OrderPolicyService', () => {
     userId: 'user-sales-1',
     orgId: 'org-1',
     permissions: ['order:read', 'order:update'],
+    dataRules: [
+      {
+        id: 'rule-owner-only',
+        code: 'order_owner_only',
+        resource: 'order',
+        condition: JSON.stringify({ currentOwnerId: '${user.id}' }),
+      },
+    ],
     user: {
       id: 'user-sales-1',
       username: 'sales1',
@@ -91,6 +99,14 @@ describe('OrderPolicyService', () => {
     userId: 'user-sales-2',
     orgId: 'org-1',
     permissions: ['order:read', 'order:update'],
+    dataRules: [
+      {
+        id: 'rule-owner-only',
+        code: 'order_owner_only',
+        resource: 'order',
+        condition: JSON.stringify({ currentOwnerId: '${user.id}' }),
+      },
+    ],
     user: {
       id: 'user-sales-2',
       username: 'sales2',
@@ -109,9 +125,20 @@ describe('OrderPolicyService', () => {
       expect(where).toEqual({});
     });
 
-    it('returns owner/purchaser/unassigned filtering for sales user', () => {
+    it('returns the explicitly assigned owner-only filter for sales user', () => {
       const where = service.getAccessibleWhere(sales1Auth);
-      expect(where).toBeDefined();
+      expect(where).toEqual({
+        OR: [{ currentOwnerId: 'user-sales-1' }],
+      });
+    });
+
+    it('returns a deny-all filter when no data rule is assigned', () => {
+      const where = service.getAccessibleWhere({
+        ...sales1Auth,
+        dataRules: [],
+      });
+
+      expect(where).toEqual({ OR: [] });
     });
   });
 
@@ -130,11 +157,11 @@ describe('OrderPolicyService', () => {
       );
     });
 
-    it('allows sales to read unassigned order (currentOwnerId is null)', () => {
+    it('rejects unassigned orders unless a public-pool rule is assigned', () => {
       const unassignedOrder = { ...baseOrder, currentOwnerId: null };
-      expect(() =>
-        service.assertCanRead(unassignedOrder, sales2Auth),
-      ).not.toThrow();
+      expect(() => service.assertCanRead(unassignedOrder, sales2Auth)).toThrow(
+        NotFoundException,
+      );
     });
   });
 
