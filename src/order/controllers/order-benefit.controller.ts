@@ -9,6 +9,7 @@ import {
 
 import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
 import { Auth } from '@/auth/decorators/auth.decorator';
+import { AuthContext } from '@/auth/types/auth-context.interface';
 import {
   ExtendOrderDto,
   FreezeOrderDto,
@@ -39,8 +40,9 @@ export class OrderBenefitController {
     @Param('id') id: string,
     @Body() dto: FreezeOrderDto,
     @Auth('userId') actorId?: string,
+    @Auth() auth?: AuthContext,
   ): Promise<OrderDto> {
-    return this.orderService.freeze(id, dto, actorId);
+    return this.orderService.freeze(id, dto, actorId, auth);
   }
 
   @Post(':id/unfreeze')
@@ -58,8 +60,9 @@ export class OrderBenefitController {
     @Param('id') id: string,
     @Body() dto: UnfreezeOrderDto,
     @Auth('userId') actorId?: string,
+    @Auth() auth?: AuthContext,
   ): Promise<OrderDto> {
-    return this.orderService.unfreeze(id, dto, actorId);
+    return this.orderService.unfreeze(id, dto, actorId, auth);
   }
 
   @Post(':id/extend')
@@ -77,8 +80,9 @@ export class OrderBenefitController {
     @Param('id') id: string,
     @Body() dto: ExtendOrderDto,
     @Auth('userId') actorId?: string,
+    @Auth() auth?: AuthContext,
   ): Promise<OrderDto> {
-    return this.orderService.extend(id, dto, actorId);
+    return this.orderService.extend(id, dto, actorId, auth);
   }
 
   @Get(':id/benefit-adjustments')
@@ -97,7 +101,8 @@ export class OrderBenefitController {
   @ApiResponse({ status: 404, description: '订单不存在' })
   async getBenefitAdjustments(
     @Param('id') id: string,
+    @Auth() auth?: AuthContext,
   ): Promise<OrderBenefitAdjustmentDto[]> {
-    return this.orderService.getBenefitAdjustments(id);
+    return this.orderService.getBenefitAdjustments(id, auth);
   }
 }
