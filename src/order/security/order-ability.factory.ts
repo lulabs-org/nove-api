@@ -3,78 +3,17 @@ import { createPrismaAbility, PrismaQueryFactory } from '@casl/prisma';
 import { Injectable } from '@nestjs/common';
 import { Order, OrderStatus, Prisma } from '@/generated/prisma/client';
 import { AuthContext } from '@/auth/types/auth-context.interface';
+import { resolveRuleCondition } from '@/auth/utils/rule-condition.util';
+import { isSuperOrAdmin } from '@/auth/utils/auth-context.helper';
+
+// 向后兼容重新导出通用规则解析器
+export { resolveRuleCondition };
 
 export type OrderSubject = Order | 'Order' | 'all';
 
 type AppPrismaQuery = PrismaQueryFactory<Prisma.TypeMap>;
 
 export type OrderAbility = Ability<[string, OrderSubject], AppPrismaQuery>;
-
-/**
- * 将规则条件中的动态变量（如 ${user.id}、${user.departmentId}）替换为真实认证上下文值，
- * 并对操作符进行归一化处理。
- */
-export function resolveRuleCondition(
-  conditionStr: string,
-  auth: AuthContext,
-): Prisma.OrderWhereInput | null {
-  if (!conditionStr || !conditionStr.trim()) {
-    return {};
-  }
-
-  const contextMap: Record<string, unknown> = {
-    '${user.id}': auth.userId || '',
-    '${user.departmentId}': auth.primaryDeptId || '',
-    '${user.departmentIds}': auth.departmentIds || [],
-    '${user.roles}': auth.user?.roles || [],
-    '${user.companyId}': auth.orgId || '',
-  };
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(conditionStr) as unknown;
-  } catch {
-    return null;
-  }
-
-  const substitute = (val: unknown): unknown => {
-    if (val === null || val === undefined) return val;
-    if (typeof val === 'string') {
-      if (contextMap[val] !== undefined) {
-        return contextMap[val];
-      }
-      return val;
-    }
-    if (Array.isArray(val)) {
-      return val.map(substitute);
-    }
-    if (typeof val === 'object') {
-      const result: Record<string, unknown> = {};
-      for (const [key, value] of Object.entries(val)) {
-        // 归一化操作符: $or -> OR, $and -> AND, $in -> in, $gte -> gte 等
-        let normKey = key;
-        if (key === '$or') normKey = 'OR';
-        else if (key === '$and') normKey = 'AND';
-        else if (key.startsWith('$')) normKey = key.slice(1);
-
-        result[normKey] = substitute(value);
-      }
-      return result;
-    }
-    return val;
-  };
-
-  const resolved = substitute(parsed);
-  if (
-    typeof resolved !== 'object' ||
-    resolved === null ||
-    Array.isArray(resolved)
-  ) {
-    return null;
-  }
-
-  return resolved as Prisma.OrderWhereInput;
-}
 
 @Injectable()
 export class OrderAbilityFactory {
@@ -87,22 +26,14 @@ export class OrderAbilityFactory {
       return build();
     }
 
-    const userId = auth.userId;
-    const permissions = auth.permissions || [];
-    const roles = auth.user?.roles || [];
-    const dataRules = auth.dataRules || [];
-
-    const isSuperOrAdmin =
-      permissions.includes('*') ||
-      permissions.includes('order:admin') ||
-      permissions.includes('admin') ||
-      roles.includes('SUPER_ADMIN') ||
-      roles.includes('ADMIN');
-
-    if (isSuperOrAdmin) {
+    if (isSuperOrAdmin(auth, 'order:admin')) {
       can('manage', 'Order');
       return build();
     }
+
+    const userId = auth.userId;
+    const permissions = auth.permissions || [];
+    const dataRules = auth.dataRules || [];
 
     // 1. 读取权限 (read)
     if (permissions.includes('order:read') || permissions.includes('order:*')) {
@@ -113,7 +44,10 @@ export class OrderAbilityFactory {
       if (orderDataRules.length > 0) {
         // 用户角色显式配置了数据规则：按配置的规则赋权
         for (const rule of orderDataRules) {
-          const condition = resolveRuleCondition(rule.condition, auth);
+          const condition = resolveRuleCondition<Prisma.OrderWhereInput>(
+            rule.condition,
+            auth,
+          );
           if (condition && Object.keys(condition).length > 0) {
             can('read', 'Order', condition);
           } else if (condition && Object.keys(condition).length === 0) {
