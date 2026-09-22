@@ -1,17 +1,14 @@
-import { AbilityBuilder, PureAbility } from '@casl/ability';
-import { createPrismaAbility, PrismaQuery, Subjects } from '@casl/prisma';
+import { Ability, AbilityBuilder } from '@casl/ability';
+import { createPrismaAbility, PrismaQueryFactory } from '@casl/prisma';
 import { Injectable } from '@nestjs/common';
-import { Order, OrderStatus } from '@/generated/prisma/client';
+import { Order, OrderStatus, Prisma } from '@/generated/prisma/client';
 import { AuthContext } from '@/auth/types/auth-context.interface';
 
-export type OrderSubject =
-  | Subjects<{
-      Order: Order;
-    }>
-  | 'Order'
-  | 'all';
+export type OrderSubject = Order | 'Order' | 'all';
 
-export type OrderAbility = PureAbility<[string, OrderSubject], PrismaQuery>;
+type AppPrismaQuery = PrismaQueryFactory<Prisma.TypeMap>;
+
+export type OrderAbility = Ability<[string, OrderSubject], AppPrismaQuery>;
 
 /**
  * 将规则条件中的动态变量（如 ${user.id}、${user.departmentId}）替换为真实认证上下文值，
@@ -20,12 +17,12 @@ export type OrderAbility = PureAbility<[string, OrderSubject], PrismaQuery>;
 export function resolveRuleCondition(
   conditionStr: string,
   auth: AuthContext,
-): Record<string, any> | null {
+): Prisma.OrderWhereInput | null {
   if (!conditionStr || !conditionStr.trim()) {
     return {};
   }
 
-  const contextMap: Record<string, any> = {
+  const contextMap: Record<string, unknown> = {
     '${user.id}': auth.userId || '',
     '${user.departmentId}': auth.primaryDeptId || '',
     '${user.departmentIds}': auth.departmentIds || [],
@@ -33,14 +30,14 @@ export function resolveRuleCondition(
     '${user.companyId}': auth.orgId || '',
   };
 
-  let parsed: any;
+  let parsed: unknown;
   try {
-    parsed = JSON.parse(conditionStr);
+    parsed = JSON.parse(conditionStr) as unknown;
   } catch {
     return null;
   }
 
-  const substitute = (val: any): any => {
+  const substitute = (val: unknown): unknown => {
     if (val === null || val === undefined) return val;
     if (typeof val === 'string') {
       if (contextMap[val] !== undefined) {
@@ -52,7 +49,7 @@ export function resolveRuleCondition(
       return val.map(substitute);
     }
     if (typeof val === 'object') {
-      const result: Record<string, any> = {};
+      const result: Record<string, unknown> = {};
       for (const [key, value] of Object.entries(val)) {
         // 归一化操作符: $or -> OR, $and -> AND, $in -> in, $gte -> gte 等
         let normKey = key;
@@ -67,7 +64,16 @@ export function resolveRuleCondition(
     return val;
   };
 
-  return substitute(parsed);
+  const resolved = substitute(parsed);
+  if (
+    typeof resolved !== 'object' ||
+    resolved === null ||
+    Array.isArray(resolved)
+  ) {
+    return null;
+  }
+
+  return resolved as Prisma.OrderWhereInput;
 }
 
 @Injectable()
