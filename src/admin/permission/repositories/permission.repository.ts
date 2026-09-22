@@ -36,6 +36,41 @@ export class PermRepository {
     });
   }
 
+  async findDataRulesByRoleCodes(roleCodes: string[]) {
+    if (!roleCodes || roleCodes.length === 0) {
+      return [];
+    }
+    const roles = await this.prisma.role.findMany({
+      where: {
+        code: { in: roleCodes },
+        active: true,
+      },
+      include: {
+        dataPermissions: {
+          where: {
+            rule: {
+              active: true,
+            },
+          },
+          include: {
+            rule: true,
+          },
+        },
+      },
+    });
+
+    const ruleMap = new Map<string, any>();
+    for (const role of roles) {
+      for (const rdp of role.dataPermissions) {
+        if (rdp.rule && !ruleMap.has(rdp.rule.id)) {
+          ruleMap.set(rdp.rule.id, rdp.rule);
+        }
+      }
+    }
+
+    return Array.from(ruleMap.values());
+  }
+
   async findUserRoles(userId: string) {
     const orgMembers = await this.prisma.orgMember.findMany({
       where: { userId },

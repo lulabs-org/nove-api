@@ -27,10 +27,11 @@ import {
   RoleDto,
   RoleListResponse,
   SetRolePermissionsDto,
+  SetRoleDataRulesDto,
   CreateRoleBindingDto,
   RoleBindingDto,
 } from '../dto';
-import { PermissionDto } from '@/admin/permission/dto';
+import { PermissionDto, DataPermissionRuleDto } from '@/admin/permission/dto';
 
 @ApiTags('Admin / Roles')
 @Controller('admin/roles')
@@ -237,6 +238,63 @@ export class RoleController {
     @Body() dto: SetRolePermissionsDto,
   ): Promise<PermissionDto[]> {
     return this.roleService.setRolePermissions(roleId, dto);
+  }
+
+  @Get(':roleId/data-rules')
+  @ApiOperation({
+    summary: '获取角色的数据权限规则',
+    description: '获取指定角色绑定的全部数据权限规则',
+  })
+  @ApiParam({
+    name: 'roleId',
+    description: '角色 ID',
+    example: 'clx1234567890abcdef',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '获取成功',
+    type: [DataPermissionRuleDto],
+  })
+  @ApiResponse({
+    status: 404,
+    description: '角色不存在',
+  })
+  @RequirePermissions('role:read')
+  async getRoleDataRules(
+    @Param('roleId') roleId: string,
+  ): Promise<DataPermissionRuleDto[]> {
+    return this.roleService.getRoleDataRules(roleId);
+  }
+
+  @Put(':roleId/data-rules')
+  @ApiOperation({
+    summary: '设置角色的数据权限规则',
+    description: '覆盖设置指定角色绑定的数据权限规则列表',
+  })
+  @ApiParam({
+    name: 'roleId',
+    description: '角色 ID',
+    example: 'clx1234567890abcdef',
+  })
+  @ApiResponse({
+    status: 200,
+    description: '更新成功',
+    type: [DataPermissionRuleDto],
+  })
+  @ApiResponse({
+    status: 400,
+    description: '请求参数无效',
+  })
+  @ApiResponse({
+    status: 404,
+    description: '角色不存在',
+  })
+  @RequirePermissions('role:update')
+  async setRoleDataRules(
+    @Param('roleId') roleId: string,
+    @Body() dto: SetRoleDataRulesDto,
+  ): Promise<DataPermissionRuleDto[]> {
+    return this.roleService.setRoleDataRules(roleId, dto);
   }
 
   @Post('orgs/:orgId/role-bindings')

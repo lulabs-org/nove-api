@@ -12,6 +12,13 @@ import type { AuthenticatedUser } from './jwt.types';
  */
 export type AuthMethod = 'jwt' | 'api_key' | 'oauth';
 
+export interface AuthDataRule {
+  id: string;
+  code: string;
+  resource: string;
+  condition: string;
+}
+
 /**
  * 统一认证上下文接口
  * 无论使用 JWT 还是 API Key 认证，最终都会解析为此结构
@@ -28,6 +35,15 @@ export interface AuthContext {
 
   /** 权限列表（JWT: 通过角色解析; API Key: scopes） */
   permissions: string[];
+
+  /** 数据权限规则列表 */
+  dataRules?: AuthDataRule[];
+
+  /** 当前用户主部门 ID */
+  primaryDeptId?: string | null;
+
+  /** 当前用户归属的所有部门 ID（主部门 + 兼任部门） */
+  departmentIds?: string[];
 
   /** API Key ID（仅 API Key 认证时有值） */
   apiKeyId?: string;

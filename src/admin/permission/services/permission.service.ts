@@ -53,6 +53,35 @@ export class PermService {
     }
   }
 
+  async getDataRulesByRoleCodes(roleCodes: string[]): Promise<
+    Array<{
+      id: string;
+      code: string;
+      resource: string;
+      condition: string;
+    }>
+  > {
+    if (!roleCodes || roleCodes.length === 0) {
+      return [];
+    }
+
+    try {
+      const rules = await this.permRepo.findDataRulesByRoleCodes(roleCodes);
+      return rules.map((r) => ({
+        id: r.id,
+        code: r.code,
+        resource: r.resource,
+        condition: r.condition,
+      }));
+    } catch (error) {
+      this.logger.error(
+        `Failed to get data rules for roles: ${roleCodes.join(', ')}`,
+        error,
+      );
+      return [];
+    }
+  }
+
   private async getUserRoleCodes(userId: string): Promise<string[]> {
     const userRoles = await this.permRepo.findUserRoles(userId);
     return userRoles
