@@ -66,7 +66,6 @@ describe('OrderPolicyService', () => {
       emailVerified: true,
       phoneVerified: false,
       createdAt: new Date(),
-      updatedAt: new Date(),
     },
   };
 
@@ -84,7 +83,6 @@ describe('OrderPolicyService', () => {
       emailVerified: true,
       phoneVerified: false,
       createdAt: new Date(),
-      updatedAt: new Date(),
     },
   };
 
@@ -102,7 +100,6 @@ describe('OrderPolicyService', () => {
       emailVerified: true,
       phoneVerified: false,
       createdAt: new Date(),
-      updatedAt: new Date(),
     },
   };
 

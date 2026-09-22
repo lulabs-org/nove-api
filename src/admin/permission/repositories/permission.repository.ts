@@ -1,6 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import { PermissionType, Permission } from '@/generated/prisma/client';
+import {
+  DataPermissionRule,
+  PermissionType,
+  Permission,
+} from '@/generated/prisma/client';
 
 interface PermissionWithChildren extends Permission {
   parent: Permission | null;
@@ -36,39 +40,26 @@ export class PermRepository {
     });
   }
 
-  async findDataRulesByRoleCodes(roleCodes: string[]) {
+  async findDataRulesByRoleCodes(
+    roleCodes: string[],
+  ): Promise<DataPermissionRule[]> {
     if (!roleCodes || roleCodes.length === 0) {
       return [];
     }
-    const roles = await this.prisma.role.findMany({
+
+    return this.prisma.dataPermissionRule.findMany({
       where: {
-        code: { in: roleCodes },
         active: true,
-      },
-      include: {
-        dataPermissions: {
-          where: {
-            rule: {
+        roles: {
+          some: {
+            role: {
+              code: { in: roleCodes },
               active: true,
             },
-          },
-          include: {
-            rule: true,
           },
         },
       },
     });
-
-    const ruleMap = new Map<string, any>();
-    for (const role of roles) {
-      for (const rdp of role.dataPermissions) {
-        if (rdp.rule && !ruleMap.has(rdp.rule.id)) {
-          ruleMap.set(rdp.rule.id, rdp.rule);
-        }
-      }
-    }
-
-    return Array.from(ruleMap.values());
   }
 
   async findUserRoles(userId: string) {
