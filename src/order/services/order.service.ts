@@ -26,6 +26,8 @@ import {
   OrderRepository,
   OrderWithRelations,
 } from '../repositories/order.repository';
+import { AuthContext } from '@/auth/types/auth-context.interface';
+import { OrderPolicyService } from '../security/order-policy.service';
 
 const SORT_FIELD_MAP: Record<
   string,
@@ -44,9 +46,15 @@ const SORT_FIELD_MAP: Record<
 
 @Injectable()
 export class OrderService {
-  constructor(private readonly orderRepository: OrderRepository) {}
+  constructor(
+    private readonly orderRepository: OrderRepository,
+    private readonly orderPolicyService: OrderPolicyService,
+  ) {}
 
-  async create(dto: CreateOrderDto): Promise<OrderDto> {
+  async create(
+    dto: CreateOrderDto,
+    auth?: AuthContext | null,
+  ): Promise<OrderDto> {
     const { orderCode, orderNumber } = await this.resolveOrderNumbers(dto);
 
     await this.ensureOrderNumberAvailable(orderCode, orderNumber);
@@ -70,6 +78,8 @@ export class OrderService {
       );
     }
 
+    const currentOwnerId = dto.currentOwnerId || auth?.userId || undefined;
+
     const order = await this.orderRepository.create({
       orderCode,
       orderNumber,
@@ -78,14 +88,14 @@ export class OrderService {
       productName,
       email: this.trimNullable(dto.email),
       phone: this.trimNullable(dto.phone),
-      phoneCode: this.trimNullable(dto.phoneCode),
+      phoneCode: this.trimNullable(dto.phoneCode) || '+86',
       financialClosedAt: this.toDate(dto.financialClosedAt),
       amount: dto.amount,
-      currency: dto.currency ?? Currency.CNY,
+      currency: dto.currency || Currency.CNY,
       amountCny: dto.amountCny,
       fxRateToCny: dto.fxRateToCny,
       fxLockedAt: this.toDate(dto.fxLockedAt),
-      status: dto.status ?? OrderStatus.UNPAID,
+      status: dto.status || OrderStatus.UNPAID,
       paidAt: this.toDate(dto.paidAt),
       cancelledAt: this.toDate(dto.cancelledAt),
       completedAt: this.toDate(dto.completedAt),
@@ -102,8 +112,8 @@ export class OrderService {
         dto.channelId !== undefined
           ? { connect: { id: dto.channelId } }
           : undefined,
-      currentOwner: dto.currentOwnerId
-        ? { connect: { id: dto.currentOwnerId } }
+      currentOwner: currentOwnerId
+        ? { connect: { id: currentOwnerId } }
         : undefined,
       financialCloser: dto.financialCloserId
         ? { connect: { id: dto.financialCloserId } }
@@ -113,11 +123,18 @@ export class OrderService {
     return this.toDto(order);
   }
 
-  async findAll(query: QueryOrderDto): Promise<OrderListResponse> {
+  async findAll(
+    query: QueryOrderDto,
+    auth?: AuthContext | null,
+  ): Promise<OrderListResponse> {
     const page = query.page || 1;
     const pageSize = query.pageSize || 10;
     const skip = (page - 1) * pageSize;
-    const where = this.buildWhere(query);
+    const businessWhere = this.buildWhere(query);
+    const accessibleWhere = this.orderPolicyService.getAccessibleWhere(auth);
+    const where: Prisma.OrderWhereInput = {
+      AND: [accessibleWhere, businessWhere],
+    };
     const orderBy = this.buildOrderBy(query);
 
     const { items, total } = await this.orderRepository.findMany({
@@ -136,13 +153,19 @@ export class OrderService {
     };
   }
 
-  async findById(id: string): Promise<OrderDto> {
+  async findById(id: string, auth?: AuthContext | null): Promise<OrderDto> {
     const order = await this.findActiveOrder(id);
+    this.orderPolicyService.assertCanRead(order, auth);
     return this.toDto(order);
   }
 
-  async update(id: string, dto: UpdateOrderDto): Promise<OrderDto> {
+  async update(
+    id: string,
+    dto: UpdateOrderDto,
+    auth?: AuthContext | null,
+  ): Promise<OrderDto> {
     const existing = await this.findActiveOrder(id);
+    this.orderPolicyService.assertCanUpdate(existing, auth);
 
     if (dto.orderCode && dto.orderCode !== existing.orderCode) {
       const order = await this.orderRepository.findByOrderCode(dto.orderCode);
@@ -240,18 +263,25 @@ export class OrderService {
     return this.toDto(order);
   }
 
-  async updateStatus(id: string, status: OrderStatus): Promise<OrderDto> {
-    await this.findActiveOrder(id);
-    const order = await this.orderRepository.update(id, { status });
-    return this.toDto(order);
+  async updateStatus(
+    id: string,
+    status: OrderStatus,
+    auth?: AuthContext | null,
+  ): Promise<OrderDto> {
+    const order = await this.findActiveOrder(id);
+    this.orderPolicyService.assertCanUpdate(order, auth);
+    const updated = await this.orderRepository.update(id, { status });
+    return this.toDto(updated);
   }
 
   async freeze(
     id: string,
     dto: FreezeOrderDto,
     operatorId?: string,
+    auth?: AuthContext | null,
   ): Promise<OrderDto> {
     const order = await this.findActiveOrder(id);
+    this.orderPolicyService.assertCanAdjustBenefit(order, auth);
 
     if (order.status !== OrderStatus.PAID) {
       throw new BadRequestException(
@@ -295,8 +325,10 @@ export class OrderService {
     id: string,
     dto: UnfreezeOrderDto,
     operatorId?: string,
+    auth?: AuthContext | null,
   ): Promise<OrderDto> {
     const order = await this.findActiveOrder(id);
+    this.orderPolicyService.assertCanAdjustBenefit(order, auth);
 
     if (order.status !== OrderStatus.FROZEN || !order.frozenAt) {
       throw new BadRequestException(
@@ -349,8 +381,10 @@ export class OrderService {
     id: string,
     dto: ExtendOrderDto,
     operatorId?: string,
+    auth?: AuthContext | null,
   ): Promise<OrderDto> {
     const order = await this.findActiveOrder(id);
+    this.orderPolicyService.assertCanAdjustBenefit(order, auth);
 
     if (
       order.status !== OrderStatus.PAID &&
@@ -395,14 +429,17 @@ export class OrderService {
 
   async getBenefitAdjustments(
     id: string,
+    auth?: AuthContext | null,
   ): Promise<OrderBenefitAdjustmentDto[]> {
-    await this.findActiveOrder(id);
+    const order = await this.findActiveOrder(id);
+    this.orderPolicyService.assertCanRead(order, auth);
     const adjustments = await this.orderRepository.findBenefitAdjustments(id);
     return adjustments.map((item) => this.toAdjustmentDto(item));
   }
 
-  async delete(id: string): Promise<void> {
-    await this.findActiveOrder(id);
+  async delete(id: string, auth?: AuthContext | null): Promise<void> {
+    const order = await this.findActiveOrder(id);
+    this.orderPolicyService.assertCanDelete(order, auth);
     await this.orderRepository.softDelete(id);
   }
 

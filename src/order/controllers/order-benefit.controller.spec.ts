@@ -25,7 +25,12 @@ describe('OrderBenefitController', () => {
 
     const result = await controller.freeze('order-1', dto, 'user-1');
 
-    expect(service.freeze).toHaveBeenCalledWith('order-1', dto, 'user-1');
+    expect(service.freeze).toHaveBeenCalledWith(
+      'order-1',
+      dto,
+      'user-1',
+      undefined,
+    );
     expect(result.status).toBe('FROZEN');
   });
 
@@ -38,7 +43,12 @@ describe('OrderBenefitController', () => {
 
     const result = await controller.unfreeze('order-1', dto, 'user-1');
 
-    expect(service.unfreeze).toHaveBeenCalledWith('order-1', dto, 'user-1');
+    expect(service.unfreeze).toHaveBeenCalledWith(
+      'order-1',
+      dto,
+      'user-1',
+      undefined,
+    );
     expect(result.status).toBe('PAID');
   });
 
@@ -51,7 +61,12 @@ describe('OrderBenefitController', () => {
 
     const result = await controller.extend('order-1', dto, 'user-1');
 
-    expect(service.extend).toHaveBeenCalledWith('order-1', dto, 'user-1');
+    expect(service.extend).toHaveBeenCalledWith(
+      'order-1',
+      dto,
+      'user-1',
+      undefined,
+    );
     expect(result.id).toBe('order-1');
   });
 
@@ -68,7 +83,10 @@ describe('OrderBenefitController', () => {
 
     const result = await controller.getBenefitAdjustments('order-1');
 
-    expect(service.getBenefitAdjustments).toHaveBeenCalledWith('order-1');
+    expect(service.getBenefitAdjustments).toHaveBeenCalledWith(
+      'order-1',
+      undefined,
+    );
     expect(result).toEqual(adjustments);
   });
 });

@@ -11,11 +11,17 @@ import {
   RoleDto,
   RoleListResponse,
   SetRolePermissionsDto,
+  SetRoleDataRulesDto,
   CreateRoleBindingDto,
   RoleBindingDto,
 } from '../dto';
-import { Role, RoleType, Permission } from '@/generated/prisma/client';
-import { PermissionDto } from '@/admin/permission/dto';
+import {
+  Role,
+  RoleType,
+  Permission,
+  DataPermissionRule,
+} from '@/generated/prisma/client';
+import { PermissionDto, DataPermissionRuleDto } from '@/admin/permission/dto';
 
 interface RoleWithPermissions extends Role {
   permissions: Array<{
@@ -198,6 +204,55 @@ export class RoleService {
     return updatedRole.permissions.map((rp) =>
       this.toPermissionDto(rp.permission),
     );
+  }
+
+  async setRoleDataRules(
+    roleId: string,
+    dto: SetRoleDataRulesDto,
+  ): Promise<DataPermissionRuleDto[]> {
+    const existingRole = await this.roleRepository.findById(roleId);
+    if (!existingRole) {
+      throw new NotFoundException('Role not found');
+    }
+
+    if (existingRole.type === RoleType.SYSTEM) {
+      throw new BadRequestException('Cannot update system roles');
+    }
+
+    const updatedRole = await this.roleRepository.setRoleDataRules(
+      roleId,
+      dto.ruleIds,
+    );
+
+    return updatedRole.dataPermissions.map((rdp) =>
+      this.toDataPermissionRuleDto(rdp.rule),
+    );
+  }
+
+  async getRoleDataRules(roleId: string): Promise<DataPermissionRuleDto[]> {
+    const existingRole = await this.roleRepository.findById(roleId);
+    if (!existingRole) {
+      throw new NotFoundException('Role not found');
+    }
+
+    const rules = await this.roleRepository.findRoleDataRules(roleId);
+    return rules.map((r) => this.toDataPermissionRuleDto(r));
+  }
+
+  private toDataPermissionRuleDto(
+    rule: DataPermissionRule,
+  ): DataPermissionRuleDto {
+    return {
+      id: rule.id,
+      name: rule.name,
+      code: rule.code,
+      description: rule.description,
+      resource: rule.resource,
+      condition: rule.condition,
+      active: rule.active,
+      createdAt: rule.createdAt,
+      updatedAt: rule.updatedAt,
+    };
   }
 
   private toPermissionDto(permission: Permission): PermissionDto {

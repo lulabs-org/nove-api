@@ -25,7 +25,7 @@ describe('OrderController', () => {
 
     const result = await controller.create(dto as never);
 
-    expect(service.create).toHaveBeenCalledWith(dto);
+    expect(service.create).toHaveBeenCalledWith(dto, undefined);
     expect(result.id).toBe('order-1');
   });
 
@@ -35,7 +35,7 @@ describe('OrderController', () => {
 
     const result = await controller.findAll(query);
 
-    expect(service.findAll).toHaveBeenCalledWith(query);
+    expect(service.findAll).toHaveBeenCalledWith(query, undefined);
     expect(result.total).toBe(0);
   });
 
@@ -44,7 +44,7 @@ describe('OrderController', () => {
 
     const result = await controller.findById('order-1');
 
-    expect(service.findById).toHaveBeenCalledWith('order-1');
+    expect(service.findById).toHaveBeenCalledWith('order-1', undefined);
     expect(result.id).toBe('order-1');
   });
 
@@ -54,7 +54,7 @@ describe('OrderController', () => {
 
     const result = await controller.update('order-1', dto as never);
 
-    expect(service.update).toHaveBeenCalledWith('order-1', dto);
+    expect(service.update).toHaveBeenCalledWith('order-1', dto, undefined);
     expect(result.amount).toBe(2000);
   });
 
@@ -71,6 +71,7 @@ describe('OrderController', () => {
     expect(service.updateStatus).toHaveBeenCalledWith(
       'order-1',
       OrderStatus.PAID,
+      undefined,
     );
     expect(result.status).toBe(OrderStatus.PAID);
   });
@@ -80,6 +81,6 @@ describe('OrderController', () => {
 
     await controller.delete('order-1');
 
-    expect(service.delete).toHaveBeenCalledWith('order-1');
+    expect(service.delete).toHaveBeenCalledWith('order-1', undefined);
   });
 });

@@ -1,9 +1,5 @@
-import {
-  Injectable,
-  Logger,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import { DataPermRepository } from '../repositories';
 import {
   CreateDataPermissionRuleDto,
@@ -28,14 +24,14 @@ export class DataPermService {
   async createDataPermRule(
     dto: CreateDataPermissionRuleDto,
   ): Promise<DataPermissionRuleDto> {
-    const codeExists = await this.dataPermRepo.checkCodeExists(dto.code);
-    if (codeExists) {
-      throw new BadRequestException(
-        `Data permission rule code "${dto.code}" already exists`,
-      );
-    }
-
-    const rule = await this.dataPermRepo.create(dto);
+    const rule = await this.dataPermRepo.create({
+      name: dto.name,
+      description: dto.description,
+      resource: dto.resource,
+      condition: dto.condition,
+      active: dto.active,
+      code: `data_rule_${randomUUID()}`,
+    });
     return this.toDataPermissionRuleDto(rule);
   }
 
