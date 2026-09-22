@@ -1,4 +1,9 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { DataPermRepository } from '../repositories';
 import {
@@ -9,6 +14,7 @@ import {
   DataPermissionRuleListResponse,
 } from '../dto';
 import { DataPermissionRule } from '@/generated/prisma/client';
+import { validateDataRuleCondition } from '../utils/data-rule-condition.util';
 
 interface DataPermissionRuleWithFields extends DataPermissionRule {
   createdAt: Date;
@@ -24,6 +30,11 @@ export class DataPermService {
   async createDataPermRule(
     dto: CreateDataPermissionRuleDto,
   ): Promise<DataPermissionRuleDto> {
+    const conditionError = validateDataRuleCondition(
+      dto.condition,
+      dto.resource,
+    );
+    if (conditionError) throw new BadRequestException(conditionError);
     const rule = await this.dataPermRepo.create({
       name: dto.name,
       description: dto.description,
@@ -101,6 +112,14 @@ export class DataPermService {
     const existingRule = await this.dataPermRepo.findById(id);
     if (!existingRule) {
       throw new NotFoundException('Data permission rule not found');
+    }
+
+    if (dto.condition !== undefined || dto.resource !== undefined) {
+      const conditionError = validateDataRuleCondition(
+        dto.condition ?? existingRule.condition,
+        dto.resource ?? existingRule.resource,
+      );
+      if (conditionError) throw new BadRequestException(conditionError);
     }
 
     const updatedRule = await this.dataPermRepo.update(id, dto);

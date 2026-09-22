@@ -1,5 +1,6 @@
 import { DataPermRepository } from '../repositories';
 import { DataPermService } from './data-permission.service';
+import { BadRequestException } from '@nestjs/common';
 
 describe('DataPermService', () => {
   type CreateRuleData = {
@@ -13,6 +14,8 @@ describe('DataPermService', () => {
 
   let repository: {
     create: jest.Mock;
+    findById: jest.Mock;
+    update: jest.Mock;
   };
   let service: DataPermService;
   let createdData: CreateRuleData | undefined;
@@ -20,6 +23,8 @@ describe('DataPermService', () => {
   beforeEach(() => {
     repository = {
       create: jest.fn(),
+      findById: jest.fn(),
+      update: jest.fn(),
     };
     createdData = undefined;
     service = new DataPermService(repository as unknown as DataPermRepository);
@@ -56,5 +61,28 @@ describe('DataPermService', () => {
       /^data_rule_[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
     );
     expect(result.code).not.toBe('client_supplied_code');
+  });
+
+  it('rejects an invalid nested rule before writing it', async () => {
+    await expect(
+      service.createDataPermRule({
+        name: '空 OR',
+        resource: 'order',
+        condition: '{"$or":[]}',
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(repository.create).not.toHaveBeenCalled();
+  });
+
+  it('rejects a resource change when the saved condition uses a field absent from orders', async () => {
+    repository.findById.mockResolvedValue({
+      id: 'rule-1',
+      resource: 'user',
+      condition: '{"departmentId":"dept-1"}',
+    });
+    await expect(
+      service.updateDataPermRule('rule-1', { resource: 'order' }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(repository.update).not.toHaveBeenCalled();
   });
 });
