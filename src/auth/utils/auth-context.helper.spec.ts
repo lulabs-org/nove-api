@@ -8,6 +8,17 @@
 
 import { isSuperAdmin, isSuperOrAdmin } from './auth-context.helper';
 import { AuthContext } from '@/auth/types/auth-context.interface';
+import type { AuthenticatedUser } from '@/auth/types/jwt.types';
+
+const createUser = (id: string, roles: string[]): AuthenticatedUser => ({
+  id,
+  email: `${id}@example.com`,
+  roles,
+  active: true,
+  emailVerified: false,
+  phoneVerified: false,
+  createdAt: new Date(0),
+});
 
 describe('auth-context.helper', () => {
   describe('isSuperAdmin', () => {
@@ -32,7 +43,7 @@ describe('auth-context.helper', () => {
         userId: 'usr_1',
         orgId: 'org_1',
         permissions: [],
-        user: { id: 'usr_1', roles: ['SUPER_ADMIN'] } as any,
+        user: createUser('usr_1', ['SUPER_ADMIN']),
       };
       expect(isSuperAdmin(auth)).toBe(true);
     });
@@ -43,7 +54,7 @@ describe('auth-context.helper', () => {
         userId: 'usr_2',
         orgId: 'org_1',
         permissions: ['admin'],
-        user: { id: 'usr_2', roles: ['ADMIN'] } as any,
+        user: createUser('usr_2', ['ADMIN']),
       };
       expect(isSuperAdmin(auth)).toBe(false);
     });
@@ -92,7 +103,7 @@ describe('auth-context.helper', () => {
         userId: 'usr_1',
         orgId: 'org_1',
         permissions: [],
-        user: { id: 'usr_1', roles: ['SUPER_ADMIN'] } as any,
+        user: createUser('usr_1', ['SUPER_ADMIN']),
       };
       expect(isSuperOrAdmin(superAdminAuth)).toBe(true);
     });
@@ -103,7 +114,7 @@ describe('auth-context.helper', () => {
         userId: 'usr_2',
         orgId: 'org_1',
         permissions: ['order:read'],
-        user: { id: 'usr_2', roles: ['ADMIN'] } as any,
+        user: createUser('usr_2', ['ADMIN']),
       };
       // 不再无脑给 ADMIN 角色通配特权，必须具备相应权限
       expect(isSuperOrAdmin(plainAdminAuth, 'order:admin')).toBe(false);
@@ -115,7 +126,7 @@ describe('auth-context.helper', () => {
         userId: 'usr_reg',
         orgId: 'org_1',
         permissions: ['order:read', 'order:create'],
-        user: { id: 'usr_reg', roles: ['MEMBER'] } as any,
+        user: createUser('usr_reg', ['MEMBER']),
       };
       expect(isSuperOrAdmin(regularAuth, 'order:admin')).toBe(false);
     });
