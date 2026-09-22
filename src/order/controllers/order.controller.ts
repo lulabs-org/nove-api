@@ -20,6 +20,8 @@ import {
 } from '@nestjs/swagger';
 
 import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
+import { Auth } from '@/auth/decorators/auth.decorator';
+import { AuthContext } from '@/auth/types/auth-context.interface';
 import {
   CreateOrderDto,
   OrderDto,
@@ -45,8 +47,11 @@ export class OrderController {
   @ApiResponse({ status: 201, description: '订单创建成功', type: OrderDto })
   @ApiResponse({ status: 400, description: '请求参数无效' })
   @ApiResponse({ status: 401, description: '未授权' })
-  async create(@Body() dto: CreateOrderDto): Promise<OrderDto> {
-    return this.orderService.create(dto);
+  async create(
+    @Body() dto: CreateOrderDto,
+    @Auth() auth?: AuthContext,
+  ): Promise<OrderDto> {
+    return this.orderService.create(dto, auth);
   }
 
   @Get()
@@ -61,8 +66,11 @@ export class OrderController {
     type: OrderListResponse,
   })
   @ApiResponse({ status: 401, description: '未授权' })
-  async findAll(@Query() query: QueryOrderDto): Promise<OrderListResponse> {
-    return this.orderService.findAll(query);
+  async findAll(
+    @Query() query: QueryOrderDto,
+    @Auth() auth?: AuthContext,
+  ): Promise<OrderListResponse> {
+    return this.orderService.findAll(query, auth);
   }
 
   @Get(':id')
@@ -75,8 +83,11 @@ export class OrderController {
   @ApiResponse({ status: 200, description: '订单详情', type: OrderDto })
   @ApiResponse({ status: 401, description: '未授权' })
   @ApiResponse({ status: 404, description: '订单不存在' })
-  async findById(@Param('id') id: string): Promise<OrderDto> {
-    return this.orderService.findById(id);
+  async findById(
+    @Param('id') id: string,
+    @Auth() auth?: AuthContext,
+  ): Promise<OrderDto> {
+    return this.orderService.findById(id, auth);
   }
 
   @Put(':id')
@@ -93,8 +104,9 @@ export class OrderController {
   async update(
     @Param('id') id: string,
     @Body() dto: UpdateOrderDto,
+    @Auth() auth?: AuthContext,
   ): Promise<OrderDto> {
-    return this.orderService.update(id, dto);
+    return this.orderService.update(id, dto, auth);
   }
 
   @Patch(':id/status')
@@ -111,8 +123,9 @@ export class OrderController {
   async updateStatus(
     @Param('id') id: string,
     @Body() dto: UpdateOrderStatusDto,
+    @Auth() auth?: AuthContext,
   ): Promise<OrderDto> {
-    return this.orderService.updateStatus(id, dto.status);
+    return this.orderService.updateStatus(id, dto.status, auth);
   }
 
   @Delete(':id')
@@ -126,7 +139,10 @@ export class OrderController {
   @ApiResponse({ status: 204, description: '订单删除成功' })
   @ApiResponse({ status: 401, description: '未授权' })
   @ApiResponse({ status: 404, description: '订单不存在' })
-  async delete(@Param('id') id: string): Promise<void> {
-    return this.orderService.delete(id);
+  async delete(
+    @Param('id') id: string,
+    @Auth() auth?: AuthContext,
+  ): Promise<void> {
+    return this.orderService.delete(id, auth);
   }
 }

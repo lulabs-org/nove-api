@@ -11,6 +11,8 @@ import {
   OrderWithRelations,
 } from '../repositories/order.repository';
 import { OrderService } from './order.service';
+import { OrderAbilityFactory } from '../security/order-ability.factory';
+import { OrderPolicyService } from '../security/order-policy.service';
 
 const now = new Date('2024-06-01T00:00:00.000Z');
 
@@ -88,7 +90,8 @@ describe('OrderService - Benefit Freeze, Unfreeze & Extension', () => {
       findBenefitAdjustments: jest.fn(),
     } as unknown as jest.Mocked<OrderRepository>;
 
-    service = new OrderService(repository);
+    const policyService = new OrderPolicyService(new OrderAbilityFactory());
+    service = new OrderService(repository, policyService);
   });
 
   describe('freeze', () => {

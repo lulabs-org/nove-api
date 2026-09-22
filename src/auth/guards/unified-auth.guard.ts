@@ -25,7 +25,11 @@ import {
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
-import { AuthContext, AuthMethod } from '../types/auth-context.interface';
+import {
+  AuthContext,
+  AuthMethod,
+  AuthDataRule,
+} from '../types/auth-context.interface';
 import { REQUIRE_AUTH_KEY } from '../decorators/require-auth.decorator';
 import { ApiKeyService } from '@/admin/api-key/services/api-key.service';
 import { UserOrgService } from '@/admin/api-key/services/user-organization.service';
@@ -212,11 +216,63 @@ export class UnifiedAuthGuard extends AuthGuard('jwt') implements CanActivate {
       );
     }
 
+    let dataRules: AuthDataRule[] = [];
+    try {
+      const roleCodes = user.roles || [];
+      if (roleCodes.length > 0) {
+        dataRules = await this.permService.getDataRulesByRoleCodes(roleCodes);
+      }
+    } catch (error) {
+      this.logger.debug(
+        `Could not resolve data rules for user ${user.id}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+
+    let primaryDeptId: string | null = null;
+    let departmentIds: string[] = [];
+    if (orgId) {
+      try {
+        const member = await this.prisma.orgMember.findUnique({
+          where: {
+            orgId_userId: {
+              orgId,
+              userId: user.id,
+            },
+          },
+          include: {
+            memberDepartments: {
+              select: { deptId: true },
+            },
+          },
+        });
+        if (member) {
+          primaryDeptId = member.primaryDeptId;
+          const allDeptIds = new Set<string>();
+          if (member.primaryDeptId) allDeptIds.add(member.primaryDeptId);
+          for (const md of member.memberDepartments) {
+            if (md.deptId) allDeptIds.add(md.deptId);
+          }
+          departmentIds = Array.from(allDeptIds);
+        }
+      } catch (error) {
+        this.logger.debug(
+          `Could not resolve department for user ${user.id} in org ${orgId}: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+        );
+      }
+    }
+
     const authContext: AuthContext = {
       authMethod: 'jwt',
       userId: user.id,
       orgId,
       permissions,
+      dataRules,
+      primaryDeptId,
+      departmentIds,
       user,
     };
 

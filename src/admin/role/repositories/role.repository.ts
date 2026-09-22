@@ -282,4 +282,36 @@ export class RoleRepository {
       },
     });
   }
+
+  async setRoleDataRules(roleId: string, ruleIds: string[]) {
+    return this.prisma.role.update({
+      where: { id: roleId },
+      data: {
+        dataPermissions: {
+          deleteMany: {},
+          create: ruleIds.map((ruleId) => ({
+            ruleId,
+          })),
+        },
+      },
+      include: {
+        dataPermissions: {
+          include: {
+            rule: true,
+          },
+        },
+      },
+    });
+  }
+
+  async findRoleDataRules(roleId: string) {
+    const roleDataPerms = await this.prisma.roleDataPermission.findMany({
+      where: { roleId },
+      include: {
+        rule: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return roleDataPerms.map((rdp) => rdp.rule);
+  }
 }

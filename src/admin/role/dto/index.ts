@@ -5,3 +5,4 @@ export * from './role.dto';
 export * from './set-role-permissions.dto';
 export * from './create-role-binding.dto';
 export * from './role-binding.dto';
+export * from './set-role-data-rules.dto';
