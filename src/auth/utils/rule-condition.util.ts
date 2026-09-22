@@ -57,6 +57,9 @@ export function resolveRuleCondition<T = Record<string, unknown>>(
         let normKey = key;
         if (key === '$or') normKey = 'OR';
         else if (key === '$and') normKey = 'AND';
+        else if (key === '$eq' || key === 'eq') normKey = 'equals';
+        else if (key === '$ne' || key === 'ne') normKey = 'not';
+        else if (key === '$nin' || key === 'nin') normKey = 'notIn';
         else if (key.startsWith('$')) normKey = key.slice(1);
 
         result[normKey] = substitute(value);

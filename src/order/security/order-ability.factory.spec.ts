@@ -61,7 +61,7 @@ describe('OrderAbilityFactory with Dynamic Data Rules', () => {
   });
 
   describe('createForUser with dynamic rules', () => {
-    it('applies dynamically configured department rule in accessibleBy Prisma query', () => {
+    it('applies a configured status list in accessibleBy Prisma query', () => {
       const auth: AuthContext = {
         authMethod: 'jwt',
         userId: 'usr_sales_lead',
@@ -74,9 +74,7 @@ describe('OrderAbilityFactory with Dynamic Data Rules', () => {
             id: 'rule_dept_1',
             code: 'order_dept_only',
             resource: 'order',
-            condition: JSON.stringify({
-              departmentId: { $in: '${user.departmentIds}' },
-            }),
+            condition: JSON.stringify({ status: { $in: ['PAID', 'FROZEN'] } }),
           },
         ],
       };
@@ -87,10 +85,75 @@ describe('OrderAbilityFactory with Dynamic Data Rules', () => {
       expect(where).toEqual({
         OR: [
           {
-            departmentId: { in: ['dept_east_sales', 'dept_east_team_a'] },
+            status: { in: ['PAID', 'FROZEN'] },
           },
         ],
       });
+    });
+
+    it('applies nested owner-or-purchaser AND paid rule', () => {
+      const auth: AuthContext = {
+        authMethod: 'jwt',
+        userId: 'usr_rep_1',
+        orgId: 'org_1',
+        permissions: ['order:read'],
+        dataRules: [
+          {
+            id: 'rule-nested',
+            code: 'order_nested',
+            resource: 'order',
+            condition: JSON.stringify({
+              $and: [
+                {
+                  $or: [
+                    { currentOwnerId: '${user.id}' },
+                    { purchaserId: '${user.id}' },
+                  ],
+                },
+                { status: 'PAID' },
+              ],
+            }),
+          },
+        ],
+      };
+      const where = accessibleBy(factory.createForUser(auth), 'read').ofType(
+        'Order',
+      );
+      expect(where).toEqual({
+        OR: [
+          {
+            AND: [
+              {
+                OR: [
+                  { currentOwnerId: 'usr_rep_1' },
+                  { purchaserId: 'usr_rep_1' },
+                ],
+              },
+              { status: 'PAID' },
+            ],
+          },
+        ],
+      });
+    });
+
+    it('ignores a legacy rule with a nonexistent order field', () => {
+      const auth: AuthContext = {
+        authMethod: 'jwt',
+        userId: 'usr_rep_1',
+        orgId: 'org_1',
+        permissions: ['order:read'],
+        dataRules: [
+          {
+            id: 'bad',
+            code: 'bad',
+            resource: 'order',
+            condition: '{"departmentId":"dept_sales"}',
+          },
+        ],
+      };
+      expect(
+        accessibleBy(factory.createForUser(auth), 'read').ofType('Order'),
+      ).toEqual({ OR: [] });
     });
 
     it('applies owner-only rule if configured in dataRules', () => {

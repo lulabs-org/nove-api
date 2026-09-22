@@ -91,6 +91,19 @@ describe('resolveRuleCondition', () => {
     });
   });
 
+  it('maps equality and exclusion operators to Prisma filter names', () => {
+    const raw = JSON.stringify({
+      currentOwnerId: { $ne: null },
+      status: { $nin: ['CANCELLED'] },
+      amount: { $eq: 100 },
+    });
+    expect(resolveRuleCondition(raw, mockAuth)).toEqual({
+      currentOwnerId: { not: null },
+      status: { notIn: ['CANCELLED'] },
+      amount: { equals: 100 },
+    });
+  });
+
   it('handles nested objects and leaves non-matching string values untouched', () => {
     const raw = JSON.stringify({
       nested: {

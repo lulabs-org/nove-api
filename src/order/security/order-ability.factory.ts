@@ -5,6 +5,7 @@ import { Order, OrderStatus, Prisma } from '@/generated/prisma/client';
 import { AuthContext } from '@/auth/types/auth-context.interface';
 import { resolveRuleCondition } from '@/auth/utils/rule-condition.util';
 import { isSuperOrAdmin } from '@/auth/utils/auth-context.helper';
+import { validateDataRuleCondition } from '@/admin/permission/utils/data-rule-condition.util';
 
 // 向后兼容重新导出通用规则解析器
 export { resolveRuleCondition };
@@ -44,6 +45,7 @@ export class OrderAbilityFactory {
       if (orderDataRules.length > 0) {
         // 用户角色显式配置了数据规则：按配置的规则赋权
         for (const rule of orderDataRules) {
+          if (validateDataRuleCondition(rule.condition, 'order')) continue;
           const condition = resolveRuleCondition<Prisma.OrderWhereInput>(
             rule.condition,
             auth,
