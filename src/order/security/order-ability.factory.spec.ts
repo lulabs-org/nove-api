@@ -146,7 +146,7 @@ describe('OrderAbilityFactory with Dynamic Data Rules', () => {
       expect(where).toEqual({});
     });
 
-    it('falls back to default safe visibility when no data rules are attached', () => {
+    it('denies all order rows when no data rules are attached', () => {
       const auth: AuthContext = {
         authMethod: 'jwt',
         userId: 'usr_regular_1',
@@ -158,13 +158,29 @@ describe('OrderAbilityFactory with Dynamic Data Rules', () => {
       const ability = factory.createForUser(auth);
       const where = accessibleBy(ability, 'read').ofType('Order');
 
-      expect(where).toEqual({
-        OR: [
-          { purchaserId: 'usr_regular_1' },
-          { currentOwnerId: null },
-          { currentOwnerId: 'usr_regular_1' },
+      expect(where).toEqual({ OR: [] });
+    });
+
+    it('allows unassigned orders only through an explicit public-pool rule', () => {
+      const auth: AuthContext = {
+        authMethod: 'jwt',
+        userId: 'usr_regular_1',
+        orgId: 'org_1',
+        permissions: ['order:read'],
+        dataRules: [
+          {
+            id: 'rule_public_pool_1',
+            code: 'order_public_pool',
+            resource: 'order',
+            condition: JSON.stringify({ currentOwnerId: null }),
+          },
         ],
-      });
+      };
+
+      const ability = factory.createForUser(auth);
+      const where = accessibleBy(ability, 'read').ofType('Order');
+
+      expect(where).toEqual({ OR: [{ currentOwnerId: null }] });
     });
   });
 });

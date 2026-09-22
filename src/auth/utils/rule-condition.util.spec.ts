@@ -21,7 +21,11 @@ describe('resolveRuleCondition', () => {
       id: 'usr_100',
       email: 'test@example.com',
       roles: ['SALES_REP'],
-    } as any,
+      active: true,
+      emailVerified: true,
+      phoneVerified: false,
+      createdAt: new Date(0),
+    },
   };
 
   it('returns empty object when condition string is empty or whitespace', () => {
