@@ -30,7 +30,7 @@ import {
 } from './dto';
 import { OrderRefundService } from './order-refund.service';
 
-@ApiTags('Admin - Order Refunds')
+@ApiTags('Admin / Order Refunds')
 @ApiBearerAuth()
 @Controller('admin/order-refunds')
 export class OrderRefundController {

@@ -32,7 +32,7 @@ import {
 } from '../dto';
 import { OrderService } from '../services/order.service';
 
-@ApiTags('Admin - Orders')
+@ApiTags('Admin / Orders')
 @Controller('admin/orders')
 @ApiBearerAuth()
 export class OrderController {

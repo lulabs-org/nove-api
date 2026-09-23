@@ -68,7 +68,7 @@ export class LarkWebhookController {
   @Post()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Lark Webhook',
+    summary: 'Receive Lark Webhook Events',
     description: '接收 Lark Webhook 事件',
   })
   @ApiResponse({ status: 200, description: 'Webhook 处理成功' })

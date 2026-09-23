@@ -26,7 +26,7 @@ import {
 } from '@/admin/integrations';
 import { SingleOrgContextService } from '@/admin/org';
 
-@ApiTags('Wechat Shop')
+@ApiTags('Webhooks')
 @Controller('webhooks/wechat-shop/events')
 export class WechatShopEventController implements OnModuleInit {
   private readonly logger = new Logger(WechatShopEventController.name);
@@ -76,7 +76,7 @@ export class WechatShopEventController implements OnModuleInit {
   @Public()
   @Get()
   @ApiOperation({
-    summary: 'Verify webhook',
+    summary: 'Verify WeChat Shop Webhook URL',
     description: '用于接收并响应微信小店事件推送服务器的 URL 验证请求。',
   })
   verifyWebhook(
@@ -106,7 +106,7 @@ export class WechatShopEventController implements OnModuleInit {
   @Post()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Receive events',
+    summary: 'Receive WeChat Shop Events',
     description:
       '接收微信小店的各类事件推送（如订单、售后、商品等），并进行统一验证、解密和分发。',
   })

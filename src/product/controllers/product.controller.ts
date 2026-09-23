@@ -31,7 +31,7 @@ import {
 } from '../dto';
 import { ProductService } from '../services/product.service';
 
-@ApiTags('Admin - Products')
+@ApiTags('Admin / Products')
 @ApiBearerAuth()
 @Controller('admin/products')
 export class ProductController {

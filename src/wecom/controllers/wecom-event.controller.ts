@@ -21,7 +21,7 @@ import {
   generateSignature,
 } from '../utils/wecom-crypto.util';
 
-@ApiTags('WeCom')
+@ApiTags('Webhooks')
 @Controller('webhooks/wecom/events')
 export class WecomEventController {
   private readonly logger = new Logger(WecomEventController.name);

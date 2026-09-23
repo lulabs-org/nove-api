@@ -26,9 +26,8 @@ import { TMeetWebhookEventBodyDto } from '../dto/tmeet-webhook-body.dto';
 export function ApiTMeetUrlVerificationDocs() {
   return applyDecorators(
     ApiOperation({
-      summary: 'TMeet Webhook URL验证',
+      summary: 'Verify TMeet Webhook URL',
       description: '用于腾讯会议webhook URL有效性验证',
-      tags: ['TMeet'],
     }),
     ApiQuery({
       name: 'check_str',
@@ -74,10 +73,9 @@ export function ApiTMeetUrlVerificationDocs() {
 export function ApiTMeetEventReceiverDocs() {
   return applyDecorators(
     ApiOperation({
-      summary: 'TMeet Webhook事件接收',
+      summary: 'Receive TMeet Webhook Events',
       description:
         '接收腾讯会议的Webhook事件通知。支持会议创建、开始、结束、录制完成等事件。请求体中的data字段是Base64编码的加密事件数据，需要使用EncodingAESKey进行解密。',
-      tags: ['TMeet'],
     }),
     ApiHeader({
       name: 'timestamp',

@@ -33,7 +33,7 @@ export class StripeWebhookController {
   @Post()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Receive Stripe webhooks',
+    summary: 'Receive Stripe Webhooks',
     description:
       '接收并验签 Stripe Webhook 回调事件，幂等处理结账支付与售后退款。',
   })

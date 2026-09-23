@@ -40,7 +40,7 @@ import {
   ApiUpdateMemberDepartments,
 } from '../decorators/org-member.decorators';
 
-@ApiTags('Admin / OrgMembers')
+@ApiTags('Admin / Org Members')
 @Controller('admin')
 @ApiBearerAuth()
 export class OrgMemberController {

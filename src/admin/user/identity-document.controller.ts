@@ -26,7 +26,7 @@ import {
 } from './dto';
 import { IdentityDocumentService } from './identity-document.service';
 
-@ApiTags('Admin / User identity documents')
+@ApiTags('Admin / User Identity Documents')
 @ApiBearerAuth()
 @Controller('admin/users/:userId/identity-documents')
 export class IdentityDocumentController {
