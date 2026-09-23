@@ -18,6 +18,11 @@ export class QueryDataPermissionRuleDto {
   @IsOptional()
   resource?: string;
 
+  @ApiPropertyOptional({ description: '操作类型', example: '*' })
+  @IsString()
+  @IsOptional()
+  action?: string;
+
   @ApiPropertyOptional({ description: '是否启用', example: true })
   @IsBoolean()
   @IsOptional()

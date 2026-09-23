@@ -248,6 +248,7 @@ export class RoleService {
       code: rule.code,
       description: rule.description,
       resource: rule.resource,
+      action: rule.action,
       condition: rule.condition,
       active: rule.active,
       createdAt: rule.createdAt,

@@ -49,6 +49,7 @@ model DataPermissionRule {
   code        String  @unique // 规则编码
   description String? // 规则描述
   resource    String // 资源标识
+  action      String  @default("*") // 操作类型（如 read, update, delete 或 *）
   condition   String // 权限条件（JSON格式）
   active      Boolean @default(true) // 是否启用
 
@@ -61,5 +62,6 @@ model DataPermissionRule {
 
   @@index([code])
   @@index([resource])
+  @@index([resource, action])
   @@map("data_permission_rules")
 }

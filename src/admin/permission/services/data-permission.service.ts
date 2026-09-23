@@ -39,6 +39,7 @@ export class DataPermService {
       name: dto.name,
       description: dto.description,
       resource: dto.resource,
+      action: dto.action?.trim() || '*',
       condition: dto.condition,
       active: dto.active,
       code: `data_rule_${randomUUID()}`,
@@ -85,6 +86,10 @@ export class DataPermService {
       where.resource = query.resource;
     }
 
+    if (query.action) {
+      where.action = query.action;
+    }
+
     if (query.active !== undefined) {
       where.active = query.active;
     }
@@ -122,7 +127,10 @@ export class DataPermService {
       if (conditionError) throw new BadRequestException(conditionError);
     }
 
-    const updatedRule = await this.dataPermRepo.update(id, dto);
+    const updatedRule = await this.dataPermRepo.update(id, {
+      ...dto,
+      action: dto.action !== undefined ? dto.action.trim() || '*' : undefined,
+    });
     return this.toDataPermissionRuleDto(updatedRule);
   }
 
@@ -144,6 +152,7 @@ export class DataPermService {
       code: rule.code,
       description: rule.description,
       resource: rule.resource,
+      action: rule.action,
       condition: rule.condition,
       active: rule.active,
       createdAt: rule.createdAt,
