@@ -551,7 +551,10 @@ export class OrderService {
     );
   }
 
-  private async ensureUserExists(userId: string | undefined, message: string) {
+  private async ensureUserExists(
+    userId: string | null | undefined,
+    message: string,
+  ) {
     if (!userId) return;
     const exists = await this.orderRepository.userExists(userId);
     if (!exists) throw new NotFoundException(message);
