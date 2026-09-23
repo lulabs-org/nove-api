@@ -30,7 +30,7 @@ import {
 } from '../dto';
 import { ChannelService } from '../services/channel.service';
 
-@ApiTags('Admin - Channels')
+@ApiTags('Admin / Channels')
 @ApiBearerAuth()
 @Controller('admin/channels')
 export class ChannelController {

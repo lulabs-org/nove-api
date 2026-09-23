@@ -36,7 +36,7 @@ import {
 } from '../dto';
 import { ProjectService } from '../services/project.service';
 
-@ApiTags('Admin - Projects')
+@ApiTags('Admin / Projects')
 @ApiBearerAuth()
 @Controller('admin/projects')
 export class ProjectController {

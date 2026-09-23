@@ -13,7 +13,7 @@ import { RequirePermissions } from '@/admin/permission/decorators/permissions.de
 import { ProfitSharingRecordService } from '../services/profit-sharing-record.service';
 import { ProfitSharingService } from '../services/profit-sharing.service';
 
-@ApiTags('分润明细流水 (Records)')
+@ApiTags('Admin / Profit Sharing Records')
 @ApiBearerAuth()
 @Controller('profit-sharing/records')
 export class ProfitSharingRecordController {

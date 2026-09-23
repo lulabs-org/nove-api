@@ -47,7 +47,7 @@ import { CurrentOrg } from '@/auth/decorators';
  * 会议记录控制器
  * 提供会议记录的CRUD操作API
  */
-@ApiTags('Meet')
+@ApiTags('Meetings')
 @Controller('meetings')
 @ApiBearerAuth()
 export class MeetingController {

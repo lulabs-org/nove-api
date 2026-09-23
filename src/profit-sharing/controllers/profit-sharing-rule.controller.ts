@@ -19,7 +19,7 @@ import {
   BatchDuplicateProfitShareRuleDto,
 } from '../dto/duplicate-rule.dto';
 
-@ApiTags('分润规则 (Rules)')
+@ApiTags('Admin / Profit Sharing Rules')
 @ApiBearerAuth()
 @Controller('profit-sharing/rules')
 export class ProfitSharingRuleController {

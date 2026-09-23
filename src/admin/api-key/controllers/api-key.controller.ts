@@ -47,7 +47,7 @@ import {
  * 处理 API Key 的 CRUD 操作
  * 所有接口都需要 JWT 认证和相应的权限
  */
-@ApiTags('Admin / API Key')
+@ApiTags('Admin / API Keys')
 @ApiBearerAuth()
 @RequireAuth('jwt')
 @Controller('admin/api-keys')
