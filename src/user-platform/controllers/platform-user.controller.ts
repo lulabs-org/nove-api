@@ -9,6 +9,7 @@ import {
   Query,
 } from '@nestjs/common';
 import {
+  ApiBearerAuth,
   ApiBody,
   ApiExtraModels,
   ApiOperation,
@@ -35,6 +36,7 @@ const nullablePlatformUserSchema = {
 };
 
 @ApiTags('Platform Users')
+@ApiBearerAuth()
 @ApiExtraModels(
   PlatformUserDto,
   PlatformUserWithProfileDto,

@@ -21,7 +21,7 @@ import {
   ValidationPipe,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { NoPermissionRequired } from '@/admin/permission/decorators/permissions.decorator';
 import { Request } from 'express';
 import { ProfileService } from './services/profile.service';
@@ -38,6 +38,7 @@ import { RequireAuth } from '@/auth/decorators/require-auth.decorator';
 import { AvatarUploadFile } from '@/user/types/avatar-upload-file';
 
 @ApiTags('User')
+@ApiBearerAuth()
 @Controller('api/user')
 @NoPermissionRequired()
 export class UserController {

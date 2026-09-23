@@ -516,6 +516,57 @@ export const REAL_PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     action: 'log',
   },
 
+  // ========== 任务调度管理 ==========
+  {
+    name: '查看任务',
+    code: 'task:read',
+    description: '查看任务与队列状态',
+    resource: 'task',
+    action: 'read',
+  },
+  {
+    name: '创建任务',
+    code: 'task:create',
+    description: '创建单次或周期任务',
+    resource: 'task',
+    action: 'create',
+  },
+  {
+    name: '更新任务',
+    code: 'task:update',
+    description: '更新任务配置',
+    resource: 'task',
+    action: 'update',
+  },
+  {
+    name: '删除任务',
+    code: 'task:delete',
+    description: '删除任务记录',
+    resource: 'task',
+    action: 'delete',
+  },
+  {
+    name: '运行任务',
+    code: 'task:run',
+    description: '立即运行任务',
+    resource: 'task',
+    action: 'run',
+  },
+  {
+    name: '暂停任务/队列',
+    code: 'task:pause',
+    description: '暂停任务或全局队列',
+    resource: 'task',
+    action: 'pause',
+  },
+  {
+    name: '恢复任务/队列',
+    code: 'task:resume',
+    description: '恢复任务或全局队列',
+    resource: 'task',
+    action: 'resume',
+  },
+
   // ========== 仪表板管理 ==========
   {
     name: '查看仪表板',
@@ -1330,6 +1381,57 @@ export const PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     description: '查看系统日志',
     resource: 'system',
     action: 'log',
+  },
+
+  // ========== 任务调度管理 ==========
+  {
+    name: '查看任务',
+    code: 'task:read',
+    description: '查看任务与队列状态',
+    resource: 'task',
+    action: 'read',
+  },
+  {
+    name: '创建任务',
+    code: 'task:create',
+    description: '创建单次或周期任务',
+    resource: 'task',
+    action: 'create',
+  },
+  {
+    name: '更新任务',
+    code: 'task:update',
+    description: '更新任务配置',
+    resource: 'task',
+    action: 'update',
+  },
+  {
+    name: '删除任务',
+    code: 'task:delete',
+    description: '删除任务记录',
+    resource: 'task',
+    action: 'delete',
+  },
+  {
+    name: '运行任务',
+    code: 'task:run',
+    description: '立即运行任务',
+    resource: 'task',
+    action: 'run',
+  },
+  {
+    name: '暂停任务/队列',
+    code: 'task:pause',
+    description: '暂停任务或全局队列',
+    resource: 'task',
+    action: 'pause',
+  },
+  {
+    name: '恢复任务/队列',
+    code: 'task:resume',
+    description: '恢复任务或全局队列',
+    resource: 'task',
+    action: 'resume',
   },
 
   // ========== 仪表板管理 ==========

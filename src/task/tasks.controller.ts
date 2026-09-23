@@ -20,8 +20,9 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { ApiTags, ApiExtraModels } from '@nestjs/swagger';
-import { NoPermissionRequired } from '@/admin/permission/decorators/permissions.decorator';
+import { ApiTags, ApiExtraModels, ApiBearerAuth } from '@nestjs/swagger';
+import { Public } from '@/auth/decorators/public.decorator';
+import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
 import { TasksService } from './services/tasks.service';
 import { CreateOnceDto } from './dto/create-once.dto';
 import { CreateCronDto } from './dto/create-cron.dto';
@@ -49,13 +50,14 @@ import {
 } from './dto/responses.dto';
 
 @ApiTags('Tasks')
+@ApiBearerAuth()
 @ApiExtraModels(TaskEntity, PaginatedTasksResponse, OkResponse, RunNowResponse)
 @Controller('tasks')
-@NoPermissionRequired()
 export class TasksController {
   constructor(private readonly service: TasksService) {}
 
   @ApiHealthCheckDocs()
+  @Public()
   @Get('health')
   health() {
     return {
@@ -65,66 +67,77 @@ export class TasksController {
   }
 
   @ApiCreateOnceDocs()
+  @RequirePermissions('task:create')
   @Post('once')
   createOnce(@Body() dto: CreateOnceDto) {
     return this.service.createOnce(dto);
   }
 
   @ApiCreateCronDocs()
+  @RequirePermissions('task:create')
   @Post('cron')
   createCron(@Body() dto: CreateCronDto) {
     return this.service.createCron(dto);
   }
 
   @ApiListTasksDocs()
+  @RequirePermissions('task:read')
   @Get()
   list(@Query() q: QueryDto) {
     return this.service.list(q);
   }
 
   @ApiTaskDetailDocs()
+  @RequirePermissions('task:read')
   @Get(':id')
   detail(@Param('id') id: string) {
     return this.service.detail(id);
   }
 
   @ApiUpdateTaskDocs()
+  @RequirePermissions('task:update')
   @Patch(':id')
   update(@Param('id') id: string, @Body() dto: UpdateTaskDto) {
     return this.service.update(id, dto);
   }
 
   @ApiRemoveTaskDocs()
+  @RequirePermissions('task:delete')
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.service.remove(id);
   }
 
   @ApiPauseQueueDocs()
+  @RequirePermissions('task:pause')
   @Post('pause')
   pause() {
     return this.service.pauseQueue();
   }
 
   @ApiResumeQueueDocs()
+  @RequirePermissions('task:resume')
   @Post('resume')
   resume() {
     return this.service.resumeQueue();
   }
 
   @ApiRunNowDocs()
+  @RequirePermissions('task:run')
   @Post(':id/run')
   runNow(@Param('id') id: string) {
     return this.service.runNow(id);
   }
 
   @ApiPauseTaskDocs()
+  @RequirePermissions('task:pause')
   @Post(':id/pause')
   pauseTask(@Param('id') id: string) {
     return this.service.pauseTask(id);
   }
 
   @ApiResumeTaskDocs()
+  @RequirePermissions('task:resume')
   @Post(':id/resume')
   resumeTask(@Param('id') id: string) {
     return this.service.resumeTask(id);

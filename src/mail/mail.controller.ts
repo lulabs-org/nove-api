@@ -17,22 +17,22 @@ import {
   HttpStatus,
   HttpException,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { MailService } from './services/mail.service';
 import { SendEmailDto } from './dto/send-email.dto';
-import { Public } from '@/auth/decorators/public.decorator';
 import {
   ApiSendEmailDocs,
   ApiVerifyConnectionDocs,
 } from './decorators/mail.decorators';
-import { NoPermissionRequired } from '@/admin/permission/decorators/permissions.decorator';
+import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
 
 @ApiTags('Mail')
+@ApiBearerAuth()
 @Controller('mail')
-@NoPermissionRequired()
 export class MailController {
   constructor(private readonly mailService: MailService) {}
 
+  @RequirePermissions('system:config:write')
   @Post('send')
   @ApiSendEmailDocs()
   async sendEmail(@Body() sendEmailDto: SendEmailDto) {
@@ -70,7 +70,7 @@ export class MailController {
   }
 
   @Get('verify')
-  @Public()
+  @RequirePermissions('system:config:read')
   @ApiVerifyConnectionDocs()
   async verifyConnection() {
     try {
@@ -95,6 +95,7 @@ export class MailController {
     }
   }
 
+  @RequirePermissions('system:config:write')
   @Post('send-later')
   async sendLater(
     @Body('email') email: string,
