@@ -142,6 +142,61 @@ describe('OrderPolicyService', () => {
     });
   });
 
+  describe('assertCanCreate', () => {
+    const salesCreatorAuth: AuthContext = {
+      ...sales1Auth,
+      permissions: ['order:create'],
+      dataRules: [
+        {
+          id: 'rule-create-owner',
+          code: 'order_create_owner',
+          resource: 'order',
+          action: 'create',
+          condition: JSON.stringify({ currentOwnerId: '${user.id}' }),
+        },
+      ],
+    };
+
+    it('allows admin to create any order', () => {
+      expect(() =>
+        service.assertCanCreate({ currentOwnerId: 'anyone' }, adminAuth),
+      ).not.toThrow();
+    });
+
+    it('allows sales creator to create order assigned to themselves', () => {
+      expect(() =>
+        service.assertCanCreate(
+          { currentOwnerId: 'user-sales-1' },
+          salesCreatorAuth,
+        ),
+      ).not.toThrow();
+    });
+
+    it('forbids sales creator from creating order assigned to someone else', () => {
+      expect(() =>
+        service.assertCanCreate(
+          { currentOwnerId: 'user-sales-2' },
+          salesCreatorAuth,
+        ),
+      ).toThrow(ForbiddenException);
+    });
+
+    it('forbids user without order:create permission from creating order', () => {
+      expect(() =>
+        service.assertCanCreate(
+          { currentOwnerId: 'user-sales-1' },
+          sales1Auth, // only has order:read, order:update
+        ),
+      ).toThrow(ForbiddenException);
+    });
+
+    it('allows creation when auth is null/undefined (system calls)', () => {
+      expect(() =>
+        service.assertCanCreate({ currentOwnerId: 'anyone' }, null),
+      ).not.toThrow();
+    });
+  });
+
   describe('assertCanRead', () => {
     it('allows admin to read any order', () => {
       expect(() => service.assertCanRead(baseOrder, adminAuth)).not.toThrow();

@@ -80,6 +80,29 @@ export class OrderService {
 
     const currentOwnerId = dto.currentOwnerId || auth?.userId || undefined;
 
+    // 断言用户是否有权创建该订单（校验功能权限与数据规则）
+    this.orderPolicyService.assertCanCreate(
+      {
+        orderCode,
+        orderNumber,
+        externalId: this.trimNullable(dto.externalId),
+        productId: dto.productId,
+        productName,
+        purchaserId: dto.purchaserId,
+        channelId: dto.channelId,
+        email: this.trimNullable(dto.email),
+        phone: this.trimNullable(dto.phone),
+        phoneCode: this.trimNullable(dto.phoneCode) || '+86',
+        currentOwnerId,
+        financialCloserId: dto.financialCloserId,
+        amount: dto.amount,
+        currency: dto.currency || Currency.CNY,
+        amountCny: dto.amountCny,
+        status: dto.status || OrderStatus.UNPAID,
+      },
+      auth,
+    );
+
     const order = await this.orderRepository.create({
       orderCode,
       orderNumber,

@@ -25,6 +25,23 @@ export class OrderPolicyService {
   }
 
   /**
+   * 断言用户是否有权创建该订单
+   * @param order 可选的订单草稿对象。传入时将校验属性级数据规则
+   * @param auth 用户认证上下文
+   */
+  assertCanCreate(
+    order?: Partial<Order> | null,
+    auth?: AuthContext | null,
+  ): void {
+    if (!auth) return;
+    const ability = this.abilityFactory.createForUser(auth);
+    const target = order ? subject('Order', order as Order) : 'Order';
+    if (!ability.can('create', target)) {
+      throw new ForbiddenException('无权创建该订单');
+    }
+  }
+
+  /**
    * 断言用户是否有权读取该订单
    */
   assertCanRead(order: Order, auth?: AuthContext | null): void {

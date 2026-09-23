@@ -71,7 +71,25 @@ export class OrderAbilityFactory {
       permissions.includes('order:create') ||
       permissions.includes('order:*')
     ) {
-      can('create', 'Order');
+      const orderCreateRules = getRulesForAction('create');
+
+      if (orderCreateRules.length > 0) {
+        for (const rule of orderCreateRules) {
+          if (validateDataRuleCondition(rule.condition, 'order')) continue;
+          const condition = resolveRuleCondition<Prisma.OrderWhereInput>(
+            rule.condition,
+            auth,
+          );
+          if (condition && Object.keys(condition).length > 0) {
+            can('create', 'Order', condition);
+          } else if (condition && Object.keys(condition).length === 0) {
+            can('create', 'Order');
+          }
+        }
+      } else {
+        // 未显式配置创建数据规则时，默认拥有创建权限
+        can('create', 'Order');
+      }
     }
 
     // 3. 更新权限 (update)

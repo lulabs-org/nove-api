@@ -1,4 +1,5 @@
 import { accessibleBy } from '@casl/prisma';
+import { subject } from '@casl/ability';
 import { OrderAbilityFactory } from './order-ability.factory';
 import { resolveRuleCondition } from '@/auth/utils/rule-condition.util';
 import { AuthContext } from '@/auth/types/auth-context.interface';
@@ -314,5 +315,69 @@ describe('OrderAbilityFactory with Dynamic Data Rules', () => {
         OR: [{ status: 'UNPAID' }],
       });
     });
+
+    it('applies custom create data rules when configured and validates draft', () => {
+      const auth: AuthContext = {
+        authMethod: 'jwt',
+        userId: 'usr_rep_1',
+        orgId: 'org_1',
+        permissions: ['order:create'],
+        dataRules: [
+          {
+            id: 'rule_create_owner',
+            code: 'order_create_own',
+            resource: 'order',
+            action: 'create',
+            condition: JSON.stringify({ currentOwnerId: '${user.id}' }),
+          },
+        ],
+      };
+
+      const ability = factory.createForUser(auth);
+
+      // Draft created with matching currentOwnerId -> allowed
+      expect(
+        ability.can(
+          'create',
+          subject('Order', { currentOwnerId: 'usr_rep_1' } as any),
+        ),
+      ).toBe(true);
+
+      // Draft created with other user's ownerId -> forbidden
+      expect(
+        ability.can(
+          'create',
+          subject('Order', { currentOwnerId: 'usr_rep_2' } as any),
+        ),
+      ).toBe(false);
+    });
+
+    it('allows create unconditionally when order:create is granted without create data rules', () => {
+      const auth: AuthContext = {
+        authMethod: 'jwt',
+        userId: 'usr_rep_1',
+        orgId: 'org_1',
+        permissions: ['order:create'],
+        dataRules: [
+          {
+            id: 'rule_read_only',
+            code: 'order_read_only',
+            resource: 'order',
+            action: 'read',
+            condition: JSON.stringify({ currentOwnerId: '${user.id}' }),
+          },
+        ],
+      };
+
+      const ability = factory.createForUser(auth);
+      expect(ability.can('create', 'Order')).toBe(true);
+      expect(
+        ability.can(
+          'create',
+          subject('Order', { currentOwnerId: 'any_user' } as any),
+        ),
+      ).toBe(true);
+    });
   });
 });
+
