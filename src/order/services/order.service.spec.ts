@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/unbound-method */
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import { AuthContext } from '@/auth/types/auth-context.interface';
 import {
   BenefitAdjustmentType,
   Currency,
@@ -434,5 +435,62 @@ describe('OrderService - Benefit Freeze, Unfreeze & Extension', () => {
       );
       expect(result.durationDays).toBe(30);
     });
+
+    it('enforces data permission rules when creating orders with auth context', async () => {
+      repository.findByOrderCode.mockResolvedValue(null);
+      repository.findByOrderNumber.mockResolvedValue(null);
+      repository.productExists.mockResolvedValue(true);
+      repository.userExists.mockResolvedValue(true);
+      repository.findProductById.mockResolvedValue({
+        id: 'prod-1',
+        name: '年度会员',
+        durationDays: 30,
+      });
+
+      const authWithRule: AuthContext = {
+        authMethod: 'jwt',
+        userId: 'sales-user-1',
+        orgId: 'org-1',
+        permissions: ['order:create'],
+        dataRules: [
+          {
+            id: 'rule-owner',
+            code: 'order_create_own',
+            resource: 'order',
+            action: 'create',
+            condition: JSON.stringify({ currentOwnerId: '${user.id}' }),
+          },
+        ],
+      };
+
+      const createdOrder = mockOrder({
+        currentOwnerId: 'sales-user-1',
+      });
+      repository.create.mockResolvedValue(createdOrder);
+
+      // 1. Success when owner is implicitly defaulted to auth.userId
+      await expect(
+        service.create(
+          {
+            amount: 1000,
+            productId: 'prod-1',
+          },
+          authWithRule,
+        ),
+      ).resolves.toBeDefined();
+
+      // 2. Fails when user attempts to assign order to another owner
+      await expect(
+        service.create(
+          {
+            amount: 1000,
+            productId: 'prod-1',
+            currentOwnerId: 'sales-user-2',
+          },
+          authWithRule,
+        ),
+      ).rejects.toThrow(ForbiddenException);
+    });
   });
 });
+
