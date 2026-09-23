@@ -1,13 +1,20 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 
 @Injectable()
-export class SingleOrgContextService {
+export class SingleOrgContextService implements OnModuleInit {
   private orgId: string | null = null;
 
   constructor(private readonly prisma: PrismaService) {}
 
+  async onModuleInit(): Promise<void> {
+    await this.initialize();
+  }
+
   async initialize(): Promise<string> {
+    if (this.orgId) {
+      return this.orgId;
+    }
     const organizations = await this.prisma.org.findMany({
       where: { active: true, deletedAt: null },
       select: { id: true },
