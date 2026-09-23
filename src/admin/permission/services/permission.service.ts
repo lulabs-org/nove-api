@@ -58,6 +58,7 @@ export class PermService {
       id: string;
       code: string;
       resource: string;
+      action: string;
       condition: string;
     }>
   > {
@@ -71,6 +72,7 @@ export class PermService {
         id: r.id,
         code: r.code,
         resource: r.resource,
+        action: r.action,
         condition: r.condition,
       }));
     } catch (error) {

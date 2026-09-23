@@ -16,6 +16,7 @@ export interface AuthDataRule {
   id: string;
   code: string;
   resource: string;
+  action?: string;
   condition: string;
 }
 
