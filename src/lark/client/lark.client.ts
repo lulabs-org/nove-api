@@ -7,7 +7,6 @@ import {
   IntegrationsService,
   IntegrationValues,
 } from '@/admin/integrations';
-import { SingleOrgContextService } from '@/admin/org';
 import { LarkClientNotConfiguredException } from '../exceptions';
 
 @Injectable()
@@ -16,19 +15,16 @@ export class LarkClient implements OnModuleInit {
   public client: lark.Client;
   public wsClient: lark.WSClient;
   public isConfigured = false;
+  public orgId: string | null = null;
 
-  constructor(
-    private readonly integrationsService: IntegrationsService,
-    private readonly orgContext: SingleOrgContextService,
-  ) {
+  constructor(private readonly integrationsService: IntegrationsService) {
     this.setupClients(undefined, false);
   }
 
   async onModuleInit() {
-    const { value } = await this.integrationsService.getEffectiveConfig(
-      this.orgContext.getOrgId(),
-      'lark',
-    );
+    const { value, orgId } =
+      await this.integrationsService.getEffectiveConfig('lark');
+    this.orgId = orgId;
     this.setupClients(value, true);
     if (this.isConfigured) {
       this.logger.log('Lark client initialized successfully');
@@ -37,14 +33,16 @@ export class LarkClient implements OnModuleInit {
 
   @OnEvent(INTEGRATION_EVENT_PATTERNS.LARK_UPDATED)
   handleConfigUpdated(event: IntegrationChangeEvent) {
-    if (!this.orgContext.matches(event.orgId)) return;
+    if (this.orgId && event.orgId !== this.orgId) return;
+    this.orgId = event.orgId;
     this.setupClients(event.value, true);
     this.logger.log('Lark client updated from config event');
   }
 
   @OnEvent(INTEGRATION_EVENT_PATTERNS.LARK_DELETED)
   handleConfigDeleted(event: IntegrationChangeEvent) {
-    if (!this.orgContext.matches(event.orgId)) return;
+    if (this.orgId && event.orgId !== this.orgId) return;
+    this.orgId = null;
     this.setupClients(event.value, true);
     this.logger.log('Lark client reset from config delete event');
   }

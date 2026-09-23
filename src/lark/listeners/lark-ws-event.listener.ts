@@ -4,7 +4,6 @@ import { LarkClient } from '../client/lark.client';
 import { LarkMeetingService } from '../services/lark-meeting.service';
 import { MeetingEndedEventData } from '../types/lark-meeting.types';
 import { LarkEvent } from '../enums/lark-event.enum';
-import { SingleOrgContextService } from '@/admin/org';
 
 @Injectable()
 export class LarkWsEventListener implements OnApplicationBootstrap {
@@ -13,18 +12,17 @@ export class LarkWsEventListener implements OnApplicationBootstrap {
   constructor(
     private readonly larkClient: LarkClient,
     private readonly larkMeetingService: LarkMeetingService,
-    private readonly orgContext: SingleOrgContextService,
   ) {}
 
   onApplicationBootstrap() {
-    if (!this.larkClient.isConfigured) {
+    if (!this.larkClient.isConfigured || !this.larkClient.orgId) {
       this.logger.warn(
         'Lark credentials not configured, skipping WebSocket listener.',
       );
       return;
     }
 
-    const orgId = this.orgContext.getOrgId();
+    const orgId = this.larkClient.orgId;
     const dispatcher = new Lark.EventDispatcher({}).register({
       [LarkEvent.VC_MEETING_ALL_ENDED_V1]: async (
         data: MeetingEndedEventData,
