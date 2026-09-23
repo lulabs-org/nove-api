@@ -26,6 +26,19 @@ describe('SingleOrgContextService', () => {
     });
   });
 
+  it('returns cached orgId idempotently if initialize is called multiple times', async () => {
+    const { service, findMany } = createService([{ id: 'org-1' }]);
+    await expect(service.initialize()).resolves.toBe('org-1');
+    await expect(service.initialize()).resolves.toBe('org-1');
+    expect(findMany).toHaveBeenCalledTimes(1);
+  });
+
+  it('initializes automatically via onModuleInit lifecycle hook', async () => {
+    const { service } = createService([{ id: 'org-init-1' }]);
+    await expect(service.onModuleInit()).resolves.toBeUndefined();
+    expect(service.getOrgId()).toBe('org-init-1');
+  });
+
   it.each([
     { organizations: [] as Array<{ id: string }> },
     { organizations: [{ id: 'org-1' }, { id: 'org-2' }] },

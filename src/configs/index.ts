@@ -12,3 +12,6 @@
 export * from './redis.config';
 export * from './jwt.config';
 export * from './api-key.config';
+export * from './swagger.config';
+export * from './cors.config';
+export * from './app.config';
