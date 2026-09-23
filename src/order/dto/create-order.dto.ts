@@ -106,10 +106,11 @@ export class CreateOrderDto {
   @ApiPropertyOptional({
     description: '当前负责人用户 ID',
     example: 'clx1234567890abcdef',
+    nullable: true,
   })
   @IsOptional()
   @IsString()
-  currentOwnerId?: string;
+  currentOwnerId?: string | null;
 
   @ApiPropertyOptional({
     description: '财务结单人用户 ID',

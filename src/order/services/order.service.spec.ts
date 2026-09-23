@@ -95,6 +95,38 @@ describe('OrderService - Benefit Freeze, Unfreeze & Extension', () => {
     service = new OrderService(repository, policyService);
   });
 
+  describe('update owner', () => {
+    it('disconnects the current owner when explicitly cleared', async () => {
+      repository.findById.mockResolvedValue(
+        mockOrder({ currentOwnerId: 'user-1' }),
+      );
+      repository.update.mockResolvedValue(mockOrder());
+
+      await service.update('order-1', { currentOwnerId: null });
+
+      expect(repository.update).toHaveBeenCalledWith(
+        'order-1',
+        expect.objectContaining({ currentOwner: { disconnect: true } }),
+      );
+    });
+
+    it('keeps the current owner when the field is omitted', async () => {
+      repository.findById.mockResolvedValue(
+        mockOrder({ currentOwnerId: 'user-1' }),
+      );
+      repository.update.mockResolvedValue(
+        mockOrder({ currentOwnerId: 'user-1' }),
+      );
+
+      await service.update('order-1', {});
+
+      expect(repository.update).toHaveBeenCalledWith(
+        'order-1',
+        expect.objectContaining({ currentOwner: undefined }),
+      );
+    });
+  });
+
   describe('freeze', () => {
     it('successfully freezes a PAID order and records adjustment', async () => {
       // Set benefitEnd in future
@@ -493,4 +525,3 @@ describe('OrderService - Benefit Freeze, Unfreeze & Extension', () => {
     });
   });
 });
-
