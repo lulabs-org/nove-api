@@ -20,6 +20,7 @@ import { MailModule } from './mail/mail.module';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { UnifiedAuthGuard } from '@/auth/guards/unified-auth.guard';
+import { RoleGuard } from '@/admin/role/guards/role.guard';
 import { PermissionGuard } from '@/admin/permission/guards/permission.guard';
 import { PrismaModule } from './prisma/prisma.module';
 import { RedisModule } from './redis/redis.module';
@@ -150,6 +151,10 @@ import { SmsModule } from './sms';
     {
       provide: APP_GUARD,
       useClass: UnifiedAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RoleGuard,
     },
     {
       provide: APP_GUARD,
