@@ -25,6 +25,14 @@ export class UpdateDataPermissionRuleDto {
   resource?: string;
 
   @ApiPropertyOptional({
+    description: '操作类型（如 read, update, delete, export 或 *）',
+    example: '*',
+  })
+  @IsString()
+  @IsOptional()
+  action?: string;
+
+  @ApiPropertyOptional({
     description: '权限条件（JSON格式）',
     example: '{"departmentId": "${user.departmentId}"}',
   })

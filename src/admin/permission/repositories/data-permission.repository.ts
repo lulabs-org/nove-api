@@ -25,6 +25,7 @@ export class DataPermRepository {
       name?: { contains: string };
       code?: string;
       resource?: string;
+      action?: string;
       active?: boolean;
     };
     orderBy?: {
@@ -63,6 +64,7 @@ export class DataPermRepository {
     code: string;
     description?: string;
     resource: string;
+    action?: string;
     condition: string;
     active?: boolean;
   }) {
@@ -77,6 +79,7 @@ export class DataPermRepository {
       name?: string;
       description?: string;
       resource?: string;
+      action?: string;
       condition?: string;
       active?: boolean;
     },

@@ -16,6 +16,9 @@ export class DataPermissionRuleDto {
   @ApiProperty({ description: '资源标识' })
   resource: string;
 
+  @ApiProperty({ description: '操作类型', example: '*' })
+  action: string;
+
   @ApiProperty({ description: '权限条件（JSON格式）' })
   condition: string;
 

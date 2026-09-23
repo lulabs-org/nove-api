@@ -8,6 +8,7 @@ describe('DataPermService', () => {
     code: string;
     description?: string;
     resource: string;
+    action?: string;
     condition: string;
     active?: boolean;
   };
@@ -63,6 +64,36 @@ describe('DataPermService', () => {
     expect(result.code).not.toBe('client_supplied_code');
   });
 
+  it('defaults action to * if omitted, or preserves custom action', async () => {
+    repository.create.mockImplementation((data: CreateRuleData) => {
+      createdData = data;
+      return Promise.resolve({
+        id: 'rule-2',
+        description: null,
+        createdAt: new Date('2026-09-22T00:00:00Z'),
+        updatedAt: new Date('2026-09-22T00:00:00Z'),
+        ...data,
+      });
+    });
+
+    const res1 = await service.createDataPermRule({
+      name: '默认全部操作',
+      resource: 'order',
+      condition: '{}',
+    });
+    expect(createdData?.action).toBe('*');
+    expect(res1.action).toBe('*');
+
+    const res2 = await service.createDataPermRule({
+      name: '订单只读规则',
+      resource: 'order',
+      action: 'read',
+      condition: '{}',
+    });
+    expect(createdData?.action).toBe('read');
+    expect(res2.action).toBe('read');
+  });
+
   it('rejects an invalid nested rule before writing it', async () => {
     await expect(
       service.createDataPermRule({
@@ -78,11 +109,47 @@ describe('DataPermService', () => {
     repository.findById.mockResolvedValue({
       id: 'rule-1',
       resource: 'user',
+      action: '*',
       condition: '{"departmentId":"dept-1"}',
     });
     await expect(
       service.updateDataPermRule('rule-1', { resource: 'order' }),
     ).rejects.toBeInstanceOf(BadRequestException);
     expect(repository.update).not.toHaveBeenCalled();
+  });
+
+  it('updates action correctly in updateDataPermRule', async () => {
+    repository.findById.mockResolvedValue({
+      id: 'rule-1',
+      name: '旧规则',
+      resource: 'order',
+      action: '*',
+      condition: '{}',
+      active: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    repository.update.mockResolvedValue({
+      id: 'rule-1',
+      name: '旧规则',
+      resource: 'order',
+      action: 'update',
+      condition: '{}',
+      active: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    const result = await service.updateDataPermRule('rule-1', {
+      action: 'update',
+    });
+
+    expect(repository.update).toHaveBeenCalledWith(
+      'rule-1',
+      expect.objectContaining({
+        action: 'update',
+      }),
+    );
+    expect(result.action).toBe('update');
   });
 });
