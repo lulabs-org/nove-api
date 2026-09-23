@@ -1,8 +1,6 @@
 import { accessibleBy } from '@casl/prisma';
-import {
-  OrderAbilityFactory,
-  resolveRuleCondition,
-} from './order-ability.factory';
+import { OrderAbilityFactory } from './order-ability.factory';
+import { resolveRuleCondition } from '@/auth/utils/rule-condition.util';
 import { AuthContext } from '@/auth/types/auth-context.interface';
 
 describe('OrderAbilityFactory with Dynamic Data Rules', () => {
@@ -244,6 +242,77 @@ describe('OrderAbilityFactory with Dynamic Data Rules', () => {
       const where = accessibleBy(ability, 'read').ofType('Order');
 
       expect(where).toEqual({ OR: [{ currentOwnerId: null }] });
+    });
+
+    it('isolates data rules by action: update rule does not pollute read query', () => {
+      const auth: AuthContext = {
+        authMethod: 'jwt',
+        userId: 'usr_rep_1',
+        orgId: 'org_1',
+        permissions: ['order:read', 'order:update'],
+        dataRules: [
+          {
+            id: 'rule_read',
+            code: 'order_read_all',
+            resource: 'order',
+            action: 'read',
+            condition: '{}',
+          },
+          {
+            id: 'rule_update',
+            code: 'order_update_unpaid',
+            resource: 'order',
+            action: 'update',
+            condition: JSON.stringify({ status: 'UNPAID' }),
+          },
+        ],
+      };
+
+      const ability = factory.createForUser(auth);
+      // read should be unconstrained ({}) because the read rule is {} and update rule is ignored for read
+      const where = accessibleBy(ability, 'read').ofType('Order');
+      expect(where).toEqual({});
+
+      // update should enforce status = UNPAID
+      const updateWhere = accessibleBy(ability, 'update').ofType('Order');
+      expect(updateWhere).toEqual({
+        OR: [
+          {
+            AND: [
+              { status: 'UNPAID' },
+              {
+                NOT: {
+                  status: { in: ['CANCELLED', 'COMPLETED'] },
+                },
+              },
+            ],
+          },
+        ],
+      });
+    });
+
+    it('applies custom delete data rules when configured', () => {
+      const auth: AuthContext = {
+        authMethod: 'jwt',
+        userId: 'usr_rep_1',
+        orgId: 'org_1',
+        permissions: ['order:delete'],
+        dataRules: [
+          {
+            id: 'rule_delete',
+            code: 'order_delete_unpaid',
+            resource: 'order',
+            action: 'delete',
+            condition: JSON.stringify({ status: 'UNPAID' }),
+          },
+        ],
+      };
+
+      const ability = factory.createForUser(auth);
+      const deleteWhere = accessibleBy(ability, 'delete').ofType('Order');
+      expect(deleteWhere).toEqual({
+        OR: [{ status: 'UNPAID' }],
+      });
     });
   });
 });
