@@ -3,8 +3,10 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { SingleOrgContextService } from '@/admin/org';
 import { Prisma } from '@/generated/prisma/client';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
@@ -43,7 +45,27 @@ export class IntegrationsService {
   constructor(
     private readonly repository: IntegrationsRepository,
     private readonly eventEmitter: EventEmitter2,
+    @Optional()
+    private readonly orgContext?: SingleOrgContextService,
   ) {}
+
+  /**
+   * 解析当前操作的目标组织 ID
+   */
+  public resolveOrgId(explicitOrgId?: string): string {
+    if (explicitOrgId) return explicitOrgId;
+    if (this.orgContext) return this.orgContext.getOrgId();
+    throw new Error(
+      'SingleOrgContextService is not available; orgId must be provided explicitly',
+    );
+  }
+
+  /**
+   * 获取当前单组织环境的 orgId
+   */
+  public getCurrentOrgId(): string {
+    return this.resolveOrgId();
+  }
 
   private getModuleKey(module: IntegrationModuleName): string {
     if (module === 'aliyun-sms') return 'ALIYUN_SMS_CONFIG';
@@ -62,7 +84,15 @@ export class IntegrationsService {
     return module;
   }
 
-  async getRawConfig(orgId: string, module: string) {
+  /**
+   * 获取原始配置
+   * 支持调用形式：
+   * 1. getRawConfig('mail') -> 自动使用当前单组织上下文
+   * 2. getRawConfig(orgId, 'mail') -> 查询指定组织的原始配置
+   */
+  async getRawConfig(moduleOrOrgId: string, maybeModule?: string) {
+    const orgId = maybeModule ? moduleOrOrgId : this.resolveOrgId();
+    const module = maybeModule ? maybeModule : moduleOrOrgId;
     const moduleName = this.assertModule(module);
     return this.repository.findByKey(orgId, this.getModuleKey(moduleName));
   }
@@ -70,11 +100,17 @@ export class IntegrationsService {
   /**
    * 核心逻辑：获取当前模块的“最终生效”配置
    * 合并策略：数据库配置 (最高优) > 代码默认值 (兜底)
+   *
+   * 支持调用形式：
+   * 1. getEffectiveConfig('mail') -> 自动使用当前单组织上下文
+   * 2. getEffectiveConfig(orgId, 'mail') -> 查询指定组织的生效配置
    */
   async getEffectiveConfig(
-    orgId: string,
-    module: string,
+    moduleOrOrgId: string,
+    maybeModule?: string,
   ): Promise<EffectiveIntegration> {
+    const orgId = maybeModule ? moduleOrOrgId : this.resolveOrgId();
+    const module = maybeModule ? maybeModule : moduleOrOrgId;
     const moduleName = this.assertModule(module);
     const entry = IntegrationRegistry[moduleName];
     const stored = await this.repository.findByKey(

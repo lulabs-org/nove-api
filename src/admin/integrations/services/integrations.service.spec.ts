@@ -247,4 +247,47 @@ describe('IntegrationsService', () => {
       }),
     ).rejects.toThrow('Missing required configuration');
   });
+
+  describe('SingleOrgContextService integration', () => {
+    it('automatically resolves orgId from orgContext when not explicitly provided', async () => {
+      const mockOrgContext = {
+        getOrgId: jest.fn().mockReturnValue('org-context-1'),
+      };
+      const contextualService = new IntegrationsService(
+        repository,
+        emitter,
+        mockOrgContext as never,
+      );
+
+      expect(contextualService.getCurrentOrgId()).toBe('org-context-1');
+
+      const config = await contextualService.getEffectiveConfig('ai');
+      expect(config.orgId).toBe('org-context-1');
+      expect(mockOrgContext.getOrgId).toHaveBeenCalled();
+    });
+
+    it('throws error when orgId is omitted and orgContext is not injected', () => {
+      expect(() => service.getCurrentOrgId()).toThrow(
+        'SingleOrgContextService is not available; orgId must be provided explicitly',
+      );
+    });
+
+    it('prefers explicit orgId over orgContext', async () => {
+      const mockOrgContext = {
+        getOrgId: jest.fn().mockReturnValue('org-context-1'),
+      };
+      const contextualService = new IntegrationsService(
+        repository,
+        emitter,
+        mockOrgContext as never,
+      );
+
+      const config = await contextualService.getEffectiveConfig(
+        'explicit-org',
+        'ai',
+      );
+      expect(config.orgId).toBe('explicit-org');
+      expect(mockOrgContext.getOrgId).not.toHaveBeenCalled();
+    });
+  });
 });
