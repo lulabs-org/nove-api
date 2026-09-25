@@ -29,6 +29,7 @@ import { UserQueryRepository } from '@/user/repositories/user-query.repository';
 import { UserCommandRepository } from '@/user/repositories/user-command.repository';
 import { OtpService } from './otp.service';
 import { TokenService } from './token.service';
+import { RefreshTokenRepository } from '../repositories/refresh-token.repository';
 import { LoginLogRepository } from '../repositories/login-log.repository';
 import { AuthMailService } from '@/mail/services/auth-mail.service';
 import { PermService } from '@/admin/permission/services/permission.service';
@@ -57,6 +58,7 @@ export class AuthService {
     private readonly userCommandRepo: UserCommandRepository,
     private readonly otpService: OtpService,
     private readonly tokenService: TokenService,
+    private readonly refreshTokenRepo: RefreshTokenRepository,
     private readonly loginLogRepo: LoginLogRepository,
     private readonly authMailService: AuthMailService,
     private readonly permService: PermService,
@@ -212,6 +214,16 @@ export class AuthService {
         ip,
         userAgent,
       });
+
+      // 同设备重新登录时顶替旧会话：必须在 generateTokens 之前执行，
+      // 否则新签发的令牌（同 deviceId）会被一并撤销。
+      // deviceId 缺省时不执行，保持旧行为。
+      if (loginDto.deviceId) {
+        await this.refreshTokenRepo.revokeTokensByDeviceId(
+          user.id,
+          loginDto.deviceId,
+        );
+      }
 
       const tokens = await this.tokenService.generateTokens(user.id, {
         ip,
