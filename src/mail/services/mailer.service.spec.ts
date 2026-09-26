@@ -82,6 +82,7 @@ describe('MailerService', () => {
         user: config.smtp.user,
         pass: config.smtp.pass,
         from: config.smtp.from,
+        brandName: config.brand?.name,
       },
     });
   };
@@ -163,12 +164,14 @@ describe('MailerService', () => {
       expect.objectContaining({ from: 'alice@test.com', to: 'to@test.com' }),
     );
 
-    // when from not provided, falls back to SMTP_FROM
+    // when from not provided, combines the configured brand and SMTP_FROM
     transporter.sendMail.mockResolvedValueOnce({ messageId: 'mid-2' });
     const r2 = await svc.send({ to: 'x@y.com', subject: 'B' });
     expect(r2).toEqual({ messageId: 'mid-2' });
     expect(transporter.sendMail).toHaveBeenCalledWith(
-      expect.objectContaining({ from: 'noreply@test.com' }),
+      expect.objectContaining({
+        from: { name: 'Nove System', address: 'noreply@test.com' },
+      }),
     );
 
     // when SMTP_FROM not set, falls back to SMTP_USER
@@ -192,7 +195,9 @@ describe('MailerService', () => {
     const r3 = await svcWithoutFrom.send({ to: 'z@z.com', subject: 'C' });
     expect(r3).toEqual({ messageId: 'mid-3' });
     expect(transporter.sendMail).toHaveBeenCalledWith(
-      expect.objectContaining({ from: 'user@test.com' }),
+      expect.objectContaining({
+        from: { name: 'Nove System', address: 'user@test.com' },
+      }),
     );
 
     // ensure transporter built with SMTP config
