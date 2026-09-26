@@ -1,8 +1,5 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@/generated/prisma/client';
 import { OrganizationRepository } from '../repositories/organization.repository';
 import {
@@ -23,14 +20,9 @@ export class OrganizationService {
   async createOrganization(
     dto: CreateOrganizationDto,
   ): Promise<OrganizationDto> {
-    const existingOrg = await this.organizationRepository.findByCode(dto.code);
-    if (existingOrg) {
-      throw new BadRequestException('Organization code already exists');
-    }
-
     const organization = await this.organizationRepository.create({
       name: dto.name,
-      code: dto.code,
+      code: `ORG_${randomUUID().replaceAll('-', '').toUpperCase()}`,
       logo: dto.logo,
       description: dto.description,
       parent: dto.parentId
@@ -98,16 +90,8 @@ export class OrganizationService {
       throw new NotFoundException('Organization not found');
     }
 
-    if (dto.code && dto.code !== existingOrg.code) {
-      const codeExists = await this.organizationRepository.findByCode(dto.code);
-      if (codeExists) {
-        throw new BadRequestException('Organization code already exists');
-      }
-    }
-
     const organization = await this.organizationRepository.update(id, {
       name: dto.name,
-      code: dto.code,
       logo: dto.logo,
       description: dto.description,
       parent: dto.parentId

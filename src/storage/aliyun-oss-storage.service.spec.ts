@@ -47,6 +47,11 @@ describe('AliyunOssStorageService', () => {
     ).toBe('mail-brand-logos/org-1/logo.webp');
     expect(
       service.getManagedKey(
+        'https://cdn.example.com/media/organization-logos/org-1/logo.webp',
+      ),
+    ).toBe('organization-logos/org-1/logo.webp');
+    expect(
+      service.getManagedKey(
         'https://cdn.example.com/media/projects/image.webp',
       ),
     ).toBeNull();

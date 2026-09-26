@@ -14,14 +14,6 @@ export class UpdateOrganizationDto {
   name?: string;
 
   @ApiPropertyOptional({
-    description: '组织编码',
-    example: 'ACME_UPDATED',
-  })
-  @IsOptional()
-  @IsString()
-  code?: string;
-
-  @ApiPropertyOptional({
     description: '组织 Logo URL',
     example: 'https://example.com/logo-updated.png',
   })
