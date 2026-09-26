@@ -128,7 +128,9 @@ describe('ParticipantSummaryController (e2e)', () => {
     await prisma.user.deleteMany({
       where: { id: testUserId },
     });
-    await prisma.platformUser.deleteMany({ where: { id: platformUserId } });
+    if (platformUserId) {
+      await prisma.platformUser.deleteMany({ where: { id: platformUserId } });
+    }
     await app.close();
   });
 

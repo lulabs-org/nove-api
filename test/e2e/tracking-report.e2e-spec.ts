@@ -61,7 +61,9 @@ describe('TrackingReportController (e2e)', () => {
       });
       await prisma.trackingTarget.delete({ where: { id: target.id } });
     }
-    await prisma.user.deleteMany({ where: { id: businessTargetId } });
+    if (businessTargetId) {
+      await prisma.user.deleteMany({ where: { id: businessTargetId } });
+    }
     await app.close();
   });
 

@@ -31,6 +31,14 @@ const common: Partial<Config> = {
 
 const config: Config = {
   maxWorkers: '50%',
+  coverageThreshold: {
+    global: {
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80,
+    },
+  },
   projects: [
     {
       displayName: 'unit',
@@ -40,14 +48,6 @@ const config: Config = {
         '<rootDir>/test/unit/**/*.spec.ts',
       ],
       coverageDirectory: 'coverage/unit',
-      coverageThreshold: {
-        global: {
-          branches: 80,
-          functions: 80,
-          lines: 80,
-          statements: 80,
-        },
-      },
     },
     {
       displayName: 'integration',
@@ -68,6 +68,7 @@ const config: Config = {
       ...common,
       testMatch: ['<rootDir>/test/e2e/**/*.e2e-spec.ts'],
       coverageDirectory: 'coverage/e2e',
+      setupFilesAfterEnv: ['<rootDir>/test/setup-e2e.ts'],
     },
   ],
 };
