@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import './test-safety-guard';
 import { execSync } from 'child_process';
 
 // 系统测试环境设置

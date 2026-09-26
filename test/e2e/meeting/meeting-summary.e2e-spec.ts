@@ -92,9 +92,11 @@ describe('MinuteSummaryController (e2e)', () => {
         where: { id: createdMeetingId },
       });
     }
-    await prisma.user.deleteMany({
-      where: { id: testUserId },
-    });
+    if (testUserId) {
+      await prisma.user.deleteMany({
+        where: { id: testUserId },
+      });
+    }
     await app.close();
   });
 
