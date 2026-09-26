@@ -27,14 +27,6 @@ export class CreateOrganizationDto {
   @IsNotEmpty()
   name: string;
 
-  @ApiProperty({
-    description: '组织编码',
-    example: 'ACME',
-  })
-  @IsString()
-  @IsNotEmpty()
-  code: string;
-
   @ApiPropertyOptional({
     description: '组织 Logo URL',
     example: 'https://example.com/logo.png',

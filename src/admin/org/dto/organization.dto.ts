@@ -14,7 +14,8 @@ export class OrganizationDto {
   name: string;
 
   @ApiProperty({
-    description: '组织编码',
+    description: '系统生成的组织编码，创建后不可修改；保留已有编码',
+    readOnly: true,
     example: 'ACME',
   })
   code: string;

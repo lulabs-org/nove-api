@@ -86,7 +86,11 @@ interface StorageEffectiveConfig {
   signedUrlExpiresSeconds: number;
 }
 
-const PUBLIC_ASSET_PREFIXES = ['avatars/', 'mail-brand-logos/'] as const;
+const PUBLIC_ASSET_PREFIXES = [
+  'avatars/',
+  'mail-brand-logos/',
+  'organization-logos/',
+] as const;
 
 function isManagedPublicAsset(key: string): boolean {
   return PUBLIC_ASSET_PREFIXES.some((prefix) => key.startsWith(prefix));

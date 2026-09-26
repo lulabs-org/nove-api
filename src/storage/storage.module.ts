@@ -1,3 +1,5 @@
+import { OrganizationProfileController } from './organization-profile.controller';
+import { OrganizationProfileService } from './organization-profile.service';
 import { Module } from '@nestjs/common';
 import { IntegrationsModule } from '@/admin/integrations';
 import { AliyunOssStorageService } from './aliyun-oss-storage.service';
@@ -8,11 +10,12 @@ import { MailBrandLogoService } from './mail-brand-logo.service';
 
 @Module({
   imports: [IntegrationsModule],
-  controllers: [MailBrandLogoController],
+  controllers: [MailBrandLogoController, OrganizationProfileController],
   providers: [
     AliyunOssStorageService,
     StorageTesterService,
     MailBrandLogoService,
+    OrganizationProfileService,
     {
       provide: OBJECT_STORAGE,
       useExisting: AliyunOssStorageService,
