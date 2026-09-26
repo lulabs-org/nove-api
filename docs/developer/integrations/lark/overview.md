@@ -80,17 +80,9 @@ test/integration/
 - `bitable:app` - 多维表格权限
 - `bitable:app:readonly` - 多维表格只读权限
 
-### 4. 环境变量配置
+### 4. 服务配置
 
-在 `.env` 文件中添加以下配置：
-
-```bash
-# 飞书集成配置
-LARK_APP_ID=your_lark_app_id
-LARK_APP_SECRET=your_lark_app_secret
-LARK_BITABLE_APP_TOKEN=your_bitable_app_token
-LARK_TABLE_MEETING=your_meeting_table_id
-```
+飞书自建应用基础凭证与事件订阅（`appId`、`appSecret`、`eventEncryptKey`、`eventVerificationToken`）已收拢至 **Nove Admin 管理后台「服务集成 → 飞书」** 中加密管理与动态存储，无需在 `.env` 中声明。详见[服务集成配置指南](../service-integrations.md)。
 
 ## 使用说明
 
