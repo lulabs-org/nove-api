@@ -54,14 +54,9 @@ setup_environment() {
   # 确保测试环境变量
   export NODE_ENV=${NODE_ENV:-test}
 
-  # 确保 .env.test 存在
-  if [ ! -f .env.test ]; then
-    if [ -f .env.test.example ]; then
-      echo -e "${YELLOW}⚠️  .env.test 未找到，正在从 .env.test.example 创建${NC}"
-      cp .env.test.example .env.test
-    else
-      echo -e "${YELLOW}⚠️  .env.test 未找到，且缺少 .env.test.example，请手动准备测试环境变量${NC}"
-    fi
+  # 检查环境配置（优先 .env.test，回退 .env，或直接使用系统环境变量）
+  if [ ! -f .env.test ] && [ ! -f .env ]; then
+    echo -e "${YELLOW}ℹ️  未检测到 .env.test 或 .env 文件，将使用当前系统环境变量${NC}"
   fi
 
   # 生成 Prisma 客户端（与 schema 对齐）

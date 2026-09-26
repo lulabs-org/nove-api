@@ -8,11 +8,9 @@ set -e
 echo "🧪 Running Tencent Meeting Webhook E2E Tests..."
 echo ""
 
-# Check if .env.test exists, if not create from example
-if [ ! -f .env.test ]; then
-    echo "⚠️  .env.test not found, creating from .env.test.example..."
-    cp .env.test.example .env.test
-    echo "⚠️  Please update .env.test with your test configuration values"
+# Check if .env.test or .env exists
+if [ ! -f .env.test ] && [ ! -f .env ]; then
+    echo "ℹ️  .env.test or .env not found, using system environment variables"
 fi
 
 # Run the specific e2e test

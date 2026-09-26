@@ -16,7 +16,7 @@ export async function createTestApp(
     imports: [
       ConfigModule.forRoot({
         isGlobal: true,
-        envFilePath: '.env.test',
+        envFilePath: ['.env.test', '.env'],
       }),
       ...moduleImports,
     ],
