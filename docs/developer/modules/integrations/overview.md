@@ -1,14 +1,16 @@
 # 第三方服务集成 (Integrations)
 
-`src/admin/integrations` 提供可校验、可加密并支持热更新的第三方业务集成配置。Registry 注册邮件、AI、腾讯会议、飞书和微信小店五个模块。
+`src/admin/integrations` 提供可校验、可加密并支持热更新的第三方业务集成配置。`IntegrationRegistry` 注册管理 AI 模型、SMTP 邮件、腾讯会议、飞书应用、企业微信、微信小店、文件扫描、阿里云短信、Stripe 支付、对象存储与云盘等集成模块。
+
+各集成的具体配置字段说明与管理后台操作指南请参见[服务集成配置指南](../../integrations/service-integrations.md)。
 
 ## 配置存储与生效模型
 
-第三方业务服务配置（邮件、AI、腾讯会议、飞书、微信小店）完全由数据库（`system_configs` 表）驱动并按组织（Organization）隔离。运行时**不会读取或回退到环境变量**，生效配置规则为：
+集成注册表中的业务配置由数据库（`system_configs` 表）驱动并按组织（Organization）存储和查询，不回退到环境变量。阿里云文件扫描的访问凭证仍由服务端凭证链提供。注册表配置的生效规则为：
 $$\text{代码非敏感默认值 (兜底)} \to \text{数据库存储值 (最高优)}$$
 
 * **基础设施配置**：数据库、Redis、JWT 密钥及 `SYSTEM_ENCRYPTION_KEY` 仍由部署环境变量或 Secret 管理平台维护。
-* **业务集成配置**：所有第三方服务的凭证与参数统一在 Nove Admin 后台录入与管理。敏感字段入库时使用 `SYSTEM_ENCRYPTION_KEY` 进行 AES-256-GCM 加密，未配置时服务优雅降级。
+* **业务集成配置**：注册表字段统一在 Nove Admin 后台录入与管理。敏感字段入库时使用 `SYSTEM_ENCRYPTION_KEY` 进行 AES-256-GCM 加密；配置缺失时，相应业务能力可能不可用。
 
 ## API 与权限
 
@@ -16,10 +18,10 @@ $$\text{代码非敏感默认值 (兜底)} \to \text{数据库存储值 (最高�
 
 | 方法 | 路径 | 权限 | 说明 |
 |---|---|---|---|
-| GET | `/admin/integrations` | `system:config:read` | 返回五个集成模块的配置状态 |
+| GET | `/admin/integrations` | `system:config:read` | 返回全部已注册集成模块的配置状态 |
 | GET | `/admin/integrations/:module` | `system:config:read` | 返回掩码后的有效配置 |
 | PUT | `/admin/integrations/:module` | `system:config:write` | 校验并合并保存 |
-| DELETE | `/admin/integrations/:module` | `system:config:write` | 删除数据库配置，退回默认未配置状态 |
+| DELETE | `/admin/integrations/:module` | `system:config:write` | 删除数据库配置，退回代码默认值 |
 | POST | `/admin/integrations/:module/test` | `system:config:write` | 使用当前草稿测试连接，不持久化 |
 
 配置来源只会是 `database` 或 `default`。数据库记录存在但必填字段不足时，`source` 仍为 `database`，`configured` 为 `false`。

@@ -15,9 +15,9 @@ cp .env.example .env
 - `JWT_SECRET`、`JWT_REFRESH_SECRET` 及有效期
 - `CORS_ORIGINS`、`CORS_ORIGIN_REGEXES`、`CORS_CREDENTIALS`
 - `BULL_BOARD_USER`、`BULL_BOARD_PASSWORD`
-- 腾讯会议、飞书、微信小店、SMTP 和 LLM 凭据（仅在全新数据库首次启动时导入；短信仍按原部署配置）
-- 头像存储所需的 `ALIYUN_OSS_REGION`、`ALIYUN_OSS_BUCKET`、`ALIYUN_OSS_PUBLIC_BASE_URL`，以及可选的 `ALIYUN_OSS_SIGNED_URL_EXPIRES_SECONDS`
-- `SYSTEM_ENCRYPTION_KEY`（用于动态系统配置，必须长期保留且不能直接轮换）
+- 第三方业务凭据（对象存储/OSS、短信、腾讯会议、飞书、微信小店、SMTP 邮件和 LLM 模型凭据统一在 Nove Admin 管理后台「服务集成」中维护，无需在环境变量中配置）
+- 使用阿里云文件扫描时，额外提供服务端阿里云凭证链（如 RAM 角色或 `ALIBABA_CLOUD_ACCESS_KEY_ID` / `ALIBABA_CLOUD_ACCESS_KEY_SECRET`）
+- `SYSTEM_ENCRYPTION_KEY`（用于服务集成机密字段加密，必须长期保留且不能直接轮换）
 
 不要直接使用 `.env.example` 中的占位密钥。生产凭据应由部署平台的 Secret 管理能力注入，并限制 `.env` 文件权限。
 

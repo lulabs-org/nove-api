@@ -15,19 +15,11 @@
 
 ## 配置要求
 
-### 环境变量
+### 凭据配置
 
-在`.env`文件中配置以下变量：
+腾讯会议 Webhook 校验与解密凭据（`webhookToken` 与 `encodingAesKey`）已统一在 **Nove Admin 管理后台「服务集成 → 腾讯会议」** 中加密配置，无需在 `.env` 中声明。详见[服务集成配置指南](../service-integrations.md)。
 
-```bash
-# 腾讯会议Webhook配置
-TENCENT_MEETING_TOKEN=your_webhook_token
-TENCENT_MEETING_ENCODING_AES_KEY=your_43_character_base64_key
-
-# 飞书多维表格配置（可选）
-LARK_BITABLE_APP_TOKEN=your_lark_bitable_app_token
-LARK_TABLE_MEETING=your_meeting_table_id
-```
+当前代码未读取历史 `LARK_BITABLE_APP_TOKEN` / `LARK_TABLE_*` 环境变量；不要将这些变量作为启用同步的配置入口。
 
 ### Webhook URL配置
 

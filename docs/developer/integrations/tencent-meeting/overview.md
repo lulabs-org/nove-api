@@ -63,21 +63,18 @@ src/common/
 - 腾讯会议集成相关的单元测试就近放置于 `src/integrations/tencent-meeting/*.spec.ts`
 - 集成测试放置于 `test/integration/tencent-meeting.int-spec.ts`
 
-## 环境配置
+## 服务配置
 
-复制 `.env.example` 到 `.env` 并配置以下环境变量：
+腾讯会议的应用凭据（`appId`、`sdkId`、`secretId`、`secretKey`、`userId`、`webhookToken`、`encodingAesKey`）已收拢至 **Nove Admin 管理后台「服务集成」** 统一动态管理与 AES-256-GCM 加密存储，不再通过 `.env` 环境变量读取。
+
+详细字段说明、权限要求及测试连通性请参见[服务集成配置指南](../service-integrations.md)。
+
+基础环境（数据库及系统加密密钥）按常规 `.env` 模板配置：
 
 ```bash
-# 数据库配置
+# 数据库与基础加密配置 (.env)
 DATABASE_URL="postgresql://username:password@localhost:5432/nove_api?schema=public"
-
-# 腾讯会议配置
-TENCENT_MEETING_APP_ID="your_app_id"
-TENCENT_MEETING_SDK_ID="your_sdk_id"
-TENCENT_MEETING_SECRET_ID="your_secret_id"
-TENCENT_MEETING_SECRET_KEY="your_secret_key"
-TENCENT_MEETING_TOKEN="your_webhook_token"
-TENCENT_MEETING_ENCODING_AES_KEY="your_encoding_aes_key"
+SYSTEM_ENCRYPTION_KEY="your-32-byte-long-secure-random-key"
 ```
 
 ## API端点

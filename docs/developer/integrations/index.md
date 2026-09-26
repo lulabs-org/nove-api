@@ -2,6 +2,10 @@
 
 本目录描述第三方平台在 Nove 中的适配、事件处理和数据映射。厂商原始 API 文档与 Payload 样本统一放在[参考资料](../reference/index.md)。
 
+## 管理后台服务集成配置
+
+- [服务集成配置指南](./service-integrations.md)：腾讯会议、微信小店、企业微信、飞书、AI 模型、文件扫描及邮件等所有动态集成服务的字段说明、管理后台操作指引与热更新架构。
+
 ## 会议与协作
 
 - [腾讯会议](./tencent-meeting/overview.md)：主动 API、Webhook 验签解密和会议数据同步。

@@ -12,30 +12,11 @@
 - **配置管理**: 全局系统配置（数据库加密存储）
 - **API文档**: Swagger/OpenAPI 3.0
 
-## 首次配置
+## 服务配置
 
-1. 复制 `.env.example` 文件为 `.env`
-2. 配置SMTP邮件服务参数：
+SMTP 邮件服务参数与邮件品牌展示（Logo、主题色、页脚版权、跳转地址等）已全部收拢至 **Nove Admin 管理后台「服务集成 → 邮件」** 中动态管理并加密存储，运行时不再通过 `.env` 环境变量读取。
 
-```bash
-cp .env.example .env
-```
-
-这些环境变量只在全新数据库首次启动时导入。导入完成后，邮件配置统一在后台“平台治理 → 服务配置”中维护，运行时不再读取这些变量：
-
-```text
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_SECURE=false
-SMTP_USER=your-email@gmail.com
-SMTP_PASS=your-app-password
-SMTP_FROM=your-email@gmail.com
-EMAIL_BRAND_NAME="Nove System"
-EMAIL_BRAND_LOGO_URL=https://assets.example.com/nove-logo.png
-EMAIL_BRAND_PRIMARY_COLOR="#2563eb"
-EMAIL_BRAND_FOOTER_TEXT="此邮件由 Nove System 自动发送，请勿回复。"
-EMAIL_BRAND_PUBLIC_BASE_URL=https://assets.example.com
-```
+详细字段说明与管理后台配置指引请参见[服务集成配置指南](../../integrations/service-integrations.md)。
 
 ### 常用邮件服务配置
 

@@ -120,10 +120,10 @@ export default withMermaid(
               ],
             },
             {
-              text: '系统配置',
+              text: '服务集成',
               collapsed: true,
               items: [
-                { text: '全局配置', link: '/developer/modules/system-config/overview' },
+                { text: '模块概述', link: '/developer/modules/integrations/overview' },
               ],
             },
             {
@@ -154,6 +154,7 @@ export default withMermaid(
           collapsed: false,
           items: [
             { text: '集成索引', link: '/developer/integrations/' },
+            { text: '服务集成配置指南', link: '/developer/integrations/service-integrations' },
             {
               text: '飞书集成',
               collapsed: true,
