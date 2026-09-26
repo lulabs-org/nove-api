@@ -2,7 +2,7 @@ name: build-and-push-docker
 
 on:
   push:
-    branches: ["main", "develop", "release"]
+    branches: ["main", "release"]
     tags: |
       v*.*.*
       v*.*.*-alpha.*
