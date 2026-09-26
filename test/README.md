@@ -217,20 +217,12 @@ jest --selectProjects unit --coverage
 
 ### 环境变量
 
-测试环境使用 `.env.test` 文件：
+测试环境优先读取当前系统环境变量或本地 `.env` 文件。若需为测试单独隔离配置（如专用测试数据库或真实外部 API 凭据），可在根目录创建 `.env.test`（已被 `.gitignore` 忽略）：
 
 ```bash
-# 复制示例文件
-cp .env.test.example .env.test
-
-# 编辑配置
-nano .env.test
-
-# 典型变量示例
-DATABASE_URL="postgresql://user:password@localhost:5432/lulab_test"
+# （可选）如需隔离测试环境，创建 .env.test
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/test_db"
 REDIS_URL="redis://localhost:6379"
-TENCENT_SECRET_ID=your_secret_id
-TENCENT_SECRET_KEY=your_secret_key
 ```
 
 ## 🔧 开发指南
