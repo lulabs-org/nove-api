@@ -92,6 +92,7 @@ describe('ProjectService', () => {
           orgId: data.orgId,
           title: data.title,
           code: data.code,
+          slug: data.slug,
           status: data.status,
           tags: data.tags,
           publishedAt: data.publishedAt,
@@ -128,6 +129,21 @@ describe('ProjectService', () => {
       undefined,
     );
     expect(result.owner).toEqual({ id: 'user-1', displayName: 'Owner Name' });
+  });
+
+  it('generates a slug from the project code when none is supplied', async () => {
+    repository.findBySlug.mockResolvedValue(null);
+    repository.create.mockImplementation((data) =>
+      Promise.resolve(project({ code: data.code, slug: data.slug }) as never),
+    );
+
+    const result = await service.create('org-1', { title: '中文项目' });
+    const data = repository.create.mock.calls[0][0];
+
+    expect(data.code).toMatch(/^PRJ-\d{4}-[A-F0-9]{12}$/);
+    expect(data.slug).toBe((data.code as string).toLowerCase());
+    expect(repository.findBySlug).toHaveBeenCalledWith(data.slug);
+    expect(result.slug).toBe(data.slug);
   });
 
   it('rejects duplicate slugs, invalid relations, capacity, and date ranges', async () => {
@@ -193,6 +209,28 @@ describe('ProjectService', () => {
       undefined,
     );
     expect(result.code).toMatch(/^PRJ-\d{4}-[A-F0-9]{12}$/);
+  });
+
+  it('backfills a missing slug when a legacy project is next saved', async () => {
+    repository.findById.mockResolvedValue(
+      project({ code: 'PRJ-2026-ABC123', slug: null }) as never,
+    );
+    repository.findBySlug.mockResolvedValue(null);
+    repository.update.mockImplementation((_id, _orgId, data) =>
+      Promise.resolve(project({ slug: data.slug }) as never),
+    );
+
+    const result = await service.update('project-1', 'org-1', {
+      title: 'Updated legacy project',
+    });
+
+    expect(repository.update).toHaveBeenCalledWith(
+      'project-1',
+      'org-1',
+      expect.objectContaining({ slug: 'prj-2026-abc123' }),
+      undefined,
+    );
+    expect(result.slug).toBe('prj-2026-abc123');
   });
 
   it('applies organization filters and stable sorting to list queries', async () => {
