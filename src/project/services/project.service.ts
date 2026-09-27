@@ -38,7 +38,9 @@ export class ProjectService {
     actorId?: string | null,
     auth?: DriveAuthContext,
   ): Promise<ProjectDto> {
-    await this.ensureSlugAvailable(dto.slug);
+    const code = this.generateProjectCode();
+    const slug = dto.slug ?? code.toLowerCase();
+    await this.ensureSlugAvailable(slug);
     await this.validateRelations(dto.ownerId, dto.productId);
     this.validateCapacity(0, dto.maxStudents);
     this.validateDates(dto.startDate, dto.endDate);
@@ -49,8 +51,8 @@ export class ProjectService {
         orgId,
         title: dto.title.trim(),
         subtitle: this.nullableString(dto.subtitle),
-        code: this.generateProjectCode(),
-        slug: dto.slug ?? null,
+        code,
+        slug,
         category: this.nullableString(dto.category),
         image: this.nullableString(dto.image),
         description: this.nullableString(dto.description),
@@ -156,8 +158,11 @@ export class ProjectService {
     auth?: DriveAuthContext,
   ): Promise<ProjectDto> {
     const existing = await this.findProject(id, orgId);
-    if (dto.slug !== undefined && dto.slug !== existing.slug) {
-      await this.ensureSlugAvailable(dto.slug, id);
+    const code = existing.code ?? this.generateProjectCode();
+    const slug =
+      dto.slug === undefined ? (existing.slug ?? code.toLowerCase()) : dto.slug;
+    if (slug !== existing.slug) {
+      await this.ensureSlugAvailable(slug, id);
     }
     if (dto.ownerId !== undefined || dto.productId !== undefined) {
       await this.validateRelations(dto.ownerId, dto.productId);
@@ -184,8 +189,8 @@ export class ProjectService {
       {
         title: dto.title?.trim(),
         subtitle: this.optionalNullableString(dto, 'subtitle'),
-        code: existing.code ? undefined : this.generateProjectCode(),
-        slug: dto.slug,
+        code: existing.code ? undefined : code,
+        slug: slug === existing.slug ? undefined : slug,
         category: this.optionalNullableString(dto, 'category'),
         image: this.optionalNullableString(dto, 'image'),
         description: this.optionalNullableString(dto, 'description'),

@@ -50,7 +50,11 @@ export class CreateProjectDto {
   @MaxLength(255)
   subtitle?: string | null;
 
-  @ApiPropertyOptional({ nullable: true, example: 'python-data-analysis' })
+  @ApiPropertyOptional({
+    nullable: true,
+    example: 'python-data-analysis',
+    description: '未提供时由服务端根据项目编号自动生成',
+  })
   @IsOptional()
   @Transform(normalizeSlug)
   @IsString()
