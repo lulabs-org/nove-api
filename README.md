@@ -65,7 +65,7 @@ pnpm install
 
 # 2. 配置环境变量
 cp .env.example .env
-# 请在 .env 中填入 DATABASE_URL, REDIS_HOST 等必要配置
+# 请在 .env 中填入 DATABASE_URL、REDIS_URL 等必要配置
 
 # 3. 初始化数据库结构
 pnpm db:generate

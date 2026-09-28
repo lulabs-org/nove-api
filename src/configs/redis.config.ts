@@ -15,24 +15,56 @@
  */
 import { registerAs, ConfigType } from '@nestjs/config';
 
-export const redisConfig = registerAs('redis', () => ({
-  url: process.env.REDIS_URL ?? '',
-  host: process.env.REDIS_HOST ?? 'localhost',
-  port: (() => {
-    const port = parseInt(process.env.REDIS_PORT ?? '6379', 10);
-    if (isNaN(port) || port <= 0 || port > 65535) {
-      throw new Error('REDIS_PORT must be a valid port number');
-    }
-    return port;
-  })(),
-  password: process.env.REDIS_PASSWORD ?? '',
-  db: (() => {
-    const db = parseInt(process.env.REDIS_DB ?? '0', 10);
-    if (isNaN(db) || db < 0) {
-      throw new Error('REDIS_DB must be a non-negative integer');
-    }
-    return db;
-  })(),
-}));
+export const redisConfig = registerAs('redis', () => {
+  const rawUrl = process.env.REDIS_URL;
+  if (!rawUrl) {
+    throw new Error('REDIS_URL must be defined');
+  }
+
+  let parsed: URL;
+  try {
+    parsed = new URL(rawUrl);
+  } catch (err) {
+    throw new Error(
+      `Invalid REDIS_URL format: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
+
+  if (parsed.protocol !== 'redis:' && parsed.protocol !== 'rediss:') {
+    throw new Error(
+      `Invalid REDIS_URL protocol: ${parsed.protocol}. Expected "redis:" or "rediss:".`,
+    );
+  }
+
+  const host = parsed.hostname.replace(/^\[(.*)\]$/, '$1');
+  const port = parsed.port ? Number(parsed.port) : 6379;
+
+  if (isNaN(port) || port <= 0 || port > 65535) {
+    throw new Error('REDIS_URL contains an invalid port number');
+  }
+
+  const password = decodeURIComponent(parsed.password || '');
+  const username = decodeURIComponent(parsed.username || '');
+
+  const dbStr = parsed.pathname ? parsed.pathname.replace(/^\//, '') : '';
+  if (dbStr && !/^\d+$/.test(dbStr)) {
+    throw new Error('REDIS_URL contains an invalid database number');
+  }
+  const db = dbStr ? Number(dbStr) : 0;
+
+  if (!Number.isSafeInteger(db) || db < 0) {
+    throw new Error('REDIS_URL contains an invalid database number');
+  }
+
+  return {
+    url: rawUrl,
+    host,
+    port,
+    password,
+    username,
+    db,
+    tls: parsed.protocol === 'rediss:' ? {} : undefined,
+  };
+});
 
 export type RedisConfig = ConfigType<typeof redisConfig>;
