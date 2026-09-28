@@ -167,6 +167,9 @@ importers:
       ioredis:
         specifier: ^5.4.1
         version: 5.8.1
+      js-yaml:
+        specifier: 4.1.0
+        version: 4.1.0
       json-bigint:
         specifier: ^1.0.0
         version: 1.0.0
@@ -206,6 +209,9 @@ importers:
       swagger-ui-express:
         specifier: ^5.0.1
         version: 5.0.1(express@5.1.0)
+      yauzl:
+        specifier: 3.2.0
+        version: 3.2.0
       zod:
         specifier: ^4.3.6
         version: 4.3.6
@@ -279,6 +285,9 @@ importers:
       jest:
         specifier: ^29.7.0
         version: 29.7.0(@types/node@22.18.10)(ts-node@10.9.2(@swc/core@1.13.5)(@types/node@22.18.10)(typescript@5.9.3))
+      jszip:
+        specifier: 3.10.1
+        version: 3.10.1
       prettier:
         specifier: ^3.4.2
         version: 3.6.2

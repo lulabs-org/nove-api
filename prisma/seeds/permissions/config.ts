@@ -46,6 +46,37 @@ const DRIVE_PERMISSION_CONFIGS: readonly PermissionConfig[] = [
   },
 ];
 
+const SKILL_PERMISSION_CONFIGS: readonly PermissionConfig[] = [
+  {
+    name: '查看技能',
+    code: 'skill:read',
+    description: '查看和下载技能版本',
+    resource: 'skill',
+    action: 'read',
+  },
+  {
+    name: '导入技能',
+    code: 'skill:create',
+    description: '上传首个技能 Zip',
+    resource: 'skill',
+    action: 'create',
+  },
+  {
+    name: '维护技能',
+    code: 'skill:update',
+    description: '编辑技能、上传及切换版本',
+    resource: 'skill',
+    action: 'update',
+  },
+  {
+    name: '删除技能',
+    code: 'skill:delete',
+    description: '删除技能或非当前版本',
+    resource: 'skill',
+    action: 'delete',
+  },
+];
+
 export const REAL_PERMISSION_CONFIGS: readonly PermissionConfig[] = [
   // ========== 用户管理 ==========
   {
@@ -911,6 +942,7 @@ export const REAL_PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     action: 'delete',
   },
   ...DRIVE_PERMISSION_CONFIGS,
+  ...SKILL_PERMISSION_CONFIGS,
 ] as const satisfies readonly Prisma.PermissionCreateInput[];
 
 export const PERMISSION_CONFIGS: readonly PermissionConfig[] = [
@@ -1778,4 +1810,5 @@ export const PERMISSION_CONFIGS: readonly PermissionConfig[] = [
     action: 'delete',
   },
   ...DRIVE_PERMISSION_CONFIGS,
+  ...SKILL_PERMISSION_CONFIGS,
 ] as const satisfies readonly Prisma.PermissionCreateInput[];

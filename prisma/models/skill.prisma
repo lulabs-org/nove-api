@@ -1,0 +1,45 @@
+enum SkillStatus {
+  ACTIVE
+  DISABLED
+  DEPRECATED
+}
+
+enum SkillCategory {
+  MEETING
+  SPEAKER
+  TASK
+  REPORT
+  GENERAL
+}
+
+model Skill {
+  id             String         @id @default(cuid())
+  code           String         @unique
+  name           String
+  category       SkillCategory  @default(GENERAL)
+  description    String?        @db.Text
+  status         SkillStatus    @default(ACTIVE)
+  currentVersion String         @map("current_version")
+  versions       SkillVersion[]
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([category])
+  @@index([status])
+  @@map("skills")
+}
+
+model SkillVersion {
+  id               String        @id @default(cuid())
+  skillId          String        @map("skill_id")
+  skill            Skill         @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  version          String        @db.VarChar(50)
+  changelog        String?       @db.Text
+  packageStorageId String        @map("package_storage_id") @db.Uuid
+  packageStorage   StorageObject @relation("SkillVersionPackage", fields: [packageStorageId], references: [id], onDelete: Restrict)
+  createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([skillId, version])
+  @@index([packageStorageId])
+  @@map("skill_versions")
+}
