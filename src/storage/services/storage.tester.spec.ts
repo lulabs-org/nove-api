@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import { BadRequestException } from '@nestjs/common';
 import { StorageTesterService } from './storage.tester';
-import { IntegrationTesterService } from '@/admin/integrations';
+import { IntegrationTesterService } from '@/admin/integrations/services/integration-tester.service';
 
 jest.mock('ali-oss', () => {
   return jest.fn().mockImplementation((options: { bucket: string }) => {

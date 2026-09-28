@@ -1,16 +1,16 @@
 import * as request from 'supertest';
 import { ForbiddenException, ValidationPipe } from '@nestjs/common';
-import { OrganizationProfileController } from './organization-profile.controller';
-import { OrganizationProfileDto } from './organization-profile.dto';
+import { OrganizationController } from './organization.controller';
+import { OrganizationProfileDto } from '../dto/organization-profile.dto';
 import { validationPipeOptions } from '@/configs/app.config';
 
-describe('OrganizationProfileController', () => {
+describe('OrganizationController profile endpoint', () => {
   const service = { save: jest.fn() };
-  const controller = new OrganizationProfileController(service as never);
+  const controller = new OrganizationController({} as never, service as never);
   beforeEach(() => jest.clearAllMocks());
 
-  it('rejects attempts to update another organization', () => {
-    expect(() => controller.save('org-1', 'org-2', {})).toThrow(
+  it('rejects attempts to update another organization', async () => {
+    await expect(controller.saveProfile('org-1', 'org-2', {})).rejects.toThrow(
       ForbiddenException,
     );
     expect(service.save).not.toHaveBeenCalled();
@@ -21,7 +21,7 @@ describe('OrganizationProfileController', () => {
       mimetype: 'image/png',
       size: 5,
     };
-    await controller.save('org-1', 'org-1', { name: 'Acme' }, file);
+    await controller.saveProfile('org-1', 'org-1', { name: 'Acme' }, file);
     expect(service.save).toHaveBeenCalledWith('org-1', { name: 'Acme' }, file);
   });
   it.each([
@@ -46,17 +46,23 @@ describe('OrganizationProfileController', () => {
   });
 });
 
-describe('OrganizationProfileController multipart contract', () => {
+describe('OrganizationController multipart contract', () => {
   let app: import('@nestjs/common').INestApplication;
   const save = jest.fn();
   beforeAll(async () => {
     const { Test } = await import('@nestjs/testing');
+    const { OrganizationService } = await import(
+      '../services/organization.service'
+    );
     const { OrganizationProfileService } = await import(
-      './organization-profile.service'
+      '../services/organization-profile.service'
     );
     const module = await Test.createTestingModule({
-      controllers: [OrganizationProfileController],
-      providers: [{ provide: OrganizationProfileService, useValue: { save } }],
+      controllers: [OrganizationController],
+      providers: [
+        { provide: OrganizationService, useValue: {} },
+        { provide: OrganizationProfileService, useValue: { save } },
+      ],
     }).compile();
     app = module.createNestApplication();
     app.use(

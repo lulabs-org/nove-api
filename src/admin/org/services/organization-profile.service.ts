@@ -8,12 +8,8 @@ import { randomUUID } from 'node:crypto';
 import { OrganizationDto } from '@/admin/org/dto';
 import { OrganizationService } from '@/admin/org/services/organization.service';
 import { sharpFactory } from '@/common/utils/sharp-factory';
-import {
-  OBJECT_STORAGE,
-  ObjectStorage,
-  StoredObject,
-} from './object-storage.interface';
-import { OrganizationProfileDto } from './organization-profile.dto';
+import { OBJECT_STORAGE, ObjectStorage, StoredObject } from '@/storage';
+import { OrganizationProfileDto } from '../dto/organization-profile.dto';
 
 export interface OrganizationLogoUploadFile {
   buffer: Buffer;

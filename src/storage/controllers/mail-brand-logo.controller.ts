@@ -18,7 +18,7 @@ import { CurrentOrg } from '@/auth/decorators';
 import {
   MailBrandLogoService,
   MailBrandLogoUploadFile,
-} from './mail-brand-logo.service';
+} from '../services/mail-brand-logo.service';
 
 @ApiTags('Admin / Integrations')
 @ApiBearerAuth()

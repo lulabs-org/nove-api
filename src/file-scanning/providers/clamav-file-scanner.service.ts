@@ -6,10 +6,7 @@ import {
 import { createHash } from 'node:crypto';
 import { createConnection, Socket } from 'node:net';
 import { once } from 'node:events';
-import {
-  OBJECT_STORAGE,
-  ObjectStorage,
-} from '@/storage/object-storage.interface';
+import { OBJECT_STORAGE, ObjectStorage } from '@/storage';
 import { FileScannerProvider, FileScanInput, FileScanResult } from '../types';
 import { FileScanningConfigService } from '../services/file-scanning-config.service';
 

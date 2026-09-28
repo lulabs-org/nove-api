@@ -6,7 +6,7 @@ import {
   Optional,
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { SingleOrgContextService } from '@/admin/org';
+import { SingleOrgContextService } from '@/admin/org/services/single-org-context.service';
 import { Prisma } from '@/generated/prisma/client';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';

@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { sharpFactory } from '@/common/utils/sharp-factory';
-import type { ObjectStorage } from './object-storage.interface';
+import type { ObjectStorage } from '../interfaces/object-storage.interface';
 import { MailBrandLogoService } from './mail-brand-logo.service';
 
 describe('MailBrandLogoService', () => {

@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { sharpFactory } from '@/common/utils/sharp-factory';
-import type { PutObjectInput } from './object-storage.interface';
+import type { PutObjectInput } from '@/storage';
 import { OrganizationProfileService } from './organization-profile.service';
 
 describe('OrganizationProfileService', () => {

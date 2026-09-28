@@ -1,41 +1,59 @@
 import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Patch,
-  Delete,
-  Param,
   Body,
-  Query,
+  Controller,
+  Delete,
+  ForbiddenException,
+  Get,
   HttpCode,
   HttpStatus,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Query,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
   ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
+  ApiExtraModels,
+  ApiOperation,
   ApiParam,
+  ApiResponse,
+  ApiTags,
+  getSchemaPath,
 } from '@nestjs/swagger';
 import { RequirePermissions } from '@/admin/permission/decorators/permissions.decorator';
+import { CurrentOrg } from '@/auth/decorators';
 
-import { OrganizationService } from '../services/organization.service';
+import {
+  OrganizationLogoUploadFile,
+  OrganizationProfileService,
+  OrganizationService,
+} from '../services';
 import {
   CreateOrganizationDto,
-  UpdateOrganizationDto,
-  PaginationDto,
   OrganizationDto,
   OrganizationListResponse,
-  UpdateStatusDto,
+  OrganizationProfileDto,
   OrganizationStatsDto,
+  PaginationDto,
+  UpdateOrganizationDto,
+  UpdateStatusDto,
 } from '../dto';
 
 @ApiTags('Admin / Organizations')
-@Controller('admin/orgs')
 @ApiBearerAuth()
+@ApiExtraModels(OrganizationProfileDto)
+@Controller('admin/orgs')
 export class OrganizationController {
-  constructor(private readonly organizationService: OrganizationService) {}
+  constructor(
+    private readonly organizationService: OrganizationService,
+    private readonly organizationProfileService: OrganizationProfileService,
+  ) {}
 
   @Post()
   @ApiOperation({
@@ -239,5 +257,37 @@ export class OrganizationController {
     @Param('orgId') orgId: string,
   ): Promise<OrganizationStatsDto> {
     return this.organizationService.getOrganizationStats(orgId);
+  }
+
+  @Put(':orgId/profile')
+  @RequirePermissions('org:update')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 5 * 1024 * 1024, files: 1 },
+    }),
+  )
+  @ApiOperation({ summary: '保存企业信息及上传的 Logo' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      allOf: [
+        { $ref: getSchemaPath(OrganizationProfileDto) },
+        {
+          type: 'object',
+          properties: { file: { type: 'string', format: 'binary' } },
+        },
+      ],
+    },
+  })
+  @ApiResponse({ status: 200, type: OrganizationDto })
+  async saveProfile(
+    @CurrentOrg() currentOrgId: string,
+    @Param('orgId') orgId: string,
+    @Body() dto: OrganizationProfileDto,
+    @UploadedFile() file?: OrganizationLogoUploadFile,
+  ): Promise<OrganizationDto> {
+    if (currentOrgId !== orgId)
+      throw new ForbiddenException('只能修改当前企业的信息');
+    return this.organizationProfileService.save(orgId, dto, file);
   }
 }
