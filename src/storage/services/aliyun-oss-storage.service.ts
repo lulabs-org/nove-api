@@ -9,15 +9,15 @@ import { OnEvent } from '@nestjs/event-emitter';
 import {
   IntegrationChangeEvent,
   INTEGRATION_EVENT_PATTERNS,
-  IntegrationsService,
-} from '@/admin/integrations';
-import { SingleOrgContextService } from '@/admin/org';
+} from '@/admin/integrations/types';
+import { IntegrationsService } from '@/admin/integrations/services/integrations.service';
+import { SingleOrgContextService } from '@/admin/org/services/single-org-context.service';
 import * as OSSModule from 'ali-oss';
 import {
   ObjectStorage,
   PutObjectInput,
   StoredObject,
-} from './object-storage.interface';
+} from '../interfaces/object-storage.interface';
 import type { Readable } from 'node:stream';
 
 interface OssClient {

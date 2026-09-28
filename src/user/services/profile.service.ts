@@ -22,10 +22,7 @@ import { UserCommandRepository } from '../repositories/user-command.repository';
 import { UserProfileResponseDto } from '@/user/dto/user-profile-response.dto';
 import { UpdateProfileDto } from '@/user/dto/update-profile.dto';
 import { formatUserResponse } from '@/common/utils';
-import {
-  OBJECT_STORAGE,
-  ObjectStorage,
-} from '@/storage/object-storage.interface';
+import { OBJECT_STORAGE, ObjectStorage } from '@/storage';
 import { AvatarUploadFile } from '@/user/types/avatar-upload-file';
 import { sharpFactory } from '@/common/utils/sharp-factory';
 

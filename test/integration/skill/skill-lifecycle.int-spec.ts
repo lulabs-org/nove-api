@@ -2,7 +2,7 @@ import * as JSZip from 'jszip';
 import { randomUUID } from 'node:crypto';
 import { Readable } from 'node:stream';
 import { PrismaService } from '@/prisma/prisma.service';
-import { ObjectStorage } from '@/storage/object-storage.interface';
+import { ObjectStorage } from '@/storage';
 import { SkillRepository } from '@/skill/skill.repository';
 import { SkillService } from '@/skill/skill.service';
 import { assertSafeDatabaseUrl } from '../../test-safety-guard';

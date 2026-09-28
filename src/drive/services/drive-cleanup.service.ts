@@ -1,10 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { UploadSessionStatus } from '@/generated/prisma/client';
-import {
-  OBJECT_STORAGE,
-  ObjectStorage,
-} from '@/storage/object-storage.interface';
+import { OBJECT_STORAGE, ObjectStorage } from '@/storage';
 import { DriveCleanupRepository } from '../repositories';
 
 @Injectable()

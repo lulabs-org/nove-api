@@ -4,3 +4,4 @@ export * from './organization.dto';
 export * from './pagination.dto';
 export * from './update-status.dto';
 export * from './organization-stats.dto';
+export * from './organization-profile.dto';

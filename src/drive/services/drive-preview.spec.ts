@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DriveAction, DriveAuditAction } from '@/generated/prisma/client';
-import { OBJECT_STORAGE } from '@/storage/object-storage.interface';
+import { OBJECT_STORAGE } from '@/storage';
 import { DriveService } from './drive.service';
 import { DriveConfigService } from './drive-config.service';
 import { DriveAclService, DriveAuthContext } from '../policies';

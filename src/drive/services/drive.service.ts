@@ -19,10 +19,7 @@ import {
 } from '@/generated/prisma/client';
 import { randomUUID } from 'node:crypto';
 import { extname } from 'node:path';
-import {
-  OBJECT_STORAGE,
-  ObjectStorage,
-} from '@/storage/object-storage.interface';
+import { OBJECT_STORAGE, ObjectStorage } from '@/storage';
 import {
   CompleteUploadSessionDto,
   CreateDriveFolderDto,

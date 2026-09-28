@@ -10,10 +10,7 @@ import {
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { createHash, randomUUID } from 'node:crypto';
 import { Prisma, SkillStatus } from '@/generated/prisma/client';
-import {
-  OBJECT_STORAGE,
-  type ObjectStorage,
-} from '@/storage/object-storage.interface';
+import { OBJECT_STORAGE, type ObjectStorage } from '@/storage';
 import { ListSkillsDto, SkillUploadDto, UpdateSkillDto } from './skill.dto';
 import { validateSkillZip } from './skill-zip.validator';
 import { SkillRepository, type SkillPackageObject } from './skill.repository';

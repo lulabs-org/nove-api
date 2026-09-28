@@ -2,7 +2,7 @@
 import * as JSZip from 'jszip';
 import { ConflictException } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
-import { ObjectStorage } from '@/storage/object-storage.interface';
+import { ObjectStorage } from '@/storage';
 import { SkillRepository } from './skill.repository';
 import { SkillService } from './skill.service';
 

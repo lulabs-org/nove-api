@@ -1,21 +1,20 @@
-import { OrganizationProfileController } from './organization-profile.controller';
-import { OrganizationProfileService } from './organization-profile.service';
-import { Module } from '@nestjs/common';
-import { IntegrationsModule } from '@/admin/integrations';
-import { AliyunOssStorageService } from './aliyun-oss-storage.service';
-import { StorageTesterService } from './storage.tester';
-import { OBJECT_STORAGE } from './object-storage.interface';
-import { MailBrandLogoController } from './mail-brand-logo.controller';
-import { MailBrandLogoService } from './mail-brand-logo.service';
+import { forwardRef, Module } from '@nestjs/common';
+import { IntegrationsModule } from '@/admin/integrations/integrations.module';
+import { MailBrandLogoController } from './controllers';
+import {
+  AliyunOssStorageService,
+  MailBrandLogoService,
+  StorageTesterService,
+} from './services';
+import { OBJECT_STORAGE } from './interfaces';
 
 @Module({
-  imports: [IntegrationsModule],
-  controllers: [MailBrandLogoController, OrganizationProfileController],
+  imports: [forwardRef(() => IntegrationsModule)],
+  controllers: [MailBrandLogoController],
   providers: [
     AliyunOssStorageService,
     StorageTesterService,
     MailBrandLogoService,
-    OrganizationProfileService,
     {
       provide: OBJECT_STORAGE,
       useExisting: AliyunOssStorageService,

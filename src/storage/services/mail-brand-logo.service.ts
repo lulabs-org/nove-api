@@ -5,9 +5,12 @@ import {
   Logger,
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { IntegrationsService } from '@/admin/integrations';
+import { IntegrationsService } from '@/admin/integrations/services/integrations.service';
 import { sharpFactory } from '@/common/utils/sharp-factory';
-import { OBJECT_STORAGE, ObjectStorage } from './object-storage.interface';
+import {
+  OBJECT_STORAGE,
+  ObjectStorage,
+} from '../interfaces/object-storage.interface';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const MAX_INPUT_PIXELS = 20_000_000;

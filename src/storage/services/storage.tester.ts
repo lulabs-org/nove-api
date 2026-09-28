@@ -2,9 +2,9 @@ import { BadRequestException, Injectable, OnModuleInit } from '@nestjs/common';
 import * as OSSModule from 'ali-oss';
 import {
   IntegrationTestProvider,
-  IntegrationTesterService,
   IntegrationValues,
-} from '@/admin/integrations';
+} from '@/admin/integrations/types';
+import { IntegrationTesterService } from '@/admin/integrations/services/integration-tester.service';
 
 interface OssTestClient {
   getBucketInfo?(bucket: string): Promise<unknown>;

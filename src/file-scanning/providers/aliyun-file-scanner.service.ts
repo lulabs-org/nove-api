@@ -6,10 +6,7 @@ import {
 import Credential from '@alicloud/credentials';
 import Sas20181203, * as $Sas20181203 from '@alicloud/sas20181203';
 import { $OpenApiUtil } from '@alicloud/openapi-core';
-import {
-  OBJECT_STORAGE,
-  ObjectStorage,
-} from '@/storage/object-storage.interface';
+import { OBJECT_STORAGE, ObjectStorage } from '@/storage';
 import { FileScannerProvider, FileScanInput, FileScanResult } from '../types';
 import { FileScanningConfigService } from '../services/file-scanning-config.service';
 
