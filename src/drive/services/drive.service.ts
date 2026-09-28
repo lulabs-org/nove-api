@@ -52,6 +52,16 @@ import {
   UploadSessionRepository,
 } from '../repositories';
 
+const PDF_CONTENT_TYPE = 'application/pdf';
+const INLINE_PREVIEW_CONTENT_TYPE = /^(?:image|video)\//;
+
+function isInlinePreviewable(contentType: string): boolean {
+  return (
+    INLINE_PREVIEW_CONTENT_TYPE.test(contentType) ||
+    contentType === PDF_CONTENT_TYPE
+  );
+}
+
 @Injectable()
 export class DriveService {
   constructor(
@@ -459,8 +469,8 @@ export class DriveService {
     if (!version || version.status !== FileVersionStatus.ACTIVE) {
       throw new ConflictException('文件尚不可下载');
     }
-    if (preview && !/^(image|video)\//.test(version.contentType)) {
-      throw new BadRequestException('仅支持图片和视频预览');
+    if (preview && !isInlinePreviewable(version.contentType)) {
+      throw new BadRequestException('仅支持图片、视频和 PDF 预览');
     }
     if (!preview) {
       await this.audit(

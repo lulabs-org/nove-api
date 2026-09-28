@@ -87,6 +87,16 @@ describe('Drive image preview audit', () => {
     expect(result.contentDisposition).toBe('inline');
     expect(access.createAudit).not.toHaveBeenCalled();
   });
+  it('previews PDF documents without download audits', async () => {
+    files.findDetails.mockResolvedValue({
+      ...record,
+      versions: [{ ...record.versions[0], contentType: 'application/pdf' }],
+    });
+    const result = await service.createPreviewUrl('file-a', auth);
+    expect(result.contentDisposition).toBe('inline');
+    expect(access.createAudit).not.toHaveBeenCalled();
+  });
+
   it('explicit downloads still write DOWNLOAD audits', async () => {
     await service.createDownloadUrl('file-a', auth);
     expect(access.createAudit).toHaveBeenCalledTimes(1);
@@ -111,7 +121,14 @@ describe('Drive image preview audit', () => {
 
   it.each([
     ['pending images', { status: 'PENDING', contentType: 'image/png' }],
-    ['non-images', { status: 'ACTIVE', contentType: 'application/pdf' }],
+    [
+      'non-previewable types',
+      {
+        status: 'ACTIVE',
+        contentType:
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      },
+    ],
   ])('rejects previews for %s', async (_name, version) => {
     files.findDetails.mockResolvedValue({
       ...record,
