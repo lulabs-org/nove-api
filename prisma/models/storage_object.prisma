@@ -19,6 +19,7 @@ model StorageObject {
   identityDocFrontFiles UserIdentityDocument[] @relation("IdentityDocFrontFile")
   identityDocBackFiles  UserIdentityDocument[] @relation("IdentityDocBackFile")
   fileVersions          FileVersion[]
+  skillVersionPackages  SkillVersion[] @relation("SkillVersionPackage")
 
   @@unique([provider, bucket, objectKey])
   @@map("storage_objects")

@@ -192,7 +192,10 @@ export class AliyunOssStorageService implements ObjectStorage, OnModuleInit {
 
   async putObject(input: PutObjectInput): Promise<StoredObject> {
     const url = this.buildPublicUrl(input.key);
-    const client = this.getPublicClient();
+    const client =
+      input.access === 'public-read' || isManagedPublicAsset(input.key)
+        ? this.getPublicClient()
+        : this.getPrivateClient();
     try {
       await client.put(input.key, input.body, {
         headers: {

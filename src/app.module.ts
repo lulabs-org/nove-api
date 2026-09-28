@@ -64,6 +64,7 @@ import { DriveModule } from './drive/drive.module';
 import { WecomModule } from './wecom/wecom.module';
 import { StripeModule } from './stripe/stripe.module';
 import { SmsModule } from './sms';
+import { SkillModule } from './skill/skill.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -143,6 +144,7 @@ import { SmsModule } from './sms';
     WecomModule,
     StripeModule,
     SmsModule,
+    SkillModule,
   ],
   controllers: [AppController],
   providers: [
