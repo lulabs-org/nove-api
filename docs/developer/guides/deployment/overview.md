@@ -11,7 +11,7 @@ flowchart LR
   API --> Redis[(redis :6379)]
 ```
 
-Compose 默认从根 `.env` 注入配置。至少确认 `POSTGRES_PASSWORD`、`REDIS_PASSWORD`、`DATABASE_URL`、Redis 连接参数、JWT 密钥和外部集成密钥；不要把真实值提交到仓库。
+Compose 默认从根 `.env` 注入配置。至少确认 `POSTGRES_PASSWORD`、`REDIS_PASSWORD`、`DATABASE_URL`、`REDIS_URL`、JWT 密钥和外部集成密钥；不要把真实值提交到仓库。
 
 ## 构建与启动
 

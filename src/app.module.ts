@@ -10,7 +10,7 @@
  */
 
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigType } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ThrottlerModule } from '@nestjs/throttler';
@@ -69,6 +69,8 @@ import { SkillModule } from './skill/skill.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      expandVariables: true,
+      load: [redisConfig],
     }),
     ThrottlerModule.forRoot([
       {
@@ -82,13 +84,19 @@ import { SkillModule } from './skill/skill.module';
       playground: process.env.NODE_ENV !== 'production',
       introspection: process.env.NODE_ENV !== 'production',
     }),
-    BullModule.forRoot({
-      connection: {
-        host: redisConfig().host,
-        port: redisConfig().port,
-        password: redisConfig().password,
-        db: redisConfig().db,
-      },
+    BullModule.forRootAsync({
+      imports: [ConfigModule.forFeature(redisConfig)],
+      inject: [redisConfig.KEY],
+      useFactory: (config: ConfigType<typeof redisConfig>) => ({
+        connection: {
+          host: config.host,
+          port: config.port,
+          username: config.username || undefined,
+          password: config.password || undefined,
+          db: config.db,
+          tls: config.tls,
+        },
+      }),
     }),
     BullBoardModule.forRoot({
       route: '/queues',

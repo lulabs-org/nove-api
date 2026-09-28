@@ -45,9 +45,7 @@ SMTP 邮件服务参数与邮件品牌展示（Logo、主题色、页脚版权�
 邮件服务使用BullMQ队列系统，需要配置Redis：
 
 ```text
-REDIS_HOST=localhost
-REDIS_PORT=6379
-REDIS_PASSWORD=
+REDIS_URL=redis://localhost:6379/0
 ```
 
 ## 项目结构

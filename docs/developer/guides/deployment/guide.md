@@ -11,7 +11,7 @@ cp .env.example .env
 生产环境至少检查：
 
 - `DATABASE_URL` 与 `POSTGRES_*`
-- `REDIS_*` / `REDIS_URL`
+- `REDIS_URL`（应用缓存与队列共用）；使用 Docker Compose 时还需确认 `REDIS_PORT` 和 `REDIS_PASSWORD`
 - `JWT_SECRET`、`JWT_REFRESH_SECRET` 及有效期
 - `CORS_ORIGINS`、`CORS_ORIGIN_REGEXES`、`CORS_CREDENTIALS`
 - `BULL_BOARD_USER`、`BULL_BOARD_PASSWORD`

@@ -23,41 +23,19 @@ export class RedisService implements OnModuleDestroy {
     @Inject(redisConfig.KEY)
     private readonly config: ConfigType<typeof redisConfig>,
   ) {
-    if (this.config.url) {
-      // 如果存在 url，优先使用 URL 连接
-      this.client = new Redis(this.config.url, {
-        lazyConnect: false,
-        enableAutoPipelining: true,
-        maxRetriesPerRequest: 2,
-      });
-    } else {
-      // 如果没有 url，使用独立的配置参数构建连接
-      if (this.config.host && this.config.port) {
-        this.client = new Redis({
-          host: this.config.host,
-          port: this.config.port,
-          password: this.config.password || undefined,
-          db: this.config.db,
-          lazyConnect: false,
-          enableAutoPipelining: true,
-          maxRetriesPerRequest: 2,
-        });
-      }
-    }
+    this.client = new Redis(this.config.url, {
+      lazyConnect: false,
+      enableAutoPipelining: true,
+      maxRetriesPerRequest: 2,
+    });
 
-    if (this.client) {
-      this.client.on('error', (err) =>
-        this.logger.error(`Redis error: ${err.message}`),
-      );
-      this.client.on('connect', () => this.logger.log('Redis connected'));
-      this.client.on('reconnecting', () =>
-        this.logger.warn('Redis reconnecting...'),
-      );
-    } else {
-      this.logger.warn(
-        'Redis configuration not found; Redis features are disabled',
-      );
-    }
+    this.client.on('error', (err) =>
+      this.logger.error(`Redis error: ${err.message}`),
+    );
+    this.client.on('connect', () => this.logger.log('Redis connected'));
+    this.client.on('reconnecting', () =>
+      this.logger.warn('Redis reconnecting...'),
+    );
   }
 
   // Whether a usable Redis connection is ready
