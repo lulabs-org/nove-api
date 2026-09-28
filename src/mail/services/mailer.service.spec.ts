@@ -146,6 +146,7 @@ describe('MailerService', () => {
         secure: false,
         from: 'noreply@test.com',
       },
+      brand: { name: 'Custom Sender' },
     });
     useMailConfig(config);
     const svc = new MailerService(mockIntegrationsService, orgContext);
@@ -170,7 +171,7 @@ describe('MailerService', () => {
     expect(r2).toEqual({ messageId: 'mid-2' });
     expect(transporter.sendMail).toHaveBeenCalledWith(
       expect.objectContaining({
-        from: { name: 'Nove System', address: 'noreply@test.com' },
+        from: { name: 'Custom Sender', address: 'noreply@test.com' },
       }),
     );
 
