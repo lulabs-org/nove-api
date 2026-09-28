@@ -3,6 +3,7 @@ import * as JSZip from 'jszip';
 import { ConflictException } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { ObjectStorage } from '@/storage/object-storage.interface';
+import { SkillRepository } from './skill.repository';
 import { SkillService } from './skill.service';
 
 const manifest =
@@ -81,7 +82,7 @@ describe('SkillService', () => {
     prisma.storageObject.findMany.mockResolvedValue([]);
     tx.skillVersion.findUnique.mockResolvedValue(null);
     service = new SkillService(
-      prisma as unknown as PrismaService,
+      new SkillRepository(prisma as unknown as PrismaService),
       objectStorage as unknown as ObjectStorage,
     );
   });

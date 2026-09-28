@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { Readable } from 'node:stream';
 import { PrismaService } from '@/prisma/prisma.service';
 import { ObjectStorage } from '@/storage/object-storage.interface';
+import { SkillRepository } from '@/skill/skill.repository';
 import { SkillService } from '@/skill/skill.service';
 import { assertSafeDatabaseUrl } from '../../test-safety-guard';
 
@@ -56,7 +57,10 @@ describe('Skill version lifecycle with PostgreSQL and object storage', () => {
     process.env.DATABASE_URL = databaseUrl;
     prisma = new PrismaService();
     await prisma.$connect();
-    service = new SkillService(prisma, storage as ObjectStorage);
+    service = new SkillService(
+      new SkillRepository(prisma),
+      storage as ObjectStorage,
+    );
   });
 
   afterAll(async () => {
