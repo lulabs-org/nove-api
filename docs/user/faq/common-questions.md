@@ -76,7 +76,7 @@
 
 ### Q: 如何通过 MCP 连接 AI 工具？
 
-**A:** 系统内置了 MCP (Model Context Protocol) Server。外部 AI 工具（如支持 MCP 的大语言模型客户端）可以通过 SSE 或 HTTP 方式连接，直接查询和操作系统数据。详细配置请参考[开发者文档 - MCP 连接指南](../../developer/modules/mcp/connection-guide.md)。
+**A:** 系统内置了 MCP (Model Context Protocol) Server。外部 AI 工具（如支持 MCP 的大语言模型客户端）可以通过 SSE 或 HTTP 方式连接，直接查询和操作系统数据。详细配置请参考[开发者文档 - MCP 连接指南](../../developer/modules/agent/mcp.md)。
 
 ### Q: 遇到问题如何获取帮助？
 

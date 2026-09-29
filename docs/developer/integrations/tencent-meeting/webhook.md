@@ -23,22 +23,20 @@
 
 ### Webhook URL配置
 
-在腾讯会议后台配置以下Webhook URL：
+在腾讯会议开放平台后台配置以下 Webhook URL：
 
-- **URL**: `https://your-domain.com/webhooks/tencent`
-- **Token**: 与`TENCENT_MEETING_TOKEN`相同
-- **EncodingAESKey**: 与`TENCENT_MEETING_ENCODING_AES_KEY`相同
+- **URL**: `https://your-domain.com/webhooks/tmeet`
+- **Token**: 与管理后台「服务集成 → 腾讯会议」中填写的 `webhookToken` 一致
+- **EncodingAESKey**: 与管理后台「服务集成 → 腾讯会议」中填写的 `encodingAesKey` 一致
 
 ## API端点
 
-### API端点
-
 ### 1. URL验证端点（GET）
 
-用于腾讯会议首次配置时的URL验证。
+用于腾讯会议首次配置时的 URL 验证。
 
-```
-GET /webhooks/tencent?check_str={base64_string}&timestamp={timestamp}&nonce={nonce}&signature={signature}
+```text
+GET /webhooks/tmeet?check_str={base64_string}&timestamp={timestamp}&nonce={nonce}&signature={signature}
 ```
 
 **响应**: 返回解密后的明文字符串
@@ -47,8 +45,8 @@ GET /webhooks/tencent?check_str={base64_string}&timestamp={timestamp}&nonce={non
 
 用于接收腾讯会议的事件通知。
 
-```
-POST /webhooks/tencent
+```text
+POST /webhooks/tmeet
 Content-Type: application/json
 
 {

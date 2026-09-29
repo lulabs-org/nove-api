@@ -15,19 +15,19 @@ Lark 和腾讯会议写入链路已传递组织上下文。Minute API 通过所�
 先应用数据库迁移，再执行只读预检：
 
 ```bash
-pnpm db:backfill:meeting-org
+pnpm exec tsx scripts/ts/backfill-meeting-organizations.ts
 ```
 
 确认输出的组织 ID 和待处理数量后再写入：
 
 ```bash
-pnpm db:backfill:meeting-org -- --apply
+pnpm exec tsx scripts/ts/backfill-meeting-organizations.ts --apply
 ```
 
 存在多个启用组织时，脚本不会猜测历史会议归属，必须显式指定目标组织：
 
 ```bash
-pnpm db:backfill:meeting-org -- --org-id <organization-id> --apply
+pnpm exec tsx scripts/ts/backfill-meeting-organizations.ts --org-id <organization-id> --apply
 ```
 
 脚本只更新 `org_id IS NULL` 的会议，包括已软删除记录。执行完成后，输出中的 `remaining` 必须为 `0`。

@@ -1,140 +1,72 @@
-# 飞书多维表格集成指南
+# 飞书集成 (Lark Integration)
 
-本文档说明如何将腾讯会议事件与飞书多维表格集成，实现会议数据自动记录。
+Nove API 集成了飞书开放平台（Lark Open Platform），主要负责监听飞书视频会议（VC）事件、自动同步会议录制文件与元数据，并通过 BullMQ 队列实现高可靠的异步削峰与落库。
+
+> [!NOTE] 架构演进说明
+> 历史版本中的飞书多维表格（Bitable）数据同步已在 PR #426 中全面下线与解耦。当前的飞书模块完全聚焦于**视频会议 (VC) 协同、事件监听与云录制同步**。
+
+## 核心能力
+
+- ✅ **会议生命周期监听**：订阅全员离会事件（`vc.meeting.all_meeting_ended_v1`），捕获会议时长、参会人及会议基础信息。
+- ✅ **云录制文件拉取**：调用飞书 VC OpenAPI (`client.vc.v1.meetingRecording.get`) 获取会议录制文件及下载地址。
+- ✅ **异步解耦架构**：通过 BullMQ `lark-events` 队列缓冲突发会议事件，由工作进程异步消费处理。
+- ✅ **双通道事件接收**：同时支持 HTTP Webhook 回调接收与 WebSocket 长连接（`LarkWsEventListener`）监听。
 
 ## 项目结构
 
-```text
-src/integrations/lark/                  # 飞书集成库
-├── lark.client.ts                  # 飞书SDK客户端
-├── lark.module.ts                  # 模块配置
-├── index.ts                        # 导出文件
-├── exceptions/                     # 异常处理
-│   └── lark.exceptions.ts          # 飞书相关异常
-├── services/                       # 服务层
-│   ├── bitable.service.ts          # 多维表格核心服务
-│   └── meeting-recording.service.ts # 会议录制同步服务
-├── repositories/                   # 数据访问层
-│   ├── index.ts                    # 导出文件
-│   ├── meeting.repository.ts       # 会议记录仓库
-│   ├── meeting-user.repository.ts  # 会议用户仓库
-│   ├── meeting-recording-file.repository.ts # 录制文件仓库
-│   └── number-record.repository.ts # 记录仓库
-├── types/                          # 类型定义
-│   ├── lark-bitable.types.ts       # 飞书Bitable相关类型
-│   ├── meeting.types.ts            # 会议类型
-│   ├── meeting-user.types.ts       # 会议用户类型
-│   └── recording-file.types.ts     # 录制文件类型
-└── validators/                     # 验证器
-    └── field.validator.ts          # 字段验证器
-```
-
-## 测试配置
+飞书相关实现统一组织在 `src/lark/`：
 
 ```text
-test/integration/
-└── bitable.service.int-spec.ts     # Bitable 服务集成测试
+src/lark/
+├── client/                     # 基于 @larksuiteoapi/node-sdk 的客户端封装
+│   └── lark.client.ts
+├── controllers/
+│   └── webhook.controller.ts   # Webhook 回调入口 (/webhooks/lark)
+├── adapter/                    # Express 与飞书 SDK 原生 Request/Response 适配
+├── queue/
+│   └── lark-event.processor.ts # BullMQ 队列消费者 (lark-events)
+├── services/
+│   ├── lark-meeting.service.ts # 会议事件入队与业务落库处理
+│   └── meeting-recording.service.ts # VC 录制文件拉取服务
+├── listeners/
+│   └── lark-ws-event.listener.ts # WebSocket 长连接事件监听器
+├── enums/                      # 飞书事件类型与枚举定义
+└── lark.module.ts              # 模块装配
 ```
 
-## 功能概述
+## 服务凭据配置
 
-当腾讯会议开始时，系统会自动在飞书多维表格中创建一条会议记录，包含以下信息：
+飞书的凭据已收拢至 **Nove Admin 管理后台「服务集成 → 飞书」** 中进行动态加密维护：
 
-- 会议编号（腾讯会议ID）
-- 会议标题
-- 开始时间
-- 持续时间
-- 参会人员
-- 会议状态
+| 配置项 | 说明 |
+|---|---|
+| `appId` | 飞书开放平台企业自建应用的 App ID (`cli_xxx`) |
+| `appSecret` | 应用密钥 (App Secret，加密存储) |
+| `eventEncryptKey` | 事件订阅的消息加解密 Key (Encrypt Key，可选) |
+| `eventVerificationToken` | 事件订阅的验证 Token (Verification Token) |
 
-## 配置步骤
+后台保存后通过事件机制实时热更新至 `IntegrationsService`，无需重启后端服务。
 
-### 1. 飞书开发者配置
+## 事件处理链路
 
-1. 访问 [飞书开放平台](https://open.feishu.cn/)
-2. 创建企业自建应用
-3. 获取以下配置：
-   - `LARK_APP_ID`: 应用ID
-   - `LARK_APP_SECRET`: 应用密钥
+```mermaid
+sequenceDiagram
+    participant L as 飞书开放平台
+    participant C as LarkWebhookController (/webhooks/lark)
+    participant Q as BullMQ (lark-events)
+    participant P as LarkEventProcessor
+    participant S as LarkMeetingService
+    participant DB as PostgreSQL (meetings 表)
 
-### 2. 多维表格配置
+    L->>C: POST /webhooks/lark (vc.meeting.all_meeting_ended_v1)
+    C->>C: EventDispatcher 验签与路由
+    C->>Q: enqueueMeetingEnded(orgId, data)
+    C-->>L: 同步响应 "success"
 
-1. 在飞书中创建多维表格
-2. 创建会议记录表，需要包含以下字段：
-   - `会议编号`（文本）
-   - `会议标题`（文本）
-   - `开始时间`（日期）
-   - `持续时间`（数字）
-   - `参会人员`（多选文本）
-   - `会议状态`（单选）
-   - `录制链接`（超链接，可选）
-
-3. 获取表格信息：
-   - `LARK_BITABLE_APP_TOKEN`: 多维表格的App Token
-   - `LARK_TABLE_MEETING`: 会议记录表的Table ID
-
-### 3. 应用权限配置
-
-在飞书开放平台中，为应用添加以下权限：
-
-- `bitable:app` - 多维表格权限
-- `bitable:app:readonly` - 多维表格只读权限
-
-### 4. 服务配置
-
-飞书自建应用基础凭证与事件订阅（`appId`、`appSecret`、`eventEncryptKey`、`eventVerificationToken`）已收拢至 **Nove Admin 管理后台「服务集成 → 飞书」** 中加密管理与动态存储，无需在 `.env` 中声明。详见[服务集成配置指南](../service-integrations.md)。
-
-## 使用说明
-
-### 测试功能
-
-1. 启动应用：
-
-```bash
-pnpm run start:dev
+    Q->>P: 异步调度任务
+    P->>S: handleMeetingEnded()
+    S->>S: 转换事件数据为 Meeting 模型
+    S->>DB: upsert 写入会议与关联数据
 ```
 
-2. 触发腾讯会议开始事件
-3. 检查飞书多维表格中是否自动创建了会议记录
-
-### 故障排查
-
-#### 常见问题
-
-1. **权限错误**
-   - 确认应用已获取多维表格权限
-   - 检查应用是否已发布上线
-
-2. **字段不匹配**
-   - 确认多维表格字段名称与代码中一致
-   - 检查字段类型是否正确
-
-3. **配置错误**
-   - 验证App Token和Table ID是否正确
-   - 检查环境变量是否已正确加载
-
-#### 日志查看
-
-查看应用日志，搜索关键词：
-
-- `飞书多维表格` - 相关操作日志
-- `LARK` - 飞书集成相关日志
-- `会议记录` - 会议记录创建相关日志
-
-## 扩展功能
-
-### 添加录制完成记录
-
-如需在录制完成时也创建记录，可以扩展 `handleRecordingCompleted` 方法，添加类似的逻辑。
-
-### 自定义字段
-
-可以根据需要修改 `createMeetingRecord` 调用中的字段映射，添加更多会议信息。
-
-## 技术支持
-
-如有问题，请检查：
-
-1. 飞书开放平台文档：<https://open.feishu.cn/>
-2. 多维表格API文档：<https://open.feishu.cn/document/server-docs/docs/bitable-v1/bitable-overview>
-3. 应用运行日志
+详细 Webhook 配置步骤与字段说明参见 [Lark Webhook 集成指南](./webhook.md)。

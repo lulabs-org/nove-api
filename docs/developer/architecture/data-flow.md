@@ -1,6 +1,6 @@
-# 关键数据流
+# 关键数据流 (Data Flow)
 
-本页只描述当前源码中可验证的主路径，不承诺尚未实现的断点续传、熔断、对象存储或可观测性能力。
+本页只描述当前源码中可验证的核心主路径，不承诺尚未实现的设想能力。
 
 ## 认证与授权
 
@@ -21,44 +21,55 @@ sequenceDiagram
   end
 ```
 
-后续请求依次经过 `UnifiedAuthGuard`、`ScopeGuard`、`PermissionGuard`。控制器使用 `@Public()`、`@RequireAuth()`、`@RequireScope()`、`@RequirePermissions()` 或 `@NoPermissionRequired()` 明确例外。
+后续请求依次经过 `UnifiedAuthGuard`、`ScopeGuard`、`PermissionGuard`。控制器使用 `@Public()`、`@RequireAuth()`、`@RequireScope()`、`@RequirePermissions()` 或 `@NoPermissionRequired()` 明确访问控制级别。
 
-## 腾讯会议 Webhook
+## 腾讯会议 Webhook 链路
 
 ```mermaid
 flowchart LR
-  A[GET/POST /webhooks/tencent] --> B[签名校验与 AES 解密]
-  B --> C[TencentWebhookController]
-  C --> D[EventHandlerService / Factory]
+  A[GET/POST /webhooks/tmeet] --> B[签名校验与 AES 解密]
+  B --> C[TMeetWebhookController]
+  B --> G[(WebhookLog)]
+  C --> D[TMeetEventHandlerService]
   D --> E[具体事件 Handler]
-  E --> F[(Meeting / Recording / Transcript 等)]
-  C --> G[(WebhookLog)]
+  E --> F[(Meeting / Minute / 转写数据写入)]
 ```
 
-URL 验证与事件请求均校验腾讯签名；POST 请求通过 Pipe 解密，再由事件工厂分派。拦截器记录耗时、事件类型和脱敏签名，并将成功或失败状态写入 Webhook 日志。
+- URL 验证与事件请求均基于管理后台配置的凭证进行签名校验。
+- POST 请求通过 Pipe 解密消息体，再由事件工厂派发。
+- 拦截器记录耗时、事件类型和脱敏签名，并将处理状态写入 `webhook_logs` 表。
 
-## 飞书与微信小店队列
+## 异步任务队列 (BullMQ)
 
-- 飞书 `/webhooks/lark` 先持久化原始事件日志，再写入 `lark-events` BullMQ 队列，由 `LarkEventProcessor` 消费。
-- 微信小店回调验证签名并解密消息；历史订单同步按时间切片后批量写入 `wechat-order-sync` 队列，由 `WechatShopProcessor` 消费。
-- 队列连接来自 Redis 配置，Bull Board 挂载在 `/queues`。
+- **飞书事件**：`/webhooks/lark` 先持久化原始事件日志，再写入 `lark-events` 队列，由 `LarkEventProcessor` 异步消费。
+- **微信小店订单**：微信回调验签解密后，按时间切片将历史订单批量推入 `wechat-order-sync` 队列，由 `WechatShopProcessor` 消费入库。
+- **企业微信 Hermes**：`/webhooks/wecom/events` 验签后入队异步处理，解耦即时响应与大模型推理。
+- 队列均由基于 `REDIS_URL` 的 Redis 实例驱动，Bull Board 管理界面挂载在 `/queues`（需 Basic Auth 认证）。
 
-## 会议 AI 总结
+## 会议纪要与 AI 发言人总结
 
 ```mermaid
 flowchart LR
-  A[POST /meet-ai/recordings/:id/participant-summaries/generate] --> B[ParticipantSummaryService]
-  B --> C[RecordingParticipantSummaryRepository]
-  C --> D[(会议/录制/总结/转写上下文)]
-  B --> E[LLM Module]
-  E --> F[(RecordingParticipantSummary)]
+  A[POST /minutes/:minuteId/speaker-summaries/generate] --> B[SpeakerSummaryController]
+  B --> C[SpeakerSummaryService]
+  C --> D[MinuteRepository: 聚合会议/转写上下文]
+  C --> E[LLM Module: 调用大模型推理]
+  E --> F[SpeakerSummaryRepository: 批量写入发言人洞察]
 ```
 
-参会者总结仓储聚合最新会议关系和转写片段，Service 负责缺失数据判断、Prompt/LLM 编排及结果写入。周期总结由 `POST /meet-ai/summaries/period` 触发。
+- 调用时自动断言目标纪要及会议归属于当前用户的 `orgId`。
+- 服务层聚合最新会议参会者列表及转写文本，编排结构化 Prompt 后调用已配置的 LLM（火山方舟/OpenAI），并将生成的行动项与分析结果持久化。
 
-## 动态第三方集成配置
+## 动态第三方集成配置与热更新
 
-第三方集成服务模块（邮件、AI、腾讯会议、飞书、微信小店）完全由数据库驱动，只读取数据库值和非敏感代码默认值。管理员通过 `GET/PUT/DELETE /admin/integrations/:module` 读写配置。Service 按 Registry 校验并加密敏感字段；成功更新或删除会发送 `config.<module>.updated/deleted` 事件，各集成消费者据此刷新运行时配置。
+```mermaid
+flowchart TD
+  Admin[管理后台 PUT /admin/integrations/:module] --> Svc[IntegrationsService]
+  Svc --> AES[SYSTEM_ENCRYPTION_KEY 加密敏感字段]
+  AES --> DB[(system_configs 表持久化)]
+  Svc --> Event[EventEmitter2: config.module.updated]
+  Event --> Listeners[各业务模块监听器: 内存热重载配置]
+```
 
-读取敏感字段只返回 `********`；PUT 原样提交该掩码代表保留现有密文。删除配置后退回默认未配置状态。
-
+- 支持邮件、AI、腾讯会议、企业微信、飞书、微信小店等服务配置。
+- 读取敏感字段时统一返回掩码 `********`；PUT 原样提交该掩码代表保留已有密文不覆盖。

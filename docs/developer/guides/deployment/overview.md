@@ -41,6 +41,6 @@ pnpm db:migrate:prod
 
 ## CI 基线
 
-`.github/workflows/ci.yml` 在 `develop` push 及 `develop`/`main` PR 上运行，使用 Node 20、pnpm 9、PostgreSQL 15 和 Redis 7，依次执行依赖安装、Prisma Client 生成、lint、Prisma 校验/迁移、构建与单元测试。部署流水线应至少复用这些门禁，并额外执行 `pnpm docs:build` 以保护文档链接。
+`.github/workflows/ci.yml` 在 `main` 的 push 及 PR 上运行，使用 Node 20、pnpm 9、PostgreSQL 15 和 Redis 7，依次执行依赖安装、Prisma Client 生成、lint、Prisma 校验/迁移、构建与单元测试。部署流水线应至少复用这些门禁，并额外执行 `pnpm docs:build` 以保护文档链接。
 
 更完整的环境变量、反向代理和发布检查见[部署指南](./guide.md)。
