@@ -87,6 +87,7 @@ describe('Drive image preview audit', () => {
     expect(result.contentDisposition).toBe('inline');
     expect(access.createAudit).not.toHaveBeenCalled();
   });
+  // PDF 与图片、视频同属可直接内联预览的类型，不应再被判定为不可预览
   it('previews PDF documents without download audits', async () => {
     files.findDetails.mockResolvedValue({
       ...record,
@@ -121,6 +122,7 @@ describe('Drive image preview audit', () => {
 
   it.each([
     ['pending images', { status: 'PENDING', contentType: 'image/png' }],
+    // 用 xlsx 代表无法内联预览的格式（原用例放在这里的 pdf 已改为支持预览）
     [
       'non-previewable types',
       {
