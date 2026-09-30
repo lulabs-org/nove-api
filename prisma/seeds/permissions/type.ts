@@ -1,4 +1,4 @@
-import { Permission } from '@/generated/prisma/client';
+import { Permission, PermissionType } from '@/generated/prisma/client';
 
 export interface PermissionConfig {
   name: string;
@@ -6,6 +6,7 @@ export interface PermissionConfig {
   description: string;
   resource: string;
   action: string;
+  type: PermissionType;
 }
 
 export interface CreatedPermissions {
