@@ -16,6 +16,7 @@ describe('AuthService', () => {
     refreshToken: jest.Mock;
     logout: jest.Mock;
   };
+  let refreshTokenRepo: { revokeTokensByDeviceId: jest.Mock };
   let loginLogRepo: {
     countLoginFailuresByTargetSince: jest.Mock;
     countLoginFailuresByIpSince: jest.Mock;
@@ -51,6 +52,9 @@ describe('AuthService', () => {
       refreshToken: jest.fn(),
       logout: jest.fn(),
     };
+    refreshTokenRepo = {
+      revokeTokensByDeviceId: jest.fn().mockResolvedValue(0),
+    };
     loginLogRepo = {
       countLoginFailuresByTargetSince: jest.fn().mockResolvedValue(0),
       countLoginFailuresByIpSince: jest.fn().mockResolvedValue(0),
@@ -68,6 +72,7 @@ describe('AuthService', () => {
       userCommandRepo as never,
       otpService as never,
       tokenService as never,
+      refreshTokenRepo as never,
       loginLogRepo as never,
       authMailService as never,
       permService as never,
@@ -144,6 +149,61 @@ describe('AuthService', () => {
       );
       expect(result.user.currentOrgId).toBe('org-2');
       expect(result.accessToken).toBe('acc');
+    });
+
+    it('revokes previous tokens for the same device before issuing new ones', async () => {
+      userQueryRepo.byTarget.mockResolvedValue({
+        id: 'u2',
+        email: 'u2@example.com',
+        passwordHash: null,
+        profile: { name: 'User 2' },
+        roles: [{ role: { code: 'USER' } }],
+        createdAt: new Date(),
+      });
+
+      await authService.login(
+        {
+          type: AuthType.EMAIL_CODE,
+          email: 'u2@example.com',
+          code: '654321',
+          deviceId: 'device-1',
+        } as never,
+        '127.0.0.1',
+        'agent',
+      );
+
+      expect(refreshTokenRepo.revokeTokensByDeviceId).toHaveBeenCalledWith(
+        'u2',
+        'device-1',
+      );
+      // 撤销必须先于新令牌签发，否则新令牌（同 deviceId）会被一并撤销
+      expect(
+        refreshTokenRepo.revokeTokensByDeviceId.mock.invocationCallOrder[0],
+      ).toBeLessThan(tokenService.generateTokens.mock.invocationCallOrder[0]);
+    });
+
+    it('skips device token revocation when deviceId is absent', async () => {
+      userQueryRepo.byTarget.mockResolvedValue({
+        id: 'u2',
+        email: 'u2@example.com',
+        passwordHash: null,
+        profile: { name: 'User 2' },
+        roles: [{ role: { code: 'USER' } }],
+        createdAt: new Date(),
+      });
+
+      await authService.login(
+        {
+          type: AuthType.EMAIL_CODE,
+          email: 'u2@example.com',
+          code: '654321',
+        } as never,
+        '127.0.0.1',
+        'agent',
+      );
+
+      expect(refreshTokenRepo.revokeTokensByDeviceId).not.toHaveBeenCalled();
+      expect(tokenService.generateTokens).toHaveBeenCalled();
     });
   });
 
