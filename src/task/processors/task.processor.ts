@@ -64,7 +64,7 @@ export class TaskProcessor
    *
    * @description
    * 1. Primary lookup: uses `_taskId` injected in the Job payload for fast and exact lookup;
-   * 2. Fallback lookup: queries by jobId or repeatKey (for backward compatibility).
+   * 2. Fallback lookup: queries by jobId.
    *
    * @param job The current BullMQ Job being processed
    * @returns The matched ScheduledTask database entity, or null if not found
@@ -78,15 +78,8 @@ export class TaskProcessor
       return this.tasksRepository.findById(taskId);
     }
 
-    // 2. Fallback: extract repeatKey or query by jobId
-    const repeatOptions = job.opts.repeat as { key?: string } | undefined;
-    const repeatKey =
-      repeatOptions?.key ??
-      (job as unknown as { repeatJobKey?: string }).repeatJobKey;
-    return this.tasksRepository.findByJobIdOrRepeatKey(
-      String(job.id),
-      repeatKey,
-    );
+    // 2. Fallback: query by jobId
+    return this.tasksRepository.findByJobId(String(job.id));
   }
 
   /**
