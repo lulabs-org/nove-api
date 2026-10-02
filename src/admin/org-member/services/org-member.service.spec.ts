@@ -373,6 +373,27 @@ describe('OrgMemberService.listMembers', () => {
     });
   });
 
+  it('matches a keyword against member phone and user ID', async () => {
+    await service.listMembers('org-1', { keyword: '1380013' });
+
+    expect(repository.findList).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          OR: expect.arrayContaining([
+            {
+              user: {
+                phone: { contains: '1380013', mode: 'insensitive' },
+              },
+            },
+            {
+              userId: { contains: '1380013', mode: 'insensitive' },
+            },
+          ]),
+        }),
+      }),
+    );
+  });
+
   it('returns lightweight role options without detail lookups', async () => {
     repository.findMemberRoleOptions.mockResolvedValue({
       total: 1,

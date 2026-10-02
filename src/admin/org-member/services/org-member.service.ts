@@ -73,6 +73,14 @@ export class OrgMemberService {
         },
         {
           user: {
+            phone: { contains: pagination.keyword, mode: 'insensitive' },
+          },
+        },
+        {
+          userId: { contains: pagination.keyword, mode: 'insensitive' },
+        },
+        {
+          user: {
             profile: {
               displayName: {
                 contains: pagination.keyword,
