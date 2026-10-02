@@ -5,7 +5,6 @@ model ScheduledTask {
   type      TaskType
   queueName String     @map("queue_name")
   jobId     String?    @map("job_id") // BullMQ job id (once 任务可能有，cron 的每次实例化也会生成临时 id)
-  repeatKey String?    @map("repeat_key") // BullMQ repeatable job 的唯一键 (removeRepeatable 用)
   cron      String? // CRON 表达式（type=CRON 时必填）
   timezone  String? // 时区（type=CRON 时使用，例如 "Asia/Shanghai"）
   runAt     DateTime?  @map("run_at") @db.Timestamptz(6) // 一次性任务的执行时间（精确到毫秒）

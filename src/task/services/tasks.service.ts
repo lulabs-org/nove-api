@@ -125,10 +125,9 @@ export class TasksService {
         opts: DEFAULT_JOB_OPTIONS,
       });
 
-      // 4. Backfill scheduler ID (task.id) as jobId and reset repeatKey
+      // 4. Backfill scheduler ID (task.id) as jobId
       return await this.tasksRepository.update(task.id, {
         jobId: task.id, // Scheduler ID matches primary key of task record
-        repeatKey: null,
       });
     } catch (err) {
       // Roll back database record if scheduler registration fails
@@ -236,7 +235,6 @@ export class TasksService {
         handler: newHandler,
         cron: dto.cron ?? existing.cron,
         timezone, // Update timezone
-        repeatKey: null,
         jobId: existing.id,
         payload: (dto.payload ?? existing.payload) as unknown as object,
         status: dto.status ?? existing.status,
@@ -416,7 +414,6 @@ export class TasksService {
     await this.tasksRepository.update(id, {
       status: TaskStatus.SCHEDULED,
       jobId: newJobId,
-      ...(existing.type === TaskType.CRON ? { repeatKey: null } : {}),
     });
     return { ok: true };
   }

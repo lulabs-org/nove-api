@@ -17,7 +17,7 @@ describe('TaskProcessor', () => {
   beforeEach(async () => {
     const mockTasksRepository = {
       findById: jest.fn(),
-      findByJobIdOrRepeatKey: jest.fn(),
+      findByJobId: jest.fn(),
       updateTaskStatus: jest.fn(),
     };
 
@@ -100,39 +100,18 @@ describe('TaskProcessor', () => {
       );
     });
 
-    it('should find task by repeat options key if _taskId is missing', async () => {
-      const job = {
-        id: '1',
-        data: {},
-        opts: { repeat: { key: 'repeat-key' } },
-      } as unknown as Job;
-      const mockTask = { id: 'task-123' };
-      tasksRepository.findByJobIdOrRepeatKey.mockResolvedValue(mockTask as any);
-
-      await processor.onActive(job);
-
-      expect(tasksRepository.findByJobIdOrRepeatKey).toHaveBeenCalledWith(
-        '1',
-        'repeat-key',
-      );
-    });
-
-    it('should find task by repeatJobKey if _taskId and repeat options key are missing', async () => {
+    it('should find task by jobId if _taskId is missing', async () => {
       const job = {
         id: '1',
         data: {},
         opts: {},
-        repeatJobKey: 'repeat-job-key',
       } as unknown as Job;
       const mockTask = { id: 'task-123' };
-      tasksRepository.findByJobIdOrRepeatKey.mockResolvedValue(mockTask as any);
+      tasksRepository.findByJobId.mockResolvedValue(mockTask as any);
 
       await processor.onActive(job);
 
-      expect(tasksRepository.findByJobIdOrRepeatKey).toHaveBeenCalledWith(
-        '1',
-        'repeat-job-key',
-      );
+      expect(tasksRepository.findByJobId).toHaveBeenCalledWith('1');
     });
   });
 

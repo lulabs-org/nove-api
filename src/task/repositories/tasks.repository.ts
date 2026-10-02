@@ -64,21 +64,11 @@ export class TasksRepository {
     });
   }
 
-  async findByJobIdOrRepeatKey(
-    jobId: string,
-    repeatJobKey?: string,
-  ): Promise<ScheduledTask | null> {
-    const whereClause: Prisma.ScheduledTaskWhereInput[] = [{ jobId }];
-    if (repeatJobKey) {
-      whereClause.push({ repeatKey: repeatJobKey });
-    }
-
-    const tasks = await this.prisma.scheduledTask.findMany({
-      where: { OR: whereClause },
+  async findByJobId(jobId: string): Promise<ScheduledTask | null> {
+    return this.prisma.scheduledTask.findFirst({
+      where: { jobId },
       orderBy: { createdAt: 'desc' },
-      take: 1,
     });
-    return tasks[0] || null;
   }
 
   async updateTaskStatus(
