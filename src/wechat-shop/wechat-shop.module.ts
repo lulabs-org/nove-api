@@ -16,6 +16,9 @@ import { WechatShopProcessor } from './processor/wechat-shop.processor';
 import { UserModule } from '@/user/user.module';
 import { WechatShopTesterService } from './wechat-shop.tester';
 import { IntegrationsModule } from '@/admin/integrations';
+import { TasksModule } from '@/task/tasks.module';
+import { WechatShopSyncScheduleService } from './services/wechat-shop-sync-schedule.service';
+import { WechatShopSyncScheduleHandler } from './services/wechat-shop-sync-schedule.handler';
 
 @Module({
   imports: [
@@ -28,6 +31,7 @@ import { IntegrationsModule } from '@/admin/integrations';
       adapter: BullMQAdapter,
     }),
     IntegrationsModule,
+    TasksModule,
   ],
   controllers: [WechatShopOrderController, WechatShopEventController],
   providers: [
@@ -39,6 +43,8 @@ import { IntegrationsModule } from '@/admin/integrations';
     WechatShopTokenService,
     WechatShopProcessor,
     WechatShopTesterService,
+    WechatShopSyncScheduleService,
+    WechatShopSyncScheduleHandler,
   ],
   exports: [WechatShopOrderService, WechatShopRepository],
 })

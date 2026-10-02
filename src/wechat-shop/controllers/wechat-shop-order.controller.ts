@@ -1,4 +1,13 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Put,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -18,6 +27,8 @@ import {
   WechatShopAftersaleService,
   WechatShopOrderService,
 } from '../services';
+import { WechatShopSyncScheduleDto } from '../dto/wechat-shop-sync-schedule.dto';
+import { WechatShopSyncScheduleService } from '../services/wechat-shop-sync-schedule.service';
 
 @ApiTags('Wechat Shop')
 @ApiBearerAuth()
@@ -26,7 +37,32 @@ export class WechatShopOrderController {
   constructor(
     private readonly wechatShopOrderService: WechatShopOrderService,
     private readonly wechatShopAftersaleService: WechatShopAftersaleService,
+    private readonly syncSchedule: WechatShopSyncScheduleService,
   ) {}
+
+  @RequireRoles('SUPER_ADMIN')
+  @NoPermissionRequired()
+  @Get('sync-schedule')
+  @ApiOperation({ summary: 'Get WeChat shop sync schedule' })
+  getSyncSchedule() {
+    return this.syncSchedule.get();
+  }
+
+  @RequireRoles('SUPER_ADMIN')
+  @NoPermissionRequired()
+  @Put('sync-schedule')
+  @ApiOperation({ summary: 'Save WeChat shop sync schedule' })
+  saveSyncSchedule(@Body() dto: WechatShopSyncScheduleDto) {
+    return this.syncSchedule.save(dto);
+  }
+
+  @RequireRoles('SUPER_ADMIN')
+  @NoPermissionRequired()
+  @Delete('sync-schedule')
+  @ApiOperation({ summary: 'Remove WeChat shop sync schedule' })
+  removeSyncSchedule() {
+    return this.syncSchedule.remove();
+  }
 
   @RequireRoles('SUPER_ADMIN')
   @NoPermissionRequired()

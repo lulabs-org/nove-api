@@ -57,6 +57,6 @@ import { LinkOrdersToUsersByPhoneHandler } from './handlers/link-orders-to-users
     LinkPlatformUsersByPhoneHashHandler,
     LinkOrdersToUsersByPhoneHandler,
   ],
-  exports: [TaskHandlerRegistry],
+  exports: [TaskHandlerRegistry, TasksService],
 })
 export class TasksModule {}

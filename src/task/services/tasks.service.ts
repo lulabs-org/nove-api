@@ -54,10 +54,11 @@ export class TasksService {
     }
   }
 
-  async createCron(dto: CreateCronDto): Promise<ScheduledTask> {
+  async createCron(dto: CreateCronDto, taskId?: string): Promise<ScheduledTask> {
     const timezone = dto.timezone ?? 'Asia/Shanghai'; // 使用传入的时区或默认值
 
     const task = await this.tasksRepository.create({
+      ...(taskId ? { id: taskId } : {}),
       name: dto.name,
       handler: dto.handler,
       type: TaskType.CRON,
@@ -124,8 +125,10 @@ export class TasksService {
 
     if (
       existing.type === TaskType.CRON &&
-      dto.cron &&
-      dto.cron !== existing.cron
+      existing.status !== TaskStatus.PAUSED &&
+      ((dto.cron && dto.cron !== existing.cron) ||
+        dto.payload !== undefined ||
+        (dto.timezone && dto.timezone !== existing.timezone))
     ) {
       const timezone = dto.timezone ?? existing.timezone ?? 'Asia/Shanghai'; // 优先使用新时区
 
@@ -137,7 +140,7 @@ export class TasksService {
 
       await this.queue.upsertJobScheduler(
         existing.id,
-        { pattern: dto.cron, tz: timezone },
+        { pattern: dto.cron ?? existing.cron!, tz: timezone },
         {
           name: newHandler,
           data: {
@@ -151,7 +154,7 @@ export class TasksService {
       return this.tasksRepository.update(id, {
         name: dto.name ?? existing.name,
         handler: newHandler,
-        cron: dto.cron,
+        cron: dto.cron ?? existing.cron,
         timezone, // 更新时区
         repeatKey: null,
         jobId: existing.id,
@@ -163,6 +166,7 @@ export class TasksService {
     return this.tasksRepository.update(id, {
       name: dto.name ?? existing.name,
       handler: newHandler,
+      cron: dto.cron ?? existing.cron,
       timezone: dto.timezone ?? existing.timezone, // 更新时区
       payload: (dto.payload ?? existing.payload) as unknown as object,
       status: dto.status ?? existing.status,

@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { WechatShopOrderController } from './wechat-shop-order.controller';
 import { WechatShopOrderService } from '../services/wechat-shop-order.service';
 import { WechatShopAftersaleService } from '../services/wechat-shop-aftersale.service';
+import { WechatShopSyncScheduleService } from '../services/wechat-shop-sync-schedule.service';
 
 describe('WechatShopOrderController', () => {
   let controller: WechatShopOrderController;
@@ -26,6 +27,7 @@ describe('WechatShopOrderController', () => {
       providers: [
         { provide: WechatShopOrderService, useValue: mockOrderService },
         { provide: WechatShopAftersaleService, useValue: mockAftersaleService },
+        { provide: WechatShopSyncScheduleService, useValue: {} },
       ],
     }).compile();
 
