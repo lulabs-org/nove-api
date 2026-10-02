@@ -49,6 +49,22 @@ import {
   UploadSessionRepository,
 } from '../repositories';
 
+/** PDF 可被浏览器直接内嵌，因此与图片、视频一样走内联预览而不是下载 */
+const PDF_CONTENT_TYPE = 'application/pdf';
+/** 图片与视频的 MIME 前缀，均为浏览器可原生内嵌的类型 */
+const INLINE_PREVIEW_CONTENT_TYPE = /^(?:image|video)\//;
+
+/**
+ * 判断文件能否直接内联预览（图片、视频、PDF）。
+ * 其余类型（如 docx）需要服务端转换后才能预览，不在这里放行。
+ */
+function isInlinePreviewable(contentType: string): boolean {
+  return (
+    INLINE_PREVIEW_CONTENT_TYPE.test(contentType) ||
+    contentType === PDF_CONTENT_TYPE
+  );
+}
+
 @Injectable()
 export class DriveService {
   constructor(
@@ -456,8 +472,9 @@ export class DriveService {
     if (!version || version.status !== FileVersionStatus.ACTIVE) {
       throw new ConflictException('文件尚不可下载');
     }
-    if (preview && !/^(image|video)\//.test(version.contentType)) {
-      throw new BadRequestException('仅支持图片和视频预览');
+    // 预览与下载共用签名逻辑，区别是预览不写 DOWNLOAD 审计，并以 inline 让浏览器直接展示
+    if (preview && !isInlinePreviewable(version.contentType)) {
+      throw new BadRequestException('仅支持图片、视频和 PDF 预览');
     }
     if (!preview) {
       await this.audit(

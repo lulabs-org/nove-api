@@ -87,6 +87,17 @@ describe('Drive image preview audit', () => {
     expect(result.contentDisposition).toBe('inline');
     expect(access.createAudit).not.toHaveBeenCalled();
   });
+  // PDF 与图片、视频同属可直接内联预览的类型，不应再被判定为不可预览
+  it('previews PDF documents without download audits', async () => {
+    files.findDetails.mockResolvedValue({
+      ...record,
+      versions: [{ ...record.versions[0], contentType: 'application/pdf' }],
+    });
+    const result = await service.createPreviewUrl('file-a', auth);
+    expect(result.contentDisposition).toBe('inline');
+    expect(access.createAudit).not.toHaveBeenCalled();
+  });
+
   it('explicit downloads still write DOWNLOAD audits', async () => {
     await service.createDownloadUrl('file-a', auth);
     expect(access.createAudit).toHaveBeenCalledTimes(1);
@@ -111,7 +122,15 @@ describe('Drive image preview audit', () => {
 
   it.each([
     ['pending images', { status: 'PENDING', contentType: 'image/png' }],
-    ['non-images', { status: 'ACTIVE', contentType: 'application/pdf' }],
+    // 用 xlsx 代表无法内联预览的格式（原用例放在这里的 pdf 已改为支持预览）
+    [
+      'non-previewable types',
+      {
+        status: 'ACTIVE',
+        contentType:
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      },
+    ],
   ])('rejects previews for %s', async (_name, version) => {
     files.findDetails.mockResolvedValue({
       ...record,
