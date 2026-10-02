@@ -136,17 +136,6 @@ export const ApiCreateOnceDocs = () =>
             payload: { userId: 123, action: 'sync_data' },
           },
         },
-        with_job_id: {
-          summary: '指定任务ID',
-          description: '创建时指定自定义任务ID',
-          value: {
-            name: '邮件发送任务',
-            handler: 'send_email_handler',
-            runAt: '2025-10-16T09:00:00.000Z',
-            payload: { email: 'user@example.com', template: 'welcome' },
-            jobIdHint: 'email-job-001',
-          },
-        },
         http_request: {
           summary: 'HTTP 请求任务',
           description: '在指定时间发起一个自定义的 HTTP 请求',

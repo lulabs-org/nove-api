@@ -10,13 +10,7 @@
  */
 
 // src/tasks/dtos/create-once.dto.ts
-import {
-  IsISO8601,
-  IsNotEmpty,
-  IsObject,
-  IsOptional,
-  IsString,
-} from 'class-validator';
+import { IsISO8601, IsNotEmpty, IsObject, IsString } from 'class-validator';
 
 export class CreateOnceDto {
   @IsString()
@@ -32,8 +26,4 @@ export class CreateOnceDto {
 
   @IsObject()
   payload!: Record<string, unknown>;
-
-  @IsOptional()
-  @IsString()
-  jobIdHint?: string; // 业务期望的 jobId （可选）
 }
